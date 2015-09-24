@@ -1,5 +1,5 @@
 # 
-# Copyright 2011-2015 Jeff Bush
+# Copyright 2015 Pipat Methavanitpong
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,20 +18,17 @@ TOPDIR=../../..
 
 include $(TOPDIR)/build/target.mk
 
-CFLAGS=-O3
+CFLAGS=-O3 -I../../../software/libs/libc/include -I../../../software/libs/libos/
 
-chargen.hex: chargen.c 
-	$(CC) $(CFLAGS) chargen.c -o chargen.elf ../../../software/libs/libc/crt0.o
-	$(ELF2HEX) -o chargen.hex chargen.elf
+overrun.hex: overrun.c 
+	$(CC) $(CFLAGS) overrun.c -o overrun.elf ../../../software/libs/libc/crt0.o ../../../software/libs/libc/libc.a ../../../software/libs/libos/libos.a
+	$(ELF2HEX) -o overrun.hex overrun.elf
 
-run: chargen.hex
-	$(SERIAL_BOOT) $(SERIAL_PORT) chargen.hex
-
-run-verilator: chargen.hex
-	../../../bin/verilator_model +bin=chargen.hex
+test: overrun.hex
+	../../../bin/verilator_model +bin=overrun.hex
 
 clean: FORCE
-	rm -f chargen.elf chargen.hex
+	rm -f overrun.elf overrun.hex
 
 FORCE:
 

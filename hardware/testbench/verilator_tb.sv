@@ -149,7 +149,15 @@ module verilator_tb(
 		.ROW_ADDR_WIDTH(SDRAM_ROW_ADDR_WIDTH),
 		.COL_ADDR_WIDTH(SDRAM_COL_ADDR_WIDTH),
 		.MAX_REFRESH_INTERVAL(800)) memory(.*);
-		
+
+	logic[31:0] loopback_uart_read_data;
+	wire loopback_uart_line;
+	uart #(.BASE_ADDRESS('h100)) loopback_uart(
+		.io_read_data(loopback_uart_read_data),
+		.uart_tx(loopback_uart_line),
+		.uart_rx(loopback_uart_line),
+		.*);
+
 	// The s1 interface is not connected to anything in this configuration.
 	assign axi_bus_s1.m_awvalid = 0;
 	assign axi_bus_s1.m_wvalid = 0;
@@ -368,8 +376,9 @@ module verilator_tb(
 		
 			if (io_write_en)
 			begin
-				if (io_address == 32'h20)
-					$write("%c", io_write_data[7:0]);	// Serial output
+				case (io_address)
+					'h20: $write("%c", io_write_data[7:0]);	// Serial output
+				endcase
 			end
 
 			if (io_read_en)
@@ -380,14 +389,14 @@ module verilator_tb(
 					'h18: io_read_data <= 1;	// Serial status 
 					'h38,
 					'h3c: io_read_data <= ps2_read_data;
-				
-
 					'h48,
 					'h4c:
 					begin
 						io_read_data <= spi_read_data;
 					end
-				
+					// External UART 0
+					'h100, 											///< status
+					'h104: io_read_data <= loopback_uart_read_data;	///< data
 					default: io_read_data <= $random();
 				endcase
 			end
