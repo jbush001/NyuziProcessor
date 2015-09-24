@@ -33,7 +33,7 @@ public:
 	Texture& operator=(const Texture&) = delete;
 	
 	void setMipSurface(int mipLevel, const Surface *surface);
-	void readPixels(vecf16_t u, vecf16_t v, unsigned short mask, vecf16_t outChannels[4]) const;
+	void readPixels(vecf16_t u, vecf16_t v, unsigned short mask, vecf16_t *outChannels) const;
 	void enableBilinearFiltering(bool enable)
 	{
 		fEnableBilinearFiltering = enable;

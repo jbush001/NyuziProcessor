@@ -67,8 +67,8 @@ public:
 		uniforms->fNormalMatrix.mulVec(outParams + 6, coord); 
 	}
 
-	void shadePixels(vecf16_t outColor[4], const vecf16_t inParams[16], 
-		const void *_castToUniforms, const Texture * const sampler[kMaxActiveTextures],
+	void shadePixels(vecf16_t *outColor, const vecf16_t *inParams, 
+		const void *_castToUniforms, const Texture * const * sampler,
 		unsigned short mask) const override
 	{
 		const TextureUniforms *uniforms = static_cast<const TextureUniforms*>(_castToUniforms);

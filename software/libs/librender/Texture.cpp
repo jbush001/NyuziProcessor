@@ -91,7 +91,7 @@ namespace
 }
 
 void Texture::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
-	vecf16_t outColor[4]) const
+	vecf16_t *outColor) const
 {
 	// Determine the closest mip-level. Compute the pitch between the top
 	// two pixels. The reciprocal of this is the scaled texture size. log2 of this

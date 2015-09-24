@@ -88,7 +88,7 @@ public:
 	}
 
 	// Multiply 16 Vec3s by this matrix.	
-	void mulVec(vecf16_t outVec[4], const vecf16_t inVec[4]) const
+	void mulVec(vecf16_t *outVec, const vecf16_t *inVec) const
 	{
 		for (int row = 0; row < 4; row++)
 		{
