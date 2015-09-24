@@ -314,6 +314,10 @@ module verilator_tb(
 			$display("      l1d_miss              %0d", nyuzi.performance_counters.event_counter[9 + `NUM_CORES * i]);
 			$display("      l1d_hit               %0d", nyuzi.performance_counters.event_counter[10 + `NUM_CORES * i]);
 		end
+		
+		// Do this last so emulator doesn't kill us with SIGPIPE during cosimulation.
+		if (processor_halt)
+			$display("***HALTED***");
 	end
 
 	always_ff @(posedge clk, posedge reset)
@@ -351,10 +355,7 @@ module verilator_tb(
 				if (finish_cycles == 0)
 					finish_cycles <= 2000;
 				else if (finish_cycles == 1)
-				begin
-					$display("***HALTED***");
 					$finish;
-				end
 				else
 					finish_cycles <= finish_cycles - 1;
 			end
