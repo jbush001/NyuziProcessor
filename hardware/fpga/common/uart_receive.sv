@@ -41,7 +41,6 @@ module uart_receive
 	logic[3:0] bit_count_nxt;
 	logic do_shift;
 	logic rx_sync;
-	logic sample_enable;
 
 	assign rx_char = shift_register;
 
@@ -90,7 +89,7 @@ module uart_receive
 						bit_count_nxt = bit_count_ff + 1;
 					end
 				end
-				else if (sample_enable)
+				else
 					sample_count_nxt = sample_count_ff - 1;
 			end
 		endcase

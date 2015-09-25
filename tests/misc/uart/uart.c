@@ -25,7 +25,7 @@
 #define CHECK(cond) do { if (!(cond)) { printf("FAIL: %d: %s\n", __LINE__, \
 	#cond); abort(); } } while(0)
 
-const int kMaxTimeout = 1000000;
+const int kMaxTimeout = 10000;
 const int kMaxFifoDepth = 7;
 volatile unsigned int * const LOOPBACK_UART = (volatile unsigned int*) 0xFFFF0100;
 
@@ -39,7 +39,7 @@ enum UartRegs
 
 void writeLoopbackUart(char ch) 
 {
-	int timeout;
+	int timeout = 0;
 	LOOPBACK_UART[kTx] = ch;
 	while ((LOOPBACK_UART[kStatus] & 1) == 0)	// Wait for transmit to finish
 		CHECK(++timeout < kMaxTimeout);
@@ -81,7 +81,7 @@ int main ()
 				CHECK((LOOPBACK_UART[kStatus] & 4) == 0);
 		}
 		
-		// Indicate dropped characters
+		// Account for dropped characters
 		if (fifoCount > kMaxFifoDepth)
 			rxChar += fifoCount - kMaxFifoDepth;
 		
