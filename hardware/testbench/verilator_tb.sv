@@ -152,7 +152,7 @@ module verilator_tb(
 
 	logic[31:0] loopback_uart_read_data;
 	wire loopback_uart_line;
-	uart #(.BASE_ADDRESS('h100)) loopback_uart(
+	uart #(.BASE_ADDRESS('h100), .BAUD_DIVIDE(8)) loopback_uart(
 		.io_read_data(loopback_uart_read_data),
 		.uart_tx(loopback_uart_line),
 		.uart_rx(loopback_uart_line),

@@ -76,25 +76,25 @@ module uart
 	
 	assign tx_enable = io_write_en && io_address == TX_REG;
 
-	uart_transmit #(.BAUD_DIVIDE(BAUD_DIVIDE * 8)) uart_transmit(
+	uart_transmit #(.BAUD_DIVIDE(BAUD_DIVIDE)) uart_transmit(
 		.tx_char(io_write_data[7:0]),
 		/*AUTOINST*/
-		// Outputs
-		.tx_ready		(tx_ready),
-		.uart_tx		(uart_tx),
-		// Inputs
-		.clk			(clk),
-		.reset			(reset),
-		.tx_enable		(tx_enable));
+								 // Outputs
+								 .tx_ready		(tx_ready),
+								 .uart_tx		(uart_tx),
+								 // Inputs
+								 .clk			(clk),
+								 .reset			(reset),
+								 .tx_enable		(tx_enable));
 
 	uart_receive #(.BAUD_DIVIDE(BAUD_DIVIDE)) uart_receive(/*AUTOINST*/
-		// Outputs
-		.rx_char		(rx_char[7:0]),
-		.rx_char_valid	(rx_char_valid),
-		// Inputs
-		.clk			(clk),
-		.reset			(reset),
-		.uart_rx		(uart_rx));
+							       // Outputs
+							       .rx_char		(rx_char[7:0]),
+							       .rx_char_valid	(rx_char_valid),
+							       // Inputs
+							       .clk		(clk),
+							       .reset		(reset),
+							       .uart_rx		(uart_rx));
 						     
 	// XXX detect and flag uart_rx overflow
 	assign rx_fifo_read = io_address == RX_REG && io_read_en;

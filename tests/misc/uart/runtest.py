@@ -20,9 +20,10 @@ import sys
 sys.path.insert(0, '../..')
 import test_harness
 
-test_harness.compile_test('overrun.c')
+test_harness.compile_test('uart.c')
 result = test_harness.run_verilator()
 if result.find('PASS') == -1:
+	print result
 	print 'FAIL'
 	sys.exit(1)
 else:
