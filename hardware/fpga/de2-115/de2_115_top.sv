@@ -14,8 +14,6 @@
 // limitations under the License.
 // 
 
-`define BITBANG_SDMMC
-
 `include "defines.sv"
 
 module de2_115_top(
@@ -216,7 +214,7 @@ module de2_115_top(
 			event_count <= event_count + 1;
 	end
 `else	
-	uart #(.BASE_ADDRESS(24), .BAUD_DIVIDE(50000000 / (115200 * 8))) uart(
+	uart #(.BASE_ADDRESS(24), .BAUD_DIVIDE(50000000 / 921600)) uart(
 		.io_read_data(uart_read_data),
 		.*);
 `endif
