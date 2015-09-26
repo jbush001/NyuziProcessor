@@ -90,7 +90,13 @@ int main ()
 			readCount = kMaxFifoDepth;
 		
 		for (i = 0; i < readCount; i++)
+		{
 			CHECK(readLoopbackUart() == rxChar++);
+			
+			// Reading from the UART should clear the overflow bit
+			// if it was set.
+			CHECK((LOOPBACK_UART[kStatus] & 4) == 0);
+		}
 	}
 
 	printf("PASS\n");
