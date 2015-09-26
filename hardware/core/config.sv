@@ -18,10 +18,12 @@
 `define __CONFIG_V
 
 // Configurable parameters
-// Number of ways must be 1, 2, 4, or 8
-// If the number of L2 ways is changed, the flush_l2_cache function in 
-// testbench/verilator_tb.sv needs to be modified. Comments above
-// that function describe why and how.
+// - Number of ways must be 1, 2, 4, or 8
+// - If the number of L2 ways is changed, the flush_l2_cache function in 
+//   testbench/verilator_tb.sv needs to be modified. Comments above
+//   that function describe why and how.
+// - Cores must be 1-8. To synthesize more cores, increase CORE_ID_WIDTH
+//   in defines.sv.
 
 `define NUM_CORES 1
 `define THREADS_PER_CORE 4

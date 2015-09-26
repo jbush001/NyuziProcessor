@@ -42,6 +42,7 @@ module io_arbiter(
 	logic request_sent;
 	core_id_t request_core;
 	thread_idx_t request_thread_idx;
+	ioreq_packet_t grant_request;
 	
 	genvar request_idx;
 	generate
@@ -64,18 +65,21 @@ module io_arbiter(
 			oh_to_idx #(.NUM_SIGNALS(`NUM_CORES)) oh_to_idx_grant(
 				.one_hot(grant_oh),
 				.index(grant_idx));
+				
+			assign grant_request = io_request[grant_idx];
 		end
 		else
 		begin
 			assign grant_oh[0] = arb_request[0];
 			assign grant_idx = 0;
+			assign grant_request = io_request[0];
 		end
 	endgenerate
 
-	assign io_write_en = |grant_oh && io_request[grant_idx].is_store;
-	assign io_read_en = |grant_oh && !io_request[grant_idx].is_store;
-	assign io_write_data = io_request[grant_idx].value;
-	assign io_address = io_request[grant_idx].address;
+	assign io_write_en = |grant_oh && grant_request.is_store;
+	assign io_read_en = |grant_oh && !grant_request.is_store;
+	assign io_write_data = grant_request.value;
+	assign io_address = grant_request.address;
 		
 	always_ff @(posedge clk, posedge reset)
 	begin
@@ -91,7 +95,7 @@ module io_arbiter(
 				// Send a new request
 				request_sent <= 1;
 				request_core <= grant_idx;
-				request_thread_idx <= io_request[grant_idx].thread_idx;
+				request_thread_idx <= grant_request.thread_idx;
 			end
 			else
 				request_sent <= 0;

@@ -45,9 +45,9 @@ module l2_cache_arb(
 	input                                 l2bi_collided_miss);
 
 	logic[`NUM_CORES - 1:0] arb_request;
-	core_id_t grant_idx;
-	logic[`NUM_CORES - 1:0] grant_oh;
 	logic can_accept_request;
+	l2req_packet_t grant_request;
+	logic[`NUM_CORES - 1:0] grant_oh;
 	
 	assign can_accept_request = !l2bi_ready && !l2bi_stall;
 
@@ -63,6 +63,8 @@ module l2_cache_arb(
 	generate
 		if (`NUM_CORES > 1)
 		begin
+			core_id_t grant_idx;
+
 			arbiter #(.NUM_REQUESTERS(`NUM_CORES)) arbiter_request(
 				.request(arb_request),
 				.update_lru(can_accept_request),
@@ -72,11 +74,14 @@ module l2_cache_arb(
 			oh_to_idx #(.NUM_SIGNALS(`NUM_CORES)) oh_to_idx_grant(
 				.one_hot(grant_oh),
 				.index(grant_idx));
+				
+			assign grant_request = l2i_request[grant_idx];
 		end
 		else
 		begin
-			assign grant_idx = 0;
-			assign grant_oh = arb_request[0];
+			// Single core
+			assign grant_oh[0] = arb_request[0];
+			assign grant_request = l2i_request[0];
 		end
 	endgenerate
 
@@ -107,7 +112,7 @@ module l2_cache_arb(
 			else if (|grant_oh && can_accept_request)
 			begin
 				// New request from a core
-				l2a_request <= l2i_request[grant_idx];
+				l2a_request <= grant_request;
 				l2a_is_l2_fill <= 0;
 			end
 			else
