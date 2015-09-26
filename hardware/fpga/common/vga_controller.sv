@@ -163,11 +163,11 @@ module vga_controller(
 									axi_state <= STATE_WAIT_FIFO_EMPTY;
 								
 								vram_addr <= vram_addr + BURST_LENGTH * 4;
-								pixel_count <= pixel_count + BURST_LENGTH;
+								pixel_count <= pixel_count + 19'(BURST_LENGTH);
 							end
 						end	
 						else
-							burst_count <= burst_count + 1;
+							burst_count <= burst_count + 8'd1;
 					end
 				end
 
@@ -177,7 +177,7 @@ module vga_controller(
 	end
 	
 	assign axi_bus.m_rready = 1'b1;	// We always have enough room when a request is made.
-	assign axi_bus.m_arlen = BURST_LENGTH - 1;
+	assign axi_bus.m_arlen = 8'(BURST_LENGTH - 1);
 	assign axi_bus.m_arvalid = axi_state == STATE_ISSUE_ADDR;
 	assign axi_bus.m_araddr = vram_addr;
 

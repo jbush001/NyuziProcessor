@@ -193,12 +193,12 @@ module sdram_controller
 
 		lfifo_enqueue = 0;
 		if (refresh_timer_ff != 0)
-			refresh_timer_nxt = refresh_timer_ff - 1;
+			refresh_timer_nxt = refresh_timer_ff - 12'd1;
 		else
 			refresh_timer_nxt = 0;
 
 		if (timer_ff != 0)
-			timer_nxt = timer_ff - 1; // Wait for timer to expire...
+			timer_nxt = timer_ff - 15'd1; // Wait for timer to expire...
 		else
 		begin
 			// Progress to next state.
@@ -488,12 +488,14 @@ module sdram_controller
 				assert(((axi_bus.m_arlen + 1) & (SDRAM_BURST_LENGTH - 1)) == 0);
 				assert((axi_bus.m_araddr & (SDRAM_BURST_LENGTH - 1)) == 0);
 
+`ifdef SIMULATION
 				// Make sure memory address is in memory range
 				if (axi_bus.m_araddr >= MEMORY_SIZE)
 				begin
 					$display("sdram: read address out of range %x", axi_bus.m_araddr);
 					$finish;
 				end
+`endif
 
 				// axi_bus.m_araddr is in terms of bytes.  Convert to beats.
 				read_address <= INTERNAL_ADDR_WIDTH'(axi_bus.m_araddr[31:$clog2(DATA_WIDTH / 8)]);

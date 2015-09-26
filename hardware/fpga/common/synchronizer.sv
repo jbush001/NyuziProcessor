@@ -34,9 +34,9 @@ module synchronizer
 	begin
 		if (reset)
 		begin
-			sync0 <= RESET_STATE;
-			sync1 <= RESET_STATE;
-			data_o <= RESET_STATE;
+			sync0 <= WIDTH'(RESET_STATE);
+			sync1 <= WIDTH'(RESET_STATE);
+			data_o <= WIDTH'(RESET_STATE);
 		end
 		else
 		begin

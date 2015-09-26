@@ -68,7 +68,7 @@ module uart_receive
 					// We are at the beginning of the start bit. Next
 					// sample point is in middle of first data bit.
 					// Set divider to 1.5 times bit duration.
-					sample_count_nxt = (BAUD_DIVIDE * 3 / 2) - 1;
+					sample_count_nxt = 12'((BAUD_DIVIDE * 3 / 2) - 1);
 				end
 			end
 
@@ -86,11 +86,11 @@ module uart_receive
 					else
 					begin
 						do_shift = 1;
-						bit_count_nxt = bit_count_ff + 1;
+						bit_count_nxt = bit_count_ff + 4'd1;
 					end
 				end
 				else
-					sample_count_nxt = sample_count_ff - 1;
+					sample_count_nxt = sample_count_ff - 12'd1;
 			end
 		endcase
 	end

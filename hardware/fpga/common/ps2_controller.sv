@@ -115,7 +115,7 @@ module ps2_controller
 
 					STATE_READ_CHARACTER:
 					begin
-						bit_count <= bit_count + 1;
+						bit_count <= bit_count + 3'd1;
 						if (bit_count == 7)
 							state_ff <= STATE_READ_PARITY;
 							

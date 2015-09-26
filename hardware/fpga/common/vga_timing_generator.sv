@@ -95,10 +95,10 @@ module vga_timing_generator(
 						vertical_counter <= 0;
 					end
 					else 
-						vertical_counter <= vertical_counter + 1;
+						vertical_counter <= vertical_counter + 11'd1;
 				end
 				else
-					horizontal_counter <= horizontal_counter + 1;
+					horizontal_counter <= horizontal_counter + 11'd1;
 
 				if (vertical_counter == VSYNC_START)
 					vga_vs <= 0;
