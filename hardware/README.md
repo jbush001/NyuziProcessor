@@ -12,6 +12,18 @@ three directories:
 - testbench/ 
   Support for simulation in [Verilator](http://www.veripool.org/wiki/verilator).
 
+This project uses Emacs verilog mode to automatically generate some wire
+definitions. If you have Emacs installed, type 'make autos' from the command
+line to update the definitions in batch mode.
+
+This design uses parameterized memories (FIFOs and SRAM blocks), but not all
+tool flows support this. This can use hard coded memory instances compatible
+with memory compilers or SRAM wizards. Using `make core/srams.inc` generates an
+include file with all used memory sizes in the design. You can tweak the script
+tools/misc/extract_mems.py to change the module names or parameter formats.
+
+## Command Line Arguments
+
 Typing make in this directory compiles an executable 'verilator_model' in the
 bin/ directory. It accepts the following command line arguments:
 
@@ -49,6 +61,8 @@ and rebuild:
 The simulator writes a file called `trace.vcd` in 
 "[value change dump](http://en.wikipedia.org/wiki/Value_change_dump)" 
 format in the current working directory.
+
+## Device Registers
 
 The processor supports the following memory mapped device registers. The 
 'environment' column indicates which environments support it: F = fpga, 
@@ -102,14 +116,4 @@ set in hardware/fpga/de2_115/de2_115_top.sv, SPI otherwise.
 
 5. The loopback UART has its transmit and receive signals connected. It's used
 for testing the UART implementation.
-
-This project uses Emacs verilog mode to automatically generate some wire
-definitions. If you have Emacs installed, type 'make autos' from the command
-line to update the definitions in batch mode.
-
-This design uses parameterized memories (FIFOs and SRAM blocks), but not all
-tool flows support this. This can use hard coded memory instances compatible
-with memory compilers or SRAM wizards. Using `make core/srams.inc` generates an
-include file with all used memory sizes in the design. You can tweak the script
-tools/misc/extract_mems.py to change the module names or parameter formats.
 
