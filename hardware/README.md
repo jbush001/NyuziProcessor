@@ -63,10 +63,10 @@ E = emulator, V = verilator.
 | ffff0010 | w | F | Set value of 7 segment display 2 |
 | ffff0014 | w | F | Set value of 7 segment display 3 |
 | ffff0018 | r | FEV | Serial status. Bit 0: bytes in read FIFO. Bit 1: space available in write FIFO |
-| ffff001c | r | F | Serial read register |
-| ffff0020 | w | FEV | Serial write register<sup>1</sup> |
+| ffff001c | r | F | Serial read |
+| ffff0020 | w | FEV | Serial write<sup>1</sup> |
 | ffff0028 | w | F | VGA frame buffer address |
-| ffff002c | r | F | VGA frame toggle register |
+| ffff002c | r | F | VGA frame toggle |
 | ffff0038 | r | FEV | PS/2 Keyboard status. 1 indicates there are scancodes in FIFO. |
 | ffff003c | r | FEV | PS/2 Keyboard scancode. Remove from FIFO on read.<sup>2</sup> |
 | ffff0044 | w | FEV | SD SPI write byte<sup>3</sup> |
@@ -78,6 +78,9 @@ E = emulator, V = verilator.
 | ffff005c | w | F | SD GPIO value |
 | ffff0060 | w | FEV | Thread resume mask. A 1 bit starts a thread. (bit 0 = thread 0) |
 | ffff0064 | w | FEV | Thread halt mask. A 1 bit halts a thread. (bit 0 = thread 0) |
+| ffff0100 | r | V | Loopback UART Status<sup>5</sup> (same as above) |
+| ffff0104 | r | V | Loopback UART read |
+| ffff0108 | w | V | Loopback UART write |
 
 1. Serial writes (including printfs from software) print to standard out in
 Verilator and the emulator.
@@ -96,6 +99,9 @@ set in hardware/fpga/de2_115/de2_115_top.sv, SPI otherwise.
     | 3 | dat[3] |
     | 4 | cmd |
     | 5 | clk |
+
+5. The loopback UART has its transmit and receive signals connected. It's used
+for testing the UART implementation.
 
 This project uses Emacs verilog mode to automatically generate some wire
 definitions. If you have Emacs installed, type 'make autos' from the command
