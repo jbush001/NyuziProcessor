@@ -21,6 +21,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <uart.h>
 
 #define CHECK(cond) do { if (!(cond)) { printf("FAIL: %d: %s\n", __LINE__, \
 	#cond); abort(); } } while(0)
@@ -36,7 +37,6 @@ enum UartRegs
 	kTx = 2
 };
 
-
 void writeLoopbackUart(char ch) 
 {
 	int timeout = 0;
@@ -47,16 +47,27 @@ void writeLoopbackUart(char ch)
 	printf("write %02x\n", ch);
 }
 
+int waitLoopbackUartNewRxWord(int maxTimeOut)
+{
+	int timeout = 0;
+	while ((LOOPBACK_UART[kStatus] & UART_RX_READY) == 0)
+		if (timeout++ > maxTimeOut)
+			return 0;
+	return 1;
+}
+
 int readLoopbackUart(void)
 {
 	char result;
-	int timeout = 0;
-	while ((LOOPBACK_UART[kStatus] & 2) == 0)
-		CHECK(++timeout < kMaxTimeout);
-	
+	CHECK(waitLoopbackUartNewRxWord(kMaxTimeout));
 	result = LOOPBACK_UART[kRx];
 	printf("read %02x\n", result);
 	return result;
+}
+
+void toggleLoopbackUartLineHold()
+{
+	LOOPBACK_UART[3] = 1;	// Just write any value to 0x10c
 }
 
 int main () 
@@ -67,6 +78,7 @@ int main ()
 	char rxChar = 1;
 	int readCount;
 	
+	// Overrun Error Test
 	for (fifoCount = 1; fifoCount < kMaxFifoDepth + 3; fifoCount++)
 	{
 		for (i = 0; i < fifoCount; i++)
@@ -76,9 +88,9 @@ int main ()
 			// Ensure the overrun bit is set if we've filled the FIFO,
 			// not set if we have not
 			if (i >= kMaxFifoDepth)
-				CHECK((LOOPBACK_UART[kStatus] & 4) != 0);
+				CHECK((LOOPBACK_UART[kStatus] & UART_OVERRUN) != 0);
 			else
-				CHECK((LOOPBACK_UART[kStatus] & 4) == 0);
+				CHECK((LOOPBACK_UART[kStatus] & UART_OVERRUN) == 0);
 		}
 		
 		// Account for dropped characters
@@ -95,9 +107,37 @@ int main ()
 			
 			// Reading from the UART should clear the overflow bit
 			// if it was set.
-			CHECK((LOOPBACK_UART[kStatus] & 4) == 0);
+			CHECK((LOOPBACK_UART[kStatus] & UART_OVERRUN) == 0);
 		}
 	}
+
+	// Flush Rx FIFO
+	while ((LOOPBACK_UART[kStatus] & UART_RX_READY) != 0)
+		readLoopbackUart();
+
+	// Frame Error Test
+	toggleLoopbackUartLineHold();
+	waitLoopbackUartNewRxWord(kMaxTimeout);
+	toggleLoopbackUartLineHold();
+	int hasFrameErrorRaised = 0;
+	int hasFrameErrorLowered = 0;
+	// When unhold, the last word may be a valid word.
+	// This breaks an assumption that all words have frame error.
+	// We need to flush before checking the flag is lowered properly.
+	while ((LOOPBACK_UART[kStatus] & UART_RX_READY) != 0)
+	{
+		if ((LOOPBACK_UART[kStatus] & UART_FRAME_ERR) != 0)
+			hasFrameErrorRaised = 1;
+		readLoopbackUart();
+	}
+	CHECK(hasFrameErrorRaised);
+	// Assure that we have at least one valid word
+	writeLoopbackUart('a');
+	writeLoopbackUart('b');
+	waitLoopbackUartNewRxWord(kMaxTimeout);
+	if ((LOOPBACK_UART[kStatus] & UART_FRAME_ERR) == 0)
+		hasFrameErrorLowered = 1;
+	CHECK(hasFrameErrorLowered);
 
 	printf("PASS\n");
 	return 0;

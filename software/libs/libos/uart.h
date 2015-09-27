@@ -20,7 +20,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-	
+
+#define UART_FRAME_ERR 	(1 << 3)
+#define UART_OVERRUN 	(1 << 2)
+#define UART_RX_READY 	(1 << 1)
+#define UART_TX_READY 	(1 << 0)
+
 void writeUart(char ch);
 unsigned char readUart();
 

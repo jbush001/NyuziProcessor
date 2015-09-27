@@ -25,11 +25,13 @@ module uart_receive
 	input				reset,
 	input				uart_rx,
 	output[7:0]			rx_char,
-	output logic		rx_char_valid);
+	output logic		rx_char_valid,
+	output logic		frame_error);
 
 	typedef enum {
 		STATE_WAIT_START,
-		STATE_READ_CHARACTER
+		STATE_READ_CHARACTER,
+		STATE_STOP_BITS
 	} receive_state_t;
 
 	receive_state_t state_ff;
@@ -43,6 +45,9 @@ module uart_receive
 	logic rx_sync;
 
 	assign rx_char = shift_register;
+	// If it's out of sync, rx_sync is 0 from a new start bit.
+	// Sampling it at the end may be sufficient to indicate frame error.
+	assign frame_error = state_ff == STATE_STOP_BITS && !rx_sync;
 
 	synchronizer #(.RESET_STATE(1)) rx_synchronizer(
 		.clk(clk),
@@ -64,6 +69,7 @@ module uart_receive
 				if (!rx_sync)
 				begin
 					state_nxt = STATE_READ_CHARACTER;
+					frame_error = 0;
 					
 					// We are at the beginning of the start bit. Next
 					// sample point is in middle of first data bit.
@@ -79,15 +85,26 @@ module uart_receive
 					sample_count_nxt = BAUD_DIVIDE - 1;
 					if (bit_count_ff == 8)
 					begin
-						state_nxt = STATE_WAIT_START;
-						rx_char_valid = 1;
+						state_nxt = STATE_STOP_BITS;
 						bit_count_nxt = 0;
+						sample_count_nxt = BAUD_DIVIDE - 1;	// 0.5 stop bit
 					end
 					else
 					begin
 						do_shift = 1;
 						bit_count_nxt = bit_count_ff + 4'd1;
 					end
+				end
+				else
+					sample_count_nxt = sample_count_ff - 12'd1;
+			end
+
+			STATE_STOP_BITS:
+			begin
+				if (sample_count_ff == 0)
+				begin
+					state_nxt = STATE_WAIT_START;
+					rx_char_valid = 1;
 				end
 				else
 					sample_count_nxt = sample_count_ff - 12'd1;

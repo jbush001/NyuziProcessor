@@ -53,8 +53,10 @@ module uart
 	logic rx_fifo_full;
 	logic rx_fifo_overrun;
 	logic rx_fifo_overrun_dq;
+	logic rx_fifo_frame_error;
 
 	wire[7:0] rx_char;
+	wire rx_frame_error;
 	wire[7:0] tx_char;
 	wire tx_enable;
 
@@ -63,8 +65,8 @@ module uart
 		case (io_address)
 			STATUS_REG:
 			begin 
-				io_read_data[31:3] = 0;
-				io_read_data[2:0] = { rx_fifo_overrun, !rx_fifo_empty, tx_ready };
+				io_read_data[31:4] = 0;
+				io_read_data[3:0] = { rx_fifo_frame_error, rx_fifo_overrun, !rx_fifo_empty, tx_ready };
 			end
 			default:
 			begin
@@ -91,6 +93,7 @@ module uart
 							       // Outputs
 							       .rx_char		(rx_char[7:0]),
 							       .rx_char_valid	(rx_char_valid),
+								   .frame_error (rx_frame_error),
 							       // Inputs
 							       .clk		(clk),
 							       .reset		(reset),
@@ -132,7 +135,7 @@ module uart
 	/// automatically dequeued and OE bit is asserted when a character is queued
 	/// after this point. The OE bit is deasserted when rx_fifo_read or the
 	/// number of stored characters is lower than the threshold.
-	sync_fifo #(.WIDTH(8), .SIZE(FIFO_LENGTH), 
+	sync_fifo #(.WIDTH(9), .SIZE(FIFO_LENGTH), 
 		.ALMOST_FULL_THRESHOLD(FIFO_LENGTH - 1)) 
 		rx_fifo(
 		.clk(clk),
@@ -141,10 +144,10 @@ module uart
 		.almost_full(rx_fifo_full),
 		.full(),
 		.empty(rx_fifo_empty),
-		.value_o(rx_fifo_char),
+		.value_o({rx_fifo_frame_error, rx_fifo_char}),
 		.enqueue_en(rx_char_valid),
 		.flush_en(1'b0),
-		.value_i(rx_char),
+		.value_i({rx_frame_error, rx_char}),
 		.dequeue_en(rx_fifo_read || rx_fifo_overrun_dq));
 endmodule
 
