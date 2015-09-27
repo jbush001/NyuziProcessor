@@ -151,11 +151,13 @@ module verilator_tb(
 		.MAX_REFRESH_INTERVAL(800)) memory(.*);
 
 	logic[31:0] loopback_uart_read_data;
-	wire loopback_uart_line;
+	wire loopback_uart_tx, loopback_uart_rx;
+	logic loopback_uart_mask;	// toggle on write at 0x10c
+	assign loopback_uart_rx = loopback_uart_tx & loopback_uart_mask;
 	uart #(.BASE_ADDRESS('h100), .BAUD_DIVIDE(8)) loopback_uart(
 		.io_read_data(loopback_uart_read_data),
-		.uart_tx(loopback_uart_line),
-		.uart_rx(loopback_uart_line),
+		.uart_tx(loopback_uart_tx),
+		.uart_rx(loopback_uart_rx),
 		.*);
 
 	// The s1 interface is not connected to anything in this configuration.
@@ -353,6 +355,7 @@ module verilator_tb(
 		begin
 			for (int i = 0; i < TRACE_REORDER_QUEUE_LEN; i++)
 				trace_reorder_queue[i] <= 0;
+			loopback_uart_mask <= 1;
 		end
 		else
 		begin
@@ -378,6 +381,14 @@ module verilator_tb(
 			begin
 				case (io_address)
 					'h20: $write("%c", io_write_data[7:0]);	// Serial output
+					'h10c:
+					begin
+						if (loopback_uart_mask)
+							$write("Hold loopback uart\n");
+						else
+							$write("Unhold loopback uart\n");
+						loopback_uart_mask <= !loopback_uart_mask;
+					end
 				endcase
 			end
 
