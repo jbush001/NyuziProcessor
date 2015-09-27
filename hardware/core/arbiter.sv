@@ -14,7 +14,6 @@
 // limitations under the License.
 // 
 
-
 //
 // Round robin arbiter
 // Units that want to access a shared resource assert their bit in the 'request'

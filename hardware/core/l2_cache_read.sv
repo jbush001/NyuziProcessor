@@ -14,25 +14,24 @@
 // limitations under the License.
 // 
 
-
 `include "defines.sv"
 
 //
 // L2 cache pipeline - read stage
-// * Check for cache hit.
-// * Drive signals to update LRU flags in previous stage.
-// * Read cache memory
-//   - If this is a restarted cache fill request and the replaced line
-//     is dirty, read the old data to that this will write back to
+// - Checks for cache hit.
+// - Drives signals to update LRU flags in previous stage.
+// - Reads cache memory
+//   * If this is a restarted cache fill request and the replaced line
+//     is dirty, reads the old data to that this will write back to
 //     system memory.
-//   - If this is a cache flush request and this was a cache hit, read
+//   * If this is a cache flush request and this was a cache hit, reads
 //     the data in the line to write back.
-//   - If this is a cache hit, read the data in the line. 
-// * Drive signals to update dirty flags in previous stage
-//   - If this is a flush request, clear the dirty bit
-//   - If this is a store request, set the dirty bit
-// * Drive signals to update tags in prevous stage if this is a cache fill.
-// * Track synchronized load/store state.
+//   * If this is a cache hit, reads the data in the line. 
+// - Drives signals to update dirty flags in previous stage
+//   * If this is a flush request, clears the dirty bit
+//   * If this is a store request, sets the dirty bit
+// - Drives signals to update tags in prevous stage if this is a cache fill.
+// - Tracks synchronized load/store state.
 //
 
 module l2_cache_read(

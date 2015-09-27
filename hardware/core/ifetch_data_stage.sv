@@ -14,14 +14,13 @@
 // limitations under the License.
 // 
 
-
 `include "defines.sv"
 
 //
 // Instruction Pipeline - Instruction Fetch Data Stage
-// - If the preceding PC that was fetched is in the instruction cache, read 
+// - If the preceding PC that was fetched is in the instruction cache, reads 
 //   the contents of the cache line here.
-// - Drive signals to update LRU in previous stage
+// - Drives signals to update LRU in previous stage
 //
 
 module ifetch_data_stage(

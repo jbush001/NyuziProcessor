@@ -14,7 +14,6 @@
 // limitations under the License.
 // 
 
-
 `ifndef __DEFINES_SV
 `define __DEFINES_SV
 

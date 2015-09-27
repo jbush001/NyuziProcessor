@@ -14,12 +14,11 @@
 // limitations under the License.
 // 
 
-
 `include "defines.sv"
 
 //
 // Accepts IO requests from all cores and serializes requests to external
-// IO interface.Sends responses back to cores.
+// IO interface. Sends responses back to cores.
 //
 
 module io_arbiter(

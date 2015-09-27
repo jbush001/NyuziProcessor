@@ -14,13 +14,12 @@
 // limitations under the License.
 // 
 
-
 `include "defines.sv"
 
 //
 // Instruction Pipeline - Instruction Fetch Tag Stage
-// - Select a program counter to fetch a thread for
-// - Query instruction cache tag memory to determine if the cache line is 
+// - Selects a program counter to fetch a thread for
+// - Queries instruction cache tag memory to determine if the cache line is 
 //   resident
 //
 

@@ -14,11 +14,10 @@
 // limitations under the License.
 // 
 
-
-
 //
 // Collects statistics from various modules used for performance measuring and tuning.  
 // Counts the number of discrete events in each category.
+// XXX todo: need to expose this as device registers
 //
 
 module performance_counters

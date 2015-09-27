@@ -14,14 +14,13 @@
 // limitations under the License.
 // 
 
-
 `include "defines.sv"
 
 //
 // Instruction Pipeline Integer Execute Stage
-// - Perform simple operations that only require a single stage like logical 
-//   operations, integer add, etc. 
-// - Branch handling
+// - Performs simple operations that only require a single stage like integer
+//   addition or bitwise logical operations.
+// - Detects branches
 // 
 
 module int_execute_stage(

@@ -14,7 +14,6 @@
 // limitations under the License.
 // 
 
-
 `include "defines.sv"
 
 //
@@ -27,7 +26,8 @@
 // Fill:
 // The cache asserts fill_en and fill_set when it fills a cache line.
 // One cycle later, this module sets fill_way to the least recently used way 
-// (which the cache will replace) and moves that way to the MRU.
+// (which the cache will replace) and moves that way to the most recently used
+// position.
 //
 // Access: 
 // During the first cycle of a cache loads, the client asserts access_en and 

@@ -17,6 +17,7 @@
 `ifndef __CONFIG_V
 `define __CONFIG_V
 
+//
 // Configurable parameters
 // - Number of ways must be 1, 2, 4, or 8
 // - If the number of L2 ways is changed, the flush_l2_cache function in 
@@ -24,6 +25,8 @@
 //   that function describe why and how.
 // - Cores must be 1-8. To synthesize more cores, increase CORE_ID_WIDTH
 //   in defines.sv.
+// - The size of a cache is sets * ways * cache line size (64 bytes)
+//
 
 `define NUM_CORES 1
 `define THREADS_PER_CORE 4

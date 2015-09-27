@@ -14,14 +14,13 @@
 // limitations under the License.
 // 
 
-
 `include "defines.sv"
 
 //
 // L2 cache pipeline - update stage.
-// * Generate signals to update cache data if this is a cache fill or store.
+// - Generate signals to update cache data if this is a cache fill or store.
 //   This applies the store mask and requested data to the original data.
-// * Format a response packet to send back to cores.
+// - Format a response packet to send back to cores.
 //
 
 module l2_cache_update(

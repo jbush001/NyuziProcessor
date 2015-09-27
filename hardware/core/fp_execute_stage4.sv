@@ -14,15 +14,16 @@
 // limitations under the License.
 // 
 
-
 `include "defines.sv"
 
 //
 // Floating Point Execute Stage 4
 //
 // Floating point addition/multiplication
-// - Find leading zero to determine how much to shift to normalize for addition
-// - Pass through multiplication result. Could have second stage of wallace tree here.
+// - Finds leading zero to determine how much to shift to normalize for 
+//   addition
+// - Passes through multiplication result. Could have second stage of wallace 
+//   tree here.
 // 
 
 module fp_execute_stage4(

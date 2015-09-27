@@ -14,13 +14,12 @@
 // limitations under the License.
 // 
 
-
 `include "defines.sv"
 
 //
 // L2 AXI Bus Interface
 // Receives L2 cache misses and writeback requests from the L2 pipeline and 
-// controls AXI system memory interface to fulfill them.  When fills complete, 
+// controls AXI system memory interface to fulfill them. When fills complete, 
 // this reissues them to the L2 pipeline via the arbiter.
 //
 // If this is already handling the request for a line, it set a flag that 
@@ -204,7 +203,7 @@ module l2_axi_bus_interface(
 				// it ensures we don't overrun the write FIFO.
 				//				
 				// In the normal case, writebacks can only be initiated as the side 
-				// effect of a load, so they can't starve them.  The flush 
+				// effect of a load, so they can't starve them. The flush 
 				// instruction introduces a bit of a wrinkle here, because they *can* 
 				// starve loads.
 				if (writeback_pending)
@@ -221,7 +220,7 @@ module l2_axi_bus_interface(
 						// There are a few scenarios where we skip the read
 						// and restart the request immediately.
 						// 1. If there is already a pending L2 miss for this cache 
-						//    line.  Some other request has filled it, so we 
+						//    line. Some other request has filled it, so we 
 						//    don't need to do anything but (try to) pick up the 
 						//    result. That could result in another miss in some
 						//    cases, in which case we must make another pass through

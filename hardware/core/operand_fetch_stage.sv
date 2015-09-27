@@ -14,12 +14,11 @@
 // limitations under the License.
 // 
 
-
 `include "defines.sv"
 
 //
-// Contains vector and scalar register files and controls fetching values 
-// from them. This stage has two cycles of latency.  In the first cycle,
+// Contains vector and scalar register files and fetches values 
+// from them. This stage has two cycles of latency. In the first cycle,
 // the results are fetched from register memory: two scalar and two
 // vector ports.  In the second cycle, the appropriate results are selected
 // for the operands.

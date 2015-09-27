@@ -14,20 +14,18 @@
 // limitations under the License.
 // 
 
-
-
 `include "defines.sv"
 
 //
 // Tracks pending cache misses in the L2 cache pipeline.
-// The sole purpose of this module is to avoid having duplicate system memory
-// loads/stores. These not only waste memory bandwidth, but can cause a race 
-// condition where a load after store can will cobber data.
+// This module avoids duplicate loads/stores in the system memory request
+// queue. These not only waste memory bandwidth, but can cause data to be
+// overwritten.
 //
-// Each time a cache miss goes past this unit, it records the cache line 
-// that is pending.  When a restarted request goes past this unit, it clears
-// the pending line.  For each transaction, this asserts the 'duplicate_reqest'
-// signal to indicate if another transaction for that line is pending.
+// Each time a cache miss goes past this unit, it records that it is pending.
+// When a restarted request goes past, this clears the pending line.
+// For each transaction, this asserts the 'duplicate_reqest' signal if
+// another transaction for that line is pending.
 //
 // The pending miss for the line may be anywhere in the L2 pipeline,
 // not just the SMI queue. Because of this, QUEUE_SIZE must be >= the number of 

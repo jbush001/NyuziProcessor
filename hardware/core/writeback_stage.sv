@@ -14,7 +14,6 @@
 // limitations under the License.
 // 
 
-
 `include "defines.sv"
 
 // 
@@ -22,7 +21,7 @@
 // - Controls signals to write results back to register file
 // - Selects result from appropriate pipeline.
 // - Aligns memory read results
-// - Flag rollbacks.  They are generally detected earlier in the pipeline, 
+// - Flag rollbacks. They are generally detected earlier in the pipeline, 
 //   but we wait to handle them here to avoid having to reconcile multiple 
 //   rollbacks in the same cycle.
 //   * Branch
@@ -219,7 +218,7 @@ module writeback_stage(
 		end
 		else if (ix_instruction_valid && ix_rollback_en)
 		begin
-			// Check for rollback from single cycle pipeline.  This happens
+			// Check for rollback from single cycle pipeline. This happens
 			// because of a branch.
 			wb_rollback_en = 1;
 			wb_rollback_thread_idx = ix_thread_idx;
@@ -229,7 +228,7 @@ module writeback_stage(
 		end
 		else if (dd_instruction_valid && (dd_rollback_en || sq_rollback_en || ior_rollback_en))
 		begin
-			// Check for rollback from memory pipeline.  This happens because
+			// Check for rollback from memory pipeline. This happens because
 			// of a data cache miss, store queue full, or when an IO request
 			// is sent.
 			wb_rollback_en = 1;
@@ -502,7 +501,7 @@ module writeback_stage(
 					begin
 						// Loads should always have a destination register.
 						// XXX there appears to be a case where something is a load, but not
-						// a memory access.  That doesn't seem right.
+						// a memory access. That doesn't seem right.
 						assert(dd_instruction.has_dest || !dd_instruction.is_memory_access);
 						
 						unique case (memory_op)

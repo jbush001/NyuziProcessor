@@ -14,14 +14,13 @@
 // limitations under the License.
 // 
 
-
 `include "defines.sv"
 
 //
 // Instruction pipeline L1 data cache data stage.
-// - Detect cache miss or hit based on tag information fetched from last stage. 
-// - Read from cache data storage.
-// - Drive signals to previous stage to update LRU
+// - Detects cache miss or hit based on tag information fetched from last stage. 
+// - Reads from cache data storage.
+// - Drives signals to previous stage to update LRU
 // 
 
 module dcache_data_stage(

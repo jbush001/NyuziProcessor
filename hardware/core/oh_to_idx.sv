@@ -14,7 +14,6 @@
 // limitations under the License.
 // 
 
-
 //
 // Convert a one-hot signal to a binary index corresponding to the active bit.
 // (Binary encoder)

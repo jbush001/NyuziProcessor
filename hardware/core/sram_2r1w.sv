@@ -14,7 +14,6 @@
 // limitations under the License.
 // 
 
-
 //
 // Block SRAM with 2 read ports and 1 write port. 
 // Reads and writes are performed synchronously, with the value for a read 

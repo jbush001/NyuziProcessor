@@ -14,7 +14,6 @@
 // limitations under the License.
 // 
 
-
 //
 // Convert a binary index to a one hot signal (Binary encoder)
 // If DIRECTION is "LSB0", index 0 is the least significant bit
