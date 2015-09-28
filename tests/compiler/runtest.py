@@ -72,7 +72,7 @@ if 'USE_HOSTCC' in os.environ:
 	for source_file in files:
 		print 'Testing ' + source_file + ' (host)',
 		try:
-			subprocess.check_call(['cc', '-w', source_file, '-o', 'obj/a.out'])
+			subprocess.check_call(['c++', '-w', source_file, '-o', 'obj/a.out'])
 			result = subprocess.check_output('obj/a.out')
 			if not check_result(source_file, result):
 				failing_tests += 1
@@ -81,7 +81,8 @@ if 'USE_HOSTCC' in os.environ:
 				print 'PASS'
 		except KeyboardInterrupt:
 			sys.exit(1)
-		except:
+		except Exception as exc:
+			print exc
 			print 'FAIL'
 			failing_tests += 1
 elif 'USE_VERILATOR' in os.environ:
@@ -100,7 +101,8 @@ elif 'USE_VERILATOR' in os.environ:
 				print 'PASS'
 		except KeyboardInterrupt:
 			sys.exit(1)
-		except:
+		except Exception as exc:
+			print exc
 			print 'FAIL'
 			failing_tests += 1
 else:
@@ -118,8 +120,9 @@ else:
 					print 'PASS'
 			except KeyboardInterrupt:
 				sys.exit(1)
-			except:
+			except Exception as exc:
 				print 'FAIL'
+				print exc
 				failing_tests += 1
 
 print 'total tests', len(files)
