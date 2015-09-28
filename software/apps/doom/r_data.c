@@ -411,7 +411,7 @@ R_GetColumn
 //
 void R_InitTextures (void)
 {
-	maptexture_t*		mtexture;
+	maptexture_t		mtexture;
 	texture_t*			texture;
 	mappatch_t*			mpatch;
 	texpatch_t*			patch;
@@ -520,19 +520,20 @@ void R_InitTextures (void)
 		if (offset > maxoff)
 			I_Error ("R_InitTextures: bad texture directory");
 		
-		mtexture = (maptexture_t *) ( (byte *)maptex + offset);
+		// Copy into aligned structure on stack.
+		memcpy(&mtexture, (byte *)maptex + offset, sizeof(mtexture));
 
 		texture = textures[i] =
 			Z_Malloc (sizeof(texture_t)
-					  + sizeof(texpatch_t)*(SHORT(mtexture->patchcount)-1),
+					  + sizeof(texpatch_t)*(SHORT(mtexture.patchcount)-1),
 					  PU_STATIC, 0);
 		
-		texture->width = SHORT(mtexture->width);
-		texture->height = SHORT(mtexture->height);
-		texture->patchcount = SHORT(mtexture->patchcount);
+		texture->width = SHORT(mtexture.width);
+		texture->height = SHORT(mtexture.height);
+		texture->patchcount = SHORT(mtexture.patchcount);
 
-		memcpy (texture->name, mtexture->name, sizeof(texture->name));
-		mpatch = &mtexture->patches[0];
+		memcpy (texture->name, mtexture.name, sizeof(texture->name));
+		mpatch = &((maptexture_t*)((byte*)maptex + offset))->patches[0];
 		patch = &texture->patches[0];
 
 		for (j=0 ; j<texture->patchcount ; j++, mpatch++, patch++)

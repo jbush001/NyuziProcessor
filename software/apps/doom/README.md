@@ -16,7 +16,6 @@ The primary changes I made for the port were:
 * in i_video.c, added code to copy the screen to the framebuffer, expanding
   from an 8 bit paletted format to the 32 bit per pixel framebuffer format. 
 * in i_video.c, read from a virtual keyboard device for input. 
-* W_CheckNumForName assumed support for unaligned accesses. Changed to 
-  use memcmp.
+* Fixed a number of places that assumed unaligned accesses were supported.
 * Code from i_net and i_sound removed, as there is no hardware support 
   for them.
