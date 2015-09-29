@@ -18,7 +18,7 @@
 #include <stdio.h>
 #include "stats.h"
 
-static int64_t counters[MAX_STAT_TYPES];
+static int64_t gCounters[MAX_STAT_TYPES];
 int64_t __total_instructions;
 #ifdef LOG_INSTRUCTIONS
 static const char *kNames[] = {
@@ -33,7 +33,7 @@ static const char *kNames[] = {
 	
 void __logInstruction(InstructionType type)
 {
-	counters[type]++;
+	gCounters[type]++;
 }
 
 void dumpInstructionStats(void)
@@ -46,8 +46,8 @@ void dumpInstructionStats(void)
 #ifdef LOG_INSTRUCTIONS
 	for (i = 0; i < MAX_STAT_TYPES; i++)
 	{
-		printf("%s %lld %.4g%%\n", kNames[i], counters[i], 
-			(double) counters[i] / __total_instructions * 100);
+		printf("%s %lld %.4g%%\n", kNames[i], gCounters[i], 
+			(double) gCounters[i] / __total_instructions * 100);
 	}
 #endif
 }

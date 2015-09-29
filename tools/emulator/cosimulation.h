@@ -21,12 +21,12 @@
 #include "core.h"
 
 // Returns -1 on error, 0 if successful.
-int runCosimulation(Core *core, bool verbose);
-void cosimSetScalarReg(Core *core, uint32_t pc, uint32_t reg, uint32_t value);
-void cosimSetVectorReg(Core *core, uint32_t pc, uint32_t reg, uint32_t mask, 
+int runCosimulation(Core*, bool verbose);
+void cosimSetScalarReg(Core*, uint32_t pc, uint32_t reg, uint32_t value);
+void cosimSetVectorReg(Core*, uint32_t pc, uint32_t reg, uint32_t mask, 
 	const uint32_t *value);
-void cosimWriteBlock(Core *core, uint32_t pc, uint32_t address, uint32_t mask, 
+void cosimWriteBlock(Core*, uint32_t pc, uint32_t address, uint32_t mask, 
 	const uint32_t *values);
-void cosimWriteMemory(Core *core, uint32_t pc, uint32_t address, uint32_t size, uint32_t value);
+void cosimWriteMemory(Core*, uint32_t pc, uint32_t address, uint32_t size, uint32_t value);
 
 #endif

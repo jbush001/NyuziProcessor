@@ -31,12 +31,12 @@
 
 #define TRAP_SIGNAL 5 // SIGTRAP
 
-extern void remoteGdbMainLoop(Core *core, int enableFbWindow);
+extern void remoteGdbMainLoop(Core*, int enableFbWindow);
 static void sendFormattedResponse(const char *format, ...)  __attribute__ ((format (printf, 1, 2)));
 
 static Core *gCore;
 static int gClientSocket = -1;
-static int *gLastSignal;
+static int *gLastSignals;
 
 static int readByte(void)
 {
@@ -195,9 +195,9 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 	uint32_t currentThread = 0;
 	
 	gCore = core;
-	gLastSignal = calloc(sizeof(int), getTotalThreads(core));
+	gLastSignals = calloc(sizeof(int), getTotalThreads(core));
 	for (i = 0; i < getTotalThreads(core); i++)
-		gLastSignal[i] = 0;
+		gLastSignals[i] = 0;
 
 	listenSocket = socket(PF_INET, SOCK_STREAM, 0);
 	if (listenSocket < 0)
@@ -270,8 +270,8 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 				case 'c':
 				case 'C':
 					runUntilInterrupt(core, ALL_THREADS, enableFbWindow);
-					gLastSignal[currentThread] = TRAP_SIGNAL;
-					sendFormattedResponse("S%02x", gLastSignal[currentThread]);
+					gLastSignals[currentThread] = TRAP_SIGNAL;
+					sendFormattedResponse("S%02x", gLastSignals[currentThread]);
 					break;
 
 				// Pick thread
@@ -369,7 +369,7 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 					else if (strcmp(request + 1, "sThreadInfo") == 0)
 						sendResponsePacket("l");
 					else if (memcmp(request + 1, "ThreadStopInfo", 14) == 0)
-						sprintf(response, "S%02x", gLastSignal[currentThread]);
+						sprintf(response, "S%02x", gLastSignals[currentThread]);
 					else if (memcmp(request + 1, "RegisterInfo", 12) == 0)
 					{
 						uint32_t regId = (uint32_t) strtoul(request + 13, NULL, 16);
@@ -414,8 +414,8 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 				case 's':
 				case 'S':
 					singleStep(core, currentThread);
-					gLastSignal[currentThread] = TRAP_SIGNAL;
-					sendFormattedResponse("S%02x", gLastSignal[currentThread]);
+					gLastSignals[currentThread] = TRAP_SIGNAL;
+					sendFormattedResponse("S%02x", gLastSignals[currentThread]);
 					break;
 					
 				// Multi-character command
@@ -434,14 +434,14 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 							// s:0001
 							currentThread = (uint32_t) strtoul(sreq + 2, NULL, 16) - 1;
 							singleStep(core, currentThread);
-							gLastSignal[currentThread] = TRAP_SIGNAL;
-							sendFormattedResponse("S%02x", gLastSignal[currentThread]);
+							gLastSignals[currentThread] = TRAP_SIGNAL;
+							sendFormattedResponse("S%02x", gLastSignals[currentThread]);
 						}
 						else
 						{
 							runUntilInterrupt(core, ALL_THREADS, enableFbWindow);
-							gLastSignal[currentThread] = TRAP_SIGNAL;
-							sendFormattedResponse("S%02x", gLastSignal[currentThread]);
+							gLastSignals[currentThread] = TRAP_SIGNAL;
+							sendFormattedResponse("S%02x", gLastSignals[currentThread]);
 						}
 					}
 					else
@@ -469,7 +469,7 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 					
 				// Get last signal
 				case '?':
-					sprintf(response, "S%02x", gLastSignal[currentThread]);
+					sprintf(response, "S%02x", gLastSignals[currentThread]);
 					sendResponsePacket(response);
 					break;
 					

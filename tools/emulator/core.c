@@ -77,31 +77,31 @@ struct Breakpoint
 	bool restart;
 };
 
-static void doHalt(Core *core);
-static uint32_t getThreadScalarReg(const Thread *thread, uint32_t reg);
-static void setScalarReg(Thread *thread, uint32_t reg, uint32_t value);
-static void setVectorReg(Thread *thread, uint32_t reg, uint32_t mask, 
+static void doHalt(Core*);
+static uint32_t getThreadScalarReg(const Thread*, uint32_t reg);
+static void setScalarReg(Thread*, uint32_t reg, uint32_t value);
+static void setVectorReg(Thread*, uint32_t reg, uint32_t mask, 
 	uint32_t *values);
-static void invalidateSyncAddress(Core *core, uint32_t address);
-static void memoryAccessFault(Thread *thread, uint32_t address, bool isLoad, FaultReason);
-static void illegalInstruction(Thread *thread, uint32_t instr);
-static void writeMemBlock(Thread *thread, uint32_t address, uint32_t mask, 
+static void invalidateSyncAddress(Core*, uint32_t address);
+static void memoryAccessFault(Thread*, uint32_t address, bool isLoad, FaultReason);
+static void illegalInstruction(Thread*, uint32_t instr);
+static void writeMemBlock(Thread*, uint32_t address, uint32_t mask, 
 	const uint32_t *values);
-static void writeMemWord(Thread *thread, uint32_t address, uint32_t value);
-static void writeMemShort(Thread *thread, uint32_t address, uint32_t value);
-static void writeMemByte(Thread *thread, uint32_t address, uint32_t value);
-static uint32_t readMemoryWord(const Thread *thread, uint32_t address);
-static uint32_t scalarArithmeticOp(ArithmeticOp operation, uint32_t value1, uint32_t value2);
+static void writeMemWord(Thread*, uint32_t address, uint32_t value);
+static void writeMemShort(Thread*, uint32_t address, uint32_t value);
+static void writeMemByte(Thread*, uint32_t address, uint32_t value);
+static uint32_t readMemoryWord(const Thread*, uint32_t address);
+static uint32_t scalarArithmeticOp(ArithmeticOp, uint32_t value1, uint32_t value2);
 static bool isCompareOp(uint32_t op);
-static struct Breakpoint *lookupBreakpoint(Core *core, uint32_t pc);
-static void executeRegisterArithInst(Thread *thread, uint32_t instr);
-static void executeImmediateArithInst(Thread *thread, uint32_t instr);
-static void executeScalarLoadStoreInst(Thread *thread, uint32_t instr);
-static void executeVectorLoadStoreInst(Thread *thread, uint32_t instr);
-static void executeControlRegisterInst(Thread *thread, uint32_t instr);
-static void executeMemoryAccessInst(Thread *thread, uint32_t instr);
-static void executeBranchInst(Thread *thread, uint32_t instr);
-static int executeInstruction(Thread *thread);
+static struct Breakpoint *lookupBreakpoint(Core*, uint32_t pc);
+static void executeRegisterArithInst(Thread*, uint32_t instr);
+static void executeImmediateArithInst(Thread*, uint32_t instr);
+static void executeScalarLoadStoreInst(Thread*, uint32_t instr);
+static void executeVectorLoadStoreInst(Thread*, uint32_t instr);
+static void executeControlRegisterInst(Thread*, uint32_t instr);
+static void executeMemoryAccessInst(Thread*, uint32_t instr);
+static void executeBranchInst(Thread*, uint32_t instr);
+static int executeInstruction(Thread*);
 
 Core *initCore(uint32_t memorySize, uint32_t totalThreads, bool randomizeMemory)
 {
@@ -217,7 +217,7 @@ void printRegisters(const Core *core, uint32_t threadId)
 	for (reg = 0; reg < NUM_REGISTERS - 1; reg++)
 	{
 		if (reg < 10)
-			printf(" ");
+			printf(" "); // Align one digit numbers
 			
 		printf("s%d %08x ", reg, thread->scalarReg[reg]);
 		if (reg % 8 == 7)
@@ -228,7 +228,7 @@ void printRegisters(const Core *core, uint32_t threadId)
 	for (reg = 0; reg < NUM_REGISTERS; reg++)
 	{
 		if (reg < 10)
-			printf(" ");
+			printf(" "); // Align one digit numbers
 			
 		printf("v%d ", reg);
 		for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
@@ -362,7 +362,7 @@ int setBreakpoint(Core *core, uint32_t pc)
 	breakpoint->address = pc;
 	breakpoint->originalInstruction = core->memory[pc / 4];
 	if (breakpoint->originalInstruction == BREAKPOINT_OP)
-		breakpoint->originalInstruction = 0;	// Avoid infinite loop
+		breakpoint->originalInstruction = INSTRUCTION_NOP;	// Avoid infinite loop
 	
 	core->memory[pc / 4] = BREAKPOINT_OP;
 	return 0;
@@ -448,10 +448,7 @@ static void invalidateSyncAddress(Core *core, uint32_t address)
 	for (threadId = 0; threadId < core->totalThreads; threadId++)
 	{
 		if (core->threads[threadId].linkedAddress == address / CACHE_LINE_LENGTH)
-		{
-			// Invalidate
 			core->threads[threadId].linkedAddress = INVALID_LINK_ADDR;
-		}
 	}
 }
 
@@ -696,7 +693,6 @@ static void executeRegisterArithInst(Thread *thread, uint32_t instr)
 	LOG_INST_TYPE(STAT_REG_ARITH_INST);
 	if (op == OP_GETLANE)
 	{
-		// getlane
 		setScalarReg(thread, destreg, thread->vectorReg[op1reg][NUM_VECTOR_LANES - 1 
 			- (getThreadScalarReg(thread, op2reg) & 0xf)]);
 	}
@@ -714,9 +710,8 @@ static void executeRegisterArithInst(Thread *thread, uint32_t instr)
 			case FMT_RA_VS_M:
 				LOG_INST_TYPE(STAT_VECTOR_INST);
 
-				// Vector compares work a little differently than other arithmetic
-				// operations: the results are packed together in the 16 low
-				// bits of a scalar register
+				// Vector compare results are packed together in the 16 low
+				// bits of a scalar register, one bit per lane.
 
 				// Vector/Scalar operation
 				uint32_t scalarValue = getThreadScalarReg(thread, op2reg);
@@ -1093,6 +1088,8 @@ static void executeVectorLoadStoreInst(Thread *thread, uint32_t instr)
 			address = getThreadScalarReg(thread, ptrreg) + offset;
 			if (address >= thread->core->memorySize)
 			{
+				// This doesn't raise an actual fault on hardware. It is here to 
+				// aid debugging.
 				printf("%s Access Violation %08x, pc %08x\n", isLoad ? "Load" : "Store",
 					address, thread->currentPc - 4);
 				printRegisters(thread->core, thread->id);

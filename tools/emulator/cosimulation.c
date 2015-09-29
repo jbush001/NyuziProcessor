@@ -23,7 +23,7 @@
 #include "util.h"
 
 static void printCosimExpected(void);
-static int cosimStep(Core *core, uint32_t threadId);
+static int cosimStep(Core*, uint32_t threadId);
 static int compareMasked(uint32_t mask, const uint32_t *values1, const uint32_t *values2);
 
 static enum 
@@ -32,15 +32,15 @@ static enum
 	EVENT_MEM_STORE,
 	EVENT_VECTOR_WRITEBACK,
 	EVENT_SCALAR_WRITEBACK
-} cosimCheckEvent;
-static uint32_t cosimCheckRegister;
-static uint32_t cosimCheckAddress;
-static uint64_t cosimCheckMask;
-static uint32_t cosimCheckValues[NUM_VECTOR_LANES];
-static bool cosimError;
-static uint32_t cosimCheckPc;
-static bool cosimEventTriggered;
-static uint32_t cosimCheckThread;
+} gExpectedEvent;
+static uint32_t gExpectedRegister;
+static uint32_t gExpectedAddress;
+static uint64_t gExpectedMask;
+static uint32_t gExpectedValues[NUM_VECTOR_LANES];
+static uint32_t gExpectedPc;
+static uint32_t gExpectedThread;
+static bool gError;
+static bool gEventTriggered;
 
 // Read events from standard in.  Step each emulator thread in lockstep
 // and ensure the side effects match.
@@ -75,15 +75,17 @@ int runCosimulation(Core *core, bool verbose)
 		{
 			// Memory Store
 			if (parseHexVector(valueStr, vectorValues, true) < 0)
-				return 0;
+			{
+				printf("Error parsing cosimulation event\n");
+				return -1;
+			}
 
-			cosimCheckEvent = EVENT_MEM_STORE;
-			cosimCheckPc = pc;
-			cosimCheckThread = threadId;
-			cosimCheckAddress = address;
-			cosimCheckMask = writeMask;
-			memcpy(cosimCheckValues, vectorValues, sizeof(uint32_t) * NUM_VECTOR_LANES);
-	
+			gExpectedEvent = EVENT_MEM_STORE;
+			gExpectedPc = pc;
+			gExpectedThread = threadId;
+			gExpectedAddress = address;
+			gExpectedMask = writeMask;
+			memcpy(gExpectedValues, vectorValues, sizeof(uint32_t) * NUM_VECTOR_LANES);
 			if (!cosimStep(core, threadId))
 				return -1;
 		} 
@@ -92,29 +94,27 @@ int runCosimulation(Core *core, bool verbose)
 			// Vector writeback
 			if (parseHexVector(valueStr, vectorValues, false) < 0)
 			{
-				printf("test failed\n");
-				return 0;
+				printf("Error parsing cosimulation event\n");
+				return -1;
 			}
 
-			cosimCheckEvent = EVENT_VECTOR_WRITEBACK;
-			cosimCheckPc = pc;
-			cosimCheckThread = threadId;
-			cosimCheckRegister = reg;
-			cosimCheckMask = writeMask;
-			memcpy(cosimCheckValues, vectorValues, sizeof(uint32_t) * NUM_VECTOR_LANES);
-	
+			gExpectedEvent = EVENT_VECTOR_WRITEBACK;
+			gExpectedPc = pc;
+			gExpectedThread = threadId;
+			gExpectedRegister = reg;
+			gExpectedMask = writeMask;
+			memcpy(gExpectedValues, vectorValues, sizeof(uint32_t) * NUM_VECTOR_LANES);
 			if (!cosimStep(core, threadId))
 				return -1;
 		}
 		else if (sscanf(line, "swriteback %x %x %x %x", &pc, &threadId, &reg, &scalarValue) == 4)
 		{
 			// Scalar Writeback
-			cosimCheckEvent = EVENT_SCALAR_WRITEBACK;
-			cosimCheckPc = pc;
-			cosimCheckThread = threadId;
-			cosimCheckRegister = reg;
-			cosimCheckValues[0] = scalarValue;
-
+			gExpectedEvent = EVENT_SCALAR_WRITEBACK;
+			gExpectedPc = pc;
+			gExpectedThread = threadId;
+			gExpectedRegister = reg;
+			gExpectedValues[0] = scalarValue;
 			if (!cosimStep(core, threadId))
 				return -1;
 		}
@@ -137,13 +137,13 @@ int runCosimulation(Core *core, bool verbose)
 	}
 
 	// Ensure emulator is also halted. If it executes any more instructions
-	// cosimError will be flagged.
-	cosimEventTriggered = false;
-	cosimCheckEvent = EVENT_NONE;
+	// gError will be flagged.
+	gEventTriggered = false;
+	gExpectedEvent = EVENT_NONE;
 	while (!coreHalted(core))
 	{
 		executeInstructions(core, ALL_THREADS, 1);
-		if (cosimError)
+		if (gError)
 			return -1;
 	}
 
@@ -152,15 +152,15 @@ int runCosimulation(Core *core, bool verbose)
 
 void cosimSetScalarReg(Core *core, uint32_t pc, uint32_t reg, uint32_t value)
 {
-	cosimEventTriggered = true;
-	if (cosimCheckEvent != EVENT_SCALAR_WRITEBACK
-		|| cosimCheckPc != pc
-		|| cosimCheckRegister != reg
-		|| cosimCheckValues[0] != value)
+	gEventTriggered = true;
+	if (gExpectedEvent != EVENT_SCALAR_WRITEBACK
+		|| gExpectedPc != pc
+		|| gExpectedRegister != reg
+		|| gExpectedValues[0] != value)
 	{
-		cosimError = true;
-		printRegisters(core, cosimCheckThread);
-		printf("COSIM MISMATCH, thread %d\n", cosimCheckThread);
+		gError = true;
+		printRegisters(core, gExpectedThread);
+		printf("COSIM MISMATCH, thread %d\n", gExpectedThread);
 		printf("Reference: %08x s%d <= %08x\n", pc, reg, value);
 		printf("Hardware:  ");
 		printCosimExpected();
@@ -173,16 +173,16 @@ void cosimSetVectorReg(Core *core, uint32_t pc, uint32_t reg, uint32_t mask,
 {
 	int lane;
 	
-	cosimEventTriggered = true;
-	if (cosimCheckEvent != EVENT_VECTOR_WRITEBACK
-		|| cosimCheckPc != pc
-		|| cosimCheckRegister != reg
-		|| !compareMasked(mask, cosimCheckValues, values)
-		|| cosimCheckMask != (mask & 0xffff))
+	gEventTriggered = true;
+	if (gExpectedEvent != EVENT_VECTOR_WRITEBACK
+		|| gExpectedPc != pc
+		|| gExpectedRegister != reg
+		|| !compareMasked(mask, gExpectedValues, values)
+		|| gExpectedMask != (mask & 0xffff))
 	{
-		cosimError = true;
-		printRegisters(core, cosimCheckThread);
-		printf("COSIM MISMATCH, thread %d\n", cosimCheckThread);
+		gError = true;
+		printRegisters(core, gExpectedThread);
+		printf("COSIM MISMATCH, thread %d\n", gExpectedThread);
 		printf("Reference: %08x v%d{%04x} <= ", pc, reg, mask & 0xffff);
 		for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
 			printf("%08x ", values[lane]);
@@ -207,16 +207,16 @@ void cosimWriteBlock(Core *core, uint32_t pc, uint32_t address, uint32_t mask,
 			byteMask |= 0xfull << (lane * 4);
 	}
 
-	cosimEventTriggered = true;
-	if (cosimCheckEvent != EVENT_MEM_STORE
-		|| cosimCheckPc != pc
-		|| cosimCheckAddress != (address & ~(NUM_VECTOR_LANES * 4u - 1))
-		|| cosimCheckMask != byteMask 
-		|| !compareMasked(mask, cosimCheckValues, values))
+	gEventTriggered = true;
+	if (gExpectedEvent != EVENT_MEM_STORE
+		|| gExpectedPc != pc
+		|| gExpectedAddress != (address & ~(NUM_VECTOR_LANES * 4u - 1))
+		|| gExpectedMask != byteMask 
+		|| !compareMasked(mask, gExpectedValues, values))
 	{
-		cosimError = true;
-		printRegisters(core, cosimCheckThread);
-		printf("COSIM MISMATCH, thread %d\n", cosimCheckThread);
+		gError = true;
+		printRegisters(core, gExpectedThread);
+		printf("COSIM MISMATCH, thread %d\n", gExpectedThread);
 		printf("Reference: %08x memory[%x]{%016" PRIx64 "} <= ", pc, address, byteMask);
 		for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
 			printf("%08x ", values[lane]);
@@ -233,7 +233,7 @@ void cosimWriteMemory(Core *core, uint32_t pc, uint32_t address, uint32_t size,
 	uint32_t hardwareValue;
 	uint64_t referenceMask;
 	
-	hardwareValue = cosimCheckValues[(address & CACHE_LINE_MASK) / 4];
+	hardwareValue = gExpectedValues[(address & CACHE_LINE_MASK) / 4];
 	if (size < 4)
 	{
 		uint32_t mask = (1 << (size * 8)) - 1;
@@ -242,16 +242,16 @@ void cosimWriteMemory(Core *core, uint32_t pc, uint32_t address, uint32_t size,
 	}
 	
 	referenceMask = ((1ull << size) - 1ull) << (CACHE_LINE_MASK - (address & CACHE_LINE_MASK) - (size - 1));
-	cosimEventTriggered = true;
-	if (cosimCheckEvent != EVENT_MEM_STORE
-		|| cosimCheckPc != pc
-		|| cosimCheckAddress != (address & ~CACHE_LINE_MASK)
-		|| cosimCheckMask != referenceMask
+	gEventTriggered = true;
+	if (gExpectedEvent != EVENT_MEM_STORE
+		|| gExpectedPc != pc
+		|| gExpectedAddress != (address & ~CACHE_LINE_MASK)
+		|| gExpectedMask != referenceMask
 		|| hardwareValue != value)
 	{
-		cosimError = true;
-		printRegisters(core, cosimCheckThread);
-		printf("COSIM MISMATCH, thread %d\n", cosimCheckThread);
+		gError = true;
+		printRegisters(core, gExpectedThread);
+		printf("COSIM MISMATCH, thread %d\n", gExpectedThread);
 		printf("Reference: %08x memory[%x]{%016" PRIx64 "} <= %08x\n", pc, address & ~CACHE_LINE_MASK, 
 			referenceMask, value);
 		printf("Hardware:  ");
@@ -264,33 +264,33 @@ static void printCosimExpected(void)
 {
 	int lane;
 
-	printf("%08x ", cosimCheckPc);
+	printf("%08x ", gExpectedPc);
 	
-	switch (cosimCheckEvent)
+	switch (gExpectedEvent)
 	{
 		case EVENT_NONE:
 			printf(" HALTED\n");
 			break;
 		
 		case EVENT_MEM_STORE:
-			printf("memory[%x]{%016" PRIx64 "} <= ", cosimCheckAddress, cosimCheckMask);
+			printf("memory[%x]{%016" PRIx64 "} <= ", gExpectedAddress, gExpectedMask);
 			for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
-				printf("%08x ", cosimCheckValues[lane]);
+				printf("%08x ", gExpectedValues[lane]);
 				
 			printf("\n");
 			break;
 
 		case EVENT_VECTOR_WRITEBACK:
-			printf("v%d{%04x} <= ", cosimCheckRegister, (uint32_t) 
-				cosimCheckMask & 0xffff);
+			printf("v%d{%04x} <= ", gExpectedRegister, (uint32_t) 
+				gExpectedMask & 0xffff);
 			for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
-				printf("%08x ", cosimCheckValues[lane]);
+				printf("%08x ", gExpectedValues[lane]);
 
 			printf("\n");
 			break;
 			
 		case EVENT_SCALAR_WRITEBACK:
-			printf("s%d <= %08x\n", cosimCheckRegister, cosimCheckValues[0]);
+			printf("s%d <= %08x\n", gExpectedRegister, gExpectedValues[0]);
 			break;
 	}
 }
@@ -300,18 +300,18 @@ static int cosimStep(Core *core, uint32_t threadId)
 {
 	int count = 0;
 
-	cosimError = false;
-	cosimEventTriggered = false;
-	for (count = 0; count < 500 && !cosimEventTriggered; count++)
+	gError = false;
+	gEventTriggered = false;
+	for (count = 0; count < 500 && !gEventTriggered; count++)
 		singleStep(core, threadId);
 
-	if (!cosimEventTriggered)
+	if (!gEventTriggered)
 	{
 		printf("Simulator program in infinite loop? No event occurred.  Was expecting:\n");
 		printCosimExpected();
 	}
 	
-	return cosimEventTriggered && !cosimError;
+	return gEventTriggered && !gError;
 }		
 
 // Returns 1 if the masked values match, 0 otherwise
@@ -330,5 +330,3 @@ static int compareMasked(uint32_t mask, const uint32_t *values1, const uint32_t 
 
 	return 1;
 }
-
-
