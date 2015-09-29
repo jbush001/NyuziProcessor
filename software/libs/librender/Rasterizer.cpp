@@ -14,7 +14,6 @@
 // limitations under the License.
 // 
 
-
 //
 // The basic approach is based on this article: 
 // http://www.drdobbs.com/parallel/rasterization-on-larrabee/217200602
@@ -30,10 +29,11 @@ using namespace librender;
 namespace 
 {
 
+const int kMaxSweep = 0;
 const veci16_t kXStep = { 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3 };
 const veci16_t kYStep = { 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3 };
 
-void setupEdge(int tileLeft, int tileTop, int x1, int y1, 
+void setupRecurseEdge(int tileLeft, int tileTop, int x1, int y1, 
 	int x2, int y2, int &outAcceptEdgeValue, int &outRejectEdgeValue, 
 	veci16_t &outAcceptStepMatrix, veci16_t &outRejectStepMatrix)
 {
@@ -96,7 +96,7 @@ void setupEdge(int tileLeft, int tileTop, int x1, int y1,
 	outRejectStepMatrix = xRejectStepValues - yRejectStepValues;
 }
 
-// Workhorse of rasterization.  Recursively subdivides tile into 4x4 grids.
+// Workhorse of recursive rasterization.  Subdivides tile into 4x4 grids.
 void subdivideTile( 
 	TriangleFiller &filler,
 	const int acceptCornerValue1, 
@@ -211,12 +211,9 @@ void subdivideTile(
 	}
 }
 
-}
-
-void librender::fillTriangle(TriangleFiller &filler,
-	int tileLeft, int tileTop, 
-	int x1, int y1, int x2, int y2, int x3, int y3,
-	int clipRight, int clipBottom)
+void rasterizeRecursive(TriangleFiller &filler,
+	int tileLeft, int tileTop, int clipRight, int clipBottom,
+	int x1, int y1, int x2, int y2, int x3, int y3)
 {
 	int acceptValue1;
 	int rejectValue1;
@@ -233,11 +230,11 @@ void librender::fillTriangle(TriangleFiller &filler,
 
 	// This assumes counter-clockwise winding for triangles that are
 	// facing the camera.
-	setupEdge(tileLeft, tileTop, x1, y1, x3, y3, acceptValue1, rejectValue1, 
+	setupRecurseEdge(tileLeft, tileTop, x1, y1, x3, y3, acceptValue1, rejectValue1, 
 		acceptStepMatrix1, rejectStepMatrix1);
-	setupEdge(tileLeft, tileTop, x3, y3, x2, y2, acceptValue2, rejectValue2, 
+	setupRecurseEdge(tileLeft, tileTop, x3, y3, x2, y2, acceptValue2, rejectValue2, 
 		acceptStepMatrix2, rejectStepMatrix2);
-	setupEdge(tileLeft, tileTop, x2, y2, x1, y1, acceptValue3, rejectValue3, 
+	setupRecurseEdge(tileLeft, tileTop, x2, y2, x1, y1, acceptValue3, rejectValue3, 
 		acceptStepMatrix3, rejectStepMatrix3);
 
 	subdivideTile(
@@ -259,4 +256,111 @@ void librender::fillTriangle(TriangleFiller &filler,
 		tileTop,
 		clipRight,
 		clipBottom);
+}
+
+inline int min3(int a, int b, int c)
+{
+	int value = a < b ? a : b;
+	return c < value ? c : value;
+}
+
+inline int max3(int a, int b, int c)
+{
+	int value = a > b ? a : b;
+	return c > value ? c : value;
+}
+
+inline void setupSweepEdge(int left, int top, int x1, int y1, int x2, int y2,
+	int &outXStep4, int &outYStep4, veci16_t &outEdgeValue)
+{
+	int xStep1 = y2 - y1;
+	int yStep1 = x2 - x1;
+	outEdgeValue = (kXStep + splati(left) - splati(x2)) * splati(xStep1)
+		- (kYStep + splati(top) - splati(y2)) * splati(yStep1);
+	if (y1 > y2 || (y1 == y2 && x2 > x1))
+		outEdgeValue -= splati(1);	// Left or top edge
+
+	outXStep4 = xStep1 * 4;
+	outYStep4 = yStep1 * 4;
+}
+
+//
+// For smaller triangles, this skips the setup overhead of the recursive rasterizer.
+// It instead steps the 4x4 grid over the bounding box of the triangle in a serpentine
+// pattern.
+// Currently disabled.
+//
+void rasterizeSweep(TriangleFiller &filler,
+	int bbLeft, int bbTop, int bbRight, int bbBottom,
+	int x1, int y1, int x2, int y2, int x3, int y3)
+{
+	int xStep4_1;
+	int yStep4_1;
+	int xStep4_2;
+	int yStep4_2;
+	int xStep4_3;
+	int yStep4_3;
+	veci16_t edgeValue1;
+	veci16_t edgeValue2;
+	veci16_t edgeValue3;
+
+	setupSweepEdge(bbLeft, bbTop, x1, y1, x2, y2, xStep4_1, yStep4_1, edgeValue1);
+	setupSweepEdge(bbLeft, bbTop, x2, y2, x3, y3, xStep4_2, yStep4_2, edgeValue2);
+	setupSweepEdge(bbLeft, bbTop, x3, y3, x1, y1, xStep4_3, yStep4_3, edgeValue3);
+
+	int col = bbLeft;
+	int row = bbTop;
+	int stepDir = 4;
+	do
+	{
+		for (int colCount = 0; ; colCount++)
+		{
+			int mask = __builtin_nyuzi_mask_cmpi_sge(edgeValue1, splati(0))
+				& __builtin_nyuzi_mask_cmpi_sge(edgeValue2, splati(0))
+				& __builtin_nyuzi_mask_cmpi_sge(edgeValue3, splati(0));
+			if (mask)
+				filler.fillMasked(col, row, mask);
+
+			if (colCount == kTileSize / 4)
+				break;
+
+			// Step left/right
+			edgeValue1 += splati(xStep4_1);
+			edgeValue2 += splati(xStep4_2);
+			edgeValue3 += splati(xStep4_3);
+			col += stepDir;
+		}
+
+		// Change direction, step down
+		xStep4_1 = -xStep4_1;
+		xStep4_2 = -xStep4_2;
+		xStep4_3 = -xStep4_3;
+		stepDir = -stepDir;
+		edgeValue1 -= splati(yStep4_1);
+		edgeValue2 -= splati(yStep4_2);
+		edgeValue3 -= splati(yStep4_3);
+		row += 4;
+	}
+	while (row < bbBottom);
+}
+
+}
+
+void librender::fillTriangle(TriangleFiller &filler,
+	int tileLeft, int tileTop, 
+	int x1, int y1, int x2, int y2, int x3, int y3,
+	int clipRight, int clipBottom)
+{
+	int bbLeft = max(min3(x1, x2, x3) & ~3, tileLeft);
+	int bbTop = max(min3(y1, y2, y3) & ~3, tileTop);
+	int bbRight = min3((max3(x1, x2, x3) + 3) & ~3, clipRight, tileLeft + kTileSize);
+	int bbBottom = min3((max3(y1, y2, y3) + 3) & ~3, clipBottom, tileTop + kTileSize);
+
+	if (bbRight - bbLeft < kMaxSweep && bbBottom - bbTop < kMaxSweep)
+		rasterizeSweep(filler, bbLeft, bbTop, bbRight, bbBottom, x1, y1, x2, y2, x3, y3);
+	else
+	{
+		rasterizeRecursive(filler, tileLeft, tileTop, clipRight, clipBottom, 
+			x1, y1, x2, y2, x3, y3);
+	}
 }
