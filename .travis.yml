@@ -9,4 +9,4 @@ before_install:
 - docker pull jeffbush001/nyuzi-build	
 
 script:
-- docker run jeffbush001/nyuzi-build /root/run-test.sh -v $TRAVIS_BUILD_DIR:/root/NyuziProcessor
+- docker run -v $TRAVIS_BUILD_DIR:/root/NyuziProcessor -w /root/NyuziProcessor jeffbush001/nyuzi-build /root/run-test.sh 
