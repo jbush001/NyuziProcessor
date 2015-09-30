@@ -1,7 +1,5 @@
 sudo: required
 
-language: c
-
 services:
 - docker
 
@@ -9,4 +7,6 @@ before_install:
 - docker pull jeffbush001/nyuzi-build	
 
 script:
-- docker run -v $TRAVIS_BUILD_DIR:/root/NyuziProcessor -w /root/NyuziProcessor jeffbush001/nyuzi-build /root/run-test.sh 
+- docker run -v $TRAVIS_BUILD_DIR:/root/NyuziProcessor -w /root/NyuziProcessor jeffbush001/nyuzi-build "(cd tests/cosimulation && ./generate_random.py -m 3) && make test"
+
+
