@@ -204,8 +204,8 @@ module verilator_tb(
 		for (int set = 0; set < `L2_SETS; set++)
 		begin
 			// XXX these need to be manually commented out when changing 
-			// the number of L2 ways, since it is not possible to 
-			// index into generated array instances with a dynamic variable.
+			// the number of L2 ways, since (per IEEE 1800-2012) an 
+			// instance select must be a constant expression.
 			if (`L2_TAG_WAY[0].line_valid[set])
 				flush_l2_line(`L2_TAG_WAY[0].sram_tags.data[set], l2_set_idx_t'(set), l2_way_idx_t'(0));
 

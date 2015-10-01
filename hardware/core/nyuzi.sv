@@ -49,6 +49,11 @@ module nyuzi
 	logic[`TOTAL_THREADS - 1:0] ny_thread_enable;
 	logic[`TOTAL_PERF_EVENTS - 1:0] perf_events;
 
+	initial
+	begin
+		assert(`NUM_CORES >= 1 && `NUM_CORES <= (1 << `CORE_ID_WIDTH));
+	end
+
 	assign processor_halt = ny_thread_enable == 0;
 
 	genvar core_idx;

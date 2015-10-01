@@ -12,7 +12,7 @@ the tests/cosimulation directory.
 - Performance modeling. This can generate memory reference traces and gather
 statistics about instruction execution.
 
-Command line options:
+### Command line options:
 
 |Option|Arguments                  |Meaning|
 |------|---------------------------|-------|
