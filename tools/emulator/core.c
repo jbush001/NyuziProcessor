@@ -92,6 +92,7 @@ struct Breakpoint
 	bool restart;
 };
 
+static void printThreadRegisters(const Thread*);
 static void doHalt(Core*);
 static uint32_t getThreadScalarReg(const Thread*, uint32_t reg);
 static void setScalarReg(Thread*, uint32_t reg, uint32_t value);
@@ -99,7 +100,7 @@ static void setVectorReg(Thread*, uint32_t reg, uint32_t mask,
 	uint32_t *values);
 static void invalidateSyncAddress(Core*, uint32_t address);
 static void memoryAccessFault(Thread*, uint32_t address, bool isLoad, FaultReason);
-static void illegalInstruction(Thread*, uint32_t instr);
+static void illegalInstruction(Thread*, uint32_t instruction);
 static void writeMemBlock(Thread*, uint32_t address, uint32_t mask, 
 	const uint32_t *values);
 static void writeMemWord(Thread*, uint32_t address, uint32_t value);
@@ -109,13 +110,13 @@ static uint32_t readMemoryWord(const Thread*, uint32_t address);
 static uint32_t scalarArithmeticOp(ArithmeticOp, uint32_t value1, uint32_t value2);
 static bool isCompareOp(uint32_t op);
 static struct Breakpoint *lookupBreakpoint(Core*, uint32_t pc);
-static void executeRegisterArithInst(Thread*, uint32_t instr);
-static void executeImmediateArithInst(Thread*, uint32_t instr);
-static void executeScalarLoadStoreInst(Thread*, uint32_t instr);
-static void executeVectorLoadStoreInst(Thread*, uint32_t instr);
-static void executeControlRegisterInst(Thread*, uint32_t instr);
-static void executeMemoryAccessInst(Thread*, uint32_t instr);
-static void executeBranchInst(Thread*, uint32_t instr);
+static void executeRegisterArithInst(Thread*, uint32_t instruction);
+static void executeImmediateArithInst(Thread*, uint32_t instruction);
+static void executeScalarLoadStoreInst(Thread*, uint32_t instruction);
+static void executeVectorLoadStoreInst(Thread*, uint32_t instruction);
+static void executeControlRegisterInst(Thread*, uint32_t instruction);
+static void executeMemoryAccessInst(Thread*, uint32_t instruction);
+static void executeBranchInst(Thread*, uint32_t instruction);
 static int executeInstruction(Thread*);
 
 Core *initCore(uint32_t memorySize, uint32_t totalThreads, bool randomizeMemory)
@@ -224,33 +225,7 @@ void *getFramebuffer(Core *core)
 
 void printRegisters(const Core *core, uint32_t threadId)
 {
-	int reg;
-	int lane;
-	const Thread *thread = &core->threads[threadId];
-	
-	printf("REGISTERS\n");
-	for (reg = 0; reg < NUM_REGISTERS - 1; reg++)
-	{
-		if (reg < 10)
-			printf(" "); // Align one digit numbers
-			
-		printf("s%d %08x ", reg, thread->scalarReg[reg]);
-		if (reg % 8 == 7)
-			printf("\n");
-	}
-
-	printf("s31 %08x\n\n", thread->currentPc - 4);
-	for (reg = 0; reg < NUM_REGISTERS; reg++)
-	{
-		if (reg < 10)
-			printf(" "); // Align one digit numbers
-			
-		printf("v%d ", reg);
-		for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
-			printf("%08x", thread->vectorReg[reg][lane]);
-			
-		printf("\n");
-	}
+	printThreadRegisters(&core->threads[threadId]);
 }
 
 void enableCosimulation(Core *core)
@@ -409,7 +384,7 @@ void dumpInstructionStats(Core *core)
 {
 	printf("%" PRId64 " total instructions\n", core->totalInstructions);
 #ifdef DUMP_INSTRUCTION_STATS
-	#define PRINT_STAT(name) printf("%s %lld %.4g%%\n", #name, core->stat_ ## name, \
+	#define PRINT_STAT(name) printf("%s %" PRId64 " %.4g%%\n", #name, core->stat_ ## name, \
 		(double) core->stat_ ## name/ core->totalInstructions * 100);
 
 	PRINT_STAT(vector_inst);
@@ -421,6 +396,36 @@ void dumpInstructionStats(Core *core)
 
 	#undef PRINT_STAT
 #endif
+}
+
+static void printThreadRegisters(const Thread *thread)
+{
+	int reg;
+	int lane;
+	
+	printf("REGISTERS\n");
+	for (reg = 0; reg < NUM_REGISTERS - 1; reg++)
+	{
+		if (reg < 10)
+			printf(" "); // Align one digit numbers
+			
+		printf("s%d %08x ", reg, thread->scalarReg[reg]);
+		if (reg % 8 == 7)
+			printf("\n");
+	}
+
+	printf("s31 %08x\n\n", thread->currentPc - 4);
+	for (reg = 0; reg < NUM_REGISTERS; reg++)
+	{
+		if (reg < 10)
+			printf(" "); // Align one digit numbers
+			
+		printf("v%d ", reg);
+		for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
+			printf("%08x", thread->vectorReg[reg][lane]);
+			
+		printf("\n");
+	}
 }
 
 static void doHalt(Core *core)
@@ -492,7 +497,7 @@ static void memoryAccessFault(Thread *thread, uint32_t address, bool isLoad, Fau
 		printf("Invalid %s access thread %d PC %08x address %08x\n",
 			isLoad ? "load" : "store",
 			thread->id, thread->currentPc - 4, address);
-		printRegisters(thread->core, thread->id);
+		printThreadRegisters(thread);
 		thread->core->halt = true;
 	}
 	else
@@ -510,13 +515,13 @@ static void memoryAccessFault(Thread *thread, uint32_t address, bool isLoad, Fau
 	}
 }
 
-static void illegalInstruction(Thread *thread, uint32_t instr)
+static void illegalInstruction(Thread *thread, uint32_t instruction)
 {
 	if (thread->core->stopOnFault)
 	{
-		printf("Illegal instruction %08x thread %d PC %08x\n", instr, thread->id, 
+		printf("Illegal instruction %08x thread %d PC %08x\n", instruction, thread->id, 
 			thread->currentPc - 4);
-		printRegisters(thread->core, thread->id);
+		printThreadRegisters(thread);
 		thread->core->halt = true;
 	}
 	else
@@ -631,7 +636,7 @@ static uint32_t readMemoryWord(const Thread *thread, uint32_t address)
 	if (address >= thread->core->memorySize)
 	{
 		printf("Load Access Violation %08x, pc %08x\n", address, thread->currentPc - 4);
-		printRegisters(thread->core, thread->id);
+		printThreadRegisters(thread);
 		thread->core->halt = true;	// XXX Perhaps should stop some other way...
 		return 0;
 	}
@@ -713,14 +718,14 @@ static struct Breakpoint *lookupBreakpoint(Core *core, uint32_t pc)
 	return NULL;
 }
 
-static void executeRegisterArithInst(Thread *thread, uint32_t instr)
+static void executeRegisterArithInst(Thread *thread, uint32_t instruction)
 {
-	RegisterArithFormat fmt = extractUnsignedBits(instr, 26, 3);
-	ArithmeticOp op = extractUnsignedBits(instr, 20, 6);
-	uint32_t op1reg = extractUnsignedBits(instr, 0, 5);
-	uint32_t op2reg = extractUnsignedBits(instr, 15, 5);
-	uint32_t destreg = extractUnsignedBits(instr, 5, 5);
-	uint32_t maskreg = extractUnsignedBits(instr, 10, 5);
+	RegisterArithFormat fmt = extractUnsignedBits(instruction, 26, 3);
+	ArithmeticOp op = extractUnsignedBits(instruction, 20, 6);
+	uint32_t op1reg = extractUnsignedBits(instruction, 0, 5);
+	uint32_t op2reg = extractUnsignedBits(instruction, 15, 5);
+	uint32_t destreg = extractUnsignedBits(instruction, 5, 5);
+	uint32_t maskreg = extractUnsignedBits(instruction, 10, 5);
 	int lane;
 
 	TALLY_INSTRUCTION(reg_arith_inst);
@@ -772,7 +777,7 @@ static void executeRegisterArithInst(Thread *thread, uint32_t instr)
 				break;
 
 			default:
-				illegalInstruction(thread, instr);
+				illegalInstruction(thread, instruction);
 				return;
 		}
 		
@@ -804,7 +809,7 @@ static void executeRegisterArithInst(Thread *thread, uint32_t instr)
 				break;
 
 			default:
-				illegalInstruction(thread, instr);
+				illegalInstruction(thread, instruction);
 				return;
 		}
 	
@@ -840,22 +845,22 @@ static void executeRegisterArithInst(Thread *thread, uint32_t instr)
 	}
 }
 
-static void executeImmediateArithInst(Thread *thread, uint32_t instr)
+static void executeImmediateArithInst(Thread *thread, uint32_t instruction)
 {
-	ImmediateArithFormat fmt = extractUnsignedBits(instr, 28, 3);
+	ImmediateArithFormat fmt = extractUnsignedBits(instruction, 28, 3);
 	uint32_t immValue;
-	ArithmeticOp op = extractUnsignedBits(instr, 23, 5);
-	uint32_t op1reg = extractUnsignedBits(instr, 0, 5);
-	uint32_t maskreg = extractUnsignedBits(instr, 10, 5);
-	uint32_t destreg = extractUnsignedBits(instr, 5, 5);
+	ArithmeticOp op = extractUnsignedBits(instruction, 23, 5);
+	uint32_t op1reg = extractUnsignedBits(instruction, 0, 5);
+	uint32_t maskreg = extractUnsignedBits(instruction, 10, 5);
+	uint32_t destreg = extractUnsignedBits(instruction, 5, 5);
 	uint32_t hasMask = fmt == FMT_IMM_VV_M || fmt == FMT_IMM_VS_M;
 	int lane;
 
 	TALLY_INSTRUCTION(imm_arith_inst);
 	if (hasMask)
-		immValue = extractSignedBits(instr, 15, 8);
+		immValue = extractSignedBits(instruction, 15, 8);
 	else
-		immValue = extractSignedBits(instr, 10, 13);
+		immValue = extractSignedBits(instruction, 10, 13);
 
 	if (op == OP_GETLANE)
 	{
@@ -892,7 +897,7 @@ static void executeImmediateArithInst(Thread *thread, uint32_t instr)
 				break;
 
 			default:
-				illegalInstruction(thread, instr);
+				illegalInstruction(thread, instruction);
 				return;
 		}
 		
@@ -924,7 +929,7 @@ static void executeImmediateArithInst(Thread *thread, uint32_t instr)
 				break;
 
 			default:
-				illegalInstruction(thread, instr);
+				illegalInstruction(thread, instruction);
 				return;
 		}
 	
@@ -943,13 +948,13 @@ static void executeImmediateArithInst(Thread *thread, uint32_t instr)
 	}
 }
 
-static void executeScalarLoadStoreInst(Thread *thread, uint32_t instr)
+static void executeScalarLoadStoreInst(Thread *thread, uint32_t instruction)
 {
-	MemoryOp op = extractUnsignedBits(instr, 25, 4);
-	uint32_t ptrreg = extractUnsignedBits(instr, 0, 5);
-	uint32_t offset = extractSignedBits(instr, 10, 15);
-	uint32_t destsrcreg = extractUnsignedBits(instr, 5, 5);
-	bool isLoad = extractUnsignedBits(instr, 29, 1);
+	MemoryOp op = extractUnsignedBits(instruction, 25, 4);
+	uint32_t ptrreg = extractUnsignedBits(instruction, 0, 5);
+	uint32_t offset = extractSignedBits(instruction, 10, 15);
+	uint32_t destsrcreg = extractUnsignedBits(instruction, 5, 5);
+	bool isLoad = extractUnsignedBits(instruction, 29, 1);
 	uint32_t address;
 	int isDeviceAccess;
 
@@ -960,7 +965,7 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instr)
 	{
 		printf("%s Access Violation %08x, pc %08x\n", isLoad ? "Load" : "Store",
 			address, thread->currentPc - 4);
-		printRegisters(thread->core, thread->id);
+		printThreadRegisters(thread);
 		thread->core->halt = true;	// XXX Perhaps should stop some other way...
 		return;
 	}
@@ -1027,7 +1032,7 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instr)
 				break;
 				
 			default:
-				illegalInstruction(thread, instr);
+				illegalInstruction(thread, instruction);
 				return;
 		}
 		
@@ -1070,19 +1075,19 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instr)
 				break;
 				
 			default:
-				illegalInstruction(thread, instr);
+				illegalInstruction(thread, instruction);
 				return;
 		}
 	}
 }
 
-static void executeVectorLoadStoreInst(Thread *thread, uint32_t instr)
+static void executeVectorLoadStoreInst(Thread *thread, uint32_t instruction)
 {
-	uint32_t op = extractUnsignedBits(instr, 25, 4);
-	uint32_t ptrreg = extractUnsignedBits(instr, 0, 5);
-	uint32_t maskreg = extractUnsignedBits(instr, 10, 5);
-	uint32_t destsrcreg = extractUnsignedBits(instr, 5, 5);
-	bool isLoad = extractUnsignedBits(instr, 29, 1);
+	uint32_t op = extractUnsignedBits(instruction, 25, 4);
+	uint32_t ptrreg = extractUnsignedBits(instruction, 0, 5);
+	uint32_t maskreg = extractUnsignedBits(instruction, 10, 5);
+	uint32_t destsrcreg = extractUnsignedBits(instruction, 5, 5);
+	bool isLoad = extractUnsignedBits(instruction, 29, 1);
 	uint32_t offset;
 	uint32_t lane;
 	uint32_t mask;
@@ -1097,17 +1102,17 @@ static void executeVectorLoadStoreInst(Thread *thread, uint32_t instr)
 		case MEM_BLOCK_VECTOR:
 		case MEM_SCGATH:
 			mask = 0xffff;
-			offset = extractSignedBits(instr, 10, 15);	// Not masked
+			offset = extractSignedBits(instruction, 10, 15);	// Not masked
 			break;
 
 		case MEM_BLOCK_VECTOR_MASK:
 		case MEM_SCGATH_MASK:
 			mask = getThreadScalarReg(thread, maskreg);
-			offset = extractSignedBits(instr, 15, 10);  // masked
+			offset = extractSignedBits(instruction, 15, 10);  // masked
 			break;
 
 		default:
-			illegalInstruction(thread, instr);
+			illegalInstruction(thread, instruction);
 			return;
 	}
 
@@ -1125,7 +1130,7 @@ static void executeVectorLoadStoreInst(Thread *thread, uint32_t instr)
 				// aid debugging.
 				printf("%s Access Violation %08x, pc %08x\n", isLoad ? "Load" : "Store",
 					address, thread->currentPc - 4);
-				printRegisters(thread->core, thread->id);
+				printThreadRegisters(thread);
 				thread->core->halt = true;	// XXX Perhaps should stop some other way...
 				return;
 			}
@@ -1168,7 +1173,7 @@ static void executeVectorLoadStoreInst(Thread *thread, uint32_t instr)
 			{
 				printf("%s Access Violation %08x, pc %08x\n", isLoad ? "Load" : "Store",
 					address, thread->currentPc - 4);
-				printRegisters(thread->core, thread->id);
+				printThreadRegisters(thread);
 				thread->core->halt = true;	// XXX Perhaps should stop some other way...
 				return;
 			}
@@ -1198,11 +1203,11 @@ static void executeVectorLoadStoreInst(Thread *thread, uint32_t instr)
 		thread->currentPc -= 4;	// repeat current instruction
 }
 
-static void executeControlRegisterInst(Thread *thread, uint32_t instr)
+static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 {
-	uint32_t crIndex = extractUnsignedBits(instr, 0, 5);
-	uint32_t dstSrcReg = extractUnsignedBits(instr, 5, 5);
-	if (extractUnsignedBits(instr, 29, 1))
+	uint32_t crIndex = extractUnsignedBits(instruction, 0, 5);
+	uint32_t dstSrcReg = extractUnsignedBits(instruction, 5, 5);
+	if (extractUnsignedBits(instruction, 29, 1))
 	{
 		// Load
 		uint32_t value = 0xffffffff;
@@ -1256,32 +1261,32 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instr)
 	}
 }
 
-static void executeMemoryAccessInst(Thread *thread, uint32_t instr)
+static void executeMemoryAccessInst(Thread *thread, uint32_t instruction)
 {
-	uint32_t type = extractUnsignedBits(instr, 25, 4);
+	uint32_t type = extractUnsignedBits(instruction, 25, 4);
 	if (type != MEM_CONTROL_REG)	// Don't count control register transfers
 	{
-		if (extractUnsignedBits(instr, 29, 1))
+		if (extractUnsignedBits(instruction, 29, 1))
 			TALLY_INSTRUCTION(load_inst);
 		else
 			TALLY_INSTRUCTION(store_inst);
 	}
 
 	if (type == MEM_CONTROL_REG)
-		executeControlRegisterInst(thread, instr);	
+		executeControlRegisterInst(thread, instruction);	
 	else if (type < MEM_CONTROL_REG)
-		executeScalarLoadStoreInst(thread, instr);
+		executeScalarLoadStoreInst(thread, instruction);
 	else
-		executeVectorLoadStoreInst(thread, instr);
+		executeVectorLoadStoreInst(thread, instruction);
 }
 
-static void executeBranchInst(Thread *thread, uint32_t instr)
+static void executeBranchInst(Thread *thread, uint32_t instruction)
 {
 	bool branchTaken = false;
-	uint32_t srcReg = extractUnsignedBits(instr, 0, 5);
+	uint32_t srcReg = extractUnsignedBits(instruction, 0, 5);
 
 	TALLY_INSTRUCTION(branch_inst);
-	switch (extractUnsignedBits(instr, 25, 3))
+	switch (extractUnsignedBits(instruction, 25, 3))
 	{
 		case BRANCH_ALL: 
 			branchTaken = (getThreadScalarReg(thread, srcReg) & 0xffff) == 0xffff;
@@ -1319,40 +1324,40 @@ static void executeBranchInst(Thread *thread, uint32_t instr)
 	}
 	
 	if (branchTaken)
-		thread->currentPc += extractSignedBits(instr, 5, 20);
+		thread->currentPc += extractSignedBits(instruction, 5, 20);
 }
 
 static int executeInstruction(Thread *thread)
 {
-	uint32_t instr;
+	uint32_t instruction;
 	
 	if ((thread->currentPc & 3) != 0)
 		memoryAccessFault(thread, thread->currentPc, true, FR_IFETCH_FAULT);
 
-	instr = readMemoryWord(thread, thread->currentPc);
+	instruction = readMemoryWord(thread, thread->currentPc);
 	thread->currentPc += 4;
 	thread->core->totalInstructions++;
 
 restart:
-	if ((instr & 0xe0000000) == 0xc0000000)
-		executeRegisterArithInst(thread, instr);
-	else if ((instr & 0x80000000) == 0)
+	if ((instruction & 0xe0000000) == 0xc0000000)
+		executeRegisterArithInst(thread, instruction);
+	else if ((instruction & 0x80000000) == 0)
 	{
-		if (instr == BREAKPOINT_OP)
+		if (instruction == BREAKPOINT_OP)
 		{
 			struct Breakpoint *breakpoint = lookupBreakpoint(thread->core, thread->currentPc - 4);
 			if (breakpoint == NULL)
 			{
 				thread->currentPc += 4;
-				illegalInstruction(thread, instr);
+				illegalInstruction(thread, instruction);
 				return 1;
 			}
 		
 			if (breakpoint->restart || thread->core->singleStepping)
 			{
 				breakpoint->restart = false;
-				instr = breakpoint->originalInstruction;
-				assert(instr != BREAKPOINT_OP);
+				instruction = breakpoint->originalInstruction;
+				assert(instruction != BREAKPOINT_OP);
 				goto restart;
 			}
 			else
@@ -1362,21 +1367,21 @@ restart:
 				return 0;
 			}
 		}
-		else if (instr != INSTRUCTION_NOP) 
+		else if (instruction != INSTRUCTION_NOP) 
 		{
 			// Don't call this for nop instructions. Although executing 
 			// the instruction (or s0, s0, s0) has no effect, it would
 			// cause a cosimulation mismatch because the verilog model
 			// does not generate an event for it.
 
-			executeImmediateArithInst(thread, instr);
+			executeImmediateArithInst(thread, instruction);
 		}
 	}
-	else if ((instr & 0xc0000000) == 0x80000000)
-		executeMemoryAccessInst(thread, instr);
-	else if ((instr & 0xf0000000) == 0xf0000000)
-		executeBranchInst(thread, instr);
-	else if ((instr & 0xf0000000) == 0xe0000000)
+	else if ((instruction & 0xc0000000) == 0x80000000)
+		executeMemoryAccessInst(thread, instruction);
+	else if ((instruction & 0xf0000000) == 0xf0000000)
+		executeBranchInst(thread, instruction);
+	else if ((instruction & 0xf0000000) == 0xe0000000)
 		;	// Format D instruction. Ignore
 	else
 		printf("Bad instruction @%08x\n", thread->currentPc - 4);

@@ -37,7 +37,7 @@ void writeDeviceRegister(uint32_t address, uint32_t value)
 	switch (address)
 	{
 		case REG_SERIAL_OUTPUT:
-			printf("%c", value & 0xff); // Serial output
+			putc(value & 0xff, stdout);
 			break;
 
 		case REG_SD_WRITE_DATA:
