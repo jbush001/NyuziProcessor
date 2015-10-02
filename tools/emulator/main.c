@@ -25,7 +25,6 @@
 #include "cosimulation.h"
 #include "device.h"
 #include "fbwindow.h"
-#include "stats.h"
 
 extern void remoteGdbMainLoop(Core *core, int enableFbWindow);
 
@@ -242,7 +241,7 @@ int main(int argc, char *argv[])
 	if (enableMemoryDump)
 		writeMemoryToFile(core, memDumpFilename, memDumpBase, memDumpLength);
 
-	dumpInstructionStats();
+	dumpInstructionStats(core);
 	if (blockDeviceOpen)
 		closeBlockDevice();
 	

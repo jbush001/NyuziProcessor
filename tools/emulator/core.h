@@ -61,4 +61,6 @@ int setBreakpoint(Core*, uint32_t pc);
 int clearBreakpoint(Core*, uint32_t pc);
 void setStopOnFault(Core*, bool stopOnFault);
 
+void dumpInstructionStats(Core*);
+
 #endif

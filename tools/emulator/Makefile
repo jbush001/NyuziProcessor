@@ -20,14 +20,13 @@ include $(TOPDIR)/build/tool.mk
 
 TARGET=$(BINDIR)/emulator
 CFLAGS+=$(shell sdl2-config --cflags)
-#CFLAGS+=-DLOG_INSTRUCTIONS
+#CFLAGS+=-DDUMP_INSTRUCTION_STATS
 
 SRCS=main.c \
 	core.c \
 	cosimulation.c \
 	remote-gdb.c \
 	device.c \
-	stats.c \
 	util.c \
 	fbwindow.c \
 	sdmmc.c
