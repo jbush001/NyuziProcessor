@@ -83,6 +83,7 @@ E = emulator, V = verilator.
 | ffff002c | r | F | VGA frame toggle |
 | ffff0038 | r | FEV | PS/2 Keyboard status. 1 indicates there are scancodes in FIFO. |
 | ffff003c | r | FEV | PS/2 Keyboard scancode. Remove from FIFO on read.<sup>2</sup> |
+| ffff0040 | r | E | Real time clock, in microseconds |
 | ffff0044 | w | FEV | SD SPI write byte<sup>3</sup> |
 | ffff0048 | r | FEV | SD SPI read byte |
 | ffff004c | r | FEV  | SD SPI status (bit 0: ready) |
@@ -95,6 +96,7 @@ E = emulator, V = verilator.
 | ffff0100 | r | V | Loopback UART Status<sup>5</sup> (same as above) |
 | ffff0104 | r | V | Loopback UART read |
 | ffff0108 | w | V | Loopback UART write |
+| ffff010c | w | V | Toggle UART tx line (used to force framing error in test) |
 
 1. Serial writes (including printfs from software) print to standard out in
 Verilator and the emulator.
