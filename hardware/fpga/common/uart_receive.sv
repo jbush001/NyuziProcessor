@@ -45,9 +45,10 @@ module uart_receive
 	logic rx_sync;
 
 	assign rx_char = shift_register;
+
 	// If it's out of sync, rx_sync is 0 from a new start bit.
 	// Sampling it at the end may be sufficient to indicate frame error.
-	assign frame_error = state_ff == STATE_STOP_BITS && !rx_sync;
+	assign frame_error = !rx_sync;
 
 	synchronizer #(.RESET_STATE(1)) rx_synchronizer(
 		.clk(clk),

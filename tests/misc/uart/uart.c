@@ -41,7 +41,7 @@ void writeLoopbackUart(char ch)
 {
 	int timeout = 0;
 	LOOPBACK_UART[kTx] = ch;
-	while ((LOOPBACK_UART[kStatus] & 1) == 0)	// Wait for transmit to finish
+	while ((LOOPBACK_UART[kStatus] & UART_TX_READY) == 0)	// Wait for transmit to finish
 		CHECK(++timeout < kMaxTimeout);
 
 	printf("write %02x\n", ch);
@@ -65,9 +65,9 @@ int readLoopbackUart(void)
 	return result;
 }
 
-void toggleLoopbackUartLineHold()
+void setLoopbackUartMask(int value)
 {
-	LOOPBACK_UART[3] = 1;	// Just write any value to 0x10c
+	LOOPBACK_UART[3] = value;
 }
 
 int main () 
@@ -103,6 +103,7 @@ int main ()
 		
 		for (i = 0; i < readCount; i++)
 		{
+			CHECK((LOOPBACK_UART[kStatus] & UART_FRAME_ERR) == 0);
 			CHECK(readLoopbackUart() == rxChar++);
 			
 			// Reading from the UART should clear the overflow bit
@@ -111,16 +112,11 @@ int main ()
 		}
 	}
 
-	// Flush Rx FIFO
-	while ((LOOPBACK_UART[kStatus] & UART_RX_READY) != 0)
-		readLoopbackUart();
-
 	// Frame Error Test
-	toggleLoopbackUartLineHold();
+	setLoopbackUartMask(0);
 	waitLoopbackUartNewRxWord(kMaxTimeout);
-	toggleLoopbackUartLineHold();
+	setLoopbackUartMask(1);
 	int hasFrameErrorRaised = 0;
-	int hasFrameErrorLowered = 0;
 	// When unhold, the last word may be a valid word.
 	// This breaks an assumption that all words have frame error.
 	// We need to flush before checking the flag is lowered properly.
@@ -135,9 +131,9 @@ int main ()
 	writeLoopbackUart('a');
 	writeLoopbackUart('b');
 	waitLoopbackUartNewRxWord(kMaxTimeout);
-	if ((LOOPBACK_UART[kStatus] & UART_FRAME_ERR) == 0)
-		hasFrameErrorLowered = 1;
-	CHECK(hasFrameErrorLowered);
+	CHECK((LOOPBACK_UART[kStatus] & UART_FRAME_ERR) == 0);
+	CHECK(readLoopbackUart() == 'a');
+	CHECK(readLoopbackUart() == 'b');
 
 	printf("PASS\n");
 	return 0;

@@ -89,6 +89,10 @@ module verilator_tb(
 	logic sd_sclk;
 	logic ps2_clk;
 	logic ps2_data;
+	logic[31:0] loopback_uart_read_data;
+	logic loopback_uart_tx;
+	logic loopback_uart_rx;
+	logic loopback_uart_mask;
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -143,16 +147,13 @@ module verilator_tb(
 		.T_POWERUP(5)) sdram_controller(
 			.axi_bus(axi_bus_m0.slave),
 			.*);
-		
+
 	sim_sdram #(
 		.DATA_WIDTH(SDRAM_DATA_WIDTH),
 		.ROW_ADDR_WIDTH(SDRAM_ROW_ADDR_WIDTH),
 		.COL_ADDR_WIDTH(SDRAM_COL_ADDR_WIDTH),
 		.MAX_REFRESH_INTERVAL(800)) memory(.*);
 
-	logic[31:0] loopback_uart_read_data;
-	wire loopback_uart_tx, loopback_uart_rx;
-	logic loopback_uart_mask;	// toggle on write at 0x10c
 	assign loopback_uart_rx = loopback_uart_tx & loopback_uart_mask;
 	uart #(.BASE_ADDRESS('h100), .BAUD_DIVIDE(8)) loopback_uart(
 		.io_read_data(loopback_uart_read_data),
@@ -355,6 +356,7 @@ module verilator_tb(
 		begin
 			for (int i = 0; i < TRACE_REORDER_QUEUE_LEN; i++)
 				trace_reorder_queue[i] <= 0;
+				
 			loopback_uart_mask <= 1;
 		end
 		else
@@ -380,14 +382,14 @@ module verilator_tb(
 			if (io_write_en)
 			begin
 				case (io_address)
-					'h20: $write("%c", io_write_data[7:0]);	// Serial output
+					'h20: 
+					begin
+						$write("%c", io_write_data[7:0]);	// Serial output
+					end
+
 					'h10c:
 					begin
-						if (loopback_uart_mask)
-							$write("Hold loopback uart\n");
-						else
-							$write("Unhold loopback uart\n");
-						loopback_uart_mask <= !loopback_uart_mask;
+						loopback_uart_mask <= io_write_data[0];
 					end
 				endcase
 			end
