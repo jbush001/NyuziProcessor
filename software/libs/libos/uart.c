@@ -27,7 +27,7 @@ void writeUart(char ch)
 
 unsigned char readUart()
 {
-	while ((REGISTERS[REG_UART_STATUS] & UART_HAS_WORD) == 0)
+	while ((REGISTERS[REG_UART_STATUS] & UART_RX_READY) == 0)
 		;	// Wait for space
 	
 	return REGISTERS[REG_UART_RX];	

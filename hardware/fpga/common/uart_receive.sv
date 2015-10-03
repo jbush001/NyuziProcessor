@@ -69,8 +69,6 @@ module uart_receive
 				if (!rx_sync)
 				begin
 					state_nxt = STATE_READ_CHARACTER;
-					frame_error = 0;
-					
 					// We are at the beginning of the start bit. Next
 					// sample point is in middle of first data bit.
 					// Set divider to 1.5 times bit duration.
