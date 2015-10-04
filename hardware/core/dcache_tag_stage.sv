@@ -18,7 +18,7 @@
 
 //
 // Instruction Pipeline L1 Data Cache Tag Stage.
-// Contains tags and cache line states. It queries these when a memory access 
+// Contains tags and cache line states, which it queries when a memory access 
 // occurs. There is one cycle of latency to fetch these, so the next stage 
 // will handle the result. The L1 data cache is set associative. There is a 
 // separate block of tag ram for each way, which this reads in parallel. The 
@@ -95,7 +95,7 @@ module dcache_tag_stage
 		for (way_idx = 0; way_idx < `L1D_WAYS; way_idx++)
 		begin : way_tag_gen
 			// Valid flags are flops instead of SRAM because they need
-			// to be simultaneously cleared on reset.
+			// to all be cleared on reset.
 			logic line_valid[`L1D_SETS];
 
 			sram_2r1w #(

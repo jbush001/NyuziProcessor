@@ -23,7 +23,8 @@
 //   algorithm, avoid various types of conflicts:
 //   * inter-instruction register dependencies, tracked using a scoreboard
 //     for each thread. 
-//   * writeback hazards among the pipelines of different lengths
+//   * writeback hazards among the pipelines of different lengths, tracked
+//     with a shared shift register.
 // - Tracks dcache misses and suspends threads until they are resolved.
 //
 
@@ -87,7 +88,7 @@ module thread_select_stage(
 	logic instruction_complete[`THREADS_PER_CORE];
 	
 	// The scoreboard tracks registers that are busy (have a result pending), with one bit
-	// per register.  Bits 0-31 are scalar registers and 32-63 are vector registers.
+	// per register. Bits 0-31 are scalar registers and 32-63 are vector registers.
 	logic[`NUM_REGISTERS * 2 - 1:0] scoreboard[`THREADS_PER_CORE];
 	logic[`NUM_REGISTERS * 2 - 1:0] scoreboard_nxt[`THREADS_PER_CORE];
 	logic[`NUM_REGISTERS * 2 - 1:0] scoreboard_dest_bitmap[`THREADS_PER_CORE];
@@ -198,7 +199,7 @@ module thread_select_stage(
 			end
 			
 			// There is one cycle of latency after the instruction comes out of the
-			// instruction FIFO to determine the scoreboard values.  They are
+			// instruction FIFO to determine the scoreboard values. They are
 			// registered here.
 			assign instruction_latch_en = !ififo_empty && (!instruction_latched 
 				|| instruction_complete[thread_idx]);
@@ -232,7 +233,7 @@ module thread_select_stage(
 			// Determine which scoreboard bits to clear
 			always_comb
 			begin
-				// Clear scoreboard entries to completed instructions. We only do this on the
+				// Clear scoreboard entries for completed instructions. We only do this on the
 				// last subcycle of an instruction. Since we don't wait on the scoreboard to 
 				// issue intermediate subcycles, we must do this for correctness.
 				scoreboard_clear_bitmap = 0;
@@ -279,7 +280,7 @@ module thread_select_stage(
 			// We only check the scoreboard on the first subcycle. The scoreboard only checks
 			// on the register granularity, not individual vector lanes. In most cases, this is fine, but
 			// with a multi-cycle operation (like a gather load), which writes back to the same register
-			// multiple times, this would delay the load.  
+			// multiple times, this would delay the load.
 			assign can_issue_thread[thread_idx] = instruction_latched
 				&& ((scoreboard[thread_idx] & scoreboard_dep_bitmap) == 0 || current_subcycle[thread_idx] != 0)
 				&& ny_thread_enable[thread_idx]
@@ -331,9 +332,9 @@ module thread_select_stage(
 		end
 	endgenerate
 	
-	// At the writeback stage, pipelines of different lengths merge.  This causes a structural
+	// At the writeback stage, pipelines of different lengths merge. This causes a structural
 	// hazard, because two instructions issued in different cycles can arrive in the same cycle.
-	// We manage this by never scheduling instructions that can conflict.  Track instruction 
+	// We manage this by never scheduling instructions that can conflict. Track instruction 
 	// arrival here for that purpose (instructions may have other side effects than 
 	// updating registers, so we set the bit even if the instruction doesn't have a 
 	// writeback register)
@@ -412,7 +413,7 @@ module thread_select_stage(
 			ts_thread_idx <= issue_thread_idx;
 			ts_subcycle <= current_subcycle[issue_thread_idx];
 
-			// The suspend signal is asserted a cycle after a dcache miss occurs.  It is possible
+			// The suspend signal is asserted a cycle after a dcache miss occurs. It is possible
 			// that that miss collides with a miss that was already pending, and in the next cycle,
 			// that miss is fulfilled. In this case, suspend and wake will be asserted simultaneously 
 			// and wake will win (because of the order of this expression)

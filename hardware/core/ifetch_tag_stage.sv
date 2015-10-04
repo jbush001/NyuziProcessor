@@ -18,9 +18,10 @@
 
 //
 // Instruction Pipeline - Instruction Fetch Tag Stage
-// - Selects a program counter to fetch a thread for
+// - Selects a program counter from one of the threads to fetch from the
+//   instruction cache.
 // - Queries instruction cache tag memory to determine if the cache line is 
-//   resident
+//   resident.
 //
 
 module ifetch_tag_stage
@@ -74,14 +75,13 @@ module ifetch_tag_stage
 
 	//
 	// Pick which thread to fetch next.
-	// We only consider threads that are not blocked. However, we do not attempt 
-	// to avoid fetching threads had a cache miss the last cycle or that have an 
-	// active rollback asserted. Although that is simple to do (bitwise and with 
-	// those signals), they have a deep combinational path that ends up being the 
-	// critical path for clock speed. Instead, if a thread in this state is selected
-	// this cycle, we invalidate the instruction by deasserting 
-	// ift_instruction_requested. This ends up wasting a cycle, but this should be 
-	// relatively infrequent.
+	// Only consider threads that are not blocked. However, this does not skip 
+	// threads that have an active rollback in the current cycle. 
+	// Although that is straightforward to do, the rollback signals have a long
+	// combinational path that end up being the critical path for clock speed. 
+	// Instead, when the selected thread is rolled back in the same cycle, 
+	// invalidate the instruction by deasserting ift_instruction_requested. 
+	// This wastes a cycle, but this should be infrequent.
 	//
 	assign can_fetch_thread_bitmap = ts_fetch_en & ~icache_wait_threads;
 
@@ -172,12 +172,11 @@ module ifetch_tag_stage
 		.*);
 
 	// 
-	// Track which threads are waiting on instruction cache misses. Avoid trying to 
-	// fetch them from the instruction cache until their misses are fulfilled.
-	// It's not possible to cancel a pending instruction cache miss. If a rollback
-	// occurs after a miss, it must still wait for that miss to be filled by the L2
-	// before restarting (othewise a race condition could exist when the response
-	// came in for the original request)
+	// Track which threads are waiting on instruction cache misses. Avoid fetching
+	// them until the L2 cache fills the miss. If a rollback occurs while a thread
+	// is waiting, it continues to wait until that miss to be filled by the L2 cache.
+	// If it didn't, a race condition would occur when that response subsequently
+	// arrived.
 	//
 	idx_to_oh #(.NUM_SIGNALS(`THREADS_PER_CORE)) idx_to_oh_miss_thread(
 		.one_hot(cache_miss_thread_oh),

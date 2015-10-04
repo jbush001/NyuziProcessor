@@ -139,7 +139,7 @@ module dcache_data_stage(
 	logic[$clog2(`VECTOR_LANES) - 1:0] scgath_lane;
 
 	// rollback_this_stage indicates a rollback was requested from an earlier issued
-	// instruction, but it does not get set when this stage is triggering a rollback.
+	// instruction, but it does not get set when this stage detects a rollback.
 	assign rollback_this_stage = wb_rollback_en 
 		&& wb_rollback_thread_idx == dt_thread_idx
 		&& wb_rollback_pipeline == PIPE_MEM;

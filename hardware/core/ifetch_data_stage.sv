@@ -18,8 +18,8 @@
 
 //
 // Instruction Pipeline - Instruction Fetch Data Stage
-// - If the preceding PC that was fetched is in the instruction cache, reads 
-//   the contents of the cache line here.
+// - If PC selected in the ifetch_tag_stage is in the instruction cache, reads 
+//   the contents of the cache line.
 // - Drives signals to update LRU in previous stage
 //
 
