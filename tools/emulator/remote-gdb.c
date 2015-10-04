@@ -340,7 +340,7 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 					{
 						uint32_t lane;
 						
-						for (lane = 0; lane < 16; lane++)
+						for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 						{
 							value = getVectorRegister(core, currentThread, regId, lane);
 							sprintf(response + lane * 8, "%08x", endianSwap32(value));

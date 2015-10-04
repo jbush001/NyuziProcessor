@@ -16,6 +16,7 @@
 
 
 #include <stdio.h>
+#include "core.h"
 #include "util.h"
 
 int parseHexVector(const char *str, uint32_t *vectorValues, bool endianSwap)
@@ -25,7 +26,7 @@ int parseHexVector(const char *str, uint32_t *vectorValues, bool endianSwap)
 	int digit;
 	uint32_t laneValue;
 	
-	for (lane = 15; lane >= 0 && *c; lane--)
+	for (lane = NUM_VECTOR_LANES - 1; lane >= 0 && *c; lane--)
 	{
 		laneValue = 0;
 		for (digit = 0; digit < 8; digit++)
