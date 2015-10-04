@@ -64,7 +64,7 @@ static uint8_t gCommandResult;
 static uint32_t gResetDelay;
 static uint8_t gCurrentCommand[6];
 static uint32_t gCurrentCommandLength;
-static bool gIsReset = false;
+static bool gIsReady = false;
 
 int openBlockDevice(const char *filename)
 {
@@ -110,7 +110,7 @@ static void processCommand(const uint8_t *command)
 	switch (command[0] & 0x3f)
 	{
 		case CMD_GO_IDLE:
-			gIsReset = true;
+			gIsReady = true;
 			gCurrentState = STATE_SEND_RESULT;
 			gCommandResult = 1;
 			break;
@@ -128,9 +128,9 @@ static void processCommand(const uint8_t *command)
 			break;
 
 		case CMD_SET_BLOCKLEN: 
-			if (!gIsReset)
+			if (!gIsReady)
 			{
-				printf("set block length command issued, card not ready\n");
+				printf("CMD_SET_BLOCKLEN: card not ready\n");
 				exit(1);
 			}
 
@@ -140,9 +140,9 @@ static void processCommand(const uint8_t *command)
 			break;
 			
 		case CMD_READ_SINGLE_BLOCK: 
-			if (!gIsReset)
+			if (!gIsReady)
 			{
-				printf("set block length command issued, card not ready\n");
+				printf("CMD_READ_SINGLE_BLOCK: card not ready\n");
 				exit(1);
 			}
 

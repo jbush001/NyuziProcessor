@@ -25,6 +25,7 @@
 #include "cosimulation.h"
 #include "device.h"
 #include "fbwindow.h"
+#include "sdmmc.h"
 
 extern void remoteGdbMainLoop(Core *core, int enableFbWindow);
 
