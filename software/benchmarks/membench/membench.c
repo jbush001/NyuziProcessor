@@ -142,11 +142,75 @@ void writeTest()
 	}
 }
 
+void ioReadTest()
+{
+	volatile uint32_t * const ioBase = (volatile uint32_t*) 0xffff0004;
+	int transferCount;
+	int startTime;
+	int endTime;
+	int total;
+
+	startTime = getTime();
+	startParallel();
+	for (transferCount = 0; transferCount < 1024; transferCount += 8)
+	{
+		total += *ioBase;
+		total += *ioBase;
+		total += *ioBase;
+		total += *ioBase;
+		total += *ioBase;
+		total += *ioBase;
+		total += *ioBase;
+		total += *ioBase;
+	}
+	endParallel();
+	
+	if (currentThread() == 0)
+	{
+		endTime = getTime();
+		printf("ioRead: %g cycles/transfer\n", (float)(endTime - startTime) 
+			/ (transferCount * NUM_THREADS));
+	}
+}
+
+void ioWriteTest()
+{
+	volatile uint32_t * const ioBase = (volatile uint32_t*) 0xffff0004;
+	int transferCount;
+	int startTime;
+	int endTime;
+	int total;
+
+	startTime = getTime();
+	startParallel();
+	for (transferCount = 0; transferCount < 1024; transferCount += 8)
+	{
+		*ioBase = 0;
+		*ioBase = 0;
+		*ioBase = 0;
+		*ioBase = 0;
+		*ioBase = 0;
+		*ioBase = 0;
+		*ioBase = 0;
+		*ioBase = 0;
+	}
+	endParallel();
+	
+	if (currentThread() == 0)
+	{
+		endTime = getTime();
+		printf("ioWrite: %g cycles/transfer\n", (float)(endTime - startTime) 
+			/ (transferCount * NUM_THREADS));
+	}
+}
+
 int main(int argc, const char *argv[])
 {
 	copyTest();
 	readTest();
 	writeTest();
+	ioReadTest();
+	ioWriteTest();
 	
 	return 0;
 }
