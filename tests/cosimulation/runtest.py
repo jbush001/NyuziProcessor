@@ -69,8 +69,13 @@ for source_file in files:
 			
 		print got
 
+	p2.wait()
+	if p2.returncode != 0:
+		print 'FAIL: cosimulation mismatch', p2.returncode
+		sys.exit(p2.returncode)
+
 	if not test_harness.assert_files_equal(VERILATOR_MEM_DUMP, EMULATOR_MEM_DUMP):
-		print "FAIL: simulator final memory contents do not match"
+		print 'FAIL: simulator final memory contents do not match'
 		sys.exit(1)
 	else:
 		print 'PASS'
