@@ -71,7 +71,7 @@ for source_file in files:
 
 	p2.wait()
 	if p2.returncode != 0:
-		print 'FAIL: cosimulation mismatch', p2.returncode
+		print 'FAIL: cosimulation mismatch'
 		sys.exit(p2.returncode)
 
 	if not test_harness.assert_files_equal(VERILATOR_MEM_DUMP, EMULATOR_MEM_DUMP):
