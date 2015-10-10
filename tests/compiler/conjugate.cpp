@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
 {
 	matrix_t A = genSpace();
 
-	printf("%d ", (int) A.rows[0][0]); // CHECK: 17
+	printf("RESULT: %d ", (int) A.rows[0][0]); // CHECK: RESULT: 17
 }
 
 

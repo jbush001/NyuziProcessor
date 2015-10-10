@@ -246,5 +246,8 @@ int main(int argc, char *argv[])
 	if (blockDeviceOpen)
 		closeBlockDevice();
 	
+	if (stoppedOnFault(core))
+		return 1;
+	
 	return 0;
 }

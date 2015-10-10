@@ -57,8 +57,15 @@ def run_emulator(block_device=None, dump_file=None, dump_base=None, dump_length=
 		args += [ '-d', dump_file + ',' + hex(dump_base) + ',' + hex(dump_length) ]
 
 	args += [ HEX_FILE ]
+
+	try:
+		output = subprocess.check_output(args)
+	except subprocess.CalledProcessError as err:
+		print 'Emulator returned error'
+		print err.output
+		raise
 	
-	return subprocess.check_output(args)
+	return output
 	
 def run_verilator(block_device=None, dump_file=None, dump_base=None, dump_length=None, extra_args=None):
 	args = [BIN_DIR + 'verilator_model']
@@ -73,7 +80,12 @@ def run_verilator(block_device=None, dump_file=None, dump_base=None, dump_length
 		args += extra_args
 
 	args += ['+bin=' + HEX_FILE]
-	return subprocess.check_output(args)
+	output = subprocess.check_output(args)
+	if output.find('***HALTED***') == -1:
+		print output
+		raise Exception('Program did not halt normally')
+	
+	return output
 	
 def assert_files_equal(file1, file2):
 	len1 = os.stat(file1).st_size

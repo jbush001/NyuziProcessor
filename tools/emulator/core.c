@@ -73,6 +73,7 @@ struct Core
 	bool stopOnFault;
 	bool enableTracing;
 	bool cosimEnable;
+	bool stoppedOnFault;
 	int64_t totalInstructions;
 #ifdef DUMP_INSTRUCTION_STATS
 	int64_t stat_vector_inst;
@@ -253,6 +254,11 @@ uint32_t getTotalThreads(const Core *core)
 bool coreHalted(const Core *core)
 {
 	return core->threadEnableMask == 0;
+}
+
+bool stoppedOnFault(const Core *core)
+{
+	return core->stoppedOnFault;
 }
 
 uint32_t executeInstructions(Core *core, uint32_t threadId, uint32_t totalInstructions)
@@ -499,6 +505,7 @@ static void memoryAccessFault(Thread *thread, uint32_t address, bool isLoad, Fau
 			thread->id, thread->currentPc - 4, address);
 		printThreadRegisters(thread);
 		thread->core->halt = true;
+		thread->core->stoppedOnFault = true;
 	}
 	else
 	{
@@ -523,6 +530,7 @@ static void illegalInstruction(Thread *thread, uint32_t instruction)
 			thread->currentPc - 4);
 		printThreadRegisters(thread);
 		thread->core->halt = true;
+		thread->core->stoppedOnFault = true;
 	}
 	else
 	{
@@ -638,6 +646,7 @@ static uint32_t readMemoryWord(const Thread *thread, uint32_t address)
 		printf("Load Access Violation %08x, pc %08x\n", address, thread->currentPc - 4);
 		printThreadRegisters(thread);
 		thread->core->halt = true;	// XXX Perhaps should stop some other way...
+		thread->core->stoppedOnFault = true;
 		return 0;
 	}
 
@@ -973,6 +982,7 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instruction)
 			address, thread->currentPc - 4);
 		printThreadRegisters(thread);
 		thread->core->halt = true;	// XXX Perhaps should stop some other way...
+		thread->core->stoppedOnFault = true;
 		return;
 	}
 
@@ -1138,6 +1148,7 @@ static void executeVectorLoadStoreInst(Thread *thread, uint32_t instruction)
 					address, thread->currentPc - 4);
 				printThreadRegisters(thread);
 				thread->core->halt = true;	// XXX Perhaps should stop some other way...
+				thread->core->stoppedOnFault = true;
 				return;
 			}
 
@@ -1181,6 +1192,7 @@ static void executeVectorLoadStoreInst(Thread *thread, uint32_t instruction)
 					address, thread->currentPc - 4);
 				printThreadRegisters(thread);
 				thread->core->halt = true;	// XXX Perhaps should stop some other way...
+				thread->core->stoppedOnFault = true;
 				return;
 			}
 

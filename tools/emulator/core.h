@@ -40,6 +40,7 @@ void enableCosimulation(Core*);
 void cosimInterrupt(Core*, uint32_t threadId, uint32_t pc);
 uint32_t getTotalThreads(const Core*);
 bool coreHalted(const Core*);
+bool stoppedOnFault(const Core*);
 
 //
 // Returns: 
