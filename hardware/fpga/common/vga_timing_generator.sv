@@ -55,11 +55,12 @@ module vga_timing_generator(
 	logic vvisible;
 	logic[10:0] horizontal_counter;
 	logic[10:0] vertical_counter;
+	logic hvisible_end;
+	logic vvisible_end;
 	
 	assign in_visible_region = hvisible && vvisible;
-
-	wire hvisible_end = horizontal_counter == HVISIBLE_END;
-	wire vvisible_end = vertical_counter == VVISIBLE_END;
+	assign hvisible_end = horizontal_counter == HVISIBLE_END;
+	assign vvisible_end = vertical_counter == VVISIBLE_END;
 	assign new_frame = !vertical_counter && !horizontal_counter && pixel_enable;
 
 	always_ff @(posedge clk, posedge reset)

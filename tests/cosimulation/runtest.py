@@ -34,7 +34,7 @@ EMULATOR_MEM_DUMP='obj/mmem.bin'
 
 verilator_args = [
 	'../../bin/verilator_model',
-	'+regtrace',
+	'+trace',
 	'+simcycles=2000000',
 	'+memdumpfile=' + VERILATOR_MEM_DUMP,
 	'+memdumpbase=800000',

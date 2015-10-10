@@ -50,16 +50,25 @@ module axi_interconnect(
 		STATE_ACTIVE_BURST
 	} burst_state_t;
 
+	burst_state_t write_state;
+	logic[31:0] write_burst_address;
+	logic[7:0] write_burst_length;	// Like axi_awlen, this is number of transfers minus 1
+	logic write_master_select;
+	logic read_selected_slave;  // Which slave interface we are accepting request from
+	logic read_selected_master; // Which master interface we are routing to
+	logic[7:0] read_burst_length;	// Like axi_arlen, this is number of transfers minus one
+	logic[31:0] read_burst_address;
+	burst_state_t read_state;
+	logic axi_arready_m;
+	logic axi_rready_m;
+	logic axi_rvalid_m;
+
 	//
 	// Write handling. Only slave interface 0 does writes.
 	// XXX I don't explicitly handle the response in the state machine, but it
 	// works because everything is in the correct state when the transaction is finished.
 	// This could introduce a subtle bug if the behavior of the core changed.
 	//
-	burst_state_t write_state;
-	logic[31:0] write_burst_address;
-	logic[7:0] write_burst_length;	// Like axi_awlen, this is number of transfers minus 1
-	logic write_master_select;
 
 	// Since only slave interface 0 supports writes, we can just hard wire these.
 	assign axi_bus_m0.m_awaddr = write_burst_address;
@@ -145,14 +154,9 @@ module axi_interconnect(
 	//
 	// Read handling.  Slave interface 1 has priority.
 	//
-	logic read_selected_slave;  // Which slave interface we are accepting request from
-	logic read_selected_master; // Which master interface we are routing to
-	logic[7:0] read_burst_length;	// Like axi_arlen, this is number of transfers minus one
-	logic[31:0] read_burst_address;
-	burst_state_t read_state;
-	wire axi_arready_m = read_selected_master ? axi_bus_m1.s_arready : axi_bus_m0.s_arready;
-	wire axi_rready_m = read_selected_master ? axi_bus_m1.m_rready : axi_bus_m0.m_rready;
-	wire axi_rvalid_m = read_selected_master ? axi_bus_m1.s_rvalid : axi_bus_m0.s_rvalid;
+	assign axi_arready_m = read_selected_master ? axi_bus_m1.s_arready : axi_bus_m0.s_arready;
+	assign axi_rready_m = read_selected_master ? axi_bus_m1.m_rready : axi_bus_m0.m_rready;
+	assign axi_rvalid_m = read_selected_master ? axi_bus_m1.s_rvalid : axi_bus_m0.s_rvalid;
 	
 	always_ff @(posedge clk, posedge reset)
 	begin

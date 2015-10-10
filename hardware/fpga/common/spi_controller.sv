@@ -29,7 +29,7 @@ module spi_controller
 	input				io_read_en,	
 	input [31:0]		io_write_data,
 	input				io_write_en,
-	output reg[31:0] 	io_read_data,
+	output logic[31:0] 	io_read_data,
 
 	// SPI interface
 	output logic        spi_clk,

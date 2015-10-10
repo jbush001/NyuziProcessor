@@ -22,7 +22,7 @@ import test_harness
 
 test_harness.assemble_test('dinvalidate.s')
 result = test_harness.run_verilator(dump_file='obj/vmem.bin', dump_base=0x100, dump_length=4, 
-	extra_args=['+regtrace=1', '+autoflushl2=1'])
+	extra_args=['+trace=1', '+autoflushl2=1'])
 
 # 1. Check that the proper value was read into s2
 if result.find('02 deadbeef') == -1:

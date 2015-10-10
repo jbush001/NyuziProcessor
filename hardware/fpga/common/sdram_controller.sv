@@ -110,21 +110,21 @@ module sdram_controller
 	logic[ROW_ADDR_WIDTH - 1:0] active_row[NUM_BANKS];
 	logic bank_active[NUM_BANKS];
 	logic output_enable;
-	wire[DATA_WIDTH - 1:0] write_data;
+	logic[DATA_WIDTH - 1:0] write_data;
 	logic[INTERNAL_ADDR_WIDTH - 1:0] write_address;
 	logic[7:0] write_length;	// Like axi_bus.m_awlen, is num transfers - 1
 	logic write_pending;
 	logic[INTERNAL_ADDR_WIDTH - 1:0] read_address;
 	logic[7:0] read_length;	// Like axi_bus.m_arlen, is num_transfers - 1
 	logic read_pending;
-	wire lfifo_empty;
-	wire sfifo_full;
-	wire[$clog2(NUM_BANKS) - 1:0] write_bank;
-	wire[COL_ADDR_WIDTH - 1:0] write_column;
-	wire[ROW_ADDR_WIDTH - 1:0] write_row;
-	wire[$clog2(NUM_BANKS) - 1:0] read_bank;
-	wire[COL_ADDR_WIDTH - 1:0] read_column;
-	wire[ROW_ADDR_WIDTH - 1:0] read_row;
+	logic lfifo_empty;
+	logic sfifo_full;
+	logic[$clog2(NUM_BANKS) - 1:0] write_bank;
+	logic[COL_ADDR_WIDTH - 1:0] write_column;
+	logic[ROW_ADDR_WIDTH - 1:0] write_row;
+	logic[$clog2(NUM_BANKS) - 1:0] read_bank;
+	logic[COL_ADDR_WIDTH - 1:0] read_column;
+	logic[ROW_ADDR_WIDTH - 1:0] read_row;
 	logic lfifo_enqueue;
 	logic access_is_read_ff;
 	logic access_is_read_nxt;

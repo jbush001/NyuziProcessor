@@ -34,8 +34,9 @@ module uart_transmit
 	logic[9:0] tx_shift;
 	logic[3:0] shift_count;
 	logic[31:0] baud_divider;
+	logic transmit_active;
 
-	wire transmit_active = shift_count != 0;
+	assign transmit_active = shift_count != 0;
 	assign uart_tx = transmit_active ? tx_shift[0] : 1'b1;
 	assign tx_ready = !transmit_active;
 	

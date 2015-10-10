@@ -27,11 +27,11 @@ module uart
 	input				reset,
 	
 	// IO bus interface
-	input [31:0]		io_address,
-	input				io_read_en,	
-	input [31:0]		io_write_data,
-	input				io_write_en,
-	output reg[31:0] 	io_read_data,
+	input [31:0]        io_address,
+	input               io_read_en,	
+	input [31:0]        io_write_data,
+	input               io_write_en,
+	output logic[31:0]  io_read_data,
 	
 	// UART interface
 	output				uart_tx,
@@ -42,23 +42,23 @@ module uart
 	localparam TX_REG = BASE_ADDRESS + 8;
 	localparam FIFO_LENGTH = 8;
 
-	/*AUTOWIRE*/
+	/*AUTOLOGIC*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	logic		rx_char_valid;		// From uart_receive of uart_receive.v
-	wire		tx_ready;		// From uart_transmit of uart_transmit.v
+	logic		tx_ready;		// From uart_transmit of uart_transmit.v
 	// End of automatics
-	wire[7:0] rx_fifo_char;
-	wire rx_fifo_empty;
-	wire rx_fifo_read;
+	logic[7:0] rx_fifo_char;
+	logic rx_fifo_empty;
+	logic rx_fifo_read;
 	logic rx_fifo_full;
 	logic rx_fifo_overrun;
 	logic rx_fifo_overrun_dq;
 	logic rx_fifo_frame_error;
 
-	wire[7:0] rx_char;
-	wire rx_frame_error;
-	wire[7:0] tx_char;
-	wire tx_enable;
+	logic[7:0] rx_char;
+	logic rx_frame_error;
+	logic[7:0] tx_char;
+	logic tx_enable;
 
 	always_comb
 	begin
@@ -93,7 +93,7 @@ module uart
 							       // Outputs
 							       .rx_char		(rx_char[7:0]),
 							       .rx_char_valid	(rx_char_valid),
-								   .frame_error (rx_frame_error),
+							       .rx_frame_error	(rx_frame_error),
 							       // Inputs
 							       .clk		(clk),
 							       .reset		(reset),

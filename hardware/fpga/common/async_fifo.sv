@@ -45,19 +45,24 @@ module async_fifo
 
 	localparam ADDR_WIDTH = $clog2(NUM_ENTRIES);
 
-	wire[ADDR_WIDTH - 1:0] write_ptr_sync;
-	reg[ADDR_WIDTH - 1:0]  read_ptr;
-	reg[ADDR_WIDTH - 1:0] read_ptr_gray;
-	wire[ADDR_WIDTH - 1:0]  read_ptr_nxt = read_ptr + 1;
-	wire[ADDR_WIDTH - 1:0] read_ptr_gray_nxt = read_ptr_nxt ^ (read_ptr_nxt >> 1);
-	wire reset_rsync;
-	wire[ADDR_WIDTH - 1:0] read_ptr_sync;
-	reg[ADDR_WIDTH - 1:0] write_ptr;
-	reg[ADDR_WIDTH - 1:0] write_ptr_gray;
-	wire[ADDR_WIDTH - 1:0] write_ptr_nxt = write_ptr + 1;
-	wire[ADDR_WIDTH - 1:0] write_ptr_gray_nxt = write_ptr_nxt ^ (write_ptr_nxt >> 1);
-	wire reset_wsync;
-	reg [WIDTH - 1:0] fifo_data[0:NUM_ENTRIES - 1];
+	logic[ADDR_WIDTH - 1:0] write_ptr_sync;
+	logic[ADDR_WIDTH - 1:0]  read_ptr;
+	logic[ADDR_WIDTH - 1:0] read_ptr_gray;
+	logic[ADDR_WIDTH - 1:0]  read_ptr_nxt;
+	logic[ADDR_WIDTH - 1:0] read_ptr_gray_nxt;
+	logic reset_rsync;
+	logic[ADDR_WIDTH - 1:0] read_ptr_sync;
+	logic[ADDR_WIDTH - 1:0] write_ptr;
+	logic[ADDR_WIDTH - 1:0] write_ptr_gray;
+	logic[ADDR_WIDTH - 1:0] write_ptr_nxt;
+	logic[ADDR_WIDTH - 1:0] write_ptr_gray_nxt;
+	logic reset_wsync;
+	logic [WIDTH - 1:0] fifo_data[0:NUM_ENTRIES - 1];
+
+	assign read_ptr_nxt = read_ptr + 1;
+	assign read_ptr_gray_nxt = read_ptr_nxt ^ (read_ptr_nxt >> 1);
+	assign write_ptr_nxt = write_ptr + 1;
+	assign write_ptr_gray_nxt = write_ptr_nxt ^ (write_ptr_nxt >> 1);
 
 	initial
 	begin

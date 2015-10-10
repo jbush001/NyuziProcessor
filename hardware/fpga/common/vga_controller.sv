@@ -58,16 +58,16 @@ module vga_controller(
 		STATE_BURST_ACTIVE
 	} frame_state_t;
 
-	/*AUTOWIRE*/
+	/*AUTOLOGIC*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	wire		in_visible_region;	// From timing_generator of vga_timing_generator.v
-	wire		new_frame;		// From timing_generator of vga_timing_generator.v
+	logic		in_visible_region;	// From timing_generator of vga_timing_generator.v
+	logic		new_frame;		// From timing_generator of vga_timing_generator.v
 	logic		pixel_enable;		// From timing_generator of vga_timing_generator.v
 	// End of automatics
 	logic[31:0] vram_addr;
-	wire[7:0] _ignore_alpha;
-	wire pixel_fifo_empty;
-	wire pixel_fifo_almost_empty;
+	logic[7:0] _ignore_alpha;
+	logic pixel_fifo_empty;
+	logic pixel_fifo_almost_empty;
 	logic[31:0] fb_base_address;
 	frame_state_t axi_state;
 	logic[7:0] burst_count;

@@ -41,8 +41,8 @@ module axi_async_bridge
 	//
 	// Write address from master->slave
 	//
-	wire write_address_full;
-	wire write_address_empty;
+	logic write_address_full;
+	logic write_address_empty;
 
 	async_fifo #(ADDR_WIDTH + 8, CONTROL_FIFO_LENGTH) write_address_fifo(
 		.reset(reset),
@@ -61,8 +61,8 @@ module axi_async_bridge
 	//
 	// Write data from master->slave
 	//
-	wire write_data_full;
-	wire write_data_empty;
+	logic write_data_full;
+	logic write_data_empty;
 
 	async_fifo #(DATA_WIDTH + 1, DATA_FIFO_LENGTH) write_data_fifo(
 		.reset(reset),
@@ -81,8 +81,8 @@ module axi_async_bridge
 	//
 	// Write response from slave->master
 	//
-	wire write_response_full;
-	wire write_response_empty;
+	logic write_response_full;
+	logic write_response_empty;
 	
 	async_fifo #(1, CONTROL_FIFO_LENGTH) write_response_fifo(
 		.reset(reset),
@@ -101,8 +101,8 @@ module axi_async_bridge
 	// 
 	// Read address from master->slave
 	//
-	wire read_address_full;
-	wire read_address_empty;
+	logic read_address_full;
+	logic read_address_empty;
 
 	async_fifo #(ADDR_WIDTH + 8, CONTROL_FIFO_LENGTH) read_address_fifo(
 		.reset(reset),
@@ -121,8 +121,8 @@ module axi_async_bridge
 	// 
 	// Read data from slave->master
 	//
-	wire read_data_full;
-	wire read_data_empty;
+	logic read_data_full;
+	logic read_data_empty;
 	
 	async_fifo #(DATA_WIDTH, DATA_FIFO_LENGTH) read_data_fifo(
 		.reset(reset),

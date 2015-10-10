@@ -30,7 +30,7 @@ bin/ directory. It accepts the following command line arguments:
 |Argument|Value|
 |--------|-----|
 | +bin=&lt;hexfile&gt; | Load this file into simulator memory at address 0. Each line contains a 32-bit little endian hex encoded value. |
-| +regtrace | Dump register and memory transfers to standard out.  The cosimulation tests use this to verify operation. |
+| +trace | Dump register and memory transfers to standard out.  The cosimulation tests use this to verify operation. |
 | +statetrace | Dump thread states each cycle into a file called 'statetrace.txt'.  Used for visualizer app (tools/visualizer). |
 | +memdumpfile=&lt;filename&gt; | Dump simulator memory to a binary file at the end of simulation. The next two parameters must also be specified for this to work |
 | +memdumpbase=&lt;baseaddress&gt;| Base address in memory to start dumping (hexadecimal) |
@@ -56,7 +56,7 @@ To write a waveform trace, set the environment variable VERILATOR_TRACE
 and rebuild:
 
     make clean
-    VERILATOR_TRACE=1 make
+    DUMP_WAVEFORM=1 make
 
 The simulator writes a file called `trace.vcd` in 
 "[value change dump](http://en.wikipedia.org/wiki/Value_change_dump)" 

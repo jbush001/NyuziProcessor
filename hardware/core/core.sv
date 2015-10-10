@@ -49,7 +49,7 @@ module core
 	scalar_t cr_fault_handler;
 	scalar_t cr_eret_address[`THREADS_PER_CORE];
 
-	/*AUTOWIRE*/
+	/*AUTOLOGIC*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	logic		dd_access_fault;	// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_cache_miss;		// From dcache_data_stage of dcache_data_stage.v
@@ -57,8 +57,8 @@ module core
 	logic		dd_cache_miss_synchronized;// From dcache_data_stage of dcache_data_stage.v
 	thread_idx_t	dd_cache_miss_thread_idx;// From dcache_data_stage of dcache_data_stage.v
 	control_register_t dd_creg_index;	// From dcache_data_stage of dcache_data_stage.v
-	wire		dd_creg_read_en;	// From dcache_data_stage of dcache_data_stage.v
-	wire		dd_creg_write_en;	// From dcache_data_stage of dcache_data_stage.v
+	logic		dd_creg_read_en;	// From dcache_data_stage of dcache_data_stage.v
+	logic		dd_creg_write_en;	// From dcache_data_stage of dcache_data_stage.v
 	scalar_t	dd_creg_write_val;	// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_dinvalidate_en;	// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_flush_en;		// From dcache_data_stage of dcache_data_stage.v
@@ -66,9 +66,9 @@ module core
 	decoded_instruction_t dd_instruction;	// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_instruction_valid;	// From dcache_data_stage of dcache_data_stage.v
 	scalar_t	dd_io_addr;		// From dcache_data_stage of dcache_data_stage.v
-	wire		dd_io_read_en;		// From dcache_data_stage of dcache_data_stage.v
+	logic		dd_io_read_en;		// From dcache_data_stage of dcache_data_stage.v
 	thread_idx_t	dd_io_thread_idx;	// From dcache_data_stage of dcache_data_stage.v
-	wire		dd_io_write_en;		// From dcache_data_stage of dcache_data_stage.v
+	logic		dd_io_write_en;		// From dcache_data_stage of dcache_data_stage.v
 	scalar_t	dd_io_write_value;	// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_is_io_address;	// From dcache_data_stage of dcache_data_stage.v
 	vector_lane_mask_t dd_lane_mask;	// From dcache_data_stage of dcache_data_stage.v
@@ -82,7 +82,7 @@ module core
 	thread_idx_t	dd_store_bypass_thread_idx;// From dcache_data_stage of dcache_data_stage.v
 	cache_line_data_t dd_store_data;	// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_store_en;		// From dcache_data_stage of dcache_data_stage.v
-	wire [`CACHE_LINE_BYTES-1:0] dd_store_mask;// From dcache_data_stage of dcache_data_stage.v
+	logic [`CACHE_LINE_BYTES-1:0] dd_store_mask;// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_store_synchronized;	// From dcache_data_stage of dcache_data_stage.v
 	thread_idx_t	dd_store_thread_idx;	// From dcache_data_stage of dcache_data_stage.v
 	subcycle_t	dd_subcycle;		// From dcache_data_stage of dcache_data_stage.v
@@ -207,25 +207,25 @@ module core
 	scalar_t	ix_rollback_pc;		// From int_execute_stage of int_execute_stage.v
 	subcycle_t	ix_subcycle;		// From int_execute_stage of int_execute_stage.v
 	thread_idx_t	ix_thread_idx;		// From int_execute_stage of int_execute_stage.v
-	wire		l2i_dcache_lru_fill_en;	// From l2_cache_interface of l2_cache_interface.v
+	logic		l2i_dcache_lru_fill_en;	// From l2_cache_interface of l2_cache_interface.v
 	l1d_set_idx_t	l2i_dcache_lru_fill_set;// From l2_cache_interface of l2_cache_interface.v
 	thread_bitmap_t	l2i_dcache_wake_bitmap;	// From l2_cache_interface of l2_cache_interface.v
 	cache_line_data_t l2i_ddata_update_data;// From l2_cache_interface of l2_cache_interface.v
 	logic		l2i_ddata_update_en;	// From l2_cache_interface of l2_cache_interface.v
 	l1d_set_idx_t	l2i_ddata_update_set;	// From l2_cache_interface of l2_cache_interface.v
 	l1d_way_idx_t	l2i_ddata_update_way;	// From l2_cache_interface of l2_cache_interface.v
-	wire [`L1D_WAYS-1:0] l2i_dtag_update_en_oh;// From l2_cache_interface of l2_cache_interface.v
+	logic [`L1D_WAYS-1:0] l2i_dtag_update_en_oh;// From l2_cache_interface of l2_cache_interface.v
 	l1d_set_idx_t	l2i_dtag_update_set;	// From l2_cache_interface of l2_cache_interface.v
 	l1d_tag_t	l2i_dtag_update_tag;	// From l2_cache_interface of l2_cache_interface.v
 	logic		l2i_dtag_update_valid;	// From l2_cache_interface of l2_cache_interface.v
-	wire		l2i_icache_lru_fill_en;	// From l2_cache_interface of l2_cache_interface.v
+	logic		l2i_icache_lru_fill_en;	// From l2_cache_interface of l2_cache_interface.v
 	l1i_set_idx_t	l2i_icache_lru_fill_set;// From l2_cache_interface of l2_cache_interface.v
 	thread_bitmap_t	l2i_icache_wake_bitmap;	// From l2_cache_interface of l2_cache_interface.v
 	cache_line_data_t l2i_idata_update_data;// From l2_cache_interface of l2_cache_interface.v
 	logic		l2i_idata_update_en;	// From l2_cache_interface of l2_cache_interface.v
 	l1i_set_idx_t	l2i_idata_update_set;	// From l2_cache_interface of l2_cache_interface.v
 	l1i_way_idx_t	l2i_idata_update_way;	// From l2_cache_interface of l2_cache_interface.v
-	wire [`L1I_WAYS-1:0] l2i_itag_update_en;// From l2_cache_interface of l2_cache_interface.v
+	logic [`L1I_WAYS-1:0] l2i_itag_update_en;// From l2_cache_interface of l2_cache_interface.v
 	l1i_set_idx_t	l2i_itag_update_set;	// From l2_cache_interface of l2_cache_interface.v
 	l1i_tag_t	l2i_itag_update_tag;	// From l2_cache_interface of l2_cache_interface.v
 	logic		l2i_itag_update_valid;	// From l2_cache_interface of l2_cache_interface.v
@@ -247,9 +247,9 @@ module core
 	logic		perf_instruction_retire;// From writeback_stage of writeback_stage.v
 	logic		perf_store_count;	// From dcache_data_stage of dcache_data_stage.v
 	logic		perf_store_rollback;	// From writeback_stage of writeback_stage.v
-	wire		sq_rollback_en;		// From l2_cache_interface of l2_cache_interface.v
+	logic		sq_rollback_en;		// From l2_cache_interface of l2_cache_interface.v
 	cache_line_data_t sq_store_bypass_data;	// From l2_cache_interface of l2_cache_interface.v
-	wire [`CACHE_LINE_BYTES-1:0] sq_store_bypass_mask;// From l2_cache_interface of l2_cache_interface.v
+	logic [`CACHE_LINE_BYTES-1:0] sq_store_bypass_mask;// From l2_cache_interface of l2_cache_interface.v
 	logic		sq_store_sync_success;	// From l2_cache_interface of l2_cache_interface.v
 	thread_bitmap_t	ts_fetch_en;		// From thread_select_stage of thread_select_stage.v
 	decoded_instruction_t ts_instruction;	// From thread_select_stage of thread_select_stage.v

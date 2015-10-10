@@ -46,21 +46,21 @@ module debug_trace
 	localparam STATE_DUMP = 1;
 	localparam STATE_STOPPED = 2;
 
-	reg[1:0] state = STATE_CAPTURE;
-	reg wrapped = 0;
-	reg[CAPTURE_INDEX_WIDTH - 1:0] capture_entry;
-	reg[CAPTURE_INDEX_WIDTH - 1:0] dump_entry;
-	reg[$clog2(CAPTURE_WIDTH_BYTES) - 1:0] dump_byte;
-	reg[CAPTURE_INDEX_WIDTH - 1:0] dump_entry_nxt;
-	reg[$clog2(CAPTURE_WIDTH_BYTES) - 1:0] dump_byte_nxt;
-	reg tx_enable = 0;
-	wire[7:0] tx_char;
-	wire[CAPTURE_WIDTH_BITS - 1:0] dump_value;
+	logic[1:0] state;
+	logic wrapped;
+	logic[CAPTURE_INDEX_WIDTH - 1:0] capture_entry;
+	logic[CAPTURE_INDEX_WIDTH - 1:0] dump_entry;
+	logic[$clog2(CAPTURE_WIDTH_BYTES) - 1:0] dump_byte;
+	logic[CAPTURE_INDEX_WIDTH - 1:0] dump_entry_nxt;
+	logic[$clog2(CAPTURE_WIDTH_BYTES) - 1:0] dump_byte_nxt;
+	logic tx_enable = 0;
+	logic[7:0] tx_char;
+	logic[CAPTURE_WIDTH_BITS - 1:0] dump_value;
 
 
-	/*AUTOWIRE*/
+	/*AUTOLOGIC*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	wire		tx_ready;		// From uart_transmit of uart_transmit.v
+	logic		tx_ready;		// From uart_transmit of uart_transmit.v
 	// End of automatics
 
 	sram_1r1w #(.DATA_WIDTH(CAPTURE_WIDTH_BITS), .SIZE(CAPTURE_SIZE)) capture_mem(
@@ -128,12 +128,12 @@ module debug_trace
 
 		if (reset)
 		begin
+			state <= STATE_CAPTURE;
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			capture_entry <= {CAPTURE_INDEX_WIDTH{1'b0}};
 			dump_byte <= {(1+($clog2(CAPTURE_WIDTH_BYTES)-1)){1'b0}};
 			dump_entry <= {CAPTURE_INDEX_WIDTH{1'b0}};
-			state <= 2'h0;
 			tx_enable <= 1'h0;
 			wrapped <= 1'h0;
 			// End of automatics

@@ -26,7 +26,7 @@ module uart_receive
 	input				uart_rx,
 	output[7:0]			rx_char,
 	output logic		rx_char_valid,
-	output logic		frame_error);
+	output logic		rx_frame_error);
 
 	typedef enum {
 		STATE_WAIT_START,
@@ -48,7 +48,7 @@ module uart_receive
 
 	// If it's out of sync, rx_sync is 0 from a new start bit.
 	// Sampling it at the end may be sufficient to indicate frame error.
-	assign frame_error = !rx_sync;
+	assign rx_frame_error = !rx_sync;
 
 	synchronizer #(.RESET_STATE(1)) rx_synchronizer(
 		.clk(clk),

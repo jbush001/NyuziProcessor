@@ -21,7 +21,7 @@ MIN_VERILATOR_VERSION=876
 VERILATOR_OPTIONS=--unroll-count 512 --assert -Werror-IMPLICIT -Wwarn-syncasyncnet -Wwarn-blkseq \
 	-Icore -y testbench -y fpga/common -DSIMULATION=1 -Mdir obj
 
-ifeq (${VERILATOR_TRACE},1)
+ifeq (${DUMP_WAVEFORM},1)
 	VERILATOR_OPTIONS+=--trace --trace-structs
 endif
 
@@ -33,13 +33,14 @@ $(TARGET): $(BINDIR) FORCE test_verilator_version
 	cp obj/Vverilator_tb $(TARGET)
 
 core/srams.inc: $(TARGET)
-	$(TARGET) +dumpmems=1 | python ../tools/misc/extract_mems.py > core/srams.inc
+	$(TARGET) +dumpmems | python ../tools/misc/extract_mems.py > core/srams.inc
 
 # Expands AUTOWIRE/AUTOINST/etc. Requires emacs and verilog-mode module installed.
 autos: FORCE
 	emacs --batch core/*.sv -f verilog-batch-auto -f save-buffer
 	emacs --batch testbench/*.sv  -f verilog-batch-auto -f save-buffer
 	emacs --batch fpga/common/*.sv  -f verilog-batch-auto -f save-buffer
+	emacs --batch fpga/de2-115/*.sv  -f verilog-batch-auto -f save-buffer
 
 test_verilator_version:
 	@if [ $$(verilator --version | cut -f2 -d ' ' | cut -f2 -d .) -lt  $(MIN_VERILATOR_VERSION) ]; \

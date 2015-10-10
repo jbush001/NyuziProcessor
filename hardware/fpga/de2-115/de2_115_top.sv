@@ -72,15 +72,15 @@ module de2_115_top(
 	logic [31:0] fb_new_base;
 	logic frame_toggle;
 
-	/*AUTOWIRE*/
+	/*AUTOLOGIC*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	scalar_t	io_address;		// From nyuzi of nyuzi.v
-	wire		io_read_en;		// From nyuzi of nyuzi.v
+	logic		io_read_en;		// From nyuzi of nyuzi.v
 	scalar_t	io_write_data;		// From nyuzi of nyuzi.v
-	wire		io_write_en;		// From nyuzi of nyuzi.v
+	logic		io_write_en;		// From nyuzi of nyuzi.v
 	logic		pc_event_dram_page_hit;	// From sdram_controller of sdram_controller.v
 	logic		pc_event_dram_page_miss;// From sdram_controller of sdram_controller.v
-	wire		processor_halt;		// From nyuzi of nyuzi.v
+	logic		processor_halt;		// From nyuzi of nyuzi.v
 	// End of automatics
 
 	axi4_interface axi_bus_m0();
@@ -88,9 +88,6 @@ module de2_115_top(
 	axi4_interface axi_bus_s0();
 	axi4_interface axi_bus_s1();
 	logic reset;
-	wire[31:0] loader_addr;
-	wire[31:0] loader_data;
-	wire loader_we;
 	logic clk;
 	scalar_t io_read_data;
 	scalar_t uart_read_data;
@@ -179,7 +176,7 @@ module de2_115_top(
 				   .dram_cas_n		(dram_cas_n),
 				   .dram_we_n		(dram_we_n),
 				   .dram_ba		(dram_ba[1:0]),
-				   .dram_addr		(dram_addr[12:0]),
+				   .dram_addr		(dram_addr[`SDRAM_ADDR_WIDTH-1:0]),
 				   .pc_event_dram_page_miss(pc_event_dram_page_miss),
 				   .pc_event_dram_page_hit(pc_event_dram_page_hit),
 				   // Inouts
@@ -286,6 +283,6 @@ module de2_115_top(
 endmodule
 
 // Local Variables:
-// verilog-library-flags:("-y ../core" "-y ../testbench")
+// verilog-library-flags:("-y ../../core" "-y ../../testbench" "-y ../common")
 // verilog-auto-inst-param-value: t
 // End:

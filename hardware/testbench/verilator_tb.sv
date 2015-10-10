@@ -94,12 +94,12 @@ module verilator_tb(
 	logic loopback_uart_rx;
 	logic loopback_uart_mask;
 
-	/*AUTOWIRE*/
+	/*AUTOLOGIC*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	scalar_t	io_address;		// From nyuzi of nyuzi.v
-	wire		io_read_en;		// From nyuzi of nyuzi.v
+	logic		io_read_en;		// From nyuzi of nyuzi.v
 	scalar_t	io_write_data;		// From nyuzi of nyuzi.v
-	wire		io_write_en;		// From nyuzi of nyuzi.v
+	logic		io_write_en;		// From nyuzi of nyuzi.v
 	// End of automatics
 
 	`define CORE0 nyuzi.core_gen[0].core
@@ -247,7 +247,7 @@ module verilator_tb(
 		for (int i = 0; i < TRACE_REORDER_QUEUE_LEN; i++)
 			trace_reorder_queue[i] = 0;
 
-		do_register_trace = $test$plusargs("regtrace");
+		do_register_trace = $test$plusargs("trace");
 		if ($test$plusargs("statetrace") != 0)
 		begin
 			do_state_trace = 1;
