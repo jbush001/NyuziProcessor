@@ -29,7 +29,7 @@ $(TARGET): $(SOURCES) manifest CLASSDIR
 
 clean:
 	rm -rf CLASSDIR
-	rm $(TARGET)
+	rm -f $(TARGET)
 	
 $(BINDIR):
 	mkdir -p $(BINDIR)
