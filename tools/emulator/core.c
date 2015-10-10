@@ -654,41 +654,42 @@ static uint32_t scalarArithmeticOp(ArithmeticOp operation, uint32_t value1, uint
 		case OP_ADD_I: return value1 + value2;
 		case OP_SUB_I: return value1 - value2;
 		case OP_MULL_I: return value1 * value2;
-		case OP_MULH_U: return (uint32_t) (((uint64_t)value1 * (uint64_t)value2) >> 32);	
-		case OP_ASHR:	return (uint32_t) (((int32_t) value1) >> (value2 & 31));
+		case OP_MULH_U: return (uint32_t)(((uint64_t)value1 * (uint64_t)value2) >> 32);	
+		case OP_ASHR:	return (uint32_t)(((int32_t)value1) >> (value2 & 31));
 		case OP_SHR: return value1 >> (value2 & 31);
 		case OP_SHL: return value1 << (value2 & 31);
-		case OP_CLZ: return value2 == 0 ? 32u : (uint32_t) __builtin_clz(value2);
-		case OP_CTZ: return value2 == 0 ? 32u : (uint32_t) __builtin_ctz(value2);
+		case OP_CLZ: return value2 == 0 ? 32u : (uint32_t)__builtin_clz(value2);
+		case OP_CTZ: return value2 == 0 ? 32u : (uint32_t)__builtin_ctz(value2);
 		case OP_MOVE: return value2;
-		case OP_CMPEQ_I: return (uint32_t) value1 == value2;
-		case OP_CMPNE_I: return (uint32_t) value1 != value2;
-		case OP_CMPGT_I: return (uint32_t) ((int32_t) value1 > (int32_t) value2);
-		case OP_CMPGE_I: return (uint32_t) ((int32_t) value1 >= (int32_t) value2);
-		case OP_CMPLT_I: return (uint32_t) ((int32_t) value1 < (int32_t) value2);
-		case OP_CMPLE_I: return (uint32_t) ((int32_t) value1 <= (int32_t) value2);
-		case OP_CMPGT_U: return (uint32_t) (value1 > value2);
-		case OP_CMPGE_U: return (uint32_t) (value1 >= value2);
-		case OP_CMPLT_U: return (uint32_t) (value1 < value2);
-		case OP_CMPLE_U: return (uint32_t) (value1 <= value2);
-		case OP_FTOI: return (uint32_t) (int32_t) valueAsFloat(value2); 
+		case OP_CMPEQ_I: return (uint32_t)value1 == value2;
+		case OP_CMPNE_I: return (uint32_t)value1 != value2;
+		case OP_CMPGT_I: return (uint32_t)((int32_t)value1 > (int32_t)value2);
+		case OP_CMPGE_I: return (uint32_t)((int32_t)value1 >= (int32_t)value2);
+		case OP_CMPLT_I: return (uint32_t)((int32_t)value1 < (int32_t)value2);
+		case OP_CMPLE_I: return (uint32_t)((int32_t)value1 <= (int32_t)value2);
+		case OP_CMPGT_U: return (uint32_t)(value1 > value2);
+		case OP_CMPGE_U: return (uint32_t)(value1 >= value2);
+		case OP_CMPLT_U: return (uint32_t)(value1 < value2);
+		case OP_CMPLE_U: return (uint32_t)(value1 <= value2);
+		case OP_FTOI: return (uint32_t)(int32_t)valueAsFloat(value2); 
 		case OP_RECIPROCAL:
 		{
 			// Reciprocal only has 6 bits of accuracy
-			uint32_t result = valueAsInt(1.0f / valueAsFloat(value2 & 0xfffe0000)); 
-			if (!isnan(valueAsFloat(result)))
-				result &= 0xfffe0000;	// Truncate, but only if not NaN
+			float fresult = 1.0f / valueAsFloat(value2 & 0xfffe0000);
+			uint32_t iresult = valueAsInt(fresult); 
+			if (!isnan(fresult))
+				iresult &= 0xfffe0000;	// Truncate, but only if not NaN
 
-			return result;
+			return iresult;
 		}
 
-		case OP_SEXT8: return (uint32_t)(int32_t)(int8_t) value2;
-		case OP_SEXT16: return (uint32_t)(int32_t)(int16_t) value2;
-		case OP_MULH_I: return (uint32_t) (((int64_t)(int32_t) value1 * (int64_t)(int32_t) value2) >> 32);
+		case OP_SEXT8: return (uint32_t)(int32_t)(int8_t)value2;
+		case OP_SEXT16: return (uint32_t)(int32_t)(int16_t)value2;
+		case OP_MULH_I: return (uint32_t) (((int64_t)(int32_t)value1 * (int64_t)(int32_t)value2) >> 32);
 		case OP_ADD_F: return valueAsInt(valueAsFloat(value1) + valueAsFloat(value2));
 		case OP_SUB_F: return valueAsInt(valueAsFloat(value1) - valueAsFloat(value2));
 		case OP_MUL_F: return valueAsInt(valueAsFloat(value1) * valueAsFloat(value2));
-		case OP_ITOF: return valueAsInt((float)((int32_t)value2)); // itof
+		case OP_ITOF: return valueAsInt((float)(int32_t)value2); 
 		case OP_CMPGT_F: return valueAsFloat(value1) > valueAsFloat(value2);
 		case OP_CMPGE_F: return valueAsFloat(value1) >= valueAsFloat(value2);
 		case OP_CMPLT_F: return valueAsFloat(value1) < valueAsFloat(value2);
@@ -855,6 +856,7 @@ static void executeImmediateArithInst(Thread *thread, uint32_t instruction)
 	uint32_t destreg = extractUnsignedBits(instruction, 5, 5);
 	uint32_t hasMask = fmt == FMT_IMM_VV_M || fmt == FMT_IMM_VS_M;
 	int lane;
+	uint32_t operand1;
 
 	TALLY_INSTRUCTION(imm_arith_inst);
 	if (hasMask)
@@ -932,18 +934,22 @@ static void executeImmediateArithInst(Thread *thread, uint32_t instruction)
 				illegalInstruction(thread, instruction);
 				return;
 		}
-	
-		for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-		{
-			uint32_t operand1;
-			if (fmt == FMT_IMM_VV || fmt == FMT_IMM_VV_M)
-				operand1 = thread->vectorReg[op1reg][lane];
-			else
-				operand1 = getThreadScalarReg(thread, op1reg);
-
-			result[lane] = scalarArithmeticOp(op, operand1, immValue);
-		}
 		
+		if (fmt == FMT_IMM_VV || fmt == FMT_IMM_VV_M)
+		{
+			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
+			{
+				result[lane] = scalarArithmeticOp(op, thread->vectorReg[op1reg][lane], 
+					immValue);
+			}
+		}
+		else
+		{
+			operand1 = getThreadScalarReg(thread, op1reg);
+			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
+				result[lane] = scalarArithmeticOp(op, operand1, immValue);
+		}
+
 		setVectorReg(thread, destreg, mask, result);
 	}
 }
