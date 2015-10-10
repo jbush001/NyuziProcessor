@@ -30,6 +30,7 @@
 // https://www.sdcard.org/downloads/pls/part1_410.pdf
 
 #define INIT_CLOCKS 80
+#define SD_COMMAND_LENGTH 6
 
 // Commands
 enum SDCommand
@@ -62,7 +63,7 @@ static uint8_t gResponseValue;
 static uint32_t gInitClockCount;
 static uint8_t gCommandResult;
 static uint32_t gResetDelay;
-static uint8_t gCurrentCommand[6];
+static uint8_t gCurrentCommand[SD_COMMAND_LENGTH];
 static uint32_t gCurrentCommandLength;
 static bool gIsReady = false;
 
@@ -77,7 +78,7 @@ int openBlockDevice(const char *filename)
 		perror("failed to open block device file");
 		return -1;
 	}
-	
+
 	gBlockDevSize = (uint32_t) fs.st_size;	
 	gBlockFd = open(filename, O_RDONLY);
 	if (gBlockFd < 0)
@@ -85,7 +86,7 @@ int openBlockDevice(const char *filename)
 		perror("failed to open block device file");
 		return -1;
 	}
-	
+
 	gBlockDevData = mmap(NULL, gBlockDevSize, PROT_READ, MAP_SHARED, gBlockFd, 0); 
 	if (gBlockDevData == NULL)
 		return -1;
@@ -94,13 +95,13 @@ int openBlockDevice(const char *filename)
 	return 0;
 }
 
-void closeBlockDevice()
+void closeBlockDevice(void)
 {
 	assert(gBlockFd > 0);
 	close(gBlockFd);
 }
 
-static unsigned int convertValue(const uint8_t *values)
+static unsigned int readLittleEndian(const uint8_t *values)
 {
 	return (unsigned int)((values[0] << 24) | (values[1] << 16) | (values[2] << 8) | values[3]);
 }
@@ -134,7 +135,7 @@ static void processCommand(const uint8_t *command)
 				exit(1);
 			}
 
-			gBlockLength = convertValue(command + 1);
+			gBlockLength = readLittleEndian(command + 1);
 			gCurrentState = STATE_SEND_RESULT;
 			gCommandResult = 0;
 			break;
@@ -146,7 +147,7 @@ static void processCommand(const uint8_t *command)
 				exit(1);
 			}
 
-			gReadOffset = convertValue(command + 1) * gBlockLength;
+			gReadOffset = readLittleEndian(command + 1) * gBlockLength;
 			gCurrentState = STATE_WAIT_READ_RESPONSE;
 			gStateDelay = rand() & 0xf;	// Wait a random amount of time
 			gResponseValue = 0;	
@@ -185,7 +186,7 @@ void writeSdCardRegister(uint32_t address, uint32_t value)
 					if (!gChipSelect)
 					{
 						gCurrentCommand[gCurrentCommandLength++] = value & 0xff;
-						if (gCurrentCommandLength == 6)
+						if (gCurrentCommandLength == SD_COMMAND_LENGTH)
 						{
 							processCommand(gCurrentCommand);
 							gCurrentCommandLength = 0;
