@@ -176,7 +176,7 @@ module de2_115_top(
 				   .dram_cas_n		(dram_cas_n),
 				   .dram_we_n		(dram_we_n),
 				   .dram_ba		(dram_ba[1:0]),
-				   .dram_addr		(dram_addr[`SDRAM_ADDR_WIDTH-1:0]),
+				   .dram_addr		(dram_addr[12:0]),
 				   .pc_event_dram_page_miss(pc_event_dram_page_miss),
 				   .pc_event_dram_page_hit(pc_event_dram_page_hit),
 				   // Inouts

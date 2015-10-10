@@ -17,8 +17,6 @@
 
 `include "defines.sv"
 
-`define SDRAM_ADDR_WIDTH 13
-
 //
 // Drive control signals for single data rate (SDR) SDRAM, including
 // auto refresh at appropriate intervals. An AXI bus interface initiates
@@ -53,7 +51,7 @@ module sdram_controller
 	output 						          dram_cas_n, 
 	output 						          dram_we_n,
 	output logic[1:0]			          dram_ba,
-	output logic[`SDRAM_ADDR_WIDTH - 1:0] dram_addr,
+	output logic[12:0]                    dram_addr,
 	inout [DATA_WIDTH - 1:0]	          dram_dq,
 	
 	// Interface to bus	
@@ -69,6 +67,7 @@ module sdram_controller
 	localparam MEMORY_SIZE = (1 << (ROW_ADDR_WIDTH + COL_ADDR_WIDTH)) * NUM_BANKS 
 		* (DATA_WIDTH / 8);
 	localparam INTERNAL_ADDR_WIDTH = ROW_ADDR_WIDTH + COL_ADDR_WIDTH + $clog2(NUM_BANKS);
+	localparam SDRAM_ADDR_WIDTH = $size(dram_addr);
 	
 	typedef enum {
 		STATE_INIT0,	
@@ -212,7 +211,7 @@ module sdram_controller
 				STATE_INIT0:
 				begin
 					// Step 1: send precharge all command
-					dram_addr = {`SDRAM_ADDR_WIDTH{1'b1}};
+					dram_addr = {SDRAM_ADDR_WIDTH{1'b1}};
 					command = CMD_PRECHARGE;
 					timer_nxt = T_ROW_PRECHARGE;
 					state_nxt = STATE_INIT1;
@@ -221,7 +220,7 @@ module sdram_controller
 				STATE_INIT1:
 				begin
 					// Step 2: send two auto refresh commands
-					dram_addr = {`SDRAM_ADDR_WIDTH{1'b1}};
+					dram_addr = {SDRAM_ADDR_WIDTH{1'b1}};
 					command = CMD_AUTO_REFRESH;
 					timer_nxt = T_AUTO_REFRESH_CYCLE; 
 					state_nxt = STATE_INIT2;
@@ -229,7 +228,7 @@ module sdram_controller
 				
 				STATE_INIT2:
 				begin
-					dram_addr = {`SDRAM_ADDR_WIDTH{1'b1}};
+					dram_addr = {SDRAM_ADDR_WIDTH{1'b1}};
 					command = CMD_AUTO_REFRESH;
 					timer_nxt = T_AUTO_REFRESH_CYCLE; 
 					state_nxt = STATE_INIT3;
@@ -239,7 +238,7 @@ module sdram_controller
 				begin
 					// Step 3: set the mode register
 					command = CMD_MODE_REGISTER_SET;
-					dram_addr = `SDRAM_ADDR_WIDTH'b000_0_00_010_0_011;	// Note: CAS latency is 2
+					dram_addr = SDRAM_ADDR_WIDTH'('b000_0_00_010_0_011);	// Note: CAS latency is 2
 					dram_ba = 2'b00;
 					state_nxt = STATE_IDLE;
 				end
@@ -310,7 +309,7 @@ module sdram_controller
 				begin
 					// Precharge a single bank that has an open row in preparation
 					// for a transfer.
-					dram_addr =  {`SDRAM_ADDR_WIDTH{1'b0}};
+					dram_addr =  {SDRAM_ADDR_WIDTH{1'b0}};
 					if (access_is_read_ff)
 						dram_ba = read_bank;
 					else
@@ -327,13 +326,13 @@ module sdram_controller
 					if (access_is_read_ff)
 					begin
 						dram_ba = read_bank;
-						dram_addr = `SDRAM_ADDR_WIDTH'(read_row);
+						dram_addr = SDRAM_ADDR_WIDTH'(read_row);
 						state_nxt = STATE_CAS_WAIT;
 					end
 					else
 					begin
 						dram_ba = write_bank;
-						dram_addr = `SDRAM_ADDR_WIDTH'(write_row);
+						dram_addr = SDRAM_ADDR_WIDTH'(write_row);
 						state_nxt = STATE_WRITE_BURST;
 					end
 					command = CMD_ACTIVATE;
@@ -343,7 +342,7 @@ module sdram_controller
 				STATE_CAS_WAIT:
 				begin
 					command = CMD_READ;
-					dram_addr = `SDRAM_ADDR_WIDTH'(read_column);
+					dram_addr = SDRAM_ADDR_WIDTH'(read_column);
 					dram_ba = read_bank;
 					timer_nxt = T_CAS_LATENCY;
 					state_nxt = STATE_READ_BURST;
@@ -364,7 +363,7 @@ module sdram_controller
 					begin
 						// On first cycle
 						dram_ba = write_bank;
-						dram_addr = `SDRAM_ADDR_WIDTH'(write_column);
+						dram_addr = SDRAM_ADDR_WIDTH'(write_column);
 						command = CMD_WRITE;	
 					end
 
@@ -376,7 +375,7 @@ module sdram_controller
 				STATE_AUTO_REFRESH0:
 				begin
 					// Precharge all banks before we perform an auto-refresh
-					dram_addr = `SDRAM_ADDR_WIDTH'b0010000000000;		// XXX parameterize
+					dram_addr = SDRAM_ADDR_WIDTH'('b0010000000000);		// XXX parameterize
 					command = CMD_PRECHARGE;
 					timer_nxt = T_ROW_PRECHARGE;
 					state_nxt = STATE_AUTO_REFRESH1;
