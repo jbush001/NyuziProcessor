@@ -2,7 +2,7 @@
 
 Follow instructions in the top level README to get the environment set up.
 
-Synthesizing and running on FPGA only works on Linux.  It uses Terasic's
+These instructions only work on Linux.  It uses Terasic's
 [DE2-115 evaluation board](http://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&No=502).
 In addition to the packages listed in the top level README, this also requires 
 [Quartus II FPGA design software](http://dl.altera.com/?edition=web) 13.1+.
@@ -36,7 +36,7 @@ run as root. You can remedy this by creating a file
 
 The build system is command line based and does not use the Quartus GUI.
 
-1. Make sure you've compiled the bootrom , either by typing make at the top 
+1. Make sure you've compiled the bootrom, either by typing make at the top 
    level, or in the software/bootrom directory.
 
 2. Synthesize the design (ensure quartus binary directory is in your PATH, by
@@ -55,12 +55,11 @@ The build system is command line based and does not use the Quartus GUI.
 		make run
 
 Other notes:
-- Reload programs by pressing the reset button (push button 0) and executing 
-  the makefile again.
 - Many programs with makefiles have a target 'fpgarun' that will load them
   onto the FPGA board using the serial loader.
-- You do not need to reload tThe bitstream (step 3) as long as the board is powered 
+- Reload programs by pressing the reset button (push button 0) and executing 
+  their makefile again.
+- You do not need to reload the bitstream (step 3) as long as the board is powered 
   (it will be lost if it is turned off, however). 
 - The `program` target does not resynthesize the bitstream if source files have changed.
-  This must be done explicitly by typing make.
-
+  This must be done explicitly by typing `make synthesize`.

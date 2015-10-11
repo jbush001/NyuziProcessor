@@ -27,7 +27,7 @@ serial port into a ramdisk in memory. This will take a while. The repak utility
 can reduce the size of the PAK file. Instructions to build repak are at the top 
 of repak.cpp in this directory.
 
-    ./repak -o pak0.pak <original pak location> gfx/palette.lmp maps/e1m1.bsp ...
+    ./repak -o pak0.pak <original pak location> gfx/palette.lmp maps/e1m1.bsp <additional files>
 
 You can load other levels by changing this line in main.cpp:
 

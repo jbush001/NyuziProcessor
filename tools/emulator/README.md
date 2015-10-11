@@ -1,12 +1,12 @@
 This is a Nyuzi instruction set emulator. It is not cycle accurate, and does not 
-simulate the behavior of the pipeline or caches. It is useful for several
+simulate the behavior of the pipeline or caches, but is useful for several
 purposes:
 
 - As a reference for co-verification.  When invoked in cosimulation mode 
 (`-m cosim`), it reads instruction side effects from the hardware model 
 via stdin. It steps its own threads and compare the results, flagging 
-an error if they do not match. More details are in the README file in
-the tests/cosimulation directory.
+an error if they do not match. More details are in tests/cosimulation/README.md 
+directory.
 - For development of software.  This allows attaching a symbolic debugger 
 (described below).
 - Performance modeling. This can generate memory reference traces and gather
@@ -14,18 +14,18 @@ statistics about instruction execution.
 
 ### Command line options:
 
-|Option|Arguments                  |Meaning|
-|------|---------------------------|-------|
-| -v   |                           | Verbose, prints register transfers to stdout |
-| -m   |  mode                     | Mode is one of: |
-|      |                           | normal- Run to completion (default) |
-|      |                           | cosim- Cosimulation validation mode |
-|      |                           | gdb - Allow debugger connection on port 8000 |
-| -f   |  widthxheight             | Display framebuffer output in window |
-| -d   |  filename,start,length    | Dump memory |
-| -b   |  filename                 | Load file into virtual block device |
-| -t   |  num                      | Total threads (default 4) |
-| -c   |  size                     | Total amount of memory |
+|Option|Arguments                  |Meaning                                           |
+|------|---------------------------|--------------------------------------------------|
+| -v   |                           | Verbose, prints register transfers to stdout     |
+| -m   |  mode                     | Mode is one of:                                  |
+|      |                           | normal- Run to completion (default)              |
+|      |                           | cosim- Cosimulation validation mode              |
+|      |                           | gdb - Allow debugger connection on port 8000     |
+| -f   |  widthxheight             | Display framebuffer output in window             |
+| -d   |  filename,start,length    | Dump memory                                      |
+| -b   |  filename                 | Load file into virtual block device              |
+| -t   |  num                      | Total threads (default 4)                        |
+| -c   |  size                     | Total amount of memory                           |
 | -r   |  instructions             | Screen refresh rate, number of instructions to execute between screen updates |
 
 The simulator assumes numeric arguments are decimals unless they are prefixed
@@ -75,7 +75,7 @@ Other notes:
   For example, at -O3, lldb cannot read variables if they are not live at the 
   execution point. 
 - Debugger only currently works with four threads enabled. There are a few hardcoded assumptions
-of four threads in remote-gdb.c.
+  of four threads in remote-gdb.c.
 
 ### Tracing
 

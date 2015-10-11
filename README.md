@@ -5,30 +5,20 @@
 Nyuzi is an experimental multicore GPGPU processor. It supports vector floating
 point, hardware multithreading, and cache coherence. The SystemVerilog-based
 hardware implementation is synthesizable and runs on FPGA. This project also
-includes an LLVM-based C++ toolchain, tests, and many other tools. It is useful
+includes an LLVM-based C++ toolchain, tests, and other tools. It is useful
 for microarchitecture experimentation, performance modeling, and parallel
 software development.
-
-I have attempted to make this easy to set up and hack on. It uses free
-and mostly open source tools. Contributions are welcome, please see 
-[CONTRIBUTING](CONTRIBUTING.md) for more details.
 
 **Documentation:** https://github.com/jbush001/NyuziProcessor/wiki  
 **Mailing list:** https://groups.google.com/forum/#!forum/nyuzi-processor-dev   
 **License:** Apache 2.0    
 **Blog:** http://latchup.blogspot.com/   
 
-
 # Getting Started
 
 The following instructions explain how to set up the Nyuzi development
-environment, including the emulator and cycle-accurate hardware simulator. This
-allows both hardware and software development without an FPGA. These
-instructions assume you have cloned this repo on your local machine and have a
-shell open in the top directory.
-
-If you have problems getting this running, feel free to send a message to the
-mailing list or Gitter (links above).
+environment. This includes an emulator and cycle-accurate hardware simulator,
+which allow hardware and software development without an FPGA. 
 
 ## Install Prerequisites
 
@@ -46,7 +36,7 @@ The makefile executes this operation in batch mode*
 ### MacOS
 
 These instructions assume Mavericks or later. If you don't have XCode, install
-the command line tools like this:
+the command line compiler like this:
 
     xcode-select --install
 
@@ -67,7 +57,7 @@ Linux under a virtual machine like [VirtualBox](https://www.virtualbox.org/wiki/
 ## Build (Linux & MacOS)
 
 Download and build Verilator as follows (although some Linux package managers have
-it, it is out of date):
+it, it is out of date). From the top level directory of this project:
 
     cd tools
     curl http://www.veripool.org/ftp/verilator-3.876.tgz | tar xz

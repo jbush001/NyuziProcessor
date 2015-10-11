@@ -14,8 +14,7 @@
 # limitations under the License.
 # 
 
-
-output_files/fpga_target.sof: FORCE
+synthesize:
 	quartus_map fpga_target
 	quartus_fit fpga_target
 	quartus_asm fpga_target
@@ -23,8 +22,3 @@ output_files/fpga_target.sof: FORCE
 	
 program: 
 	quartus_pgm -c USB-Blaster -m jtag -o "P;output_files/fpga_target.sof"
-
-netlist:
-	quartus_eda --write_settings_files=off fpga_target --format=verilog --tool=modelsim --simulation=on
-
-FORCE:

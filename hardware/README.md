@@ -17,8 +17,8 @@ definitions. If you have Emacs installed, type 'make autos' from the command
 line to update the definitions in batch mode.
 
 This design uses parameterized memories (FIFOs and SRAM blocks), but not all
-tool flows support this. This can use hard coded memory instances compatible
-with memory compilers or SRAM wizards. Using `make core/srams.inc` generates an
+tools support this. This can use hard coded memory instances compatible with 
+memory compilers or SRAM wizards. Using `make core/srams.inc` generates an
 include file with all used memory sizes in the design. You can tweak the script
 tools/misc/extract_mems.py to change the module names or parameter formats.
 
@@ -52,7 +52,7 @@ it, change MEM_SIZE in testbench/verilator_tb.sv.
 The simulator exits when all threads halt by writing to the appropriate control
 register.
 
-To write a waveform trace, set the environment variable VERILATOR_TRACE 
+To write a waveform trace, set the environment variable DUMP_WAVEFORM 
 and rebuild:
 
     make clean
@@ -60,7 +60,8 @@ and rebuild:
 
 The simulator writes a file called `trace.vcd` in 
 "[value change dump](http://en.wikipedia.org/wiki/Value_change_dump)" 
-format in the current working directory.
+format in the current working directory. This can be with a waveform 
+viewer like [GTKWave](http://gtkwave.sourceforge.net/).
 
 ## Device Registers
 
@@ -102,7 +103,7 @@ E = emulator, V = verilator.
 Verilator and the emulator.
 2. In the Verilator environment, keyboard scancodes are just an incrementing 
 pattern. For the emulator, they are only returned if the framebuffer window is 
-displayed and in focus. For the FPGA, they use the PS/2 port on the board. 
+displayed and in focus. For the FPGA, they come from the PS/2 port on the board. 
 3. SD GPIO and SD SPI are mutually exclusive. SD GPIO is if BITBANG_SDMMC is 
 set in hardware/fpga/de2_115/de2_115_top.sv, SPI otherwise. 
 4. SD GPIO pins map to the following direction/value register bits:
@@ -118,4 +119,3 @@ set in hardware/fpga/de2_115/de2_115_top.sv, SPI otherwise.
 
 5. The loopback UART has its transmit and receive signals connected. It's used
 for testing the UART implementation.
-

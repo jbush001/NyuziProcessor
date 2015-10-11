@@ -29,6 +29,8 @@ Unlike the other tests, this target does not generate an output.png image.
 
 ## On FPGA
 
+Follow instructions in hardware/fpga/de2-115 to load bitstream onto FPGA 
+board.
 1. Load bitstream into FPGA ('make program' in hardware/fpga/de2-115/)
 2. Press key 0 on the lower right hand side of the board to reset it
 3. From the test directory, run:
@@ -43,7 +45,7 @@ Type 'make profile'. It runs the program in the verilog simulator, then prints
 a list of functions with how many instructions it issued in each. It does not
 accumulate time in a function's children.
 
-This requires the c++filt utility, which is part of binutils.
+This requires the c++filt utility, which is part of the binutils package.
 
 # Debugging
 
@@ -55,9 +57,8 @@ To produce an assembly listing file, type `make program.lst`
 
 ## Run in single threaded mode
 
-Is is generally easier to debug is only one hardware thread is running 
-instead of the default 4. This can also rule out race conditions as a 
-cause. To do this, comment out the following line in main.cpp:
+Is is easier to debug is only one hardware thread is running instead of the 
+default 4. This can also rule out race conditions as a cause. To do this, 
+comment out the following line in main.cpp:
 
     startAllThreads();
-

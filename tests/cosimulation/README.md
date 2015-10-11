@@ -30,7 +30,7 @@ can generate a listing file like this:
 The program generates a trace if you set the SIMULATOR_DEBUG_ARGS 
 environment variable:
 
-    EMULATOR_DEBUG_ARGS=-v ./runtest.sh ...
+    EMULATOR_DEBUG_ARGS=-v ./runtest.py ...
 
 ### Simulator Random Seed
 
@@ -50,7 +50,7 @@ Random seed is 1405877782
 To reproduce an problem that is timing dependent, you can set the environment 
 variable RANDSEED to the value that caused the failure:
 
-    RANDSEED=1405877782 ./runtest.sh cache_stress.s
+    RANDSEED=1405877782 ./runtest.py cache_stress.s
 
 # Generating New Random Test Program
  
@@ -67,7 +67,7 @@ The -m file allows generating multiple test files. For example:
 
 The test script can run these like this:
 
-    ./runtest random*
+    ./runtest.py random*
 
 ## Instruction Selection for Random Program Generation
  
@@ -75,17 +75,16 @@ An unbiased random distribution of instructions doesn't give great coverage.
 For example, a branch squashes instructions in the pipeline. If the test program 
 issues branches too often, it will mask problems with instruction dependencies. 
 Also, if it uses the full range of 32 registers as operands and destinations of 
-instructions, RAW dependencies between instructions will be uncommon.
+instructions, RAW dependencies between instructions will be infrequent.
 
 For that reason, this uses _constrained_ random instruction generation, which
-is described in more detail below. It also imposes extra constraints to prevent
-bad program behavior.
+is described in more detail below. It also imposes extra constraints so it
+doesn't crash.
 
 ### Branches
 
-To avoid creating infinite loops, it only generates forward branches. 
-Additionally, it only generates a branch of eight or fewer instructions to 
-avoid skipping too much code.
+To avoid infinite loops, it only generates forward branches. It also only 
+branches less than eight instructions to avoid skipping too much code.
 
 ### Memory accesses
 
@@ -114,8 +113,8 @@ it can't simulate this in a cycle accurate manner yet._
 
 # How it works
 ## Checking
- 
-The test program runs the verilog simulator with the +regtrace flag, which
+
+The test program runs the verilog simulator with the +trace flag, which
 causes it to print text descriptions of register writebacks and memory stores
 to stdout. Each line includes the program counter and thread ID of the
 instruction, and register/address information specific to the instruction.
@@ -123,14 +122,10 @@ instruction, and register/address information specific to the instruction.
 The emulator (tools/emulator) is a C program that simulates behavior of the
 instruction set. It reads the textual output from the Verilog simulator. Each
 time the emulator parses one of these operations, it steps the corresponding
-thread. It continues stepping until it encounters an instruction that has a
-side effect (branch instructions, for example, do not). It then compares the
-side effect of the instruction with the result from the Verilog simulator and
-flags an error if there is a mismatch.
-
-Some sequences of instructions may be order dependent. The emulator does 
-not reproduce thread issue order. Instead, the scheme described earlier allows 
-the Verilog simulator to control instruction ordering.
+thread until it encounters an instruction that has a side effect (branch 
+instructions, for example, do not). It then compares the side effect of the 
+instruction with the result from the Verilog simulator and flags an error 
+if there is a mismatch.
 
 ### Limitations
 - The emulator does not model the behavior of the store buffer. As the store

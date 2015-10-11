@@ -9,7 +9,7 @@ and put it in this directory.
 To run in the emulator, type 'make run'.
 
 To run on FPGA, type 'make fpgarun' in this directory. The makefile transfers 
-the data files over the serial port into the ramdisk. This takes a while.
+the data files over the serial port into the ramdisk.
 
 The primary changes I made for the port were:
 
