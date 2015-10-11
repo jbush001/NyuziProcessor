@@ -420,7 +420,7 @@ module verilator_tb(
 				endcase
 			end
 
-			if (state_dump_en != 0)
+			if (state_dump_en)
 			begin
 				for (int i = 0; i < `THREADS_PER_CORE; i++)
 				begin
