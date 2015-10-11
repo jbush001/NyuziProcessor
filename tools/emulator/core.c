@@ -251,7 +251,7 @@ uint32_t getTotalThreads(const Core *core)
 
 bool coreHalted(const Core *core)
 {
-	return core->threadEnableMask == 0;
+	return core->threadEnableMask == 0 || core->crashed;
 }
 
 bool stoppedOnFault(const Core *core)
