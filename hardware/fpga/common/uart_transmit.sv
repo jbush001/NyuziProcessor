@@ -46,9 +46,9 @@ module uart_transmit
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			baud_divider <= 32'h0;
-			shift_count <= 4'h0;
-			tx_shift <= 10'h0;
+			baud_divider <= '0;
+			shift_count <= '0;
+			tx_shift <= '0;
 			// End of automatics
 		end
 		else
@@ -75,5 +75,7 @@ module uart_transmit
 endmodule
 
 // Local Variables:
+// verilog-library-flags:("-y ../../core" "-y ../../testbench")
 // verilog-typedef-regexp:"_t$"
+// verilog-auto-reset-widths:unbased
 // End:

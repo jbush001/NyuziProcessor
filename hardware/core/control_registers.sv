@@ -62,16 +62,21 @@ module control_registers
 	begin
 		if (reset)
 		begin
-			cr_interrupt_en <= 0;
 			for (int i = 0; i < `THREADS_PER_CORE; i++)
 			begin
 				fault_reason[i] <= FR_RESET;
 				cr_eret_address[i] <= 0;
 				prev_int_flag[i] <= 0;
+				fault_access_addr[i] <= '0;
 			end
 
-			cr_fault_handler <= 0;
-			cycle_count <= 0;
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			cr_creg_read_val <= '0;
+			cr_fault_handler <= '0;
+			cr_interrupt_en <= '0;
+			cycle_count <= '0;
+			// End of automatics
 		end
 		else
 		begin
@@ -145,5 +150,6 @@ endmodule
 
 // Local Variables:
 // verilog-typedef-regexp:"_t$"
+// verilog-auto-reset-widths:unbased
 // End:
 	

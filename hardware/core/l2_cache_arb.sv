@@ -89,8 +89,16 @@ module l2_cache_arb(
 		if (reset)
 		begin
 			l2a_request <= 0;
-			l2a_is_l2_fill <= 0;
-			l2a_data_from_memory <= 0;
+			`ifdef NEVER
+			// Suppress autoreset
+			l2a_request.valid <= '0;
+			`endif
+			
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			l2a_data_from_memory <= '0;
+			l2a_is_l2_fill <= '0;
+			// End of automatics
 		end
 		else
 		begin
@@ -125,4 +133,5 @@ endmodule
 
 // Local Variables:
 // verilog-typedef-regexp:"_t$"
+// verilog-auto-reset-widths:unbased
 // End:

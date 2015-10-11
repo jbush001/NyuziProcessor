@@ -137,8 +137,6 @@ module l2_cache_tag(
 			l2t_data_from_memory <= '0;
 			l2t_is_l2_fill <= '0;
 			// End of automatics
-			l2t_data_from_memory <= 0;
-			l2t_is_l2_fill <= 0;
 		end
 		else
 		begin

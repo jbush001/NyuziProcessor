@@ -177,8 +177,8 @@ module axi_sram
 			state <= STATE_IDLE;
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			burst_address <= 32'h0;
-			burst_count <= 8'h0;
+			burst_address <= '0;
+			burst_count <= '0;
 			// End of automatics
 		end
 		else
@@ -201,6 +201,8 @@ module axi_sram
 endmodule
 
 // Local Variables:
+// verilog-library-flags:("-y ../../core" "-y ../../testbench")
 // verilog-typedef-regexp:"_t$"
+// verilog-auto-reset-widths:unbased
 // End:
 

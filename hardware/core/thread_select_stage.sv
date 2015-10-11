@@ -376,7 +376,8 @@ module thread_select_stage(
 			for (int i = 0; i < ROLLBACK_STAGES; i++)
 				rollback_dest[i].valid <= 0;
 			
-			`ifdef SUPPRESS_AUTORESET
+			`ifdef NEVER
+			// Suppress autoreset
 			scoreboard_bitmap <= '0;
 			valid <= 0;
 			thread_idx <= '0;

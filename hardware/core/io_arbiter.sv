@@ -84,8 +84,22 @@ module io_arbiter(
 	begin
 		if (reset)
 		begin
-			request_sent <= 0;
-			ia_response <= 0;
+			ia_response <= '0;
+
+			`ifdef NEVER
+			// Suppress autoreset
+			ia_response.core <= '0;
+			ia_response.read_value <= '0;
+			ia_response.thread_idx <= '0;
+			ia_response.valid <= '0;
+			`endif
+
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			request_core <= '0;
+			request_sent <= '0;
+			request_thread_idx <= '0;
+			// End of automatics
 		end
 		else
 		begin
@@ -115,6 +129,7 @@ endmodule
 
 // Local Variables:
 // verilog-typedef-regexp:"_t$"
+// verilog-auto-reset-widths:unbased
 // End:
 
 

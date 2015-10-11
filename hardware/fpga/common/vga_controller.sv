@@ -108,8 +108,8 @@ module vga_controller(
 			
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			burst_count <= 8'h0;
-			pixel_count <= 19'h0;
+			burst_count <= '0;
+			pixel_count <= '0;
 			// End of automatics
 		end
 		else 
@@ -194,7 +194,8 @@ module vga_controller(
 					      .reset		(reset));
 endmodule
 
-
 // Local Variables:
+// verilog-library-flags:("-y ../../core" "-y ../../testbench")
 // verilog-typedef-regexp:"_t$"
+// verilog-auto-reset-widths:unbased
 // End:

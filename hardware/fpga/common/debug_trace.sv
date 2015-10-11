@@ -131,11 +131,11 @@ module debug_trace
 			state <= STATE_CAPTURE;
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			capture_entry <= {CAPTURE_INDEX_WIDTH{1'b0}};
-			dump_byte <= {(1+($clog2(CAPTURE_WIDTH_BYTES)-1)){1'b0}};
-			dump_entry <= {CAPTURE_INDEX_WIDTH{1'b0}};
-			tx_enable <= 1'h0;
-			wrapped <= 1'h0;
+			capture_entry <= '0;
+			dump_byte <= '0;
+			dump_entry <= '0;
+			tx_enable <= '0;
+			wrapped <= '0;
 			// End of automatics
 		end
 		else
@@ -178,6 +178,8 @@ module debug_trace
 endmodule
 
 // Local Variables:
+// verilog-library-flags:("-y ../../core" "-y ../../testbench")
 // verilog-typedef-regexp:"_t$"
+// verilog-auto-reset-widths:unbased
 // End:
 

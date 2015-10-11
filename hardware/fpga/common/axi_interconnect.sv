@@ -98,9 +98,9 @@ module axi_interconnect(
 			write_state <= STATE_ARBITRATE;
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			write_burst_address <= 32'h0;
-			write_burst_length <= 8'h0;
-			write_master_select <= 1'h0;
+			write_burst_address <= '0;
+			write_burst_length <= '0;
+			write_master_select <= '0;
 			// End of automatics
 		end
 		else if (write_state == STATE_ACTIVE_BURST)
@@ -166,10 +166,10 @@ module axi_interconnect(
 
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			read_burst_address <= 32'h0;
-			read_burst_length <= 8'h0;
-			read_selected_master <= 1'h0;
-			read_selected_slave <= 1'h0;
+			read_burst_address <= '0;
+			read_burst_length <= '0;
+			read_selected_master <= '0;
+			read_selected_slave <= '0;
 			// End of automatics
 		end
 		else if (read_state == STATE_ACTIVE_BURST)
@@ -256,6 +256,8 @@ module axi_interconnect(
 endmodule
 
 // Local Variables:
+// verilog-library-flags:("-y ../../core" "-y ../../testbench")
 // verilog-typedef-regexp:"_t$"
+// verilog-auto-reset-widths:unbased
 // End:
 

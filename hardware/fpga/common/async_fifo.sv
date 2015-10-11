@@ -93,8 +93,8 @@ module async_fifo
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			read_ptr <= {ADDR_WIDTH{1'b0}};
-			read_ptr_gray <= {ADDR_WIDTH{1'b0}};
+			read_ptr <= '0;
+			read_ptr_gray <= '0;
 			// End of automatics
 		end
 		else if (read_enable && !empty)
@@ -133,8 +133,8 @@ module async_fifo
 		
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			write_ptr <= {ADDR_WIDTH{1'b0}};
-			write_ptr_gray <= {ADDR_WIDTH{1'b0}};
+			write_ptr <= '0;
+			write_ptr_gray <= '0;
 			// End of automatics
 		end
 		else if (write_enable && !full)
@@ -147,5 +147,7 @@ module async_fifo
 endmodule
 
 // Local Variables:
+// verilog-library-flags:("-y ../../core" "-y ../../testbench")
 // verilog-typedef-regexp:"_t$"
+// verilog-auto-reset-widths:unbased
 // End:

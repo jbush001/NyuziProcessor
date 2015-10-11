@@ -197,11 +197,14 @@ module cache_lru
 	begin
 		if (reset)
 		begin
-			update_set <= 0;
-			was_fill <= 0;
 `ifdef SIMULATION
 			was_access <= 0;
 `endif
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			update_set <= '0;
+			was_fill <= '0;
+			// End of automatics
 		end
 		else
 		begin
@@ -220,4 +223,5 @@ endmodule
 
 // Local Variables:
 // verilog-typedef-regexp:"_t$"
+// verilog-auto-reset-widths:unbased
 // End:

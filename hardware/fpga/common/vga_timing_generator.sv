@@ -71,12 +71,12 @@ module vga_timing_generator(
 
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			horizontal_counter <= 11'h0;
-			hvisible <= 1'h0;
-			pixel_enable <= 1'h0;
-			vertical_counter <= 11'h0;
-			vga_hs <= 1'h0;
-			vvisible <= 1'h0;
+			horizontal_counter <= '0;
+			hvisible <= '0;
+			pixel_enable <= '0;
+			vertical_counter <= '0;
+			vga_hs <= '0;
+			vvisible <= '0;
 			// End of automatics
 		end
 		else
@@ -120,5 +120,7 @@ module vga_timing_generator(
 endmodule
 
 // Local Variables:
+// verilog-library-flags:("-y ../../core" "-y ../../testbench")
 // verilog-typedef-regexp:"_t$"
+// verilog-auto-reset-widths:unbased
 // End:
