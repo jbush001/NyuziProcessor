@@ -68,12 +68,11 @@ struct Core
 	uint32_t totalThreads;
 	uint32_t threadEnableMask;
 	uint32_t faultHandlerPc;
-	bool halt;
+	bool crashed;
 	bool singleStepping;
 	bool stopOnFault;
 	bool enableTracing;
 	bool cosimEnable;
-	bool stoppedOnFault;
 	int64_t totalInstructions;
 #ifdef DUMP_INSTRUCTION_STATS
 	int64_t stat_vector_inst;
@@ -94,7 +93,6 @@ struct Breakpoint
 };
 
 static void printThreadRegisters(const Thread*);
-static void doHalt(Core*);
 static uint32_t getThreadScalarReg(const Thread*, uint32_t reg);
 static void setScalarReg(Thread*, uint32_t reg, uint32_t value);
 static void setVectorReg(Thread*, uint32_t reg, uint32_t mask, 
@@ -158,7 +156,7 @@ Core *initCore(uint32_t memorySize, uint32_t totalThreads, bool randomizeMemory)
 	}
 
 	core->threadEnableMask = 1;
-	core->halt = false;
+	core->crashed = false;
 	core->enableTracing = false;
 	core->faultHandlerPc = 0;
 
@@ -258,7 +256,7 @@ bool coreHalted(const Core *core)
 
 bool stoppedOnFault(const Core *core)
 {
-	return core->stoppedOnFault;
+	return core->crashed;
 }
 
 uint32_t executeInstructions(Core *core, uint32_t threadId, uint32_t totalInstructions)
@@ -275,7 +273,7 @@ uint32_t executeInstructions(Core *core, uint32_t threadId, uint32_t totalInstru
 			return 0;
 		}
 	
-		if (core->halt)
+		if (core->crashed)
 			return 0;
 
 		if (threadId == ALL_THREADS)
@@ -434,11 +432,6 @@ static void printThreadRegisters(const Thread *thread)
 	}
 }
 
-static void doHalt(Core *core)
-{
-	core->halt = true;
-}
-
 static uint32_t getThreadScalarReg(const Thread *thread, uint32_t reg)
 {
 	if (reg == PC_REG)
@@ -504,8 +497,7 @@ static void memoryAccessFault(Thread *thread, uint32_t address, bool isLoad, Fau
 			isLoad ? "load" : "store",
 			thread->id, thread->currentPc - 4, address);
 		printThreadRegisters(thread);
-		thread->core->halt = true;
-		thread->core->stoppedOnFault = true;
+		thread->core->crashed = true;
 	}
 	else
 	{
@@ -529,8 +521,7 @@ static void illegalInstruction(Thread *thread, uint32_t instruction)
 		printf("Illegal instruction %08x thread %d PC %08x\n", instruction, thread->id, 
 			thread->currentPc - 4);
 		printThreadRegisters(thread);
-		thread->core->halt = true;
-		thread->core->stoppedOnFault = true;
+		thread->core->crashed = true;
 	}
 	else
 	{
@@ -584,8 +575,6 @@ static void writeMemWord(Thread *thread, uint32_t address, uint32_t value)
 		{
 			// Thread halt
 			thread->core->threadEnableMask &= ~value;
-			if (thread->core->threadEnableMask == 0)
-				doHalt(thread->core);
 		}
 		else
 			writeDeviceRegister(address & 0xffff, value);
@@ -645,8 +634,7 @@ static uint32_t readMemoryWord(const Thread *thread, uint32_t address)
 	{
 		printf("Load Access Violation %08x, pc %08x\n", address, thread->currentPc - 4);
 		printThreadRegisters(thread);
-		thread->core->halt = true;	// XXX Perhaps should stop some other way...
-		thread->core->stoppedOnFault = true;
+		thread->core->crashed = true;
 		return 0;
 	}
 
@@ -981,8 +969,7 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instruction)
 		printf("%s Access Violation %08x, pc %08x\n", isLoad ? "Load" : "Store",
 			address, thread->currentPc - 4);
 		printThreadRegisters(thread);
-		thread->core->halt = true;	// XXX Perhaps should stop some other way...
-		thread->core->stoppedOnFault = true;
+		thread->core->crashed = true;
 		return;
 	}
 
@@ -1147,8 +1134,7 @@ static void executeVectorLoadStoreInst(Thread *thread, uint32_t instruction)
 				printf("%s Access Violation %08x, pc %08x\n", isLoad ? "Load" : "Store",
 					address, thread->currentPc - 4);
 				printThreadRegisters(thread);
-				thread->core->halt = true;	// XXX Perhaps should stop some other way...
-				thread->core->stoppedOnFault = true;
+				thread->core->crashed = true;
 				return;
 			}
 
@@ -1191,8 +1177,7 @@ static void executeVectorLoadStoreInst(Thread *thread, uint32_t instruction)
 				printf("%s Access Violation %08x, pc %08x\n", isLoad ? "Load" : "Store",
 					address, thread->currentPc - 4);
 				printThreadRegisters(thread);
-				thread->core->halt = true;	// XXX Perhaps should stop some other way...
-				thread->core->stoppedOnFault = true;
+				thread->core->crashed = true;
 				return;
 			}
 

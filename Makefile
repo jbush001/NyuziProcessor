@@ -37,6 +37,7 @@ test: all FORCE
 	cd tests/misc/fs/ && ./runtest.py
 	cd tests/misc/ps2/ && ./runtest.py
 	cd tests/misc/uart && ./runtest.py
+	cd tests/misc/crash && ./runtest.py
 	cd tests/render && make test
 		
 clean:
