@@ -188,9 +188,6 @@ module cache_lru
 				$finish;
 			end
 		end
-		
-
-		// XXX does not flag error on invalid number of ways
 	endgenerate
 
 	always_ff @(posedge clk, posedge reset)

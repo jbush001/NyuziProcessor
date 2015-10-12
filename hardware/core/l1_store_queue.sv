@@ -184,9 +184,6 @@ module l1_store_queue(
 
 					if (update_store_entry)
 					begin
-						// XXX I think this shouldn't happen, but it does.  Investigate.
-						// assert(!rollback[thread_idx]);
-					
 						assert(!enqueue_cache_control);
 					
 						for (int byte_lane = 0; byte_lane < `CACHE_LINE_BYTES; byte_lane++)
