@@ -16,12 +16,9 @@
 
 `include "../core/defines.sv"
 
-//`define SIMULATE_BOOT_ROM
-
 //
 // Testbench for CPU
 //
-
 module verilator_tb(
 	input       clk, 
 	input       reset);
@@ -35,50 +32,52 @@ module verilator_tb(
 	int finish_cycles;
 	bit profile_en;
 	int profile_fd;
-	logic processor_halt;
-	l2rsp_packet_t l2_response;
 	scalar_t io_read_data;
 	logic interrupt_req;
 	int interrupt_counter;
-	logic pc_event_dram_page_miss;	
-	logic pc_event_dram_page_hit;
-	logic[31:0] spi_read_data;
-	logic[31:0] ps2_read_data;
+	scalar_t spi_read_data;
+	scalar_t ps2_read_data;
 	axi4_interface axi_bus_m0();
 	axi4_interface axi_bus_m1();
 	axi4_interface axi_bus_s0();
 	axi4_interface axi_bus_s1();
-	logic [SDRAM_DATA_WIDTH-1:0] dram_dq;	
-	logic [12:0] dram_addr;
-	logic [1:0]	dram_ba;	
-	logic dram_cas_n;	
-	logic dram_cke;	
-	logic dram_clk;	
-	logic dram_cs_n;	
-	logic dram_ras_n;	
-	logic dram_we_n;	
-	logic sd_cs_n;
-	logic sd_di;
-	logic sd_do;
-	logic sd_sclk;
-	logic ps2_clk;
-	logic ps2_data;
-	logic[31:0] loopback_uart_read_data;
+	scalar_t loopback_uart_read_data;
 	logic loopback_uart_tx;
 	logic loopback_uart_rx;
 	logic loopback_uart_mask;
+	logic sd_cs_n;
+	logic sd_di;
+	logic sd_sclk;
 
 	/*AUTOLOGIC*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
+	logic [12:0]	dram_addr;		// From sdram_controller of sdram_controller.v
+	logic [1:0]	dram_ba;		// From sdram_controller of sdram_controller.v
+	logic		dram_cas_n;		// From sdram_controller of sdram_controller.v
+	logic		dram_cke;		// From sdram_controller of sdram_controller.v
+	logic		dram_clk;		// From sdram_controller of sdram_controller.v
+	logic		dram_cs_n;		// From sdram_controller of sdram_controller.v
+	logic [SDRAM_DATA_WIDTH-1:0] dram_dq;	// To/From sdram_controller of sdram_controller.v, ...
+	logic		dram_ras_n;		// From sdram_controller of sdram_controller.v
+	logic		dram_we_n;		// From sdram_controller of sdram_controller.v
 	scalar_t	io_address;		// From nyuzi of nyuzi.v
 	logic		io_read_en;		// From nyuzi of nyuzi.v
 	scalar_t	io_write_data;		// From nyuzi of nyuzi.v
 	logic		io_write_en;		// From nyuzi of nyuzi.v
+	logic		pc_event_dram_page_hit;	// From sdram_controller of sdram_controller.v
+	logic		pc_event_dram_page_miss;// From sdram_controller of sdram_controller.v
+	logic		processor_halt;		// From nyuzi of nyuzi.v
+	logic		ps2_clk;		// From sim_ps2 of sim_ps2.v
+	logic		ps2_data;		// From sim_ps2 of sim_ps2.v
+	logic		sd_do;			// From sim_sdmmc of sim_sdmmc.v
 	// End of automatics
 
 	`define CORE0 nyuzi.core_gen[0].core
 
 `ifdef SIMULATE_BOOT_ROM 
+	// This will simulate with the boot ROM to test that it is generating
+	// the proper memory transactions, but the bootrom doesn't work correctly
+	// in the simulation environment, so it won't do anything else.
 	localparam RESET_PC = 32'hfffee000;
 
 	axi_rom #(.FILENAME("../software/bootrom/boot.hex")) boot_rom(
