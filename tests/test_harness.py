@@ -34,8 +34,10 @@ class TestException:
 		self.output = output
 
 def compile_test(source_file, optlevel='3'):
+	if not os.path.exists('obj'):
+		os.makedirs('obj')
+
 	try:
-		subprocess.check_output(['mkdir', '-p', 'obj'], stderr=subprocess.STDOUT)
 		subprocess.check_output([COMPILER_DIR + 'clang', '-o', 'obj/test.elf', 
 			'-w',
 			'-O' + optlevel,
@@ -54,8 +56,10 @@ def compile_test(source_file, optlevel='3'):
 	return HEX_FILE
 	
 def assemble_test(source_file):
+	if not os.path.exists('obj'):
+		os.makedirs('obj')
+
 	try:
-		subprocess.check_output(['mkdir', '-p', 'obj'])
 		subprocess.check_output([COMPILER_DIR + 'clang', '-o', 'obj/test.elf', source_file])
 		subprocess.check_output([COMPILER_DIR + 'elf2hex', '-o', HEX_FILE, 'obj/test.elf'])
 	except subprocess.CalledProcessError as exc:
