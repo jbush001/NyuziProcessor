@@ -32,20 +32,17 @@ test_harness.compile_test('sdmmc.c')
 with open(SOURCE_BLOCK_DEV, 'wb') as f:
 	f.write(os.urandom(FILE_SIZE))
 
-print 'testing in emulator'
-test_harness.run_emulator(block_device=SOURCE_BLOCK_DEV, dump_file=EMULATOR_OUTPUT, dump_base=0x200000,
-	dump_length=FILE_SIZE)
-if not test_harness.assert_files_equal(SOURCE_BLOCK_DEV, EMULATOR_OUTPUT):
-	print "FAIL: simulator final memory contents do not match"
-	sys.exit(1)
+def test_emulator(name):
+	test_harness.run_emulator(block_device=SOURCE_BLOCK_DEV, dump_file=EMULATOR_OUTPUT, dump_base=0x200000,
+		dump_length=FILE_SIZE)
+	test_harness.assert_files_equal(SOURCE_BLOCK_DEV, EMULATOR_OUTPUT, 'file mismatch')
 
-print 'testing in verilator'
-test_harness.run_verilator(block_device=SOURCE_BLOCK_DEV, dump_file=VERILATOR_OUTPUT, dump_base=0x200000,
-	dump_length=FILE_SIZE, extra_args=['+autoflushl2=1'])
-if not test_harness.assert_files_equal(SOURCE_BLOCK_DEV, VERILATOR_OUTPUT):
-	print "FAIL: verilator final memory contents do not match"
-	sys.exit(1)
+def test_verilator(name):
+	test_harness.run_verilator(block_device=SOURCE_BLOCK_DEV, dump_file=VERILATOR_OUTPUT, dump_base=0x200000,
+		dump_length=FILE_SIZE, extra_args=['+autoflushl2=1'])
+	test_harness.assert_files_equal(SOURCE_BLOCK_DEV, VERILATOR_OUTPUT, 'file mismatch')
 
-print 'PASS'
-
+test_harness.register_tests(test_emulator, ['ps2 (emulator)'])
+test_harness.register_tests(test_verilator, ['ps2 (verilator)'])
+test_harness.execute_tests()
 

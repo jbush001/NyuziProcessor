@@ -21,11 +21,12 @@ import subprocess
 sys.path.insert(0, '../..')
 import test_harness
 
-test_harness.compile_test('fs.c')
-subprocess.check_call(['../../../bin/mkfs', 'obj/fsimage.bin', 'test.txt'])
-result = test_harness.run_emulator(block_device='obj/fsimage.bin')
-if result.find('PASS') == -1:
-	print 'FAIL'
-	sys.exit(1)
-else:
-	print 'PASS'
+def fs_test(name):
+	test_harness.compile_test('fs.c')
+	subprocess.check_output(['../../../bin/mkfs', 'obj/fsimage.bin', 'test.txt'], stderr=subprocess.STDOUT)
+	result = test_harness.run_emulator(block_device='obj/fsimage.bin')
+	if result.find('PASS') == -1:
+		raise TestException('test program did not indicate pass')
+
+test_harness.register_tests(fs_test, ['fs'])
+test_harness.execute_tests()

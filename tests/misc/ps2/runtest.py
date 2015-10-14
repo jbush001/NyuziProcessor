@@ -20,10 +20,11 @@ import sys
 sys.path.insert(0, '../..')
 import test_harness
 
-test_harness.compile_test('ps2.c')
-result = test_harness.run_verilator()
-if result.find('PASS') == -1:
-	print 'FAIL'
-	sys.exit(1)
-else:
-	print 'PASS'
+def ps2_test(name):
+	test_harness.compile_test('ps2.c')
+	result = test_harness.run_verilator()
+	if result.find('PASS') == -1:
+		raise Exception('program did not indicate pass')
+
+test_harness.register_tests(ps2_test, ['ps2'])
+test_harness.execute_tests()

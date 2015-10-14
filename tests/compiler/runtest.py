@@ -49,84 +49,47 @@ def check_result(source_file, result):
 				if got:
 					resultOffset = got.end()
 				else:
-					print 'FAIL: line ' + str(lineNo) + ' expected string ' + expected + ' was not found'
-					print 'searching here:' + result[resultOffset:]
-					return False
+					error = 'FAIL: line ' + str(lineNo) + ' expected string ' + expected + ' was not found\n'
+					error += 'searching here:' + result[resultOffset:]
+					raise test_harness.TestException(error)
 
 			lineNo += 1
 
 	if not foundCheckLines:
-		print 'FAIL: no lines with CHECK: were found'
-		return False
+		raise test_harness.TestException('FAIL: no lines with CHECK: were found')
 		
 	return True
 	
+use_verilator = 'USE_VERILATOR' in os.environ
+
+def run_verilator_test(source_file):
+	test_harness.compile_test(source_file, optlevel='3')
+	result = test_harness.run_verilator()
+	check_result(source_file, result)
+	
+def run_host_test(source_file):
+	subprocess.check_call(['c++', '-w', source_file, '-o', 'obj/a.out'])
+	result = subprocess.check_output('obj/a.out')
+	check_result(source_file, result)
+
+def run_emulator_test(source_file):
+	test_harness.compile_test(source_file, optlevel='3')
+	result = test_harness.run_emulator()
+	check_result(source_file, result)
+
 if len(sys.argv) > 1:
-	files = sys.argv[1:]
+	test_list = sys.argv[1:]
 else:
-	files = [fname for fname in os.listdir('.') if (fname.endswith(('.c', '.cpp')) and not fname.startswith('_')) ]
+	test_harness.register_tests(run_host_test, sys.argv[1:])
 
-failing_tests = 0
+test_list = [fname for fname in os.listdir('.') if (fname.endswith(('.c', '.cpp')) and not fname.startswith('_'))]
 
-if 'USE_HOSTCC' in os.environ:
-	for source_file in files:
-		print 'Testing ' + source_file + ' (host)',
-		try:
-			subprocess.check_call(['c++', '-w', source_file, '-o', 'obj/a.out'])
-			result = subprocess.check_output('obj/a.out')
-			if not check_result(source_file, result):
-				failing_tests += 1
-				print 'FAIL'
-			else:
-				print 'PASS'
-		except KeyboardInterrupt:
-			sys.exit(1)
-		except Exception as exc:
-			print exc
-			print 'FAIL'
-			failing_tests += 1
-elif 'USE_VERILATOR' in os.environ:
-	for source_file in files:
-		if source_file.find('noverilator') != -1:
-			continue
-		
-		print 'Testing ' + source_file + ' (verilator)',
-		try:
-			test_harness.compile_test(source_file)
-			result = test_harness.run_verilator()
-			if not check_result(source_file, result):
-				failing_tests += 1
-				print 'FAIL'
-			else:
-				print 'PASS'
-		except KeyboardInterrupt:
-			sys.exit(1)
-		except Exception as exc:
-			print exc
-			print 'FAIL'
-			failing_tests += 1
+if 'USE_VERILATOR' in os.environ:
+	test_list = [fname for fname in test_list if fname.find('noverilator') == -1]
+	test_harness.register_tests(run_verilator_test, test_list)
+elif 'USE_HOSTCC' in os.environ:
+	test_harness.register_tests(run_host_test, test_list)
 else:
-	# Emulator
-	for source_file in files:
-		for optlevel in ['s', '0', '3']:
-			print 'Testing ' + source_file + ' at -O' + optlevel + ' (emulator)',
-			try:
-				test_harness.compile_test(source_file, optlevel=optlevel)
-				result = test_harness.run_emulator()
-				if not check_result(source_file, result):
-					failing_tests += 1
-					print 'FAIL'
-				else:
-					print 'PASS'
-			except KeyboardInterrupt:
-				sys.exit(1)
-			except Exception as exc:
-				print 'FAIL'
-				print exc
-				failing_tests += 1
+	test_harness.register_tests(run_emulator_test, test_list)
 
-print 'total tests', len(files)
-print 'failed', failing_tests
-if failing_tests > 0:
-	sys.exit(1)
-
+test_harness.execute_tests()

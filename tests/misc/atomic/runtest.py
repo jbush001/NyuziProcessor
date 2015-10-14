@@ -20,19 +20,20 @@ import sys
 sys.path.insert(0, '../..')
 import test_harness
 
-test_harness.compile_test('atomic.c')
-test_harness.run_verilator(dump_file='obj/vmem.bin', dump_base=0x100000, dump_length=0x800,
-	extra_args=['+autoflushl2=1'])
+def atomic_test(name):
+	test_harness.compile_test('atomic.c')
+	test_harness.run_verilator(dump_file='obj/vmem.bin', dump_base=0x100000, dump_length=0x800,
+		extra_args=['+autoflushl2=1'])
 
-with open('obj/vmem.bin', 'rb') as f:
-	while True:
-		val = f.read(4)
-		if val == '':
-			break
+	with open('obj/vmem.bin', 'rb') as f:
+		while True:
+			val = f.read(4)
+			if val == '':
+				break
 		
-		numVal = ord(val[0]) | (ord(val[1]) << 8) | (ord(val[2]) << 16) | (ord(val[3]) << 24)
-		if numVal != 10:
-			print 'FAIL: mismatch: ', numVal
-			sys.exit(1)
+			numVal = ord(val[0]) | (ord(val[1]) << 8) | (ord(val[2]) << 16) | (ord(val[3]) << 24)
+			if numVal != 10:
+				raise TestException('FAIL: mismatch: ' + str(numVal))
 
-print 'PASS'	
+test_harness.register_tests(atomic_test, ['atomic'])
+test_harness.execute_tests()

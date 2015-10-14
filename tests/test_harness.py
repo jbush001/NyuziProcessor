@@ -20,6 +20,7 @@
 
 import subprocess
 import os
+import sys
 
 COMPILER_DIR='/usr/local/llvm-nyuzi/bin/'
 BASE_DIR=os.path.normpath(os.path.dirname(os.path.abspath(__file__)) + '/../')
@@ -28,24 +29,38 @@ BIN_DIR=BASE_DIR+'/bin/'
 
 HEX_FILE='obj/test.hex'
 
+class TestException:
+	def __init__(self, output):
+		self.output = output
+
 def compile_test(source_file, optlevel='3'):
-	subprocess.check_call(['mkdir', '-p', 'obj'])
-	subprocess.check_call([COMPILER_DIR + 'clang', '-o', 'obj/test.elf', 
-		'-w',
-		'-O' + optlevel,
-		source_file, 
-		LIB_DIR + 'libc/crt0.o',
-		LIB_DIR + 'libc/libc.a',
-		LIB_DIR + 'libos/libos.a',
-		'-I' + LIB_DIR + 'libc/include',
-		'-I' + LIB_DIR + 'libos'])
-	subprocess.check_call([COMPILER_DIR + 'elf2hex', '-o', HEX_FILE, 'obj/test.elf'])
+	try:
+		subprocess.check_output(['mkdir', '-p', 'obj'], stderr=subprocess.STDOUT)
+		subprocess.check_output([COMPILER_DIR + 'clang', '-o', 'obj/test.elf', 
+			'-w',
+			'-O' + optlevel,
+			source_file, 
+			LIB_DIR + 'libc/crt0.o',
+			LIB_DIR + 'libc/libc.a',
+			LIB_DIR + 'libos/libos.a',
+			'-I' + LIB_DIR + 'libc/include',
+			'-I' + LIB_DIR + 'libos'],
+			stderr=subprocess.STDOUT)
+		subprocess.check_output([COMPILER_DIR + 'elf2hex', '-o', HEX_FILE, 'obj/test.elf'],
+			stderr=subprocess.STDOUT)
+	except subprocess.CalledProcessError as exc:
+		raise TestException('Compilation failed:\n' + exc.output)
+	
 	return HEX_FILE
 	
 def assemble_test(source_file):
-	subprocess.check_call(['mkdir', '-p', 'obj'])
-	subprocess.check_call([COMPILER_DIR + 'clang', '-o', 'obj/test.elf', source_file])
-	subprocess.check_call([COMPILER_DIR + 'elf2hex', '-o', HEX_FILE, 'obj/test.elf'])
+	try:
+		subprocess.check_output(['mkdir', '-p', 'obj'])
+		subprocess.check_output([COMPILER_DIR + 'clang', '-o', 'obj/test.elf', source_file])
+		subprocess.check_output([COMPILER_DIR + 'elf2hex', '-o', HEX_FILE, 'obj/test.elf'])
+	except subprocess.CalledProcessError as exc:
+		raise TestException('Assembly failed:\n' + exc.output)
+
 	return HEX_FILE
 	
 def run_emulator(block_device=None, dump_file=None, dump_base=None, dump_length=None):
@@ -60,10 +75,8 @@ def run_emulator(block_device=None, dump_file=None, dump_base=None, dump_length=
 
 	try:
 		output = subprocess.check_output(args)
-	except subprocess.CalledProcessError as err:
-		print 'Emulator returned error'
-		print err.output
-		raise
+	except subprocess.CalledProcessError as exc:
+		raise TestException('Emulator returned error: ' + exc.output)
 	
 	return output
 	
@@ -82,17 +95,15 @@ def run_verilator(block_device=None, dump_file=None, dump_base=None, dump_length
 	args += ['+bin=' + HEX_FILE]
 	output = subprocess.check_output(args)
 	if output.find('***HALTED***') == -1:
-		print output
-		raise Exception('Program did not halt normally')
+		raise TestException(output + '\nProgram did not halt normally')
 	
 	return output
 	
-def assert_files_equal(file1, file2):
+def assert_files_equal(file1, file2, error_msg = ''):
 	len1 = os.stat(file1).st_size
 	len2 = os.stat(file2).st_size
 	if len1 != len2:
-		print 'file mismatch: different lengths', file1, len1, file2, len2
-		return False
+		raise TestException('file mismatch: different lengths')
 
 	BUFSIZE = 0x1000
 	block_offset = 0
@@ -104,27 +115,60 @@ def assert_files_equal(file1, file2):
 				for i in range(len(block1)):
 					if block1[i] != block2[i]:
 						# Show the difference
-						print 'files differ:'
+						exception_text = error_msg + ':\n'
 						rounded_offset = i & ~15
-						print '%08x' % (block_offset + rounded_offset),
+						exception_text += '%08x' % (block_offset + rounded_offset),
 						for x in range(16):
-							print '%02x' % ord(block1[rounded_offset + x]),
+							exception_text += '%02x' % ord(block1[rounded_offset + x]),
 
-						print '\n%08x' % (block_offset + rounded_offset),
+						exception_text += '\n%08x' % (block_offset + rounded_offset),
 						for x in range(16):
-							print '%02x' % ord(block2[rounded_offset + x]),
+							exception_text += '%02x' % ord(block2[rounded_offset + x]),
 
-						print '\n        ',
+						exception_text += '\n        ',
 						for x in range(16):
 							if block1[rounded_offset + x] != block2[rounded_offset + x]:
-								print '^^',
+								exception_text += '^^',
 							else:
-								print '  ',
+								exception_text += '  ',
 
-						return False
+						raise TestException(exception_text)
 
 			if not block1:
-				return True
+				return
 
 			block_offset += BUFSIZE
 
+tests = []
+
+def register_tests(func, params):
+	global tests
+	tests += [(func, param) for param in params]
+
+def execute_tests():
+	ALIGN=30
+	failing_tests = []
+	for func, param in tests:
+		print param + (' ' * (ALIGN - len(param))),
+		try:
+			func(param)
+			print '[\x1b[32mPASS\x1b[0m]'
+		except KeyboardInterrupt:
+			sys.exit(1)
+		except TestException as exc:
+			print '[\x1b[31mFAIL\x1b[0m]'
+			failing_tests += [(param, exc.output)]
+		except Exception as exc:
+			print '[\x1b[31mFAIL\x1b[0m]'
+			failing_tests += [(param, 'Caught exception ' + str(sys.exc_info()[0]))]
+
+	if failing_tests:
+		print 'Failing tests:'
+		for name, output in failing_tests:
+			print name
+			print output
+
+	print 'Total Tests', len(tests)
+	print 'Failing Tests', len(failing_tests)
+	if failing_tests != []:
+		sys.exit(1)

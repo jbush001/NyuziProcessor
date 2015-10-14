@@ -30,7 +30,7 @@ can generate a listing file like this:
 The program generates a trace if you set the SIMULATOR_DEBUG_ARGS 
 environment variable:
 
-    EMULATOR_DEBUG_ARGS=-v ./runtest.py ...
+    VERBOSE=1 ./runtest.py ...
 
 ### Simulator Random Seed
 

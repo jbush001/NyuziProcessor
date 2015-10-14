@@ -24,10 +24,6 @@ from os import path
 sys.path.insert(0, '..')
 import test_harness
 
-if len(sys.argv) > 1:
-	files = sys.argv[1:]
-else:
-	files = [fname for fname in os.listdir('.') if fname.endswith(('.s'))]
 
 VERILATOR_MEM_DUMP='obj/vmem.bin'
 EMULATOR_MEM_DUMP='obj/mmem.bin'
@@ -53,29 +49,39 @@ emulator_args = [
 	'obj/mmem.bin,0x800000,0x400000'
 ]
 
-if 'EMULATOR_DEBUG_ARGS' in os.environ:
-	emulator_args += [ os.environ['EMULATOR_DEBUG_ARGS'] ]
+verbose = 'VERBOSE' in os.environ
+if verbose:
+	emulator_args += [ '-v' ]
 
-for source_file in files:
-	print 'testing ' + source_file,
+def run_cosimulation_test(source_file):
+	global emulator_args
+	global verilator_args
+	
 	hexfile = test_harness.assemble_test(source_file)
 	p1 = subprocess.Popen(verilator_args + [ '+bin=' + hexfile ], stdout=subprocess.PIPE)
 	p2 = subprocess.Popen(emulator_args + [ hexfile ], stdin=p1.stdout, stdout=subprocess.PIPE)
 	p1.stdout.close() # Allow P1 to receive SIGPIPE if p2 exits
+	output = ''
 	while True:
 		got = p2.stdout.read(0x1000)
 		if not got:
 			break
 			
-		print got
+		if verbose:
+			print got
+		else:
+			output += got
 
 	p2.wait()
 	if p2.returncode != 0:
-		print 'FAIL: cosimulation mismatch'
-		sys.exit(p2.returncode)
+		raise TestException('FAIL: cosimulation mismatch\n' + output)
 
-	if not test_harness.assert_files_equal(VERILATOR_MEM_DUMP, EMULATOR_MEM_DUMP):
-		print 'FAIL: simulator final memory contents do not match'
-		sys.exit(1)
-	else:
-		print 'PASS'
+	test_harness.assert_files_equal(VERILATOR_MEM_DUMP, EMULATOR_MEM_DUMP,
+		'final memory contents to not match')
+
+if len(sys.argv) > 1:
+	test_harness.register_tests(run_cosimulation_test, sys.argv[1:])
+else:
+	test_harness.register_tests(run_cosimulation_test, [fname for fname in os.listdir('.') if fname.endswith(('.s'))])
+
+test_harness.execute_tests()

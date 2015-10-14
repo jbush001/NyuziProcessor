@@ -20,11 +20,11 @@ import sys
 sys.path.insert(0, '../..')
 import test_harness
 
-test_harness.compile_test('uart.c')
-result = test_harness.run_verilator()
-if result.find('PASS') == -1:
-	print result
-	print 'FAIL'
-	sys.exit(1)
-else:
-	print 'PASS'
+def test_uart(name):
+	test_harness.compile_test('uart.c')
+	result = test_harness.run_verilator()
+	if result.find('PASS') == -1:
+		raise TestException('test did not indicate pass')
+
+test_harness.register_tests(test_uart, ['uart'])
+test_harness.execute_tests()
