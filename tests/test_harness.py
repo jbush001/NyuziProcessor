@@ -168,7 +168,6 @@ def execute_tests():
 			print name
 			print output
 
-	print 'Total Tests', len(tests)
-	print 'Failing Tests', len(failing_tests)
+	print str(len(failing_tests)) + '/' + str(len(tests)) + ' tests failed'
 	if failing_tests != []:
 		sys.exit(1)

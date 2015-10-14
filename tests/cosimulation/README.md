@@ -27,10 +27,20 @@ can generate a listing file like this:
 
     usr/local/llvm-nyuzi/bin/llvm-objdump --disassemble WORK/test.elf > test.dis
 
-The program generates a trace if you set the SIMULATOR_DEBUG_ARGS 
-environment variable:
+The program will print all events if you set the VERBOSE environment variable:
 
     VERBOSE=1 ./runtest.py ...
+
+For example:
+
+    swriteback 00000074 0 00 00000001
+    00000074 [th 0] s0 <= 00000001
+    swriteback 00000078 0 01 00000000
+    00000078 [th 0] s1 <= 00000000
+    swriteback 0000007c 0 02 ffffffff
+
+The first line in this example is output from the verilator model. The second
+is output from the emulator.
 
 ### Simulator Random Seed
 

@@ -28,7 +28,7 @@ ifneq ($(JAVAC),)
 endif
 	
 test: all FORCE
-	cd tests/cosimulation && ./runtest.py *.s
+	cd tests/cosimulation && ./runtest.py
 	cd tests/compiler && USE_VERILATOR=1 ./runtest.py
 	cd tests/misc/atomic/ && ./runtest.py
 	cd tests/misc/dflush/ && ./runtest.py
