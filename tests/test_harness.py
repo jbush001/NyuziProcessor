@@ -14,31 +14,30 @@
 # limitations under the License.
 #
 
-#
-# Common utilities for tests
-#
-
 import subprocess
 import os
 import sys
 
-COMPILER_DIR='/usr/local/llvm-nyuzi/bin/'
-BASE_DIR=os.path.normpath(os.path.dirname(os.path.abspath(__file__)) + '/../')
-LIB_DIR=BASE_DIR+'/software/libs/'
-BIN_DIR=BASE_DIR+'/bin/'
+COMPILER_DIR = '/usr/local/llvm-nyuzi/bin/'
+BASE_DIR = os.path.normpath(os.path.dirname(os.path.abspath(__file__)) + '/../')
+LIB_DIR = BASE_DIR + '/software/libs/'
+BIN_DIR = BASE_DIR + '/bin/'
+OBJ_DIR = 'obj/'
+ELF_FILE = OBJ_DIR + 'test.elf'
+HEX_FILE = OBJ_DIR + 'test.hex'
 
-HEX_FILE='obj/test.hex'
 
 class TestException:
 	def __init__(self, output):
 		self.output = output
 
+
 def compile_test(source_file, optlevel='3'):
-	if not os.path.exists('obj'):
-		os.makedirs('obj')
+	if not os.path.exists(OBJ_DIR):
+		os.makedirs(OBJ_DIR)
 
 	try:
-		subprocess.check_output([COMPILER_DIR + 'clang', '-o', 'obj/test.elf', 
+		subprocess.check_output([COMPILER_DIR + 'clang', '-o', ELF_FILE, 
 			'-w',
 			'-O' + optlevel,
 			source_file, 
@@ -48,7 +47,7 @@ def compile_test(source_file, optlevel='3'):
 			'-I' + LIB_DIR + 'libc/include',
 			'-I' + LIB_DIR + 'libos'],
 			stderr=subprocess.STDOUT)
-		subprocess.check_output([COMPILER_DIR + 'elf2hex', '-o', HEX_FILE, 'obj/test.elf'],
+		subprocess.check_output([COMPILER_DIR + 'elf2hex', '-o', HEX_FILE, ELF_FILE],
 			stderr=subprocess.STDOUT)
 	except subprocess.CalledProcessError as exc:
 		raise TestException('Compilation failed:\n' + exc.output)
@@ -56,12 +55,12 @@ def compile_test(source_file, optlevel='3'):
 	return HEX_FILE
 	
 def assemble_test(source_file):
-	if not os.path.exists('obj'):
-		os.makedirs('obj')
+	if not os.path.exists(OBJ_DIR):
+		os.makedirs(OBJ_DIR)
 
 	try:
-		subprocess.check_output([COMPILER_DIR + 'clang', '-o', 'obj/test.elf', source_file])
-		subprocess.check_output([COMPILER_DIR + 'elf2hex', '-o', HEX_FILE, 'obj/test.elf'])
+		subprocess.check_output([COMPILER_DIR + 'clang', '-o', ELF_FILE, source_file])
+		subprocess.check_output([COMPILER_DIR + 'elf2hex', '-o', HEX_FILE, ELF_FILE])
 	except subprocess.CalledProcessError as exc:
 		raise TestException('Assembly failed:\n' + exc.output)
 
@@ -73,9 +72,9 @@ def run_emulator(block_device=None, dump_file=None, dump_base=None, dump_length=
 		args += ['-b', block_device]
 
 	if dump_file:
-		args += [ '-d', dump_file + ',' + hex(dump_base) + ',' + hex(dump_length) ]
+		args += ['-d', dump_file + ',' + hex(dump_base) + ',' + hex(dump_length)]
 
-	args += [ HEX_FILE ]
+	args += [HEX_FILE]
 
 	try:
 		output = subprocess.check_output(args)
@@ -83,11 +82,12 @@ def run_emulator(block_device=None, dump_file=None, dump_base=None, dump_length=
 		raise TestException('Emulator returned error: ' + exc.output)
 	
 	return output
-	
+
+
 def run_verilator(block_device=None, dump_file=None, dump_base=None, dump_length=None, extra_args=None):
 	args = [BIN_DIR + 'verilator_model']
 	if block_device:
-		args += [ '+block=' + block_device ]
+		args += ['+block=' + block_device]
 		
 	if dump_file:
 		args += ['+memdumpfile=' + dump_file, '+memdumpbase=' + hex(dump_base)[2:], 
@@ -102,8 +102,9 @@ def run_verilator(block_device=None, dump_file=None, dump_base=None, dump_length
 		raise TestException(output + '\nProgram did not halt normally')
 	
 	return output
-	
-def assert_files_equal(file1, file2, error_msg = ''):
+
+
+def assert_files_equal(file1, file2, error_msg=''):
 	len1 = os.stat(file1).st_size
 	len2 = os.stat(file2).st_size
 	if len1 != len2:
@@ -143,14 +144,17 @@ def assert_files_equal(file1, file2, error_msg = ''):
 
 			block_offset += BUFSIZE
 
+
 tests = []
+
 
 def register_tests(func, params):
 	global tests
 	tests += [(func, param) for param in params]
 
+
 def execute_tests():
-	ALIGN=30
+	ALIGN = 30
 	failing_tests = []
 	for func, param in tests:
 		print param + (' ' * (ALIGN - len(param))),
