@@ -74,7 +74,7 @@ def run_cosimulation_test(source_file):
 
 	p2.wait()
 	if p2.returncode != 0:
-		raise TestException('FAIL: cosimulation mismatch\n' + output)
+		raise test_harness.TestException('FAIL: cosimulation mismatch\n' + output)
 
 	test_harness.assert_files_equal(VERILATOR_MEM_DUMP, EMULATOR_MEM_DUMP,
 		'final memory contents to not match')
