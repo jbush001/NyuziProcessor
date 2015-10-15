@@ -168,7 +168,7 @@ def execute_tests():
 			failing_tests += [(param, exc.output)]
 		except Exception as exc:
 			print '[\x1b[31mFAIL\x1b[0m]'
-			failing_tests += [(param, 'Caught exception ' + str(sys.exc_info()[0]))]
+			failing_tests += [(param, 'Caught exception ' + str(exc))]
 
 	if failing_tests:
 		print 'Failing tests:'
