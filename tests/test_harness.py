@@ -145,18 +145,38 @@ def assert_files_equal(file1, file2, error_msg=''):
 			block_offset += BUFSIZE
 
 
-tests = []
+registered_tests = []
 
 
 def register_tests(func, params):
-	global tests
-	tests += [(func, param) for param in params]
+	global registered_tests
+	registered_tests += [(func, param) for param in params]
+
+
+def find_files(extensions):
+	return [fname for fname in os.listdir('.') if fname.endswith(extensions)]
 
 
 def execute_tests():
+	global registered_tests
+
+	if len(sys.argv) > 1:
+		# Filter test list based on command line requests
+		new_test_list = []
+		for requested in sys.argv[1:]:
+			for func, param in registered_tests:
+				if param == requested:
+					new_test_list += [(func, param)]
+					break
+			else:
+				print 'Unknown test', requested
+				sys.exit(1)
+				
+		registered_tests = new_test_list
+
 	ALIGN = 30
 	failing_tests = []
-	for func, param in tests:
+	for func, param in registered_tests:
 		print param + (' ' * (ALIGN - len(param))),
 		try:
 			func(param)
@@ -176,6 +196,6 @@ def execute_tests():
 			print name
 			print output
 
-	print str(len(failing_tests)) + '/' + str(len(tests)) + ' tests failed'
+	print str(len(failing_tests)) + '/' + str(len(registered_tests)) + ' tests failed'
 	if failing_tests != []:
 		sys.exit(1)

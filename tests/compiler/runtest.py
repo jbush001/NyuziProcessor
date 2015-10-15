@@ -77,12 +77,7 @@ def run_emulator_test(source_file):
 	result = test_harness.run_emulator()
 	check_result(source_file, result)
 
-if len(sys.argv) > 1:
-	test_list = sys.argv[1:]
-else:
-	test_harness.register_tests(run_host_test, sys.argv[1:])
-
-test_list = [fname for fname in os.listdir('.') if (fname.endswith(('.c', '.cpp')) and not fname.startswith('_'))]
+test_list = [fname for fname in test_harness.find_files(('.c', '.cpp')) if not fname.startswith('_')]
 
 if 'USE_VERILATOR' in os.environ:
 	test_list = [fname for fname in test_list if fname.find('noverilator') == -1]

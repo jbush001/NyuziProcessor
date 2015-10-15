@@ -79,9 +79,6 @@ def run_cosimulation_test(source_file):
 	test_harness.assert_files_equal(VERILATOR_MEM_DUMP, EMULATOR_MEM_DUMP,
 		'final memory contents to not match')
 
-if len(sys.argv) > 1:
-	test_harness.register_tests(run_cosimulation_test, sys.argv[1:])
-else:
-	test_harness.register_tests(run_cosimulation_test, [fname for fname in os.listdir('.') if fname.endswith(('.s'))])
+test_harness.register_tests(run_cosimulation_test, test_harness.find_files(('.s')))
 
 test_harness.execute_tests()
