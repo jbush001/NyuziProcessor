@@ -53,7 +53,7 @@ struct Thread
 	uint32_t lastFaultPc;
 	uint32_t lastFaultAddress;
 	uint32_t interruptEnable;
-	uint32_t multiCycleTransferActive;
+	bool multiCycleTransferActive;
 	uint32_t multiCycleTransferLane;
 	uint32_t scalarReg[NUM_REGISTERS - 1];	// 31 is PC, which is special
 	uint32_t vectorReg[NUM_REGISTERS][NUM_VECTOR_LANES];

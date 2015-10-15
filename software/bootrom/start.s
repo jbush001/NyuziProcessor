@@ -14,16 +14,19 @@
 # limitations under the License.
 # 
 
-
-# Execution starts here. Set up the stack and call into the serial bootloader.
-# When other threads are started (which will be done by the program that was
-# loaded, they will start here, but skip execution of the serial bootloader and
-# jump directly to address 0, where the new program will dispatch them 
-# appropriately.
+#
+# When the processor comes out of reset, it starts execution here. This sets
+# up the stack and calls main, which runs the serial loader. After main returns,
+# this jumps to address 0, where it should have loaded the new program. When
+# the loaded program later starts other threads, they will also begin 
+# execution here. But they will skip running the serial loader and jump directly 
+# to address 0.
+#
 
 					.text
-					.globl _start
 					.align 4
+
+					.globl _start
 					.type _start,@function
 _start:				getcr s0, 0
 					btrue s0, jump_to_zero
@@ -32,7 +35,6 @@ _start:				getcr s0, 0
 					load_32 sp, temp_stack
 					call main
 
-jump_to_zero: 		move s0, 0
-					move pc, s0					
+jump_to_zero: 		move pc, 0
 
 temp_stack:			.long 0x400000
