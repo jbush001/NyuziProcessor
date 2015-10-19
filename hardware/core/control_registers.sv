@@ -64,8 +64,7 @@ module control_registers
 	logic prev_int_flag[`THREADS_PER_CORE];
 	logic prev_mmu_enable[`THREADS_PER_CORE];
 	scalar_t cycle_count;
-	scalar_t scratchpad0;
-	scalar_t scratchpad1;
+	scalar_t scratchpad[`THREADS_PER_CORE * 2];
 	
 	assign cr_itlb_update_en = dd_creg_write_en && dd_creg_index == CR_ITLB_UPDATE_VIRT;
 	assign cr_dtlb_update_en = dd_creg_write_en && dd_creg_index == CR_DTLB_UPDATE_VIRT;
@@ -85,6 +84,9 @@ module control_registers
 				prev_mmu_enable[i] <= 0;
 			end
 
+			for (int i = 0; i < `THREADS_PER_CORE * 2; i++)
+				scratchpad[i] <= '0;
+
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			cr_creg_read_val <= '0;
@@ -93,8 +95,6 @@ module control_registers
 			cr_tlb_miss_handler <= '0;
 			cr_tlb_update_ppage_idx <= '0;
 			cycle_count <= '0;
-			scratchpad0 <= '0;
-			scratchpad1 <= '0;
 			// End of automatics
 		end
 		else
@@ -145,8 +145,8 @@ module control_registers
 					CR_FAULT_HANDLER:    cr_fault_handler <= dd_creg_write_val;
 					CR_TLB_MISS_HANDLER: cr_tlb_miss_handler <= dd_creg_write_val;
 					CR_TLB_UPDATE_PHYS:  cr_tlb_update_ppage_idx <= dd_creg_write_val[31-:`PAGE_NUM_BITS];
-					CR_SCRATCHPAD0:      scratchpad0 <= dd_creg_write_val;
-					CR_SCRATCHPAD1:      scratchpad1 <= dd_creg_write_val;
+					CR_SCRATCHPAD0:      scratchpad[{1'b0, dt_thread_idx}] <= dd_creg_write_val;
+					CR_SCRATCHPAD1:      scratchpad[{1'b0, dt_thread_idx } + `THREADS_PER_CORE] <= dd_creg_write_val;
 					default:
 						;
 				endcase
@@ -175,8 +175,8 @@ module control_registers
 					CR_FAULT_ADDRESS:    cr_creg_read_val <= fault_access_addr[dt_thread_idx];
 					CR_TLB_MISS_HANDLER: cr_creg_read_val <= cr_tlb_miss_handler;
 					CR_CYCLE_COUNT:      cr_creg_read_val <= cycle_count;
-					CR_SCRATCHPAD0:      cr_creg_read_val <= scratchpad0;
-					CR_SCRATCHPAD1:      cr_creg_read_val <= scratchpad1;
+					CR_SCRATCHPAD0:      cr_creg_read_val <= scratchpad[{1'b0, dt_thread_idx}];
+					CR_SCRATCHPAD1:      cr_creg_read_val <= scratchpad[{1'b0, dt_thread_idx} + `THREADS_PER_CORE];
 					default:             cr_creg_read_val <= 32'hffffffff;
 				endcase
 			end
