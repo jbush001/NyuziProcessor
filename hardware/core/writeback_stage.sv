@@ -64,7 +64,7 @@ module writeback_stage(
 	input decoded_instruction_t           dd_instruction,
 	input vector_lane_mask_t              dd_lane_mask,
 	input thread_idx_t                    dd_thread_idx,
-	input l1d_addr_t                      dd_request_addr,
+	input l1d_addr_t                      dd_request_vaddr,
 	input subcycle_t                      dd_subcycle,
 	input                                 dd_rollback_en,
 	input scalar_t                        dd_rollback_pc,
@@ -72,6 +72,7 @@ module writeback_stage(
 	input                                 dd_suspend_thread,
 	input                                 dd_is_io_address,
 	input                                 dd_access_fault,
+	input                                 dd_tlb_miss,
 	
 	// From store queue
 	input [`CACHE_LINE_BYTES - 1:0]       sq_store_bypass_mask,
@@ -87,13 +88,14 @@ module writeback_stage(
 	input scalar_t                        cr_creg_read_val,
 	input thread_bitmap_t                 cr_interrupt_en,
 	input scalar_t                        cr_fault_handler,
+	input scalar_t                        cr_tlb_miss_handler,
 	
 	// To control registers
 	output logic                          wb_fault,
 	output fault_reason_t                 wb_fault_reason,
 	output scalar_t                       wb_fault_pc,
 	output thread_idx_t                   wb_fault_thread_idx,
-	output scalar_t                       wb_fault_access_addr,
+	output scalar_t                       wb_fault_access_vaddr,
 
 	// Interrupt input
 	input                                 interrupt_pending,
@@ -169,33 +171,53 @@ module writeback_stage(
 		wb_fault_pc = 0;
 		wb_fault_thread_idx = 0;
 		wb_interrupt_ack = 0;
-		wb_fault_access_addr = 0;
+		wb_fault_access_vaddr = 0;
 
-		if (ix_instruction_valid && (ix_instruction.illegal || ix_instruction.ifetch_fault))
+		if (ix_instruction_valid && (ix_instruction.illegal || ix_instruction.ifetch_fault
+			|| ix_instruction.tlb_miss))
 		begin
-			// Illegal instruction fault
+			// Illegal instruction/ifetch fault
 			wb_rollback_en = 1'b1;
-			wb_rollback_pc = cr_fault_handler;
+			if (ix_instruction.tlb_miss)
+				wb_rollback_pc = cr_tlb_miss_handler;
+			else
+				wb_rollback_pc = cr_fault_handler;
+			
 			wb_rollback_thread_idx = ix_thread_idx;
 			wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
 			wb_fault = 1;
-			wb_fault_reason = ix_instruction.ifetch_fault ? FR_IFETCH_FAULT : FR_ILLEGAL_INSTRUCTION;
+			if (ix_instruction.tlb_miss)
+				wb_fault_reason = FR_ITLB_MISS;
+			else if (ix_instruction.ifetch_fault)
+				wb_fault_reason = FR_IFETCH_FAULT;
+			else
+				wb_fault_reason = FR_ILLEGAL_INSTRUCTION;
+
 			wb_fault_pc = ix_instruction.pc;
-			wb_fault_access_addr = ix_instruction.pc;
+			wb_fault_access_vaddr = ix_instruction.pc;
 			wb_fault_thread_idx = ix_thread_idx;
 		end
-		else if (dd_instruction_valid && dd_access_fault)
+		else if (dd_instruction_valid && (dd_access_fault || dd_tlb_miss))
 		begin
 			// Memory access fault
 			wb_rollback_en = 1'b1;
-			wb_rollback_pc = cr_fault_handler;
 			wb_rollback_thread_idx = dd_thread_idx;
 			wb_rollback_pipeline = PIPE_MEM;
 			wb_fault = 1;
-			wb_fault_reason = FR_INVALID_ACCESS;
+			if (dd_tlb_miss)
+			begin
+				wb_fault_reason = FR_DTLB_MISS;
+				wb_rollback_pc = cr_tlb_miss_handler;
+			end
+			else
+			begin
+				wb_fault_reason = FR_INVALID_ACCESS;
+				wb_rollback_pc = cr_fault_handler;
+			end
+			
 			wb_fault_pc = dd_instruction.pc;
 			wb_fault_thread_idx = dd_thread_idx;
-			wb_fault_access_addr = dd_request_addr;
+			wb_fault_access_vaddr = dd_request_vaddr;
 		end
 		else if (ix_instruction_valid && ix_instruction.has_dest && ix_instruction.dest_reg == `REG_PC
 			&& !ix_instruction.dest_is_vector)
@@ -287,13 +309,13 @@ module writeback_stage(
 	endgenerate
 
 	assign memory_op = dd_instruction.memory_access_type;
-	assign mem_load_lane_idx = ~dd_request_addr.offset[2+:$clog2(`CACHE_LINE_WORDS)];
+	assign mem_load_lane_idx = ~dd_request_vaddr.offset[2+:$clog2(`CACHE_LINE_WORDS)];
 	assign mem_load_lane = bypassed_read_data[mem_load_lane_idx * 32+:32];
 
 	// Memory load byte aligner.
 	always_comb
 	begin
-		case (dd_request_addr.offset[1:0])
+		case (dd_request_vaddr.offset[1:0])
 			2'd0: byte_aligned = mem_load_lane[31:24];
 			2'd1: byte_aligned = mem_load_lane[23:16];
 			2'd2: byte_aligned = mem_load_lane[15:8];
@@ -305,7 +327,7 @@ module writeback_stage(
 	// Memory load halfword aligner.
 	always_comb
 	begin
-		case (dd_request_addr.offset[1])
+		case (dd_request_vaddr.offset[1])
 			1'd0: half_aligned = { mem_load_lane[23:16], mem_load_lane[31:24] };
 			1'd1: half_aligned = { mem_load_lane[7:0], mem_load_lane[15:8] };
 			default: half_aligned = '0;

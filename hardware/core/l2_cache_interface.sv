@@ -71,7 +71,7 @@ module l2_cache_interface
 		
 	// From ifetch_data_stage
 	input logic                                   ifd_cache_miss,
-	input scalar_t                                ifd_cache_miss_addr,
+	input scalar_t                                ifd_cache_miss_paddr,
 	input thread_idx_t                            ifd_cache_miss_thread_idx,
 
 	// To thread_select_stage  
@@ -194,7 +194,7 @@ module l2_cache_interface
 	l1_load_miss_queue l1_load_miss_queue_icache(
 		// Enqueue requests
 		.cache_miss(ifd_cache_miss),
-		.cache_miss_addr(ifd_cache_miss_addr),
+		.cache_miss_addr(ifd_cache_miss_paddr),
 		.cache_miss_thread_idx(ifd_cache_miss_thread_idx),
 		.cache_miss_synchronized('0),
 

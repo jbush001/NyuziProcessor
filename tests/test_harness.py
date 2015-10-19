@@ -36,17 +36,23 @@ def compile_test(source_file, optlevel='3'):
 	if not os.path.exists(OBJ_DIR):
 		os.makedirs(OBJ_DIR)
 
+	compiler_args = [COMPILER_DIR + 'clang', '-o', ELF_FILE, 
+		'-w',
+		'-O' + optlevel,
+		'-I' + LIB_DIR + 'libc/include',
+		'-I' + LIB_DIR + 'libos']
+	
+	if isinstance(source_file, list):
+		compiler_args += source_file		# List of files
+	else:
+		compiler_args += [source_file]	# Single file
+
+	compiler_args += [LIB_DIR + 'libc/crt0.o',
+		LIB_DIR + 'libc/libc.a',
+		LIB_DIR + 'libos/libos.a']
+
 	try:
-		subprocess.check_output([COMPILER_DIR + 'clang', '-o', ELF_FILE, 
-			'-w',
-			'-O' + optlevel,
-			source_file, 
-			LIB_DIR + 'libc/crt0.o',
-			LIB_DIR + 'libc/libc.a',
-			LIB_DIR + 'libos/libos.a',
-			'-I' + LIB_DIR + 'libc/include',
-			'-I' + LIB_DIR + 'libos'],
-			stderr=subprocess.STDOUT)
+		subprocess.check_output(compiler_args, stderr=subprocess.STDOUT)
 		subprocess.check_output([COMPILER_DIR + 'elf2hex', '-o', HEX_FILE, ELF_FILE],
 			stderr=subprocess.STDOUT)
 	except subprocess.CalledProcessError as exc:

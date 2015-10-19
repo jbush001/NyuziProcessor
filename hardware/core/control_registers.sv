@@ -28,6 +28,11 @@ module control_registers
 	
 	// Control signals to various stages
 	output scalar_t                         cr_eret_address[`THREADS_PER_CORE],
+	output logic                            cr_mmu_en[`THREADS_PER_CORE],
+	output logic                            cr_itlb_update_en,
+	output logic                            cr_dtlb_update_en,
+	output page_index_t                     cr_tlb_update_ppage_idx,
+	output page_index_t                     cr_tlb_update_vpage_idx,
 	
 	// From single cycle exec
 	input                                   ix_is_eret,
@@ -37,10 +42,10 @@ module control_registers
 	input                                   wb_fault,
 	input fault_reason_t                    wb_fault_reason,
 	input scalar_t                          wb_fault_pc,
-	input scalar_t                          wb_fault_access_addr,
+	input scalar_t                          wb_fault_access_vaddr,
 	input thread_idx_t                      wb_fault_thread_idx,
 	
-	// From dcache_data_stage (dd_XXX signals are unregistered.  dt_thread_idx 
+	// From dcache_data_stage (dd_XXX signals are unregistered. dt_thread_idx
 	// represents thread going into dcache_data_stage)
 	input thread_idx_t                      dt_thread_idx,
 	input                                   dd_creg_write_en,
@@ -51,13 +56,21 @@ module control_registers
 	// To writeback_stage
 	output scalar_t                         cr_creg_read_val,
 	output thread_bitmap_t                  cr_interrupt_en,
-	output scalar_t                         cr_fault_handler);
+	output scalar_t                         cr_fault_handler,
+	output scalar_t                         cr_tlb_miss_handler);
 	
 	scalar_t fault_access_addr[`THREADS_PER_CORE];
 	fault_reason_t fault_reason[`THREADS_PER_CORE];
 	logic prev_int_flag[`THREADS_PER_CORE];
+	logic prev_mmu_enable[`THREADS_PER_CORE];
 	scalar_t cycle_count;
+	scalar_t scratchpad0;
+	scalar_t scratchpad1;
 	
+	assign cr_itlb_update_en = dd_creg_write_en && dd_creg_index == CR_ITLB_UPDATE_VIRT;
+	assign cr_dtlb_update_en = dd_creg_write_en && dd_creg_index == CR_DTLB_UPDATE_VIRT;
+	assign cr_tlb_update_vpage_idx = dd_creg_write_val[31-:`PAGE_NUM_BITS];
+
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
@@ -68,6 +81,8 @@ module control_registers
 				cr_eret_address[i] <= 0;
 				prev_int_flag[i] <= 0;
 				fault_access_addr[i] <= '0;
+				cr_mmu_en[i] <= 0;
+				prev_mmu_enable[i] <= 0;
 			end
 
 			/*AUTORESET*/
@@ -75,7 +90,11 @@ module control_registers
 			cr_creg_read_val <= '0;
 			cr_fault_handler <= '0;
 			cr_interrupt_en <= '0;
+			cr_tlb_miss_handler <= '0;
+			cr_tlb_update_ppage_idx <= '0;
 			cycle_count <= '0;
+			scratchpad0 <= '0;
+			scratchpad1 <= '0;
 			// End of automatics
 		end
 		else
@@ -93,14 +112,20 @@ module control_registers
 			begin
 				fault_reason[wb_fault_thread_idx] <= wb_fault_reason;
 				cr_eret_address[wb_fault_thread_idx] <= wb_fault_pc;
-				fault_access_addr[wb_fault_thread_idx] <= wb_fault_access_addr;
+				fault_access_addr[wb_fault_thread_idx] <= wb_fault_access_vaddr;
 				cr_interrupt_en[wb_fault_thread_idx] <= 0;	// Disable interrupts for this thread
+				if (wb_fault_reason == FR_ITLB_MISS || wb_fault_reason == FR_DTLB_MISS)
+					cr_mmu_en[wb_fault_thread_idx] <= 0;
+
+				// Copy current flags to prev flags
 				prev_int_flag[wb_fault_thread_idx] <= cr_interrupt_en[wb_fault_thread_idx];
+				prev_mmu_enable[wb_fault_thread_idx] <= cr_mmu_en[wb_fault_thread_idx];
 			end
 			else if (ix_is_eret)
 			begin	
-				// Copy from prev interrupt to interrupt flag
+				// Copy from prev flags to current flags
 				cr_interrupt_en[ix_thread_idx] <= prev_int_flag[ix_thread_idx];	
+				cr_mmu_en[ix_thread_idx] <= prev_mmu_enable[ix_thread_idx];
 			end
 
 			//
@@ -111,11 +136,17 @@ module control_registers
 				case (dd_creg_index)
 					CR_FLAGS:
 					begin
+						prev_mmu_enable[dt_thread_idx] <= dd_creg_write_val[3];
+						cr_mmu_en[dt_thread_idx] <= dd_creg_write_val[2];
 						prev_int_flag[dt_thread_idx] <= dd_creg_write_val[1];
 						cr_interrupt_en[dt_thread_idx] <= dd_creg_write_val[0];
 					end 
 
 					CR_FAULT_HANDLER:    cr_fault_handler <= dd_creg_write_val;
+					CR_TLB_MISS_HANDLER: cr_tlb_miss_handler <= dd_creg_write_val;
+					CR_TLB_UPDATE_PHYS:  cr_tlb_update_ppage_idx <= dd_creg_write_val[31-:`PAGE_NUM_BITS];
+					CR_SCRATCHPAD0:      scratchpad0 <= dd_creg_write_val;
+					CR_SCRATCHPAD1:      scratchpad1 <= dd_creg_write_val;
 					default:
 						;
 				endcase
@@ -130,6 +161,8 @@ module control_registers
 					CR_FLAGS:
 					begin
 						cr_creg_read_val <= scalar_t'({ 
+							prev_mmu_enable[dt_thread_idx],
+							cr_mmu_en[dt_thread_idx],
 							prev_int_flag[dt_thread_idx],
 							cr_interrupt_en[dt_thread_idx] 
 						});
@@ -140,7 +173,10 @@ module control_registers
 					CR_FAULT_REASON:     cr_creg_read_val <= scalar_t'(fault_reason[dt_thread_idx]);
 					CR_FAULT_HANDLER:    cr_creg_read_val <= cr_fault_handler;
 					CR_FAULT_ADDRESS:    cr_creg_read_val <= fault_access_addr[dt_thread_idx];
+					CR_TLB_MISS_HANDLER: cr_creg_read_val <= cr_tlb_miss_handler;
 					CR_CYCLE_COUNT:      cr_creg_read_val <= cycle_count;
+					CR_SCRATCHPAD0:      cr_creg_read_val <= scratchpad0;
+					CR_SCRATCHPAD1:      cr_creg_read_val <= scratchpad1;
 					default:             cr_creg_read_val <= 32'hffffffff;
 				endcase
 			end

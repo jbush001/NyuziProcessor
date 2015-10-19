@@ -188,7 +188,7 @@ module verilator_tb(
 		.dd_instruction_is_load(`CORE0.dd_instruction.is_load),
 		.dt_instruction_pc(`CORE0.dt_instruction.pc),
 		.dt_thread_idx(`CORE0.dt_thread_idx),
-		.dt_request_addr(`CORE0.dt_request_addr),
+		.dt_request_virt_addr(`CORE0.dt_request_vaddr),
 		.sq_rollback_en(`CORE0.sq_rollback_en),
 		.sq_store_sync_success(`CORE0.sq_store_sync_success),
 		.wb_fault_pc(`CORE0.wb_fault_pc),
@@ -248,11 +248,12 @@ module verilator_tb(
 
 	initial
 	begin
-		$display("num cores %0d threads per core %0d l1i$ %0dk %0d ways l1d$ %0dk %0d ways l2$ %0dk %0d ways",
+		$display("cores %0d|threads per core %0d|l1i$ %0dk %0d ways|l1d$ %0dk %0d ways|l2$ %0dk %0d ways|itlb %0d entries|dtlb %0d entries",
 			`NUM_CORES, `THREADS_PER_CORE, 
 			`L1I_WAYS * `L1I_SETS * `CACHE_LINE_BYTES / 1024, `L1I_WAYS,
 			`L1D_WAYS * `L1D_SETS * `CACHE_LINE_BYTES / 1024, `L1D_WAYS,
-			`L2_WAYS * `L2_SETS * `CACHE_LINE_BYTES / 1024, `L2_WAYS);
+			`L2_WAYS * `L2_SETS * `CACHE_LINE_BYTES / 1024, `L2_WAYS,
+			`ITLB_ENTRIES, `DTLB_ENTRIES);
 
 		if ($test$plusargs("statetrace") != 0)
 		begin
@@ -328,8 +329,10 @@ module verilator_tb(
 			$display("      instruction_issue     %0d", nyuzi.performance_counters.event_counter[6 + `NUM_CORES * i]);
 			$display("      l1i_miss              %0d", nyuzi.performance_counters.event_counter[7 + `NUM_CORES * i]);
 			$display("      l1i_hit               %0d", nyuzi.performance_counters.event_counter[8 + `NUM_CORES * i]);
-			$display("      l1d_miss              %0d", nyuzi.performance_counters.event_counter[9 + `NUM_CORES * i]);
-			$display("      l1d_hit               %0d", nyuzi.performance_counters.event_counter[10 + `NUM_CORES * i]);
+			$display("      itlb_miss             %0d", nyuzi.performance_counters.event_counter[9 + `NUM_CORES * i]);
+			$display("      l1d_miss              %0d", nyuzi.performance_counters.event_counter[10 + `NUM_CORES * i]);
+			$display("      l1d_hit               %0d", nyuzi.performance_counters.event_counter[11 + `NUM_CORES * i]);
+			$display("      dtlb_miss             %0d", nyuzi.performance_counters.event_counter[12 + `NUM_CORES * i]);
 		end
 		
 		// Do this last so emulator doesn't kill us with SIGPIPE during cosimulation.

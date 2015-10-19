@@ -31,8 +31,9 @@ module ifetch_data_stage(
 	// is low, the other signals in this group are undefined and should
 	// be ignored.
 	input                            ift_instruction_requested,
-	input l1i_addr_t                 ift_pc,
+	input l1i_addr_t                 ift_pc_paddr,
 	input thread_idx_t               ift_thread_idx,
+	input                            ift_tlb_hit,
 	input l1i_tag_t                  ift_tag[`L1D_WAYS],
 	input                            ift_valid[`L1D_WAYS],
 
@@ -52,7 +53,7 @@ module ifetch_data_stage(
 
 	// To l2_interface
 	output logic                     ifd_cache_miss,
-	output scalar_t                  ifd_cache_miss_addr,
+	output scalar_t                  ifd_cache_miss_paddr,
 	output thread_idx_t              ifd_cache_miss_thread_idx,	// also to ifetch_tag
 
 	// To instruction decode stage
@@ -61,14 +62,19 @@ module ifetch_data_stage(
 	output scalar_t                  ifd_pc,
 	output thread_idx_t              ifd_thread_idx,
 	output logic                     ifd_ifetch_fault,
+	output logic                     ifd_tlb_miss,
                                     
 	// From writeback stage         
 	input                            wb_rollback_en,
 	input thread_idx_t               wb_rollback_thread_idx,
 
+	// From control registers
+	input                            cr_mmu_en[`THREADS_PER_CORE],
+
 	// Performance counters
 	output logic                     perf_icache_hit,
-	output logic                     perf_icache_miss);
+	output logic                     perf_icache_miss,
+	output logic                     perf_itlb_miss);
 
 	logic cache_hit;
 	logic[`L1I_WAYS - 1:0] way_hit_oh;
@@ -76,6 +82,8 @@ module ifetch_data_stage(
 	logic[`CACHE_LINE_BITS - 1:0] fetched_cache_line;
 	scalar_t fetched_word;
 	logic[$clog2(`CACHE_LINE_WORDS) - 1:0] cache_lane;
+	logic alignment_fault;
+	logic tlb_miss;
 
 	// 
 	// Check for cache hit
@@ -85,23 +93,34 @@ module ifetch_data_stage(
 		for (way_idx = 0; way_idx < `L1I_WAYS; way_idx++)
 		begin : hit_check_gen
 			always_comb
-				way_hit_oh[way_idx] = ift_pc.tag == ift_tag[way_idx] && ift_valid[way_idx]; 
+				way_hit_oh[way_idx] = ift_pc_paddr.tag == ift_tag[way_idx] 
+					&& ift_valid[way_idx]; 
 		end
 	endgenerate
 
-	assign cache_hit = |way_hit_oh;
+	assign cache_hit = |way_hit_oh && ift_tlb_hit;
 
 	oh_to_idx #(.NUM_SIGNALS(`L1D_WAYS)) oh_to_idx_hit_way(
 		.one_hot(way_hit_oh),
 		.index(way_hit_idx));
 
-	assign ifd_near_miss = !cache_hit && ift_instruction_requested && |l2i_itag_update_en
-		&& l2i_itag_update_set == ift_pc.set_idx && l2i_itag_update_tag == ift_pc.tag; 
-	assign ifd_cache_miss = !cache_hit && ift_instruction_requested && !ifd_near_miss;
-	assign ifd_cache_miss_addr = { ift_pc.tag, ift_pc.set_idx, {`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
+	assign ifd_near_miss = !cache_hit 
+		&& ift_tlb_hit
+		&& ift_instruction_requested
+		&& |l2i_itag_update_en
+		&& l2i_itag_update_set == ift_pc_paddr.set_idx 
+		&& l2i_itag_update_tag == ift_pc_paddr.tag; 
+	assign ifd_cache_miss = !cache_hit 
+		&& ift_tlb_hit
+		&& ift_instruction_requested 
+		&& !ifd_near_miss;
+	assign ifd_cache_miss_paddr = { ift_pc_paddr.tag, ift_pc_paddr.set_idx, {`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
 	assign ifd_cache_miss_thread_idx = ift_thread_idx;
 	assign perf_icache_hit = cache_hit && ift_instruction_requested;
-	assign perf_icache_miss = !cache_hit && ift_instruction_requested;
+	assign perf_icache_miss = !cache_hit && ift_tlb_hit && ift_instruction_requested;
+	assign perf_itlb_miss = ift_instruction_requested && tlb_miss;
+	assign alignment_fault = ift_pc_paddr[1:0] != 0;
+	assign tlb_miss = !ift_tlb_hit && cr_mmu_en[ift_thread_idx];
 
 	//
 	// Instruction cache data
@@ -112,7 +131,7 @@ module ifetch_data_stage(
 		.READ_DURING_WRITE("NEW_DATA")
 	) sram_l1i_data(
 		.read_en(cache_hit && ift_instruction_requested),
-		.read_addr({ way_hit_idx, ift_pc.set_idx }),
+		.read_addr({ way_hit_idx, ift_pc_paddr.set_idx }),
 		.read_data(fetched_cache_line),
 		.write_en(l2i_idata_update_en),	
 		.write_addr({ l2i_idata_update_way, l2i_idata_update_set }),
@@ -136,6 +155,7 @@ module ifetch_data_stage(
 			ifd_instruction_valid <= '0;
 			ifd_pc <= '0;
 			ifd_thread_idx <= '0;
+			ifd_tlb_miss <= '0;
 			// End of automatics
 		end
 		else
@@ -145,10 +165,11 @@ module ifetch_data_stage(
 			assert(!ift_instruction_requested || $onehot0(way_hit_oh));
 
 			ifd_instruction_valid <= ift_instruction_requested && (!wb_rollback_en || wb_rollback_thread_idx 
-				!= ift_thread_idx) && cache_hit;
-			ifd_pc <= ift_pc;
+				!= ift_thread_idx) && (cache_hit || alignment_fault || tlb_miss);
+			ifd_pc <= ift_pc_paddr;
 			ifd_thread_idx <= ift_thread_idx;
-			ifd_ifetch_fault <= ift_pc[1:0] != 0;
+			ifd_ifetch_fault <= alignment_fault;
+			ifd_tlb_miss <= tlb_miss;
 		end
 	end
 endmodule

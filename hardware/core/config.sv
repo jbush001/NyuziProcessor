@@ -37,5 +37,8 @@
 `define L2_WAYS 8
 `define L2_SETS 256		// 128k
 `define AXI_DATA_WIDTH 32
+`define HAS_MMU 1
+`define ITLB_ENTRIES 64
+`define DTLB_ENTRIES 64
 
 `endif

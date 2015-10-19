@@ -43,14 +43,22 @@ module core
 	// Performance events
 	output logic [`CORE_PERF_EVENTS - 1:0] core_perf_events);
 
+	// XXX for some reason, AUTOLOGIC doesn't expand these.
+	// Should figure out why.
 	scalar_t cr_creg_read_val;
 	thread_bitmap_t cr_thread_enable;
 	thread_bitmap_t cr_interrupt_en;
-	scalar_t cr_fault_handler;
 	scalar_t cr_eret_address[`THREADS_PER_CORE];
+	scalar_t cr_fault_handler;
+	scalar_t cr_tlb_miss_handler;
+	page_index_t cr_tlb_update_ppage_idx;
+	page_index_t cr_tlb_update_vpage_idx;
 
 	/*AUTOLOGIC*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
+	logic		cr_dtlb_update_en;	// From control_registers of control_registers.v
+	logic		cr_itlb_update_en;	// From control_registers of control_registers.v
+	logic		cr_mmu_en [`THREADS_PER_CORE];// From control_registers of control_registers.v
 	logic		dd_access_fault;	// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_cache_miss;		// From dcache_data_stage of dcache_data_stage.v
 	scalar_t	dd_cache_miss_addr;	// From dcache_data_stage of dcache_data_stage.v
@@ -74,7 +82,7 @@ module core
 	vector_lane_mask_t dd_lane_mask;	// From dcache_data_stage of dcache_data_stage.v
 	cache_line_data_t dd_load_data;		// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_membar_en;		// From dcache_data_stage of dcache_data_stage.v
-	l1d_addr_t	dd_request_addr;	// From dcache_data_stage of dcache_data_stage.v
+	l1d_addr_t	dd_request_vaddr;	// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_rollback_en;		// From dcache_data_stage of dcache_data_stage.v
 	scalar_t	dd_rollback_pc;		// From dcache_data_stage of dcache_data_stage.v
 	scalar_t	dd_store_addr;		// From dcache_data_stage of dcache_data_stage.v
@@ -88,19 +96,22 @@ module core
 	subcycle_t	dd_subcycle;		// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_suspend_thread;	// From dcache_data_stage of dcache_data_stage.v
 	thread_idx_t	dd_thread_idx;		// From dcache_data_stage of dcache_data_stage.v
+	logic		dd_tlb_miss;		// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_update_lru_en;	// From dcache_data_stage of dcache_data_stage.v
 	l1d_way_idx_t	dd_update_lru_way;	// From dcache_data_stage of dcache_data_stage.v
 	l1d_way_idx_t	dt_fill_lru;		// From dcache_tag_stage of dcache_tag_stage.v
 	decoded_instruction_t dt_instruction;	// From dcache_tag_stage of dcache_tag_stage.v
 	logic		dt_instruction_valid;	// From dcache_tag_stage of dcache_tag_stage.v
 	vector_lane_mask_t dt_mask_value;	// From dcache_tag_stage of dcache_tag_stage.v
-	l1d_addr_t	dt_request_addr;	// From dcache_tag_stage of dcache_tag_stage.v
+	l1d_addr_t	dt_request_paddr;	// From dcache_tag_stage of dcache_tag_stage.v
+	l1d_addr_t	dt_request_vaddr;	// From dcache_tag_stage of dcache_tag_stage.v
 	l1d_tag_t	dt_snoop_tag [`L1D_WAYS];// From dcache_tag_stage of dcache_tag_stage.v
 	logic		dt_snoop_valid [`L1D_WAYS];// From dcache_tag_stage of dcache_tag_stage.v
 	vector_t	dt_store_value;		// From dcache_tag_stage of dcache_tag_stage.v
 	subcycle_t	dt_subcycle;		// From dcache_tag_stage of dcache_tag_stage.v
 	l1d_tag_t	dt_tag [`L1D_WAYS];	// From dcache_tag_stage of dcache_tag_stage.v
 	thread_idx_t	dt_thread_idx;		// From dcache_tag_stage of dcache_tag_stage.v
+	logic		dt_tlb_hit;		// From dcache_tag_stage of dcache_tag_stage.v
 	logic		dt_valid [`L1D_WAYS];	// From dcache_tag_stage of dcache_tag_stage.v
 	logic [`VECTOR_LANES-1:0] [7:0] fx1_add_exponent;// From fp_execute_stage1 of fp_execute_stage1.v
 	logic [`VECTOR_LANES-1:0] fx1_add_result_sign;// From fp_execute_stage1 of fp_execute_stage1.v
@@ -179,7 +190,7 @@ module core
 	logic		id_instruction_valid;	// From instruction_decode_stage of instruction_decode_stage.v
 	thread_idx_t	id_thread_idx;		// From instruction_decode_stage of instruction_decode_stage.v
 	logic		ifd_cache_miss;		// From ifetch_data_stage of ifetch_data_stage.v
-	scalar_t	ifd_cache_miss_addr;	// From ifetch_data_stage of ifetch_data_stage.v
+	scalar_t	ifd_cache_miss_paddr;	// From ifetch_data_stage of ifetch_data_stage.v
 	thread_idx_t	ifd_cache_miss_thread_idx;// From ifetch_data_stage of ifetch_data_stage.v
 	logic		ifd_ifetch_fault;	// From ifetch_data_stage of ifetch_data_stage.v
 	scalar_t	ifd_instruction;	// From ifetch_data_stage of ifetch_data_stage.v
@@ -187,13 +198,15 @@ module core
 	logic		ifd_near_miss;		// From ifetch_data_stage of ifetch_data_stage.v
 	scalar_t	ifd_pc;			// From ifetch_data_stage of ifetch_data_stage.v
 	thread_idx_t	ifd_thread_idx;		// From ifetch_data_stage of ifetch_data_stage.v
+	logic		ifd_tlb_miss;		// From ifetch_data_stage of ifetch_data_stage.v
 	logic		ifd_update_lru_en;	// From ifetch_data_stage of ifetch_data_stage.v
 	l1i_way_idx_t	ifd_update_lru_way;	// From ifetch_data_stage of ifetch_data_stage.v
 	l1i_way_idx_t	ift_fill_lru;		// From ifetch_tag_stage of ifetch_tag_stage.v
 	logic		ift_instruction_requested;// From ifetch_tag_stage of ifetch_tag_stage.v
-	l1i_addr_t	ift_pc;			// From ifetch_tag_stage of ifetch_tag_stage.v
+	l1i_addr_t	ift_pc_paddr;		// From ifetch_tag_stage of ifetch_tag_stage.v
 	l1i_tag_t	ift_tag [`L1I_WAYS];	// From ifetch_tag_stage of ifetch_tag_stage.v
 	thread_idx_t	ift_thread_idx;		// From ifetch_tag_stage of ifetch_tag_stage.v
+	logic		ift_tlb_hit;		// From ifetch_tag_stage of ifetch_tag_stage.v
 	logic		ift_valid [`L1I_WAYS];	// From ifetch_tag_stage of ifetch_tag_stage.v
 	scalar_t	ior_read_value;		// From io_request_queue of io_request_queue.v
 	logic		ior_rollback_en;	// From io_request_queue of io_request_queue.v
@@ -241,10 +254,12 @@ module core
 	thread_idx_t	of_thread_idx;		// From operand_fetch_stage of operand_fetch_stage.v
 	logic		perf_dcache_hit;	// From dcache_data_stage of dcache_data_stage.v
 	logic		perf_dcache_miss;	// From dcache_data_stage of dcache_data_stage.v
+	logic		perf_dtlb_miss;		// From dcache_data_stage of dcache_data_stage.v
 	logic		perf_icache_hit;	// From ifetch_data_stage of ifetch_data_stage.v
 	logic		perf_icache_miss;	// From ifetch_data_stage of ifetch_data_stage.v
 	logic		perf_instruction_issue;	// From thread_select_stage of thread_select_stage.v
 	logic		perf_instruction_retire;// From writeback_stage of writeback_stage.v
+	logic		perf_itlb_miss;		// From ifetch_data_stage of ifetch_data_stage.v
 	logic		perf_store_count;	// From dcache_data_stage of dcache_data_stage.v
 	logic		perf_store_rollback;	// From writeback_stage of writeback_stage.v
 	logic		sq_rollback_en;		// From l2_cache_interface of l2_cache_interface.v
@@ -257,7 +272,7 @@ module core
 	subcycle_t	ts_subcycle;		// From thread_select_stage of thread_select_stage.v
 	thread_idx_t	ts_thread_idx;		// From thread_select_stage of thread_select_stage.v
 	logic		wb_fault;		// From writeback_stage of writeback_stage.v
-	scalar_t	wb_fault_access_addr;	// From writeback_stage of writeback_stage.v
+	scalar_t	wb_fault_access_vaddr;	// From writeback_stage of writeback_stage.v
 	scalar_t	wb_fault_pc;		// From writeback_stage of writeback_stage.v
 	fault_reason_t	wb_fault_reason;	// From writeback_stage of writeback_stage.v
 	thread_idx_t	wb_fault_thread_idx;	// From writeback_stage of writeback_stage.v
@@ -314,8 +329,10 @@ module core
 	io_request_queue #(.CORE_ID(CORE_ID)) io_request_queue(.*);
 	
 	assign core_perf_events = {
+		perf_dtlb_miss,
 		perf_dcache_hit,
 		perf_dcache_miss,
+		perf_itlb_miss,
 		perf_icache_hit,
 		perf_icache_miss,
 		perf_instruction_issue,

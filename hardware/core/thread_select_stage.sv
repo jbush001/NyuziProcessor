@@ -85,7 +85,7 @@ module thread_select_stage(
 	logic[WRITEBACK_ALLOC_STAGES - 1:0] writeback_allocate;
 	logic[WRITEBACK_ALLOC_STAGES - 1:0] writeback_allocate_nxt;
 	subcycle_t current_subcycle[`THREADS_PER_CORE];
-	logic instruction_complete[`THREADS_PER_CORE];
+	logic issue_last_subcycle[`THREADS_PER_CORE];
 	
 	// The scoreboard tracks registers that are busy (have a result pending), with one bit
 	// per register. Bits 0-31 are scalar registers and 32-63 are vector registers.
@@ -148,7 +148,7 @@ module thread_select_stage(
 				.value_o(thread_instr_nxt),
 				.*);
 
-			assign instruction_complete[thread_idx] = thread_issue_oh[thread_idx] 
+			assign issue_last_subcycle[thread_idx] = thread_issue_oh[thread_idx] 
 				&& current_subcycle[thread_idx] == thread_instr[thread_idx].last_subcycle;
 
 			// This signal goes back to the thread fetch stage to enable fetching more
@@ -202,7 +202,7 @@ module thread_select_stage(
 			// instruction FIFO to determine the scoreboard values. They are
 			// registered here.
 			assign instruction_latch_en = !ififo_empty && (!instruction_latched 
-				|| instruction_complete[thread_idx]);
+				|| issue_last_subcycle[thread_idx]);
 			
 			always_ff @(posedge clk, posedge reset)
 			begin
@@ -225,7 +225,7 @@ module thread_select_stage(
 						scoreboard_dep_bitmap <= scoreboard_dep_bitmap_nxt;
 						scoreboard_dest_bitmap[thread_idx] <= scoreboard_dest_bitmap_nxt;
 					end
-					else if (instruction_complete[thread_idx])
+					else if (issue_last_subcycle[thread_idx])
 						instruction_latched <= 0;	// Clear instruction
 				end
 			end
@@ -304,7 +304,7 @@ module thread_select_stage(
 					scoreboard[thread_idx] <= scoreboard_nxt[thread_idx];
 					if (wb_rollback_en && wb_rollback_thread_idx == thread_idx_t'(thread_idx))
 						current_subcycle[thread_idx] <= wb_rollback_subcycle;
-					else if (instruction_complete[thread_idx])
+					else if (issue_last_subcycle[thread_idx])
 						current_subcycle[thread_idx] <= 0;
 					else if (thread_issue_oh[thread_idx])
 						current_subcycle[thread_idx] <= current_subcycle[thread_idx] + subcycle_t'(1);

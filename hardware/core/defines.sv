@@ -23,6 +23,7 @@
 // Execution pipeline defines
 //
 
+`define PAGE_SIZE 'h1000
 `define VECTOR_LANES 16
 `define NUM_REGISTERS 32
 `define TOTAL_THREADS (`THREADS_PER_CORE * `NUM_CORES)
@@ -147,13 +148,20 @@ typedef enum logic [4:0] {
 	CR_FAULT_REASON = 5'd3,
 	CR_FLAGS = 5'd4,	// Maybe stuff some other flags here eventually
 	CR_FAULT_ADDRESS = 5'd5,
-	CR_CYCLE_COUNT = 5'd6
+	CR_CYCLE_COUNT = 5'd6,
+	CR_TLB_MISS_HANDLER = 5'd7,
+	CR_TLB_UPDATE_PHYS = 5'd8,
+	CR_ITLB_UPDATE_VIRT = 5'd9,
+	CR_DTLB_UPDATE_VIRT = 5'd10,
+	CR_SCRATCHPAD0 = 5'd11,
+	CR_SCRATCHPAD1 = 5'd12
 } control_register_t;
 
 typedef struct packed {
 	scalar_t pc;
 	logic illegal;
 	logic ifetch_fault;
+	logic tlb_miss;
 	logic has_scalar1;
 	register_idx_t scalar_sel1;
 	logic has_scalar2;
@@ -189,7 +197,9 @@ typedef enum logic[3:0] {
 	FR_ILLEGAL_INSTRUCTION,
 	FR_INVALID_ACCESS,
 	FR_INTERRUPT,
-	FR_IFETCH_FAULT
+	FR_IFETCH_FAULT,
+	FR_ITLB_MISS,
+	FR_DTLB_MISS
 } fault_reason_t;
 
 `define IEEE754_B32_EXP_WIDTH 8
@@ -209,12 +219,17 @@ typedef struct packed {
 `define CACHE_LINE_BITS (`CACHE_LINE_BYTES * 8)
 `define CACHE_LINE_WORDS (`CACHE_LINE_BYTES / 4)
 `define CACHE_LINE_OFFSET_WIDTH $clog2(`CACHE_LINE_BYTES)	// Offset into a cache line
+`define PAGE_NUM_BITS $clog2(`PAGE_SIZE)
+`define ICACHE_TAG_BITS (32 - (`CACHE_LINE_OFFSET_WIDTH + $clog2(`L1I_SETS)))
+`define DCACHE_TAG_BITS (32 - (`CACHE_LINE_OFFSET_WIDTH + $clog2(`L1D_SETS)))
 
 typedef logic[`CACHE_LINE_BITS - 1:0] cache_line_data_t;
+typedef logic[`PAGE_NUM_BITS - 1:0] page_index_t;
 
 typedef logic[$clog2(`L1D_WAYS) - 1:0] l1d_way_idx_t;
 typedef logic[$clog2(`L1D_SETS) - 1:0] l1d_set_idx_t;
-typedef logic[(31 - (`CACHE_LINE_OFFSET_WIDTH + $clog2(`L1D_SETS))):0] l1d_tag_t;
+typedef logic[`DCACHE_TAG_BITS - 1:0] l1d_tag_t;
+
 typedef struct packed {
 	l1d_tag_t tag;
 	l1d_set_idx_t set_idx;
@@ -223,7 +238,8 @@ typedef struct packed {
 
 typedef logic[$clog2(`L1I_WAYS) - 1:0] l1i_way_idx_t;
 typedef logic[$clog2(`L1I_SETS) - 1:0] l1i_set_idx_t;
-typedef logic[(31 - (`CACHE_LINE_OFFSET_WIDTH + $clog2(`L1I_SETS))):0] l1i_tag_t;
+typedef logic[`ICACHE_TAG_BITS - 1:0] l1i_tag_t;
+
 typedef struct packed {
 	l1i_tag_t tag;
 	l1i_set_idx_t set_idx;
@@ -359,7 +375,7 @@ interface axi4_interface;
 		output s_awready, s_wready, s_bvalid, s_arready, s_rvalid, s_rdata);
 endinterface
 
-`define CORE_PERF_EVENTS 8	
+`define CORE_PERF_EVENTS 10	
 `define L2_PERF_EVENTS 3
 `define TOTAL_PERF_EVENTS (`L2_PERF_EVENTS + `CORE_PERF_EVENTS * `NUM_CORES)
 

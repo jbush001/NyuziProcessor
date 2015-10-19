@@ -32,8 +32,9 @@ module ifetch_tag_stage
 	
 	// To instruction fetch data stage
 	output logic                        ift_instruction_requested,
-	output l1i_addr_t                   ift_pc,
+	output l1i_addr_t                   ift_pc_paddr,
 	output thread_idx_t                 ift_thread_idx,
+	output logic                        ift_tlb_hit,
 	output l1i_tag_t                    ift_tag[`L1I_WAYS],
 	output logic                        ift_valid[`L1I_WAYS],
 
@@ -54,6 +55,12 @@ module ifetch_tag_stage
 	input thread_bitmap_t               l2i_icache_wake_bitmap,
 	output l1i_way_idx_t                ift_fill_lru,
 
+	// From control registers
+	input                               cr_mmu_en[`THREADS_PER_CORE],
+	input                               cr_itlb_update_en,
+	input page_index_t                  cr_tlb_update_ppage_idx,
+	input page_index_t                  cr_tlb_update_vpage_idx,
+
 	// From writeback stage
 	input                               wb_rollback_en,
 	input thread_idx_t                  wb_rollback_thread_idx,
@@ -72,6 +79,11 @@ module ifetch_tag_stage
 	thread_bitmap_t icache_wait_threads_nxt;
 	thread_bitmap_t cache_miss_thread_oh;
 	thread_bitmap_t thread_sleep_mask_oh;
+	logic cache_fetch_en;
+	page_index_t tlb_ppage_idx;
+	page_index_t ppage_idx;
+	logic tlb_hit;
+	scalar_t last_fetched_pc;
 
 	//
 	// Pick which thread to fetch next.
@@ -84,6 +96,8 @@ module ifetch_tag_stage
 	// This wastes a cycle, but this should be infrequent.
 	//
 	assign can_fetch_thread_bitmap = ts_fetch_en & ~icache_wait_threads;
+	assign cache_fetch_en = |can_fetch_thread_bitmap;
+	
 
 	arbiter #(.NUM_REQUESTERS(`THREADS_PER_CORE)) arbiter_thread_select(
 		.request(can_fetch_thread_bitmap),
@@ -112,7 +126,7 @@ module ifetch_tag_stage
 			end
 		end
 	endgenerate
-
+	
 	assign pc_to_fetch = next_program_counter[selected_thread_idx];
 
 	//
@@ -131,7 +145,7 @@ module ifetch_tag_stage
 				.SIZE(`L1I_SETS),
 				.READ_DURING_WRITE("NEW_DATA")
 			) sram_tags(
-				.read_en(|can_fetch_thread_bitmap),
+				.read_en(cache_fetch_en),
 				.read_addr(pc_to_fetch.set_idx),
 				.read_data(ift_tag[way_idx]),
 				.write_en(l2i_itag_update_en[way_idx]),
@@ -160,6 +174,36 @@ module ifetch_tag_stage
 			end
 		end
 	endgenerate
+
+`ifdef HAS_MMU
+	tlb #(.NUM_ENTRIES(`ITLB_ENTRIES)) itlb(
+		.lookup_en(cache_fetch_en),
+		.lookup_vpage_idx(pc_to_fetch[31-:`PAGE_NUM_BITS]),
+		.lookup_ppage_idx(tlb_ppage_idx),
+		.lookup_hit(tlb_hit),
+		.update_en(cr_itlb_update_en),
+		.update_ppage_idx(cr_tlb_update_ppage_idx),
+		.update_vpage_idx(cr_tlb_update_vpage_idx),
+		.*);
+	always_comb
+	begin
+		if (cr_mmu_en[selected_thread_idx])
+		begin
+			ift_tlb_hit = tlb_hit;
+			ppage_idx = tlb_ppage_idx;
+		end
+		else
+		begin
+			ift_tlb_hit = 1;
+			ppage_idx = last_fetched_pc[31-:`PAGE_NUM_BITS];
+		end
+	end
+`else
+	// If MMU is disabled, just identity map addresses
+	assign ift_tlb_hit = 1;
+	always_ff @(posedge clk)
+		ift_ppage_idx <= pc_to_fetch.tag.page_index;
+`endif
 
 	cache_lru #(.NUM_WAYS(`L1D_WAYS), .NUM_SETS(`L1I_SETS)) cache_lru(
 		.fill_en(l2i_icache_lru_fill_en),
@@ -193,15 +237,15 @@ module ifetch_tag_stage
 			// Beginning of autoreset for uninitialized flops
 			icache_wait_threads <= '0;
 			ift_instruction_requested <= '0;
-			ift_pc <= '0;
 			ift_thread_idx <= '0;
+			last_fetched_pc <= '0;
 			last_selected_thread_oh <= '0;
 			// End of automatics
 		end
 		else
 		begin
 			icache_wait_threads <= icache_wait_threads_nxt;
-			ift_pc <= pc_to_fetch;
+			last_fetched_pc <= pc_to_fetch;
 			ift_thread_idx <= selected_thread_idx;
 			ift_instruction_requested <= |can_fetch_thread_bitmap
 				&& !((ifd_cache_miss || ifd_near_miss) && ifd_cache_miss_thread_idx == selected_thread_idx)	
@@ -216,6 +260,8 @@ module ifetch_tag_stage
 `endif
 		end
 	end
+	
+	assign ift_pc_paddr = { ppage_idx, last_fetched_pc[31 - `PAGE_NUM_BITS:0] };
 endmodule
 
 // Local Variables:

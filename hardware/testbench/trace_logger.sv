@@ -64,7 +64,7 @@ module trace_logger(
 	input memory_op_t                dd_instruction_memory_access_type,
 	input scalar_t                   dt_instruction_pc,
 	input thread_idx_t               dt_thread_idx,
-	input scalar_t                   dt_request_addr,
+	input scalar_t                   dt_request_virt_addr,
 	input                            sq_rollback_en,
 	input                            sq_store_sync_success);
 
@@ -215,7 +215,7 @@ module trace_logger(
 				trace_reorder_queue[5].pc <= dt_instruction_pc;
 				trace_reorder_queue[5].thread_idx <= dt_thread_idx;
 				trace_reorder_queue[5].addr <= {
-					dt_request_addr[31:`CACHE_LINE_OFFSET_WIDTH],
+					dt_request_virt_addr[31:`CACHE_LINE_OFFSET_WIDTH],
 					{`CACHE_LINE_OFFSET_WIDTH{1'b0}}
 				};
 				trace_reorder_queue[5].mask <= dd_store_mask;
