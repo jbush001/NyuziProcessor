@@ -380,7 +380,7 @@ module dcache_data_stage(
 	assign dd_cache_miss_addr = dcache_request_addr;
 	assign dd_cache_miss_thread_idx = dt_thread_idx;
 	assign dd_cache_miss_synchronized = is_synchronized;
-	assign dd_store_en = dcache_store_req && !is_unaligned_access;
+	assign dd_store_en = dcache_store_req && !is_unaligned_access && dt_tlb_hit;
 	assign dd_store_thread_idx = dt_thread_idx;
 
 	assign dd_update_lru_en = cache_hit && dcache_access_req && !is_unaligned_access;
