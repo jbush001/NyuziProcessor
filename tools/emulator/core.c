@@ -28,6 +28,11 @@
 #include "instruction-set.h"
 #include "util.h"
 
+#define TLB_SETS 16
+#define TLB_WAYS 4
+#define PAGE_SIZE 0x1000u
+#define PAGE_MASK ~(PAGE_SIZE - 1u)
+
 #ifdef DUMP_INSTRUCTION_STATS
     #define TALLY_INSTRUCTION(type) thread->core->stat_ ## type++
 #else
@@ -42,6 +47,7 @@
 #define BREAKPOINT_OP 0x707fffff
 
 typedef struct Thread Thread;
+typedef struct TlbEntry TlbEntry;
 
 struct Thread
 {
@@ -52,11 +58,22 @@ struct Thread
 	FaultReason lastFaultReason;
 	uint32_t lastFaultPc;
 	uint32_t lastFaultAddress;
-	uint32_t interruptEnable;
+	uint32_t scratchpad0;
+	uint32_t scratchpad1;
+	bool enableInterrupt;
+	bool prevEnableInterrupt;
 	bool multiCycleTransferActive;
+	bool enableMmu;
+	bool prevEnableMmu;
 	uint32_t multiCycleTransferLane;
 	uint32_t scalarReg[NUM_REGISTERS - 1];	// 31 is PC, which is special
 	uint32_t vectorReg[NUM_REGISTERS][NUM_VECTOR_LANES];
+};
+
+struct TlbEntry
+{
+	uint32_t virtualAddress;
+	uint32_t physicalAddress;
 };
 
 struct Core
@@ -68,6 +85,12 @@ struct Core
 	uint32_t totalThreads;
 	uint32_t threadEnableMask;
 	uint32_t faultHandlerPc;
+	uint32_t tlbMissHandlerPc;
+	uint32_t physTlbUpdateAddr;
+	TlbEntry *itlb;
+	uint32_t nextITlbWay;
+	TlbEntry *dtlb;
+	uint32_t nextDTlbWay;
 	bool crashed;
 	bool singleStepping;
 	bool stopOnFault;
@@ -100,12 +123,13 @@ static void setVectorReg(Thread*, uint32_t reg, uint32_t mask,
 static void invalidateSyncAddress(Core*, uint32_t address);
 static void memoryAccessFault(Thread*, uint32_t address, bool isLoad, FaultReason);
 static void illegalInstruction(Thread*, uint32_t instruction);
+static bool getMemoryPointer(Thread*, uint32_t virtualAddress, void **memPtr, bool data);
 static void writeMemBlock(Thread*, uint32_t address, uint32_t mask, 
 	const uint32_t *values);
 static void writeMemWord(Thread*, uint32_t address, uint32_t value);
 static void writeMemShort(Thread*, uint32_t address, uint32_t value);
 static void writeMemByte(Thread*, uint32_t address, uint32_t value);
-static uint32_t readMemoryWord(const Thread*, uint32_t address);
+static uint32_t readMemoryWord(Thread*, uint32_t address);
 static uint32_t scalarArithmeticOp(ArithmeticOp, uint32_t value1, uint32_t value2);
 static bool isCompareOp(uint32_t op);
 static struct Breakpoint *lookupBreakpoint(Core*, uint32_t pc);
@@ -144,6 +168,9 @@ Core *initCore(uint32_t memorySize, uint32_t totalThreads, bool randomizeMemory)
 	}
 	else
 		memset(core->memory, 0, core->memorySize);
+
+	core->itlb = (TlbEntry*) calloc(sizeof(TlbEntry), TLB_SETS * TLB_WAYS);
+	core->dtlb = (TlbEntry*) calloc(sizeof(TlbEntry), TLB_SETS * TLB_WAYS);
 
 	core->totalThreads = totalThreads;
 	core->threads = (Thread*) calloc(sizeof(Thread), totalThreads);
@@ -240,7 +267,9 @@ void cosimInterrupt(Core *core, uint32_t threadId, uint32_t pc)
 	thread->lastFaultPc = pc;
 	thread->currentPc = thread->core->faultHandlerPc;
 	thread->lastFaultReason = FR_INTERRUPT;
-	thread->interruptEnable = false;
+	thread->prevEnableInterrupt = thread->enableInterrupt;
+	thread->prevEnableMmu = thread->enableMmu;
+	thread->enableInterrupt = false;
 	thread->multiCycleTransferActive = false;
 }
 
@@ -319,20 +348,24 @@ uint32_t getVectorRegister(const Core *core, uint32_t threadId, uint32_t regId, 
 	return core->threads[threadId].vectorReg[regId][lane];
 }
 
-uint32_t readMemoryByte(const Core *core, uint32_t address)
+uint32_t debugReadMemoryByte(const Core *core, uint32_t address)
 {
-	if (address >= core->memorySize)
+	void *memPtr;
+
+	if (!getMemoryPointer(&core->threads[0], address, &memPtr, true))
 		return 0xffffffff;
 	
-	return ((uint8_t*) core->memory)[address];
+	return *((uint8_t*)memPtr);
 }
 
-void writeMemoryByte(const Core *core, uint32_t address, uint8_t byte)
+void debugWriteMemoryByte(const Core *core, uint32_t address, uint8_t byte)
 {
-	if (address >= core->memorySize)
-		return;
+	void *memPtr;
 	
-	((uint8_t*) core->memory)[address] = byte;
+	if (!getMemoryPointer(&core->threads[0], address, &memPtr, true))
+		return;
+
+	*((uint8_t*)memPtr) = byte;
 }
 
 int setBreakpoint(Core *core, uint32_t pc)
@@ -509,7 +542,9 @@ static void memoryAccessFault(Thread *thread, uint32_t address, bool isLoad, Fau
 			
 		thread->currentPc = thread->core->faultHandlerPc;
 		thread->lastFaultReason = reason;
-		thread->interruptEnable = false;
+		thread->prevEnableInterrupt = thread->enableInterrupt;
+		thread->prevEnableMmu = thread->enableMmu;
+		thread->enableInterrupt = false;
 		thread->lastFaultAddress = address;
 	}
 }
@@ -529,17 +564,77 @@ static void illegalInstruction(Thread *thread, uint32_t instruction)
 		thread->lastFaultPc = thread->currentPc - 4;
 		thread->currentPc = thread->core->faultHandlerPc;
 		thread->lastFaultReason = FR_ILLEGAL_INSTRUCTION;
-		thread->interruptEnable = false;
+		thread->prevEnableInterrupt = thread->enableInterrupt;
+		thread->prevEnableMmu = thread->enableMmu;
+		thread->enableInterrupt = false;
 	}
+}
+
+// Performs address translation if enabled.
+static bool getMemoryPointer(Thread *thread, uint32_t virtualAddress, void **memPtr, 
+	bool dataFetch)
+{
+	int tlbSet;
+	int way;
+	TlbEntry *setEntries;
+	uint32_t translatedAddress;
+
+	if (!thread->enableMmu)
+	{
+		if (virtualAddress >= thread->core->memorySize)
+		{
+			// This isn't an actual fault supported by the hardware, but a debugging
+			// aid only available in the emulator.
+			printf("Access Violation %08x, pc %08x\n", virtualAddress, thread->currentPc - 4);
+			printThreadRegisters(thread);
+			thread->core->crashed = true;
+			return false;
+		}
+
+		*memPtr = (void*) (((uint8_t*)thread->core->memory) + virtualAddress);
+		return true;
+	}
+
+	tlbSet = (virtualAddress / PAGE_SIZE) % TLB_SETS;
+	setEntries = (dataFetch ? thread->core->dtlb : thread->core->itlb) + tlbSet * TLB_WAYS;
+	for (way = 0; way < TLB_WAYS; way++)
+	{
+		if ((setEntries[way].virtualAddress & PAGE_MASK) == (virtualAddress & PAGE_MASK))
+		{
+			translatedAddress = (setEntries[way].physicalAddress & PAGE_MASK)
+				| (virtualAddress & ~PAGE_MASK);
+			*memPtr = (void*) (((uint8_t*)thread->core->memory) + translatedAddress);
+			return true;
+		}
+	}
+
+	// No translation found, raise exception
+	thread->lastFaultPc = thread->currentPc - 4;
+	thread->currentPc = thread->core->tlbMissHandlerPc;
+	if (dataFetch)
+		thread->lastFaultReason = FR_DTLB_MISS;
+	else
+		thread->lastFaultReason = FR_ITLB_MISS;
+
+	thread->prevEnableInterrupt = thread->enableInterrupt;
+	thread->prevEnableMmu = thread->enableMmu;
+	thread->enableInterrupt = false;
+	thread->enableMmu = false;
+	thread->lastFaultAddress = virtualAddress;
+	return false;
 }
 
 static void writeMemBlock(Thread *thread, uint32_t address, uint32_t mask, 
 	const uint32_t *values)
 {
 	uint32_t lane;
+	void *blockPtr;
 
 	if ((mask & 0xffff) == 0)
 		return;	// Hardware ignores block stores with a mask of zero
+
+	if (!getMemoryPointer(thread, address, &blockPtr, true)) 
+		return;
 
 	if (thread->core->enableTracing)
 	{
@@ -549,12 +644,12 @@ static void writeMemBlock(Thread *thread, uint32_t address, uint32_t mask,
 	
 	if (thread->core->cosimEnable)
 		cosimWriteBlock(thread->core, thread->currentPc - 4, address, mask, values);
-	
+
 	for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 	{
 		uint32_t regIndex = NUM_VECTOR_LANES - lane - 1;
 		if (mask & (1 << regIndex))
-			thread->core->memory[(address / 4) + lane] = values[regIndex];
+			((uint32_t*)blockPtr)[lane] = values[regIndex];
 	}
 
 	invalidateSyncAddress(thread->core, address);
@@ -562,6 +657,8 @@ static void writeMemBlock(Thread *thread, uint32_t address, uint32_t mask,
 
 static void writeMemWord(Thread *thread, uint32_t address, uint32_t value)
 {
+	void *memPtr;
+
 	if ((address & 0xffff0000) == 0xffff0000)
 	{
 		// IO address range
@@ -591,12 +688,17 @@ static void writeMemWord(Thread *thread, uint32_t address, uint32_t value)
 	if (thread->core->cosimEnable)
 		cosimWriteMemory(thread->core, thread->currentPc - 4, address, 4, value);
 
-	thread->core->memory[address / 4] = value;
+	if (!getMemoryPointer(thread, address, &memPtr, true))
+		return;
+	
+	*((uint32_t*) memPtr) = value;
 	invalidateSyncAddress(thread->core, address);
 }
 
 static void writeMemShort(Thread *thread, uint32_t address, uint32_t value)
 {
+	void *memPtr;
+
 	if (thread->core->enableTracing)
 	{
 		printf("%08x [th %d] writeMemShort %08x %04x\n", thread->currentPc - 4, thread->id,
@@ -606,12 +708,17 @@ static void writeMemShort(Thread *thread, uint32_t address, uint32_t value)
 	if (thread->core->cosimEnable)
 		cosimWriteMemory(thread->core, thread->currentPc - 4, address, 2, value);
 
-	((uint16_t*)thread->core->memory)[address / 2] = value & 0xffff;
+	if (!getMemoryPointer(thread, address, &memPtr, true))
+		return;
+
+	*((uint16_t*) memPtr) = value & 0xffff;
 	invalidateSyncAddress(thread->core, address);
 }
 
 static void writeMemByte(Thread *thread, uint32_t address, uint32_t value)
 {
+	void *memPtr;
+
 	if (thread->core->enableTracing)
 	{
 		printf("%08x [th %d] writeMemByte %08x %02x\n", thread->currentPc - 4, thread->id,
@@ -621,24 +728,23 @@ static void writeMemByte(Thread *thread, uint32_t address, uint32_t value)
 	if (thread->core->cosimEnable)
 		cosimWriteMemory(thread->core, thread->currentPc - 4, address, 1, value);
 
-	((uint8_t*)thread->core->memory)[address] = value & 0xff;
+	if (!getMemoryPointer(thread, address, &memPtr, true))
+		return;
+
+	*((uint8_t*) memPtr) = value & 0xff;
 	invalidateSyncAddress(thread->core, address);
 }
 
-static uint32_t readMemoryWord(const Thread *thread, uint32_t address)
+static uint32_t readMemoryWord(Thread *thread, uint32_t address)
 {
+	void *memPtr;
 	if ((address & 0xffff0000) == 0xffff0000)
 		return readDeviceRegister(address & 0xffff);
-	
-	if (address >= thread->core->memorySize)
-	{
-		printf("Load Access Violation %08x, pc %08x\n", address, thread->currentPc - 4);
-		printThreadRegisters(thread);
-		thread->core->crashed = true;
-		return 0;
-	}
 
-	return thread->core->memory[address / 4];
+	if (!getMemoryPointer(thread, address, &memPtr, true))
+		return 0;
+
+	return *((uint32_t*) memPtr);
 }
 
 static uint32_t scalarArithmeticOp(ArithmeticOp operation, uint32_t value1, uint32_t value2)
@@ -960,12 +1066,15 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instruction)
 	bool isLoad = extractUnsignedBits(instruction, 29, 1);
 	uint32_t address;
 	int isDeviceAccess;
+	void *memPtr;
+	uint32_t value;
 
 	address = getThreadScalarReg(thread, ptrreg) + offset;
 	isDeviceAccess = (address & 0xffff0000) == 0xffff0000;
 	if ((address >= thread->core->memorySize && !isDeviceAccess)
 		|| (isDeviceAccess && op != MEM_LONG))
 	{
+		// This is not an actual CPU fault, but a debugging aid in the emulator.
 		printf("%s Access Violation %08x, pc %08x\n", isLoad ? "Load" : "Store",
 			address, thread->currentPc - 4);
 		printThreadRegisters(thread);
@@ -1002,43 +1111,50 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instruction)
 
 	if (isLoad)
 	{
-		uint32_t value;
-		switch (op)
+		if (op == MEM_LONG)
 		{
-			case MEM_BYTE: 
-				value = (uint32_t) ((uint8_t*) thread->core->memory)[address]; 
-				break;
-				
-			case MEM_BYTE_SEXT: 	
-				value = (uint32_t) ((int8_t*) thread->core->memory)[address]; 
-				break;
-				
-			case MEM_SHORT: 
-				value = (uint32_t) ((uint16_t*) thread->core->memory)[address / 2]; 
-				break;
-
-			case MEM_SHORT_EXT: 
-				value = (uint32_t) ((int16_t*) thread->core->memory)[address / 2]; 
-				break;
-
-			case MEM_LONG:
-				value = readMemoryWord(thread, address); 
-				break;
-
-			case MEM_SYNC:
-				value = readMemoryWord(thread, address);
-				thread->linkedAddress = address / CACHE_LINE_LENGTH;
-				break;
-				
-			case MEM_CONTROL_REG:
-				value = 0;
-				break;
-				
-			default:
-				illegalInstruction(thread, instruction);
-				return;
+			// This has special logic to handle memory mapped IO 
+			// registers.
+			value = readMemoryWord(thread, address);
 		}
-		
+		else
+		{
+			if (!getMemoryPointer(thread, address, &memPtr, true))
+				return;
+
+			switch (op)
+			{
+				case MEM_BYTE: 
+					value = (uint32_t) *((uint8_t*) memPtr); 
+					break;
+				
+				case MEM_BYTE_SEXT: 	
+					value = (uint32_t) *((int8_t*) memPtr); 
+					break;
+				
+				case MEM_SHORT: 
+					value = (uint32_t) *((uint16_t*) memPtr); 
+					break;
+
+				case MEM_SHORT_EXT: 
+					value = (uint32_t) *((int16_t*) memPtr); 
+					break;
+
+				case MEM_SYNC:
+					value = *((uint32_t*) memPtr); 
+					thread->linkedAddress = address / CACHE_LINE_LENGTH;
+					break;
+				
+				case MEM_CONTROL_REG:
+					value = 0;
+					break;
+				
+				default:
+					illegalInstruction(thread, instruction);
+					return;
+			}
+		}
+
 		setScalarReg(thread, destsrcreg, value);			
 	}
 	else
@@ -1127,17 +1243,6 @@ static void executeVectorLoadStoreInst(Thread *thread, uint32_t instruction)
 		{
 			// Block vector access. Executes in a single cycle
 			address = getThreadScalarReg(thread, ptrreg) + offset;
-			if (address >= thread->core->memorySize)
-			{
-				// This doesn't raise an actual fault on hardware. It is here to 
-				// aid debugging.
-				printf("%s Access Violation %08x, pc %08x\n", isLoad ? "Load" : "Store",
-					address, thread->currentPc - 4);
-				printThreadRegisters(thread);
-				thread->core->crashed = true;
-				return;
-			}
-
 			if ((address & (NUM_VECTOR_LANES * 4 - 1)) != 0)
 			{
 				memoryAccessFault(thread, address, isLoad, FR_INVALID_ACCESS);
@@ -1172,15 +1277,6 @@ static void executeVectorLoadStoreInst(Thread *thread, uint32_t instruction)
 
 			lane = thread->multiCycleTransferLane;
 			address = thread->vectorReg[ptrreg][lane] + offset;
-			if (address >= thread->core->memorySize)
-			{
-				printf("%s Access Violation %08x, pc %08x\n", isLoad ? "Load" : "Store",
-					address, thread->currentPc - 4);
-				printThreadRegisters(thread);
-				thread->core->crashed = true;
-				return;
-			}
-
 			if ((mask & (1 << lane)) && (address & 3) != 0)
 			{
 				memoryAccessFault(thread, address, isLoad, FR_INVALID_ACCESS);
@@ -1233,7 +1329,7 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 				break;
 				
 			case CR_INTERRUPT_ENABLE:
-				value = thread->interruptEnable;
+				value = thread->enableInterrupt;
 				break;
 				
 			case CR_FAULT_ADDRESS:
@@ -1243,6 +1339,18 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 			case CR_CYCLE_COUNT:
 				value = (uint32_t) (thread->core->totalInstructions & 0xffffffff);
 				break;
+
+			case CR_TLB_MISS_HANDLER:
+				value = thread->core->tlbMissHandlerPc;
+				break;
+
+			case CR_SCRATCHPAD0:
+				value = thread->scratchpad0;
+				break;
+
+			case CR_SCRATCHPAD1:
+				value = thread->scratchpad1;
+				break;
 		}
 
 		setScalarReg(thread, dstSrcReg, value);
@@ -1251,6 +1359,7 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 	{
 		// Store
 		uint32_t value = getThreadScalarReg(thread, dstSrcReg);
+		TlbEntry *entry;
 		switch (crIndex)
 		{
 			case CR_FAULT_HANDLER:
@@ -1258,7 +1367,39 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 				break;
 				
 			case CR_INTERRUPT_ENABLE:
-				thread->interruptEnable = value;;
+				thread->enableInterrupt = value;
+				break;
+
+			case CR_TLB_MISS_HANDLER:
+				thread->core->tlbMissHandlerPc = value;
+				break;
+
+			case CR_TLB_UPDATE_PHYS:
+				thread->core->physTlbUpdateAddr = value;
+				break;
+
+			case CR_ITLB_UPDATE_VIRT:
+				entry = &thread->core->itlb[((value / PAGE_SIZE) % TLB_SETS) * TLB_WAYS 
+					+ thread->core->nextITlbWay];
+				entry->virtualAddress = value;
+				entry->physicalAddress = thread->core->physTlbUpdateAddr;
+				thread->core->nextITlbWay = (thread->core->nextITlbWay + 1) % TLB_WAYS;
+				break;
+
+			case CR_DTLB_UPDATE_VIRT:
+				entry = &thread->core->dtlb[((value / PAGE_SIZE) % TLB_SETS) * TLB_WAYS 
+					+ thread->core->nextDTlbWay];
+				entry->virtualAddress = value;
+				entry->physicalAddress = thread->core->physTlbUpdateAddr;
+				thread->core->nextDTlbWay = (thread->core->nextDTlbWay + 1) % TLB_WAYS;
+				break;
+
+			case CR_SCRATCHPAD0:
+				thread->scratchpad0 = value;
+				break;
+
+			case CR_SCRATCHPAD1:
+				thread->scratchpad1 = value;
 				break;
 		}
 	}
@@ -1322,6 +1463,8 @@ static void executeBranchInst(Thread *thread, uint32_t instruction)
 			return; // Short circuit out, since we use register as destination.
 			
 		case BRANCH_ERET:
+			thread->enableInterrupt = thread->prevEnableInterrupt;
+			thread->enableMmu = thread->prevEnableMmu;
 			thread->currentPc = thread->lastFaultPc;
 			return; // Short circuit out
 	}
@@ -1333,11 +1476,18 @@ static void executeBranchInst(Thread *thread, uint32_t instruction)
 static int executeInstruction(Thread *thread)
 {
 	uint32_t instruction;
+	void *memPtr;
 	
 	if ((thread->currentPc & 3) != 0)
+	{
 		memoryAccessFault(thread, thread->currentPc, true, FR_IFETCH_FAULT);
+		return 1;
+	}
 
-	instruction = readMemoryWord(thread, thread->currentPc);
+	if (!getMemoryPointer(thread, thread->currentPc, &memPtr, false))
+		return 0;
+
+	instruction = *((uint32_t*) memPtr);
 	thread->currentPc += 4;
 	thread->core->totalInstructions++;
 

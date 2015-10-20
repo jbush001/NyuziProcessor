@@ -122,7 +122,13 @@ enum _ControlRegister {
 	CR_FAULT_REASON = 3,
 	CR_INTERRUPT_ENABLE = 4,
 	CR_FAULT_ADDRESS = 5,
-	CR_CYCLE_COUNT = 6
+	CR_CYCLE_COUNT = 6,
+	CR_TLB_MISS_HANDLER = 7,
+	CR_TLB_UPDATE_PHYS = 8,
+	CR_ITLB_UPDATE_VIRT = 9,
+	CR_DTLB_UPDATE_VIRT = 10,
+	CR_SCRATCHPAD0 = 11,
+	CR_SCRATCHPAD1 = 12
 };
 typedef enum _ControlRegister ControlRegister;
 
@@ -132,7 +138,9 @@ enum _FaultReason
 	FR_ILLEGAL_INSTRUCTION,
 	FR_INVALID_ACCESS,
 	FR_INTERRUPT,
-	FR_IFETCH_FAULT
+	FR_IFETCH_FAULT,
+	FR_ITLB_MISS,
+	FR_DTLB_MISS
 };
 typedef enum _FaultReason FaultReason;
 

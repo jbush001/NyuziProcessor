@@ -308,7 +308,7 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 					{
 						// Read memory
 						for (offset = 0; offset < length; offset++)
-							sprintf(response + offset * 2, "%02x", readMemoryByte(core, start + offset));
+							sprintf(response + offset * 2, "%02x", debugReadMemoryByte(core, start + offset));
 					
 						sendResponsePacket(response);
 					}
@@ -317,7 +317,7 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 						// Write memory
 						dataPtr += 1;	// Skip colon
 						for (offset = 0; offset < length; offset++)
-							writeMemoryByte(core, start + offset, decodeHexByte(dataPtr + offset * 2));
+							debugWriteMemoryByte(core, start + offset, decodeHexByte(dataPtr + offset * 2));
 
 						sendResponsePacket("OK");
 					}
