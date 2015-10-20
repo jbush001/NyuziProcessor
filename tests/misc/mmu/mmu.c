@@ -20,13 +20,19 @@
 #include <string.h>
 #include <unistd.h>
 
+#define COPY_SIZE 0x10000
+
 extern void tlb_miss_handler();
+
+char *tmp;
 
 int main(int argc, const char *argv[])
 {
 	// Set up miss handler
 	__builtin_nyuzi_write_control_reg(7, tlb_miss_handler);
 	__builtin_nyuzi_write_control_reg(4, (1 << 2));	// Turn on MMU in flags
+	tmp = malloc(COPY_SIZE);
+	memset(tmp, 0xff, COPY_SIZE);
 	
 	printf("TLB test passed\n");
 	return 0;

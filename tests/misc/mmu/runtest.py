@@ -21,11 +21,11 @@ import subprocess
 sys.path.insert(0, '../..')
 import test_harness
 
-def fs_test(name):
+def mmu_test(name):
 	test_harness.compile_test(['mmu.c', 'tlb_miss_handler.s'])
 	result = test_harness.run_verilator()
 	if result.find('TLB test passed') == -1:
 		raise TestException('test program did not indicate pass')
 
-test_harness.register_tests(fs_test, ['mmu'])
+test_harness.register_tests(mmu_test, ['mmu'])
 test_harness.execute_tests()
