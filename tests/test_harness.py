@@ -103,7 +103,11 @@ def run_verilator(block_device=None, dump_file=None, dump_base=None, dump_length
 		args += extra_args
 
 	args += ['+bin=' + HEX_FILE]
-	output = subprocess.check_output(args)
+	try:
+		output = subprocess.check_output(args)
+	except subprocess.CalledProcessError as exc:
+		raise TestException('Verilator returned error: ' + exc.output)
+
 	if output.find('***HALTED***') == -1:
 		raise TestException(output + '\nProgram did not halt normally')
 	
