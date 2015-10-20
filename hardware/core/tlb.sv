@@ -127,8 +127,9 @@ module tlb
 		begin
 			// Make sure we don't have duplicate entries in a set
 			assert($onehot0(way_hit_oh));
-			
-			update_way <= update_way + 1;
+
+			if (update_en)
+				update_way <= update_way + 1;
 		end
 	end
 endmodule
