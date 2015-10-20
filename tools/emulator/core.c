@@ -1328,8 +1328,11 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 				value = thread->lastFaultReason;
 				break;
 				
-			case CR_INTERRUPT_ENABLE:
-				value = thread->enableInterrupt;
+			case CR_FLAGS:
+				value = (thread->enableInterrupt ? 1 : 0)
+					| (thread->prevEnableInterrupt ? 2 : 0)
+					| (thread->enableMmu ? 4 : 0)
+					| (thread->prevEnableMmu ? 8 : 0);
 				break;
 				
 			case CR_FAULT_ADDRESS:
@@ -1366,8 +1369,11 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 				thread->core->faultHandlerPc = value;
 				break;
 				
-			case CR_INTERRUPT_ENABLE:
-				thread->enableInterrupt = value;
+			case CR_FLAGS:
+				thread->enableInterrupt = (value & 1) != 0;
+				thread->prevEnableInterrupt = (value & 2) != 0;
+				thread->enableMmu = (value & 4) != 0;
+				thread->prevEnableMmu = (value & 8) != 0;
 				break;
 
 			case CR_TLB_MISS_HANDLER:
