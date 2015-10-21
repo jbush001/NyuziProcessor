@@ -21,11 +21,16 @@ import subprocess
 sys.path.insert(0, '../..')
 import test_harness
 
+DUMP_FILE='obj/memdump.bin'
+EXPECT_STRING='Test String'
+
 def mmu_test(name):
 	test_harness.compile_test(['mmu.c', 'tlb_miss_handler.s'])
-	result = test_harness.run_verilator()
-	if result.find('TLB test passed') == -1:
-		raise TestException('test program did not indicate pass')
+	result = test_harness.run_verilator(dump_file=DUMP_FILE, dump_base=0x100000,
+		dump_length=32)
+	with open(DUMP_FILE, 'r') as f:
+		if f.read(len(EXPECT_STRING)) != EXPECT_STRING:
+			raise test_harness.TestException('memory contents did not match')
 
 test_harness.register_tests(mmu_test, ['mmu'])
 test_harness.execute_tests()
