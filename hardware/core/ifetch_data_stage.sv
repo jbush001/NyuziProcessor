@@ -32,6 +32,7 @@ module ifetch_data_stage(
 	// be ignored.
 	input                            ift_instruction_requested,
 	input l1i_addr_t                 ift_pc_paddr,
+	input scalar_t                   ift_pc_vaddr,
 	input thread_idx_t               ift_thread_idx,
 	input                            ift_tlb_hit,
 	input l1i_tag_t                  ift_tag[`L1D_WAYS],
@@ -166,7 +167,7 @@ module ifetch_data_stage(
 
 			ifd_instruction_valid <= ift_instruction_requested && (!wb_rollback_en || wb_rollback_thread_idx 
 				!= ift_thread_idx) && (cache_hit || alignment_fault || tlb_miss);
-			ifd_pc <= ift_pc_paddr;
+			ifd_pc <= ift_pc_vaddr;
 			ifd_thread_idx <= ift_thread_idx;
 			ifd_ifetch_fault <= alignment_fault;
 			ifd_tlb_miss <= tlb_miss;

@@ -219,7 +219,7 @@ typedef struct packed {
 `define CACHE_LINE_BITS (`CACHE_LINE_BYTES * 8)
 `define CACHE_LINE_WORDS (`CACHE_LINE_BYTES / 4)
 `define CACHE_LINE_OFFSET_WIDTH $clog2(`CACHE_LINE_BYTES)	// Offset into a cache line
-`define PAGE_NUM_BITS $clog2(`PAGE_SIZE)
+`define PAGE_NUM_BITS (32 - $clog2(`PAGE_SIZE))
 `define ICACHE_TAG_BITS (32 - (`CACHE_LINE_OFFSET_WIDTH + $clog2(`L1I_SETS)))
 `define DCACHE_TAG_BITS (32 - (`CACHE_LINE_OFFSET_WIDTH + $clog2(`L1D_SETS)))
 

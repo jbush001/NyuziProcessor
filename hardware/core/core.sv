@@ -204,6 +204,7 @@ module core
 	l1i_way_idx_t	ift_fill_lru;		// From ifetch_tag_stage of ifetch_tag_stage.v
 	logic		ift_instruction_requested;// From ifetch_tag_stage of ifetch_tag_stage.v
 	l1i_addr_t	ift_pc_paddr;		// From ifetch_tag_stage of ifetch_tag_stage.v
+	scalar_t	ift_pc_vaddr;		// From ifetch_tag_stage of ifetch_tag_stage.v
 	l1i_tag_t	ift_tag [`L1I_WAYS];	// From ifetch_tag_stage of ifetch_tag_stage.v
 	thread_idx_t	ift_thread_idx;		// From ifetch_tag_stage of ifetch_tag_stage.v
 	logic		ift_tlb_hit;		// From ifetch_tag_stage of ifetch_tag_stage.v

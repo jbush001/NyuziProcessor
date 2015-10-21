@@ -33,6 +33,7 @@ module ifetch_tag_stage
 	// To instruction fetch data stage
 	output logic                        ift_instruction_requested,
 	output l1i_addr_t                   ift_pc_paddr,
+	output scalar_t                     ift_pc_vaddr,
 	output thread_idx_t                 ift_thread_idx,
 	output logic                        ift_tlb_hit,
 	output l1i_tag_t                    ift_tag[`L1I_WAYS],
@@ -262,6 +263,7 @@ module ifetch_tag_stage
 	end
 	
 	assign ift_pc_paddr = { ppage_idx, last_fetched_pc[31 - `PAGE_NUM_BITS:0] };
+	assign ift_pc_vaddr = last_fetched_pc;
 endmodule
 
 // Local Variables:
