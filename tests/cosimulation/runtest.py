@@ -20,6 +20,7 @@ import subprocess
 import re
 import os
 from os import path
+import time
 
 sys.path.insert(0, '..')
 import test_harness
@@ -60,7 +61,6 @@ def run_cosimulation_test(source_file):
 	hexfile = test_harness.assemble_test(source_file)
 	p1 = subprocess.Popen(verilator_args + [ '+bin=' + hexfile ], stdout=subprocess.PIPE)
 	p2 = subprocess.Popen(emulator_args + [ hexfile ], stdin=p1.stdout, stdout=subprocess.PIPE)
-	p1.stdout.close() # Allow P1 to receive SIGPIPE if p2 exits
 	output = ''
 	while True:
 		got = p2.stdout.read(0x1000)
@@ -73,6 +73,8 @@ def run_cosimulation_test(source_file):
 			output += got
 
 	p2.wait()
+	time.sleep(1)	# Give verilator a chance to clean up 
+	p1.kill() 	# Make sure verilator has exited
 	if p2.returncode != 0:
 		raise test_harness.TestException('FAIL: cosimulation mismatch\n' + output)
 
