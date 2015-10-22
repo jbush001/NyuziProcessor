@@ -147,6 +147,7 @@ Core *initCore(uint32_t memorySize, uint32_t totalThreads, bool randomizeMemory)
 	uint32_t address;
 	uint32_t threadid;
 	Core *core;
+	int i;
 
 	// Currently limited by enable mask
 	assert(totalThreads <= 32);
@@ -169,9 +170,17 @@ Core *initCore(uint32_t memorySize, uint32_t totalThreads, bool randomizeMemory)
 	else
 		memset(core->memory, 0, core->memorySize);
 
-	core->itlb = (TlbEntry*) calloc(sizeof(TlbEntry), TLB_SETS * TLB_WAYS);
-	core->dtlb = (TlbEntry*) calloc(sizeof(TlbEntry), TLB_SETS * TLB_WAYS);
-
+	core->itlb = (TlbEntry*) malloc(sizeof(TlbEntry) * TLB_SETS * TLB_WAYS);
+	core->dtlb = (TlbEntry*) malloc(sizeof(TlbEntry) * TLB_SETS * TLB_WAYS);
+	for (i = 0; i < TLB_SETS * TLB_WAYS; i++)
+	{
+		// Set to invalid (unaligned) addresses so these don't match
+		core->itlb[i].virtualAddress = 0xffffffffu;
+		core->itlb[i].physicalAddress = 0xffffffffu;
+		core->dtlb[i].virtualAddress = 0xffffffffu;
+		core->dtlb[i].physicalAddress = 0xffffffffu;
+	}
+	
 	core->totalThreads = totalThreads;
 	core->threads = (Thread*) calloc(sizeof(Thread), totalThreads);
 	for (threadid = 0; threadid < totalThreads; threadid++)
