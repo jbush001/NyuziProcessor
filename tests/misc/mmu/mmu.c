@@ -14,25 +14,34 @@
 // limitations under the License.
 // 
 
-#include <errno.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-
-#define COPY_SIZE 0x10000
 
 extern void tlb_miss_handler();
 
-// This address is normally out of range, but the MMU maps it to 0x100000.
-char *tmp = (char*) 0x80100000;
+// The TLB handle makes memory wrap every 4 MB
+// The MMU maps these to 0x100000.
+char *tmp1 = (char*) 0x500000;
+char *tmp2 = (char*) 0x900000;
 
 int main(int argc, const char *argv[])
 {
 	// Set up miss handler
 	__builtin_nyuzi_write_control_reg(7, tlb_miss_handler);
 	__builtin_nyuzi_write_control_reg(4, (1 << 2));	// Turn on MMU in flags
-	strcpy(tmp, "Test String");
-	asm("dflush %0" : : "s" (tmp));
+
+	// This dflush should cause a TLB miss and fill.
+	asm("dflush %0" : : "s" (tmp1));
+
+	// Test that stores are properly translated. Test harness will read
+	// physical memory. This should be written to 1MB.
+	strcpy(tmp1, "Test String");
+
+	// Test that loads are properly mapped. This should alias to tmp1
+	printf("read %p \"%s\"\n", tmp2, tmp2);
+
+	// Make sure to flush first address so it will be in memory dump.
+	asm("dflush %0" : : "s" (tmp1));
+
 	return 0;
 }

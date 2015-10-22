@@ -117,6 +117,7 @@ module dcache_data_stage(
 	output logic                              perf_store_count,
 	output logic                              perf_dtlb_miss);
 
+	logic mem_or_cachectrl_req;
 	logic dcache_access_req;
 	logic creg_access_req;
 	vector_lane_mask_t word_store_mask;
@@ -149,20 +150,22 @@ module dcache_data_stage(
 		&& wb_rollback_pipeline == PIPE_MEM;
 	assign is_io_address = dt_request_paddr ==? 32'hffff????;
 	assign is_synchronized = dt_instruction.memory_access_type == MEM_SYNC;
-	assign dcache_access_req = dt_instruction_valid 
-		&& dt_instruction.is_memory_access 
+	assign mem_or_cachectrl_req = dt_instruction_valid 
 		&& dt_instruction.memory_access_type != MEM_CONTROL_REG 
 		&& !is_io_address
 		&& !rollback_this_stage
 		&& (dt_instruction.is_load || dd_store_mask != 0); // Skip store if mask is clear
+	assign dcache_access_req = mem_or_cachectrl_req
+		&& dt_instruction.is_memory_access;
 	assign dcache_load_req = dcache_access_req && dt_instruction.is_load;
 	assign dcache_store_req = dcache_access_req && !dt_instruction.is_load;
 	assign dcache_request_addr = { dt_request_paddr[31:`CACHE_LINE_OFFSET_WIDTH], 
 		{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
 	assign cache_lane_idx = dt_request_paddr.offset[`CACHE_LINE_OFFSET_WIDTH - 1:2];
 	assign is_valid_cache_control = dt_instruction_valid
+		&& dt_tlb_hit
 		&& dt_instruction.is_cache_control 
-		&& !rollback_this_stage;	
+		&& !rollback_this_stage;
 	assign dd_flush_en = is_valid_cache_control
 		&& dt_instruction.cache_control_op == CACHE_DFLUSH
 		&& !is_io_address; // XXX should a cache control of IO address raise exception?
@@ -186,7 +189,7 @@ module dcache_data_stage(
 	assign perf_dcache_hit = cache_hit && dcache_load_req;
 	assign perf_dcache_miss = !cache_hit && dt_tlb_hit && dcache_load_req; 
 	assign perf_store_count = dcache_store_req;
-	assign perf_dtlb_miss = dcache_access_req && !dt_tlb_hit;
+	assign perf_dtlb_miss = mem_or_cachectrl_req && !dt_tlb_hit;
 
 	assign dd_store_bypass_addr = dt_request_paddr;
 	assign dd_store_bypass_thread_idx = dt_thread_idx;
@@ -458,7 +461,7 @@ module dcache_data_stage(
 				&& !is_unaligned_access && dt_tlb_hit;
 			
 			dd_access_fault <= is_unaligned_access && dcache_access_req;
-			dd_tlb_miss <= dcache_access_req && !dt_tlb_hit;
+			dd_tlb_miss <= mem_or_cachectrl_req && !dt_tlb_hit;
 		end
 	end
 endmodule

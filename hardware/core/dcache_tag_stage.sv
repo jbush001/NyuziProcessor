@@ -102,8 +102,7 @@ module dcache_tag_stage
 		&& of_instruction.is_memory_access      // Not cache control
 		&& of_instruction.is_load;
 	assign tlb_lookup_en = instruction_valid 
-		&& of_instruction.memory_access_type != MEM_CONTROL_REG
-		&& of_instruction.is_memory_access;
+		&& of_instruction.memory_access_type != MEM_CONTROL_REG;
 	assign scgath_lane = ~of_subcycle;
 	assign request_addr_nxt = of_operand1[scgath_lane] + of_instruction.immediate_value;
 

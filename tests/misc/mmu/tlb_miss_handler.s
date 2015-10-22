@@ -16,7 +16,7 @@
 
 
 #
-# Map the low 8 MB of physical address space repeating across the entire
+# Map the low 4 MB of physical address space repeating across the entire
 # virtual address range, except the memory mapped registers at 0xffff0000,
 # which are identity mapped.
 #
@@ -26,15 +26,15 @@ tlb_miss_handler:	setcr s0, 11		# Save s0 in scratchpad
 					setcr s1, 12        # Save s1
 					getcr s0, 5			# Get fault virtual address
 
-					# Is this in the device region (0xffff0000-)
+					# Is this in the device region (0xffff0000-0xffffffff)
 					move s1, -1
 					shl s1, s1, 16
 					cmpgt_u s1, s0, s1
 					btrue s1, map_device
 
-					# Make lowaddress space repeat every 8MB
-					shl s0, s0, 9
-					shr s0, s0, 9
+					# Make lowaddress space repeat every 4 MB
+					shl s0, s0, 10
+					shr s0, s0, 10
 
 map_device:			setcr s0, 8			# Set physical address
 

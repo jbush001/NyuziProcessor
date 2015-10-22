@@ -28,6 +28,9 @@ def mmu_test(name):
 	test_harness.compile_test(['mmu.c', 'tlb_miss_handler.s'])
 	result = test_harness.run_verilator(dump_file=DUMP_FILE, dump_base=0x100000,
 		dump_length=32)
+	if result.find('read 00900000 "Test String"') == -1:
+		raise test_harness.TestException('did not get correct read string:\n' + result)
+
 	with open(DUMP_FILE, 'r') as f:
 		if f.read(len(EXPECT_STRING)) != EXPECT_STRING:
 			raise test_harness.TestException('memory contents did not match')
