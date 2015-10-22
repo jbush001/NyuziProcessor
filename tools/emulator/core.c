@@ -599,9 +599,9 @@ static bool getMemoryPointer(Thread *thread, uint32_t virtualAddress, void **mem
 	setEntries = (dataFetch ? thread->core->dtlb : thread->core->itlb) + tlbSet * TLB_WAYS;
 	for (way = 0; way < TLB_WAYS; way++)
 	{
-		if ((setEntries[way].virtualAddress & PAGE_MASK) == (virtualAddress & PAGE_MASK))
+		if (setEntries[way].virtualAddress == (virtualAddress & PAGE_MASK))
 		{
-			translatedAddress = (setEntries[way].physicalAddress & PAGE_MASK)
+			translatedAddress = setEntries[way].physicalAddress
 				| (virtualAddress & ~PAGE_MASK);
 			*memPtr = (void*) (((uint8_t*)thread->core->memory) + translatedAddress);
 			return true;
@@ -609,13 +609,18 @@ static bool getMemoryPointer(Thread *thread, uint32_t virtualAddress, void **mem
 	}
 
 	// No translation found, raise exception
-	thread->lastFaultPc = thread->currentPc - 4;
-	thread->currentPc = thread->core->tlbMissHandlerPc;
 	if (dataFetch)
+	{
+		thread->lastFaultPc = thread->currentPc - 4;
 		thread->lastFaultReason = FR_DTLB_MISS;
+	}
 	else
+	{
+		thread->lastFaultPc = thread->currentPc;
 		thread->lastFaultReason = FR_ITLB_MISS;
+	}
 
+	thread->currentPc = thread->core->tlbMissHandlerPc;
 	thread->prevEnableInterrupt = thread->enableInterrupt;
 	thread->prevEnableMmu = thread->enableMmu;
 	thread->enableInterrupt = false;
@@ -1381,13 +1386,13 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 				break;
 
 			case CR_TLB_UPDATE_PHYS:
-				thread->core->physTlbUpdateAddr = value;
+				thread->core->physTlbUpdateAddr = value & PAGE_MASK;
 				break;
 
 			case CR_ITLB_UPDATE_VIRT:
 				entry = &thread->core->itlb[((value / PAGE_SIZE) % TLB_SETS) * TLB_WAYS 
 					+ thread->core->nextITlbWay];
-				entry->virtualAddress = value;
+				entry->virtualAddress = value & PAGE_MASK;
 				entry->physicalAddress = thread->core->physTlbUpdateAddr;
 				thread->core->nextITlbWay = (thread->core->nextITlbWay + 1) % TLB_WAYS;
 				break;
@@ -1395,7 +1400,7 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 			case CR_DTLB_UPDATE_VIRT:
 				entry = &thread->core->dtlb[((value / PAGE_SIZE) % TLB_SETS) * TLB_WAYS 
 					+ thread->core->nextDTlbWay];
-				entry->virtualAddress = value;
+				entry->virtualAddress = value & PAGE_MASK;
 				entry->physicalAddress = thread->core->physTlbUpdateAddr;
 				thread->core->nextDTlbWay = (thread->core->nextDTlbWay + 1) % TLB_WAYS;
 				break;
@@ -1491,7 +1496,7 @@ static int executeInstruction(Thread *thread)
 	}
 
 	if (!getMemoryPointer(thread, thread->currentPc, &memPtr, false))
-		return 0;
+		return 1;	// On next execution will start in TLB miss handler
 
 	instruction = *((uint32_t*) memPtr);
 	thread->currentPc += 4;
