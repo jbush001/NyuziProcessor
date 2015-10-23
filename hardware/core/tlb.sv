@@ -18,7 +18,7 @@
 
 //
 // Translation lookaside buffer.
-// Converts virtual addresses to physical addresses.
+// Caches virtual to physical address translations.
 //
 
 module tlb
@@ -36,7 +36,12 @@ module tlb
 	// Update interface
 	input                update_en,
 	page_index_t         update_ppage_idx,
-	page_index_t         update_vpage_idx);
+	page_index_t         update_vpage_idx,
+	
+	// Invalidate
+	input                invalidate_en,
+	input                invalidate_all,
+	page_index_t         invalidate_vpage_idx);
 
 	localparam NUM_WAYS = 4;
 	localparam NUM_SETS = NUM_ENTRIES / NUM_WAYS;
@@ -47,7 +52,6 @@ module tlb
 	logic[NUM_WAYS - 1:0] way_hit_oh;
 	page_index_t way_ppage_idx[NUM_WAYS];
 	page_index_t lookup_vpage_idx_latched;
-	
 
 	// We do not need to bypass TLB values that are set in the same cycle
 	// like in the L1 caches. These are updated by software, which is 
@@ -90,9 +94,22 @@ module tlb
 				end
 				else
 				begin
-					way_valid <= entry_valid[lookup_set_idx];
-					if (update_en && update_way == WAY_INDEX_WIDTH'(way))
-						entry_valid[update_vpage_idx[SET_INDEX_WIDTH - 1:0]] <= 1;
+					if (lookup_en)
+						way_valid <= entry_valid[lookup_set_idx];
+
+					for (int set_idx = 0; set_idx < NUM_SETS; set_idx++)
+					begin
+						if (invalidate_en && (invalidate_all
+							|| invalidate_vpage_idx[SET_INDEX_WIDTH - 1:0] == SET_INDEX_WIDTH'(set_idx)))
+						begin
+							entry_valid[set_idx] <= 0;
+						end
+						else if (update_en && update_way == WAY_INDEX_WIDTH'(way)
+							&& update_vpage_idx[SET_INDEX_WIDTH - 1:0] == SET_INDEX_WIDTH'(set_idx))
+						begin
+							entry_valid[set_idx] <= 1;
+						end
+					end
 						
 					lookup_vpage_idx_latched <= lookup_vpage_idx;
 				end
@@ -125,9 +142,21 @@ module tlb
 		end
 		else
 		begin
-			// Make sure we don't have duplicate entries in a set
-			assert($onehot0(way_hit_oh));
+`ifdef SIMULATION
+			// These are triggered from the same stage, so should never
+			// occur together.
+			assert(!(update_en && invalidate_en));
 
+			// Make sure we don't have duplicate entries in a set
+			// If this happens, it is a software bug, since hardware
+			// does nothing to prevent it.
+			if (!$onehot0(way_hit_oh))
+			begin
+				$display("%m duplicate TLB entry %08x ways %b", {lookup_vpage_idx_latched, 
+					{`PAGE_NUM_BITS{1'b0}}}, way_hit_oh);
+				$finish;
+			end
+`endif
 			if (update_en)
 				update_way <= update_way + 1;
 		end

@@ -73,6 +73,9 @@ module core
 	logic		dd_iinvalidate_en;	// From dcache_data_stage of dcache_data_stage.v
 	decoded_instruction_t dd_instruction;	// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_instruction_valid;	// From dcache_data_stage of dcache_data_stage.v
+	logic		dd_invalidate_tlb_all;	// From dcache_data_stage of dcache_data_stage.v
+	logic		dd_invalidate_tlb_en;	// From dcache_data_stage of dcache_data_stage.v
+	page_index_t	dd_invalidate_tlb_vpage_idx;// From dcache_data_stage of dcache_data_stage.v
 	scalar_t	dd_io_addr;		// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_io_read_en;		// From dcache_data_stage of dcache_data_stage.v
 	thread_idx_t	dd_io_thread_idx;	// From dcache_data_stage of dcache_data_stage.v

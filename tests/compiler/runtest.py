@@ -17,65 +17,29 @@
 
 import sys
 import subprocess
-import re
 import os
 from os import path
 
 sys.path.insert(0, '..')
 import test_harness
 
-#
-# This reads the results of a program from stdin and a source file specified
-# on the command line.  For each line in the source file prefixed with 
-# 'CHECK:', it searches to see if that string occurs in the program output. 
-# The strings must occur in order.  It ignores any other output between the
-# strings.
-#
-def check_result(source_file, result):
-	PREFIX = 'CHECK: '
-
-	# Read expected results
-	resultOffset = 0
-	lineNo = 1
-	foundCheckLines = False
-	with open(source_file, 'r') as f:
-		for line in f:
-			chkoffs = line.find(PREFIX)
-			if chkoffs != -1:
-				foundCheckLines = True
-				expected = line[chkoffs + len(PREFIX):].strip()
-				regexp = re.compile(expected)
-				got = regexp.search(result, resultOffset)
-				if got:
-					resultOffset = got.end()
-				else:
-					error = 'FAIL: line ' + str(lineNo) + ' expected string ' + expected + ' was not found\n'
-					error += 'searching here:' + result[resultOffset:]
-					raise test_harness.TestException(error)
-
-			lineNo += 1
-
-	if not foundCheckLines:
-		raise test_harness.TestException('FAIL: no lines with CHECK: were found')
-		
-	return True
 	
 use_verilator = 'USE_VERILATOR' in os.environ
 
 def run_verilator_test(source_file):
 	test_harness.compile_test(source_file, optlevel='3')
 	result = test_harness.run_verilator()
-	check_result(source_file, result)
+	test_harness.check_result(source_file, result)
 	
 def run_host_test(source_file):
 	subprocess.check_call(['c++', '-w', source_file, '-o', 'obj/a.out'])
 	result = subprocess.check_output('obj/a.out')
-	check_result(source_file, result)
+	test_harness.check_result(source_file, result)
 
 def run_emulator_test(source_file):
 	test_harness.compile_test(source_file, optlevel='3')
 	result = test_harness.run_emulator()
-	check_result(source_file, result)
+	test_harness.check_result(source_file, result)
 
 test_list = [fname for fname in test_harness.find_files(('.c', '.cpp')) if not fname.startswith('_')]
 

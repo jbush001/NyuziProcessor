@@ -43,6 +43,9 @@ module dcache_data_stage(
 	// To dcache_tag_stage
 	output logic                              dd_update_lru_en,
 	output l1d_way_idx_t                      dd_update_lru_way,
+	output                                    dd_invalidate_tlb_en,
+	output                                    dd_invalidate_tlb_all,
+	output page_index_t                       dd_invalidate_tlb_vpage_idx,
 
 	// To io_request_queue
 	output                                    dd_io_write_en,
@@ -177,6 +180,12 @@ module dcache_data_stage(
 		&& !is_io_address;
 	assign dd_membar_en = is_valid_cache_control
 		&& dt_instruction.cache_control_op == CACHE_MEMBAR;
+	assign dd_invalidate_tlb_en = is_valid_cache_control
+		&& (dt_instruction.cache_control_op == CACHE_TLB_INVAL
+		|| dt_instruction.cache_control_op == CACHE_TLB_INVAL_ALL);
+	assign dd_invalidate_tlb_all = dt_instruction.cache_control_op 
+		== CACHE_TLB_INVAL_ALL;
+	assign dd_invalidate_tlb_vpage_idx = dt_request_vaddr[31-:`PAGE_NUM_BITS];
 	assign creg_access_req = dt_instruction_valid 
 		&& dt_instruction.is_memory_access 
 		&& dt_instruction.memory_access_type == MEM_CONTROL_REG

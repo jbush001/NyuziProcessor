@@ -144,4 +144,11 @@ enum _FaultReason
 };
 typedef enum _FaultReason FaultReason;
 
+enum _CacheControlOp
+{
+	CC_INVALIDATE_TLB = 5,
+	CC_INVALIDATE_TLB_ALL
+};
+typedef enum _CacheControlOp CacheControlOp;
+
 #endif

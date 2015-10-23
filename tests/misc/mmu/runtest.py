@@ -24,8 +24,8 @@ import test_harness
 DUMP_FILE='obj/memdump.bin'
 EXPECT_STRING='Test String'
 
-def mmu_test_verilator(name):
-	test_harness.compile_test(['mmu.c', 'tlb_miss_handler.s'])
+def test_tlb_miss_verilator(name):
+	test_harness.compile_test(['tlb_miss.c', 'tlb_miss_handler.s'])
 	result = test_harness.run_verilator(dump_file=DUMP_FILE, dump_base=0x100000,
 		dump_length=32)
 	if result.find('read 00900000 "Test String"') == -1:
@@ -35,8 +35,8 @@ def mmu_test_verilator(name):
 		if f.read(len(EXPECT_STRING)) != EXPECT_STRING:
 			raise test_harness.TestException('memory contents did not match')
 
-def mmu_test_emulator(name):
-	test_harness.compile_test(['mmu.c', 'tlb_miss_handler.s'])
+def test_tlb_miss_emulator(name):
+	test_harness.compile_test(['tlb_miss.c', 'tlb_miss_handler.s'])
 	result = test_harness.run_emulator(dump_file=DUMP_FILE, dump_base=0x100000,
 		dump_length=32)
 	if result.find('read 00900000 "Test String"') == -1:
@@ -46,6 +46,19 @@ def mmu_test_emulator(name):
 		if f.read(len(EXPECT_STRING)) != EXPECT_STRING:
 			raise test_harness.TestException('memory contents did not match')
 
-test_harness.register_tests(mmu_test_verilator, ['mmu (verilator)'])
-test_harness.register_tests(mmu_test_emulator, ['mmu (emulator)'])
+def test_tlb_invalidate_verilator(name):
+	test_harness.compile_test(['invalidate.c'])
+	result = test_harness.run_verilator()
+	test_harness.check_result('invalidate.c', result)
+	
+def test_tlb_invalidate_emulator(name):
+	test_harness.compile_test(['invalidate.c'])
+	result = test_harness.run_emulator()
+	test_harness.check_result('invalidate.c', result)
+
+test_harness.register_tests(test_tlb_miss_verilator, ['tlb_miss (verilator)'])
+test_harness.register_tests(test_tlb_miss_emulator, ['tlb_miss (emulator)'])
+test_harness.register_tests(test_tlb_invalidate_verilator, ['tlb_invalidate (verilator)'])
+test_harness.register_tests(test_tlb_invalidate_emulator, ['tlb_invalidate (emulator)'])
+
 test_harness.execute_tests()

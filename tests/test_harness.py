@@ -17,6 +17,7 @@
 import subprocess
 import os
 import sys
+import re
 
 COMPILER_DIR = '/usr/local/llvm-nyuzi/bin/'
 BASE_DIR = os.path.normpath(os.path.dirname(os.path.abspath(__file__)) + '/../')
@@ -209,3 +210,39 @@ def execute_tests():
 	print str(len(failing_tests)) + '/' + str(len(registered_tests)) + ' tests failed'
 	if failing_tests != []:
 		sys.exit(1)
+
+#
+# This reads the results of a program from stdin and a source file specified
+# on the command line.  For each line in the source file prefixed with 
+# 'CHECK:', it searches to see if that string occurs in the program output. 
+# The strings must occur in order.  It ignores any other output between the
+# strings.
+#
+def check_result(source_file, result):
+	PREFIX = 'CHECK: '
+
+	# Read expected results
+	resultOffset = 0
+	lineNo = 1
+	foundCheckLines = False
+	with open(source_file, 'r') as f:
+		for line in f:
+			chkoffs = line.find(PREFIX)
+			if chkoffs != -1:
+				foundCheckLines = True
+				expected = line[chkoffs + len(PREFIX):].strip()
+				regexp = re.compile(expected)
+				got = regexp.search(result, resultOffset)
+				if got:
+					resultOffset = got.end()
+				else:
+					error = 'FAIL: line ' + str(lineNo) + ' expected string ' + expected + ' was not found\n'
+					error += 'searching here:' + result[resultOffset:]
+					raise TestException(error)
+
+			lineNo += 1
+
+	if not foundCheckLines:
+		raise TestException('FAIL: no lines with CHECK: were found')
+		
+	return True

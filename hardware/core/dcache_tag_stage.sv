@@ -55,6 +55,9 @@ module dcache_tag_stage
 	// from dcache_data_stage
 	input                                       dd_update_lru_en,
 	input l1d_way_idx_t                         dd_update_lru_way,
+	input                                       dd_invalidate_tlb_en,
+	input                                       dd_invalidate_tlb_all,
+	input page_index_t                          dd_invalidate_tlb_vpage_idx,
 	
 	// From l2_interface
 	input                                       l2i_dcache_lru_fill_en,
@@ -76,7 +79,7 @@ module dcache_tag_stage
 	output logic                                dt_snoop_valid[`L1D_WAYS],
 	output l1d_tag_t                            dt_snoop_tag[`L1D_WAYS],
 	output l1d_way_idx_t                        dt_fill_lru,
-	
+
 	// From writeback stage                     
 	input logic                                 wb_rollback_en,
 	input thread_idx_t                          wb_rollback_thread_idx);
@@ -176,6 +179,9 @@ module dcache_tag_stage
 		.update_en(cr_dtlb_update_en),
 		.update_ppage_idx(cr_tlb_update_ppage_idx),
 		.update_vpage_idx(cr_tlb_update_vpage_idx),
+		.invalidate_en(dd_invalidate_tlb_en),
+		.invalidate_all(dd_invalidate_tlb_all),
+		.invalidate_vpage_idx(dd_invalidate_tlb_vpage_idx),
 		.*);
 	always_comb
 	begin

@@ -99,10 +99,12 @@ typedef enum logic[3:0] {
 } memory_op_t;
 
 typedef enum logic[2:0] {
-	CACHE_DINVALIDATE 	= 3'b001,
-	CACHE_DFLUSH		= 3'b010,
-	CACHE_IINVALIDATE	= 3'b011,
-	CACHE_MEMBAR		= 3'b100
+	CACHE_DINVALIDATE   = 3'b001,
+	CACHE_DFLUSH        = 3'b010,
+	CACHE_IINVALIDATE   = 3'b011,
+	CACHE_MEMBAR        = 3'b100,
+	CACHE_TLB_INVAL     = 3'b101,
+	CACHE_TLB_INVAL_ALL = 3'b110
 } cache_op_t;
 
 typedef enum logic[2:0] {

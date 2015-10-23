@@ -62,6 +62,11 @@ module ifetch_tag_stage
 	input page_index_t                  cr_tlb_update_ppage_idx,
 	input page_index_t                  cr_tlb_update_vpage_idx,
 
+	// From dcache_data_stage
+	input                               dd_invalidate_tlb_en,
+	input                               dd_invalidate_tlb_all,
+	page_index_t                        dd_invalidate_tlb_vpage_idx,
+
 	// From writeback stage
 	input                               wb_rollback_en,
 	input thread_idx_t                  wb_rollback_thread_idx,
@@ -185,6 +190,9 @@ module ifetch_tag_stage
 		.update_en(cr_itlb_update_en),
 		.update_ppage_idx(cr_tlb_update_ppage_idx),
 		.update_vpage_idx(cr_tlb_update_vpage_idx),
+		.invalidate_en(dd_invalidate_tlb_en),
+		.invalidate_all(dd_invalidate_tlb_all),
+		.invalidate_vpage_idx(dd_invalidate_tlb_vpage_idx),
 		.*);
 	always_comb
 	begin

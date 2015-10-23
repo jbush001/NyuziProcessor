@@ -140,6 +140,7 @@ static void executeVectorLoadStoreInst(Thread*, uint32_t instruction);
 static void executeControlRegisterInst(Thread*, uint32_t instruction);
 static void executeMemoryAccessInst(Thread*, uint32_t instruction);
 static void executeBranchInst(Thread*, uint32_t instruction);
+static void executeCacheControlInst(Thread*, uint32_t instruction);
 static int executeInstruction(Thread*);
 
 Core *initCore(uint32_t memorySize, uint32_t totalThreads, bool randomizeMemory)
@@ -1493,6 +1494,45 @@ static void executeBranchInst(Thread *thread, uint32_t instruction)
 		thread->currentPc += extractSignedBits(instruction, 5, 20);
 }
 
+static void executeCacheControlInst(Thread *thread, uint32_t instruction)
+{
+	uint32_t op = extractUnsignedBits(instruction, 25, 3);
+
+	switch (op)
+	{
+		case CC_INVALIDATE_TLB:
+		{
+			uint32_t ptrReg = extractUnsignedBits(instruction, 0, 5);
+			uint32_t offset = extractSignedBits(instruction, 15, 10);
+			uint32_t ptrVal = getThreadScalarReg(thread, ptrReg) + offset;
+			uint32_t tlbIndex = ((ptrVal / PAGE_SIZE) % TLB_SETS) * TLB_WAYS;
+			uint32_t way;
+
+			for (way = 0; way < TLB_WAYS; way++)
+			{
+				thread->core->itlb[tlbIndex + way].virtualAddress = 0xffffffffu;
+				thread->core->dtlb[tlbIndex + way].virtualAddress = 0xffffffffu;
+			}
+
+			break;
+		}
+			
+		case CC_INVALIDATE_TLB_ALL:
+		{
+			int i;
+			
+			for (i = 0; i < TLB_SETS * TLB_WAYS; i++)
+			{
+				// Set to invalid (unaligned) addresses so these don't match
+				thread->core->itlb[i].virtualAddress = 0xffffffffu;
+				thread->core->dtlb[i].virtualAddress = 0xffffffffu;
+			}
+			
+			break;
+		}
+	}
+}
+
 static int executeInstruction(Thread *thread)
 {
 	uint32_t instruction;
@@ -1555,7 +1595,7 @@ restart:
 	else if ((instruction & 0xf0000000) == 0xf0000000)
 		executeBranchInst(thread, instruction);
 	else if ((instruction & 0xf0000000) == 0xe0000000)
-		;	// Format D instruction. Ignore
+		executeCacheControlInst(thread, instruction);
 	else
 		printf("Bad instruction @%08x\n", thread->currentPc - 4);
 
