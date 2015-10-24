@@ -1,45 +1,33 @@
-# 
+#!/usr/bin/python
+#
 # Copyright 2011-2015 Jeff Bush
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# 
+#
 
+import sys
+import subprocess
+import os
+from os import path
 
-JAVAC := $(shell which javac)
+sys.path.insert(0, '..')
+import test_harness
 
-all:
-	cd hardware/ && make
-	cd software/ && make
-	cd tools/emulator && make
-	cd tools/serial_boot && make
-	cd tools/mkfs && make
-ifneq ($(JAVAC),)
-	cd tools/visualizer && make
-endif
-	
-test:
-	cd tests/ && make test
-		
-clean:
-	cd hardware/ && make clean
-	cd software/ && make clean
-	cd tools/emulator && make clean
-	cd tools/serial_boot && make clean
-	cd tools/mkfs && make clean
-ifneq ($(JAVAC),)
-	cd tools/visualizer && make clean
-endif
-	rm -rf bin/
+def run_emulator_test(source_file):
+	test_harness.compile_test(source_file, optlevel='3')
+	result = test_harness.run_emulator()
+	test_harness.check_result(source_file, result)
 
-FORCE:
-
+test_list = [fname for fname in test_harness.find_files(('.c', '.cpp')) if not fname.startswith('_')]
+test_harness.register_tests(run_emulator_test, test_list)
+test_harness.execute_tests()

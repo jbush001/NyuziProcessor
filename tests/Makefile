@@ -1,5 +1,5 @@
 # 
-# Copyright 2011-2015 Jeff Bush
+# Copyright 2015 Jeff Bush
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,32 +14,17 @@
 # limitations under the License.
 # 
 
-
-JAVAC := $(shell which javac)
-
-all:
-	cd hardware/ && make
-	cd software/ && make
-	cd tools/emulator && make
-	cd tools/serial_boot && make
-	cd tools/mkfs && make
-ifneq ($(JAVAC),)
-	cd tools/visualizer && make
-endif
-	
 test:
-	cd tests/ && make test
-		
-clean:
-	cd hardware/ && make clean
-	cd software/ && make clean
-	cd tools/emulator && make clean
-	cd tools/serial_boot && make clean
-	cd tools/mkfs && make clean
-ifneq ($(JAVAC),)
-	cd tools/visualizer && make clean
-endif
-	rm -rf bin/
-
-FORCE:
-
+	cd cosimulation && ./runtest.py
+	cd compiler && USE_VERILATOR=1 ./runtest.py
+	cd libc && ./runtest.py
+	cd misc/atomic/ && ./runtest.py
+	cd misc/dflush/ && ./runtest.py
+	cd misc/dinvalidate/ && ./runtest.py
+	cd misc/sdmmc/ && ./runtest.py
+	cd misc/fs/ && ./runtest.py
+	cd misc/ps2/ && ./runtest.py
+	cd misc/uart && ./runtest.py
+	cd misc/crash && ./runtest.py
+	cd misc/mmu && ./runtest.py
+	cd render && make test
