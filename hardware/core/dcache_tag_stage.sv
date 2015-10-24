@@ -30,7 +30,7 @@ module dcache_tag_stage
 	(input                                      clk,
 	input                                       reset,
                                                 
-	// From operand fetch stage                 
+	// From operand_fetch_stage                 
 	input vector_t                              of_operand1,
 	input vector_lane_mask_t                    of_mask_value,
 	input vector_t                              of_store_value,
@@ -39,7 +39,7 @@ module dcache_tag_stage
 	input thread_idx_t                          of_thread_idx,
 	input subcycle_t                            of_subcycle,
                                                 
-	// to dcache data stage                     
+	// to dcache_data_stage                     
 	output logic                                dt_instruction_valid,
 	output decoded_instruction_t                dt_instruction,
 	output vector_lane_mask_t                   dt_mask_value,
@@ -59,7 +59,7 @@ module dcache_tag_stage
 	input                                       dd_invalidate_tlb_all,
 	input page_index_t                          dd_invalidate_tlb_vpage_idx,
 	
-	// From l2_interface
+	// From l2_cache_interface
 	input                                       l2i_dcache_lru_fill_en,
 	input l1d_set_idx_t                         l2i_dcache_lru_fill_set,
 	input [`L1D_WAYS - 1:0]                     l2i_dtag_update_en_oh,
@@ -69,18 +69,18 @@ module dcache_tag_stage
 	input                                       l2i_snoop_en,
 	input l1d_set_idx_t                         l2i_snoop_set,
 
-	// From control registers
+	// From control_registers
 	input                                       cr_mmu_en[`THREADS_PER_CORE],
 	input                                       cr_dtlb_update_en,
 	input page_index_t                          cr_tlb_update_ppage_idx,
 	input page_index_t                          cr_tlb_update_vpage_idx,
 
-	// To l2_interface
+	// To l2_cache_interface
 	output logic                                dt_snoop_valid[`L1D_WAYS],
 	output l1d_tag_t                            dt_snoop_tag[`L1D_WAYS],
 	output l1d_way_idx_t                        dt_fill_lru,
 
-	// From writeback stage                     
+	// From writeback_stage                     
 	input logic                                 wb_rollback_en,
 	input thread_idx_t                          wb_rollback_thread_idx);
 

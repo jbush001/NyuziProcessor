@@ -30,7 +30,7 @@ module ifetch_tag_stage
 	(input                              clk,
 	input                               reset,
 	
-	// To instruction fetch data stage
+	// To ifetch_data_stage
 	output logic                        ift_instruction_requested,
 	output l1i_addr_t                   ift_pc_paddr,
 	output scalar_t                     ift_pc_vaddr,
@@ -39,14 +39,14 @@ module ifetch_tag_stage
 	output l1i_tag_t                    ift_tag[`L1I_WAYS],
 	output logic                        ift_valid[`L1I_WAYS],
 
-	// from instruction fetch data stage
+	// From ifetch_data_stage
 	input                               ifd_update_lru_en,
 	input l1i_way_idx_t                 ifd_update_lru_way,
 	input                               ifd_cache_miss,
 	input                               ifd_near_miss,
 	input thread_idx_t                  ifd_cache_miss_thread_idx,
 
-	// From l2_interface
+	// From l2_cache_interface
 	input                               l2i_icache_lru_fill_en,
 	input l1i_set_idx_t                 l2i_icache_lru_fill_set,
 	input [`L1I_WAYS - 1:0]             l2i_itag_update_en,
@@ -56,7 +56,7 @@ module ifetch_tag_stage
 	input thread_bitmap_t               l2i_icache_wake_bitmap,
 	output l1i_way_idx_t                ift_fill_lru,
 
-	// From control registers
+	// From control_registers
 	input                               cr_mmu_en[`THREADS_PER_CORE],
 	input                               cr_itlb_update_en,
 	input page_index_t                  cr_tlb_update_ppage_idx,
@@ -67,12 +67,12 @@ module ifetch_tag_stage
 	input                               dd_invalidate_tlb_all,
 	page_index_t                        dd_invalidate_tlb_vpage_idx,
 
-	// From writeback stage
+	// From writeback_stage
 	input                               wb_rollback_en,
 	input thread_idx_t                  wb_rollback_thread_idx,
 	input scalar_t                      wb_rollback_pc,
 
-	// From thread select stage
+	// From thread_select_stage
 	input thread_bitmap_t               ts_fetch_en);
 
 	scalar_t next_program_counter[`THREADS_PER_CORE];

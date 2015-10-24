@@ -43,7 +43,7 @@ module instruction_decode_stage(
 	input                         clk,
 	input                         reset,
 	
-	// From instruction fetch data stage
+	// From ifetch_data_stage
 	input scalar_t                ifd_instruction,
 	input                         ifd_instruction_valid,
 	input scalar_t                ifd_pc,
@@ -51,13 +51,12 @@ module instruction_decode_stage(
 	input                         ifd_ifetch_fault,
 	input                         ifd_tlb_miss,
 
-
-	// To thread select stage
+	// To thread_select_stage
 	output decoded_instruction_t  id_instruction,
 	output logic                  id_instruction_valid,
 	output thread_idx_t           id_thread_idx,
 	
-	// From rollback controller
+	// From writeback_stage
 	input                         wb_rollback_en,
 	input thread_idx_t            wb_rollback_thread_idx);
 

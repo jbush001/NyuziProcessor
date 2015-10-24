@@ -32,21 +32,21 @@ module thread_select_stage(
 	input                              clk,
 	input                              reset,
 	
-	// From instruction decode stage
+	// From instruction_decode_stage
 	input decoded_instruction_t        id_instruction,
 	input                              id_instruction_valid,
 	input thread_idx_t                 id_thread_idx,
 
-	// To ifetch tag stage
+	// To ifetch_tag_stage
 	output thread_bitmap_t             ts_fetch_en,
 
-	// To operand fetch stage
+	// To operand_fetch_stage
 	output logic                       ts_instruction_valid,
 	output decoded_instruction_t       ts_instruction,
 	output thread_idx_t                ts_thread_idx,
 	output subcycle_t                  ts_subcycle,
 	
-	// From writeback stage
+	// From writeback_stage
 	input                              wb_writeback_en,
 	input thread_idx_t                 wb_writeback_thread_idx,
 	input                              wb_writeback_is_vector,
@@ -57,10 +57,10 @@ module thread_select_stage(
 	input pipeline_sel_t               wb_rollback_pipeline,
 	input subcycle_t                   wb_rollback_subcycle,
 
-	// From control registers
+	// From control_registers
 	input thread_bitmap_t              ny_thread_enable,
 	
-	// From dcache data stage
+	// From dcache_data_stage
 	input thread_bitmap_t              wb_suspend_thread_oh,
 	input thread_bitmap_t              l2i_dcache_wake_bitmap,
 	input thread_bitmap_t              ior_wake_bitmap,

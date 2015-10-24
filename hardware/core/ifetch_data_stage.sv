@@ -27,9 +27,9 @@ module ifetch_data_stage(
 	input                            clk,
 	input                            reset,
 
-	// From instruction fetch tag stage.  If ift_instruction_requested
-	// is low, the other signals in this group are undefined and should
-	// be ignored.
+	// From ifetch_tag_stage.  
+	// If ift_instruction_requested is low, the other signals in this group are 
+	// undefined and should be ignored.
 	input                            ift_instruction_requested,
 	input l1i_addr_t                 ift_pc_paddr,
 	input scalar_t                   ift_pc_vaddr,
@@ -43,7 +43,7 @@ module ifetch_data_stage(
 	output l1i_way_idx_t             ifd_update_lru_way,
 	output logic                     ifd_near_miss,
 
-	// From l2_interface
+	// From l2_cache_interface
 	input                            l2i_idata_update_en,
 	input l1i_way_idx_t              l2i_idata_update_way,
 	input l1i_set_idx_t              l2i_idata_update_set,
@@ -52,12 +52,12 @@ module ifetch_data_stage(
 	input l1i_set_idx_t              l2i_itag_update_set,
 	input l1i_tag_t                  l2i_itag_update_tag,
 
-	// To l2_interface
+	// To l2_cache_interface
 	output logic                     ifd_cache_miss,
 	output scalar_t                  ifd_cache_miss_paddr,
 	output thread_idx_t              ifd_cache_miss_thread_idx,	// also to ifetch_tag
 
-	// To instruction decode stage
+	// To instruction_decode_stage
 	output scalar_t                  ifd_instruction,
 	output logic                     ifd_instruction_valid,
 	output scalar_t                  ifd_pc,
@@ -65,11 +65,11 @@ module ifetch_data_stage(
 	output logic                     ifd_ifetch_fault,
 	output logic                     ifd_tlb_miss,
                                     
-	// From writeback stage         
+	// From writeback_stage         
 	input                            wb_rollback_en,
 	input thread_idx_t               wb_rollback_thread_idx,
 
-	// From control registers
+	// From control_registers
 	input                            cr_mmu_en[`THREADS_PER_CORE],
 
 	// Performance counters

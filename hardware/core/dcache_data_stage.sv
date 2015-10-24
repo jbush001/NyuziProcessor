@@ -27,7 +27,7 @@ module dcache_data_stage(
 	input                                     clk,
 	input                                     reset,
                                               
-	// From dcache tag stage                  
+	// From dcache_tag_stage                  
 	input                                     dt_instruction_valid,
 	input decoded_instruction_t               dt_instruction,
 	input vector_lane_mask_t                  dt_mask_value,
@@ -54,7 +54,7 @@ module dcache_data_stage(
 	output scalar_t                           dd_io_addr,
 	output scalar_t                           dd_io_write_value,
                                               
-	// To writeback stage                     
+	// To writeback_stage                     
 	output logic                              dd_instruction_valid,
 	output decoded_instruction_t              dd_instruction,
 	output vector_lane_mask_t                 dd_lane_mask,
@@ -69,13 +69,14 @@ module dcache_data_stage(
 	output logic                              dd_access_fault,
 	output logic                              dd_tlb_miss,
 
-	// To control registers (these signals are unregistered)
+	// To control_registers 
+	// These signals are unregistered
 	output                                    dd_creg_write_en,
 	output                                    dd_creg_read_en,
 	output control_register_t                 dd_creg_index,
 	output scalar_t                           dd_creg_write_val,
 	
-	// From l2_interface
+	// From l2_cache_interface
 	input                                     l2i_ddata_update_en,
 	input l1d_way_idx_t                       l2i_ddata_update_way,
 	input l1d_set_idx_t                       l2i_ddata_update_set,
@@ -84,7 +85,7 @@ module dcache_data_stage(
 	input l1d_set_idx_t                       l2i_dtag_update_set,
 	input l1d_tag_t                           l2i_dtag_update_tag,
  
- 	// To l2_interface
+ 	// To l2_cache_interface
 	output logic                              dd_cache_miss,
 	output scalar_t                           dd_cache_miss_addr,
 	output thread_idx_t                       dd_cache_miss_thread_idx,
@@ -109,7 +110,7 @@ module dcache_data_stage(
 	input thread_idx_t                        interrupt_thread_idx,
 	input                                     wb_interrupt_ack,
 
-	// From writeback stage                   
+	// From writeback_stage                   
 	input logic                               wb_rollback_en,
 	input thread_idx_t                        wb_rollback_thread_idx,
 	input pipeline_sel_t                      wb_rollback_pipeline,

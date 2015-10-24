@@ -29,7 +29,7 @@ module fp_execute_stage5(
 	input                               clk,
 	input                               reset,
 	                                    
-	// From mx4 stage                   
+	// From fp_execute_stage4                   
 	input vector_lane_mask_t            fx4_mask_value,
 	input                               fx4_instruction_valid,
 	input decoded_instruction_t         fx4_instruction,
@@ -50,7 +50,7 @@ module fp_execute_stage5(
 	input [`VECTOR_LANES - 1:0][7:0]    fx4_mul_exponent,
 	input [`VECTOR_LANES - 1:0]         fx4_mul_sign,
 	                                    
-	// To writeback stage               
+	// To writeback_stage               
 	output logic                        fx5_instruction_valid,
 	output decoded_instruction_t        fx5_instruction,
 	output vector_lane_mask_t           fx5_mask_value,

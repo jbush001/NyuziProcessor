@@ -32,7 +32,7 @@ module fp_execute_stage3(
 	input                                    clk,
 	input                                    reset,
 	                                        
-	// From mx2 stage                       
+	// From fp_execute_stage2                  
 	input vector_lane_mask_t                 fx2_mask_value,
 	input                                    fx2_instruction_valid,
 	input decoded_instruction_t              fx2_instruction,
@@ -57,7 +57,7 @@ module fp_execute_stage3(
 	input [`VECTOR_LANES - 1:0][7:0]         fx2_mul_exponent,
 	input [`VECTOR_LANES - 1:0]              fx2_mul_sign,
 	
-	// To mx4 stage
+	// To fp_execute_stage4
 	output logic                             fx3_instruction_valid,
 	output decoded_instruction_t             fx3_instruction,
 	output vector_lane_mask_t                fx3_mask_value,

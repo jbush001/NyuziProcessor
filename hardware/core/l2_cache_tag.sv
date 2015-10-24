@@ -25,7 +25,7 @@ module l2_cache_tag(
 	input                                 clk,
 	input                                 reset,
                                           
-	// From l2_cache_arb stage            
+	// From l2_cache_arb            
 	input l2req_packet_t                  l2a_request,
 	input cache_line_data_t               l2a_data_from_memory,
 	input                                 l2a_is_l2_fill,
@@ -41,7 +41,7 @@ module l2_cache_tag(
 	input                                 l2r_update_lru_en,
 	input l2_way_idx_t                    l2r_update_lru_hit_way,
                                           
-	// To l2_cache_read stage             
+	// To l2_cache_read             
 	output l2req_packet_t                 l2t_request,
 	output logic                          l2t_valid[`L2_WAYS],
 	output l2_tag_t                       l2t_tag[`L2_WAYS],

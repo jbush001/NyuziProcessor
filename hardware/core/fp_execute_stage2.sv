@@ -31,12 +31,12 @@ module fp_execute_stage2(
 	input                                    clk,
 	input                                    reset,
                                             
-	// From writeback stage                 
+	// From writeback_stage                 
 	input logic                              wb_rollback_en,
 	input thread_idx_t                       wb_rollback_thread_idx,
 	input pipeline_sel_t                     wb_rollback_pipeline,
 	                                        
-	// From mx1 stage                       
+	// From fp_execute_stage1                       
 	input vector_lane_mask_t                 fx1_mask_value,
 	input                                    fx1_instruction_valid,
 	input decoded_instruction_t              fx1_instruction,
@@ -60,7 +60,7 @@ module fp_execute_stage2(
 	input [`VECTOR_LANES - 1:0][31:0]        fx1_multiplicand,
 	input [`VECTOR_LANES - 1:0][31:0]        fx1_multiplier,
 	                                        
-	// To mx3 stage                         
+	// To fp_execute_stage3                     
 	output logic                             fx2_instruction_valid,
 	output decoded_instruction_t             fx2_instruction,
 	output vector_lane_mask_t                fx2_mask_value,

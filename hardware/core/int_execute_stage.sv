@@ -27,7 +27,7 @@ module int_execute_stage(
 	input                             clk,
 	input                             reset,
 	
-	// From operand fetch stage
+	// From operand_fetch_stage
 	input vector_t                    of_operand1,
 	input vector_t                    of_operand2,
 	input vector_lane_mask_t          of_mask_value,
@@ -36,15 +36,17 @@ module int_execute_stage(
 	input thread_idx_t                of_thread_idx,
 	input subcycle_t                  of_subcycle,
 	
-	// From writeback stage
+	// From writeback_stage
 	input logic                       wb_rollback_en,
 	input thread_idx_t                wb_rollback_thread_idx,
 	
-	// To/From control register
+	// From control_registers
 	input scalar_t                    cr_eret_address[`THREADS_PER_CORE],
+
+	// To control_registers
 	output logic                      ix_is_eret,
 	
-	// To writeback stage
+	// To writeback_stage
 	output logic                      ix_instruction_valid,
 	output decoded_instruction_t      ix_instruction,
 	output vector_t                   ix_result,

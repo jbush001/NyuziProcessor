@@ -26,7 +26,7 @@ module control_registers
 	(input                                  clk,
 	input                                   reset,
 	
-	// Control signals to various stages
+	// To multiple stages
 	output scalar_t                         cr_eret_address[`THREADS_PER_CORE],
 	output logic                            cr_mmu_en[`THREADS_PER_CORE],
 	output logic                            cr_itlb_update_en,
@@ -34,19 +34,20 @@ module control_registers
 	output page_index_t                     cr_tlb_update_ppage_idx,
 	output page_index_t                     cr_tlb_update_vpage_idx,
 	
-	// From single cycle exec
+	// From int_execute_stage
 	input                                   ix_is_eret,
 	input thread_idx_t                      ix_thread_idx,
 	
-	// From writeback stage
+	// From writeback_stage
 	input                                   wb_fault,
 	input fault_reason_t                    wb_fault_reason,
 	input scalar_t                          wb_fault_pc,
 	input scalar_t                          wb_fault_access_vaddr,
 	input thread_idx_t                      wb_fault_thread_idx,
 	
-	// From dcache_data_stage (dd_XXX signals are unregistered. dt_thread_idx
-	// represents thread going into dcache_data_stage)
+	// From dcache_data_stage 
+	// dd_XXX signals are unregistered. dt_thread_idx represents thread going into
+	// dcache_data_stage)
 	input thread_idx_t                      dt_thread_idx,
 	input                                   dd_creg_write_en,
 	input                                   dd_creg_read_en,

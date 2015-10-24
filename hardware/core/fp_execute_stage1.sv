@@ -34,11 +34,11 @@ module fp_execute_stage1(
 	input                                          clk,
 	input                                          reset,
 
-	// From writeback stage                        
+	// From writeback_stage                        
 	input logic                                    wb_rollback_en,
 	input thread_idx_t                             wb_rollback_thread_idx,
 	                                               
-	// From operand fetch stage                    
+	// From operand_fetch_stage                    
 	input vector_t                                 of_operand1,
 	input vector_t                                 of_operand2,
 	input vector_lane_mask_t                       of_mask_value,
@@ -47,7 +47,7 @@ module fp_execute_stage1(
 	input thread_idx_t                             of_thread_idx,
 	input subcycle_t                               of_subcycle,
 	                                               
-	// To mx2 stage                                
+	// To fp_execute_stage2                               
 	output logic                                   fx1_instruction_valid,
 	output decoded_instruction_t                   fx1_instruction,
 	output vector_lane_mask_t                      fx1_mask_value,

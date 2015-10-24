@@ -41,7 +41,7 @@ module writeback_stage(
 	input                                 clk,
 	input                                 reset,
 
-	// From last fp execute stage
+	// From fp_execute_stage5
 	input                                 fx5_instruction_valid,
 	input decoded_instruction_t           fx5_instruction,
 	input vector_t                        fx5_result,
@@ -49,7 +49,7 @@ module writeback_stage(
 	input thread_idx_t                    fx5_thread_idx,
 	input subcycle_t                      fx5_subcycle,
 
-	// From single-cycle execute stage
+	// From int_execute_stage
 	input                                 ix_instruction_valid,
 	input decoded_instruction_t           ix_instruction,
 	input vector_t                        ix_result,
@@ -59,7 +59,7 @@ module writeback_stage(
 	input scalar_t                        ix_rollback_pc,
 	input subcycle_t                      ix_subcycle,
 	                               
-	// From dcache data stage      
+	// From dcache_data_stage      
 	input                                 dd_instruction_valid,
 	input decoded_instruction_t           dd_instruction,
 	input vector_lane_mask_t              dd_lane_mask,
@@ -74,7 +74,7 @@ module writeback_stage(
 	input                                 dd_access_fault,
 	input                                 dd_tlb_miss,
 	
-	// From store queue
+	// From l1_store_queue
 	input [`CACHE_LINE_BYTES - 1:0]       sq_store_bypass_mask,
 	input cache_line_data_t               sq_store_bypass_data,
 	input                                 sq_store_sync_success,
@@ -84,13 +84,13 @@ module writeback_stage(
 	input scalar_t                        ior_read_value,
 	input logic                           ior_rollback_en,
 	
-	// From control registers
+	// From control_registers
 	input scalar_t                        cr_creg_read_val,
 	input thread_bitmap_t                 cr_interrupt_en,
 	input scalar_t                        cr_fault_handler,
 	input scalar_t                        cr_tlb_miss_handler,
 	
-	// To control registers
+	// To control_registers
 	output logic                          wb_fault,
 	output fault_reason_t                 wb_fault_reason,
 	output scalar_t                       wb_fault_pc,
@@ -109,7 +109,7 @@ module writeback_stage(
 	output pipeline_sel_t                 wb_rollback_pipeline,
 	output subcycle_t                     wb_rollback_subcycle,
 
-	// To operand fetch/thread select stages
+	// To operand_fetch_stage/thread_select_stage
 	output logic                          wb_writeback_en,
 	output thread_idx_t                   wb_writeback_thread_idx,
 	output logic                          wb_writeback_is_vector,
@@ -118,7 +118,7 @@ module writeback_stage(
 	output register_idx_t                 wb_writeback_reg,
 	output logic                          wb_writeback_is_last_subcycle,
 
-	// To thread select
+	// To thread_select_stage
 	output thread_bitmap_t                wb_suspend_thread_oh,
 	
 	// Performance counters

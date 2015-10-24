@@ -34,11 +34,11 @@ module io_request_queue
 	input scalar_t                         dd_io_addr,
 	input scalar_t                         dd_io_write_value,
 	                                       
-	// To writeback stage                  
+	// To writeback_stage                  
 	output scalar_t                        ior_read_value,
 	output logic                           ior_rollback_en,
 	
-	// To thread select stage
+	// To thread_select_stage
 	output thread_bitmap_t                 ior_wake_bitmap,
 	
 	// To io_arbiter

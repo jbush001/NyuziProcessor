@@ -36,7 +36,7 @@ module l2_cache_arb(
 	output cache_line_data_t              l2a_data_from_memory,
 	output logic                          l2a_is_l2_fill,
 	
-	// From bus interface
+	// From l2_axi_bus_interface
 	input                                 l2bi_ready,
 	input l2req_packet_t                  l2bi_request,
 	input cache_line_data_t               l2bi_data_from_memory,

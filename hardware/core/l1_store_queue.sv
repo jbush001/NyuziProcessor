@@ -29,7 +29,7 @@ module l1_store_queue(
 	input                                  clk,
 	input                                  reset,
                                            
-	// From dache data stage               
+	// From dache_data_stage               
 	input                                  dd_store_en,
 	input                                  dd_flush_en,
 	input                                  dd_membar_en,
@@ -43,7 +43,7 @@ module l1_store_queue(
 	input l1d_addr_t                       dd_store_bypass_addr,
 	input thread_idx_t                     dd_store_bypass_thread_idx,
 	
-	// To writeback stage
+	// To writeback_stage
 	output logic [`CACHE_LINE_BYTES - 1:0] sq_store_bypass_mask,
 	output cache_line_data_t               sq_store_bypass_data,
 	output logic                           sq_store_sync_success,
