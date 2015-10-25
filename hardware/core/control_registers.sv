@@ -143,11 +143,12 @@ module control_registers
 						cr_interrupt_en[dt_thread_idx] <= dd_creg_write_val[0];
 					end 
 
+					CR_FAULT_PC:         cr_eret_address[dt_thread_idx] <= dd_creg_write_val;
 					CR_FAULT_HANDLER:    cr_fault_handler <= dd_creg_write_val;
 					CR_TLB_MISS_HANDLER: cr_tlb_miss_handler <= dd_creg_write_val;
 					CR_TLB_UPDATE_PHYS:  cr_tlb_update_ppage_idx <= dd_creg_write_val[31-:`PAGE_NUM_BITS];
 					CR_SCRATCHPAD0:      scratchpad[{1'b0, dt_thread_idx}] <= dd_creg_write_val;
-					CR_SCRATCHPAD1:      scratchpad[{1'b0, dt_thread_idx } + `THREADS_PER_CORE] <= dd_creg_write_val;
+					CR_SCRATCHPAD1:      scratchpad[{1'b1, dt_thread_idx}] <= dd_creg_write_val;
 					default:
 						;
 				endcase
@@ -177,7 +178,7 @@ module control_registers
 					CR_TLB_MISS_HANDLER: cr_creg_read_val <= cr_tlb_miss_handler;
 					CR_CYCLE_COUNT:      cr_creg_read_val <= cycle_count;
 					CR_SCRATCHPAD0:      cr_creg_read_val <= scratchpad[{1'b0, dt_thread_idx}];
-					CR_SCRATCHPAD1:      cr_creg_read_val <= scratchpad[{1'b0, dt_thread_idx} + `THREADS_PER_CORE];
+					CR_SCRATCHPAD1:      cr_creg_read_val <= scratchpad[{1'b1, dt_thread_idx}];
 					default:             cr_creg_read_val <= 32'hffffffff;
 				endcase
 			end

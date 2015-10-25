@@ -123,13 +123,8 @@ static void setVectorReg(Thread*, uint32_t reg, uint32_t mask,
 static void invalidateSyncAddress(Core*, uint32_t address);
 static void memoryAccessFault(Thread*, uint32_t address, bool isLoad, FaultReason);
 static void illegalInstruction(Thread*, uint32_t instruction);
-static bool getMemoryPointer(Thread*, uint32_t virtualAddress, void **memPtr, bool data);
-static void writeMemBlock(Thread*, uint32_t address, uint32_t mask, 
-	const uint32_t *values);
-static void writeMemWord(Thread*, uint32_t address, uint32_t value);
-static void writeMemShort(Thread*, uint32_t address, uint32_t value);
-static void writeMemByte(Thread*, uint32_t address, uint32_t value);
-static uint32_t readMemoryWord(Thread*, uint32_t address);
+static bool translateAddress(Thread*, uint32_t virtualAddress, uint32_t 
+	*physicalAddress, bool data);
 static uint32_t scalarArithmeticOp(ArithmeticOp, uint32_t value1, uint32_t value2);
 static bool isCompareOp(uint32_t op);
 static struct Breakpoint *lookupBreakpoint(Core*, uint32_t pc);
@@ -360,22 +355,12 @@ uint32_t getVectorRegister(const Core *core, uint32_t threadId, uint32_t regId, 
 
 uint32_t debugReadMemoryByte(const Core *core, uint32_t address)
 {
-	void *memPtr;
-
-	if (!getMemoryPointer(&core->threads[0], address, &memPtr, true))
-		return 0xffffffff;
-	
-	return *((uint8_t*)memPtr);
+	return ((uint8_t*)core->memory)[address];
 }
 
 void debugWriteMemoryByte(const Core *core, uint32_t address, uint8_t byte)
 {
-	void *memPtr;
-	
-	if (!getMemoryPointer(&core->threads[0], address, &memPtr, true))
-		return;
-
-	*((uint8_t*)memPtr) = byte;
+	((uint8_t*)core->memory)[address] = byte;
 }
 
 int setBreakpoint(Core *core, uint32_t pc)
@@ -580,18 +565,19 @@ static void illegalInstruction(Thread *thread, uint32_t instruction)
 	}
 }
 
-// Performs address translation if enabled.
-static bool getMemoryPointer(Thread *thread, uint32_t virtualAddress, void **memPtr, 
+// Performs address translation.
+// If there is a TLB miss, this will update the thread state to make it jump
+// to the fault handler.
+static bool translateAddress(Thread *thread, uint32_t virtualAddress, uint32_t *outPhysicalAddress, 
 	bool dataFetch)
 {
 	int tlbSet;
 	int way;
 	TlbEntry *setEntries;
-	uint32_t translatedAddress;
 
 	if (!thread->enableMmu)
 	{
-		if (virtualAddress >= thread->core->memorySize)
+		if (virtualAddress >= thread->core->memorySize && virtualAddress < 0xffff0000)
 		{
 			// This isn't an actual fault supported by the hardware, but a debugging
 			// aid only available in the emulator.
@@ -601,7 +587,7 @@ static bool getMemoryPointer(Thread *thread, uint32_t virtualAddress, void **mem
 			return false;
 		}
 
-		*memPtr = (void*) (((uint8_t*)thread->core->memory) + virtualAddress);
+		*outPhysicalAddress = virtualAddress;
 		return true;
 	}
 
@@ -611,9 +597,8 @@ static bool getMemoryPointer(Thread *thread, uint32_t virtualAddress, void **mem
 	{
 		if (setEntries[way].virtualAddress == (virtualAddress & PAGE_MASK))
 		{
-			translatedAddress = setEntries[way].physicalAddress
+			*outPhysicalAddress = setEntries[way].physicalAddress
 				| (virtualAddress & ~PAGE_MASK);
-			*memPtr = (void*) (((uint8_t*)thread->core->memory) + translatedAddress);
 			return true;
 		}
 	}
@@ -637,129 +622,6 @@ static bool getMemoryPointer(Thread *thread, uint32_t virtualAddress, void **mem
 	thread->enableMmu = false;
 	thread->lastFaultAddress = virtualAddress;
 	return false;
-}
-
-static void writeMemBlock(Thread *thread, uint32_t address, uint32_t mask, 
-	const uint32_t *values)
-{
-	uint32_t lane;
-	void *blockPtr;
-
-	if ((mask & 0xffff) == 0)
-		return;	// Hardware ignores block stores with a mask of zero
-
-	if (!getMemoryPointer(thread, address, &blockPtr, true)) 
-		return;
-
-	if (thread->core->enableTracing)
-	{
-		printf("%08x [th %d] writeMemBlock %08x\n", thread->currentPc - 4, thread->id,
-			address);
-	}
-	
-	if (thread->core->cosimEnable)
-		cosimWriteBlock(thread->core, thread->currentPc - 4, address, mask, values);
-
-	for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-	{
-		uint32_t regIndex = NUM_VECTOR_LANES - lane - 1;
-		if (mask & (1 << regIndex))
-			((uint32_t*)blockPtr)[lane] = values[regIndex];
-	}
-
-	invalidateSyncAddress(thread->core, address);
-}
-
-static void writeMemWord(Thread *thread, uint32_t address, uint32_t value)
-{
-	void *memPtr;
-
-	if ((address & 0xffff0000) == 0xffff0000)
-	{
-		// IO address range
-		if (address == 0xffff0060)
-		{
-			// Thread resume
-			thread->core->threadEnableMask |= value
-				& ((1ull << thread->core->totalThreads) - 1);
-		}
-		else if (address == 0xffff0064)
-		{
-			// Thread halt
-			thread->core->threadEnableMask &= ~value;
-		}
-		else
-			writeDeviceRegister(address & 0xffff, value);
-
-		return;
-	}
-
-	if (thread->core->enableTracing)
-	{
-		printf("%08x [th %d] writeMemWord %08x %08x\n", thread->currentPc - 4, thread->id, 
-			address, value);
-	}
-
-	if (thread->core->cosimEnable)
-		cosimWriteMemory(thread->core, thread->currentPc - 4, address, 4, value);
-
-	if (!getMemoryPointer(thread, address, &memPtr, true))
-		return;
-	
-	*((uint32_t*) memPtr) = value;
-	invalidateSyncAddress(thread->core, address);
-}
-
-static void writeMemShort(Thread *thread, uint32_t address, uint32_t value)
-{
-	void *memPtr;
-
-	if (thread->core->enableTracing)
-	{
-		printf("%08x [th %d] writeMemShort %08x %04x\n", thread->currentPc - 4, thread->id,
-			address, value);
-	}
-
-	if (thread->core->cosimEnable)
-		cosimWriteMemory(thread->core, thread->currentPc - 4, address, 2, value);
-
-	if (!getMemoryPointer(thread, address, &memPtr, true))
-		return;
-
-	*((uint16_t*) memPtr) = value & 0xffff;
-	invalidateSyncAddress(thread->core, address);
-}
-
-static void writeMemByte(Thread *thread, uint32_t address, uint32_t value)
-{
-	void *memPtr;
-
-	if (thread->core->enableTracing)
-	{
-		printf("%08x [th %d] writeMemByte %08x %02x\n", thread->currentPc - 4, thread->id,
-			address, value);
-	}
-
-	if (thread->core->cosimEnable)
-		cosimWriteMemory(thread->core, thread->currentPc - 4, address, 1, value);
-
-	if (!getMemoryPointer(thread, address, &memPtr, true))
-		return;
-
-	*((uint8_t*) memPtr) = value & 0xff;
-	invalidateSyncAddress(thread->core, address);
-}
-
-static uint32_t readMemoryWord(Thread *thread, uint32_t address)
-{
-	void *memPtr;
-	if ((address & 0xffff0000) == 0xffff0000)
-		return readDeviceRegister(address & 0xffff);
-
-	if (!getMemoryPointer(thread, address, &memPtr, true))
-		return 0;
-
-	return *((uint32_t*) memPtr);
 }
 
 static uint32_t scalarArithmeticOp(ArithmeticOp operation, uint32_t value1, uint32_t value2)
@@ -1079,95 +941,93 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instruction)
 	uint32_t offset = extractSignedBits(instruction, 10, 15);
 	uint32_t destsrcreg = extractUnsignedBits(instruction, 5, 5);
 	bool isLoad = extractUnsignedBits(instruction, 29, 1);
-	uint32_t address;
+	uint32_t virtualAddress;
+	uint32_t physicalAddress;
 	int isDeviceAccess;
-	void *memPtr;
 	uint32_t value;
+	uint32_t accessSize;
 
-	address = getThreadScalarReg(thread, ptrreg) + offset;
-	isDeviceAccess = (address & 0xffff0000) == 0xffff0000;
-	if ((address >= thread->core->memorySize && !isDeviceAccess)
-		|| (isDeviceAccess && op != MEM_LONG))
+	virtualAddress = getThreadScalarReg(thread, ptrreg) + offset;
+
+	switch (op) 
+	{
+		case MEM_BYTE:
+		case MEM_BYTE_SEXT:
+			accessSize = 1;
+			break;
+
+		case MEM_SHORT:
+		case MEM_SHORT_EXT:
+			accessSize = 2;
+			break;
+
+		default:
+			accessSize = 4;
+	}
+
+	// Check alignment
+	if ((virtualAddress % accessSize) != 0)
+	{
+		memoryAccessFault(thread, virtualAddress, isLoad, FR_INVALID_ACCESS);
+		return;
+	}
+
+	// If translateAddress fails because the TLB entry is not present, it will
+	// jump to the fault handler as a side effect. Return immediately so we don't
+	// perform any other side effects of the faulting instruction.
+	if (!translateAddress(thread, virtualAddress, &physicalAddress, true))
+		return;
+	
+	isDeviceAccess = (physicalAddress & 0xffff0000) == 0xffff0000;
+	if (isDeviceAccess && op != MEM_LONG)
 	{
 		// This is not an actual CPU fault, but a debugging aid in the emulator.
-		printf("%s Access Violation %08x, pc %08x\n", isLoad ? "Load" : "Store",
-			address, thread->currentPc - 4);
+		printf("%s Invalid device access %08x, pc %08x\n", isLoad ? "Load" : "Store",
+			virtualAddress, thread->currentPc - 4);
 		printThreadRegisters(thread);
 		thread->core->crashed = true;
 		return;
 	}
 
-	// Check for address alignment
-	switch (op) 
-	{
-		// Short
-		case MEM_SHORT:
-		case MEM_SHORT_EXT:
-			if ((address & 1) != 0)
-			{
-				memoryAccessFault(thread, address, isLoad, FR_INVALID_ACCESS);
-				return;
-			}
-			break;
-
-		// Word
-		case MEM_LONG:
-		case MEM_SYNC:
-			if ((address & 3) != 0)
-			{
-				memoryAccessFault(thread, address, isLoad, FR_INVALID_ACCESS);
-				return;
-			}
-			break;
-
-		default:
-			break;
-	}
-
 	if (isLoad)
 	{
-		if (op == MEM_LONG)
+		switch (op)
 		{
-			// This has special logic to handle memory mapped IO 
-			// registers.
-			value = readMemoryWord(thread, address);
-		}
-		else
-		{
-			if (!getMemoryPointer(thread, address, &memPtr, true))
+			case MEM_LONG:
+				if (isDeviceAccess)
+					value = readDeviceRegister(physicalAddress & 0xffff);
+				else
+					value = (uint32_t) *UINT32_PTR(thread->core->memory, physicalAddress);
+
+				break;
+			
+			case MEM_BYTE: 
+				value = (uint32_t) *UINT8_PTR(thread->core->memory, physicalAddress);
+				break;
+			
+			case MEM_BYTE_SEXT: 	
+				value = (uint32_t)(int32_t) *INT8_PTR(thread->core->memory, physicalAddress);
+				break;
+			
+			case MEM_SHORT: 
+				value = (uint32_t) *UINT16_PTR(thread->core->memory, physicalAddress);
+				break;
+
+			case MEM_SHORT_EXT: 
+				value = (uint32_t)(int32_t) *INT16_PTR(thread->core->memory, physicalAddress);
+				break;
+
+			case MEM_SYNC:
+				value = *UINT32_PTR(thread->core->memory, physicalAddress);
+				thread->linkedAddress = physicalAddress / CACHE_LINE_LENGTH;
+				break;
+			
+			case MEM_CONTROL_REG:
+				assert(0);	// Should have been handled in caller
+			
+			default:
+				illegalInstruction(thread, instruction);
 				return;
-
-			switch (op)
-			{
-				case MEM_BYTE: 
-					value = (uint32_t) *((uint8_t*) memPtr); 
-					break;
-				
-				case MEM_BYTE_SEXT: 	
-					value = (uint32_t) *((int8_t*) memPtr); 
-					break;
-				
-				case MEM_SHORT: 
-					value = (uint32_t) *((uint16_t*) memPtr); 
-					break;
-
-				case MEM_SHORT_EXT: 
-					value = (uint32_t) *((int16_t*) memPtr); 
-					break;
-
-				case MEM_SYNC:
-					value = *((uint32_t*) memPtr); 
-					thread->linkedAddress = address / CACHE_LINE_LENGTH;
-					break;
-				
-				case MEM_CONTROL_REG:
-					value = 0;
-					break;
-				
-				default:
-					illegalInstruction(thread, instruction);
-					return;
-			}
 		}
 
 		setScalarReg(thread, destsrcreg, value);			
@@ -1177,40 +1037,93 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instruction)
 		// Store
 		// Shift and mask in the value.
 		uint32_t valueToStore = getThreadScalarReg(thread, destsrcreg);
+		
+		// Some instruction don't update memory, for example: a synchronized store
+		// that fails or writes to device memory. This tracks whether they
+		// did for the cosimulation code below.
+		bool didWrite = false;
 		switch (op)
 		{
 			case MEM_BYTE:
 			case MEM_BYTE_SEXT:
-				writeMemByte(thread, address, valueToStore);
+				*UINT8_PTR(thread->core->memory, physicalAddress) = (uint8_t) valueToStore;
+				didWrite = true;
 				break;
 				
 			case MEM_SHORT:
 			case MEM_SHORT_EXT:
-				writeMemShort(thread, address, valueToStore);
+				*UINT16_PTR(thread->core->memory, physicalAddress) = (uint16_t) valueToStore;
+				didWrite = true;
 				break;
 				
 			case MEM_LONG:
-				writeMemWord(thread, address, valueToStore);
+				if ((physicalAddress & 0xffff0000) == 0xffff0000)
+				{
+					// IO address range
+					if (physicalAddress == 0xffff0060)
+					{
+						// Thread resume
+						thread->core->threadEnableMask |= valueToStore
+							& ((1ull << thread->core->totalThreads) - 1);
+					}
+					else if (physicalAddress == 0xffff0064)
+					{
+						// Thread halt
+						thread->core->threadEnableMask &= ~valueToStore;
+					}
+					else
+						writeDeviceRegister(physicalAddress & 0xffff, valueToStore);
+
+					// Bail to avoid logging and other side effects below.
+					return;
+				}
+
+				*UINT32_PTR(thread->core->memory, physicalAddress) = valueToStore;
+				didWrite = true;
 				break;
 
 			case MEM_SYNC:
-				if (address / CACHE_LINE_LENGTH == thread->linkedAddress)
+				if (physicalAddress / CACHE_LINE_LENGTH == thread->linkedAddress)
 				{
 					// Success
-					thread->scalarReg[destsrcreg] = 1;	// HACK: cosim assumes one side effect per inst.
-					writeMemWord(thread, address, valueToStore);
+
+					// HACK: cosim can only track one side effect per instruction, but sync
+					// store has two: setting the register to indicate success and updating 
+					// memory. We chose to only log the memory transaction. Instead of 
+					// calling setScalarReg (which would log the register transfer as 
+					// a side effect), set the value manually here.
+					thread->scalarReg[destsrcreg] = 1;	
+					
+					*UINT32_PTR(thread->core->memory, physicalAddress) = valueToStore;
+					didWrite = true;
 				}
 				else
-					thread->scalarReg[destsrcreg] = 0;	// Fail. Same as above.
+					thread->scalarReg[destsrcreg] = 0;	// Fail. Set register manually as above.
 				
 				break;
 				
 			case MEM_CONTROL_REG:
-				break;
+				assert(0);	// Should have been handled in caller
 				
 			default:
 				illegalInstruction(thread, instruction);
 				return;
+		}
+
+		if (didWrite)
+		{
+			invalidateSyncAddress(thread->core, physicalAddress);
+			if (thread->core->enableTracing)
+			{
+				printf("%08x [th %d] memory store size %d %08x %02x\n", thread->currentPc - 4, 
+					thread->id, accessSize, virtualAddress, valueToStore);
+			}
+
+			if (thread->core->cosimEnable)
+			{
+				cosimWriteMemory(thread->core, thread->currentPc - 4, virtualAddress, accessSize, 
+					valueToStore);
+			}
 		}
 	}
 }
@@ -1225,8 +1138,8 @@ static void executeVectorLoadStoreInst(Thread *thread, uint32_t instruction)
 	uint32_t offset;
 	uint32_t lane;
 	uint32_t mask;
-	uint32_t address;
-	uint32_t result[NUM_VECTOR_LANES];
+	uint32_t virtualAddress;
+	uint32_t physicalAddress;
 
 	TALLY_INSTRUCTION(vector_inst);
 
@@ -1256,28 +1169,63 @@ static void executeVectorLoadStoreInst(Thread *thread, uint32_t instruction)
 		case MEM_BLOCK_VECTOR:
 		case MEM_BLOCK_VECTOR_MASK:
 		{
+			uint32_t *blockPtr;
+
 			// Block vector access. Executes in a single cycle
-			address = getThreadScalarReg(thread, ptrreg) + offset;
-			if ((address & (NUM_VECTOR_LANES * 4 - 1)) != 0)
+			virtualAddress = getThreadScalarReg(thread, ptrreg) + offset;
+			
+			// Check alignment
+			if ((virtualAddress & (NUM_VECTOR_LANES * 4 - 1)) != 0)
 			{
-				memoryAccessFault(thread, address, isLoad, FR_INVALID_ACCESS);
+				memoryAccessFault(thread, virtualAddress, isLoad, FR_INVALID_ACCESS);
 				return;
 			}
 
+			if (!translateAddress(thread, virtualAddress, &physicalAddress, true))
+				return;
+
+			blockPtr = UINT32_PTR(thread->core->memory, physicalAddress);
 			if (isLoad)
 			{
+				uint32_t loadValue[NUM_VECTOR_LANES];
 				for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-					result[lane] = readMemoryWord(thread, address + (NUM_VECTOR_LANES - 1 - lane) * 4);
+				{
+					loadValue[lane] = UINT32_PTR(thread->core->memory, physicalAddress)[
+						NUM_VECTOR_LANES - lane - 1];
+				}
 
-				setVectorReg(thread, destsrcreg, mask, result);
+				setVectorReg(thread, destsrcreg, mask, loadValue);
 			}
 			else
-				writeMemBlock(thread, address, mask, thread->vectorReg[destsrcreg]);
+			{
+				uint32_t *storeValue = thread->vectorReg[destsrcreg];
+				
+				if ((mask & 0xffff) == 0)
+					return;	// Hardware ignores block stores with a mask of zero
+
+				if (thread->core->enableTracing)
+				{
+					printf("%08x [th %d] writeMemBlock %08x\n", thread->currentPc - 4, thread->id,
+						virtualAddress);
+				}
+
+				if (thread->core->cosimEnable)
+					cosimWriteBlock(thread->core, thread->currentPc - 4, virtualAddress, mask, storeValue);
+
+				for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
+				{
+					uint32_t regIndex = NUM_VECTOR_LANES - lane - 1;
+					if (mask & (1 << regIndex))
+						blockPtr[lane] = storeValue[regIndex];
+				}
+
+				invalidateSyncAddress(thread->core, physicalAddress);
+			}
 		}
 		break;
 
 		default:
-			// Multi-cycle vector access.
+			// Multi-cycle scatter/gather access.
 			if (!thread->multiCycleTransferActive)
 			{
 				thread->multiCycleTransferActive = true;
@@ -1287,28 +1235,40 @@ static void executeVectorLoadStoreInst(Thread *thread, uint32_t instruction)
 			{
 				thread->multiCycleTransferLane -= 1;
 				if (thread->multiCycleTransferLane == 0)
-					thread->multiCycleTransferActive = 0;
+					thread->multiCycleTransferActive = false;
 			}
 
 			lane = thread->multiCycleTransferLane;
-			address = thread->vectorReg[ptrreg][lane] + offset;
-			if ((mask & (1 << lane)) && (address & 3) != 0)
+			virtualAddress = thread->vectorReg[ptrreg][lane] + offset;
+			if ((mask & (1 << lane)) && (virtualAddress & 3) != 0)
 			{
-				memoryAccessFault(thread, address, isLoad, FR_INVALID_ACCESS);
+				memoryAccessFault(thread, virtualAddress, isLoad, FR_INVALID_ACCESS);
 				return;
 			}
+			
+			if (!translateAddress(thread, virtualAddress, &physicalAddress, true)) 
+				return;
 
 			if (isLoad)
 			{
-				uint32_t values[NUM_VECTOR_LANES];
-				memset(values, 0, NUM_VECTOR_LANES * sizeof(uint32_t));
+				uint32_t loadValue[NUM_VECTOR_LANES];
+				memset(loadValue, 0, NUM_VECTOR_LANES * sizeof(uint32_t));
 				if (mask & (1 << lane))
-					values[lane] = readMemoryWord(thread, address);
+					loadValue[lane] = *UINT32_PTR(thread->core->memory, physicalAddress);
 
-				setVectorReg(thread, destsrcreg, mask & (1 << lane), values);
+				setVectorReg(thread, destsrcreg, mask & (1 << lane), loadValue);
 			}
 			else if (mask & (1 << lane))
-				writeMemWord(thread, address, thread->vectorReg[destsrcreg][lane]);
+			{
+				*UINT32_PTR(thread->core->memory, physicalAddress) 
+					= thread->vectorReg[destsrcreg][lane];
+				invalidateSyncAddress(thread->core, physicalAddress);
+				if (thread->core->cosimEnable)
+				{
+					cosimWriteMemory(thread->core, thread->currentPc - 4, virtualAddress, 4, 
+						thread->vectorReg[destsrcreg][lane]);
+				}
+			}
 
 			break;
 	}
@@ -1382,6 +1342,10 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 		{
 			case CR_FAULT_HANDLER:
 				thread->core->faultHandlerPc = value;
+				break;
+
+			case CR_FAULT_PC:
+				thread->lastFaultPc = value;
 				break;
 				
 			case CR_FLAGS:
@@ -1536,18 +1500,19 @@ static void executeCacheControlInst(Thread *thread, uint32_t instruction)
 static int executeInstruction(Thread *thread)
 {
 	uint32_t instruction;
-	void *memPtr;
+	uint32_t physicalPc;
 	
+	// Check PC alignment
 	if ((thread->currentPc & 3) != 0)
 	{
 		memoryAccessFault(thread, thread->currentPc, true, FR_IFETCH_FAULT);
 		return 1;
 	}
 
-	if (!getMemoryPointer(thread, thread->currentPc, &memPtr, false))
+	if (!translateAddress(thread, thread->currentPc, &physicalPc, false))
 		return 1;	// On next execution will start in TLB miss handler
 
-	instruction = *((uint32_t*) memPtr);
+	instruction = *UINT32_PTR(thread->core->memory, physicalPc);
 	thread->currentPc += 4;
 	thread->core->totalInstructions++;
 

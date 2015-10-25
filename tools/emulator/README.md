@@ -76,6 +76,7 @@ Other notes:
   execution point. 
 - Debugger only currently works with four threads enabled. There are a few hardcoded assumptions
   of four threads in remote-gdb.c.
+- The debugger does not work with virtual memory enabled.
 
 ### Tracing
 

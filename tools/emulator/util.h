@@ -22,6 +22,12 @@
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
+#define INT8_PTR(memory, address) ((int8_t*)(memory) + (address))
+#define UINT8_PTR(memory, address) ((uint8_t*)(memory) + (address))
+#define INT16_PTR(memory, address) ((int16_t*)(memory) + (address) / 2)
+#define UINT16_PTR(memory, address) ((uint16_t*)(memory) + (address) / 2)
+#define UINT32_PTR(memory, address) ((uint32_t*)(memory) + (address) / 4)
+
 int parseHexVector(const char *str, uint32_t *vectorValues, bool endianSwap);
 
 static inline uint32_t endianSwap32(uint32_t value)
