@@ -36,7 +36,7 @@ typedef logic[4:0] register_idx_t;
 typedef logic[$clog2(`VECTOR_LANES) - 1:0] subcycle_t;
 typedef logic[`VECTOR_LANES - 1:0] vector_lane_mask_t;
 
-`define NOP 32'd0
+`define INSTRUCTION_NOP 32'd0
 `define REG_RA (register_idx_t'(30))
 `define REG_PC (register_idx_t'(31))
 

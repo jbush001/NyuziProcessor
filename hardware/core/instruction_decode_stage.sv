@@ -191,7 +191,7 @@ module instruction_decode_stage(
 	assign is_fmt_i = ifd_instruction[31] == 1'b0;	// immediate arithmetic
 	assign is_getlane = (is_fmt_r || is_fmt_i) && alu_op == OP_GETLANE;
 	
-	assign is_nop = ifd_instruction == 0;
+	assign is_nop = ifd_instruction == `INSTRUCTION_NOP;
 	assign is_legal_instruction = !dlut_out.illegal && !ifd_ifetch_fault && !ifd_tlb_miss;
 	
 	assign decoded_instr_nxt.illegal = dlut_out.illegal;
