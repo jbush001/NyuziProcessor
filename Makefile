@@ -27,7 +27,7 @@ ifneq ($(JAVAC),)
 	cd tools/visualizer && make
 endif
 	
-test:
+test: all
 	cd tests/ && make test
 		
 clean:
