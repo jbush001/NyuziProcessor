@@ -100,7 +100,6 @@ module dcache_tag_stage
 		&& (!wb_rollback_en || wb_rollback_thread_idx != of_thread_idx) 
 		&& of_instruction.pipeline_sel == PIPE_MEM;
 	assign cache_load_en = instruction_valid 
-		&& request_addr_nxt !=? 32'hffff????    // Not I/O address
 		&& of_instruction.memory_access_type != MEM_CONTROL_REG
 		&& of_instruction.is_memory_access      // Not cache control
 		&& of_instruction.is_load;
