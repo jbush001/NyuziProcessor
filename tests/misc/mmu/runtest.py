@@ -62,7 +62,7 @@ def test_fill_verilator(name):
 	if result.find('FAIL') != -1 or result.find('PASS') == -1:
 		raise test_harness.TestException(result + '\ntest did not signal pass')
 	
-	# XXX check number of DTLB misses to ensure it is above/below a threshold
+	# XXX check number of DTLB misses to ensure it is above/below thresholds
 	
 def test_fill_emulator(name):
 	test_harness.compile_test(['fill_test.c', 'tlb_miss_handler2.s'])
@@ -70,11 +70,42 @@ def test_fill_emulator(name):
 	if result.find('FAIL') != -1 or result.find('PASS') == -1:
 		raise test_harness.TestException(result + '\ntest did not signal pass')
 
+def test_io_map_verilator(name):
+	test_harness.compile_test(['io_map.c'])
+	result = test_harness.run_verilator(dump_file=DUMP_FILE, dump_base=0x100000,
+		dump_length=32)
+	
+	# Check value printed via virtual serial port
+	if result.find('jabberwocky') == -1:
+		raise test_harness.TestException('did not get correct read string:\n' + result)
+
+	# Check value written to memory
+	with open(DUMP_FILE, 'r') as f:
+		if f.read(len('galumphing')) != 'galumphing':
+			raise test_harness.TestException('memory contents did not match')
+	
+def test_io_map_emulator(name):
+	test_harness.compile_test(['io_map.c'])
+	result = test_harness.run_emulator(dump_file=DUMP_FILE, dump_base=0x100000,
+		dump_length=32)
+	
+	# Check value printed via virtual serial port
+	if result.find('jabberwocky') == -1:
+		raise test_harness.TestException('did not get correct read string:\n' + result)
+
+	# Check value written to memory
+	with open(DUMP_FILE, 'r') as f:
+		if f.read(len('galumphing')) != 'galumphing':
+			raise test_harness.TestException('memory contents did not match')
+
+
 test_harness.register_tests(test_tlb_miss_verilator, ['tlb_miss (verilator)'])
 test_harness.register_tests(test_tlb_miss_emulator, ['tlb_miss (emulator)'])
 test_harness.register_tests(test_tlb_invalidate_verilator, ['tlb_invalidate (verilator)'])
 test_harness.register_tests(test_tlb_invalidate_emulator, ['tlb_invalidate (emulator)'])
 test_harness.register_tests(test_fill_verilator, ['fill (verilator)'])
 test_harness.register_tests(test_fill_emulator, ['fill (emulator)'])
+test_harness.register_tests(test_io_map_verilator, ['io_map (verilator)'])
+test_harness.register_tests(test_io_map_emulator, ['io_map (emulator)'])
 
 test_harness.execute_tests()
