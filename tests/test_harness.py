@@ -18,6 +18,7 @@ import subprocess
 import os
 import sys
 import re
+import traceback
 
 COMPILER_DIR = '/usr/local/llvm-nyuzi/bin/'
 BASE_DIR = os.path.normpath(os.path.dirname(os.path.abspath(__file__)) + '/../')
@@ -199,7 +200,7 @@ def execute_tests():
 			failing_tests += [(param, exc.output)]
 		except Exception as exc:
 			print '[\x1b[31mFAIL\x1b[0m]'
-			failing_tests += [(param, 'Caught exception ' + str(exc))]
+			failing_tests += [(param, 'Caught exception ' + traceback.format_exc())]
 
 	if failing_tests:
 		print 'Failing tests:'
