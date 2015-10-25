@@ -332,12 +332,12 @@ module thread_select_stage(
 		end
 	endgenerate
 	
-	// At the writeback stage, pipelines of different lengths merge. This causes a structural
-	// hazard, because two instructions issued in different cycles can arrive in the same cycle.
-	// We manage this by never scheduling instructions that can conflict. Track instruction 
-	// arrival here for that purpose (instructions may have other side effects than 
-	// updating registers, so we set the bit even if the instruction doesn't have a 
-	// writeback register)
+	// At the writeback stage, pipelines of different lengths merge. This results
+	// in a structural hazard where two instructions issued in different cycles 
+	// could arrive during the same cycle. This stage avoids that by not scheduling
+	// instructions that would conflict. It tracks instruction issue. This tracks
+	// instructions even if they don't write back to a register, since they may 
+	// have other side effects.
 	always_comb
 	begin
 		writeback_allocate_nxt = {1'b0, writeback_allocate[WRITEBACK_ALLOC_STAGES - 1:1] };
@@ -414,10 +414,12 @@ module thread_select_stage(
 			ts_thread_idx <= issue_thread_idx;
 			ts_subcycle <= current_subcycle[issue_thread_idx];
 
-			// The suspend signal is asserted a cycle after a dcache miss occurs. It is possible
-			// that that miss collides with a miss that was already pending, and in the next cycle,
-			// that miss is fulfilled. In this case, suspend and wake will be asserted simultaneously 
-			// and wake will win (because of the order of this expression)
+			// The writeback stage asserts the suspend signal a cycle after a dcache
+			// miss occurs. It is possible a cache miss is already pending for that 
+			// address, and that it gets filled in the next cycle. In this case, 
+			// suspend and wake will be asserted simultaneously. Wake will win 
+			// because of the order of this expression. This is intended, since
+			// cache data is now available and the thread won't be rolled back.
 			thread_blocked <= (thread_blocked | wb_suspend_thread_oh) & ~(l2i_dcache_wake_bitmap
 				| ior_wake_bitmap);
 

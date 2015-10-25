@@ -20,8 +20,10 @@
 // Instruction Pipeline - Instruction Fetch Tag Stage
 // - Selects a program counter from one of the threads to fetch from the
 //   instruction cache.
-// - Queries instruction cache tag memory to determine if the cache line is 
+// - Reads instruction cache tag memory to determine if the cache line is 
 //   resident.
+// - Reads translation lookaside buffer to translate from virtual to physical
+//   address.
 //
 
 module ifetch_tag_stage

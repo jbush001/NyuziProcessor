@@ -53,9 +53,10 @@ module tlb
 	page_index_t way_ppage_idx[NUM_WAYS];
 	page_index_t lookup_vpage_idx_latched;
 
-	// We do not need to bypass TLB values that are set in the same cycle
-	// like in the L1 caches. These are updated by software, which is 
-	// already responsible for handling collisions.
+	// This does not need to bypass TLB values that are read and written
+	// in the same cycle like the L1 caches. These are updated 
+	// by software, which already needs to handle collisions for other
+	// reasons.
 	genvar way;
 	generate
 		for (way = 0; way < NUM_WAYS; way++)

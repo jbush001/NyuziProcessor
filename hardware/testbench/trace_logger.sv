@@ -17,11 +17,15 @@
 `include "defines.sv"
 
 //
-// This prints a textual log of register updates and memory writes to the 
-// console. It is used primarily to verify the design in cosimulation.
-// Instructions don't retire in the order they are issued. This makes it 
-// hard to correlate with the emulator. To remedy this, we reorder completed 
-// instructions so the events are logged the order they are issued.
+// This prints register updates and memory writes to the console. The emulator
+// uses this information to verify the hardware is working correctly in
+// cosimulation.
+// 
+// This captures instructions as the pipeline retires them. This is necessary 
+// to get the results of arithmetic operations. The problem is that the
+// pipeline doesn't always retire instructions in program order like the
+// emulator. To be able to compare the results , this uses a queue to reorder
+// instructions and logs them in issue order.
 //
 
 module trace_logger(

@@ -18,7 +18,8 @@
 
 //
 // Instruction pipeline L1 data cache data stage.
-// - Detects cache miss or hit based on tag information fetched from last stage. 
+// - Detects cache miss or hit based on tag information fetched from last 
+//   stage. 
 // - Reads from cache data storage.
 // - Drives signals to previous stage to update LRU
 // 

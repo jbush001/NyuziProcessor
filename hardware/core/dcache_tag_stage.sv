@@ -23,7 +23,10 @@
 // will handle the result. The L1 data cache is set associative. There is a 
 // separate block of tag ram for each way, which this reads in parallel. The 
 // next stage will check them to see if there is a cache hit on one of the 
-// ways.
+// ways. This also contains the translation lookaside buffer, which will 
+// convert the virtual memory address to a physical one. The cache is 
+// virtually indexed and physically tagged: the tag memories contain physical
+// addresses, translated by the TLB.
 //
 
 module dcache_tag_stage
