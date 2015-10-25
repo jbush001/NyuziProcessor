@@ -22,27 +22,27 @@
 // mapped into different regions of a common address space.
 //
 
-module axi_interconnect(
-	input					clk,
-	input					reset,
+module axi_interconnect
+	#(parameter M1_BASE_ADDRESS = 0)
 
-	// Master Interface 0 (address 0x00000000 - 0xfffedfff)
+	(input					 clk,
+	input					 reset,
+
+	// Master Interface 0 (address 0x00000000 - M1_BASE_ADDRESS)
 	// (This interface acts as a master and controls an externally
 	// connected slave)
 	axi4_interface.master    axi_bus_m0,
 
-	// Master Interface 1 (address 0xfffee000 - 0xfffeffff) 
-	axi4_interface.master   axi_bus_m1,
+	// Master Interface 1 (address M1_BASE_ADDRESS - 0xfffeffff) 
+	axi4_interface.master    axi_bus_m1,
 
 	// Slave Interface 0 (CPU/L2 cache)
 	// This interface acts as a slave and is controlled by an externally
 	// connected master
-	axi4_interface.slave    axi_bus_s0,
+	axi4_interface.slave     axi_bus_s0,
 
 	// Slave Interface 1 (Display Controller, read only)
-	axi4_interface.slave    axi_bus_s1);
-
-	localparam M1_BASE_ADDRESS = 32'hfffee000;
+	axi4_interface.slave     axi_bus_s1);
 
 	typedef enum {
 		STATE_ARBITRATE,

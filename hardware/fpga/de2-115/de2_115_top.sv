@@ -65,6 +65,8 @@ module de2_115_top(
 	inout                       ps2_clk,
 	inout                       ps2_data);
 
+	localparam BOOT_ROM_BASE = 32'hfffee000;
+
 	// We always access the full word width, so hard code these to active (low)
 	assign dram_dqm = 4'b0000;
 
@@ -101,7 +103,7 @@ module de2_115_top(
 		.axi_bus(axi_bus_s0[]),
 		);
 	*/
-	nyuzi #(.RESET_PC(32'hfffee000)) nyuzi(
+	nyuzi #(.RESET_PC(BOOT_ROM_BASE)) nyuzi(
 			.interrupt_req(0),
 		/*AUTOINST*/
 					       // Interfaces
@@ -117,7 +119,7 @@ module de2_115_top(
 					       .reset		(reset),
 					       .io_read_data	(io_read_data));
 	
-	axi_interconnect axi_interconnect(
+	axi_interconnect #(.M1_BASE_ADDRESS(BOOT_RAM_BASE)) axi_interconnect(
 		/*AUTOINST*/
 					  // Interfaces
 					  .axi_bus_m0		(axi_bus_m0.master),
