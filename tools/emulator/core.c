@@ -131,7 +131,8 @@ static struct Breakpoint *lookupBreakpoint(Core*, uint32_t pc);
 static void executeRegisterArithInst(Thread*, uint32_t instruction);
 static void executeImmediateArithInst(Thread*, uint32_t instruction);
 static void executeScalarLoadStoreInst(Thread*, uint32_t instruction);
-static void executeVectorLoadStoreInst(Thread*, uint32_t instruction);
+static void executeBlockLoadStoreInst(Thread*, uint32_t instruction);
+static void executeScatterGatherInst(Thread*, uint32_t instruction);
 static void executeControlRegisterInst(Thread*, uint32_t instruction);
 static void executeMemoryAccessInst(Thread*, uint32_t instruction);
 static void executeBranchInst(Thread*, uint32_t instruction);
@@ -1128,7 +1129,90 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instruction)
 	}
 }
 
-static void executeVectorLoadStoreInst(Thread *thread, uint32_t instruction)
+static void executeBlockLoadStoreInst(Thread *thread, uint32_t instruction)
+{
+	uint32_t op = extractUnsignedBits(instruction, 25, 4);
+	uint32_t ptrreg = extractUnsignedBits(instruction, 0, 5);
+	uint32_t maskreg = extractUnsignedBits(instruction, 10, 5);
+	uint32_t destsrcreg = extractUnsignedBits(instruction, 5, 5);
+	bool isLoad = extractUnsignedBits(instruction, 29, 1);
+	uint32_t offset;
+	uint32_t lane;
+	uint32_t mask;
+	uint32_t virtualAddress;
+	uint32_t physicalAddress;
+	uint32_t *blockPtr;
+
+	TALLY_INSTRUCTION(vector_inst);
+
+	// Compute mask value
+	switch (op)
+	{
+		case MEM_BLOCK_VECTOR:
+			mask = 0xffff;
+			offset = extractSignedBits(instruction, 10, 15);
+			break;
+
+		case MEM_BLOCK_VECTOR_MASK:
+			mask = getThreadScalarReg(thread, maskreg);
+			offset = extractSignedBits(instruction, 15, 10);
+			break;
+
+		default:
+			assert(0);
+	}
+
+	virtualAddress = getThreadScalarReg(thread, ptrreg) + offset;
+	
+	// Check alignment
+	if ((virtualAddress & (NUM_VECTOR_LANES * 4 - 1)) != 0)
+	{
+		memoryAccessFault(thread, virtualAddress, isLoad, FR_INVALID_ACCESS);
+		return;
+	}
+
+	if (!translateAddress(thread, virtualAddress, &physicalAddress, true))
+		return;
+
+	blockPtr = UINT32_PTR(thread->core->memory, physicalAddress);
+	if (isLoad)
+	{
+		uint32_t loadValue[NUM_VECTOR_LANES];
+		for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
+		{
+			loadValue[lane] = blockPtr[NUM_VECTOR_LANES - lane - 1];
+		}
+
+		setVectorReg(thread, destsrcreg, mask, loadValue);
+	}
+	else
+	{
+		uint32_t *storeValue = thread->vectorReg[destsrcreg];
+
+		if ((mask & 0xffff) == 0)
+			return;	// Hardware ignores block stores with a mask of zero
+
+		if (thread->core->enableTracing)
+		{
+			printf("%08x [th %d] writeMemBlock %08x\n", thread->currentPc - 4, thread->id,
+				virtualAddress);
+		}
+
+		if (thread->core->cosimEnable)
+			cosimWriteBlock(thread->core, thread->currentPc - 4, virtualAddress, mask, storeValue);
+
+		for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
+		{
+			uint32_t regIndex = NUM_VECTOR_LANES - lane - 1;
+			if (mask & (1 << regIndex))
+				blockPtr[lane] = storeValue[regIndex];
+		}
+
+		invalidateSyncAddress(thread->core, physicalAddress);
+	}
+}
+
+static void executeScatterGatherInst(Thread *thread, uint32_t instruction)
 {
 	uint32_t op = extractUnsignedBits(instruction, 25, 4);
 	uint32_t ptrreg = extractUnsignedBits(instruction, 0, 5);
@@ -1146,131 +1230,62 @@ static void executeVectorLoadStoreInst(Thread *thread, uint32_t instruction)
 	// Compute mask value
 	switch (op)
 	{
-		case MEM_BLOCK_VECTOR:
 		case MEM_SCGATH:
 			mask = 0xffff;
 			offset = extractSignedBits(instruction, 10, 15);	// Not masked
 			break;
 
-		case MEM_BLOCK_VECTOR_MASK:
 		case MEM_SCGATH_MASK:
 			mask = getThreadScalarReg(thread, maskreg);
 			offset = extractSignedBits(instruction, 15, 10);  // masked
 			break;
-
+			
 		default:
-			illegalInstruction(thread, instruction);
-			return;
+			assert(0);
 	}
 
-	// Perform transfer
-	switch (op)
+	if (!thread->multiCycleTransferActive)
 	{
-		case MEM_BLOCK_VECTOR:
-		case MEM_BLOCK_VECTOR_MASK:
+		thread->multiCycleTransferActive = true;
+		thread->multiCycleTransferLane = NUM_VECTOR_LANES - 1;
+	}
+	else
+	{
+		thread->multiCycleTransferLane -= 1;
+		if (thread->multiCycleTransferLane == 0)
+			thread->multiCycleTransferActive = false;
+	}
+
+	lane = thread->multiCycleTransferLane;
+	virtualAddress = thread->vectorReg[ptrreg][lane] + offset;
+	if ((mask & (1 << lane)) && (virtualAddress & 3) != 0)
+	{
+		memoryAccessFault(thread, virtualAddress, isLoad, FR_INVALID_ACCESS);
+		return;
+	}
+
+	if (!translateAddress(thread, virtualAddress, &physicalAddress, true)) 
+		return;
+
+	if (isLoad)
+	{
+		uint32_t loadValue[NUM_VECTOR_LANES];
+		memset(loadValue, 0, NUM_VECTOR_LANES * sizeof(uint32_t));
+		if (mask & (1 << lane))
+			loadValue[lane] = *UINT32_PTR(thread->core->memory, physicalAddress);
+
+		setVectorReg(thread, destsrcreg, mask & (1 << lane), loadValue);
+	}
+	else if (mask & (1 << lane))
+	{
+		*UINT32_PTR(thread->core->memory, physicalAddress) 
+			= thread->vectorReg[destsrcreg][lane];
+		invalidateSyncAddress(thread->core, physicalAddress);
+		if (thread->core->cosimEnable)
 		{
-			uint32_t *blockPtr;
-
-			// Block vector access. Executes in a single cycle
-			virtualAddress = getThreadScalarReg(thread, ptrreg) + offset;
-			
-			// Check alignment
-			if ((virtualAddress & (NUM_VECTOR_LANES * 4 - 1)) != 0)
-			{
-				memoryAccessFault(thread, virtualAddress, isLoad, FR_INVALID_ACCESS);
-				return;
-			}
-
-			if (!translateAddress(thread, virtualAddress, &physicalAddress, true))
-				return;
-
-			blockPtr = UINT32_PTR(thread->core->memory, physicalAddress);
-			if (isLoad)
-			{
-				uint32_t loadValue[NUM_VECTOR_LANES];
-				for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-				{
-					loadValue[lane] = UINT32_PTR(thread->core->memory, physicalAddress)[
-						NUM_VECTOR_LANES - lane - 1];
-				}
-
-				setVectorReg(thread, destsrcreg, mask, loadValue);
-			}
-			else
-			{
-				uint32_t *storeValue = thread->vectorReg[destsrcreg];
-				
-				if ((mask & 0xffff) == 0)
-					return;	// Hardware ignores block stores with a mask of zero
-
-				if (thread->core->enableTracing)
-				{
-					printf("%08x [th %d] writeMemBlock %08x\n", thread->currentPc - 4, thread->id,
-						virtualAddress);
-				}
-
-				if (thread->core->cosimEnable)
-					cosimWriteBlock(thread->core, thread->currentPc - 4, virtualAddress, mask, storeValue);
-
-				for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-				{
-					uint32_t regIndex = NUM_VECTOR_LANES - lane - 1;
-					if (mask & (1 << regIndex))
-						blockPtr[lane] = storeValue[regIndex];
-				}
-
-				invalidateSyncAddress(thread->core, physicalAddress);
-			}
+			cosimWriteMemory(thread->core, thread->currentPc - 4, virtualAddress, 4, 
+				thread->vectorReg[destsrcreg][lane]);
 		}
-		break;
-
-		default:
-			// Multi-cycle scatter/gather access.
-			if (!thread->multiCycleTransferActive)
-			{
-				thread->multiCycleTransferActive = true;
-				thread->multiCycleTransferLane = NUM_VECTOR_LANES - 1;
-			}
-			else
-			{
-				thread->multiCycleTransferLane -= 1;
-				if (thread->multiCycleTransferLane == 0)
-					thread->multiCycleTransferActive = false;
-			}
-
-			lane = thread->multiCycleTransferLane;
-			virtualAddress = thread->vectorReg[ptrreg][lane] + offset;
-			if ((mask & (1 << lane)) && (virtualAddress & 3) != 0)
-			{
-				memoryAccessFault(thread, virtualAddress, isLoad, FR_INVALID_ACCESS);
-				return;
-			}
-			
-			if (!translateAddress(thread, virtualAddress, &physicalAddress, true)) 
-				return;
-
-			if (isLoad)
-			{
-				uint32_t loadValue[NUM_VECTOR_LANES];
-				memset(loadValue, 0, NUM_VECTOR_LANES * sizeof(uint32_t));
-				if (mask & (1 << lane))
-					loadValue[lane] = *UINT32_PTR(thread->core->memory, physicalAddress);
-
-				setVectorReg(thread, destsrcreg, mask & (1 << lane), loadValue);
-			}
-			else if (mask & (1 << lane))
-			{
-				*UINT32_PTR(thread->core->memory, physicalAddress) 
-					= thread->vectorReg[destsrcreg][lane];
-				invalidateSyncAddress(thread->core, physicalAddress);
-				if (thread->core->cosimEnable)
-				{
-					cosimWriteMemory(thread->core, thread->currentPc - 4, virtualAddress, 4, 
-						thread->vectorReg[destsrcreg][lane]);
-				}
-			}
-
-			break;
 	}
 
 	if (thread->multiCycleTransferActive)
@@ -1405,8 +1420,12 @@ static void executeMemoryAccessInst(Thread *thread, uint32_t instruction)
 		executeControlRegisterInst(thread, instruction);	
 	else if (type < MEM_CONTROL_REG)
 		executeScalarLoadStoreInst(thread, instruction);
+	else if (type == MEM_BLOCK_VECTOR || type == MEM_BLOCK_VECTOR_MASK)
+		executeBlockLoadStoreInst(thread, instruction);
+	else if (type == MEM_SCGATH || type == MEM_SCGATH_MASK)
+		executeScatterGatherInst(thread, instruction);
 	else
-		executeVectorLoadStoreInst(thread, instruction);
+		illegalInstruction(thread, instruction);
 }
 
 static void executeBranchInst(Thread *thread, uint32_t instruction)
