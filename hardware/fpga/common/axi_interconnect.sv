@@ -23,7 +23,7 @@
 //
 
 module axi_interconnect
-	#(parameter M1_BASE_ADDRESS = 0)
+	#(parameter M1_BASE_ADDRESS = 32'hffffeee0)
 
 	(input					 clk,
 	input					 reset,
