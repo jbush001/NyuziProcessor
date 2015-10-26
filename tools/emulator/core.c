@@ -1416,16 +1416,34 @@ static void executeMemoryAccessInst(Thread *thread, uint32_t instruction)
 			TALLY_INSTRUCTION(store_inst);
 	}
 
-	if (type == MEM_CONTROL_REG)
-		executeControlRegisterInst(thread, instruction);	
-	else if (type < MEM_CONTROL_REG)
-		executeScalarLoadStoreInst(thread, instruction);
-	else if (type == MEM_BLOCK_VECTOR || type == MEM_BLOCK_VECTOR_MASK)
-		executeBlockLoadStoreInst(thread, instruction);
-	else if (type == MEM_SCGATH || type == MEM_SCGATH_MASK)
-		executeScatterGatherInst(thread, instruction);
-	else
-		illegalInstruction(thread, instruction);
+	switch (type)
+	{
+		case MEM_BYTE:
+		case MEM_BYTE_SEXT:
+		case MEM_SHORT:
+		case MEM_SHORT_EXT:
+		case MEM_LONG:
+		case MEM_SYNC:
+			executeScalarLoadStoreInst(thread, instruction);
+			break;
+
+		case MEM_CONTROL_REG:
+			executeControlRegisterInst(thread, instruction);
+			break;
+			
+		case MEM_BLOCK_VECTOR:
+		case MEM_BLOCK_VECTOR_MASK:
+			executeBlockLoadStoreInst(thread, instruction);
+			break;
+			
+		case MEM_SCGATH:
+		case MEM_SCGATH_MASK:
+			executeScatterGatherInst(thread, instruction);
+			break;
+			
+		default:
+			illegalInstruction(thread, instruction);
+	}
 }
 
 static void executeBranchInst(Thread *thread, uint32_t instruction)
