@@ -582,7 +582,7 @@ static bool translateAddress(Thread *thread, uint32_t virtualAddress, uint32_t *
 		{
 			// This isn't an actual fault supported by the hardware, but a debugging
 			// aid only available in the emulator.
-			printf("Access Violation %08x, pc %08x\n", virtualAddress, thread->currentPc - 4);
+			printf("Memory access out of range %08x, pc %08x\n", virtualAddress, thread->currentPc - 4);
 			printThreadRegisters(thread);
 			thread->core->crashed = true;
 			return false;
@@ -600,6 +600,17 @@ static bool translateAddress(Thread *thread, uint32_t virtualAddress, uint32_t *
 		{
 			*outPhysicalAddress = setEntries[way].physicalAddress
 				| (virtualAddress & ~PAGE_MASK);
+
+			if (*outPhysicalAddress >= thread->core->memorySize && *outPhysicalAddress < 0xffff0000)
+			{
+				// This isn't an actual fault supported by the hardware, but a debugging
+				// aid only available in the emulator.
+				printf("Memory access out of range %08x, pc %08x\n", virtualAddress, thread->currentPc - 4);
+				printThreadRegisters(thread);
+				thread->core->crashed = true;
+				return false;
+			}
+
 			return true;
 		}
 	}
