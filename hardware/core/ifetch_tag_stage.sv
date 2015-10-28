@@ -212,8 +212,7 @@ module ifetch_tag_stage
 `else
 	// If MMU is disabled, just identity map addresses
 	assign ift_tlb_hit = 1;
-	always_ff @(posedge clk)
-		ift_ppage_idx <= pc_to_fetch.tag.page_index;
+	assign ppage_idx = last_fetched_pc[31-:`PAGE_NUM_BITS];;
 `endif
 
 	cache_lru #(.NUM_WAYS(`L1D_WAYS), .NUM_SETS(`L1I_SETS)) cache_lru(

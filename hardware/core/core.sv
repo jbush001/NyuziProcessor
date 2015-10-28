@@ -53,6 +53,7 @@ module core
 	scalar_t cr_tlb_miss_handler;
 	page_index_t cr_tlb_update_ppage_idx;
 	page_index_t cr_tlb_update_vpage_idx;
+	subcycle_t cr_eret_subcycle[`THREADS_PER_CORE];
 
 	/*AUTOLOGIC*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -279,6 +280,7 @@ module core
 	scalar_t	wb_fault_access_vaddr;	// From writeback_stage of writeback_stage.v
 	scalar_t	wb_fault_pc;		// From writeback_stage of writeback_stage.v
 	fault_reason_t	wb_fault_reason;	// From writeback_stage of writeback_stage.v
+	subcycle_t	wb_fault_subcycle;	// From writeback_stage of writeback_stage.v
 	thread_idx_t	wb_fault_thread_idx;	// From writeback_stage of writeback_stage.v
 	logic		wb_interrupt_ack;	// From writeback_stage of writeback_stage.v
 	logic		wb_rollback_en;		// From writeback_stage of writeback_stage.v

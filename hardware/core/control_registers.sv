@@ -44,6 +44,7 @@ module control_registers
 	input scalar_t                          wb_fault_pc,
 	input scalar_t                          wb_fault_access_vaddr,
 	input thread_idx_t                      wb_fault_thread_idx,
+	input subcycle_t                        wb_fault_subcycle,
 	
 	// From dcache_data_stage 
 	// dd_XXX signals are unregistered. dt_thread_idx represents thread going into
@@ -53,10 +54,11 @@ module control_registers
 	input                                   dd_creg_read_en,
 	input control_register_t                dd_creg_index,
 	input scalar_t                          dd_creg_write_val,
-	
+
 	// To writeback_stage
 	output scalar_t                         cr_creg_read_val,
 	output thread_bitmap_t                  cr_interrupt_en,
+	output subcycle_t                       cr_eret_subcycle[`THREADS_PER_CORE],
 	output scalar_t                         cr_fault_handler,
 	output scalar_t                         cr_tlb_miss_handler);
 	
@@ -83,6 +85,7 @@ module control_registers
 				fault_access_addr[i] <= '0;
 				cr_mmu_en[i] <= 0;
 				prev_mmu_enable[i] <= 0;
+				cr_eret_subcycle[i] <= 0;
 			end
 
 			for (int i = 0; i < `THREADS_PER_CORE * 2; i++)
@@ -108,7 +111,7 @@ module control_registers
 			assert(!(wb_fault && ix_is_eret));
 		
 			cycle_count <= cycle_count + 1;
-		
+
 			if (wb_fault)
 			begin
 				fault_reason[wb_fault_thread_idx] <= wb_fault_reason;
@@ -121,6 +124,7 @@ module control_registers
 				// Copy current flags to prev flags
 				prev_int_flag[wb_fault_thread_idx] <= cr_interrupt_en[wb_fault_thread_idx];
 				prev_mmu_enable[wb_fault_thread_idx] <= cr_mmu_en[wb_fault_thread_idx];
+				cr_eret_subcycle[wb_fault_thread_idx] <= wb_fault_subcycle;
 			end
 			else if (ix_is_eret)
 			begin	
@@ -149,6 +153,7 @@ module control_registers
 					CR_TLB_UPDATE_PHYS:  cr_tlb_update_ppage_idx <= dd_creg_write_val[31-:`PAGE_NUM_BITS];
 					CR_SCRATCHPAD0:      scratchpad[{1'b0, dt_thread_idx}] <= dd_creg_write_val;
 					CR_SCRATCHPAD1:      scratchpad[{1'b1, dt_thread_idx}] <= dd_creg_write_val;
+					CR_SUBCYCLE:         cr_eret_subcycle[dt_thread_idx] <= subcycle_t'(dd_creg_write_val);
 					default:
 						;
 				endcase
@@ -179,6 +184,7 @@ module control_registers
 					CR_CYCLE_COUNT:      cr_creg_read_val <= cycle_count;
 					CR_SCRATCHPAD0:      cr_creg_read_val <= scratchpad[{1'b0, dt_thread_idx}];
 					CR_SCRATCHPAD1:      cr_creg_read_val <= scratchpad[{1'b1, dt_thread_idx}];
+					CR_SUBCYCLE:         cr_creg_read_val <= scalar_t'(cr_eret_subcycle[dt_thread_idx]);
 					default:             cr_creg_read_val <= 32'hffffffff;
 				endcase
 			end

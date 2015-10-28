@@ -62,10 +62,10 @@ struct Thread
 	uint32_t scratchpad1;
 	bool enableInterrupt;
 	bool prevEnableInterrupt;
-	bool multiCycleTransferActive;
 	bool enableMmu;
 	bool prevEnableMmu;
-	uint32_t multiCycleTransferLane;
+	uint32_t faultSubcycle;
+	uint32_t currentSubcycle;
 	uint32_t scalarReg[NUM_REGISTERS - 1];	// 31 is PC, which is special
 	uint32_t vectorReg[NUM_REGISTERS][NUM_VECTOR_LANES];
 };
@@ -276,7 +276,7 @@ void cosimInterrupt(Core *core, uint32_t threadId, uint32_t pc)
 	thread->prevEnableInterrupt = thread->enableInterrupt;
 	thread->prevEnableMmu = thread->enableMmu;
 	thread->enableInterrupt = false;
-	thread->multiCycleTransferActive = false;
+	thread->currentSubcycle = 0;
 }
 
 uint32_t getTotalThreads(const Core *core)
@@ -542,6 +542,8 @@ static void memoryAccessFault(Thread *thread, uint32_t address, bool isLoad, Fau
 		thread->prevEnableMmu = thread->enableMmu;
 		thread->enableInterrupt = false;
 		thread->lastFaultAddress = address;
+		thread->faultSubcycle = thread->currentSubcycle;
+		thread->currentSubcycle = 0;
 	}
 }
 
@@ -633,6 +635,9 @@ static bool translateAddress(Thread *thread, uint32_t virtualAddress, uint32_t *
 	thread->enableInterrupt = false;
 	thread->enableMmu = false;
 	thread->lastFaultAddress = virtualAddress;
+	thread->faultSubcycle = thread->currentSubcycle;
+	thread->currentSubcycle = 0;
+
 	return false;
 }
 
@@ -1255,19 +1260,7 @@ static void executeScatterGatherInst(Thread *thread, uint32_t instruction)
 			assert(0);
 	}
 
-	if (!thread->multiCycleTransferActive)
-	{
-		thread->multiCycleTransferActive = true;
-		thread->multiCycleTransferLane = NUM_VECTOR_LANES - 1;
-	}
-	else
-	{
-		thread->multiCycleTransferLane -= 1;
-		if (thread->multiCycleTransferLane == 0)
-			thread->multiCycleTransferActive = false;
-	}
-
-	lane = thread->multiCycleTransferLane;
+	lane = NUM_VECTOR_LANES - 1 - thread->currentSubcycle;
 	virtualAddress = thread->vectorReg[ptrreg][lane] + offset;
 	if ((mask & (1 << lane)) && (virtualAddress & 3) != 0)
 	{
@@ -1299,7 +1292,9 @@ static void executeScatterGatherInst(Thread *thread, uint32_t instruction)
 		}
 	}
 
-	if (thread->multiCycleTransferActive)
+	if (++thread->currentSubcycle == NUM_VECTOR_LANES)
+		thread->currentSubcycle = 0;	// Finish
+	else
 		thread->currentPc -= 4;	// repeat current instruction
 }
 
@@ -1354,6 +1349,10 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 
 			case CR_SCRATCHPAD1:
 				value = thread->scratchpad1;
+				break;
+
+			case CR_SUBCYCLE:
+				value = thread->faultSubcycle;
 				break;
 		}
 
@@ -1411,6 +1410,10 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 
 			case CR_SCRATCHPAD1:
 				thread->scratchpad1 = value;
+				break;
+
+			case CR_SUBCYCLE:
+				thread->faultSubcycle = value;
 				break;
 		}
 	}
@@ -1499,6 +1502,7 @@ static void executeBranchInst(Thread *thread, uint32_t instruction)
 			thread->enableInterrupt = thread->prevEnableInterrupt;
 			thread->enableMmu = thread->prevEnableMmu;
 			thread->currentPc = thread->lastFaultPc;
+	 		thread->currentSubcycle = thread->faultSubcycle;
 			return; // Short circuit out
 	}
 	

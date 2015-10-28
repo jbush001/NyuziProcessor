@@ -128,7 +128,8 @@ enum _ControlRegister {
 	CR_ITLB_UPDATE_VIRT = 9,
 	CR_DTLB_UPDATE_VIRT = 10,
 	CR_SCRATCHPAD0 = 11,
-	CR_SCRATCHPAD1 = 12
+	CR_SCRATCHPAD1 = 12,
+	CR_SUBCYCLE = 13
 };
 typedef enum _ControlRegister ControlRegister;
 

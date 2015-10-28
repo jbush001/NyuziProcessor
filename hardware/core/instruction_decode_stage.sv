@@ -283,7 +283,8 @@ module instruction_decode_stage(
 	end
 
 	assign decoded_instr_nxt.branch_type = branch_type_t'(ifd_instruction[27:25]);
-	assign decoded_instr_nxt.is_branch = ifd_instruction[31:28] == 4'b1111;
+	assign decoded_instr_nxt.is_branch = ifd_instruction[31:28] == 4'b1111
+		&& is_legal_instruction;
 	assign decoded_instr_nxt.pc = ifd_pc;
 	
 	always_comb
@@ -306,9 +307,11 @@ module instruction_decode_stage(
 	
 	assign memory_access_type = memory_op_t'(ifd_instruction[28:25]);
 	assign decoded_instr_nxt.memory_access_type = memory_access_type;
-	assign decoded_instr_nxt.is_memory_access = ifd_instruction[31:30] == 2'b10;
+	assign decoded_instr_nxt.is_memory_access = ifd_instruction[31:30] == 2'b10
+		&& is_legal_instruction;
 	assign decoded_instr_nxt.is_load = ifd_instruction[29];
-	assign decoded_instr_nxt.is_cache_control = ifd_instruction[31:28] == 4'b1110;
+	assign decoded_instr_nxt.is_cache_control = ifd_instruction[31:28] == 4'b1110
+		 && is_legal_instruction;
 	assign decoded_instr_nxt.cache_control_op = cache_op_t'(ifd_instruction[27:25]);
 	
 	always_comb

@@ -156,7 +156,8 @@ typedef enum logic [4:0] {
 	CR_ITLB_UPDATE_VIRT = 5'd9,
 	CR_DTLB_UPDATE_VIRT = 5'd10,
 	CR_SCRATCHPAD0 = 5'd11,
-	CR_SCRATCHPAD1 = 5'd12
+	CR_SCRATCHPAD1 = 5'd12,
+	CR_SUBCYCLE = 5'd13
 } control_register_t;
 
 typedef struct packed {

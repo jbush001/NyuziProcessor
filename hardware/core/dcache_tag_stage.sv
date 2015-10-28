@@ -201,8 +201,7 @@ module dcache_tag_stage
 `else
 	// If MMU is disabled, just identity map addresses
 	assign dt_tlb_hit = 1;
-	always_ff @(posedge clk)
-		dt_ppage_idx <= request_addr_nxt[31-:`PAGE_NUM_BITS];
+	assign ppage_idx = fetched_addr[31-:`PAGE_NUM_BITS];
 `endif
 
 	cache_lru #(.NUM_WAYS(`L1D_WAYS), .NUM_SETS(`L1D_SETS)) lru(

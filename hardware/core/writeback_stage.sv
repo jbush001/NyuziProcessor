@@ -89,13 +89,15 @@ module writeback_stage(
 	input thread_bitmap_t                 cr_interrupt_en,
 	input scalar_t                        cr_fault_handler,
 	input scalar_t                        cr_tlb_miss_handler,
-	
+	input subcycle_t                      cr_eret_subcycle[`THREADS_PER_CORE],
+
 	// To control_registers
 	output logic                          wb_fault,
 	output fault_reason_t                 wb_fault_reason,
 	output scalar_t                       wb_fault_pc,
 	output thread_idx_t                   wb_fault_thread_idx,
 	output scalar_t                       wb_fault_access_vaddr,
+	output subcycle_t                     wb_fault_subcycle,
 
 	// Interrupt input
 	input                                 interrupt_pending,
@@ -143,7 +145,6 @@ module writeback_stage(
 	cache_line_data_t bypassed_read_data;
 	thread_bitmap_t thread_oh;
 	scalar_t last_retire_pc[`THREADS_PER_CORE];
-	logic multi_issue_pending[`THREADS_PER_CORE];
  	logic is_last_subcycle_dd;
 	logic is_last_subcycle_sx;
 	logic is_last_subcycle_mx;
@@ -172,6 +173,7 @@ module writeback_stage(
 		wb_fault_thread_idx = 0;
 		wb_interrupt_ack = 0;
 		wb_fault_access_vaddr = 0;
+		wb_fault_subcycle = dd_subcycle;
 
 		if (ix_instruction_valid && (ix_instruction.illegal || ix_instruction.ifetch_fault
 			|| ix_instruction.tlb_miss))
@@ -246,7 +248,10 @@ module writeback_stage(
 			wb_rollback_thread_idx = ix_thread_idx;
 			wb_rollback_pc = ix_rollback_pc;
 			wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
-			wb_rollback_subcycle = ix_subcycle;
+			if (ix_instruction.branch_type == BRANCH_ERET)
+				wb_rollback_subcycle = cr_eret_subcycle[ix_thread_idx];
+			else
+				wb_rollback_subcycle = ix_subcycle;
 		end
 		else if (dd_instruction_valid && (dd_rollback_en || sq_rollback_en || ior_rollback_en))
 		begin
@@ -261,16 +266,12 @@ module writeback_stage(
 		end
 		else if (interrupt_pending 
 			&& cr_interrupt_en[interrupt_thread_idx] 
-			&& !multi_issue_pending[interrupt_thread_idx]
 			&& !dd_instruction_valid
 			&& (!ix_instruction_valid || ix_thread_idx == interrupt_thread_idx)
 			&& !fx5_instruction_valid)
 		begin	
 			// We cannot flag an interrupt in the following cases:
 			// - In the same cycle as another type of rollback.
-			// - In the middle of a multi-issue instruction (like gather load)
-			//   because that will cause incorrect behavior if the destination register is also one 
-			//   of the source operands.
 			// - For a long latency (floating point) instruction because there isn't logic in 
 			//   the thread select stage to invalidate the scoreboard entries.
 			// - For a memory operation, because a device IO read/write may have already 
@@ -286,6 +287,9 @@ module writeback_stage(
 			wb_fault_reason = FR_INTERRUPT;
 			wb_fault_thread_idx = interrupt_thread_idx;
 			wb_interrupt_ack = 1;
+			if (ix_instruction_valid)
+				wb_fault_subcycle = ix_subcycle;
+			// else dd_subcycle by default
 		end
 	end
 
@@ -374,7 +378,6 @@ module writeback_stage(
 			for (int i = 0; i < `THREADS_PER_CORE; i++)
 			begin
 				last_retire_pc[i] <= 0;
-				multi_issue_pending[i] <= 0;
 			end
 
 `ifdef SIMULATION
@@ -463,7 +466,6 @@ module writeback_stage(
 					wb_writeback_mask <= fx5_mask_value;
 					wb_writeback_reg <= fx5_instruction.dest_reg;
 					wb_writeback_is_last_subcycle <= is_last_subcycle_mx;
-					multi_issue_pending[fx5_thread_idx] <= !is_last_subcycle_mx;
 
 `ifdef SIMULATION
 					// Used by testbench for cosimulation output
@@ -498,7 +500,6 @@ module writeback_stage(
 					wb_writeback_mask <= ix_mask_value;
 					wb_writeback_reg <= ix_instruction.dest_reg;
 					wb_writeback_is_last_subcycle <= is_last_subcycle_sx;
-					multi_issue_pending[ix_thread_idx] <= !is_last_subcycle_sx;
 
 `ifdef SIMULATION
 					// Used by testbench for cosimulation output
@@ -517,7 +518,6 @@ module writeback_stage(
 					wb_writeback_is_vector <= dd_instruction.dest_is_vector;
 					wb_writeback_reg <= dd_instruction.dest_reg;
 					wb_writeback_is_last_subcycle <= is_last_subcycle_dd;
-					multi_issue_pending[dd_thread_idx] <= !is_last_subcycle_dd;
 				
 					if (dd_instruction.is_load)
 					begin
