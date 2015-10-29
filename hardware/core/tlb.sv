@@ -27,7 +27,8 @@ module tlb
 	(input               clk,
 	input                reset,
 
-	// Lookup interface
+	// Lookup interface.  lookup_ppage_idx and lookup_hit have one cycle of
+	// latency.
 	input                lookup_en,
 	input page_index_t   lookup_vpage_idx,
 	output page_index_t  lookup_ppage_idx,

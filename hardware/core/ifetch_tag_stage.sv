@@ -79,6 +79,7 @@ module ifetch_tag_stage
 
 	scalar_t next_program_counter[`THREADS_PER_CORE];
 	thread_idx_t selected_thread_idx;
+	thread_idx_t last_selected_thread_idx;
 	l1i_addr_t pc_to_fetch;
 	thread_bitmap_t can_fetch_thread_bitmap;
 	thread_bitmap_t selected_thread_oh;
@@ -196,9 +197,13 @@ module ifetch_tag_stage
 		.invalidate_all(dd_invalidate_tlb_all),
 		.invalidate_vpage_idx(dd_invalidate_tlb_vpage_idx),
 		.*);
+
+	// These combinational signals are after the output flops of
+	// this stage (and the TLB has one cycle of latency.) All 
+	// inputs to this should be registered.
 	always_comb
 	begin
-		if (cr_mmu_en[selected_thread_idx])
+		if (cr_mmu_en[last_selected_thread_idx])
 		begin
 			ift_tlb_hit = tlb_hit;
 			ppage_idx = tlb_ppage_idx;
@@ -249,6 +254,7 @@ module ifetch_tag_stage
 			ift_instruction_requested <= '0;
 			ift_thread_idx <= '0;
 			last_fetched_pc <= '0;
+			last_selected_thread_idx <= '0;
 			last_selected_thread_oh <= '0;
 			// End of automatics
 		end
@@ -256,6 +262,7 @@ module ifetch_tag_stage
 		begin
 			icache_wait_threads <= icache_wait_threads_nxt;
 			last_fetched_pc <= pc_to_fetch;
+			last_selected_thread_idx <= selected_thread_idx;
 			ift_thread_idx <= selected_thread_idx;
 			ift_instruction_requested <= |can_fetch_thread_bitmap
 				&& !((ifd_cache_miss || ifd_near_miss) && ifd_cache_miss_thread_idx == selected_thread_idx)	
