@@ -36,13 +36,13 @@ module tlb
 
 	// Update interface
 	input                update_en,
-	page_index_t         update_ppage_idx,
-	page_index_t         update_vpage_idx,
+	input page_index_t   update_ppage_idx,
+	input page_index_t   update_vpage_idx,
 	
 	// Invalidate
 	input                invalidate_en,
 	input                invalidate_all,
-	page_index_t         invalidate_vpage_idx);
+	input page_index_t   invalidate_vpage_idx);
 
 	localparam NUM_WAYS = 4;
 	localparam NUM_SETS = NUM_ENTRIES / NUM_WAYS;
