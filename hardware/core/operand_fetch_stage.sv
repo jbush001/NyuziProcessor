@@ -18,10 +18,10 @@
 
 //
 // Contains vector and scalar register files and fetches values 
-// from them. This stage has two cycles of latency. In the first cycle,
-// the results are fetched from register memory: two scalar and two
-// vector ports.  In the second cycle, the appropriate results are selected
-// for the operands.
+// from them. This stage has two cycles of latency. The first stage
+// fetches the results from register SRAM, which has one cycle of
+// latency. The second stage steers the register results to the
+// appropriate operand ports.
 //
 
 module operand_fetch_stage(
@@ -65,7 +65,7 @@ module operand_fetch_stage(
 	subcycle_t cyc1_subcycle;
 
 	//
-	// Intermediate stage (cycle 1)
+	// Fetch register values (cycle 1)
 	//
 	sram_2r1w #(
 		.DATA_WIDTH($bits(scalar_t)),

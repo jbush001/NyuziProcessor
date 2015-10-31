@@ -125,8 +125,10 @@ module l1_store_queue(
 			assign send_this_cycle = send_grant_oh[thread_idx] && sq_dequeue_ack;
 			assign can_write_combine = pending_stores[thread_idx].valid 
 				&& pending_stores[thread_idx].address == cache_aligned_store_addr
-				&& !(pending_stores[thread_idx].synchronized || pending_stores[thread_idx].flush
-					|| pending_stores[thread_idx].iinvalidate || pending_stores[thread_idx].dinvalidate)
+				&& !pending_stores[thread_idx].synchronized 
+				&& !pending_stores[thread_idx].flush
+				&& !pending_stores[thread_idx].iinvalidate
+				&& !pending_stores[thread_idx].dinvalidate
 				&& !dd_store_synchronized
 				&& !pending_stores[thread_idx].request_sent
 				&& !send_this_cycle
@@ -154,9 +156,9 @@ module l1_store_queue(
 					 && (dd_flush_en || dd_dinvalidate_en || dd_iinvalidate_en || dd_store_en))
 				begin
 					// Trigger a rollback if the store buffer is full.
-					// * On the first synchronized store request, always suspend the thread, even 
+					// - On the first synchronized store request, always suspend the thread, even 
 					//   when there is space in the buffer, because this must wait for a response.
-					// * If the store entry is full, but it got a response this cycle, 
+					// - If the store entry is full, but it got a response this cycle, 
 					//   allow enqueuing a new one. This is simpler, because it avoids
 					//   needing to handle the lost wakeup issue (like the near miss case
 					//   in the data cache)

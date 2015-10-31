@@ -14,8 +14,6 @@
 // limitations under the License.
 // 
 
-
-
 //
 // Asynchronous AXI->AXI bridge.  This safely transfers AXI requests and responses
 // between two clock domains running at different speeds.

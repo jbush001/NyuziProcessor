@@ -43,7 +43,7 @@ module core
 	// Performance events
 	output logic [`CORE_PERF_EVENTS - 1:0] core_perf_events);
 
-	// XXX for some reason, AUTOLOGIC doesn't expand these.
+	// XXX for some reason, AUTOLOGIC doesn't generate these.
 	// Should figure out why.
 	scalar_t cr_creg_read_val;
 	thread_bitmap_t cr_thread_enable;
@@ -193,10 +193,10 @@ module core
 	decoded_instruction_t id_instruction;	// From instruction_decode_stage of instruction_decode_stage.v
 	logic		id_instruction_valid;	// From instruction_decode_stage of instruction_decode_stage.v
 	thread_idx_t	id_thread_idx;		// From instruction_decode_stage of instruction_decode_stage.v
+	logic		ifd_alignment_fault;	// From ifetch_data_stage of ifetch_data_stage.v
 	logic		ifd_cache_miss;		// From ifetch_data_stage of ifetch_data_stage.v
 	scalar_t	ifd_cache_miss_paddr;	// From ifetch_data_stage of ifetch_data_stage.v
 	thread_idx_t	ifd_cache_miss_thread_idx;// From ifetch_data_stage of ifetch_data_stage.v
-	logic		ifd_ifetch_fault;	// From ifetch_data_stage of ifetch_data_stage.v
 	scalar_t	ifd_instruction;	// From ifetch_data_stage of ifetch_data_stage.v
 	logic		ifd_instruction_valid;	// From ifetch_data_stage of ifetch_data_stage.v
 	logic		ifd_near_miss;		// From ifetch_data_stage of ifetch_data_stage.v

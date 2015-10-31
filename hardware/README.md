@@ -12,9 +12,9 @@ three directories:
 - testbench/ 
   Support for simulation in [Verilator](http://www.veripool.org/wiki/verilator).
 
-This project uses Emacs verilog mode to automatically generate some wire
-definitions. If you have Emacs installed, type 'make autos' from the command
-line to update the definitions in batch mode.
+This project uses Emacs [Verilog Mode](http://www.veripool.org/wiki/verilog-mode)
+to automatically generate wire definitions and resets. If you have Emacs installed, 
+type 'make autos' from the command line to update the definitions in batch mode.
 
 This design uses parameterized memories (FIFOs and SRAM blocks), but not all
 tools support this. This can use hard coded memory instances compatible with 

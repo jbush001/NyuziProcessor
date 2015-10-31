@@ -185,6 +185,10 @@ module dcache_tag_stage
 		.invalidate_all(dd_invalidate_tlb_all),
 		.invalidate_vpage_idx(dd_invalidate_tlb_vpage_idx),
 		.*);
+		
+	// This combinational logic is after the flip flops,
+	// so these signals are delayed one cycle from other signals
+	// in this module.
 	always_comb
 	begin
 		if (cr_mmu_en[dt_thread_idx])

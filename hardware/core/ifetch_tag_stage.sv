@@ -97,12 +97,11 @@ module ifetch_tag_stage
 	//
 	// Pick which thread to fetch next.
 	// Only consider threads that are not blocked. However, do not skip 
-	// threads that are being rolled back in the current cycle. 
-	// Although that is straightforward to do, the rollback signals have a long
-	// combinational path that is a critical path for clock speed. Instead, when 
-	// the selected thread is rolled back in the same cycle, invalidate the 
-	// instruction by deasserting ift_instruction_requested. This wastes a cycle, 
-	// but this should be infrequent.
+	// threads that are being rolled back in the current cycle. The rollback 
+	// signals have a long combinational path that is a critical path for clock 
+	// speed. Instead, when the selected thread is rolled back in the same cycle, 
+	// invalidate the instruction by deasserting ift_instruction_requested. This 
+	// wastes a cycle, but this should be infrequent.
 	//
 	assign can_fetch_thread_bitmap = ts_fetch_en & ~icache_wait_threads;
 	assign cache_fetch_en = |can_fetch_thread_bitmap;
@@ -208,6 +207,7 @@ module ifetch_tag_stage
 		end
 		else
 		begin
+			// MMU disabled, identity map.
 			ift_tlb_hit = 1;
 			ppage_idx = last_selected_pc[31-:`PAGE_NUM_BITS];
 		end
@@ -240,7 +240,8 @@ module ifetch_tag_stage
 		.index(ifd_cache_miss_thread_idx));
 
 	assign thread_sleep_mask_oh = cache_miss_thread_oh & {`THREADS_PER_CORE{ifd_cache_miss}};
-	assign icache_wait_threads_nxt = (icache_wait_threads | thread_sleep_mask_oh) & ~l2i_icache_wake_bitmap;
+	assign icache_wait_threads_nxt = (icache_wait_threads | thread_sleep_mask_oh)
+		& ~l2i_icache_wake_bitmap;
 
 	always_ff @(posedge clk, posedge reset)
 	begin

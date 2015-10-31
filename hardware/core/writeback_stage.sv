@@ -21,9 +21,9 @@
 // - Controls signals to write results back to register file
 // - Selects result from appropriate pipeline.
 // - Aligns memory read results
-// - Flag rollbacks. They are generally detected earlier in the pipeline, 
-//   but we wait to handle them here to avoid having to reconcile multiple 
-//   rollbacks in the same cycle.
+// - Flags rollbacks. Most are detected earlier in the pipeline, but we 
+//   handle them here to avoid having to reconcile multiple rollbacks in 
+//   the same cycle.
 //   * Branch
 //   * Data cache miss
 //   * Exception
@@ -338,8 +338,12 @@ module writeback_stage(
 		endcase
 	end
 	
-	assign swapped_word_value = { mem_load_lane[7:0], mem_load_lane[15:8], mem_load_lane[23:16],
-		 mem_load_lane[31:24] };
+	assign swapped_word_value = { 
+		mem_load_lane[7:0], 
+		mem_load_lane[15:8], 
+		mem_load_lane[23:16],
+		mem_load_lane[31:24] 
+	};
 	
 	// Endian swap memory load
 	genvar swap_word;

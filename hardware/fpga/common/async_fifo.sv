@@ -127,8 +127,8 @@ module async_fifo
 	begin
 		if (reset_wsync)
 		begin
-			`ifdef SUPPRESSAUTORESET
-			fifo_data <= 0;
+			`ifdef NEVER
+			fifo_data <= 0;	// Suppress autoreset
 			`endif
 		
 			/*AUTORESET*/

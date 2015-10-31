@@ -72,6 +72,8 @@ module nyuzi
 		end
 	endgenerate
 	
+	// Thread enable flag handling. A set of memory mapped registers control enable/
+	// disable threads.
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)

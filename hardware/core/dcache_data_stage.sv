@@ -105,8 +105,8 @@ module dcache_data_stage(
 	output thread_idx_t                       dd_store_bypass_thread_idx,
 
 	// Interrupt input. Interrupts are diferent than rollbacks because
-	// they can occur in the middle of a synchronized operation. We explicitly
-	// detect these and cancel the operation.
+	// they can occur in the middle of a synchronized load/store. Detect 
+	// these and cancel the operation.
 	input                                     interrupt_pending,
 	input thread_idx_t                        interrupt_thread_idx,
 	input                                     wb_interrupt_ack,
@@ -230,7 +230,7 @@ module dcache_data_stage(
 		end
 	endgenerate
 
-	// This treats a synchronized load as a cache miss the first time it occurs, because
+	// Treat a synchronized load as a cache miss the first time it occurs, because
 	// it needs to send it to the L2 cache to register it.
 	assign cache_hit = |way_hit_oh && (!is_synchronized || sync_load_pending[dt_thread_idx])
 		&& dt_tlb_hit;
@@ -340,7 +340,7 @@ module dcache_data_stage(
 	end
 
 	// Generate store mask signals.  word_store_mask corresponds to lanes, 
-	// byte_store_mask corresponds to bytes within a word.  byte_store_mask 
+	// byte_store_mask corresponds to bytes within a word. byte_store_mask 
 	// always has all bits set if word_store_mask has more than one bit set:
 	// we are either selecting some number of words within the cache line for
 	// a vector transfer or some bytes within a specific word for a scalar transfer.

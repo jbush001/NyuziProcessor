@@ -63,7 +63,7 @@ module ifetch_data_stage(
 	output logic                     ifd_instruction_valid,
 	output scalar_t                  ifd_pc,
 	output thread_idx_t              ifd_thread_idx,
-	output logic                     ifd_ifetch_fault,
+	output logic                     ifd_alignment_fault,
 	output logic                     ifd_tlb_miss,
                                     
 	// From writeback_stage         
@@ -82,6 +82,7 @@ module ifetch_data_stage(
 	scalar_t fetched_word;
 	logic[$clog2(`CACHE_LINE_WORDS) - 1:0] cache_lane_idx;
 	logic alignment_fault;
+	logic rollback_this_stage;
 
 	// 
 	// Check for cache hit
@@ -90,9 +91,8 @@ module ifetch_data_stage(
 	generate
 		for (way_idx = 0; way_idx < `L1I_WAYS; way_idx++)
 		begin : hit_check_gen
-			always_comb
-				way_hit_oh[way_idx] = ift_pc_paddr.tag == ift_tag[way_idx] 
-					&& ift_valid[way_idx]; 
+			assign way_hit_oh[way_idx] = ift_pc_paddr.tag == ift_tag[way_idx] 
+				&& ift_valid[way_idx]; 
 		end
 	endgenerate
 
@@ -135,10 +135,10 @@ module ifetch_data_stage(
 		.READ_DURING_WRITE("NEW_DATA")
 	) sram_l1i_data(
 		.read_en(cache_hit && ift_instruction_requested),
-		.read_addr({ way_hit_idx, ift_pc_paddr.set_idx }),
+		.read_addr({way_hit_idx, ift_pc_paddr.set_idx}),
 		.read_data(fetched_cache_line),
 		.write_en(l2i_idata_update_en),	
-		.write_addr({ l2i_idata_update_way, l2i_idata_update_set }),
+		.write_addr({l2i_idata_update_way, l2i_idata_update_set}),
 		.write_data(l2i_idata_update_data),
 		.*);
 
@@ -148,6 +148,8 @@ module ifetch_data_stage(
 
 	assign ifd_update_lru_en = cache_hit && ift_instruction_requested;
 	assign ifd_update_lru_way = way_hit_idx;
+	assign rollback_this_stage = wb_rollback_en && wb_rollback_thread_idx 
+		== ift_thread_idx;
 
 	always_ff @(posedge clk, posedge reset)
 	begin
@@ -155,7 +157,7 @@ module ifetch_data_stage(
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			ifd_ifetch_fault <= '0;
+			ifd_alignment_fault <= '0;
 			ifd_instruction_valid <= '0;
 			ifd_pc <= '0;
 			ifd_thread_idx <= '0;
@@ -168,14 +170,14 @@ module ifetch_data_stage(
 			// if an instruction wasn't requested).
 			assert(!ift_instruction_requested || $onehot0(way_hit_oh));
 
-			// We piggyback faults and TLB misses inside instructions, so mark it valid
-			// if those conditions have occurred.
-			ifd_instruction_valid <= ift_instruction_requested && (!wb_rollback_en || wb_rollback_thread_idx 
-				!= ift_thread_idx) && (cache_hit || alignment_fault || !ift_tlb_hit);
+			ifd_instruction_valid <= ift_instruction_requested && !rollback_this_stage
+				&& cache_hit && ift_tlb_hit && !alignment_fault;
+			ifd_alignment_fault <= ift_instruction_requested && !rollback_this_stage
+				&& alignment_fault;
+			ifd_tlb_miss <= ift_instruction_requested && !rollback_this_stage
+				&& !ift_tlb_hit;
 			ifd_pc <= ift_pc_vaddr;
 			ifd_thread_idx <= ift_thread_idx;
-			ifd_ifetch_fault <= alignment_fault;
-			ifd_tlb_miss <= !ift_tlb_hit;
 		end
 	end
 endmodule

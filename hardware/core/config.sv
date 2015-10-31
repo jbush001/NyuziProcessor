@@ -23,7 +23,7 @@
 // - If the number of L2 ways is changed, the flush_l2_cache function in 
 //   testbench/verilator_tb.sv needs to be modified. Comments above
 //   that function describe why and how.
-// - Cores must be 1-8. To synthesize more cores, increase CORE_ID_WIDTH
+// - NUM_CORES must be 1-8. To synthesize more cores, increase CORE_ID_WIDTH
 //   in defines.sv.
 // - The size of a cache is sets * ways * cache line size (64 bytes)
 //

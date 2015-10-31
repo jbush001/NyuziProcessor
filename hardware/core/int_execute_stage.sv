@@ -171,7 +171,7 @@ module int_execute_stage(
 
 			// Right shift
 			assign shift_in_sign = of_instruction.alu_op == OP_ASHR ? lane_operand1[31] : 1'd0;
-			assign rshift = scalar_t'({ {32{shift_in_sign}}, lane_operand1 } >> lane_operand2[4:0]);
+			assign rshift = scalar_t'({{32{shift_in_sign}}, lane_operand1} >> lane_operand2[4:0]);
 
 			// Reciprocal estimate
 			assign fp_operand = lane_operand2;
@@ -183,21 +183,21 @@ module int_execute_stage(
 			begin
 				if (fp_operand.exponent == 0)
 				begin
-					// Any subnormal will overflow the exponent field, so convert to infinity.
+					// A subnormal will overflow the exponent field, so convert to infinity.
 					// This also handles division by zero.
-					reciprocal = { fp_operand.sign, 8'hff, 23'd0 }; // inf
+					reciprocal = {fp_operand.sign, 8'hff, 23'd0}; // inf
 				end
 				else if (fp_operand.exponent == 8'hff)
 				begin
 					if (fp_operand.significand != 0)
-						reciprocal = { 1'b0, 8'hff, 23'h7fffff }; // Division by NaN = NaN
+						reciprocal = {1'b0, 8'hff, 23'h7fffff}; // Division by NaN = NaN
 					else
-						reciprocal = { fp_operand.sign, 8'h00, 23'h000000 }; // Division by +/-inf = +/-0.0
+						reciprocal = {fp_operand.sign, 8'h00, 23'h000000}; // Division by +/-inf = +/-0.0
 				end
 				else 
 				begin
-					reciprocal = { fp_operand.sign, 8'd253 - fp_operand.exponent + 8'((fp_operand.significand[22:17] == 0)), 
-						reciprocal_estimate, {17{1'b0}} };
+					reciprocal = {fp_operand.sign, 8'd253 - fp_operand.exponent + 8'((fp_operand.significand[22:17] == 0)), 
+						reciprocal_estimate, {17{1'b0}}};
 				end
 			end
 
@@ -215,18 +215,18 @@ module int_execute_stage(
 					OP_XOR: lane_result = lane_operand1 ^ lane_operand2;
 					OP_ADD_I: lane_result = lane_operand1 + lane_operand2;	
 					OP_SUB_I: lane_result = difference;
-					OP_CMPEQ_I: lane_result = { {31{1'b0}}, zero };	  
-					OP_CMPNE_I: lane_result = { {31{1'b0}}, !zero }; 
-					OP_CMPGT_I: lane_result = { {31{1'b0}}, signed_gtr && !zero };
-					OP_CMPGE_I: lane_result = { {31{1'b0}}, signed_gtr || zero }; 
-					OP_CMPLT_I: lane_result = { {31{1'b0}}, !signed_gtr && !zero}; 
-					OP_CMPLE_I: lane_result = { {31{1'b0}}, !signed_gtr || zero };
-					OP_CMPGT_U: lane_result = { {31{1'b0}}, !borrow && !zero };
-					OP_CMPGE_U: lane_result = { {31{1'b0}}, !borrow || zero };
-					OP_CMPLT_U: lane_result = { {31{1'b0}}, borrow && !zero };
-					OP_CMPLE_U: lane_result = { {31{1'b0}}, borrow || zero };
-					OP_SEXT8: lane_result = { {24{lane_operand2[7]}}, lane_operand2[7:0] };
-					OP_SEXT16: lane_result = { {16{lane_operand2[15]}}, lane_operand2[15:0] };
+					OP_CMPEQ_I: lane_result = {{31{1'b0}}, zero};	  
+					OP_CMPNE_I: lane_result = {{31{1'b0}}, !zero};
+					OP_CMPGT_I: lane_result = {{31{1'b0}}, signed_gtr && !zero};
+					OP_CMPGE_I: lane_result = {{31{1'b0}}, signed_gtr || zero}; 
+					OP_CMPLT_I: lane_result = {{31{1'b0}}, !signed_gtr && !zero}; 
+					OP_CMPLE_I: lane_result = {{31{1'b0}}, !signed_gtr || zero};
+					OP_CMPGT_U: lane_result = {{31{1'b0}}, !borrow && !zero};
+					OP_CMPGE_U: lane_result = {{31{1'b0}}, !borrow || zero};
+					OP_CMPLT_U: lane_result = {{31{1'b0}}, borrow && !zero};
+					OP_CMPLE_U: lane_result = {{31{1'b0}}, borrow || zero};
+					OP_SEXT8: lane_result = {{24{lane_operand2[7]}}, lane_operand2[7:0]};
+					OP_SEXT16: lane_result = {{16{lane_operand2[15]}}, lane_operand2[15:0]};
 					OP_SHUFFLE,
 					OP_GETLANE: lane_result = of_operand1[~lane_operand2];
 					OP_RECIPROCAL: lane_result = reciprocal;
@@ -293,7 +293,7 @@ module int_execute_stage(
 						BRANCH_ALWAYS,         
 						BRANCH_CALL_OFFSET,    
 						BRANCH_CALL_REGISTER,  
-						BRANCH_ERET:        ix_rollback_en <= 1'b1;
+						BRANCH_ERET:           ix_rollback_en <= 1'b1;
 					endcase
 				end
 				else

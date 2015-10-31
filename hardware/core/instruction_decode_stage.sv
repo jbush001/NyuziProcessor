@@ -26,16 +26,16 @@
 //                                               store 
 //       format           op1     op2    mask    value
 // +-------------------+-------+-------+-------+-------+
-// | A - scalar/scalar |   s1  |   s2  |       |       |
-// | A - vector/scalar |   v1  |   s2  |  s1   |       |
-// | A - vector/vector |   v1  |   v2  |  s2   |       |
-// | B - scalar        |   s1  |  imm  |  n/a  |       |
-// | B - vector        |   v1  |  imm  |  s2   |       |
-// | C - scalar        |   s1  |  imm  |  n/a  |  s2   |
-// | C - block         |   s1  |  imm  |  s2   |  v2   |
-// | C - scatter/gather|   v1  |  imm  |  s2   |  v2   |
-// | D                 |   s1  |  imm  |       |       |
-// | E                 |   s1  |       |       |       |
+// | R - scalar/scalar |   s1  |   s2  |       |       |
+// | R - vector/scalar |   v1  |   s2  |  s1   |       |
+// | R - vector/vector |   v1  |   v2  |  s2   |       |
+// | I - scalar        |   s1  |  imm  |  n/a  |       |
+// | I - vector        |   v1  |  imm  |  s2   |       |
+// | M - scalar        |   s1  |  imm  |  n/a  |  s2   |
+// | M - block         |   s1  |  imm  |  s2   |  v2   |
+// | M - scatter/gather|   v1  |  imm  |  s2   |  v2   |
+// | C                 |   s1  |  imm  |       |       |
+// | B                 |   s1  |       |       |       |
 // +-------------------+-------+-------+-------+-------+
 //
 
@@ -44,11 +44,11 @@ module instruction_decode_stage(
 	input                         reset,
 	
 	// From ifetch_data_stage
-	input scalar_t                ifd_instruction,
 	input                         ifd_instruction_valid,
+	input scalar_t                ifd_instruction,
 	input scalar_t                ifd_pc,
 	input thread_idx_t            ifd_thread_idx,
-	input                         ifd_ifetch_fault,
+	input                         ifd_alignment_fault,
 	input                         ifd_tlb_miss,
 
 	// To thread_select_stage
@@ -114,73 +114,73 @@ module instruction_decode_stage(
 	register_idx_t scalar_sel2;
 	logic is_legal_instruction;
 
-	// The instruction set has been structured so that the format of the instruction
-	// can be determined from the first 7 bits. Those are fed into this ROM table that 
-	// returns the decoded information.
-	// XXX this seemed like a good idea at the time.  FPGA synthesis tools just turn 
-	// this into random logic.
+	// I originally tried to structure the instruction set so that this could
+	// determine the format of the instruction from the first 7 bits. Those 
+	// index into this ROM table that returns the decoded information. This 
+	// has become less true as the instruction set has evolved. Also, synthesis 
+	// tools just turn this into random logic. Should revisit this at some point.
 	always_comb
 	begin
 		casez (ifd_instruction[31:25])
 			// Format R (register arithmetic)
-			7'b110_000_?: dlut_out = { F, F, T, IMM_DONT_CARE, SCLR1_4_0, SCLR2_19_15, F, F, F, F, OP2_SRC_SCALAR2, MASK_SRC_ALL_ONES, F, F };
-			7'b110_001_?: dlut_out = { F, T, T, IMM_DONT_CARE, SCLR1_4_0, SCLR2_19_15, T, F, F, T, OP2_SRC_SCALAR2, MASK_SRC_ALL_ONES, F, F };
+			7'b110_000_?: dlut_out = { F, F, T, IMM_DONT_CARE, SCLR1_4_0, SCLR2_19_15,   F, F, F, F, OP2_SRC_SCALAR2, MASK_SRC_ALL_ONES, F, F };
+			7'b110_001_?: dlut_out = { F, T, T, IMM_DONT_CARE, SCLR1_4_0, SCLR2_19_15,   T, F, F, T, OP2_SRC_SCALAR2, MASK_SRC_ALL_ONES, F, F };
 			7'b110_010_?: dlut_out = { F, T, T, IMM_DONT_CARE, SCLR1_14_10, SCLR2_19_15, T, F, F, T, OP2_SRC_SCALAR2, MASK_SRC_SCALAR1, F, F };
-			7'b110_100_?: dlut_out = { F, T, T, IMM_DONT_CARE, SCLR1_14_10, SCLR2_NONE,   T, T, F, T, OP2_SRC_VECTOR2, MASK_SRC_ALL_ONES, F, F };
-			7'b110_101_?: dlut_out = { F, T, T, IMM_DONT_CARE, SCLR1_4_0, SCLR2_14_10, T, T, F, T, OP2_SRC_VECTOR2, MASK_SRC_SCALAR2, F, F };
+			7'b110_100_?: dlut_out = { F, T, T, IMM_DONT_CARE, SCLR1_14_10, SCLR2_NONE,  T, T, F, T, OP2_SRC_VECTOR2, MASK_SRC_ALL_ONES, F, F };
+			7'b110_101_?: dlut_out = { F, T, T, IMM_DONT_CARE, SCLR1_4_0, SCLR2_14_10,   T, T, F, T, OP2_SRC_VECTOR2, MASK_SRC_SCALAR2, F, F };
 
 			// Format I (immediate arithmetic)
-			7'b0_000_???: dlut_out = { F, F, T, IMM_B_WIDE, SCLR1_4_0, SCLR2_NONE,      F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
-			7'b0_001_???: dlut_out = { F, T, T, IMM_B_WIDE, SCLR1_4_0, SCLR2_NONE,      T, F, F, T, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
-			7'b0_010_???: dlut_out = { F, T, T, IMM_B_NARROW, SCLR1_4_0, SCLR2_14_10,  T, F, F, T, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, F, F };
-			7'b0_100_???: dlut_out = { F, T, T, IMM_B_WIDE, SCLR1_4_0, SCLR2_NONE,      F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
+			7'b0_000_???: dlut_out = { F, F, T, IMM_B_WIDE, SCLR1_4_0, SCLR2_NONE,       F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
+			7'b0_001_???: dlut_out = { F, T, T, IMM_B_WIDE, SCLR1_4_0, SCLR2_NONE,       T, F, F, T, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
+			7'b0_010_???: dlut_out = { F, T, T, IMM_B_NARROW, SCLR1_4_0, SCLR2_14_10,    T, F, F, T, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, F, F };
+			7'b0_100_???: dlut_out = { F, T, T, IMM_B_WIDE, SCLR1_4_0, SCLR2_NONE,       F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
 			7'b0_101_???: dlut_out = { F, T, T, IMM_B_NARROW, SCLR1_4_0, SCLR2_14_10,    F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, F, F };
 			
 			// Format M (memory)
 			// Store
-			7'b10_0_0000: dlut_out = { F, F, F, IMM_C_WIDE, SCLR1_4_0, SCLR2_9_5,   F, F, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
-			7'b10_0_0001: dlut_out = { F, F, F, IMM_C_WIDE, SCLR1_4_0, SCLR2_9_5,   F, F, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
-			7'b10_0_0010: dlut_out = { F, F, F, IMM_C_WIDE, SCLR1_4_0, SCLR2_9_5,   T, F, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
-			7'b10_0_0011: dlut_out = { F, F, F, IMM_C_WIDE, SCLR1_4_0, SCLR2_9_5,   F, F, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
-			7'b10_0_0100: dlut_out = { F, F, F, IMM_C_WIDE, SCLR1_4_0, SCLR2_9_5,   F, F, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
-			7'b10_0_0101: dlut_out = { F, F, T, IMM_C_WIDE, SCLR1_4_0, SCLR2_9_5,   F, F, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
-			7'b10_0_0110: dlut_out = { F, F, F, IMM_C_WIDE, SCLR1_4_0, SCLR2_9_5,   F, F, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
-			7'b10_0_0111: dlut_out = { F, F, F, IMM_C_WIDE, SCLR1_4_0, SCLR2_NONE,      F, T, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, T, F };
-			7'b10_0_1000: dlut_out = { F, F, F, IMM_C_NARROW, SCLR1_4_0, SCLR2_14_10,    F, T, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, T, F };
-			7'b10_0_1101: dlut_out = { F, F, F, IMM_C_WIDE, SCLR1_4_0, SCLR2_NONE,      T, T, T, T, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, T, F };
-			7'b10_0_1110: dlut_out = { F, F, F, IMM_C_NARROW, SCLR1_4_0, SCLR2_14_10,    T, T, T, T, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, T, F };
+			7'b10_0_0000: dlut_out = { F, F, F, IMM_C_WIDE, SCLR1_4_0, SCLR2_9_5,     F, F, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
+			7'b10_0_0001: dlut_out = { F, F, F, IMM_C_WIDE, SCLR1_4_0, SCLR2_9_5,     F, F, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
+			7'b10_0_0010: dlut_out = { F, F, F, IMM_C_WIDE, SCLR1_4_0, SCLR2_9_5,     T, F, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
+			7'b10_0_0011: dlut_out = { F, F, F, IMM_C_WIDE, SCLR1_4_0, SCLR2_9_5,     F, F, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
+			7'b10_0_0100: dlut_out = { F, F, F, IMM_C_WIDE, SCLR1_4_0, SCLR2_9_5,     F, F, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
+			7'b10_0_0101: dlut_out = { F, F, T, IMM_C_WIDE, SCLR1_4_0, SCLR2_9_5,     F, F, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
+			7'b10_0_0110: dlut_out = { F, F, F, IMM_C_WIDE, SCLR1_4_0, SCLR2_9_5,     F, F, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
+			7'b10_0_0111: dlut_out = { F, F, F, IMM_C_WIDE, SCLR1_4_0, SCLR2_NONE,    F, T, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, T, F };
+			7'b10_0_1000: dlut_out = { F, F, F, IMM_C_NARROW, SCLR1_4_0, SCLR2_14_10, F, T, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, T, F };
+			7'b10_0_1101: dlut_out = { F, F, F, IMM_C_WIDE, SCLR1_4_0, SCLR2_NONE,    T, T, T, T, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, T, F };
+			7'b10_0_1110: dlut_out = { F, F, F, IMM_C_NARROW, SCLR1_4_0, SCLR2_14_10, T, T, T, T, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, T, F };
 
 			// Load
-			7'b10_1_0000: dlut_out = { F, F, T, IMM_C_WIDE, SCLR1_4_0, SCLR2_NONE,      T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
-			7'b10_1_0001: dlut_out = { F, F, T, IMM_C_WIDE, SCLR1_4_0, SCLR2_NONE,      T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
-			7'b10_1_0010: dlut_out = { F, F, T, IMM_C_WIDE, SCLR1_4_0, SCLR2_NONE,      T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
-			7'b10_1_0011: dlut_out = { F, F, T, IMM_C_WIDE, SCLR1_4_0, SCLR2_NONE,      T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
-			7'b10_1_0100: dlut_out = { F, F, T, IMM_C_WIDE, SCLR1_4_0, SCLR2_NONE,      T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
-			7'b10_1_0101: dlut_out = { F, F, T, IMM_C_WIDE, SCLR1_4_0, SCLR2_NONE,      T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
-			7'b10_1_0110: dlut_out = { F, F, T, IMM_C_WIDE, SCLR1_4_0, SCLR2_NONE,      T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
-			7'b10_1_0111: dlut_out = { F, T, T, IMM_C_WIDE, SCLR1_4_0, SCLR2_NONE,      T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
-			7'b10_1_1000: dlut_out = { F, T, T, IMM_C_NARROW, SCLR1_4_0, SCLR2_14_10,    T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, F, F };
-			7'b10_1_1101: dlut_out = { F, T, T, IMM_C_WIDE, SCLR1_4_0, SCLR2_NONE,      T, T, F, T, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
-			7'b10_1_1110: dlut_out = { F, T, T, IMM_C_NARROW, SCLR1_4_0, SCLR2_14_10,    T, T, F, T, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, F, F };
+			7'b10_1_0000: dlut_out = { F, F, T, IMM_C_WIDE, SCLR1_4_0, SCLR2_NONE,    T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
+			7'b10_1_0001: dlut_out = { F, F, T, IMM_C_WIDE, SCLR1_4_0, SCLR2_NONE,    T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
+			7'b10_1_0010: dlut_out = { F, F, T, IMM_C_WIDE, SCLR1_4_0, SCLR2_NONE,    T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
+			7'b10_1_0011: dlut_out = { F, F, T, IMM_C_WIDE, SCLR1_4_0, SCLR2_NONE,    T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
+			7'b10_1_0100: dlut_out = { F, F, T, IMM_C_WIDE, SCLR1_4_0, SCLR2_NONE,    T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
+			7'b10_1_0101: dlut_out = { F, F, T, IMM_C_WIDE, SCLR1_4_0, SCLR2_NONE,    T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
+			7'b10_1_0110: dlut_out = { F, F, T, IMM_C_WIDE, SCLR1_4_0, SCLR2_NONE,    T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
+			7'b10_1_0111: dlut_out = { F, T, T, IMM_C_WIDE, SCLR1_4_0, SCLR2_NONE,    T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
+			7'b10_1_1000: dlut_out = { F, T, T, IMM_C_NARROW, SCLR1_4_0, SCLR2_14_10, T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, F, F };
+			7'b10_1_1101: dlut_out = { F, T, T, IMM_C_WIDE, SCLR1_4_0, SCLR2_NONE,    T, T, F, T, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
+			7'b10_1_1110: dlut_out = { F, T, T, IMM_C_NARROW, SCLR1_4_0, SCLR2_14_10, T, T, F, T, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, F, F };
 			
 			// Format C (cache control)
-			7'b1110_000: dlut_out = { F, F, F,  IMM_C_NARROW, SCLR1_4_0, SCLR2_NONE,    F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
-			7'b1110_001: dlut_out = { F, F, F,  IMM_C_NARROW, SCLR1_4_0, SCLR2_NONE,    F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
-			7'b1110_010: dlut_out = { F, F, F,  IMM_C_NARROW, SCLR1_4_0, SCLR2_NONE,    F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
-			7'b1110_011: dlut_out = { F, F, F,  IMM_C_NARROW, SCLR1_4_0, SCLR2_NONE,    F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
-			7'b1110_100: dlut_out = { F, F, F,  IMM_C_NARROW, SCLR1_NONE, SCLR2_NONE,   F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
-			7'b1110_101: dlut_out = { F, F, F,  IMM_C_NARROW, SCLR1_4_0, SCLR2_NONE,    F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
-			7'b1110_110: dlut_out = { F, F, F,  IMM_C_NARROW, SCLR1_NONE, SCLR2_NONE,   F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
+			7'b1110_000: dlut_out = { F, F, F,  IMM_C_NARROW, SCLR1_4_0, SCLR2_NONE,  F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
+			7'b1110_001: dlut_out = { F, F, F,  IMM_C_NARROW, SCLR1_4_0, SCLR2_NONE,  F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
+			7'b1110_010: dlut_out = { F, F, F,  IMM_C_NARROW, SCLR1_4_0, SCLR2_NONE,  F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
+			7'b1110_011: dlut_out = { F, F, F,  IMM_C_NARROW, SCLR1_4_0, SCLR2_NONE,  F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
+			7'b1110_100: dlut_out = { F, F, F,  IMM_C_NARROW, SCLR1_NONE, SCLR2_NONE, F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
+			7'b1110_101: dlut_out = { F, F, F,  IMM_C_NARROW, SCLR1_4_0, SCLR2_NONE,  F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
+			7'b1110_110: dlut_out = { F, F, F,  IMM_C_NARROW, SCLR1_NONE, SCLR2_NONE, F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
 			
 			// Format B (branch)
 			7'b1111_000: dlut_out = { F, F, F, IMM_E, SCLR1_4_0, SCLR2_NONE,   F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
 			7'b1111_001: dlut_out = { F, F, F, IMM_E, SCLR1_4_0, SCLR2_NONE,   F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
 			7'b1111_010: dlut_out = { F, F, F, IMM_E, SCLR1_4_0, SCLR2_NONE,   F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
-			7'b1111_011: dlut_out = { F, F, F, IMM_E, SCLR1_NONE, SCLR2_NONE,     F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
-			7'b1111_100: dlut_out = { F, F, T, IMM_E, SCLR1_NONE, SCLR2_PC,     F, F, F, F, OP2_SRC_SCALAR2, MASK_SRC_ALL_ONES, F, T };
+			7'b1111_011: dlut_out = { F, F, F, IMM_E, SCLR1_NONE, SCLR2_NONE,  F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
+			7'b1111_100: dlut_out = { F, F, T, IMM_E, SCLR1_NONE, SCLR2_PC,    F, F, F, F, OP2_SRC_SCALAR2, MASK_SRC_ALL_ONES, F, T };
 			7'b1111_101: dlut_out = { F, F, F, IMM_E, SCLR1_4_0, SCLR2_NONE,   F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
-			7'b1111_110: dlut_out = { F, F, T, IMM_E, SCLR1_4_0, SCLR2_PC,   F, F, F, F, OP2_SRC_SCALAR2, MASK_SRC_ALL_ONES, F, T };
-			7'b1111_111: dlut_out = { F, F, T, IMM_E, SCLR1_4_0, SCLR2_PC,   F, F, F, F, OP2_SRC_SCALAR2, MASK_SRC_ALL_ONES, F, F };
+			7'b1111_110: dlut_out = { F, F, T, IMM_E, SCLR1_4_0, SCLR2_PC,     F, F, F, F, OP2_SRC_SCALAR2, MASK_SRC_ALL_ONES, F, T };
+			7'b1111_111: dlut_out = { F, F, T, IMM_E, SCLR1_4_0, SCLR2_PC,     F, F, F, F, OP2_SRC_SCALAR2, MASK_SRC_ALL_ONES, F, F };
 
 			// Invalid instruction format
 			default: dlut_out = { T, F, F, IMM_DONT_CARE, SCLR1_NONE, SCLR2_NONE, F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
@@ -192,10 +192,10 @@ module instruction_decode_stage(
 	assign is_getlane = (is_fmt_r || is_fmt_i) && alu_op == OP_GETLANE;
 	
 	assign is_nop = ifd_instruction == `INSTRUCTION_NOP;
-	assign is_legal_instruction = !dlut_out.illegal && !ifd_ifetch_fault && !ifd_tlb_miss;
+	assign is_legal_instruction = !dlut_out.illegal && !ifd_alignment_fault && !ifd_tlb_miss;
 	
 	assign decoded_instr_nxt.illegal = dlut_out.illegal;
-	assign decoded_instr_nxt.ifetch_fault = ifd_ifetch_fault;
+	assign decoded_instr_nxt.ifetch_fault = ifd_alignment_fault;
 	assign decoded_instr_nxt.tlb_miss = ifd_tlb_miss;
 	assign decoded_instr_nxt.has_scalar1 = dlut_out.scalar1_loc != SCLR1_NONE && !is_nop
 		&& is_legal_instruction;
@@ -289,7 +289,7 @@ module instruction_decode_stage(
 	
 	always_comb
 	begin
-		if (dlut_out.illegal || ifd_ifetch_fault || ifd_tlb_miss)
+		if (dlut_out.illegal || ifd_alignment_fault || ifd_tlb_miss)
 			decoded_instr_nxt.pipeline_sel = PIPE_SCYCLE_ARITH;
 		else if (is_fmt_r || is_fmt_i)
 		begin
@@ -361,7 +361,10 @@ module instruction_decode_stage(
 		end
 		else
 		begin
-			id_instruction_valid <= ifd_instruction_valid && (!wb_rollback_en || wb_rollback_thread_idx != ifd_thread_idx);
+			// We piggyback ifetch faults and TLB misses inside instructions, so mark
+			// the instruction valid if these conditions occur
+			id_instruction_valid <= (ifd_instruction_valid || ifd_tlb_miss || ifd_alignment_fault) 
+				&& (!wb_rollback_en || wb_rollback_thread_idx != ifd_thread_idx);
 			id_instruction <= decoded_instr_nxt;
 			id_thread_idx <= ifd_thread_idx;
 		end

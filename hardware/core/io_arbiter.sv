@@ -87,7 +87,7 @@ module io_arbiter(
 			ia_response <= '0;
 
 			`ifdef NEVER
-			// Suppress autoreset
+			// Suppress AUTORESET
 			ia_response.core <= '0;
 			ia_response.read_value <= '0;
 			ia_response.thread_idx <= '0;

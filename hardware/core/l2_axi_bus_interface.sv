@@ -23,11 +23,14 @@
 // this reissues them to the L2 pipeline via the arbiter.
 //
 // If this is already handling the request for a line, it set a flag that 
-// causes it to reissue the request to the L2 pipeline, but doesn't actually 
-// read or write system memory.
+// causes it to reissue the request to the L2 pipeline, but doesn't read 
+// or write system memory.
 //
 // The interface to system memory is the AMBA AXI interface.
 // http://www.arm.com/products/system-ip/amba-specifications.php
+//
+// XXX This does not overlap address and data phases, but it should to improve
+// bus utilization.
 //
 
 module l2_axi_bus_interface(

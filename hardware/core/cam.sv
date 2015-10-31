@@ -48,7 +48,6 @@ module cam
 	logic[NUM_ENTRIES - 1:0] hit_oh;
 
 	genvar test_index;
-	
 	generate
 		for (test_index = 0; test_index < NUM_ENTRIES; test_index++)
 		begin : lookup_gen

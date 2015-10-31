@@ -106,29 +106,29 @@ module de2_115_top(
 	nyuzi #(.RESET_PC(BOOT_ROM_BASE)) nyuzi(
 			.interrupt_req(0),
 		/*AUTOINST*/
-					       // Interfaces
-					       .axi_bus		(axi_bus_s0),	 // Templated
-					       // Outputs
-					       .processor_halt	(processor_halt),
-					       .io_write_en	(io_write_en),
-					       .io_read_en	(io_read_en),
-					       .io_address	(io_address),
-					       .io_write_data	(io_write_data),
-					       // Inputs
-					       .clk		(clk),
-					       .reset		(reset),
-					       .io_read_data	(io_read_data));
+						// Interfaces
+						.axi_bus	(axi_bus_s0),	 // Templated
+						// Outputs
+						.processor_halt	(processor_halt),
+						.io_write_en	(io_write_en),
+						.io_read_en	(io_read_en),
+						.io_address	(io_address),
+						.io_write_data	(io_write_data),
+						// Inputs
+						.clk		(clk),
+						.reset		(reset),
+						.io_read_data	(io_read_data));
 	
 	axi_interconnect #(.M1_BASE_ADDRESS(BOOT_RAM_BASE)) axi_interconnect(
 		/*AUTOINST*/
-					  // Interfaces
-					  .axi_bus_m0		(axi_bus_m0.master),
-					  .axi_bus_m1		(axi_bus_m1.master),
-					  .axi_bus_s0		(axi_bus_s0.slave),
-					  .axi_bus_s1		(axi_bus_s1.slave),
-					  // Inputs
-					  .clk			(clk),
-					  .reset		(reset));
+									     // Interfaces
+									     .axi_bus_m0	(axi_bus_m0.master),
+									     .axi_bus_m1	(axi_bus_m1.master),
+									     .axi_bus_s0	(axi_bus_s0.slave),
+									     .axi_bus_s1	(axi_bus_s1.slave),
+									     // Inputs
+									     .clk		(clk),
+									     .reset		(reset));
 
 	synchronizer reset_synchronizer(
 		.clk(clk),

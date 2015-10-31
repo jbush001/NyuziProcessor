@@ -23,7 +23,7 @@
 //   algorithm, avoid various types of conflicts:
 //   * inter-instruction register dependencies, tracked using a scoreboard
 //     for each thread. 
-//   * writeback hazards among the pipelines of different lengths, tracked
+//   * writeback hazards between the pipelines of different lengths, tracked
 //     with a shared shift register.
 // - Tracks dcache misses and suspends threads until they are resolved.
 //
@@ -57,7 +57,7 @@ module thread_select_stage(
 	input pipeline_sel_t               wb_rollback_pipeline,
 	input subcycle_t                   wb_rollback_subcycle,
 
-	// From control_registers
+	// From top level module
 	input thread_bitmap_t              ny_thread_enable,
 	
 	// From dcache_data_stage
@@ -69,7 +69,7 @@ module thread_select_stage(
 	output logic                       perf_instruction_issue);
 
 	localparam THREAD_FIFO_SIZE = 8;
-	
+
 	// Number of stages in longest pipeline
 	localparam ROLLBACK_STAGES = 5;
 

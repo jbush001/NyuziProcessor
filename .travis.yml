@@ -3,6 +3,7 @@ sudo: required
 services:
 - docker
 
+# Dockerfile is here: https://github.com/jbush001/NyuziBuildContainer
 before_install:
 - docker pull jeffbush001/nyuzi-build	
 
