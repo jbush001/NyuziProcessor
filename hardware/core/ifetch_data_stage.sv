@@ -21,6 +21,7 @@
 // - If PC selected in the ifetch_tag_stage is in the instruction cache, reads 
 //   the contents of the cache line.
 // - Drives signals to update LRU in previous stage
+// - Detects alignment fault and TLB misses.
 //
 
 module ifetch_data_stage(
@@ -29,7 +30,7 @@ module ifetch_data_stage(
 
 	// From ifetch_tag_stage.  
 	// If ift_instruction_requested is low, the other signals in this group are 
-	// undefined and should be ignored.
+	// undefined.
 	input                            ift_instruction_requested,
 	input l1i_addr_t                 ift_pc_paddr,
 	input scalar_t                   ift_pc_vaddr,
@@ -69,9 +70,6 @@ module ifetch_data_stage(
 	input                            wb_rollback_en,
 	input thread_idx_t               wb_rollback_thread_idx,
 
-	// From control_registers
-	input                            cr_mmu_en[`THREADS_PER_CORE],
-
 	// Performance counters
 	output logic                     perf_icache_hit,
 	output logic                     perf_icache_miss,
@@ -82,9 +80,8 @@ module ifetch_data_stage(
 	l1i_way_idx_t way_hit_idx;
 	logic[`CACHE_LINE_BITS - 1:0] fetched_cache_line;
 	scalar_t fetched_word;
-	logic[$clog2(`CACHE_LINE_WORDS) - 1:0] cache_lane;
+	logic[$clog2(`CACHE_LINE_WORDS) - 1:0] cache_lane_idx;
 	logic alignment_fault;
-	logic tlb_miss;
 
 	// 
 	// Check for cache hit
@@ -105,6 +102,13 @@ module ifetch_data_stage(
 		.one_hot(way_hit_oh),
 		.index(way_hit_idx));
 
+	// ifd_near_miss is high if the cache line requested in the last stage
+	// is filled this cycle. If we treated this as a cache miss, it would be 
+	// fetch duplicate lines into the cache set. If we blocked the thread, 
+	// it would hang (because the wakeup signal is happening this cycle). 
+	// The cache interface updates the tag, then the data a cycle later, so 
+	// the data will appear in the next cycle. In order to pick up the data,
+	// this signal goes back to the previous stage to make it retry the same PC.
 	assign ifd_near_miss = !cache_hit 
 		&& ift_tlb_hit
 		&& ift_instruction_requested
@@ -119,12 +123,11 @@ module ifetch_data_stage(
 	assign ifd_cache_miss_thread_idx = ift_thread_idx;
 	assign perf_icache_hit = cache_hit && ift_instruction_requested;
 	assign perf_icache_miss = !cache_hit && ift_tlb_hit && ift_instruction_requested;
-	assign perf_itlb_miss = ift_instruction_requested && tlb_miss;
+	assign perf_itlb_miss = ift_instruction_requested && !ift_tlb_hit;
 	assign alignment_fault = ift_pc_paddr[1:0] != 0;
-	assign tlb_miss = !ift_tlb_hit && cr_mmu_en[ift_thread_idx];
 
 	//
-	// Instruction cache data
+	// Cache data
 	//
 	sram_1r1w #(
 		.DATA_WIDTH(`CACHE_LINE_BITS), 
@@ -139,8 +142,8 @@ module ifetch_data_stage(
 		.write_data(l2i_idata_update_data),
 		.*);
 
-	assign cache_lane = ~ifd_pc[`CACHE_LINE_OFFSET_WIDTH - 1:2];
-	assign fetched_word = fetched_cache_line[32 * cache_lane+:32];
+	assign cache_lane_idx = ~ifd_pc[`CACHE_LINE_OFFSET_WIDTH - 1:2];
+	assign fetched_word = fetched_cache_line[32 * cache_lane_idx+:32];
 	assign ifd_instruction = { fetched_word[7:0], fetched_word[15:8], fetched_word[23:16], fetched_word[31:24] };
 
 	assign ifd_update_lru_en = cache_hit && ift_instruction_requested;
@@ -165,12 +168,14 @@ module ifetch_data_stage(
 			// if an instruction wasn't requested).
 			assert(!ift_instruction_requested || $onehot0(way_hit_oh));
 
+			// We piggyback faults and TLB misses inside instructions, so mark it valid
+			// if those conditions have occurred.
 			ifd_instruction_valid <= ift_instruction_requested && (!wb_rollback_en || wb_rollback_thread_idx 
-				!= ift_thread_idx) && (cache_hit || alignment_fault || tlb_miss);
+				!= ift_thread_idx) && (cache_hit || alignment_fault || !ift_tlb_hit);
 			ifd_pc <= ift_pc_vaddr;
 			ifd_thread_idx <= ift_thread_idx;
 			ifd_ifetch_fault <= alignment_fault;
-			ifd_tlb_miss <= tlb_miss;
+			ifd_tlb_miss <= !ift_tlb_hit;
 		end
 	end
 endmodule

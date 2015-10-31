@@ -19,7 +19,8 @@
 //
 // Instruction Pipeline - Instruction Fetch Tag Stage
 // - Selects a program counter from one of the threads to fetch from the
-//   instruction cache.
+//   instruction cache. It tries to fetch an instruction from a different 
+//   thread every cycle whenever possible.
 // - Reads instruction cache tag memory to determine if the cache line is 
 //   resident.
 // - Reads translation lookaside buffer to translate from virtual to physical
@@ -79,7 +80,7 @@ module ifetch_tag_stage
 
 	scalar_t next_program_counter[`THREADS_PER_CORE];
 	thread_idx_t selected_thread_idx;
-	thread_idx_t last_selected_thread_idx;
+	scalar_t last_selected_pc;
 	l1i_addr_t pc_to_fetch;
 	thread_bitmap_t can_fetch_thread_bitmap;
 	thread_bitmap_t selected_thread_oh;
@@ -92,21 +93,19 @@ module ifetch_tag_stage
 	page_index_t tlb_ppage_idx;
 	page_index_t ppage_idx;
 	logic tlb_hit;
-	scalar_t last_fetched_pc;
 
 	//
 	// Pick which thread to fetch next.
-	// Only consider threads that are not blocked. However, this does not skip 
-	// threads that have an active rollback in the current cycle. 
+	// Only consider threads that are not blocked. However, do not skip 
+	// threads that are being rolled back in the current cycle. 
 	// Although that is straightforward to do, the rollback signals have a long
-	// combinational path that end up being the critical path for clock speed. 
-	// Instead, when the selected thread is rolled back in the same cycle, 
-	// invalidate the instruction by deasserting ift_instruction_requested. 
-	// This wastes a cycle, but this should be infrequent.
+	// combinational path that is a critical path for clock speed. Instead, when 
+	// the selected thread is rolled back in the same cycle, invalidate the 
+	// instruction by deasserting ift_instruction_requested. This wastes a cycle, 
+	// but this should be infrequent.
 	//
 	assign can_fetch_thread_bitmap = ts_fetch_en & ~icache_wait_threads;
 	assign cache_fetch_en = |can_fetch_thread_bitmap;
-	
 
 	arbiter #(.NUM_REQUESTERS(`THREADS_PER_CORE)) arbiter_thread_select(
 		.request(can_fetch_thread_bitmap),
@@ -146,7 +145,7 @@ module ifetch_tag_stage
 		for (way_idx = 0; way_idx < `L1I_WAYS; way_idx++)
 		begin : way_tag_gen
 			// Valid flags are flops instead of SRAM because they need
-			// to all be simulatenously cleared on reset.
+			// to simultaneously be cleared on reset.
 			logic line_valid[`L1I_SETS];
 
 			sram_1r1w #(
@@ -198,12 +197,11 @@ module ifetch_tag_stage
 		.invalidate_vpage_idx(dd_invalidate_tlb_vpage_idx),
 		.*);
 
-	// These combinational signals are after the output flops of
-	// this stage (and the TLB has one cycle of latency.) All 
-	// inputs to this should be registered.
+	// These combinational signals are after the output flops of this stage (and
+	// the TLB has one cycle of latency). All inputs to this should be registered.
 	always_comb
 	begin
-		if (cr_mmu_en[last_selected_thread_idx])
+		if (cr_mmu_en[ift_thread_idx])
 		begin
 			ift_tlb_hit = tlb_hit;
 			ppage_idx = tlb_ppage_idx;
@@ -211,13 +209,13 @@ module ifetch_tag_stage
 		else
 		begin
 			ift_tlb_hit = 1;
-			ppage_idx = last_fetched_pc[31-:`PAGE_NUM_BITS];
+			ppage_idx = last_selected_pc[31-:`PAGE_NUM_BITS];
 		end
 	end
 `else
-	// If MMU is disabled, just identity map addresses
+	// If MMU is disabled, identity map addresses
 	assign ift_tlb_hit = 1;
-	assign ppage_idx = last_fetched_pc[31-:`PAGE_NUM_BITS];;
+	assign ppage_idx = last_selected_pc[31-:`PAGE_NUM_BITS];;
 `endif
 
 	cache_lru #(.NUM_WAYS(`L1D_WAYS), .NUM_SETS(`L1I_SETS)) cache_lru(
@@ -253,16 +251,14 @@ module ifetch_tag_stage
 			icache_wait_threads <= '0;
 			ift_instruction_requested <= '0;
 			ift_thread_idx <= '0;
-			last_fetched_pc <= '0;
-			last_selected_thread_idx <= '0;
+			last_selected_pc <= '0;
 			last_selected_thread_oh <= '0;
 			// End of automatics
 		end
 		else
 		begin
 			icache_wait_threads <= icache_wait_threads_nxt;
-			last_fetched_pc <= pc_to_fetch;
-			last_selected_thread_idx <= selected_thread_idx;
+			last_selected_pc <= pc_to_fetch;
 			ift_thread_idx <= selected_thread_idx;
 			ift_instruction_requested <= |can_fetch_thread_bitmap
 				&& !((ifd_cache_miss || ifd_near_miss) && ifd_cache_miss_thread_idx == selected_thread_idx)	
@@ -278,8 +274,8 @@ module ifetch_tag_stage
 		end
 	end
 	
-	assign ift_pc_paddr = { ppage_idx, last_fetched_pc[31 - `PAGE_NUM_BITS:0] };
-	assign ift_pc_vaddr = last_fetched_pc;
+	assign ift_pc_paddr = { ppage_idx, last_selected_pc[31 - `PAGE_NUM_BITS:0] };
+	assign ift_pc_vaddr = last_selected_pc;
 endmodule
 
 // Local Variables:
