@@ -53,6 +53,9 @@ module tlb
 	logic[NUM_WAYS - 1:0] way_hit_oh;
 	page_index_t way_ppage_idx[NUM_WAYS];
 	page_index_t lookup_vpage_idx_latched;
+	logic[SET_INDEX_WIDTH - 1:0] lookup_set_idx;
+
+	assign lookup_set_idx = lookup_vpage_idx[SET_INDEX_WIDTH - 1:0];
 
 	// This does not need to bypass TLB values that are read and written
 	// in the same cycle like the L1 caches. These are updated 
@@ -65,9 +68,7 @@ module tlb
 			page_index_t way_vpage_idx;
 			logic way_valid;
 			logic entry_valid[NUM_SETS];
-			logic[SET_INDEX_WIDTH - 1:0] lookup_set_idx;
 		
-			assign lookup_set_idx = lookup_vpage_idx[SET_INDEX_WIDTH - 1:0];
 			sram_1r1w #(
 				.SIZE(NUM_SETS), 
 				.DATA_WIDTH(`PAGE_NUM_BITS * 2),
@@ -112,8 +113,6 @@ module tlb
 							entry_valid[set_idx] <= 1;
 						end
 					end
-						
-					lookup_vpage_idx_latched <= lookup_vpage_idx;
 				end
 			end
 				
@@ -159,6 +158,7 @@ module tlb
 				$finish;
 			end
 `endif
+			lookup_vpage_idx_latched <= lookup_vpage_idx;
 			if (update_en)
 				update_way <= update_way + 1;
 		end
