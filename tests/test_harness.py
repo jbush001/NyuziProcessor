@@ -14,6 +14,10 @@
 # limitations under the License.
 #
 
+#
+# Utility functions for unit tests
+#
+
 import subprocess
 import os
 import sys
@@ -21,9 +25,9 @@ import re
 import traceback
 
 COMPILER_DIR = '/usr/local/llvm-nyuzi/bin/'
-BASE_DIR = os.path.normpath(os.path.dirname(os.path.abspath(__file__)) + '/../')
-LIB_DIR = BASE_DIR + '/software/libs/'
-BIN_DIR = BASE_DIR + '/bin/'
+PROJECT_TOP = os.path.normpath(os.path.dirname(os.path.abspath(__file__)) + '/../')
+LIB_DIR = PROJECT_TOP + '/software/libs/'
+BIN_DIR = PROJECT_TOP + '/bin/'
 OBJ_DIR = 'obj/'
 ELF_FILE = OBJ_DIR + 'test.elf'
 HEX_FILE = OBJ_DIR + 'test.hex'
@@ -38,7 +42,8 @@ def compile_test(source_file, optlevel='3'):
 	if not os.path.exists(OBJ_DIR):
 		os.makedirs(OBJ_DIR)
 
-	compiler_args = [COMPILER_DIR + 'clang', '-o', ELF_FILE, 
+	compiler_args = [COMPILER_DIR + 'clang', 
+		'-o', ELF_FILE, 
 		'-w',
 		'-O' + optlevel,
 		'-I' + LIB_DIR + 'libc/include',
@@ -212,18 +217,17 @@ def execute_tests():
 	if failing_tests != []:
 		sys.exit(1)
 
+
 #
-# This reads the results of a program from stdin and a source file specified
-# on the command line.  For each line in the source file prefixed with 
-# 'CHECK:', it searches to see if that string occurs in the program output. 
-# The strings must occur in order.  It ignores any other output between the
-# strings.
+# For each pattern in source_file that begins with 'CHECK:', this searches
+# to see if the regular expression that follows it occurs in program_output. 
+# The strings must occur in order, but this ignores any other output between
+# them.
 #
-def check_result(source_file, result):
+def check_result(source_file, program_output):
 	PREFIX = 'CHECK: '
 
-	# Read expected results
-	resultOffset = 0
+	output_offset = 0
 	lineNo = 1
 	foundCheckLines = False
 	with open(source_file, 'r') as f:
@@ -233,12 +237,12 @@ def check_result(source_file, result):
 				foundCheckLines = True
 				expected = line[chkoffs + len(PREFIX):].strip()
 				regexp = re.compile(expected)
-				got = regexp.search(result, resultOffset)
+				got = regexp.search(program_output, output_offset)
 				if got:
-					resultOffset = got.end()
+					output_offset = got.end()
 				else:
 					error = 'FAIL: line ' + str(lineNo) + ' expected string ' + expected + ' was not found\n'
-					error += 'searching here:' + result[resultOffset:]
+					error += 'searching here:' + output_offset[output_offset:]
 					raise TestException(error)
 
 			lineNo += 1
