@@ -242,7 +242,7 @@ def check_result(source_file, program_output):
 					output_offset = got.end()
 				else:
 					error = 'FAIL: line ' + str(lineNo) + ' expected string ' + expected + ' was not found\n'
-					error += 'searching here:' + output_offset[output_offset:]
+					error += 'searching here:' + program_output[output_offset:]
 					raise TestException(error)
 
 			lineNo += 1
