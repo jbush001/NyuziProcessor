@@ -57,8 +57,6 @@ module core
 
 	/*AUTOLOGIC*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	logic		cr_dtlb_update_en;	// From control_registers of control_registers.v
-	logic		cr_itlb_update_en;	// From control_registers of control_registers.v
 	logic		cr_mmu_en [`THREADS_PER_CORE];// From control_registers of control_registers.v
 	logic		dd_access_fault;	// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_cache_miss;		// From dcache_data_stage of dcache_data_stage.v
@@ -74,9 +72,6 @@ module core
 	logic		dd_iinvalidate_en;	// From dcache_data_stage of dcache_data_stage.v
 	decoded_instruction_t dd_instruction;	// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_instruction_valid;	// From dcache_data_stage of dcache_data_stage.v
-	logic		dd_invalidate_tlb_all;	// From dcache_data_stage of dcache_data_stage.v
-	logic		dd_invalidate_tlb_en;	// From dcache_data_stage of dcache_data_stage.v
-	page_index_t	dd_invalidate_tlb_vpage_idx;// From dcache_data_stage of dcache_data_stage.v
 	scalar_t	dd_io_addr;		// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_io_read_en;		// From dcache_data_stage of dcache_data_stage.v
 	thread_idx_t	dd_io_thread_idx;	// From dcache_data_stage of dcache_data_stage.v
@@ -106,6 +101,9 @@ module core
 	l1d_way_idx_t	dt_fill_lru;		// From dcache_tag_stage of dcache_tag_stage.v
 	decoded_instruction_t dt_instruction;	// From dcache_tag_stage of dcache_tag_stage.v
 	logic		dt_instruction_valid;	// From dcache_tag_stage of dcache_tag_stage.v
+	logic		dt_invalidate_tlb_all;	// From dcache_tag_stage of dcache_tag_stage.v
+	logic		dt_invalidate_tlb_en;	// From dcache_tag_stage of dcache_tag_stage.v
+	page_index_t	dt_invalidate_tlb_vpage_idx;// From dcache_tag_stage of dcache_tag_stage.v
 	vector_lane_mask_t dt_mask_value;	// From dcache_tag_stage of dcache_tag_stage.v
 	l1d_addr_t	dt_request_paddr;	// From dcache_tag_stage of dcache_tag_stage.v
 	l1d_addr_t	dt_request_vaddr;	// From dcache_tag_stage of dcache_tag_stage.v
@@ -116,6 +114,9 @@ module core
 	l1d_tag_t	dt_tag [`L1D_WAYS];	// From dcache_tag_stage of dcache_tag_stage.v
 	thread_idx_t	dt_thread_idx;		// From dcache_tag_stage of dcache_tag_stage.v
 	logic		dt_tlb_hit;		// From dcache_tag_stage of dcache_tag_stage.v
+	logic		dt_update_itlb_en;	// From dcache_tag_stage of dcache_tag_stage.v
+	page_index_t	dt_update_itlb_ppage_idx;// From dcache_tag_stage of dcache_tag_stage.v
+	page_index_t	dt_update_itlb_vpage_idx;// From dcache_tag_stage of dcache_tag_stage.v
 	logic		dt_valid [`L1D_WAYS];	// From dcache_tag_stage of dcache_tag_stage.v
 	logic [`VECTOR_LANES-1:0] [7:0] fx1_add_exponent;// From fp_execute_stage1 of fp_execute_stage1.v
 	logic [`VECTOR_LANES-1:0] fx1_add_result_sign;// From fp_execute_stage1 of fp_execute_stage1.v

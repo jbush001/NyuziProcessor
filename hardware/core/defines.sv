@@ -99,12 +99,14 @@ typedef enum logic[3:0] {
 } memory_op_t;
 
 typedef enum logic[2:0] {
+	CACHE_DTLB_INSERT   = 3'b000,
 	CACHE_DINVALIDATE   = 3'b001,
 	CACHE_DFLUSH        = 3'b010,
 	CACHE_IINVALIDATE   = 3'b011,
 	CACHE_MEMBAR        = 3'b100,
 	CACHE_TLB_INVAL     = 3'b101,
-	CACHE_TLB_INVAL_ALL = 3'b110
+	CACHE_TLB_INVAL_ALL = 3'b110,
+	CACHE_ITLB_INSERT   = 3'b111
 } cache_op_t;
 
 typedef enum logic[2:0] {
@@ -152,9 +154,6 @@ typedef enum logic [4:0] {
 	CR_FAULT_ADDRESS = 5'd5,
 	CR_CYCLE_COUNT = 5'd6,
 	CR_TLB_MISS_HANDLER = 5'd7,
-	CR_TLB_UPDATE_PHYS = 5'd8,
-	CR_ITLB_UPDATE_VIRT = 5'd9,
-	CR_DTLB_UPDATE_VIRT = 5'd10,
 	CR_SCRATCHPAD0 = 5'd11,
 	CR_SCRATCHPAD1 = 5'd12,
 	CR_SUBCYCLE = 5'd13

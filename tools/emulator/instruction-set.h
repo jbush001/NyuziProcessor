@@ -124,9 +124,6 @@ enum _ControlRegister {
 	CR_FAULT_ADDRESS = 5,
 	CR_CYCLE_COUNT = 6,
 	CR_TLB_MISS_HANDLER = 7,
-	CR_TLB_UPDATE_PHYS = 8,
-	CR_ITLB_UPDATE_VIRT = 9,
-	CR_DTLB_UPDATE_VIRT = 10,
 	CR_SCRATCHPAD0 = 11,
 	CR_SCRATCHPAD1 = 12,
 	CR_SUBCYCLE = 13
@@ -147,8 +144,10 @@ typedef enum _FaultReason FaultReason;
 
 enum _CacheControlOp
 {
+	CC_DTLB_INSERT = 0,
 	CC_INVALIDATE_TLB = 5,
-	CC_INVALIDATE_TLB_ALL
+	CC_INVALIDATE_TLB_ALL = 6,
+	CC_ITLB_INSERT = 7
 };
 typedef enum _CacheControlOp CacheControlOp;
 

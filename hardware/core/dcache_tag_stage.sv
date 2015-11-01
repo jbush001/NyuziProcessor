@@ -58,9 +58,15 @@ module dcache_tag_stage
 	// from dcache_data_stage
 	input                                       dd_update_lru_en,
 	input l1d_way_idx_t                         dd_update_lru_way,
-	input                                       dd_invalidate_tlb_en,
-	input                                       dd_invalidate_tlb_all,
-	input page_index_t                          dd_invalidate_tlb_vpage_idx,
+
+	// To ifetch_tag_stage
+	output                                      dt_invalidate_tlb_en,
+	output                                      dt_invalidate_tlb_all,
+	output page_index_t                         dt_invalidate_tlb_vpage_idx,
+	output                                      dt_update_itlb_en,
+	output page_index_t                         dt_update_itlb_vpage_idx,
+	output page_index_t                         dt_update_itlb_ppage_idx,
+	
 	
 	// From l2_cache_interface
 	input                                       l2i_dcache_lru_fill_en,
@@ -74,9 +80,6 @@ module dcache_tag_stage
 
 	// From control_registers
 	input                                       cr_mmu_en[`THREADS_PER_CORE],
-	input                                       cr_dtlb_update_en,
-	input page_index_t                          cr_tlb_update_ppage_idx,
-	input page_index_t                          cr_tlb_update_vpage_idx,
 
 	// To l2_cache_interface
 	output logic                                dt_snoop_valid[`L1D_WAYS],
@@ -98,10 +101,14 @@ module dcache_tag_stage
 	page_index_t ppage_idx;
 	scalar_t fetched_addr;
 	logic tlb_lookup_en;
+	logic is_valid_cache_control;
+	logic update_dtlb_en;
 
 	assign instruction_valid = of_instruction_valid 
 		&& (!wb_rollback_en || wb_rollback_thread_idx != of_thread_idx) 
 		&& of_instruction.pipeline_sel == PIPE_MEM;
+	assign is_valid_cache_control = instruction_valid
+		&& of_instruction.is_cache_control;
 	assign cache_load_en = instruction_valid 
 		&& of_instruction.memory_access_type != MEM_CONTROL_REG
 		&& of_instruction.is_memory_access      // Not cache control
@@ -110,6 +117,18 @@ module dcache_tag_stage
 		&& of_instruction.memory_access_type != MEM_CONTROL_REG;
 	assign scgath_lane = ~of_subcycle;
 	assign request_addr_nxt = of_operand1[scgath_lane] + of_instruction.immediate_value;
+	assign dt_invalidate_tlb_en = is_valid_cache_control
+		&& (of_instruction.cache_control_op == CACHE_TLB_INVAL
+		|| of_instruction.cache_control_op == CACHE_TLB_INVAL_ALL);
+	assign dt_invalidate_tlb_all = of_instruction.cache_control_op 
+		== CACHE_TLB_INVAL_ALL;
+	assign dt_invalidate_tlb_vpage_idx = of_operand1[0][31-:`PAGE_NUM_BITS];
+	assign update_dtlb_en = is_valid_cache_control
+		&& of_instruction.cache_control_op == CACHE_DTLB_INSERT;
+	assign dt_update_itlb_en = is_valid_cache_control
+		&& of_instruction.cache_control_op == CACHE_ITLB_INSERT;
+	assign dt_update_itlb_vpage_idx = of_operand1[0][31-:`PAGE_NUM_BITS];
+	assign dt_update_itlb_ppage_idx = of_store_value[0][31-:`PAGE_NUM_BITS];
 
 	//
 	// Way metadata
@@ -178,12 +197,12 @@ module dcache_tag_stage
 		.lookup_vpage_idx(request_addr_nxt[31-:`PAGE_NUM_BITS]),
 		.lookup_ppage_idx(tlb_ppage_idx),
 		.lookup_hit(tlb_hit),
-		.update_en(cr_dtlb_update_en),
-		.update_ppage_idx(cr_tlb_update_ppage_idx),
-		.update_vpage_idx(cr_tlb_update_vpage_idx),
-		.invalidate_en(dd_invalidate_tlb_en),
-		.invalidate_all(dd_invalidate_tlb_all),
-		.invalidate_vpage_idx(dd_invalidate_tlb_vpage_idx),
+		.update_en(update_dtlb_en),
+		.update_ppage_idx(of_store_value[0][31-:`PAGE_NUM_BITS]),
+		.update_vpage_idx(of_operand1[0][31-:`PAGE_NUM_BITS]),
+		.invalidate_en(dt_invalidate_tlb_en),
+		.invalidate_all(dt_invalidate_tlb_all),
+		.invalidate_vpage_idx(dt_invalidate_tlb_vpage_idx),
 		.*);
 		
 	// This combinational logic is after the flip flops,

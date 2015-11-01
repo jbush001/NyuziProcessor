@@ -26,14 +26,12 @@
 
 void add_itlb_mapping(unsigned int va, unsigned int pa)
 {
-	__builtin_nyuzi_write_control_reg(8, pa);
-	__builtin_nyuzi_write_control_reg(9, va);
+	asm("itlbinsert %0, %1" : : "r" (va), "r" (pa));
 }
 
 void add_dtlb_mapping(unsigned int va, unsigned int pa)
 {
-	__builtin_nyuzi_write_control_reg(8, pa);
-	__builtin_nyuzi_write_control_reg(10, va);
+	asm("dtlbinsert %0, %1" : : "r" (va), "r" (pa));
 }
 
 void printmsg(const char *value)

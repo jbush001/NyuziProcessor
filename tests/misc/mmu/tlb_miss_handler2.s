@@ -22,13 +22,14 @@
 tlb_miss_handler:		setcr s0, 11		# Save s0 in scratchpad
 						setcr s1, 12        # Save s1
 						getcr s0, 5			# Get fault virtual address
-						setcr s0, 8			# Set physical address
 						getcr s1, 3			# Get fault reason
 						cmpeq_i s1, s1, 5	# Is ITLB miss?
 						btrue s1, fill_itlb # If so, branch to update ITLB
-fill_dltb:				setcr s0, 10        # Set virtual address for DTLB
+fill_dltb:				getcr s1, 5			# Get virtual address
+						dtlbinsert s1, s0
 						goto done
-fill_itlb:				setcr s0, 9         # Set virtual address for ITLB
+fill_itlb:				getcr s1, 5			# Get virtual address
+						itlbinsert s1, s0
 done:					getcr s0, 11        # Get saved s0 from scratchpad
 						getcr s1, 12        # Get saved s1
 						eret

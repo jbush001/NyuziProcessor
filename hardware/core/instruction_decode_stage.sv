@@ -107,6 +107,7 @@ module instruction_decode_stage(
 	logic is_nop;
 	logic is_fmt_r;
 	logic is_fmt_i;
+	logic is_fmt_m;
 	logic is_getlane;
 	logic is_compare;
 	alu_op_t alu_op;
@@ -164,13 +165,14 @@ module instruction_decode_stage(
 			7'b10_1_1110: dlut_out = { F, T, T, IMM_C_NARROW, SCLR1_4_0, SCLR2_14_10, T, T, F, T, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, F, F };
 			
 			// Format C (cache control)
-			7'b1110_000: dlut_out = { F, F, F,  IMM_C_NARROW, SCLR1_4_0, SCLR2_NONE,  F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
+			7'b1110_000: dlut_out = { F, F, F,  IMM_C_NARROW, SCLR1_4_0, SCLR2_9_5,  F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
 			7'b1110_001: dlut_out = { F, F, F,  IMM_C_NARROW, SCLR1_4_0, SCLR2_NONE,  F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
 			7'b1110_010: dlut_out = { F, F, F,  IMM_C_NARROW, SCLR1_4_0, SCLR2_NONE,  F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
 			7'b1110_011: dlut_out = { F, F, F,  IMM_C_NARROW, SCLR1_4_0, SCLR2_NONE,  F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
 			7'b1110_100: dlut_out = { F, F, F,  IMM_C_NARROW, SCLR1_NONE, SCLR2_NONE, F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
 			7'b1110_101: dlut_out = { F, F, F,  IMM_C_NARROW, SCLR1_4_0, SCLR2_NONE,  F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
 			7'b1110_110: dlut_out = { F, F, F,  IMM_C_NARROW, SCLR1_NONE, SCLR2_NONE, F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
+			7'b1110_111: dlut_out = { F, F, F,  IMM_C_NARROW, SCLR1_4_0, SCLR2_9_5,  F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
 			
 			// Format B (branch)
 			7'b1111_000: dlut_out = { F, F, F, IMM_E, SCLR1_4_0, SCLR2_NONE,   F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
@@ -189,6 +191,7 @@ module instruction_decode_stage(
 	
 	assign is_fmt_r = ifd_instruction[31:29] == 3'b110;	// register arithmetic
 	assign is_fmt_i = ifd_instruction[31] == 1'b0;	// immediate arithmetic
+	assign is_fmt_m = ifd_instruction[31:30] == 2'b10;
 	assign is_getlane = (is_fmt_r || is_fmt_i) && alu_op == OP_GETLANE;
 	
 	assign is_nop = ifd_instruction == `INSTRUCTION_NOP;
@@ -309,7 +312,8 @@ module instruction_decode_stage(
 	assign decoded_instr_nxt.memory_access_type = memory_access_type;
 	assign decoded_instr_nxt.is_memory_access = ifd_instruction[31:30] == 2'b10
 		&& is_legal_instruction;
-	assign decoded_instr_nxt.is_load = ifd_instruction[29];
+	assign decoded_instr_nxt.is_load = ifd_instruction[29]
+		&& is_fmt_m;
 	assign decoded_instr_nxt.is_cache_control = ifd_instruction[31:28] == 4'b1110
 		 && is_legal_instruction;
 	assign decoded_instr_nxt.cache_control_op = cache_op_t'(ifd_instruction[27:25]);

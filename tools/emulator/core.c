@@ -1362,7 +1362,6 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 	{
 		// Store
 		uint32_t value = getThreadScalarReg(thread, dstSrcReg);
-		TlbEntry *entry;
 		switch (crIndex)
 		{
 			case CR_FAULT_HANDLER:
@@ -1382,26 +1381,6 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 
 			case CR_TLB_MISS_HANDLER:
 				thread->core->tlbMissHandlerPc = value;
-				break;
-
-			case CR_TLB_UPDATE_PHYS:
-				thread->core->physTlbUpdateAddr = value & PAGE_MASK;
-				break;
-
-			case CR_ITLB_UPDATE_VIRT:
-				entry = &thread->core->itlb[((value / PAGE_SIZE) % TLB_SETS) * TLB_WAYS 
-					+ thread->core->nextITlbWay];
-				entry->virtualAddress = value & PAGE_MASK;
-				entry->physicalAddress = thread->core->physTlbUpdateAddr;
-				thread->core->nextITlbWay = (thread->core->nextITlbWay + 1) % TLB_WAYS;
-				break;
-
-			case CR_DTLB_UPDATE_VIRT:
-				entry = &thread->core->dtlb[((value / PAGE_SIZE) % TLB_SETS) * TLB_WAYS 
-					+ thread->core->nextDTlbWay];
-				entry->virtualAddress = value & PAGE_MASK;
-				entry->physicalAddress = thread->core->physTlbUpdateAddr;
-				thread->core->nextDTlbWay = (thread->core->nextDTlbWay + 1) % TLB_WAYS;
 				break;
 
 			case CR_SCRATCHPAD0:
@@ -1513,12 +1492,40 @@ static void executeBranchInst(Thread *thread, uint32_t instruction)
 static void executeCacheControlInst(Thread *thread, uint32_t instruction)
 {
 	uint32_t op = extractUnsignedBits(instruction, 25, 3);
+	uint32_t ptrReg = extractUnsignedBits(instruction, 0, 5);
 
 	switch (op)
 	{
+		case CC_DTLB_INSERT:
+		case CC_ITLB_INSERT:
+		{
+			uint32_t virtualAddress = getThreadScalarReg(thread, ptrReg) & PAGE_MASK;
+			uint32_t physAddrReg = extractUnsignedBits(instruction, 5, 5);
+			uint32_t physicalAddress = getThreadScalarReg(thread, physAddrReg) & PAGE_MASK;
+			uint32_t *wayPtr;
+			TlbEntry *tlb;
+
+			if (op == CC_DTLB_INSERT)
+			{
+				tlb = thread->core->dtlb;
+				wayPtr = &thread->core->nextDTlbWay;
+			}
+			else
+			{
+				tlb = thread->core->itlb;
+				wayPtr = &thread->core->nextITlbWay;
+			}
+			
+			TlbEntry *entry = &tlb[((virtualAddress / PAGE_SIZE) % TLB_SETS) 
+				* TLB_WAYS + *wayPtr];
+			entry->virtualAddress = virtualAddress;
+			entry->physicalAddress = physicalAddress;
+			*wayPtr = (*wayPtr + 1) % TLB_WAYS;
+			break;
+		}
+		
 		case CC_INVALIDATE_TLB:
 		{
-			uint32_t ptrReg = extractUnsignedBits(instruction, 0, 5);
 			uint32_t offset = extractSignedBits(instruction, 15, 10);
 			uint32_t ptrVal = getThreadScalarReg(thread, ptrReg) + offset;
 			uint32_t tlbIndex = ((ptrVal / PAGE_SIZE) % TLB_SETS) * TLB_WAYS;

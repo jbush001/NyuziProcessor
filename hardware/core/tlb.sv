@@ -91,7 +91,6 @@ module tlb
 
 					/*AUTORESET*/
 					// Beginning of autoreset for uninitialized flops
-					lookup_vpage_idx_latched <= '0;
 					way_valid <= '0;
 					// End of automatics
 				end
@@ -138,6 +137,7 @@ module tlb
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
+			lookup_vpage_idx_latched <= '0;
 			update_way <= '0;
 			// End of automatics
 		end
@@ -154,11 +154,13 @@ module tlb
 			if (!$onehot0(way_hit_oh))
 			begin
 				$display("%m duplicate TLB entry %08x ways %b", {lookup_vpage_idx_latched, 
-					{`PAGE_NUM_BITS{1'b0}}}, way_hit_oh);
+					{$clog2(`PAGE_SIZE){1'b0}}}, way_hit_oh);
 				$finish;
 			end
 `endif
-			lookup_vpage_idx_latched <= lookup_vpage_idx;
+			if (lookup_en)
+				lookup_vpage_idx_latched <= lookup_vpage_idx;
+
 			if (update_en)
 				update_way <= update_way + 1;
 		end

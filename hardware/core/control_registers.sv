@@ -29,10 +29,6 @@ module control_registers
 	// To multiple stages
 	output scalar_t                         cr_eret_address[`THREADS_PER_CORE],
 	output logic                            cr_mmu_en[`THREADS_PER_CORE],
-	output logic                            cr_itlb_update_en,
-	output logic                            cr_dtlb_update_en,
-	output page_index_t                     cr_tlb_update_ppage_idx,
-	output page_index_t                     cr_tlb_update_vpage_idx,
 	
 	// From int_execute_stage
 	input                                   ix_is_eret,
@@ -68,10 +64,6 @@ module control_registers
 	logic prev_mmu_enable[`THREADS_PER_CORE];
 	scalar_t cycle_count;
 	scalar_t scratchpad[`THREADS_PER_CORE * 2];
-	
-	assign cr_itlb_update_en = dd_creg_write_en && dd_creg_index == CR_ITLB_UPDATE_VIRT;
-	assign cr_dtlb_update_en = dd_creg_write_en && dd_creg_index == CR_DTLB_UPDATE_VIRT;
-	assign cr_tlb_update_vpage_idx = dd_creg_write_val[31-:`PAGE_NUM_BITS];
 
 	always_ff @(posedge clk, posedge reset)
 	begin
@@ -97,7 +89,6 @@ module control_registers
 			cr_fault_handler <= '0;
 			cr_interrupt_en <= '0;
 			cr_tlb_miss_handler <= '0;
-			cr_tlb_update_ppage_idx <= '0;
 			cycle_count <= '0;
 			// End of automatics
 		end
@@ -150,7 +141,6 @@ module control_registers
 					CR_FAULT_PC:         cr_eret_address[dt_thread_idx] <= dd_creg_write_val;
 					CR_FAULT_HANDLER:    cr_fault_handler <= dd_creg_write_val;
 					CR_TLB_MISS_HANDLER: cr_tlb_miss_handler <= dd_creg_write_val;
-					CR_TLB_UPDATE_PHYS:  cr_tlb_update_ppage_idx <= dd_creg_write_val[31-:`PAGE_NUM_BITS];
 					CR_SCRATCHPAD0:      scratchpad[{1'b0, dt_thread_idx}] <= dd_creg_write_val;
 					CR_SCRATCHPAD1:      scratchpad[{1'b1, dt_thread_idx}] <= dd_creg_write_val;
 					CR_SUBCYCLE:         cr_eret_subcycle[dt_thread_idx] <= subcycle_t'(dd_creg_write_val);

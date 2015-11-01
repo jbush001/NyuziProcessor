@@ -61,14 +61,14 @@ module ifetch_tag_stage
 
 	// From control_registers
 	input                               cr_mmu_en[`THREADS_PER_CORE],
-	input                               cr_itlb_update_en,
-	input page_index_t                  cr_tlb_update_ppage_idx,
-	input page_index_t                  cr_tlb_update_vpage_idx,
 
-	// From dcache_data_stage
-	input                               dd_invalidate_tlb_en,
-	input                               dd_invalidate_tlb_all,
-	page_index_t                        dd_invalidate_tlb_vpage_idx,
+	// From dcache_tag_stage
+	input                               dt_invalidate_tlb_en,
+	input                               dt_invalidate_tlb_all,
+	input page_index_t                  dt_invalidate_tlb_vpage_idx,
+	input                               dt_update_itlb_en,
+	input page_index_t                  dt_update_itlb_vpage_idx,
+	input page_index_t                  dt_update_itlb_ppage_idx,
 
 	// From writeback_stage
 	input                               wb_rollback_en,
@@ -188,12 +188,12 @@ module ifetch_tag_stage
 		.lookup_vpage_idx(pc_to_fetch[31-:`PAGE_NUM_BITS]),
 		.lookup_ppage_idx(tlb_ppage_idx),
 		.lookup_hit(tlb_hit),
-		.update_en(cr_itlb_update_en),
-		.update_ppage_idx(cr_tlb_update_ppage_idx),
-		.update_vpage_idx(cr_tlb_update_vpage_idx),
-		.invalidate_en(dd_invalidate_tlb_en),
-		.invalidate_all(dd_invalidate_tlb_all),
-		.invalidate_vpage_idx(dd_invalidate_tlb_vpage_idx),
+		.update_en(dt_update_itlb_en),
+		.update_ppage_idx(dt_update_itlb_ppage_idx),
+		.update_vpage_idx(dt_update_itlb_vpage_idx),
+		.invalidate_en(dt_invalidate_tlb_en),
+		.invalidate_all(dt_invalidate_tlb_all),
+		.invalidate_vpage_idx(dt_invalidate_tlb_vpage_idx),
 		.*);
 
 	// These combinational signals are after the output flops of this stage (and
