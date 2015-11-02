@@ -112,8 +112,6 @@ module dcache_tag_stage
 		&& of_instruction.memory_access_type != MEM_CONTROL_REG
 		&& of_instruction.is_memory_access      // Not cache control
 		&& of_instruction.is_load;
-	assign tlb_lookup_en = instruction_valid 
-		&& of_instruction.memory_access_type != MEM_CONTROL_REG;
 	assign scgath_lane = ~of_subcycle;
 	assign request_addr_nxt = of_operand1[scgath_lane] + of_instruction.immediate_value;
 	assign dt_invalidate_tlb_en = is_valid_cache_control
@@ -125,6 +123,10 @@ module dcache_tag_stage
 		&& of_instruction.cache_control_op == CACHE_DTLB_INSERT;
 	assign dt_update_itlb_en = is_valid_cache_control
 		&& of_instruction.cache_control_op == CACHE_ITLB_INSERT;
+	assign tlb_lookup_en = instruction_valid 
+		&& of_instruction.memory_access_type != MEM_CONTROL_REG
+		&& !update_dtlb_en
+		&& !dt_invalidate_tlb_en;
 	assign dt_itlb_vpage_idx = of_operand1[0][31-:`PAGE_NUM_BITS];
 	assign dt_update_itlb_ppage_idx = of_store_value[0][31-:`PAGE_NUM_BITS];
 
@@ -192,15 +194,13 @@ module dcache_tag_stage
 `ifdef HAS_MMU
 	tlb #(.NUM_ENTRIES(`DTLB_ENTRIES)) dtlb(
 		.lookup_en(tlb_lookup_en),
-		.lookup_vpage_idx(of_operand1[0][31-:`PAGE_NUM_BITS]),
+		.request_vpage_idx(of_operand1[0][31-:`PAGE_NUM_BITS]),
 		.lookup_ppage_idx(tlb_ppage_idx),
 		.lookup_hit(tlb_hit),
 		.update_en(update_dtlb_en),
 		.update_ppage_idx(of_store_value[0][31-:`PAGE_NUM_BITS]),
-		.update_vpage_idx(of_operand1[0][31-:`PAGE_NUM_BITS]),
 		.invalidate_en(dt_invalidate_tlb_en),
 		.invalidate_all(dt_invalidate_tlb_all),
-		.invalidate_vpage_idx(of_operand1[0][31-:`PAGE_NUM_BITS]),
 		.*);
 		
 	// This combinational logic is after the flip flops,

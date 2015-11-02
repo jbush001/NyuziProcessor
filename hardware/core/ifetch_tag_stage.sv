@@ -103,11 +103,15 @@ module ifetch_tag_stage
 	// wastes a cycle, but this should be infrequent.
 	//
 	assign can_fetch_thread_bitmap = ts_fetch_en & ~icache_wait_threads;
-	assign cache_fetch_en = |can_fetch_thread_bitmap;
+	
+	// If an instruction is updating the TLB, we can't access it to translate the next
+	// address, so skip instruction fetch this cycle.
+	assign cache_fetch_en = |can_fetch_thread_bitmap && !dt_update_itlb_en
+		&& !dt_invalidate_tlb_en;
 
 	arbiter #(.NUM_REQUESTERS(`THREADS_PER_CORE)) arbiter_thread_select(
 		.request(can_fetch_thread_bitmap),
-		.update_lru(1'b1),
+		.update_lru(cache_fetch_en),
 		.grant_oh(selected_thread_oh),
 		.*);
 
@@ -184,15 +188,13 @@ module ifetch_tag_stage
 `ifdef HAS_MMU
 	tlb #(.NUM_ENTRIES(`ITLB_ENTRIES)) itlb(
 		.lookup_en(cache_fetch_en),
-		.lookup_vpage_idx(pc_to_fetch[31-:`PAGE_NUM_BITS]),
+		.request_vpage_idx(cache_fetch_en ? pc_to_fetch[31-:`PAGE_NUM_BITS] : dt_itlb_vpage_idx),
 		.lookup_ppage_idx(tlb_ppage_idx),
 		.lookup_hit(tlb_hit),
 		.update_en(dt_update_itlb_en),
 		.update_ppage_idx(dt_update_itlb_ppage_idx),
-		.update_vpage_idx(dt_itlb_vpage_idx),
 		.invalidate_en(dt_invalidate_tlb_en),
 		.invalidate_all(dt_invalidate_tlb_all),
-		.invalidate_vpage_idx(dt_itlb_vpage_idx),
 		.*);
 
 	// These combinational signals are after the output flops of this stage (and
@@ -221,7 +223,7 @@ module ifetch_tag_stage
 		.fill_en(l2i_icache_lru_fill_en),
 		.fill_set(l2i_icache_lru_fill_set),
 		.fill_way(ift_fill_lru),
-		.access_en(|can_fetch_thread_bitmap),
+		.access_en(cache_fetch_en),
 		.access_set(pc_to_fetch.set_idx),
 		.access_update_en(ifd_update_lru_en),
 		.access_update_way(ifd_update_lru_way),
@@ -260,7 +262,7 @@ module ifetch_tag_stage
 			icache_wait_threads <= icache_wait_threads_nxt;
 			last_selected_pc <= pc_to_fetch;
 			ift_thread_idx <= selected_thread_idx;
-			ift_instruction_requested <= |can_fetch_thread_bitmap
+			ift_instruction_requested <= cache_fetch_en
 				&& !((ifd_cache_miss || ifd_near_miss) && ifd_cache_miss_thread_idx == selected_thread_idx)	
 				&& !(wb_rollback_en && wb_rollback_thread_idx == selected_thread_idx);
 			last_selected_thread_oh <= selected_thread_oh;

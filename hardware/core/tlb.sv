@@ -20,6 +20,10 @@
 // Translation lookaside buffer.
 // Caches virtual to physical address translations.
 //
+// XXX WIP: need to make updates handle duplicates. They will need to be moved a 
+// cycle later and read SRAM to determine if the data is already present. 
+// Invalidate should do this as well.
+//
 
 module tlb
 	#(parameter NUM_ENTRIES = 16)
@@ -27,22 +31,17 @@ module tlb
 	(input               clk,
 	input                reset,
 
-	// Lookup interface.  lookup_ppage_idx and lookup_hit have one cycle of
-	// latency.
+	// Command
 	input                lookup_en,
-	input page_index_t   lookup_vpage_idx,
-	output page_index_t  lookup_ppage_idx,
-	output logic         lookup_hit,
-
-	// Update interface
 	input                update_en,
-	input page_index_t   update_vpage_idx,
-	input page_index_t   update_ppage_idx,
-	
-	// Invalidate
 	input                invalidate_en,
 	input                invalidate_all,
-	input page_index_t   invalidate_vpage_idx);
+	input page_index_t   request_vpage_idx,
+	input page_index_t   update_ppage_idx,
+
+	// Response
+	output page_index_t  lookup_ppage_idx,
+	output logic         lookup_hit);
 
 	localparam NUM_WAYS = 4;
 	localparam NUM_SETS = NUM_ENTRIES / NUM_WAYS;
@@ -52,15 +51,11 @@ module tlb
 	logic[WAY_INDEX_WIDTH - 1:0] update_way;
 	logic[NUM_WAYS - 1:0] way_hit_oh;
 	page_index_t way_ppage_idx[NUM_WAYS];
-	page_index_t lookup_vpage_idx_latched;
-	logic[SET_INDEX_WIDTH - 1:0] lookup_set_idx;
+	page_index_t request_vpage_idx_latched;
+	logic[SET_INDEX_WIDTH - 1:0] request_set_idx;
 
-	assign lookup_set_idx = lookup_vpage_idx[SET_INDEX_WIDTH - 1:0];
+	assign request_set_idx = request_vpage_idx[SET_INDEX_WIDTH - 1:0];
 
-	// This does not need to bypass TLB values that are read and written
-	// in the same cycle like the L1 caches. These are updated 
-	// by software, which already needs to handle collisions for other
-	// reasons.
 	genvar way_idx;
 	generate
 		for (way_idx = 0; way_idx < NUM_WAYS; way_idx++)
@@ -72,14 +67,14 @@ module tlb
 			sram_1r1w #(
 				.SIZE(NUM_SETS), 
 				.DATA_WIDTH(`PAGE_NUM_BITS * 2),
-				.READ_DURING_WRITE("DONT_CARE")
+				.READ_DURING_WRITE("NEW_DATA")
 			) tlb_paddr_sram(
 				.read_en(lookup_en),
-				.read_addr(lookup_set_idx),
+				.read_addr(request_set_idx),
 				.read_data({way_vpage_idx, way_ppage_idx[way_idx]}),
 				.write_en(update_en && update_way == WAY_INDEX_WIDTH'(way_idx)),
-				.write_addr(update_vpage_idx[SET_INDEX_WIDTH - 1:0]),
-				.write_data({update_vpage_idx, update_ppage_idx}),
+				.write_addr(request_vpage_idx[SET_INDEX_WIDTH - 1:0]),
+				.write_data({request_vpage_idx, update_ppage_idx}),
 				.*);
 
 			always_ff @(posedge clk, posedge reset)
@@ -97,17 +92,17 @@ module tlb
 				else
 				begin
 					if (lookup_en)
-						way_valid <= entry_valid[lookup_set_idx];
+						way_valid <= entry_valid[request_set_idx];
 
 					for (int set_idx = 0; set_idx < NUM_SETS; set_idx++)
 					begin
 						if (invalidate_en && (invalidate_all
-							|| invalidate_vpage_idx[SET_INDEX_WIDTH - 1:0] == SET_INDEX_WIDTH'(set_idx)))
+							|| request_vpage_idx[SET_INDEX_WIDTH - 1:0] == SET_INDEX_WIDTH'(set_idx)))
 						begin
 							entry_valid[set_idx] <= 0;
 						end
 						else if (update_en && update_way == WAY_INDEX_WIDTH'(way_idx)
-							&& update_vpage_idx[SET_INDEX_WIDTH - 1:0] == SET_INDEX_WIDTH'(set_idx))
+							&& request_vpage_idx[SET_INDEX_WIDTH - 1:0] == SET_INDEX_WIDTH'(set_idx))
 						begin
 							entry_valid[set_idx] <= 1;
 						end
@@ -115,7 +110,7 @@ module tlb
 				end
 			end
 				
-			assign way_hit_oh[way_idx] = way_valid && way_vpage_idx == lookup_vpage_idx_latched;
+			assign way_hit_oh[way_idx] = way_valid && way_vpage_idx == request_vpage_idx_latched;
 		end
 	endgenerate
 
@@ -137,12 +132,14 @@ module tlb
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			lookup_vpage_idx_latched <= '0;
+			request_vpage_idx_latched <= '0;
 			update_way <= '0;
 			// End of automatics
 		end
 		else
 		begin
+			assert($onehot0({lookup_en, update_en, invalidate_en}));
+		
 `ifdef SIMULATION
 			// These are triggered from the same stage, so should never
 			// occur together.
@@ -153,13 +150,13 @@ module tlb
 			// does nothing to prevent it.
 			if (!$onehot0(way_hit_oh))
 			begin
-				$display("%m duplicate TLB entry %08x ways %b", {lookup_vpage_idx_latched, 
+				$display("%m duplicate TLB entry %08x ways %b", {request_vpage_idx_latched, 
 					{$clog2(`PAGE_SIZE){1'b0}}}, way_hit_oh);
 				$finish;
 			end
 `endif
 			if (lookup_en)
-				lookup_vpage_idx_latched <= lookup_vpage_idx;
+				request_vpage_idx_latched <= request_vpage_idx;
 
 			if (update_en)
 				update_way <= update_way + 1;
