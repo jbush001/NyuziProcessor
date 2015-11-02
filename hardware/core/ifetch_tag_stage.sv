@@ -65,9 +65,8 @@ module ifetch_tag_stage
 	// From dcache_tag_stage
 	input                               dt_invalidate_tlb_en,
 	input                               dt_invalidate_tlb_all,
-	input page_index_t                  dt_invalidate_tlb_vpage_idx,
+	input page_index_t                  dt_itlb_vpage_idx,
 	input                               dt_update_itlb_en,
-	input page_index_t                  dt_update_itlb_vpage_idx,
 	input page_index_t                  dt_update_itlb_ppage_idx,
 
 	// From writeback_stage
@@ -190,10 +189,10 @@ module ifetch_tag_stage
 		.lookup_hit(tlb_hit),
 		.update_en(dt_update_itlb_en),
 		.update_ppage_idx(dt_update_itlb_ppage_idx),
-		.update_vpage_idx(dt_update_itlb_vpage_idx),
+		.update_vpage_idx(dt_itlb_vpage_idx),
 		.invalidate_en(dt_invalidate_tlb_en),
 		.invalidate_all(dt_invalidate_tlb_all),
-		.invalidate_vpage_idx(dt_invalidate_tlb_vpage_idx),
+		.invalidate_vpage_idx(dt_itlb_vpage_idx),
 		.*);
 
 	// These combinational signals are after the output flops of this stage (and

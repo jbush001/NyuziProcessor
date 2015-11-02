@@ -36,8 +36,8 @@ module tlb
 
 	// Update interface
 	input                update_en,
-	input page_index_t   update_ppage_idx,
 	input page_index_t   update_vpage_idx,
+	input page_index_t   update_ppage_idx,
 	
 	// Invalidate
 	input                invalidate_en,
@@ -61,9 +61,9 @@ module tlb
 	// in the same cycle like the L1 caches. These are updated 
 	// by software, which already needs to handle collisions for other
 	// reasons.
-	genvar way;
+	genvar way_idx;
 	generate
-		for (way = 0; way < NUM_WAYS; way++)
+		for (way_idx = 0; way_idx < NUM_WAYS; way_idx++)
 		begin : way_gen
 			page_index_t way_vpage_idx;
 			logic way_valid;
@@ -76,8 +76,8 @@ module tlb
 			) tlb_paddr_sram(
 				.read_en(lookup_en),
 				.read_addr(lookup_set_idx),
-				.read_data({way_vpage_idx, way_ppage_idx[way]}),
-				.write_en(update_en && update_way == WAY_INDEX_WIDTH'(way)),
+				.read_data({way_vpage_idx, way_ppage_idx[way_idx]}),
+				.write_en(update_en && update_way == WAY_INDEX_WIDTH'(way_idx)),
 				.write_addr(update_vpage_idx[SET_INDEX_WIDTH - 1:0]),
 				.write_data({update_vpage_idx, update_ppage_idx}),
 				.*);
@@ -106,7 +106,7 @@ module tlb
 						begin
 							entry_valid[set_idx] <= 0;
 						end
-						else if (update_en && update_way == WAY_INDEX_WIDTH'(way)
+						else if (update_en && update_way == WAY_INDEX_WIDTH'(way_idx)
 							&& update_vpage_idx[SET_INDEX_WIDTH - 1:0] == SET_INDEX_WIDTH'(set_idx))
 						begin
 							entry_valid[set_idx] <= 1;
@@ -115,7 +115,7 @@ module tlb
 				end
 			end
 				
-			assign way_hit_oh[way] = way_valid && way_vpage_idx == lookup_vpage_idx_latched;
+			assign way_hit_oh[way_idx] = way_valid && way_vpage_idx == lookup_vpage_idx_latched;
 		end
 	endgenerate
 

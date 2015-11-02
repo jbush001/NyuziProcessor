@@ -62,9 +62,8 @@ module dcache_tag_stage
 	// To ifetch_tag_stage
 	output                                      dt_invalidate_tlb_en,
 	output                                      dt_invalidate_tlb_all,
-	output page_index_t                         dt_invalidate_tlb_vpage_idx,
+	output page_index_t                         dt_itlb_vpage_idx,
 	output                                      dt_update_itlb_en,
-	output page_index_t                         dt_update_itlb_vpage_idx,
 	output page_index_t                         dt_update_itlb_ppage_idx,
 	
 	
@@ -122,12 +121,11 @@ module dcache_tag_stage
 		|| of_instruction.cache_control_op == CACHE_TLB_INVAL_ALL);
 	assign dt_invalidate_tlb_all = of_instruction.cache_control_op 
 		== CACHE_TLB_INVAL_ALL;
-	assign dt_invalidate_tlb_vpage_idx = of_operand1[0][31-:`PAGE_NUM_BITS];
 	assign update_dtlb_en = is_valid_cache_control
 		&& of_instruction.cache_control_op == CACHE_DTLB_INSERT;
 	assign dt_update_itlb_en = is_valid_cache_control
 		&& of_instruction.cache_control_op == CACHE_ITLB_INSERT;
-	assign dt_update_itlb_vpage_idx = of_operand1[0][31-:`PAGE_NUM_BITS];
+	assign dt_itlb_vpage_idx = of_operand1[0][31-:`PAGE_NUM_BITS];
 	assign dt_update_itlb_ppage_idx = of_store_value[0][31-:`PAGE_NUM_BITS];
 
 	//
@@ -194,7 +192,7 @@ module dcache_tag_stage
 `ifdef HAS_MMU
 	tlb #(.NUM_ENTRIES(`DTLB_ENTRIES)) dtlb(
 		.lookup_en(tlb_lookup_en),
-		.lookup_vpage_idx(request_addr_nxt[31-:`PAGE_NUM_BITS]),
+		.lookup_vpage_idx(of_operand1[0][31-:`PAGE_NUM_BITS]),
 		.lookup_ppage_idx(tlb_ppage_idx),
 		.lookup_hit(tlb_hit),
 		.update_en(update_dtlb_en),
@@ -202,7 +200,7 @@ module dcache_tag_stage
 		.update_vpage_idx(of_operand1[0][31-:`PAGE_NUM_BITS]),
 		.invalidate_en(dt_invalidate_tlb_en),
 		.invalidate_all(dt_invalidate_tlb_all),
-		.invalidate_vpage_idx(dt_invalidate_tlb_vpage_idx),
+		.invalidate_vpage_idx(of_operand1[0][31-:`PAGE_NUM_BITS]),
 		.*);
 		
 	// This combinational logic is after the flip flops,

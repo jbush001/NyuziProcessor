@@ -103,7 +103,7 @@ module core
 	logic		dt_instruction_valid;	// From dcache_tag_stage of dcache_tag_stage.v
 	logic		dt_invalidate_tlb_all;	// From dcache_tag_stage of dcache_tag_stage.v
 	logic		dt_invalidate_tlb_en;	// From dcache_tag_stage of dcache_tag_stage.v
-	page_index_t	dt_invalidate_tlb_vpage_idx;// From dcache_tag_stage of dcache_tag_stage.v
+	page_index_t	dt_itlb_vpage_idx;	// From dcache_tag_stage of dcache_tag_stage.v
 	vector_lane_mask_t dt_mask_value;	// From dcache_tag_stage of dcache_tag_stage.v
 	l1d_addr_t	dt_request_paddr;	// From dcache_tag_stage of dcache_tag_stage.v
 	l1d_addr_t	dt_request_vaddr;	// From dcache_tag_stage of dcache_tag_stage.v
@@ -116,7 +116,6 @@ module core
 	logic		dt_tlb_hit;		// From dcache_tag_stage of dcache_tag_stage.v
 	logic		dt_update_itlb_en;	// From dcache_tag_stage of dcache_tag_stage.v
 	page_index_t	dt_update_itlb_ppage_idx;// From dcache_tag_stage of dcache_tag_stage.v
-	page_index_t	dt_update_itlb_vpage_idx;// From dcache_tag_stage of dcache_tag_stage.v
 	logic		dt_valid [`L1D_WAYS];	// From dcache_tag_stage of dcache_tag_stage.v
 	logic [`VECTOR_LANES-1:0] [7:0] fx1_add_exponent;// From fp_execute_stage1 of fp_execute_stage1.v
 	logic [`VECTOR_LANES-1:0] fx1_add_result_sign;// From fp_execute_stage1 of fp_execute_stage1.v
