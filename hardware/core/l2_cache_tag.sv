@@ -54,9 +54,6 @@ module l2_cache_tag(
 	
 	assign l2_addr = l2a_request.address;
 
-	//
-	// LRU
-	//
 	cache_lru #(.NUM_SETS(`L2_SETS), .NUM_WAYS(`L2_WAYS)) cache_lru(
 		.fill_en(l2a_is_l2_fill),
 		.fill_set(l2_addr.set_idx),

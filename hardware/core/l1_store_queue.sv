@@ -20,7 +20,7 @@
 // Queues store requests from the instruction pipeline, sends store requests to 
 // L2 interconnect, and processes responses. Cache control commands go through 
 // here as well.
-// A memory barrier request waits until all pending store requests finish.  
+// A memory barrier request waits until all pending store requests finish.
 // It acts like a store for rollback logic, but doesn't enqueue anything if 
 // the store buffer is empty.
 //
@@ -208,10 +208,10 @@ module l1_store_queue(
 					if (store_requested_this_entry)
 					begin
 						// Attempt to enqueue a new request. This may happen the same cycle 
-						// an old request is satisfied. In this case it replaces the old entry.
+						// an old request is satisfied. In this case, replace the old entry.
 						if (is_restarted_sync_request)
 						begin
-							// This is the restarted request after we finished a synchronized send.
+							// This is the restarted request after a synchronized load/store.
 							// Clear the entry.
 							assert(pending_stores[thread_idx].response_received);
 							assert(!got_response_this_entry);
@@ -255,22 +255,21 @@ module l1_store_queue(
 						pending_stores[thread_idx].response_received <= 0;
 					end
 
-					// If we got a response *and* we haven't queued a new one over the top of it in the
-					// same cycle, clear it out.
+					// If this got a response *and* hasn't queued a new one over the top of it in the
+					// same cycle, clear it.
 					if (got_response_this_entry && (!store_requested_this_entry || !update_store_entry)
 						&& !enqueue_cache_control)
 					begin
-						// Ensure we don't get a response for an entry that isn't valid
-						// or hasn't been sent.
+						// Ensure a response isn't sent for an entry that hasn't been sent.
 						assert(pending_stores[thread_idx].valid);
 						assert(pending_stores[thread_idx].request_sent);
 
-						// Ensure we haven't already received a response
+						// Ensure a response isn't sent multiple times
 						assert(!pending_stores[thread_idx].response_received);
 						
-						// When we receive a synchronized response, the entry is still valid until the thread
-						// wakes back up and retrives the result.
-						// If it is not synchronized, this finishes the transaction.
+						// When the L2 cache responds to a synchronized memory transaction, the
+						// entry is still valid until the thread wakes back up and retrives the 
+						// result. If it is not synchronized, finish the transaction.
 						if (pending_stores[thread_idx].synchronized)
 						begin
 							pending_stores[thread_idx].response_received <= 1;

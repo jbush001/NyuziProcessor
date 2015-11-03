@@ -68,9 +68,9 @@ module l2_axi_bus_interface(
 
 	localparam REQUEST_QUEUE_LENGTH = 8;
 
-	// This is the number of stages before this one in the pipeline. We need to assert
-	// the signal to stop accepting new packets this number of cycles early so
-	// requests that are already in the L2 pipeline don't overrun one of the FIFOs.
+	// This is the number of stages before this one in the pipeline. Assert the
+	// signal to stop accepting new packets this number of cycles early so 
+	// requests that are already in the L2 pipeline don't overrun the FIFOs.
 	localparam L2REQ_LATENCY = 4;
 	localparam BURST_BEATS = `CACHE_LINE_BITS / `AXI_DATA_WIDTH;	
 	localparam BURST_OFFSET_WIDTH = $clog2(BURST_BEATS);
@@ -202,9 +202,9 @@ module l2_axi_bus_interface(
 			STATE_IDLE:
 			begin	
 				// Writebacks take precendence over loads to avoid a race condition 
-				// where we load stale data. Since loads can also enqueue writebacks,
-				// it ensures we don't overrun the write FIFO.
-				//				
+				// where this loads stale data. Since loads can also enqueue writebacks,
+				// it ensures this doesn't overrun the write FIFO.
+				//
 				// In the normal case, writebacks can only be initiated as the side 
 				// effect of a load, so they can't starve them. The flush 
 				// instruction introduces a bit of a wrinkle here, because they *can* 
@@ -220,18 +220,17 @@ module l2_axi_bus_interface(
 						|| (l2bi_request.store_mask == {`CACHE_LINE_BYTES{1'b1}}
 						&& l2bi_request.packet_type == L2REQ_STORE))
 					begin
-						// There are a few scenarios where we skip the read
-						// and restart the request immediately.
+						// Skip the read and restart the request immediately if:
 						// 1. If there is already a pending L2 miss for this cache 
-						//    line. Some other request has filled it, so we 
+						//    line. Some other request has filled it, so 
 						//    don't need to do anything but (try to) pick up the 
 						//    result. That could result in another miss in some
-						//    cases, in which case we must make another pass through
+						//    cases, in which case must make another pass through
 						//    here.
 						// 2. It is a store that replaces the entire line.
-						//    We let this flow through the read miss queue instead
+						//    Let this flow through the read miss queue instead
 						//    of handling it immediately in the pipeline
-						//    because we need it to go through the pending miss unit
+						//    because it must go through the pending miss unit
 						//    to reconcile any other misses that may be in progress.
 						state_nxt = STATE_READ_COMPLETE;
 					end

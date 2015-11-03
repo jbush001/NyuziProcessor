@@ -98,7 +98,7 @@ module control_registers
 			assert(!(dd_creg_write_en && dd_creg_read_en));
 		
 			// A fault and eret are triggered from the same stage, so they
-			// shouldn't occur simultaneously.
+			// must not occur simultaneously.
 			assert(!(wb_fault && ix_is_eret));
 		
 			cycle_count <= cycle_count + 1;

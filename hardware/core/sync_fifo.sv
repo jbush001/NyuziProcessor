@@ -20,9 +20,9 @@
 // First-in, first-out queue, with synchronous read/write
 // - SIZE must be a power of two and greater than or equal to 4.
 // - almost_full asserts when there are ALMOST_FULL_THRESHOLD or more entries 
-//   queued.  
+//   queued.
 // - almost_empty asserts when there are ALMOST_EMPTY_THRESHOLD or fewer 
-//   entries queued.  
+//   entries queued.
 // - almost_full asserts when full is asserted, as does almost_empty 
 //   when empty is asserted. 
 // - flush takes precedence over enqueue/dequeue if it is asserted 

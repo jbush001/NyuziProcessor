@@ -206,8 +206,7 @@ module cache_lru
 		else
 		begin
 `ifdef SIMULATION
-			// Verify we don't attempt to update when the last cycle didn't 
-			// perform an access.
+			// Can't update when the last cycle didn't perform an access.
 			assert(!(access_update_en && !was_access));
 			was_access <= access_en;	// Debug only
 `endif

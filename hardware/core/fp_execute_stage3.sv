@@ -94,7 +94,7 @@ module fp_execute_stage3(
 			logic do_round;
 			logic _unused;
 
-			// Round-to-nearest, round half to even.  Compute the value of the low bit 
+			// Round-to-nearest, round half to even. Compute the value of the low bit 
 			// of the sum to predict if the result is odd.
 			assign sum_is_odd = fx2_significand_le[lane_idx][0] ^ fx2_significand_se[lane_idx][0];
 			assign round_tie = (fx2_guard[lane_idx] && !(fx2_round[lane_idx] || fx2_sticky[lane_idx]));
@@ -102,13 +102,13 @@ module fp_execute_stage3(
 			assign do_round = (round_up || (sum_is_odd && round_tie));
 			
 			// For logical subtraction, rounding reduces the unnormalized sum because 
-			// it rounds the subtrahend up.  Since we are inverting the second parameter 
-			// to perform a subtraction, a +1 is normally necessary. We round down by 
+			// it rounds the subtrahend up. Since this inverts the second parameter 
+			// to perform a subtraction, a +1 is normally necessary. Round down by 
 			// not doing that. For logical addition, rounding increases the unnormalized 
-			// sum.  We can do either of these by setting carry_in appropriately.
+			// sum. Do these by setting carry_in appropriately.
 			//
-			// For float<->int conversions, we overload this to handle changing between signed-magnitude
-			// and two's complement format.  LE is set to zero and fx2_logical_subtract indicates
+			// For float<->int conversions, overload this to handle changing between signed-magnitude
+			// and two's complement format. LE is set to zero and fx2_logical_subtract indicates
 			// if it needs a conversion.
 			assign carry_in = fx2_logical_subtract[lane_idx] ^ (do_round && !is_ftoi);
 			assign { unnormalized_sum, _unused } = { fx2_significand_le[lane_idx], 1'b1 } 

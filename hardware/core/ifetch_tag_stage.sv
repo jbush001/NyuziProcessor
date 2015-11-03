@@ -95,16 +95,16 @@ module ifetch_tag_stage
 
 	//
 	// Pick which thread to fetch next.
-	// Only consider threads that are not blocked. However, do not skip 
-	// threads that are being rolled back in the current cycle. The rollback 
-	// signals have a long combinational path that is a critical path for clock 
-	// speed. Instead, when the selected thread is rolled back in the same cycle, 
+	// Only consider threads that are not blocked, but do not skip threads that 
+	// are being rolled back in the current cycle because the rollback signals 
+	// have a long combinational path that is a critical path for clock speed. 
+	// Instead, when the selected thread is rolled back in the same cycle, 
 	// invalidate the instruction by deasserting ift_instruction_requested. This 
 	// wastes a cycle, but this should be infrequent.
 	//
 	assign can_fetch_thread_bitmap = ts_fetch_en & ~icache_wait_threads;
 	
-	// If an instruction is updating the TLB, we can't access it to translate the next
+	// If an instruction is updating the TLB, can't access it to translate the next
 	// address, so skip instruction fetch this cycle.
 	assign cache_fetch_en = |can_fetch_thread_bitmap && !dt_update_itlb_en
 		&& !dt_invalidate_tlb_en;
@@ -232,9 +232,8 @@ module ifetch_tag_stage
 	// 
 	// Track which threads are waiting on instruction cache misses. Avoid fetching
 	// them until the L2 cache fills the miss. If a rollback occurs while a thread
-	// is waiting, it continues to wait until that miss to be filled by the L2 cache.
-	// If it didn't, a race condition would occur when that response subsequently
-	// arrived.
+	// is waiting, wait until that miss to be filled by the L2 cache. This avoids
+	// a race condition that would occur when that response subsequently arrived.
 	//
 	idx_to_oh #(.NUM_SIGNALS(`THREADS_PER_CORE)) idx_to_oh_miss_thread(
 		.one_hot(cache_miss_thread_oh),

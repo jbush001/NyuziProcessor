@@ -95,7 +95,7 @@ module instruction_decode_stage(
 		scalar2_loc_t scalar2_loc;
 		logic has_vector1;
 		logic has_vector2;
-		logic vector_sel2_is_9_5;	// Else is src2.  Only for stores.
+		logic vector_sel2_is_9_5;	// Else is src2. Only for stores.
 		logic op1_is_vector;
 		op2_src_t op2_src;
 		mask_src_t mask_src;
@@ -365,7 +365,7 @@ module instruction_decode_stage(
 		end
 		else
 		begin
-			// We piggyback ifetch faults and TLB misses inside instructions, so mark
+			// Piggyback ifetch faults and TLB misses inside instructions, marking
 			// the instruction valid if these conditions occur
 			id_instruction_valid <= (ifd_instruction_valid || ifd_tlb_miss || ifd_alignment_fault) 
 				&& (!wb_rollback_en || wb_rollback_thread_idx != ifd_thread_idx);

@@ -46,7 +46,7 @@ module sram_1r1w
 `ifdef VENDOR_ALTERA
 	logic[DATA_WIDTH - 1:0] data_from_ram;
 
-	// Not all Altera FPGA families support .READ_DURING_WRITE_MIXED_PORTS 
+	// Not all Altera FPGA families support READ_DURING_WRITE_MIXED_PORTS 
 	// (which I found out the hard way). I just set that to DONT_CARE and 
 	// insert my own logic to bypass results.
 	ALTSYNCRAM #(

@@ -163,13 +163,13 @@ module fp_execute_stage1(
 					result_is_nan = fop1_is_nan || fop2_is_nan || (fop1_is_inf && fop2_is_inf && logical_subtract);
 			end
 			
-			// The result exponent for multiplication is the sum of the exponents.  We convert these
+			// The result exponent for multiplication is the sum of the exponents. Convert these
 			// from biased to unbiased representation by inverting the MSB, then add.
 			// XXX handle underflow
 			assign { mul_exponent_underflow, mul_exponent_carry, mul_exponent }
 				=  { 2'd0, fop1.exponent } + { 2'd0, fop2.exponent } - 10'd127;
 
-			// Subtle: In the case where values are equal, leave operand1 in the _le slot.  This properly 
+			// Subtle: In the case where values are equal, leave operand1 in the _le slot. This properly 
 			// handles the sign for +/- zero.
 			assign op1_is_larger = fop1.exponent > fop2.exponent 
 					|| (fop1.exponent == fop2.exponent && full_significand1 >= full_significand2);
@@ -229,8 +229,8 @@ module fp_execute_stage1(
 				else
 				begin
 					// Compute how much to shift significand to make exponents be equal.
-					// We shift up to 27 bits, even though the significand is only
-					// 24 bits.  This allows shifting out the guard and round bits.
+					// Shift up to 27 bits, even though the significand is only 24 bits. 
+					// This allows shifting out the guard and round bits.
 					fx1_se_align_shift[lane_idx] <= exp_difference < 8'd27 ? 6'(exp_difference) : 6'd27;	
 				end
 				

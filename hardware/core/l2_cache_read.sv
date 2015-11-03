@@ -150,8 +150,8 @@ module l2_cache_read(
 		.*);
 
 	//
-	// Update dirty bits.  If this is a fill, initialize the dirty bit to the correct
-	// value depending on whether this is a write.  If it is a cache hit, update the
+	// Update dirty bits. If this is a fill, initialize the dirty bit to the correct
+	// value depending on whether this is a write. If it is a cache hit, update the
 	// dirty bit only if this is a store.
 	//
 	assign update_dirty = l2t_request.valid && (l2t_is_l2_fill
@@ -170,8 +170,8 @@ module l2_cache_read(
 	endgenerate
 	
 	//
-	// Update tag memory.  If this is a fill, make the new line valid.  If it is an invalidate
-	// make it invalid.
+	// Update tag memory. If this is a fill, make the new line valid. If it is an
+	// invalidate make it invalid.
 	//
 	assign update_tag = l2t_is_l2_fill || (cache_hit && is_dinvalidate);
 	assign tag_update_way = l2t_is_l2_fill ? l2t_fill_way : hit_way_idx;
@@ -259,8 +259,8 @@ module l2_cache_read(
 					L2REQ_STORE,
 					L2REQ_STORE_SYNC:
 					begin
-						// We don't invalidate if the sync store is 
-						// not successful.  Otherwise threads can livelock.
+						// Don't invalidate if the sync store is not successful. Otherwise 
+						// threads can livelock.
 						if (l2t_request.packet_type == L2REQ_STORE || can_store_sync)
 						begin
 							// Invalidate

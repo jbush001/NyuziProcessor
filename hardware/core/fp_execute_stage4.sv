@@ -82,10 +82,10 @@ module fp_execute_stage4(
 		begin : lane_logic_gen
 			logic[5:0] leading_zeroes;
 			
-			// Leading zero detection: determine normalization shift amount for add/sub.
+			// Determine normalization shift count for add/sub.
 			always_comb
 			begin
-				// That the 24th and 0th bit positions will get chopped already.  The
+				// The 24th and 0th bit positions will get chopped already. The
 				// normalization shift measures how far the value needs to be shifted to 
 				// make the leading one be truncated.
 				leading_zeroes = 0;

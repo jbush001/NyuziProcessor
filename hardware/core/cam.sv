@@ -19,7 +19,7 @@
 //
 // Content addressable memory. 
 // Lookup is async: This asserts lookup_idx and lookup_hit the same cycle 
-// lookup_key is asserted. It registers the update signals on the edge of clk.  
+// lookup_key is asserted. It registers the update signals on the edge of clk.
 // If an update is performed to the same address as a lookup in the same clock 
 // cycle, it doesn't flag a match.
 //
@@ -86,7 +86,7 @@ module cam
 	end	
 
 `ifdef SIMULATION
-	// Test code checks for duplicate entries
+	// Check for duplicate entries
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (!reset && update_en)

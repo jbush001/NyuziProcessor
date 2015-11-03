@@ -105,7 +105,7 @@ module l1_load_miss_queue(
 						// Send a new L2 request
 						pending_entries[wait_entry].request_sent <= 1;
 
-						// Ensure we don't dequeue an entry that has already been
+						// Ensure this doesn't dequeue an entry that has already been
 						// sent.
 						assert(pending_entries[wait_entry].valid);
 						assert(!pending_entries[wait_entry].request_sent);

@@ -28,7 +28,7 @@ module ifetch_data_stage(
 	input                            clk,
 	input                            reset,
 
-	// From ifetch_tag_stage.  
+	// From ifetch_tag_stage.
 	// If ift_instruction_requested is low, the other signals in this group are 
 	// undefined.
 	input                            ift_instruction_requested,
@@ -103,12 +103,12 @@ module ifetch_data_stage(
 		.index(way_hit_idx));
 
 	// ifd_near_miss is high if the cache line requested in the last stage
-	// is filled this cycle. If we treated this as a cache miss, it would be 
-	// fetch duplicate lines into the cache set. If we blocked the thread, 
-	// it would hang (because the wakeup signal is happening this cycle). 
-	// The cache interface updates the tag, then the data a cycle later, so 
-	// the data will appear in the next cycle. In order to pick up the data,
-	// this signal goes back to the previous stage to make it retry the same PC.
+	// is filled this cycle. Treating this as a cache miss would fetch 
+	// duplicate lines into the cache set. Blocking the thread would hang 
+	// (because the wakeup signal is happening this cycle). The cache interface 
+	// updates the tag, then the data a cycle later, so the data will appear in 
+	// the next cycle. In order to pick up the data, this signal goes back to 
+	// the previous stage to make it retry the same PC.
 	assign ifd_near_miss = !cache_hit 
 		&& ift_tlb_hit
 		&& ift_instruction_requested

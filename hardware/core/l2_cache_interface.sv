@@ -30,7 +30,7 @@
 // This processes L2 responses using a three stage pipeline:
 // 1. Sends store address from the response to L1D tag memory (which 
 //    has one cycle of latency) to snoop it.
-// 2. Checks the snoop responses.  If the data are in the cache, selects the 
+// 2. Checks the snoop responses. If the data are in the cache, selects the 
 //    way for update. For load responses, update tag memory.
 // 3. Update L1D data memory. It must do this a cycle after updating the 
 //    tags to avoid a race condition. They are checked in this sequence 
@@ -296,7 +296,7 @@ module l2_cache_interface
 	assign l2i_dtag_update_valid = !response_is_dinvalidate;
 
 	//
-	// Update instruction cache tag.  For a fill, mark the line valid and update the tag.
+	// Update instruction cache tag. For a fill, mark the line valid and update the tag.
 	// For a invalidate, mark all ways for the selected set invalid
 	//
 	assign response_is_iinvalidate = response_stage2.valid 

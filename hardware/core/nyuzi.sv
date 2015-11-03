@@ -17,7 +17,7 @@
 `include "defines.sv"
 
 //
-// Top level block for processor.  Contains all cores and L2 cache, connects
+// Top level block for processor. Contains all cores and L2 cache, connects
 // to AXI system bus.
 //
 

@@ -101,8 +101,8 @@ module fp_execute_stage5(
 			assign add_is_subnormal = fx4_add_exponent[lane_idx] == 0 || fx4_add_significand[lane_idx] == 0;
 			assign shifted_significand = fx4_add_significand[lane_idx] << fx4_norm_shift[lane_idx];
 
-			// Because this can only shift one bit out, we can only round to even here.  
-			// shifted_significand[7] is the guard bit.  shifted_significand[8] indicates whether
+			// Because this can only shift one bit out, can only round to even here.
+			// shifted_significand[7] is the guard bit. shifted_significand[8] indicates whether
 			// the result is even or odd.
 			assign add_round = shifted_significand[7] && shifted_significand[8] && !fx4_logical_subtract[lane_idx];
 			assign add_result_significand = add_is_subnormal ? fx4_add_significand[lane_idx][22:0] 
@@ -144,7 +144,7 @@ module fp_execute_stage5(
 			end
 
 			// If the operands for multiplication are both normalized (start with a leading 1), then the 
-			// the maximum normalization shift is one place.  
+			// the maximum normalization shift is one place.
 			// XXX does not handle subnormal product
 			assign mul_normalize_shift = !fx4_significand_product[lane_idx][47];
 			assign { mul_normalized_significand, mul_guard, mul_round, mul_sticky_bits } = mul_normalize_shift 

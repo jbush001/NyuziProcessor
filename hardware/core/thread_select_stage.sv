@@ -152,11 +152,11 @@ module thread_select_stage(
 				&& current_subcycle[thread_idx] == thread_instr[thread_idx].last_subcycle;
 
 			// This signal goes back to the thread fetch stage to enable fetching more
-			// instructions. We need to deassert fetch enable a few cycles before the FIFO 
-			// fills up becausee there are several stages in-between.
+			// instructions. Deassert fetch enable a few cycles before the FIFO 
+			// fills up because there are several stages in-between.
 			assign ts_fetch_en[thread_idx] = !ififo_almost_full && ny_thread_enable[thread_idx];
 
-			/// XXX PC needs to be treated specially for scoreboard?
+			/// XXX Treat PC specially for scoreboard?
 
 			// Generate destination bitmap for the next instruction to be issued.
 			always_comb
@@ -199,8 +199,8 @@ module thread_select_stage(
 			end
 			
 			// There is one cycle of latency after the instruction comes out of the
-			// instruction FIFO to determine the scoreboard values. They are
-			// registered here.
+			// instruction FIFO to determine the scoreboard values. Registered them
+			// here.
 			assign instruction_latch_en = !ififo_empty && (!instruction_latched 
 				|| issue_last_subcycle[thread_idx]);
 			
@@ -233,8 +233,8 @@ module thread_select_stage(
 			// Determine which scoreboard bits to clear
 			always_comb
 			begin
-				// Clear scoreboard entries for completed instructions. We only do this on the
-				// last subcycle of an instruction. Since we don't wait on the scoreboard to 
+				// Clear scoreboard entries for completed instructions. Only do this on the
+				// last subcycle of an instruction. Since this doesn't wait on the scoreboard to 
 				// issue intermediate subcycles, we must do this for correctness.
 				scoreboard_clear_bitmap = 0;
 				if (wb_writeback_en && wb_writeback_thread_idx == thread_idx_t'(thread_idx) 
@@ -277,10 +277,11 @@ module thread_select_stage(
 				endcase
 			end
 
-			// We only check the scoreboard on the first subcycle. The scoreboard only checks
-			// on the register granularity, not individual vector lanes. In most cases, this is fine, but
-			// with a multi-cycle operation (like a gather load), which writes back to the same register
-			// multiple times, this would delay the load.
+			// Only check the scoreboard on the first subcycle. The scoreboard only
+			// tracks register granularity, not individual vector lanes. In most 
+			// cases, this is fine, but with a multi-cycle operation (like a gather 
+			// load), which writes back to the same register multiple times, this 
+			// would delay the load.
 			assign can_issue_thread[thread_idx] = instruction_latched
 				&& ((scoreboard[thread_idx] & scoreboard_dep_bitmap) == 0 || current_subcycle[thread_idx] != 0)
 				&& ny_thread_enable[thread_idx]
@@ -334,10 +335,10 @@ module thread_select_stage(
 	
 	// At the writeback stage, pipelines of different lengths merge. This results
 	// in a structural hazard where two instructions issued in different cycles 
-	// could arrive during the same cycle. This stage avoids that by not scheduling
-	// instructions that would conflict. It tracks instruction issue. This tracks
-	// instructions even if they don't write back to a register, since they may 
-	// have other side effects.
+	// could arrive during the same cycle. Avoid that tracking instruction issue
+	// and not scheduling instructions that would conflict. Must track instructions 
+	// even if they don't write back to a register, since they may have other side 
+	// effects.
 	always_comb
 	begin
 		writeback_allocate_nxt = {1'b0, writeback_allocate[WRITEBACK_ALLOC_STAGES - 1:1] };

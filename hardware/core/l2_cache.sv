@@ -22,7 +22,7 @@
 // request back into the L2 cache pipeline.
 // The L2 cache has a four stage pipeline:
 //  - Arbitrate: chooses among requests from cores, or a restarted request
-//    filled from system memory.  Restarted requests always take precedence to 
+//    filled from system memory. Restarted requests always take precedence to 
 //    avoid deadlock.
 //  - Tag: issues address to tag ram ways, checks LRU.
 //  - Read: checks for cache hit, reads cache memory

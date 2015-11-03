@@ -330,11 +330,11 @@ module dcache_data_stage(
 		endcase
 	end
 
-	// Generate store mask signals.  word_store_mask corresponds to lanes, 
+	// Generate store mask signals. word_store_mask corresponds to lanes, 
 	// byte_store_mask corresponds to bytes within a word. byte_store_mask 
 	// always has all bits set if word_store_mask has more than one bit set:
-	// we are either selecting some number of words within the cache line for
-	// a vector transfer or some bytes within a specific word for a scalar transfer.
+	// either select some number of words within the cache line for
+	// a vector transfer or some bytes within a word for a scalar transfer.
 	genvar mask_idx;
 	generate
 		for (mask_idx = 0; mask_idx < `CACHE_LINE_BYTES; mask_idx++)
@@ -353,7 +353,7 @@ module dcache_data_stage(
 		.SIZE(`L1D_WAYS * `L1D_SETS),
 		.READ_DURING_WRITE("NEW_DATA")
 	) l1d_data(
-		// Instruction pipeline access.  
+		// Instruction pipeline access.
 		.read_en(cache_hit && dcache_load_req),
 		.read_addr({way_hit_idx, dt_request_paddr.set_idx}),
 		.read_data(dd_load_data),
@@ -365,10 +365,10 @@ module dcache_data_stage(
 		.*);
 
 	// cache_near_miss indicates a cache miss is occurring in the cycle this is 
-	// filling the same line. If we suspend the thread here, it will never 
-	// receive a wakeup. Instead, roll the thread back and let it retry. This 
-	// must not be set for a synchronized load (even if the data is in the L1 
-	// cache): it must do a round trip to the L2 cache to latch the address.
+	// filling the same line. If this suspends the thread, it will never 
+	// receive a wakeup. Instead, roll the thread back and let it retry.
+	// Do not be set for a synchronized load, even if the data is in the L1 
+	// cache: it must do a round trip to the L2 cache to latch the address.
 	assign cache_near_miss = !cache_hit
 		&& dt_tlb_hit
 		&& dcache_load_req 
@@ -391,8 +391,8 @@ module dcache_data_stage(
 	assign dd_update_lru_en = cache_hit && dcache_access_req && !is_unaligned_access;
 	assign dd_update_lru_way = way_hit_idx;
 
-	// The first synchronized load is always treated as a miss (even if data is 
-	// present) to register request with L2 cache.  The second will not be a miss 
+	// Always treat the first synchronized load as a cache miss, even if data is 
+	// present to register request with L2 cache. The second will not be a miss 
 	// if the data is in the cache (there is a window where it could be before the 
 	// thread can fetch it, in which case it will fail and restart).
 	// sync_load_pending tracks if this is the first or second request. 

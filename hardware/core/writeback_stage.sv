@@ -156,9 +156,10 @@ module writeback_stage(
 	//
 	// Rollback control logic
 	//
-	// These signals are not registered because the next instruction may be a memory store 
-	// and we must squash it before it applies its side effects. This stage handles all rollbacks,
-	// so there can be only one asserted at a time.
+	// These signals are not registered because the next instruction may be a 
+	// memory store and we must squash it before it applies its side effects.
+	// This stage handles all rollbacks, so there can be only one asserted at a 
+	// time.
 	//
 	always_comb
 	begin
@@ -270,9 +271,9 @@ module writeback_stage(
 			&& (!ix_instruction_valid || ix_thread_idx == interrupt_thread_idx)
 			&& !fx5_instruction_valid)
 		begin	
-			// We cannot flag an interrupt in the following cases:
+			// Do not flag an interrupt in the following cases:
 			// - In the same cycle as another type of rollback.
-			// - For a long latency (floating point) instruction because there isn't logic in 
+			// - For a long latency (floating point) instruction, because there isn't logic in 
 			//   the thread select stage to invalidate the scoreboard entries.
 			// - For a memory operation, because a device IO read/write may have already 
 			//   occured in the last stage and rolling back here will cause them to happen
@@ -416,7 +417,7 @@ module writeback_stage(
 				&& memory_op == MEM_SYNC;
 `endif
 			// Latch the last *issued* instruction to save for interrupt handling.
-			// Because instructions can retire out of order, we need to ensure we
+			// Because instructions can retire out of order, ensure this
 			// don't incorrectly latch an instruction that issued earlier but
 			// retired later.
 			if (wb_rollback_en)
@@ -528,9 +529,7 @@ module writeback_stage(
 						if (dd_instruction.is_load)
 						begin
 							// Loads should always have a destination register.
-							// XXX there appears to be a case where something is a load, but not
-							// a memory access. That doesn't seem right.
-							assert(dd_instruction.has_dest || !dd_instruction.is_memory_access);
+							assert(dd_instruction.has_dest);
 						
 							unique case (memory_op)
 								MEM_B:  wb_writeback_value[0] <= { 24'b0, byte_aligned };
