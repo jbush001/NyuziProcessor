@@ -40,5 +40,6 @@
 `define HAS_MMU 1
 `define ITLB_ENTRIES 64
 `define DTLB_ENTRIES 64
+`define TLB_WAYS 4
 
 `endif

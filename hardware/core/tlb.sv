@@ -22,7 +22,8 @@
 //
 
 module tlb
-	#(parameter NUM_ENTRIES = 16)
+	#(parameter NUM_ENTRIES = 64,
+	parameter NUM_WAYS = 4)
 
 	(input               clk,
 	input                reset,
@@ -39,7 +40,6 @@ module tlb
 	output page_index_t  lookup_ppage_idx,
 	output logic         lookup_hit);
 
-	localparam NUM_WAYS = 4;
 	localparam NUM_SETS = NUM_ENTRIES / NUM_WAYS;
 	localparam SET_INDEX_WIDTH = $clog2(NUM_SETS);
 	localparam WAY_INDEX_WIDTH = $clog2(NUM_WAYS);

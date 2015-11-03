@@ -186,7 +186,10 @@ module ifetch_tag_stage
 	endgenerate
 
 `ifdef HAS_MMU
-	tlb #(.NUM_ENTRIES(`ITLB_ENTRIES)) itlb(
+	tlb #(
+		.NUM_ENTRIES(`DTLB_ENTRIES),
+		.NUM_WAYS(`TLB_WAYS)
+	) itlb(
 		.lookup_en(cache_fetch_en),
 		.update_en(dt_update_itlb_en),
 		.invalidate_en(dt_invalidate_tlb_en),

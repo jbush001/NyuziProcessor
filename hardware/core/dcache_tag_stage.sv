@@ -192,7 +192,10 @@ module dcache_tag_stage
 	endgenerate
 	
 `ifdef HAS_MMU
-	tlb #(.NUM_ENTRIES(`DTLB_ENTRIES)) dtlb(
+	tlb #(
+		.NUM_ENTRIES(`DTLB_ENTRIES),
+		.NUM_WAYS(`TLB_WAYS)
+	) dtlb(
 		.lookup_en(tlb_lookup_en),
 		.update_en(update_dtlb_en),
 		.invalidate_en(dt_invalidate_tlb_en),
