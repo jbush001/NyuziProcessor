@@ -61,7 +61,7 @@ module dcache_tag_stage
 
 	// To ifetch_tag_stage
 	output                                      dt_invalidate_tlb_en,
-	output                                      dt_invalidate_tlb_all,
+	output                                      dt_invalidate_tlb_all_en,
 	output page_index_t                         dt_itlb_vpage_idx,
 	output                                      dt_update_itlb_en,
 	output page_index_t                         dt_update_itlb_ppage_idx,
@@ -115,10 +115,9 @@ module dcache_tag_stage
 	assign scgath_lane = ~of_subcycle;
 	assign request_addr_nxt = of_operand1[scgath_lane] + of_instruction.immediate_value;
 	assign dt_invalidate_tlb_en = is_valid_cache_control
-		&& (of_instruction.cache_control_op == CACHE_TLB_INVAL
-		|| of_instruction.cache_control_op == CACHE_TLB_INVAL_ALL);
-	assign dt_invalidate_tlb_all = of_instruction.cache_control_op 
-		== CACHE_TLB_INVAL_ALL;
+		&& of_instruction.cache_control_op == CACHE_TLB_INVAL;
+	assign dt_invalidate_tlb_all_en = is_valid_cache_control
+		&& of_instruction.cache_control_op == CACHE_TLB_INVAL_ALL;
 	assign update_dtlb_en = is_valid_cache_control
 		&& of_instruction.cache_control_op == CACHE_DTLB_INSERT;
 	assign dt_update_itlb_en = is_valid_cache_control
@@ -126,7 +125,8 @@ module dcache_tag_stage
 	assign tlb_lookup_en = instruction_valid 
 		&& of_instruction.memory_access_type != MEM_CONTROL_REG
 		&& !update_dtlb_en
-		&& !dt_invalidate_tlb_en;
+		&& !dt_invalidate_tlb_en
+		&& !dt_invalidate_tlb_all_en;
 	assign dt_itlb_vpage_idx = of_operand1[0][31-:`PAGE_NUM_BITS];
 	assign dt_update_itlb_ppage_idx = of_store_value[0][31-:`PAGE_NUM_BITS];
 
@@ -194,13 +194,13 @@ module dcache_tag_stage
 `ifdef HAS_MMU
 	tlb #(.NUM_ENTRIES(`DTLB_ENTRIES)) dtlb(
 		.lookup_en(tlb_lookup_en),
-		.request_vpage_idx(of_operand1[0][31-:`PAGE_NUM_BITS]),
+		.update_en(update_dtlb_en),
+		.invalidate_en(dt_invalidate_tlb_en),
+		.invalidate_all_en(dt_invalidate_tlb_all_en),
+		.request_vpage_idx(request_addr_nxt[31-:`PAGE_NUM_BITS]),
+		.update_ppage_idx(of_store_value[0][31-:`PAGE_NUM_BITS]),
 		.lookup_ppage_idx(tlb_ppage_idx),
 		.lookup_hit(tlb_hit),
-		.update_en(update_dtlb_en),
-		.update_ppage_idx(of_store_value[0][31-:`PAGE_NUM_BITS]),
-		.invalidate_en(dt_invalidate_tlb_en),
-		.invalidate_all(dt_invalidate_tlb_all),
 		.*);
 		
 	// This combinational logic is after the flip flops,

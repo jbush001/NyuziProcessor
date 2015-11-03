@@ -1493,6 +1493,8 @@ static void executeCacheControlInst(Thread *thread, uint32_t instruction)
 {
 	uint32_t op = extractUnsignedBits(instruction, 25, 3);
 	uint32_t ptrReg = extractUnsignedBits(instruction, 0, 5);
+	uint32_t way;
+	bool updatedEntry;
 
 	switch (op)
 	{
@@ -1516,10 +1518,25 @@ static void executeCacheControlInst(Thread *thread, uint32_t instruction)
 				wayPtr = &thread->core->nextITlbWay;
 			}
 			
-			TlbEntry *entry = &tlb[((virtualAddress / PAGE_SIZE) % TLB_SETS) 
-				* TLB_WAYS + *wayPtr];
-			entry->virtualAddress = virtualAddress;
-			entry->physicalAddress = physicalAddress;
+			TlbEntry *entry = &tlb[((virtualAddress / PAGE_SIZE) % TLB_SETS) * TLB_WAYS];
+			updatedEntry = false;
+			for (way = 0; way < TLB_WAYS; way++)
+			{
+				if (entry[way].virtualAddress == virtualAddress)
+				{
+					// Found existing entry, update it
+					entry[way].physicalAddress = physicalAddress;
+					updatedEntry = true;
+				}
+			}
+			
+			if (!updatedEntry)
+			{
+				// Replace entry with a new one
+				entry[*wayPtr].virtualAddress = virtualAddress;
+				entry[*wayPtr].physicalAddress = physicalAddress;
+			}
+
 			*wayPtr = (*wayPtr + 1) % TLB_WAYS;
 			break;
 		}
@@ -1527,14 +1544,16 @@ static void executeCacheControlInst(Thread *thread, uint32_t instruction)
 		case CC_INVALIDATE_TLB:
 		{
 			uint32_t offset = extractSignedBits(instruction, 15, 10);
-			uint32_t ptrVal = getThreadScalarReg(thread, ptrReg) + offset;
-			uint32_t tlbIndex = ((ptrVal / PAGE_SIZE) % TLB_SETS) * TLB_WAYS;
-			uint32_t way;
+			uint32_t virtualAddress = (getThreadScalarReg(thread, ptrReg) + offset) & PAGE_MASK;
+			uint32_t tlbIndex = ((virtualAddress / PAGE_SIZE) % TLB_SETS) * TLB_WAYS;
 
 			for (way = 0; way < TLB_WAYS; way++)
 			{
-				thread->core->itlb[tlbIndex + way].virtualAddress = 0xffffffffu;
-				thread->core->dtlb[tlbIndex + way].virtualAddress = 0xffffffffu;
+				if (thread->core->itlb[tlbIndex + way].virtualAddress == virtualAddress)
+					thread->core->itlb[tlbIndex + way].virtualAddress = 0xffffffffu;
+
+				if (thread->core->dtlb[tlbIndex + way].virtualAddress == virtualAddress)
+					thread->core->dtlb[tlbIndex + way].virtualAddress = 0xffffffffu;
 			}
 
 			break;

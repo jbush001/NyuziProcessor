@@ -444,7 +444,6 @@ module dcache_data_stage(
 		begin
 			// Make sure data is not present in more than one way.
 			assert(!dcache_load_req || $onehot0(way_hit_oh));
-
 			dd_instruction_valid <= dt_instruction_valid && !rollback_this_stage;
 			dd_instruction <= dt_instruction;
 			dd_lane_mask <= dt_mask_value;

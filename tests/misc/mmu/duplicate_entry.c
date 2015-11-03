@@ -19,9 +19,7 @@
 
 #define PAGE_SIZE 0x1000
 
-// Note: this aliases to virtual address. Ensure invalidate only removes the 
-// matching way.
-unsigned int *data_addr = (unsigned int*) 0x100000;
+volatile unsigned int *data_addr = (unsigned int*) 0x100000;
 
 void tlb_miss_handler();
 
@@ -37,8 +35,7 @@ void add_dtlb_mapping(unsigned int va, unsigned int pa)
 
 void tlb_miss_handler()
 {
-	printf("%cTLB miss %08x\n", __builtin_nyuzi_read_control_reg(3) == 5 ? 'I' : 'D',
-		 __builtin_nyuzi_read_control_reg(5));
+	printf("TLB miss %08x\n", __builtin_nyuzi_read_control_reg(5));
 	exit(0);
 }
 
@@ -48,7 +45,7 @@ int main(int argc, const char *argv[])
 	unsigned int stack_addr = (unsigned int) &i & ~(PAGE_SIZE - 1);
 
 	// Map code & data
-	for (i = 0; i < 8; i++)
+	for (i = 0; i < 9; i++)
 	{
 		add_itlb_mapping(i * PAGE_SIZE, i * PAGE_SIZE);
 		add_dtlb_mapping(i * PAGE_SIZE, i * PAGE_SIZE);
@@ -57,7 +54,12 @@ int main(int argc, const char *argv[])
 	// Stack
 	add_dtlb_mapping(stack_addr, stack_addr);
 
-	// A data region
+	// A data region. Enter a few bogus mapping first, then the proper
+	// one, which should replace them.
+	add_dtlb_mapping(data_addr, 0x101000);
+	add_dtlb_mapping(data_addr, 0x102000);
+	add_dtlb_mapping(data_addr, 0x103000);
+	add_dtlb_mapping(data_addr, 0x104000);
 	add_dtlb_mapping(data_addr, data_addr);
 
 	// I/O address
@@ -70,8 +72,5 @@ int main(int argc, const char *argv[])
 	*data_addr = 0x1f6818aa;
 	printf("data value %08x\n", *data_addr); // CHECK: data value 1f6818aa
 
-	asm("tlbinval %0" : : "s" (data_addr));
-
-	printf("FAIL: read value %08x\n", *data_addr);	// CHECK: DTLB miss 00100000
 	return 0;
 }

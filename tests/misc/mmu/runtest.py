@@ -99,6 +99,16 @@ def test_io_map_emulator(name):
 			raise test_harness.TestException('memory contents did not match')
 
 
+def test_duplicate_entry_verilator(name):
+	test_harness.compile_test(['duplicate_entry.c'])
+	result = test_harness.run_verilator()
+	test_harness.check_result('duplicate_entry.c', result)
+	
+def test_duplicate_entry_emulator(name):
+	test_harness.compile_test(['duplicate_entry.c'])
+	result = test_harness.run_emulator()
+	test_harness.check_result('duplicate_entry.c', result)
+
 test_harness.register_tests(test_tlb_miss_verilator, ['tlb_miss (verilator)'])
 test_harness.register_tests(test_tlb_miss_emulator, ['tlb_miss (emulator)'])
 test_harness.register_tests(test_tlb_invalidate_verilator, ['tlb_invalidate (verilator)'])
@@ -107,5 +117,7 @@ test_harness.register_tests(test_fill_verilator, ['fill (verilator)'])
 test_harness.register_tests(test_fill_emulator, ['fill (emulator)'])
 test_harness.register_tests(test_io_map_verilator, ['io_map (verilator)'])
 test_harness.register_tests(test_io_map_emulator, ['io_map (emulator)'])
+test_harness.register_tests(test_duplicate_entry_verilator, ['duplicate_entry (verilator)'])
+test_harness.register_tests(test_duplicate_entry_emulator, ['duplicate_entry (emulator)'])
 
 test_harness.execute_tests()

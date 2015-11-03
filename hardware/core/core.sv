@@ -101,7 +101,7 @@ module core
 	l1d_way_idx_t	dt_fill_lru;		// From dcache_tag_stage of dcache_tag_stage.v
 	decoded_instruction_t dt_instruction;	// From dcache_tag_stage of dcache_tag_stage.v
 	logic		dt_instruction_valid;	// From dcache_tag_stage of dcache_tag_stage.v
-	logic		dt_invalidate_tlb_all;	// From dcache_tag_stage of dcache_tag_stage.v
+	logic		dt_invalidate_tlb_all_en;// From dcache_tag_stage of dcache_tag_stage.v
 	logic		dt_invalidate_tlb_en;	// From dcache_tag_stage of dcache_tag_stage.v
 	page_index_t	dt_itlb_vpage_idx;	// From dcache_tag_stage of dcache_tag_stage.v
 	vector_lane_mask_t dt_mask_value;	// From dcache_tag_stage of dcache_tag_stage.v

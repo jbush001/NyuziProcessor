@@ -64,7 +64,7 @@ module ifetch_tag_stage
 
 	// From dcache_tag_stage
 	input                               dt_invalidate_tlb_en,
-	input                               dt_invalidate_tlb_all,
+	input                               dt_invalidate_tlb_all_en,
 	input page_index_t                  dt_itlb_vpage_idx,
 	input                               dt_update_itlb_en,
 	input page_index_t                  dt_update_itlb_ppage_idx,
@@ -131,7 +131,7 @@ module ifetch_tag_stage
 					next_program_counter[thread_idx] <= wb_rollback_pc;
 				else if ((ifd_cache_miss || ifd_near_miss) && last_selected_thread_oh[thread_idx])
 					next_program_counter[thread_idx] <= next_program_counter[thread_idx] - 4;
-				else if (selected_thread_oh[thread_idx])
+				else if (selected_thread_oh[thread_idx] && cache_fetch_en)
 					next_program_counter[thread_idx] <= next_program_counter[thread_idx] + 4;
 			end
 		end
@@ -188,13 +188,13 @@ module ifetch_tag_stage
 `ifdef HAS_MMU
 	tlb #(.NUM_ENTRIES(`ITLB_ENTRIES)) itlb(
 		.lookup_en(cache_fetch_en),
+		.update_en(dt_update_itlb_en),
+		.invalidate_en(dt_invalidate_tlb_en),
+		.invalidate_all_en(dt_invalidate_tlb_all_en),
 		.request_vpage_idx(cache_fetch_en ? pc_to_fetch[31-:`PAGE_NUM_BITS] : dt_itlb_vpage_idx),
+		.update_ppage_idx(dt_update_itlb_ppage_idx),
 		.lookup_ppage_idx(tlb_ppage_idx),
 		.lookup_hit(tlb_hit),
-		.update_en(dt_update_itlb_en),
-		.update_ppage_idx(dt_update_itlb_ppage_idx),
-		.invalidate_en(dt_invalidate_tlb_en),
-		.invalidate_all(dt_invalidate_tlb_all),
 		.*);
 
 	// These combinational signals are after the output flops of this stage (and
