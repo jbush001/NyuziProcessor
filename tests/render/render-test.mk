@@ -33,7 +33,7 @@ $(OBJ_DIR)/program.elf: $(DEPS) $(OBJS)
 	$(LD) -o $@ $(OBJS) $(LDFLAGS) $(LIBS)
 
 program.lst: $(OBJ_DIR)/program.elf
-	$(OBJDUMP) --disassemble WORK/program.elf > program.lst 2> /dev/null	# Make disassembly file
+	$(OBJDUMP) --disassemble $(OBJ_DIR)/program.elf > program.lst 2> /dev/null	# Make disassembly file
 
 clean:
 	rm -rf $(OBJ_DIR)
