@@ -1527,6 +1527,7 @@ static void executeCacheControlInst(Thread *thread, uint32_t instruction)
 					// Found existing entry, update it
 					entry[way].physicalAddress = physicalAddress;
 					updatedEntry = true;
+					break;
 				}
 			}
 			
