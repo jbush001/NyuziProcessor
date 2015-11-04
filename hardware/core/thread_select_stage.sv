@@ -335,7 +335,7 @@ module thread_select_stage(
 	
 	// At the writeback stage, pipelines of different lengths merge. This results
 	// in a structural hazard where two instructions issued in different cycles 
-	// could arrive during the same cycle. Avoid that tracking instruction issue
+	// could arrive during the same cycle. Avoid that by tracking instruction issue
 	// and not scheduling instructions that would conflict. Must track instructions 
 	// even if they don't write back to a register, since they may have other side 
 	// effects.

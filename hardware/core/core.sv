@@ -46,13 +46,10 @@ module core
 	// XXX for some reason, AUTOLOGIC doesn't generate these.
 	// Should figure out why.
 	scalar_t cr_creg_read_val;
-	thread_bitmap_t cr_thread_enable;
 	thread_bitmap_t cr_interrupt_en;
 	scalar_t cr_eret_address[`THREADS_PER_CORE];
 	scalar_t cr_fault_handler;
 	scalar_t cr_tlb_miss_handler;
-	page_index_t cr_tlb_update_ppage_idx;
-	page_index_t cr_tlb_update_vpage_idx;
 	subcycle_t cr_eret_subcycle[`THREADS_PER_CORE];
 
 	/*AUTOLOGIC*/

@@ -44,7 +44,6 @@ module tlb
 	localparam SET_INDEX_WIDTH = $clog2(NUM_SETS);
 	localparam WAY_INDEX_WIDTH = $clog2(NUM_WAYS);
 
-	logic[WAY_INDEX_WIDTH - 1:0] update_way;
 	logic[NUM_WAYS - 1:0] way_hit_oh;
 	page_index_t way_ppage_idx[NUM_WAYS];
 	page_index_t request_vpage_idx_latched;

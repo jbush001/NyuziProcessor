@@ -39,15 +39,16 @@ module nyuzi
 
 	l2req_packet_t l2i_request[`NUM_CORES];
 	l2rsp_packet_t l2_response;
-	logic l2_ready[`NUM_CORES];
 	ioreq_packet_t io_request[`NUM_CORES];
-	logic ia_ready[`NUM_CORES];
 	iorsp_packet_t ia_response;
-	logic perf_l2_hit;		
-	logic perf_l2_miss;		
-	logic perf_l2_writeback;	
 	logic[`TOTAL_THREADS - 1:0] ny_thread_enable;
 	logic[`TOTAL_PERF_EVENTS - 1:0] perf_events;
+	
+	/*AUTOLOGIC*/
+	// Beginning of automatic wires (for undeclared instantiated-module outputs)
+	logic		ia_ready [`NUM_CORES];	// From io_arbiter of io_arbiter.v
+	logic		l2_ready [`NUM_CORES];	// From l2_cache of l2_cache.v
+	// End of automatics
 
 	initial
 	begin

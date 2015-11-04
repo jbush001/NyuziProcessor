@@ -38,6 +38,10 @@ module l2_cache(
 	axi4_interface.master                 axi_bus,
 	output logic[`L2_PERF_EVENTS - 1:0]   l2_perf_events);
 
+	// XXX AUTOLOGIC not generating these.
+	l2req_packet_t l2bi_request;
+	cache_line_data_t l2bi_data_from_memory;
+
 	/*AUTOLOGIC*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	cache_line_data_t l2a_data_from_memory;	// From l2_cache_arb of l2_cache_arb.v
@@ -78,8 +82,6 @@ module l2_cache(
 	logic		perf_l2_miss;		// From l2_cache_read of l2_cache_read.v
 	logic		perf_l2_writeback;	// From l2_axi_bus_interface of l2_axi_bus_interface.v
 	// End of automatics
-	l2req_packet_t l2bi_request;
-	cache_line_data_t l2bi_data_from_memory;
 
 	l2_cache_arb l2_cache_arb(.*);
 	l2_cache_tag l2_cache_tag(.*);

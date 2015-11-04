@@ -90,11 +90,9 @@ module dcache_tag_stage
 	input thread_idx_t                          wb_rollback_thread_idx);
 
 	l1d_addr_t request_addr_nxt;
-	logic is_cache_access;
 	logic cache_load_en;
 	logic instruction_valid;
 	logic[$clog2(`VECTOR_LANES) - 1:0] scgath_lane;
-	logic cache_fetch_en;
 	page_index_t tlb_ppage_idx;
 	logic tlb_hit;
 	page_index_t ppage_idx;

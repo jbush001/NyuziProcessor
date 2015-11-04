@@ -57,7 +57,6 @@ module uart
 
 	logic[7:0] rx_char;
 	logic rx_frame_error;
-	logic[7:0] tx_char;
 	logic tx_enable;
 
 	always_comb
