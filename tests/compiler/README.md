@@ -1,23 +1,21 @@
 This is a set of whole-program tests, like the 'test-suite' project in LLVM. It
 runs programs it in the emulator and comparing the output to regular
 expressions embedded in source code comments prefixed with 'CHECK:'. This is
-similar to DejaGnu and llvm-lit.
+similar to DejaGnu and llvm-lit. Each file is a separate test.
 
 Although this is primarily a compiler test, it also exercises the emulator and
 hardware model. I've grabbed snippets of code from a variety of open source
 projects to get coverage of different coding styles. These tests are all single
 threaded.
 
-Run the test using the runtest script:
+To run all tests:
 
-    ./runtest.sh <program names>
+    ./runtest.py
 
-For example:
+To run a specific test:
 
-    ./runtest.sh hello.cpp
-    ./runtest.sh *.c
+    ./runtest.py *program names*
 
-* Invoking runtest with no arguments runs all tests in the directory.
 * The test script skips filenames that begin with underscore, which is
   useful for known failing cases.
 * Set the environment variable USE_VERILATOR to use the hardware model instead

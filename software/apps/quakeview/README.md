@@ -20,6 +20,9 @@ To run in emulator, type:
 
     make run
 
+The default screen resolution is 640x480. To change this, update the variables
+FB_WIDTH and FB_HEIGHT in the Makefile.
+
 ## Running on FPGA
 
 To run on FPGA, type 'make fpgarun'. It will transfer the data files over the 

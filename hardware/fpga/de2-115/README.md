@@ -17,8 +17,10 @@ For a Prolific USB based dongle, for example, the path is.
 
         export SERIAL_PORT="/dev/ttyUSB0"
 
-    For a different serial device, you will need to figure
-    out the device path.
+    For a different serial device, you will need to find
+    the device path. It may also be something like:
+	
+	    /dev/ttyS0
 
 3. Ensure you can access the serial port without being root:
 

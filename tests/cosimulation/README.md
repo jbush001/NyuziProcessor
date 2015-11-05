@@ -2,7 +2,7 @@ This directory contains scripts and programs to verify the hardware design in
 co-simulation. It executes programs in lock-step in the Verilog simulator and C
 based emulator and compares instruction side effects. If they do not match, it
 flags an error. This works with real programs and random instruction sequences
-created by the generate_random utility.
+created by the generate_random utility. Each file is a separate test.
 
 Randomized cosimulation is a common processor verification technique. Here 
 are a few papers that describe its application in some commercial processors:
@@ -13,12 +13,13 @@ are a few papers that describe its application in some commercial processors:
 
 # Executing Tests
 
-Execute a test using the runtest script, like this:
+To execute all tests in this directory, use the runtest script:
 
-    ./runtest.py <filename>
+    ./runtest.py
 
-&lt;filename&gt; can an assembly file (.s), which the test script assembles
-before execution, or a hex memory image. 
+To run a specific test, specify it on the command line
+
+    ./runtest.py *filename*
 
 The cosimulator only works in single-core configurations.
 
@@ -39,8 +40,18 @@ For example:
     00000078 [th 0] s1 <= 00000000
     swriteback 0000007c 0 02 ffffffff
 
-The first line in this example is output from the verilator model. The second
-is output from the emulator.
+The first line in this example is output from the verilator model, which can be the following:
+
+    swriteback *program counter* *thread* *register* *value*
+    vwriteback *program counter* *thread* *register* *mask* *value*
+    store *program counter* *thread* *address* *mask* *value*
+
+The second is output from the emulator.
+
+    *pc* [th *thread*] *register*{*mask*} <= *value* 
+    *pc* [th *thread*] memory store size *size* *address* *value*
+
+*Why are these different? Should probably clean this up*
 
 ### Simulator Random Seed
 
