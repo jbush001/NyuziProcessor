@@ -39,7 +39,8 @@ tlb_miss_handler:	setcr s0, 11		# Save s0 in scratchpad
 map_device:			getcr s1, 3			# Get fault reason
 					cmpeq_i s1, s1, 5	# Is ITLB miss?
 					btrue s1, fill_itlb # If so, branch to update ITLB
-fill_dltb:			getcr s1, 5			# Get virtual address
+fill_dltb:			or s0, s0, 2		# Set write enable bit
+					getcr s1, 5			# Get virtual address
 					dtlbinsert s1, s0
 					goto done
 fill_itlb:			getcr s1, 5			# Get virtual address

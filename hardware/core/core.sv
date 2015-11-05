@@ -95,6 +95,7 @@ module core
 	logic		dd_tlb_miss;		// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_update_lru_en;	// From dcache_data_stage of dcache_data_stage.v
 	l1d_way_idx_t	dd_update_lru_way;	// From dcache_data_stage of dcache_data_stage.v
+	logic		dd_write_fault;		// From dcache_data_stage of dcache_data_stage.v
 	l1d_way_idx_t	dt_fill_lru;		// From dcache_tag_stage of dcache_tag_stage.v
 	decoded_instruction_t dt_instruction;	// From dcache_tag_stage of dcache_tag_stage.v
 	logic		dt_instruction_valid;	// From dcache_tag_stage of dcache_tag_stage.v
@@ -111,6 +112,7 @@ module core
 	l1d_tag_t	dt_tag [`L1D_WAYS];	// From dcache_tag_stage of dcache_tag_stage.v
 	thread_idx_t	dt_thread_idx;		// From dcache_tag_stage of dcache_tag_stage.v
 	logic		dt_tlb_hit;		// From dcache_tag_stage of dcache_tag_stage.v
+	logic		dt_tlb_writable;	// From dcache_tag_stage of dcache_tag_stage.v
 	logic		dt_update_itlb_en;	// From dcache_tag_stage of dcache_tag_stage.v
 	page_index_t	dt_update_itlb_ppage_idx;// From dcache_tag_stage of dcache_tag_stage.v
 	logic		dt_valid [`L1D_WAYS];	// From dcache_tag_stage of dcache_tag_stage.v

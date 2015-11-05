@@ -201,7 +201,8 @@ typedef enum logic[3:0] {
 	FR_INTERRUPT,
 	FR_IFETCH_FAULT,
 	FR_ITLB_MISS,
-	FR_DTLB_MISS
+	FR_DTLB_MISS,
+	FR_ILLEGAL_WRITE
 } fault_reason_t;
 
 `define IEEE754_B32_EXP_WIDTH 8

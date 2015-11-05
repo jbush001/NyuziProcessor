@@ -192,12 +192,14 @@ module ifetch_tag_stage
 	) itlb(
 		.lookup_en(cache_fetch_en),
 		.update_en(dt_update_itlb_en),
+		.update_writable(1'b0),
 		.invalidate_en(dt_invalidate_tlb_en),
 		.invalidate_all_en(dt_invalidate_tlb_all_en),
 		.request_vpage_idx(cache_fetch_en ? pc_to_fetch[31-:`PAGE_NUM_BITS] : dt_itlb_vpage_idx),
 		.update_ppage_idx(dt_update_itlb_ppage_idx),
 		.lookup_ppage_idx(tlb_ppage_idx),
 		.lookup_hit(tlb_hit),
+		.lookup_writable(),
 		.*);
 
 	// These combinational signals are after the output flops of this stage (and

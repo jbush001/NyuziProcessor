@@ -18,6 +18,7 @@
 #include <unistd.h>
 
 #define PAGE_SIZE 0x1000
+#define TLB_WRITE_ENABLE 2
 
 // Note: this aliases to virtual address. Ensure invalidate only removes the 
 // matching way.
@@ -32,7 +33,7 @@ void add_itlb_mapping(unsigned int va, unsigned int pa)
 
 void add_dtlb_mapping(unsigned int va, unsigned int pa)
 {
-	asm("dtlbinsert %0, %1" : : "r" (va), "r" (pa));
+	asm("dtlbinsert %0, %1" : : "r" (va), "r" (pa | TLB_WRITE_ENABLE));
 }
 
 void tlb_miss_handler()

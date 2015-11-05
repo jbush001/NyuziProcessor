@@ -36,6 +36,7 @@ module dcache_data_stage(
 	input l1d_addr_t                          dt_request_vaddr,
 	input l1d_addr_t                          dt_request_paddr,
 	input                                     dt_tlb_hit,
+	input                                     dt_tlb_writable,
 	input vector_t                            dt_store_value,
 	input subcycle_t                          dt_subcycle,
 	input                                     dt_valid[`L1D_WAYS],
@@ -65,6 +66,7 @@ module dcache_data_stage(
 	output logic                              dd_suspend_thread,
 	output logic                              dd_is_io_address,
 	output logic                              dd_access_fault,
+	output logic                              dd_write_fault,
 	output logic                              dd_tlb_miss,
 
 	// To control_registers 
@@ -385,7 +387,8 @@ module dcache_data_stage(
 	assign dd_cache_miss_addr = dcache_request_addr;
 	assign dd_cache_miss_thread_idx = dt_thread_idx;
 	assign dd_cache_miss_synchronized = is_synchronized;
-	assign dd_store_en = dcache_store_req && !is_unaligned_access && dt_tlb_hit;
+	assign dd_store_en = dcache_store_req && !is_unaligned_access && dt_tlb_hit
+		&& dt_tlb_writable;
 	assign dd_store_thread_idx = dt_thread_idx;
 
 	assign dd_update_lru_en = cache_hit && dcache_access_req && !is_unaligned_access;
@@ -438,6 +441,7 @@ module dcache_data_stage(
 			dd_suspend_thread <= '0;
 			dd_thread_idx <= '0;
 			dd_tlb_miss <= '0;
+			dd_write_fault <= '0;
 			// End of automatics
 		end
 		else
@@ -460,8 +464,8 @@ module dcache_data_stage(
 			// In the near miss case (described above), don't suspend thread.
 			dd_suspend_thread <= dcache_load_req && !cache_hit && !cache_near_miss
 				&& !is_unaligned_access && dt_tlb_hit;
-			
 			dd_access_fault <= is_unaligned_access && dcache_access_req;
+			dd_write_fault <= !dt_tlb_writable && dcache_store_req;
 			dd_tlb_miss <= mem_or_cachectrl_req && !dt_tlb_hit;
 		end
 	end

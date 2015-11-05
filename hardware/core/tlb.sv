@@ -35,10 +35,12 @@ module tlb
 	input                invalidate_all_en,
 	input page_index_t   request_vpage_idx,
 	input page_index_t   update_ppage_idx,
+	input                update_writable,
 
 	// Response
 	output page_index_t  lookup_ppage_idx,
-	output logic         lookup_hit);
+	output logic         lookup_hit,
+	output logic         lookup_writable);
 
 	localparam NUM_SETS = NUM_ENTRIES / NUM_WAYS;
 	localparam SET_INDEX_WIDTH = $clog2(NUM_SETS);
@@ -46,6 +48,7 @@ module tlb
 
 	logic[NUM_WAYS - 1:0] way_hit_oh;
 	page_index_t way_ppage_idx[NUM_WAYS];
+	logic way_writable[NUM_WAYS];
 	page_index_t request_vpage_idx_latched;
 	page_index_t update_ppage_idx_latched;
 	logic[SET_INDEX_WIDTH - 1:0] request_set_idx;
@@ -56,6 +59,7 @@ module tlb
 	logic tlb_read_en;
 	logic[NUM_WAYS - 1:0] way_update_oh;
 	logic[NUM_WAYS - 1:0] next_way_oh;
+	logic update_writable_latched;
 
 	//
 	// Stage 1: lookup
@@ -74,15 +78,15 @@ module tlb
 		
 			sram_1r1w #(
 				.SIZE(NUM_SETS), 
-				.DATA_WIDTH(`PAGE_NUM_BITS * 2),
+				.DATA_WIDTH(`PAGE_NUM_BITS * 2 + 1),
 				.READ_DURING_WRITE("NEW_DATA")
 			) tlb_paddr_sram(
 				.read_en(tlb_read_en),
 				.read_addr(request_set_idx),
-				.read_data({way_vpage_idx, way_ppage_idx[way_idx]}),
+				.read_data({way_vpage_idx, way_ppage_idx[way_idx], way_writable[way_idx]}),
 				.write_en(way_update_oh[way_idx]),
 				.write_addr(update_set_idx),
-				.write_data({request_vpage_idx_latched, update_ppage_idx_latched}),
+				.write_data({request_vpage_idx_latched, update_ppage_idx_latched, update_writable_latched}),
 				.*);
 
 			always_ff @(posedge clk, posedge reset)
@@ -128,6 +132,7 @@ module tlb
 			request_vpage_idx_latched <= '0;
 			update_en_latched <= '0;
 			update_ppage_idx_latched <= '0;
+			update_writable_latched <= '0;
 			// End of automatics
 		end
 		else
@@ -139,6 +144,7 @@ module tlb
 			update_en_latched <= update_en;
 			invalidate_en_latched <= invalidate_en;
 			update_ppage_idx_latched <= update_ppage_idx;
+			update_writable_latched <= update_writable;
 		end
 	end
 
@@ -150,10 +156,14 @@ module tlb
 	begin
 		// Enabled mux. Use OR to avoid inferring priority encoder.
 		lookup_ppage_idx = 0;
+		lookup_writable = 0;
 		for (int i = 0; i < NUM_WAYS; i++)
 		begin
 			if (way_hit_oh[i])
+			begin
 				lookup_ppage_idx |= way_ppage_idx[i]; 
+				lookup_writable |= way_writable[i];
+			end
 		end
 	end
 	

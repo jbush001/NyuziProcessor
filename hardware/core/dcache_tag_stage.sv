@@ -50,6 +50,7 @@ module dcache_tag_stage
 	output l1d_addr_t                           dt_request_vaddr,
 	output l1d_addr_t                           dt_request_paddr,
 	output                                      dt_tlb_hit,
+	output                                      dt_tlb_writable,
 	output vector_t                             dt_store_value,
 	output subcycle_t                           dt_subcycle,
 	output logic                                dt_valid[`L1D_WAYS],
@@ -100,6 +101,7 @@ module dcache_tag_stage
 	logic tlb_lookup_en;
 	logic is_valid_cache_control;
 	logic update_dtlb_en;
+	logic tlb_writable;
 
 	assign instruction_valid = of_instruction_valid 
 		&& (!wb_rollback_en || wb_rollback_thread_idx != of_thread_idx) 
@@ -200,8 +202,10 @@ module dcache_tag_stage
 		.invalidate_all_en(dt_invalidate_tlb_all_en),
 		.request_vpage_idx(request_addr_nxt[31-:`PAGE_NUM_BITS]),
 		.update_ppage_idx(of_store_value[0][31-:`PAGE_NUM_BITS]),
+		.update_writable(of_store_value[0][1]), // Bit 1 of the TLB entry is write enable
 		.lookup_ppage_idx(tlb_ppage_idx),
 		.lookup_hit(tlb_hit),
+		.lookup_writable(tlb_writable),
 		.*);
 		
 	// This combinational logic is after the flip flops,
@@ -212,17 +216,20 @@ module dcache_tag_stage
 		if (cr_mmu_en[dt_thread_idx])
 		begin
 			dt_tlb_hit = tlb_hit;
+			dt_tlb_writable = tlb_writable;
 			ppage_idx = tlb_ppage_idx;
 		end
 		else
 		begin
 			dt_tlb_hit = 1;
+			dt_tlb_writable = 1;
 			ppage_idx = fetched_addr[31-:`PAGE_NUM_BITS];
 		end
 	end
 `else
 	// If MMU is disabled, identity map addresses
 	assign dt_tlb_hit = 1;
+	assign dt_tlb_writable = 1;
 	assign ppage_idx = fetched_addr[31-:`PAGE_NUM_BITS];
 `endif
 

@@ -212,7 +212,7 @@ int main(int argc, char *argv[])
 			if (verbose)
 				enableTracing(core);
 			
-			setStopOnFault(core, true);
+			setStopOnFault(core, false);
 			if (enableFbWindow)
 			{
 				while (executeInstructions(core, ALL_THREADS, gScreenRefreshRate))

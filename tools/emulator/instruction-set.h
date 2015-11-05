@@ -21,6 +21,8 @@
 #define PC_REG 31
 #define INSTRUCTION_NOP 0
 
+#define TLB_WRITE_ENABLE 2
+
 enum _ArithmeticOp
 {
 	OP_OR = 0,
@@ -134,11 +136,12 @@ enum _FaultReason
 {
 	FR_RESET,
 	FR_ILLEGAL_INSTRUCTION,
-	FR_INVALID_ACCESS,
+	FR_ALIGNMENT_FAULT,
 	FR_INTERRUPT,
 	FR_IFETCH_FAULT,
 	FR_ITLB_MISS,
-	FR_DTLB_MISS
+	FR_DTLB_MISS,
+	FR_ILLEGAL_WRITE
 };
 typedef enum _FaultReason FaultReason;
 

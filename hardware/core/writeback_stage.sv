@@ -72,6 +72,7 @@ module writeback_stage(
 	input                                 dd_suspend_thread,
 	input                                 dd_is_io_address,
 	input                                 dd_access_fault,
+	input                                 dd_write_fault,
 	input                                 dd_tlb_miss,
 	
 	// From l1_store_queue
@@ -200,7 +201,7 @@ module writeback_stage(
 			wb_fault_access_vaddr = ix_instruction.pc;
 			wb_fault_thread_idx = ix_thread_idx;
 		end
-		else if (dd_instruction_valid && (dd_access_fault || dd_tlb_miss))
+		else if (dd_instruction_valid && (dd_access_fault || dd_tlb_miss || dd_write_fault))
 		begin
 			// Memory access fault
 			wb_rollback_en = 1'b1;
@@ -209,13 +210,16 @@ module writeback_stage(
 			wb_fault = 1;
 			if (dd_tlb_miss)
 			begin
-				wb_fault_reason = FR_DTLB_MISS;
 				wb_rollback_pc = cr_tlb_miss_handler;
+				wb_fault_reason = FR_DTLB_MISS;
 			end
 			else
 			begin
-				wb_fault_reason = FR_INVALID_ACCESS;
 				wb_rollback_pc = cr_fault_handler;
+				if (dd_write_fault)
+					wb_fault_reason = FR_ILLEGAL_WRITE;
+				else
+					wb_fault_reason = FR_INVALID_ACCESS;
 			end
 			
 			wb_fault_pc = dd_instruction.pc;

@@ -31,7 +31,8 @@
 #define TLB_SETS 16
 #define TLB_WAYS 4
 #define PAGE_SIZE 0x1000u
-#define PAGE_MASK ~(PAGE_SIZE - 1u)
+#define ROUND_TO_PAGE(addr) ((addr) & ~(PAGE_SIZE - 1u))
+#define PAGE_OFFSET(addr) ((addr) & (PAGE_SIZE - 1u))
 
 #ifdef DUMP_INSTRUCTION_STATS
     #define TALLY_INSTRUCTION(type) thread->core->stat_ ## type++
@@ -73,7 +74,7 @@ struct Thread
 struct TlbEntry
 {
 	uint32_t virtualAddress;
-	uint32_t physicalAddress;
+	uint32_t physAddrAndFlags;
 };
 
 struct Core
@@ -121,10 +122,11 @@ static void setScalarReg(Thread*, uint32_t reg, uint32_t value);
 static void setVectorReg(Thread*, uint32_t reg, uint32_t mask, 
 	uint32_t *values);
 static void invalidateSyncAddress(Core*, uint32_t address);
-static void memoryAccessFault(Thread*, uint32_t address, bool isLoad, FaultReason);
+static void dispatchFault(Thread*, uint32_t address, FaultReason);
+static void memoryAccessFault(Thread*, uint32_t address, FaultReason, bool isLoad);
 static void illegalInstruction(Thread*, uint32_t instruction);
 static bool translateAddress(Thread*, uint32_t virtualAddress, uint32_t 
-	*physicalAddress, bool data);
+	*physicalAddress, bool data, bool isWrite);
 static uint32_t scalarArithmeticOp(ArithmeticOp, uint32_t value1, uint32_t value2);
 static bool isCompareOp(uint32_t op);
 static struct Breakpoint *lookupBreakpoint(Core*, uint32_t pc);
@@ -173,9 +175,7 @@ Core *initCore(uint32_t memorySize, uint32_t totalThreads, bool randomizeMemory)
 	{
 		// Set to invalid (unaligned) addresses so these don't match
 		core->itlb[i].virtualAddress = 0xffffffffu;
-		core->itlb[i].physicalAddress = 0xffffffffu;
 		core->dtlb[i].virtualAddress = 0xffffffffu;
-		core->dtlb[i].physicalAddress = 0xffffffffu;
 	}
 	
 	core->totalThreads = totalThreads;
@@ -269,14 +269,8 @@ void enableCosimulation(Core *core)
 void cosimInterrupt(Core *core, uint32_t threadId, uint32_t pc)
 {
 	Thread *thread = &core->threads[threadId];
-
-	thread->lastFaultPc = pc;
-	thread->currentPc = thread->core->faultHandlerPc;
-	thread->lastFaultReason = FR_INTERRUPT;
-	thread->prevEnableInterrupt = thread->enableInterrupt;
-	thread->prevEnableMmu = thread->enableMmu;
-	thread->enableInterrupt = false;
-	thread->currentSubcycle = 0;
+	thread->currentPc = pc + 4;
+	dispatchFault(thread, 0, FR_INTERRUPT);
 }
 
 uint32_t getTotalThreads(const Core *core)
@@ -518,9 +512,34 @@ static void invalidateSyncAddress(Core *core, uint32_t address)
 	}
 }
 
-static void memoryAccessFault(Thread *thread, uint32_t address, bool isLoad, FaultReason reason)
+static void dispatchFault(Thread *thread, uint32_t faultAddress, FaultReason reason)
 {
-	if (thread->core->stopOnFault)
+	// Save old state
+	thread->lastFaultPc = thread->currentPc - 4;
+	thread->prevEnableInterrupt = thread->enableInterrupt;
+	thread->prevEnableMmu = thread->enableMmu;
+	thread->faultSubcycle = thread->currentSubcycle;
+
+	// Update state
+	thread->enableInterrupt = false;
+	if (reason == FR_ITLB_MISS || reason == FR_DTLB_MISS)
+	{
+		thread->currentPc = thread->core->tlbMissHandlerPc;
+		thread->enableMmu = false;
+	}
+	else
+		thread->currentPc = thread->core->faultHandlerPc;
+
+	thread->currentSubcycle = 0;
+
+	// Save fault information
+	thread->lastFaultReason = reason;
+	thread->lastFaultAddress = faultAddress;
+}
+
+static void memoryAccessFault(Thread *thread, uint32_t address, FaultReason reason, bool isLoad)
+{
+	if (thread->core->stopOnFault || thread->core->faultHandlerPc == 0)
 	{
 		printf("Invalid %s access thread %d PC %08x address %08x\n",
 			isLoad ? "load" : "store",
@@ -532,24 +551,15 @@ static void memoryAccessFault(Thread *thread, uint32_t address, bool isLoad, Fau
 	{
 		// Allow core to dispatch
 		if (reason == FR_IFETCH_FAULT)
-			thread->lastFaultPc = thread->currentPc;
-		else
-			thread->lastFaultPc = thread->currentPc - 4;
+			thread->currentPc += 4;
 			
-		thread->currentPc = thread->core->faultHandlerPc;
-		thread->lastFaultReason = reason;
-		thread->prevEnableInterrupt = thread->enableInterrupt;
-		thread->prevEnableMmu = thread->enableMmu;
-		thread->enableInterrupt = false;
-		thread->lastFaultAddress = address;
-		thread->faultSubcycle = thread->currentSubcycle;
-		thread->currentSubcycle = 0;
+		dispatchFault(thread, address, reason);
 	}
 }
 
 static void illegalInstruction(Thread *thread, uint32_t instruction)
 {
-	if (thread->core->stopOnFault)
+	if (thread->core->stopOnFault || thread->core->faultHandlerPc == 0)
 	{
 		printf("Illegal instruction %08x thread %d PC %08x\n", instruction, thread->id, 
 			thread->currentPc - 4);
@@ -559,12 +569,7 @@ static void illegalInstruction(Thread *thread, uint32_t instruction)
 	else
 	{
 		// Allow core to dispatch
-		thread->lastFaultPc = thread->currentPc - 4;
-		thread->currentPc = thread->core->faultHandlerPc;
-		thread->lastFaultReason = FR_ILLEGAL_INSTRUCTION;
-		thread->prevEnableInterrupt = thread->enableInterrupt;
-		thread->prevEnableMmu = thread->enableMmu;
-		thread->enableInterrupt = false;
+		dispatchFault(thread, 0, FR_ILLEGAL_INSTRUCTION);
 	}
 }
 
@@ -572,7 +577,7 @@ static void illegalInstruction(Thread *thread, uint32_t instruction)
 // If there is a TLB miss, this will update the thread state to make it jump
 // to the fault handler.
 static bool translateAddress(Thread *thread, uint32_t virtualAddress, uint32_t *outPhysicalAddress, 
-	bool dataFetch)
+	bool dataFetch, bool isWrite)
 {
 	int tlbSet;
 	int way;
@@ -598,10 +603,17 @@ static bool translateAddress(Thread *thread, uint32_t virtualAddress, uint32_t *
 	setEntries = (dataFetch ? thread->core->dtlb : thread->core->itlb) + tlbSet * TLB_WAYS;
 	for (way = 0; way < TLB_WAYS; way++)
 	{
-		if (setEntries[way].virtualAddress == (virtualAddress & PAGE_MASK))
+		if (setEntries[way].virtualAddress == ROUND_TO_PAGE(virtualAddress))
 		{
-			*outPhysicalAddress = setEntries[way].physicalAddress
-				| (virtualAddress & ~PAGE_MASK);
+			if (isWrite && (setEntries[way].physAddrAndFlags & TLB_WRITE_ENABLE) == 0)
+			{
+				// Write protected page, raise a fault
+				memoryAccessFault(thread, virtualAddress, FR_ILLEGAL_WRITE, false);
+				return false;
+			}
+			
+			*outPhysicalAddress = ROUND_TO_PAGE(setEntries[way].physAddrAndFlags)
+				| PAGE_OFFSET(virtualAddress);
 
 			if (*outPhysicalAddress >= thread->core->memorySize && *outPhysicalAddress < 0xffff0000)
 			{
@@ -619,24 +631,12 @@ static bool translateAddress(Thread *thread, uint32_t virtualAddress, uint32_t *
 
 	// No translation found, raise exception
 	if (dataFetch)
-	{
-		thread->lastFaultPc = thread->currentPc - 4;
-		thread->lastFaultReason = FR_DTLB_MISS;
-	}
+		dispatchFault(thread, virtualAddress, FR_DTLB_MISS);
 	else
 	{
-		thread->lastFaultPc = thread->currentPc;
-		thread->lastFaultReason = FR_ITLB_MISS;
+		thread->currentPc += 4;	// In instruction fetch, hadn't been incremented yet
+		dispatchFault(thread, virtualAddress, FR_ITLB_MISS);
 	}
-
-	thread->currentPc = thread->core->tlbMissHandlerPc;
-	thread->prevEnableInterrupt = thread->enableInterrupt;
-	thread->prevEnableMmu = thread->enableMmu;
-	thread->enableInterrupt = false;
-	thread->enableMmu = false;
-	thread->lastFaultAddress = virtualAddress;
-	thread->faultSubcycle = thread->currentSubcycle;
-	thread->currentSubcycle = 0;
 
 	return false;
 }
@@ -985,14 +985,14 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instruction)
 	// Check alignment
 	if ((virtualAddress % accessSize) != 0)
 	{
-		memoryAccessFault(thread, virtualAddress, isLoad, FR_INVALID_ACCESS);
+		memoryAccessFault(thread, virtualAddress, FR_ALIGNMENT_FAULT, isLoad);
 		return;
 	}
 
 	// If translateAddress fails because the TLB entry is not present, it will
 	// jump to the fault handler as a side effect. Return immediately so we don't
 	// perform any other side effects of the faulting instruction.
-	if (!translateAddress(thread, virtualAddress, &physicalAddress, true))
+	if (!translateAddress(thread, virtualAddress, &physicalAddress, true, !isLoad))
 		return;
 	
 	isDeviceAccess = (physicalAddress & 0xffff0000) == 0xffff0000;
@@ -1183,11 +1183,11 @@ static void executeBlockLoadStoreInst(Thread *thread, uint32_t instruction)
 	// Check alignment
 	if ((virtualAddress & (NUM_VECTOR_LANES * 4 - 1)) != 0)
 	{
-		memoryAccessFault(thread, virtualAddress, isLoad, FR_INVALID_ACCESS);
+		memoryAccessFault(thread, virtualAddress, FR_ALIGNMENT_FAULT, isLoad);
 		return;
 	}
 
-	if (!translateAddress(thread, virtualAddress, &physicalAddress, true))
+	if (!translateAddress(thread, virtualAddress, &physicalAddress, true, !isLoad))
 		return;
 
 	blockPtr = UINT32_PTR(thread->core->memory, physicalAddress);
@@ -1264,11 +1264,11 @@ static void executeScatterGatherInst(Thread *thread, uint32_t instruction)
 	virtualAddress = thread->vectorReg[ptrreg][lane] + offset;
 	if ((mask & (1 << lane)) && (virtualAddress & 3) != 0)
 	{
-		memoryAccessFault(thread, virtualAddress, isLoad, FR_INVALID_ACCESS);
+		memoryAccessFault(thread, virtualAddress, FR_ALIGNMENT_FAULT, isLoad);
 		return;
 	}
 
-	if (!translateAddress(thread, virtualAddress, &physicalAddress, true)) 
+	if (!translateAddress(thread, virtualAddress, &physicalAddress, true, !isLoad)) 
 		return;
 
 	if (isLoad)
@@ -1501,9 +1501,9 @@ static void executeCacheControlInst(Thread *thread, uint32_t instruction)
 		case CC_DTLB_INSERT:
 		case CC_ITLB_INSERT:
 		{
-			uint32_t virtualAddress = getThreadScalarReg(thread, ptrReg) & PAGE_MASK;
+			uint32_t virtualAddress = ROUND_TO_PAGE(getThreadScalarReg(thread, ptrReg));
 			uint32_t physAddrReg = extractUnsignedBits(instruction, 5, 5);
-			uint32_t physicalAddress = getThreadScalarReg(thread, physAddrReg) & PAGE_MASK;
+			uint32_t physAddrAndFlags = getThreadScalarReg(thread, physAddrReg);
 			uint32_t *wayPtr;
 			TlbEntry *tlb;
 
@@ -1525,7 +1525,7 @@ static void executeCacheControlInst(Thread *thread, uint32_t instruction)
 				if (entry[way].virtualAddress == virtualAddress)
 				{
 					// Found existing entry, update it
-					entry[way].physicalAddress = physicalAddress;
+					entry[way].physAddrAndFlags = physAddrAndFlags;
 					updatedEntry = true;
 					break;
 				}
@@ -1535,7 +1535,7 @@ static void executeCacheControlInst(Thread *thread, uint32_t instruction)
 			{
 				// Replace entry with a new one
 				entry[*wayPtr].virtualAddress = virtualAddress;
-				entry[*wayPtr].physicalAddress = physicalAddress;
+				entry[*wayPtr].physAddrAndFlags = physAddrAndFlags;
 			}
 
 			*wayPtr = (*wayPtr + 1) % TLB_WAYS;
@@ -1545,7 +1545,7 @@ static void executeCacheControlInst(Thread *thread, uint32_t instruction)
 		case CC_INVALIDATE_TLB:
 		{
 			uint32_t offset = extractSignedBits(instruction, 15, 10);
-			uint32_t virtualAddress = (getThreadScalarReg(thread, ptrReg) + offset) & PAGE_MASK;
+			uint32_t virtualAddress = ROUND_TO_PAGE(getThreadScalarReg(thread, ptrReg) + offset);
 			uint32_t tlbIndex = ((virtualAddress / PAGE_SIZE) % TLB_SETS) * TLB_WAYS;
 
 			for (way = 0; way < TLB_WAYS; way++)
@@ -1584,11 +1584,11 @@ static int executeInstruction(Thread *thread)
 	// Check PC alignment
 	if ((thread->currentPc & 3) != 0)
 	{
-		memoryAccessFault(thread, thread->currentPc, true, FR_IFETCH_FAULT);
+		memoryAccessFault(thread, thread->currentPc, FR_IFETCH_FAULT, true);
 		return 1;
 	}
 
-	if (!translateAddress(thread, thread->currentPc, &physicalPc, false))
+	if (!translateAddress(thread, thread->currentPc, &physicalPc, false, false))
 		return 1;	// On next execution will start in TLB miss handler
 
 	instruction = *UINT32_PTR(thread->core->memory, physicalPc);

@@ -20,23 +20,22 @@
 #define PAGE_SIZE 0x1000
 #define TLB_WRITE_ENABLE 2
 
-volatile unsigned int *data_addr = (unsigned int*) 0x100000;
-
-void tlb_miss_handler();
+unsigned int *data_addr = (unsigned int*) 0x100000;
 
 void add_itlb_mapping(unsigned int va, unsigned int pa)
 {
 	asm("itlbinsert %0, %1" : : "r" (va), "r" (pa));
 }
 
-void add_dtlb_mapping(unsigned int va, unsigned int pa)
+void add_dtlb_mapping(unsigned int va, unsigned int pa, int write_enable)
 {
-	asm("dtlbinsert %0, %1" : : "r" (va), "r" (pa | TLB_WRITE_ENABLE));
+	asm("dtlbinsert %0, %1" : : "r" (va), "r" (pa | (write_enable ? TLB_WRITE_ENABLE : 0)));
 }
 
-void tlb_miss_handler()
+void fault_handler()
 {
-	printf("TLB miss %08x\n", __builtin_nyuzi_read_control_reg(5));
+	printf("FAULT %d %08x\n", __builtin_nyuzi_read_control_reg(3),
+		__builtin_nyuzi_read_control_reg(5));
 	exit(0);
 }
 
@@ -46,32 +45,35 @@ int main(int argc, const char *argv[])
 	unsigned int stack_addr = (unsigned int) &i & ~(PAGE_SIZE - 1);
 
 	// Map code & data
-	for (i = 0; i < 9; i++)
+	for (i = 0; i < 8; i++)
 	{
 		add_itlb_mapping(i * PAGE_SIZE, i * PAGE_SIZE);
-		add_dtlb_mapping(i * PAGE_SIZE, i * PAGE_SIZE);
+		add_dtlb_mapping(i * PAGE_SIZE, i * PAGE_SIZE, 1);
 	}
 
 	// Stack
-	add_dtlb_mapping(stack_addr, stack_addr);
+	add_dtlb_mapping(stack_addr, stack_addr, 1);
 
-	// A data region. Enter a few bogus mapping first, then the proper
-	// one, which should replace them.
-	add_dtlb_mapping(data_addr, 0x101000);
-	add_dtlb_mapping(data_addr, 0x102000);
-	add_dtlb_mapping(data_addr, 0x103000);
-	add_dtlb_mapping(data_addr, 0x104000);
-	add_dtlb_mapping(data_addr, data_addr);
+	// Writable data
+	add_dtlb_mapping(data_addr, data_addr, 1);
+
+	// Read only data
+	add_dtlb_mapping(data_addr + (PAGE_SIZE / sizeof(int)), data_addr + (PAGE_SIZE / sizeof(int)), 
+		0);
 
 	// I/O address
-	add_dtlb_mapping(0xffff0000, 0xffff0000);
+	add_dtlb_mapping(0xffff0000, 0xffff0000, 1);
 
 	// Enable MMU in flags register
-	__builtin_nyuzi_write_control_reg(7, tlb_miss_handler);
+	__builtin_nyuzi_write_control_reg(1, fault_handler);
 	__builtin_nyuzi_write_control_reg(4, (1 << 2));
 
 	*data_addr = 0x1f6818aa;
 	printf("data value %08x\n", *data_addr); // CHECK: data value 1f6818aa
 
+	// Attempt to write to write protected page will fail.
+	data_addr[PAGE_SIZE / sizeof(int)] = 0x1f6818aa; // CHECK: FAULT 7 00101000
+
+	printf("FAIL: read value %08x\n", *data_addr);
 	return 0;
 }
