@@ -20,6 +20,10 @@
 #define PAGE_SIZE 0x1000
 #define TLB_WRITE_ENABLE 2
 
+//
+// Verify that inserting duplicate entries does not cause problems.
+//
+
 volatile unsigned int *data_addr = (unsigned int*) 0x100000;
 
 void tlb_miss_handler();

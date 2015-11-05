@@ -22,6 +22,11 @@
 extern void tlb_miss_handler();
 extern void enable_mmu();
 
+//
+// Fill a memory region with memory identity mapped, testing TLB
+// fault handling.
+//
+
 int main(void)
 {
 	unsigned int rand_seed;
