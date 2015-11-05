@@ -14,7 +14,6 @@
 // limitations under the License.
 // 
 
-
 //
 // Drive a 640x480 VGA display.  This is an AXI master that will DMA color 
 // data from a memory framebuffer, hard coded at address 0x10000000 (32 BPP 
@@ -22,22 +21,22 @@
 //
 
 module vga_controller(
-	input 					clk,
-	input					reset,
+	input                   clk,
+	input                   reset,
 
 	input                   fb_base_update_en,
 	input [31:0]            fb_new_base,
 	output logic            frame_toggle,
 
 	// To DAC
-	output [7:0]			vga_r,
-	output [7:0]			vga_g,
-	output [7:0]			vga_b,
-	output 					vga_clk,
-	output 					vga_blank_n,
-	output 					vga_hs,
-	output 					vga_vs,
-	output 					vga_sync_n,
+	output [7:0]            vga_r,
+	output [7:0]            vga_g,
+	output [7:0]            vga_b,
+	output                  vga_clk,
+	output                  vga_blank_n,
+	output                  vga_hs,
+	output                  vga_vs,
+	output                  vga_sync_n,
 	
 	// To AXI interconnect
 	axi4_interface.master   axi_bus);
@@ -62,7 +61,7 @@ module vga_controller(
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	logic		in_visible_region;	// From timing_generator of vga_timing_generator.v
 	logic		new_frame;		// From timing_generator of vga_timing_generator.v
-	logic		pixel_enable;		// From timing_generator of vga_timing_generator.v
+	logic		pixel_en;		// From timing_generator of vga_timing_generator.v
 	// End of automatics
 	logic[31:0] vram_addr;
 	logic[7:0] _ignore_alpha;
@@ -75,7 +74,7 @@ module vga_controller(
 
 	assign vga_blank_n = in_visible_region;
 	assign vga_sync_n = 1'b0;	// Not used
-	assign vga_clk = pixel_enable;	// This is a bid odd: using enable as external clock.
+	assign vga_clk = pixel_en;	// This is a bid odd: using enable as external clock.
 
 	// Buffers data to the display from SDRAM.  The enqueue threshold
 	// is set to ensure there is capacity to enqueue an entire burst from memory.
@@ -95,7 +94,7 @@ module vga_controller(
 		.value_i(axi_bus.s_rdata),
 		.enqueue_en(axi_bus.s_rvalid),
 		.full(),
-		.dequeue_en(pixel_enable && in_visible_region && !pixel_fifo_empty));
+		.dequeue_en(pixel_en && in_visible_region && !pixel_fifo_empty));
 		
 	always_ff @(posedge clk, posedge reset)
 	begin
@@ -115,7 +114,7 @@ module vga_controller(
 		else 
 		begin
 			// Check for FIFO underrun
-			assert(!(pixel_enable && in_visible_region && pixel_fifo_empty));
+			assert(!(pixel_en && in_visible_region && pixel_fifo_empty));
 			
 			if (fb_base_update_en)
 				fb_base_address <= fb_new_base;
@@ -187,7 +186,7 @@ module vga_controller(
 					      .vga_vs		(vga_vs),
 					      .vga_hs		(vga_hs),
 					      .in_visible_region(in_visible_region),
-					      .pixel_enable	(pixel_enable),
+					      .pixel_en	(pixel_en),
 					      .new_frame	(new_frame),
 					      // Inputs
 					      .clk		(clk),

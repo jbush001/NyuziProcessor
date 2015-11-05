@@ -14,8 +14,6 @@
 // limitations under the License.
 // 
 
-
-
 `include "defines.sv"
 
 //
@@ -26,29 +24,29 @@
 //
 
 module async_fifo
-	#(parameter WIDTH=32,
-	parameter NUM_ENTRIES=8)
+	#(parameter WIDTH = 32,
+	parameter NUM_ENTRIES = 8)
 
-	(input					reset,		
+	(input                  reset,		
 	
 	// Read.
-	input					read_clock,
-	input 		 			read_enable,
-	output [WIDTH - 1:0]	read_data,
-	output 		 			empty,
+	input                   read_clk,
+	input                   read_en,
+	output [WIDTH - 1:0]    read_data,
+	output                  empty,
 
 	// Write 	
-	input 					write_clock,
-	input 					write_enable,
-	output 					full,
-	input [WIDTH - 1:0]		write_data);
+	input                   write_clk,
+	input                   write_en,
+	output                  full,
+	input [WIDTH - 1:0]     write_data);
 
 	localparam ADDR_WIDTH = $clog2(NUM_ENTRIES);
 
 	logic[ADDR_WIDTH - 1:0] write_ptr_sync;
-	logic[ADDR_WIDTH - 1:0]  read_ptr;
+	logic[ADDR_WIDTH - 1:0] read_ptr;
 	logic[ADDR_WIDTH - 1:0] read_ptr_gray;
-	logic[ADDR_WIDTH - 1:0]  read_ptr_nxt;
+	logic[ADDR_WIDTH - 1:0] read_ptr_nxt;
 	logic[ADDR_WIDTH - 1:0] read_ptr_gray_nxt;
 	logic reset_rsync;
 	logic[ADDR_WIDTH - 1:0] read_ptr_sync;
@@ -64,17 +62,11 @@ module async_fifo
 	assign write_ptr_nxt = write_ptr + 1;
 	assign write_ptr_gray_nxt = write_ptr_nxt ^ (write_ptr_nxt >> 1);
 
-	initial
-	begin
-		for (int i = 0; i < NUM_ENTRIES; i = i + 1)
-			fifo_data[i] = 0;
-	end
-
 	//
 	// Read clock domain
 	//
 	synchronizer #(.WIDTH(ADDR_WIDTH)) write_ptr_synchronizer(
-		.clk(read_clock),
+		.clk(read_clk),
 		.reset(reset_rsync),
 		.data_o(write_ptr_sync),
 		.data_i(write_ptr_gray));
@@ -82,12 +74,12 @@ module async_fifo
 	assign empty = write_ptr_sync == read_ptr_gray;
 
 	synchronizer #(.RESET_STATE(1)) read_reset_synchronizer(
-		.clk(read_clock),
+		.clk(read_clk),
 		.reset(reset),
 		.data_i(0),
 		.data_o(reset_rsync));
 
-	always_ff @(posedge read_clock, posedge reset_rsync)
+	always_ff @(posedge read_clk, posedge reset_rsync)
 	begin
 		if (reset_rsync)
 		begin
@@ -97,7 +89,7 @@ module async_fifo
 			read_ptr_gray <= '0;
 			// End of automatics
 		end
-		else if (read_enable && !empty)
+		else if (read_en && !empty)
 		begin
 			read_ptr <= read_ptr_nxt;
 			read_ptr_gray <= read_ptr_gray_nxt;
@@ -110,7 +102,7 @@ module async_fifo
 	// Write clock domain
 	//
 	synchronizer #(.WIDTH(ADDR_WIDTH)) read_ptr_synchronizer(
-		.clk(write_clock),
+		.clk(write_clk),
 		.reset(reset_wsync),
 		.data_o(read_ptr_sync),
 		.data_i(read_ptr_gray));
@@ -118,12 +110,12 @@ module async_fifo
 	assign full = write_ptr_gray_nxt == read_ptr_sync;
 
 	synchronizer #(.RESET_STATE(1)) write_reset_synchronizer(
-		.clk(write_clock),
+		.clk(write_clk),
 		.reset(reset),
 		.data_i(0),
 		.data_o(reset_wsync));
 
-	always_ff @(posedge write_clock, posedge reset_wsync)
+	always_ff @(posedge write_clk, posedge reset_wsync)
 	begin
 		if (reset_wsync)
 		begin
@@ -137,7 +129,7 @@ module async_fifo
 			write_ptr_gray <= '0;
 			// End of automatics
 		end
-		else if (write_enable && !full)
+		else if (write_en && !full)
 		begin
 			fifo_data[write_ptr] <= write_data;
 			write_ptr <= write_ptr_nxt;

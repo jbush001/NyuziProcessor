@@ -14,6 +14,10 @@
 // limitations under the License.
 // 
 
+//
+// General Purpose Input/Output
+// Bidirectional pins that can be driven and read
+//
 module gpio_controller
 	#(parameter BASE_ADDRESS = 0,
 	parameter NUM_PINS = 8,
@@ -23,11 +27,11 @@ module gpio_controller
 	input				  reset,
 	                      
 	// IO bus interface   
-	input [31:0]		  io_address,
-	input				  io_read_en,	
-	input [31:0]		  io_write_data,
-	input				  io_write_en,
-	output logic[31:0] 	  io_read_data,
+	input [31:0]          io_address,
+	input                 io_read_en,	
+	input [31:0]          io_write_data,
+	input                 io_write_en,
+	output logic[31:0]    io_read_data,
 
 	// To/from SD card
 	inout[NUM_PINS - 1:0] gpio_value);	

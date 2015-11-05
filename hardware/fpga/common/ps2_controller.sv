@@ -26,11 +26,11 @@ module ps2_controller
 	input               reset,
 	
 	// IO bus interface
-	input [31:0]		io_address,
-	input				io_read_en,	
-	input [31:0]		io_write_data,
-	input				io_write_en,
-	output logic[31:0] 	io_read_data,
+	input [31:0]        io_address,
+	input               io_read_en,	
+	input [31:0]        io_write_data,
+	input               io_write_en,
+	output logic[31:0]  io_read_data,
 	
 	// PS/2 Interface
 	inout               ps2_clk,
@@ -64,7 +64,7 @@ module ps2_controller
 		.*);
 
 	// If the FIFO hits the almost full threshold, we dequeue an entry (dropping the oldest
-	// character). We use the almost full threshold instead of full because the Altera specs
+	// character). Use the almost full threshold instead of full because the Altera specs
 	// say it is not allowed to enqueue into a full FIFO. Although it seems like this should 
 	// be legal if read is also asserted, I'm being conservative.
 	sync_fifo #(.WIDTH(8), .SIZE(FIFO_LENGTH), .ALMOST_FULL_THRESHOLD(FIFO_LENGTH - 1)) input_fifo(

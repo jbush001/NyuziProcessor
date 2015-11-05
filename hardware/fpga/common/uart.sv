@@ -23,8 +23,8 @@ module uart
 	#(parameter			BASE_ADDRESS = 0,
 	parameter			BAUD_DIVIDE = 1)
 
-	(input				clk,
-	input				reset,
+	(input              clk,
+	input               reset,
 	
 	// IO bus interface
 	input [31:0]        io_address,
@@ -34,8 +34,8 @@ module uart
 	output logic[31:0]  io_read_data,
 	
 	// UART interface
-	output				uart_tx,
-	input				uart_rx);
+	output              uart_tx,
+	input               uart_rx);
 
 	localparam STATUS_REG = BASE_ADDRESS;
 	localparam RX_REG = BASE_ADDRESS + 4;
@@ -97,11 +97,10 @@ module uart
 							       .clk		(clk),
 							       .reset		(reset),
 							       .uart_rx		(uart_rx));
-						     
-	// XXX detect and flag uart_rx overflow
+
 	assign rx_fifo_read = io_address == RX_REG && io_read_en;
 
-	/// Logic for Overrun Error (OE) bit
+	// Logic for Overrun Error (OE) bit
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
@@ -130,10 +129,10 @@ module uart
 			rx_fifo_overrun_dq = 0;
 	end
 
-	/// Up to ALMOST_FULL_THRESHOLD characters can be filled. FIFO is
-	/// automatically dequeued and OE bit is asserted when a character is queued
-	/// after this point. The OE bit is deasserted when rx_fifo_read or the
-	/// number of stored characters is lower than the threshold.
+	// Up to ALMOST_FULL_THRESHOLD characters can be filled. FIFO is
+	// automatically dequeued and OE bit is asserted when a character is queued
+	// after this point. The OE bit is deasserted when rx_fifo_read or the
+	// number of stored characters is lower than the threshold.
 	sync_fifo #(.WIDTH(9), .SIZE(FIFO_LENGTH), 
 		.ALMOST_FULL_THRESHOLD(FIFO_LENGTH - 1)) 
 		rx_fifo(

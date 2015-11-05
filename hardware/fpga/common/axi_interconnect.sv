@@ -25,8 +25,8 @@
 module axi_interconnect
 	#(parameter M1_BASE_ADDRESS = 32'hffffeee0)
 
-	(input					 clk,
-	input					 reset,
+	(input                   clk,
+	input                    reset,
 
 	// Master Interface 0 (address 0x00000000 - M1_BASE_ADDRESS)
 	// (This interface acts as a master and controls an externally
@@ -70,7 +70,7 @@ module axi_interconnect
 	// This could introduce a subtle bug if the behavior of the core changed.
 	//
 
-	// Since only slave interface 0 supports writes, we can just hard wire these.
+	// Since only slave interface 0 supports writes, just hard wire these.
 	assign axi_bus_m0.m_awaddr = write_burst_address;
 	assign axi_bus_m0.m_awlen = write_burst_length;
 	assign axi_bus_m0.m_wdata = axi_bus_s0.m_wdata;
@@ -248,7 +248,7 @@ module axi_interconnect
 	assign axi_bus_m0.m_arburst = read_selected_master ? axi_bus_s1.m_arburst : axi_bus_s0.m_arburst;
 	assign axi_bus_m0.m_arsize = read_selected_master ? axi_bus_s1.m_arsize : axi_bus_s0.m_arsize;
 
-	// Note that we end up reusing read_burst_length to track how many beats are left
+	// We end up reusing read_burst_length to track how many beats are left
 	// later.  At this point, the value of ARLEN should be ignored by slave
 	// we are driving, so it won't break anything.
 	assign axi_bus_m0.m_arlen = read_burst_length;

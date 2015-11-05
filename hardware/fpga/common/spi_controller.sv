@@ -21,15 +21,15 @@
 module spi_controller
 	#(parameter			BASE_ADDRESS = 0)
 
-	(input				clk,
-	input				reset,
+	(input              clk,
+	input               reset,
 	
 	// IO bus interface
-	input [31:0]		io_address,
-	input				io_read_en,	
-	input [31:0]		io_write_data,
-	input				io_write_en,
-	output logic[31:0] 	io_read_data,
+	input [31:0]        io_address,
+	input               io_read_en,	
+	input [31:0]        io_write_data,
+	input               io_write_en,
+	output logic[31:0]  io_read_data,
 
 	// SPI interface
 	output logic        spi_clk,

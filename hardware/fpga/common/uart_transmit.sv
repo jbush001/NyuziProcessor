@@ -21,12 +21,12 @@
 
 module uart_transmit
 	#(parameter			BAUD_DIVIDE = 1)
-	(input				clk,
-	input				reset,
-	input				tx_enable,
-	output				tx_ready,
-	input[7:0]			tx_char,
-	output				uart_tx);
+	(input              clk,
+	input               reset,
+	input               tx_enable,
+	output              tx_ready,
+	input[7:0]          tx_char,
+	output              uart_tx);
 
 	localparam START_BIT = 1'b0;
 	localparam STOP_BIT = 1'b1;

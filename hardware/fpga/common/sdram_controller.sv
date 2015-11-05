@@ -18,7 +18,7 @@
 `include "defines.sv"
 
 //
-// Drive control signals for single data rate (SDR) SDRAM, including
+// Drives control signals for single data rate (SDR) SDRAM, including
 // auto refresh at appropriate intervals. An AXI bus interface initiates
 // reads and writes.
 // For performance, this lazily keeps rows open after accesses, tracking them 
@@ -31,8 +31,8 @@ module sdram_controller
 	parameter					          COL_ADDR_WIDTH = 8, // 256 columns
 	
 	// These are expressed in numbers of clocks. Each one is the number
-	// of clocks of delay minus one.  Need to compute this
-	// based on the part specifications and incoming clock rate.
+	// of clocks of delay minus one. Need to compute this by dividing
+	// part specification by clock interval.
 	parameter					          T_POWERUP = 10000,
 	parameter					          T_ROW_PRECHARGE = 1,
 	parameter					          T_AUTO_REFRESH_CYCLE = 3,
@@ -95,8 +95,7 @@ module sdram_controller
 		CMD_NOP               = 4'b1000	
 	} sdram_cmd_t;
 	
-	// Note that all latched addresses and lengths are in terms of
-	// DATA_WIDTH beats, not bytes.
+	// latched addresses and lengths are in terms of DATA_WIDTH beats, not bytes.
 	logic[11:0] refresh_timer_ff;
 	logic[11:0] refresh_timer_nxt;
 	logic[14:0] timer_ff;
@@ -111,7 +110,7 @@ module sdram_controller
 	logic output_enable;
 	logic[DATA_WIDTH - 1:0] write_data;
 	logic[INTERNAL_ADDR_WIDTH - 1:0] write_address;
-	logic[7:0] write_length;	// Like axi_bus.m_awlen, is num transfers - 1
+	logic[7:0] write_length; // Like axi_bus.m_awlen, is num transfers - 1
 	logic write_pending;
 	logic[INTERNAL_ADDR_WIDTH - 1:0] read_address;
 	logic[7:0] read_length;	// Like axi_bus.m_arlen, is num_transfers - 1
@@ -171,11 +170,10 @@ module sdram_controller
 		
 	assign dram_dq = output_enable ? write_data : {DATA_WIDTH{1'hZ}};
 	
-	// Next state logic.  There are many cases where we want to delay between
-	// states. In this case, timer_ff tracks how many cycles are remaining.
-	// It is important to note that state_ff will point to the next state during
-	// this interval, but the control signals associated with the state (in the case
-	// below) won't be asserted until the timer counts down to zero.
+	// Next state logic. When there is a delay between states, timer_ff tracks 
+	// how many cycles are remaining. state_ff will point to the *next* state 
+	// during this interval, but the  control signals associated with the state 
+	// (in the case below) won't be asserted until the timer counts down to zero.
 	always_comb
 	begin
 		// Default values
@@ -197,7 +195,7 @@ module sdram_controller
 			refresh_timer_nxt = 0;
 
 		if (timer_ff != 0)
-			timer_nxt = timer_ff - 15'd1; // Wait for timer to expire...
+			timer_nxt = timer_ff - 15'd1; // Wait for timer to expire
 		else
 		begin
 			// Progress to next state.
@@ -237,8 +235,9 @@ module sdram_controller
 				STATE_INIT3:
 				begin
 					// Step 3: set the mode register
+					// CAS latency is hardcoded to 2 clocks
 					command = CMD_MODE_REGISTER_SET;
-					dram_addr = SDRAM_ADDR_WIDTH'('b000_0_00_010_0_011);	// Note: CAS latency is 2
+					dram_addr = SDRAM_ADDR_WIDTH'('b000_0_00_010_0_011); 
 					dram_ba = 2'b00;
 					state_nxt = STATE_IDLE;
 				end
@@ -265,13 +264,15 @@ module sdram_controller
 						access_is_read_nxt = 1;
 						if (!bank_active[read_bank])
 						begin
+							// Row is not open in this bank, need to pen it.
 							pc_event_dram_page_miss = 1;
-							state_nxt = STATE_OPEN_ROW;	// Row is not open, do that
+							state_nxt = STATE_OPEN_ROW;	
 						end
 						else if (read_row != active_row[read_bank])	
 						begin
+							// Different row is already open in this bank, close it first.
 							pc_event_dram_page_miss = 1;
-							state_nxt = STATE_CLOSE_ROW; // Different row open in this bank, close
+							state_nxt = STATE_CLOSE_ROW; 
 						end
 						else
 						begin
@@ -283,19 +284,23 @@ module sdram_controller
 						&& (!read_pending || write_address == read_address))
 					begin
 						// Start a write burst.  
-						// We don't start the burst if a read is pending and the FIFO is full.
+						// Don't start the burst if a read is pending and the FIFO is full.
 						// This is a hack to avoid starving the VGA controller.  However, do 
-						// start the write if the read is for data we are about to write.
+						// start the write if the read is for data we are about to write
+						// (write_address == read_address above), which avoids a nasty race 
+						// condition that corrrupts data.
 						access_is_read_nxt = 0;
 						if (!bank_active[write_bank])
 						begin
+							// Row is not open, do that
 							pc_event_dram_page_miss = 1;
-							state_nxt = STATE_OPEN_ROW;	// Row is not open, do that
+							state_nxt = STATE_OPEN_ROW;	
 						end
 						else if (write_row != active_row[write_bank])	
 						begin
+							// Different row open in this bank, close
 							pc_event_dram_page_miss = 1;
-							state_nxt = STATE_CLOSE_ROW; // Different row open in this bank, close
+							state_nxt = STATE_CLOSE_ROW; 
 						end
 						else
 						begin
@@ -374,8 +379,8 @@ module sdram_controller
 
 				STATE_AUTO_REFRESH0:
 				begin
-					// Precharge all banks before we perform an auto-refresh
-					dram_addr = SDRAM_ADDR_WIDTH'('b0010000000000);		// XXX parameterize
+					// Precharge all banks before auto-refresh
+					dram_addr = SDRAM_ADDR_WIDTH'('b0010000000000);	// XXX parameterize
 					command = CMD_PRECHARGE;
 					timer_nxt = T_ROW_PRECHARGE;
 					state_nxt = STATE_AUTO_REFRESH1;

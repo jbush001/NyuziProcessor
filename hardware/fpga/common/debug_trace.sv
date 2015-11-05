@@ -14,15 +14,13 @@
 // limitations under the License.
 // 
 
-
-
 //
-// Quick and dirty event dumper
+// Quick and dirty embedded logic analyzer
 // BAUD_DIVIDE should be: clk rate / target baud rate 
 // Each cycle that capture_enable is asserted, capture_data is
 // stored into a circular buffer.  When trigger is asserted (it only
 // needs to be asserted for one cycle), this will transmit the contents
-// of the circular buffer.  Each entry will be padded to a multiple of
+// of the circular buffer. Each entry will be padded to a multiple of
 // bytes and sent a byte at a time, starting at the least significand bit
 // of capture_data.
 //
@@ -33,7 +31,7 @@ module debug_trace
 	parameter BAUD_DIVIDE = 1)
 
 	(input                       clk,
-	input						reset,
+	input						 reset,
 	input[CAPTURE_WIDTH_BITS - 1:0] capture_data,
 	input                        capture_enable,
 	input                        trigger,

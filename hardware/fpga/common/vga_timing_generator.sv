@@ -20,13 +20,13 @@
 //
 
 module vga_timing_generator(
-	input clk, 	// clk is expected to be 50Mhz
-	input reset,
-	output logic vga_vs, 
-	output logic vga_hs, 
-	output in_visible_region,
-	output logic pixel_enable,
-	output new_frame);
+	input                   clk,  // clk is expected to be 50Mhz
+	input                   reset,
+	output logic            vga_vs, 
+	output logic            vga_hs, 
+	output                  in_visible_region,
+	output logic            pixel_en,
+	output                  new_frame);
 
 	// 640x480 @60 hz.  Pixel clock = 25.175 Mhz Vert Refresh = 31.46875 kHz
 	// Horizontal timing:
@@ -61,7 +61,7 @@ module vga_timing_generator(
 	assign in_visible_region = hvisible && vvisible;
 	assign hvisible_end = horizontal_counter == HVISIBLE_END;
 	assign vvisible_end = vertical_counter == VVISIBLE_END;
-	assign new_frame = !vertical_counter && !horizontal_counter && pixel_enable;
+	assign new_frame = !vertical_counter && !horizontal_counter && pixel_en;
 
 	always_ff @(posedge clk, posedge reset)
 	begin
@@ -73,7 +73,7 @@ module vga_timing_generator(
 			// Beginning of autoreset for uninitialized flops
 			horizontal_counter <= '0;
 			hvisible <= '0;
-			pixel_enable <= '0;
+			pixel_en <= '0;
 			vertical_counter <= '0;
 			vga_hs <= '0;
 			vvisible <= '0;
@@ -82,8 +82,8 @@ module vga_timing_generator(
 		else
 		begin
 			// Divide clock rate by two
-			pixel_enable <= !pixel_enable;
-			if (pixel_enable)
+			pixel_en <= !pixel_en;
+			if (pixel_en)
 			begin
 				// Counters
 				if (hvisible_end)

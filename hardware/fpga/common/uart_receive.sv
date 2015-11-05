@@ -21,12 +21,12 @@
 
 module uart_receive
 	#(parameter BAUD_DIVIDE = 1)
-	(input 				clk,
-	input				reset,
-	input				uart_rx,
-	output[7:0]			rx_char,
-	output logic		rx_char_valid,
-	output logic		rx_frame_error);
+	(input              clk,
+	input               reset,
+	input               uart_rx,
+	output[7:0]         rx_char,
+	output logic        rx_char_valid,
+	output logic        rx_frame_error);
 
 	typedef enum {
 		STATE_WAIT_START,
