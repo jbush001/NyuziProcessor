@@ -27,6 +27,10 @@
 // - NUM_CORES must be 1-8. To synthesize more cores, increase CORE_ID_WIDTH
 //   in defines.sv.
 // - The size of a cache is sets * ways * cache line size (64 bytes)
+// - The number of L1 sets can't be greater than 64 if virtual address 
+//   translation is enabled (because the snoop address is physical and isn't 
+//   translated, it may map to the wrong set).
+//
 //
 
 `define NUM_CORES 1
