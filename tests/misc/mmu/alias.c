@@ -18,6 +18,11 @@
 #include <string.h>
 
 //
+// This creates two virtual mappings to the same physical address
+// (cache synonym) and ensures the value written in one is readable 
+// in the other.
+//
+
 extern void tlb_miss_handler();
 
 // The TLB handle makes memory wrap every 4 MB
@@ -30,9 +35,6 @@ int main(int argc, const char *argv[])
 	// Set up miss handler
 	__builtin_nyuzi_write_control_reg(7, tlb_miss_handler);
 	__builtin_nyuzi_write_control_reg(4, (1 << 2));	// Turn on MMU in flags
-
-	// This dflush should cause a TLB miss and fill.
-	asm("dflush %0" : : "s" (tmp1));
 
 	// Test that stores are properly translated. Test harness will read
 	// physical memory. This should be written to 1MB.
