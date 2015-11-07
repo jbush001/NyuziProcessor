@@ -28,7 +28,7 @@
 			    .align	4
 			    .type	main,@function
 _start:			lea s0, fault_handler
-			    setcr s0, 1			# Set fault handler address
+			    setcr s0, CR_FAULT_HANDLER			# Set fault handler address
 			   
 			    lea s1, branch_address
 			    add_i s1, s1, 1
@@ -40,10 +40,10 @@ branch_address:	move s10, 2			# Shouldn't happen (bad address)
 				goto done
 
 
-fault_handler: 	getcr s11, 2		# Fault PC
-				getcr s12, 3		# Reason
-				getcr s13, 5		# Access address
-				getcr s14, 4		# Flags
-				getcr s15, 8		# Saved flags
+fault_handler: 	getcr s11, CR_FAULT_PC
+				getcr s12, CR_FAULT_REASON
+				getcr s13, CR_FAULT_ADDRESS
+				getcr s14, CR_FLAGS
+				getcr s15, CR_SAVED_FLAGS
 
 done:			HALT_CURRENT_THREAD

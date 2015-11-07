@@ -29,11 +29,11 @@
 				.globl _start
 _start:			START_ALL_THREADS
 
-				getcr s1, 0			# seed for RNG (based on thread ID)
+				getcr s1, CR_CURRENT_THREAD # seed for RNG (based on thread ID)
 				load_32 s5, num_iterations
 				load_32 s2, generator_a
 				load_32 s3, generator_c
-				getcr s8, 0			# get thread ID
+				getcr s8, CR_CURRENT_THREAD # get thread ID
 				shl s8, s8, 2		# Compute thread write offset (thread * 4)
 				move s0, 7			# Initialize value to write
 				

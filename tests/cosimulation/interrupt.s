@@ -27,9 +27,9 @@
 			    .align	4
 			    .type	main,@function
 _start:		    lea s0, interrupt_handler
-			    setcr s0, 1			# Set interrupt handler address
+			    setcr s0, CR_FAULT_HANDLER
 				move s0, 1
-				setcr s0, 4			# Enable interrupts
+				setcr s0, CR_FLAGS   # Enable interrupts
 				move s1, 1000
 				move s2, 7
 				move s3, 17
@@ -45,12 +45,12 @@ _start:		    lea s0, interrupt_handler
 				# where the emulator can begin processing an interrupt before 
 				# halting.
 				move s0, 0			
-				setcr s0, 4
+				setcr s0, CR_FLAGS
 	
 				HALT_CURRENT_THREAD
 
 
-interrupt_handler: 	getcr s11, 2		# Interrupt PC
-				getcr s12, 3		# Reason
+interrupt_handler: 	getcr s11, CR_FAULT_PC		# Interrupt PC
+				getcr s12, CR_FAULT_REASON		# Reason
 				move s13, 1
 				eret
