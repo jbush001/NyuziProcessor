@@ -130,6 +130,15 @@ module dcache_tag_stage
 	assign dt_itlb_vpage_idx = of_operand1[0][31-:`PAGE_NUM_BITS];
 	assign dt_update_itlb_ppage_idx = of_store_value[0][31-:`PAGE_NUM_BITS];
 
+	initial 
+	begin
+		if (`L1D_SETS > 64 && `HAS_MMU)
+		begin
+			$display("Cannot use more than 64 dcache sets with MMU enabled");
+			$finish;
+		end
+	end
+
 	//
 	// Way metadata
 	//

@@ -263,7 +263,9 @@ module l2_cache_interface
 		.one_hot(snoop_hit_way_oh));
 
 	//
-	// Determine fill way
+	// Determine fill way. If this data is already in this cache set, update the
+	// way that has the data. This handles write updates and cache synonyms 
+	// (two virtual addresses point to the same physical address).
 	//
 	always_comb
 	begin
