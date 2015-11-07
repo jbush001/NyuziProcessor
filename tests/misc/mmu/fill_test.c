@@ -35,6 +35,8 @@ int main(void)
 
 	// Enable MMU in flags register
 	__builtin_nyuzi_write_control_reg(7, tlb_miss_handler);
+
+	// Validate enabling MMU by setting saved flags and calling eret
 	enable_mmu();
 
 	// Fill memory region

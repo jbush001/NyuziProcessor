@@ -132,11 +132,15 @@ module control_registers
 				case (dd_creg_index)
 					CR_FLAGS:
 					begin
-						prev_mmu_enable[dt_thread_idx] <= dd_creg_write_val[3];
-						cr_mmu_en[dt_thread_idx] <= dd_creg_write_val[2];
-						prev_int_flag[dt_thread_idx] <= dd_creg_write_val[1];
+						cr_mmu_en[dt_thread_idx] <= dd_creg_write_val[1];
 						cr_interrupt_en[dt_thread_idx] <= dd_creg_write_val[0];
-					end 
+					end
+
+					CR_SAVED_FLAGS:
+					begin
+						prev_mmu_enable[dt_thread_idx] <= dd_creg_write_val[1];
+						prev_int_flag[dt_thread_idx] <= dd_creg_write_val[0];
+					end
 
 					CR_FAULT_PC:         cr_eret_address[dt_thread_idx] <= dd_creg_write_val;
 					CR_FAULT_HANDLER:    cr_fault_handler <= dd_creg_write_val;
@@ -158,10 +162,16 @@ module control_registers
 					CR_FLAGS:
 					begin
 						cr_creg_read_val <= scalar_t'({ 
-							prev_mmu_enable[dt_thread_idx],
 							cr_mmu_en[dt_thread_idx],
-							prev_int_flag[dt_thread_idx],
 							cr_interrupt_en[dt_thread_idx] 
+						});
+					end
+
+					CR_SAVED_FLAGS:
+					begin
+						cr_creg_read_val <= scalar_t'({ 
+							prev_mmu_enable[dt_thread_idx],
+							prev_int_flag[dt_thread_idx]
 						});
 					end
 

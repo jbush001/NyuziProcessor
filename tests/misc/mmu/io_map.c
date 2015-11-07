@@ -65,7 +65,7 @@ int main(void)
 	add_dtlb_mapping(0x100000, 0xffff0000);
 
 	// Enable MMU in flags register
-	__builtin_nyuzi_write_control_reg(4, (1 << 2));
+	__builtin_nyuzi_write_control_reg(4, (1 << 1));
 
 	// Print a message
 	printmsg("jabberwocky");

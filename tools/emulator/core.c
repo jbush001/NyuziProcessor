@@ -573,9 +573,9 @@ static void illegalInstruction(Thread *thread, uint32_t instruction)
 	}
 }
 
-// Performs address translation.
-// If there is a TLB miss, this will update the thread state to make it jump
-// to the fault handler.
+// Translate addresses using the translation lookaside buffer.
+// If there is a TLB miss, update the thread state to make it jump to the fault
+// handler.
 static bool translateAddress(Thread *thread, uint32_t virtualAddress, uint32_t *outPhysicalAddress, 
 	bool dataFetch, bool isWrite)
 {
@@ -910,7 +910,7 @@ static void executeImmediateArithInst(Thread *thread, uint32_t instruction)
 	}
 	else
 	{
-		// Vector arithmetic...
+		// Vector arithmetic
 		uint32_t result[NUM_VECTOR_LANES];
 		uint32_t mask;
 
@@ -1326,9 +1326,12 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 				
 			case CR_FLAGS:
 				value = (thread->enableInterrupt ? 1 : 0)
-					| (thread->prevEnableInterrupt ? 2 : 0)
-					| (thread->enableMmu ? 4 : 0)
-					| (thread->prevEnableMmu ? 8 : 0);
+					| (thread->enableMmu ? 2 : 0);
+				break;
+
+			case CR_SAVED_FLAGS:
+				value = (thread->prevEnableInterrupt ? 1 : 0)
+					| (thread->enableMmu ? 2 : 0);
 				break;
 				
 			case CR_FAULT_ADDRESS:
@@ -1374,9 +1377,12 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 				
 			case CR_FLAGS:
 				thread->enableInterrupt = (value & 1) != 0;
-				thread->prevEnableInterrupt = (value & 2) != 0;
-				thread->enableMmu = (value & 4) != 0;
-				thread->prevEnableMmu = (value & 8) != 0;
+				thread->enableMmu = (value & 2) != 0;
+				break;
+
+			case CR_SAVED_FLAGS:
+				thread->prevEnableInterrupt = (value & 1) != 0;
+				thread->prevEnableMmu = (value & 2) != 0;
 				break;
 
 			case CR_TLB_MISS_HANDLER:

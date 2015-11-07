@@ -53,6 +53,8 @@ _start:			START_ALL_THREADS
 fault_handler: 	getcr s11, 2		# Fault PC
 				getcr s12, 3		# Reason
 				getcr s13, 5		# Access address
+				getcr s14, 4		# Flags
+				getcr s15, 8		# Saved flags
 				add_i pc, s11, 4	# Jump back to next instruction
 
 			   .align 4

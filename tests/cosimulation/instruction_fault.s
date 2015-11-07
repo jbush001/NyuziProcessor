@@ -43,5 +43,7 @@ branch_address:	move s10, 2			# Shouldn't happen (bad address)
 fault_handler: 	getcr s11, 2		# Fault PC
 				getcr s12, 3		# Reason
 				getcr s13, 5		# Access address
+				getcr s14, 4		# Flags
+				getcr s15, 8		# Saved flags
 
 done:			HALT_CURRENT_THREAD
