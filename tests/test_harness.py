@@ -39,9 +39,10 @@ class TestException(Exception):
 
 
 def compile_test(source_file, optlevel='3'):
-	"""Compile one or more files and write the executable as test.hex.
+	"""Compile one or more files.
 
-	This will automatically linkstartup code in crt0.o, libc, and libos.
+	This will link in crt0.o, libc, and libos. It converts the binary
+	to a hex file that can be loaded into memory.
 
 	Args:
 		source_file: name of a single file or list of files, which can
@@ -86,7 +87,8 @@ def compile_test(source_file, optlevel='3'):
 def assemble_test(source_file):
 	"""Assemble a file and write the executable as test.hex. 
 	
-	The file is expected to be standalone; other libraries will not be linked
+	The file is expected to be standalone; other libraries will not be linked.
+	It converts the binary to a hex file that can be loaded into memory.
 
 	Args:
 		source_file: relative path to a assembler file that ends with .s
@@ -257,7 +259,7 @@ def register_tests(func, names):
 	"""Add a list of tests to be run when execute_tests is called. 
 	
 	This function can be called multiple times, it will append passed
-	tests to the existing list each time.
+	tests to the existing list.
 
 	Args:
 		func: A function that will be called for each of the elements
@@ -279,7 +281,8 @@ def find_files(extensions):
 	"""Find files in the current directory that have certain extensions
 
 	Args:
-		extensions: list of extensions, each starting with a dot
+		extensions: list of extensions, each starting with a dot. For example
+		['.c', '.cpp']
 
 	Returns:
 		List of filenames
@@ -352,8 +355,7 @@ def check_result(source_file, program_output):
 	
 	For each pattern in a source file that begins with 'CHECK:', search
 	to see if the regular expression that follows it occurs in program_output. 
-	The strings must occur in order, but this ignores any other output between
-	them.
+	The strings must occur in order, but this ignores anything between them.
 
 	Args:
 		source_file: relative path to a source file that contains patterns
