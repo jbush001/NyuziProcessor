@@ -305,10 +305,10 @@ def generate_test(filename, numInstructions, numThreads, enableInterrupts):
 _start:			START_ALL_THREADS
 			
 				##### Set up pointers #####################
-				getcr s2, 0
-				add_i s2, s2, 8	# Start at 8MB
+				getcr s2, CR_CURRENT_THREAD
+				add_i s2, s2, 8	# Start at 8 MB
 				shl s2, s2, 20	# Multiply by 1meg: private base address
-				
+
 				load_v v2, ptrvec
 				add_i v2, v2, s2	# Set up vector private base register (for scatter/gather)
 
@@ -325,7 +325,7 @@ _start:			START_ALL_THREADS
 				######### Fill private memory with a random pattern ######
 				move s3, s2	# Base Address
 				load_32 s4, fill_length	# Size to copy
-				getcr s5, 0	# Use thread ID as seed
+				getcr s5, CR_CURRENT_THREAD	# Use thread ID as seed
                 load_32 s6, generator_a
                 load_32 s7, generator_c
 
@@ -359,15 +359,15 @@ fill_loop:		store_32 s5, (s3)
 		file.write('''
 				###### Set up interrupt handler ###################################
 				lea s10, interrupt_handler
-			    setcr s10, 1			# Set interrupt handler address
+			    setcr s10, CR_FAULT_HANDLER
 				move s10, 1
-				setcr s10, 4			# Enable interrupts
+				setcr s10, CR_FLAGS   # Enable interrupts
 ''')
 
 
 	file.write('''
 				###### Compute address of per-thread code and branch ######
-				getcr s3, 0
+				getcr s3, CR_CURRENT_THREAD
 				shl s3, s3, 2
 				lea s4, branch_addrs
 				add_i s3, s3, s4
@@ -375,8 +375,8 @@ fill_loop:		store_32 s5, (s3)
 				move pc, s3
 
 				# Interrupt handler
-interrupt_handler: 	getcr s11, 2		# PC
-					getcr s12, 3		# Reason
+interrupt_handler: 	getcr s11, CR_FAULT_PC
+					getcr s12, CR_FAULT_REASON
 					eret
 
 				.align 64
@@ -387,7 +387,7 @@ branch_addrs: 	.long ''')
 		if i != 0:
 			file.write(", ")
 
-		file.write("start_thread" + str(i))
+		file.write('start_thread' + str(i))
 
 	file.write('''
 fill_length: 	.long 0x1000 / 4
@@ -397,7 +397,7 @@ device_ptr:		.long 0xffff0004
 ''')
 
 	for thread in range(numThreads):
-		file.write('\nstart_thread%d: ' % thread)
+		file.write('\nstart_thread%d:\n' % thread)
 		labelIdx = 1
 		for x in range(numInstructions):
 			file.write(str(labelIdx + 1) + ': ')
