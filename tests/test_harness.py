@@ -33,16 +33,27 @@ ELF_FILE = OBJ_DIR + 'test.elf'
 HEX_FILE = OBJ_DIR + 'test.hex'
 
 
-class TestException:
+class TestException(Exception):
 	def __init__(self, output):
 		self.output = output
 
 
 def compile_test(source_file, optlevel='3'):
 	"""Compile one or more files and write the executable as test.hex.
+
+	This will automatically linkstartup code in crt0.o, libc, and libos.
+
+	Args:
+		source_file: name of a single file or list of files, which can
+		  be C/C++ or assembly files.
+		optlevel: optimization level, 0-3
+
+	Returns:
+		Name of hex file created
 	
-	source_file can be a single file or list of files. This will link in crt0.o,
-	libc, and libos."""
+	Raises:
+		TestException if compilation failed, will contain compiler output
+	"""
 
 	if not os.path.exists(OBJ_DIR):
 		os.makedirs(OBJ_DIR)
@@ -75,7 +86,17 @@ def compile_test(source_file, optlevel='3'):
 def assemble_test(source_file):
 	"""Assemble a file and write the executable as test.hex. 
 	
-	The file is expected to be standalone; other libraries will not be linked"""
+	The file is expected to be standalone; other libraries will not be linked
+
+	Args:
+		source_file: relative path to a assembler file that ends with .s
+
+	Returns:
+		Name of hex file created
+
+	Raises:
+		TestException if assembly failed, will contain assembler output
+	"""
 	
 	if not os.path.exists(OBJ_DIR):
 		os.makedirs(OBJ_DIR)
@@ -89,10 +110,26 @@ def assemble_test(source_file):
 	return HEX_FILE
 	
 def run_emulator(block_device=None, dump_file=None, dump_base=None, dump_length=None):
-	"""Run test program in emulator and return output printed to virtual serial
-	device. 
+	"""Run test program in emulator.
+
+	This uses the hex file produced by assemble_test or compile_test.
 	
-	This uses the hex file produced by assemble_test or compile_test."""
+	Args:
+		block_device: Relative path to a file that contains a filesystem image.
+		   If passed, contents will appear as a virtual SDMMC device.
+		dump_file: Relative path to a file to write memory contents into after
+		   execution completes.
+		dump_base: if dump_file is specified, base physical memory address to start
+		   writing mempry from.
+		dump_length: number of bytes of memory to write to dump_file
+
+	Returns:
+		Output from program, anything written to virtual serial device
+
+	Raises:
+		TestException if emulated program crashes or the emulator cannot
+		  execute for some other reason.
+	"""
 	
 	args = [BIN_DIR + 'emulator']
 	if block_device:
@@ -113,10 +150,26 @@ def run_emulator(block_device=None, dump_file=None, dump_base=None, dump_length=
 
 def run_verilator(block_device=None, dump_file=None, dump_base=None, 
 	dump_length=None, extra_args=None):
-	"""Run test program in Verilog simulator and return output printed to virtual
-	serial device.
+	"""Run test program in Verilog simulator
 
-	This uses the hex file produced by assemble_test or compile_test."""
+	This uses the hex file produced by assemble_test or compile_test.
+
+	Args:
+		block_device: Relative path to a file that contains a filesystem image.
+		   If passed, contents will appear as a virtual SDMMC device.
+		dump_file: Relative path to a file to write memory contents into after
+		   execution completes.
+		dump_base: if dump_file is specified, base physical memory address to start
+		   writing mempry from.
+		dump_length: number of bytes of memory to write to dump_file
+
+	Returns:
+		Output from program, anything written to virtual serial device
+
+	Raises:
+		TestException if emulated program crashes or the emulator cannot
+		  execute for some other reason.
+	"""
 
 	args = [BIN_DIR + 'verilator_model']
 	if block_device:
@@ -142,12 +195,20 @@ def run_verilator(block_device=None, dump_file=None, dump_base=None,
 
 
 def assert_files_equal(file1, file2, error_msg=''):
-	"""Read two files and throw a TestException if they are not the same"""
+	"""Read two files and throw a TestException if they are not the same
+
+	Args:
+		file1: relative path to first file
+		file2: relative path to second file
+		error_msg: If there is a file mismatch, prepend this to error output
+
+	Returns:
+		Nothing
 	
-	len1 = os.stat(file1).st_size
-	len2 = os.stat(file2).st_size
-	if len1 != len2:
-		raise TestException('file mismatch: different lengths')
+	Raises:
+		TestException if the files don't match. Exception test contains
+		details about where the mismatch occurred.
+	"""
 
 	BUFSIZE = 0x1000
 	block_offset = 0
@@ -155,6 +216,11 @@ def assert_files_equal(file1, file2, error_msg=''):
 		while True:
 			block1 = fp1.read(BUFSIZE)
 			block2 = fp2.read(BUFSIZE)
+			if len(block1) < len(block2):
+				raise TestException(error_msg + ': file1 shorter than file2')
+			elif len(block1) > len(block2):
+				raise TestException(error_msg + ': file1 longer than file2')
+
 			if block1 != block2:
 				for i in range(len(block1)):
 					if block1[i] != block2[i]:
@@ -187,24 +253,57 @@ def assert_files_equal(file1, file2, error_msg=''):
 registered_tests = []
 
 
-def register_tests(func, params):
+def register_tests(func, names):
 	"""Add a list of tests to be run when execute_tests is called. 
 	
-	This function can be called multiple times. func is the function that will
-	be called for each element in the 'params' list, which is a list of test 
-	names"""
+	This function can be called multiple times, it will append passed
+	tests to the existing list each time.
+
+	Args:
+		func: A function that will be called for each of the elements
+			in the names list.
+		names: List of tests to run.
+
+	Returns:
+		Nothing
+
+	Raises:
+		Nothing
+	 """
 	
 	global registered_tests
-	registered_tests += [(func, param) for param in params]
+	registered_tests += [(func, name) for name in names]
 
 
 def find_files(extensions):
+	"""Find files in the current directory that have certain extensions
+
+	Args:
+		extensions: list of extensions, each starting with a dot
+
+	Returns:
+		List of filenames
+
+	Raises:
+		Nothing
+	"""
+
 	return [fname for fname in os.listdir('.') if fname.endswith(extensions)]
 
 
 def execute_tests():
 	"""Run all tests that have been registered with the register_tests functions
-	and report results"""
+	and report results. If this fails, it will call sys.exit with a non-zero status.
+
+	Args:
+		None
+
+	Returns:
+		None
+
+	Raises:
+		Nothing
+	"""
 	
 	global registered_tests
 
@@ -251,10 +350,20 @@ def execute_tests():
 def check_result(source_file, program_output):
 	"""Check output of a program based on embedded comments in source code.
 	
-	For each pattern in source_file that begins with 'CHECK:', search
+	For each pattern in a source file that begins with 'CHECK:', search
 	to see if the regular expression that follows it occurs in program_output. 
 	The strings must occur in order, but this ignores any other output between
-	them."""
+	them.
+
+	Args:
+		source_file: relative path to a source file that contains patterns
+
+	Returns:
+		Nothing
+
+	Raises:
+		TestException if a string is not found.
+	"""
 	
 	PREFIX = 'CHECK: '
 
