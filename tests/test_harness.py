@@ -39,6 +39,11 @@ class TestException:
 
 
 def compile_test(source_file, optlevel='3'):
+	"""Compile one or more files and write the executable as test.hex.
+	
+	source_file can be a single file or list of files. This will link in crt0.o,
+	libc, and libos."""
+
 	if not os.path.exists(OBJ_DIR):
 		os.makedirs(OBJ_DIR)
 
@@ -68,6 +73,10 @@ def compile_test(source_file, optlevel='3'):
 	return HEX_FILE
 	
 def assemble_test(source_file):
+	"""Assemble a file and write the executable as test.hex. 
+	
+	The file is expected to be standalone; other libraries will not be linked"""
+	
 	if not os.path.exists(OBJ_DIR):
 		os.makedirs(OBJ_DIR)
 
@@ -80,6 +89,11 @@ def assemble_test(source_file):
 	return HEX_FILE
 	
 def run_emulator(block_device=None, dump_file=None, dump_base=None, dump_length=None):
+	"""Run test program in emulator and return output printed to virtual serial
+	device. 
+	
+	This uses the hex file produced by assemble_test or compile_test."""
+	
 	args = [BIN_DIR + 'emulator']
 	if block_device:
 		args += ['-b', block_device]
@@ -97,7 +111,13 @@ def run_emulator(block_device=None, dump_file=None, dump_base=None, dump_length=
 	return output
 
 
-def run_verilator(block_device=None, dump_file=None, dump_base=None, dump_length=None, extra_args=None):
+def run_verilator(block_device=None, dump_file=None, dump_base=None, 
+	dump_length=None, extra_args=None):
+	"""Run test program in Verilog simulator and return output printed to virtual
+	serial device.
+
+	This uses the hex file produced by assemble_test or compile_test."""
+
 	args = [BIN_DIR + 'verilator_model']
 	if block_device:
 		args += ['+block=' + block_device]
@@ -122,6 +142,8 @@ def run_verilator(block_device=None, dump_file=None, dump_base=None, dump_length
 
 
 def assert_files_equal(file1, file2, error_msg=''):
+	"""Read two files and throw a TestException if they are not the same"""
+	
 	len1 = os.stat(file1).st_size
 	len2 = os.stat(file2).st_size
 	if len1 != len2:
@@ -166,6 +188,12 @@ registered_tests = []
 
 
 def register_tests(func, params):
+	"""Add a list of tests to be run when execute_tests is called. 
+	
+	This function can be called multiple times. func is the function that will
+	be called for each element in the 'params' list, which is a list of test 
+	names"""
+	
 	global registered_tests
 	registered_tests += [(func, param) for param in params]
 
@@ -175,6 +203,9 @@ def find_files(extensions):
 
 
 def execute_tests():
+	"""Run all tests that have been registered with the register_tests functions
+	and report results"""
+	
 	global registered_tests
 
 	if len(sys.argv) > 1:
@@ -217,14 +248,14 @@ def execute_tests():
 	if failing_tests != []:
 		sys.exit(1)
 
-
-#
-# For each pattern in source_file that begins with 'CHECK:', this searches
-# to see if the regular expression that follows it occurs in program_output. 
-# The strings must occur in order, but this ignores any other output between
-# them.
-#
 def check_result(source_file, program_output):
+	"""Check output of a program based on embedded comments in source code.
+	
+	For each pattern in source_file that begins with 'CHECK:', search
+	to see if the regular expression that follows it occurs in program_output. 
+	The strings must occur in order, but this ignores any other output between
+	them."""
+	
 	PREFIX = 'CHECK: '
 
 	output_offset = 0
