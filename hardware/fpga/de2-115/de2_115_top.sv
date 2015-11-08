@@ -119,7 +119,7 @@ module de2_115_top(
 						.reset		(reset),
 						.io_read_data	(io_read_data));
 	
-	axi_interconnect #(.M1_BASE_ADDRESS(BOOT_RAM_BASE)) axi_interconnect(
+	axi_interconnect #(.M1_BASE_ADDRESS(BOOT_ROM_BASE)) axi_interconnect(
 		/*AUTOINST*/
 									     // Interfaces
 									     .axi_bus_m0	(axi_bus_m0.master),
