@@ -105,7 +105,7 @@ module tlb
 				begin
 					if (way_update_oh[way_idx] && tlb_read_en && update_set_idx == request_set_idx)
 						way_valid <= update_valid;  // Bypass
-					else if (lookup_en)
+					else if (tlb_read_en)
 						way_valid <= entry_valid[request_set_idx];
 					else
 						way_valid <= 0;
