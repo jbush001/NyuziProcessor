@@ -18,14 +18,14 @@
 
 //
 // Block SRAM with 1 read port and 1 write port. 
-// Reads and writes are performed synchronously, with the value for a read 
-// appearing on the next clock edge after the address is asserted. 
-// The READ_DURING_WRITE parameter determine what happens if a read and a write 
-// are performed to the same address in the same cycle:
-//  "NEW_DATA" this will return the newly written data ("read-after-write").
-//  "DONT_CARE" The results are undefined. This can be used to improve clock 
-//  speed.
-//
+// Reads and writes are performed synchronously. The read value appears 
+// on the next clock edge after the address and readx_en are asserted
+// If read_en is not asserted, the value of read_data is undefined during
+// the next cycle. The READ_DURING_WRITE parameter determines what happens 
+// if a read and a write are performed to the same address in the same cycle:
+//  - "NEW_DATA" this will return the newly written data ("read-after-write").
+//  - "DONT_CARE" The results are undefined. This can be used to improve clock 
+//    speed.
 // This does not clear memory contents on reset.
 //
 
@@ -114,6 +114,8 @@ module sram_1r1w
 		end
 		else if (read_en)
 			read_data <= data[read_addr];
+		else
+			read_data <= {DATA_WIDTH{1'bx}};
 	end
 
 	initial

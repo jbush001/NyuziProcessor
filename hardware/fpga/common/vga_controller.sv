@@ -186,7 +186,7 @@ module vga_controller(
 					      .vga_vs		(vga_vs),
 					      .vga_hs		(vga_hs),
 					      .in_visible_region(in_visible_region),
-					      .pixel_en	(pixel_en),
+					      .pixel_en		(pixel_en),
 					      .new_frame	(new_frame),
 					      // Inputs
 					      .clk		(clk),

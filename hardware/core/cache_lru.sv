@@ -114,80 +114,86 @@ module cache_lru
 		.*);
 	
 	generate
-		if (NUM_WAYS == 1)
-		begin
-			assign fill_way = 0;
-			assign update_flags = 0;
-		end
-		else if (NUM_WAYS == 2)
-		begin
-			assign fill_way = !lru_flags[0];
-			assign update_flags[0] = !new_mru;
-		end
-		else if (NUM_WAYS == 4)
-		begin
-			always_comb
+		case (NUM_WAYS)
+			1:
 			begin
-				casez (lru_flags)
-					3'b00?: fill_way = 0;
-					3'b10?: fill_way = 1;
-					3'b?10: fill_way = 2;
-					3'b?11: fill_way = 3;
-					default: fill_way = '0;
-				endcase
+				assign fill_way = 0;
+				assign update_flags = 0;
 			end
 
-			always_comb
+			2:
 			begin
-				case (new_mru)
-					2'd0: update_flags = { 2'b11, lru_flags[0] };
-					2'd1: update_flags = { 2'b01, lru_flags[0] };
-					2'd2: update_flags = { lru_flags[2], 2'b01 };
-					2'd3: update_flags = { lru_flags[2], 2'b00 };
-					default: update_flags = '0;
-				endcase
-			end
-		end
-		else if (NUM_WAYS == 8)
-		begin
-			always_comb
-			begin
-				casez (lru_flags)
-					7'b00?0???: fill_way = 0;
-					7'b10?0???: fill_way = 1;
-					7'b?100???: fill_way = 2;
-					7'b?110???: fill_way = 3;
-					7'b???100?: fill_way = 4;
-					7'b???110?: fill_way = 5;
-					7'b???1?10: fill_way = 6;
-					7'b???1?11: fill_way = 7;
-					default: fill_way = '0;
-				endcase
+				assign fill_way = !lru_flags[0];
+				assign update_flags[0] = !new_mru;
 			end
 
-			always_comb
+			4:
 			begin
-				case (new_mru)
-					3'd0: update_flags = { 2'b11, lru_flags[5], 1'b1, lru_flags[2:0] };
-					3'd1: update_flags = { 2'b01, lru_flags[5], 1'b1, lru_flags[2:0] };
-					3'd2: update_flags = { lru_flags[6], 3'b011, lru_flags[2:0] };
-					3'd3: update_flags = { lru_flags[6], 3'b001, lru_flags[2:0] };
-					3'd4: update_flags = { lru_flags[6:4], 3'b011, lru_flags[0] };
-					3'd5: update_flags = { lru_flags[6:4], 3'b010, lru_flags[0] };
-					3'd6: update_flags = { lru_flags[6:4], 2'b00, lru_flags[1], 1'b1 }; 
-					3'd7: update_flags = { lru_flags[6:4], 2'b00, lru_flags[1], 1'b0 };
-					default: update_flags = '0;
-				endcase
+				always_comb
+				begin
+					casez (lru_flags)
+						3'b00?: fill_way = 0;
+						3'b10?: fill_way = 1;
+						3'b?10: fill_way = 2;
+						3'b?11: fill_way = 3;
+						default: fill_way = '0;
+					endcase
+				end
+
+				always_comb
+				begin
+					case (new_mru)
+						2'd0: update_flags = { 2'b11, lru_flags[0] };
+						2'd1: update_flags = { 2'b01, lru_flags[0] };
+						2'd2: update_flags = { lru_flags[2], 2'b01 };
+						2'd3: update_flags = { lru_flags[2], 2'b00 };
+						default: update_flags = '0;
+					endcase
+				end
 			end
-		end
-		else
-		begin
-			initial
+
+			8:
 			begin
-				$display("%m invalid number of ways");
-				$finish;
+				always_comb
+				begin
+					casez (lru_flags)
+						7'b00?0???: fill_way = 0;
+						7'b10?0???: fill_way = 1;
+						7'b?100???: fill_way = 2;
+						7'b?110???: fill_way = 3;
+						7'b???100?: fill_way = 4;
+						7'b???110?: fill_way = 5;
+						7'b???1?10: fill_way = 6;
+						7'b???1?11: fill_way = 7;
+						default: fill_way = '0;
+					endcase
+				end
+
+				always_comb
+				begin
+					case (new_mru)
+						3'd0: update_flags = { 2'b11, lru_flags[5], 1'b1, lru_flags[2:0] };
+						3'd1: update_flags = { 2'b01, lru_flags[5], 1'b1, lru_flags[2:0] };
+						3'd2: update_flags = { lru_flags[6], 3'b011, lru_flags[2:0] };
+						3'd3: update_flags = { lru_flags[6], 3'b001, lru_flags[2:0] };
+						3'd4: update_flags = { lru_flags[6:4], 3'b011, lru_flags[0] };
+						3'd5: update_flags = { lru_flags[6:4], 3'b010, lru_flags[0] };
+						3'd6: update_flags = { lru_flags[6:4], 2'b00, lru_flags[1], 1'b1 }; 
+						3'd7: update_flags = { lru_flags[6:4], 2'b00, lru_flags[1], 1'b0 };
+						default: update_flags = '0;
+					endcase
+				end
 			end
-		end
+
+			default:
+			begin
+				initial
+				begin
+					$display("%m invalid number of ways");
+					$finish;
+				end
+			end
+		endcase
 	endgenerate
 
 	always_ff @(posedge clk, posedge reset)

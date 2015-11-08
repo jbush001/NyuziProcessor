@@ -38,11 +38,14 @@ module nyuzi
 	input scalar_t        io_read_data);
 
 	l2req_packet_t l2i_request[`NUM_CORES];
-	l2rsp_packet_t l2_response;
 	ioreq_packet_t io_request[`NUM_CORES];
-	iorsp_packet_t ia_response;
 	logic[`TOTAL_THREADS - 1:0] ny_thread_enable;
 	logic[`TOTAL_PERF_EVENTS - 1:0] perf_events;
+
+	// XXX AUTOLOGIC not generating these
+	l2rsp_packet_t l2_response;
+	iorsp_packet_t ia_response;
+
 	
 	/*AUTOLOGIC*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)

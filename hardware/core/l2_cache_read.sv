@@ -236,7 +236,7 @@ module l2_cache_read(
 			assert(!l2t_is_l2_fill || !cache_hit);
 			
 			// Make sure there isn't a hit on more than one way
-			assert($onehot0(hit_way_oh));
+			assert(!l2t_request.valid || $onehot0(hit_way_oh));
 
 			l2r_request <= l2t_request;
 			l2r_cache_hit <= cache_hit;

@@ -34,6 +34,15 @@ module control_registers
 	input                                   ix_is_eret,
 	input thread_idx_t                      ix_thread_idx,
 	
+	// From dcache_data_stage 
+	// dd_xxx signals are unregistered. dt_thread_idx represents thread going into
+	// dcache_data_stage)
+	input thread_idx_t                      dt_thread_idx,
+	input                                   dd_creg_write_en,
+	input                                   dd_creg_read_en,
+	input control_register_t                dd_creg_index,
+	input scalar_t                          dd_creg_write_val,
+
 	// From writeback_stage
 	input                                   wb_fault,
 	input fault_reason_t                    wb_fault_reason,
@@ -41,15 +50,6 @@ module control_registers
 	input scalar_t                          wb_fault_access_vaddr,
 	input thread_idx_t                      wb_fault_thread_idx,
 	input subcycle_t                        wb_fault_subcycle,
-	
-	// From dcache_data_stage 
-	// dd_XXX signals are unregistered. dt_thread_idx represents thread going into
-	// dcache_data_stage)
-	input thread_idx_t                      dt_thread_idx,
-	input                                   dd_creg_write_en,
-	input                                   dd_creg_read_en,
-	input control_register_t                dd_creg_index,
-	input scalar_t                          dd_creg_write_val,
 
 	// To writeback_stage
 	output scalar_t                         cr_creg_read_val,
@@ -60,10 +60,10 @@ module control_registers
 	
 	scalar_t fault_access_addr[`THREADS_PER_CORE];
 	fault_reason_t fault_reason[`THREADS_PER_CORE];
-	logic prev_int_flag[`THREADS_PER_CORE];
-	logic prev_mmu_enable[`THREADS_PER_CORE];
-	scalar_t cycle_count;
+	logic interrupt_en_saved[`THREADS_PER_CORE];
+	logic mmu_en_saved[`THREADS_PER_CORE];
 	scalar_t scratchpad[`THREADS_PER_CORE * 2];
+	scalar_t cycle_count;
 
 	always_ff @(posedge clk, posedge reset)
 	begin
@@ -73,10 +73,10 @@ module control_registers
 			begin
 				fault_reason[i] <= FR_RESET;
 				cr_eret_address[i] <= 0;
-				prev_int_flag[i] <= 0;
+				interrupt_en_saved[i] <= 0;
 				fault_access_addr[i] <= '0;
 				cr_mmu_en[i] <= 0;
-				prev_mmu_enable[i] <= 0;
+				mmu_en_saved[i] <= 0;
 				cr_eret_subcycle[i] <= 0;
 			end
 
@@ -113,15 +113,15 @@ module control_registers
 					cr_mmu_en[wb_fault_thread_idx] <= 0;
 
 				// Copy current flags to prev flags
-				prev_int_flag[wb_fault_thread_idx] <= cr_interrupt_en[wb_fault_thread_idx];
-				prev_mmu_enable[wb_fault_thread_idx] <= cr_mmu_en[wb_fault_thread_idx];
+				interrupt_en_saved[wb_fault_thread_idx] <= cr_interrupt_en[wb_fault_thread_idx];
+				mmu_en_saved[wb_fault_thread_idx] <= cr_mmu_en[wb_fault_thread_idx];
 				cr_eret_subcycle[wb_fault_thread_idx] <= wb_fault_subcycle;
 			end
 			else if (ix_is_eret)
 			begin	
 				// Copy from prev flags to current flags
-				cr_interrupt_en[ix_thread_idx] <= prev_int_flag[ix_thread_idx];	
-				cr_mmu_en[ix_thread_idx] <= prev_mmu_enable[ix_thread_idx];
+				cr_interrupt_en[ix_thread_idx] <= interrupt_en_saved[ix_thread_idx];	
+				cr_mmu_en[ix_thread_idx] <= mmu_en_saved[ix_thread_idx];
 			end
 
 			//
@@ -138,8 +138,8 @@ module control_registers
 
 					CR_SAVED_FLAGS:
 					begin
-						prev_mmu_enable[dt_thread_idx] <= dd_creg_write_val[1];
-						prev_int_flag[dt_thread_idx] <= dd_creg_write_val[0];
+						mmu_en_saved[dt_thread_idx] <= dd_creg_write_val[1];
+						interrupt_en_saved[dt_thread_idx] <= dd_creg_write_val[0];
 					end
 
 					CR_FAULT_PC:         cr_eret_address[dt_thread_idx] <= dd_creg_write_val;
@@ -161,7 +161,7 @@ module control_registers
 				case (dd_creg_index)
 					CR_FLAGS:
 					begin
-						cr_creg_read_val <= scalar_t'({ 
+						cr_creg_read_val <= scalar_t'({
 							cr_mmu_en[dt_thread_idx],
 							cr_interrupt_en[dt_thread_idx] 
 						});
@@ -169,13 +169,13 @@ module control_registers
 
 					CR_SAVED_FLAGS:
 					begin
-						cr_creg_read_val <= scalar_t'({ 
-							prev_mmu_enable[dt_thread_idx],
-							prev_int_flag[dt_thread_idx]
+						cr_creg_read_val <= scalar_t'({
+							mmu_en_saved[dt_thread_idx],
+							interrupt_en_saved[dt_thread_idx]
 						});
 					end
 
-					CR_THREAD_ID:        cr_creg_read_val <= scalar_t'({ CORE_ID, dt_thread_idx });
+					CR_THREAD_ID:        cr_creg_read_val <= scalar_t'({CORE_ID, dt_thread_idx});
 					CR_FAULT_PC:         cr_creg_read_val <= cr_eret_address[dt_thread_idx];
 					CR_FAULT_REASON:     cr_creg_read_val <= scalar_t'(fault_reason[dt_thread_idx]);
 					CR_FAULT_HANDLER:    cr_creg_read_val <= cr_fault_handler;

@@ -348,7 +348,8 @@ module l2_cache_interface
 		else
 		begin
 			// Make sure more than one snoop way isn't a hit
-			assert($onehot0(snoop_hit_way_oh));
+			assert(!response_stage2.valid || response_stage2.cache_type != CT_DCACHE 
+				|| $onehot0(snoop_hit_way_oh));
 
 			// Ensure only one dequeue type is set
 			assert(!sq_dequeue_ready || $onehot0({sq_dequeue_flush, sq_dequeue_iinvalidate, 
