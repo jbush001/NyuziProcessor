@@ -122,8 +122,8 @@ module dcache_data_stage(
 	output logic                              perf_dtlb_miss);
 
 	logic mem_or_cachectrl_req;
-	logic dcache_access_req;
-	logic creg_access_req;
+	logic dcache_access_en;
+	logic creg_access_en;
 	vector_lane_mask_t word_store_mask;
 	logic[3:0] byte_store_mask;
 	logic[$clog2(`CACHE_LINE_WORDS) - 1:0] cache_lane_idx;
@@ -135,17 +135,18 @@ module dcache_data_stage(
 	logic[`L1D_WAYS - 1:0] way_hit_oh;
 	l1d_way_idx_t way_hit_idx;
 	logic cache_hit;
-	logic dcache_load_req;
+	logic dcache_load_en;
 	scalar_t dcache_request_addr;
 	logic rollback_this_stage;
 	logic cache_near_miss;
-	logic dcache_store_req;
+	logic dcache_store_en;
 	thread_bitmap_t sync_load_pending;
-	logic io_access_req;
-	logic is_unaligned_access;
+	logic io_access_en;
+	logic is_unaligned;
 	logic is_synchronized;
-	logic is_valid_cache_control;
+	logic cache_control_en;
 	logic[$clog2(`VECTOR_LANES) - 1:0] scgath_lane;
+	logic is_tlb_access;
 
 	// rollback_this_stage indicates a rollback was requested from an earlier issued
 	// instruction, but it does not get set when this stage detects a rollback.
@@ -154,62 +155,89 @@ module dcache_data_stage(
 		&& wb_rollback_pipeline == PIPE_MEM;
 	assign is_io_address = dt_request_paddr ==? 32'hffff????;
 	assign is_synchronized = dt_instruction.memory_access_type == MEM_SYNC;
-	assign mem_or_cachectrl_req = dt_instruction_valid 
-		&& dt_instruction.memory_access_type != MEM_CONTROL_REG 
-		&& !is_io_address
+
+	// Determine if this instruction accesses the TLB (and thus will raise a TLB
+	// miss if the entry is not present)
+	always_comb
+	begin
+		is_tlb_access = 0;
+		if (dt_instruction_valid && !rollback_this_stage)
+		begin
+			if (dt_instruction.is_memory_access)
+				is_tlb_access = dt_instruction.memory_access_type != MEM_CONTROL_REG;
+			else if (dt_instruction.is_cache_control)
+			begin
+				// Only these cache control opertions perform a virtual->physical
+				// address translation.
+				is_tlb_access = dt_instruction.cache_control_op == CACHE_DFLUSH
+					|| dt_instruction.cache_control_op == CACHE_DINVALIDATE;
+			end
+		end
+	end
+
+	// L1 data cache or store buffer access
+	assign dcache_access_en = dt_instruction_valid 
 		&& !rollback_this_stage
-		&& (dt_instruction.is_load || dd_store_mask != 0); // Skip store if mask is clear
-	assign dcache_access_req = mem_or_cachectrl_req
-		&& dt_instruction.is_memory_access;
-	assign dcache_load_req = dcache_access_req && dt_instruction.is_load;
-	assign dcache_store_req = dcache_access_req && !dt_instruction.is_load;
+		&& dt_instruction.is_memory_access
+		&& dt_instruction.memory_access_type != MEM_CONTROL_REG
+		&& dt_tlb_hit
+		&& !is_io_address;
+	assign dcache_load_en = dcache_access_en && dt_instruction.is_load;
+	assign dcache_store_en = dcache_access_en && !dt_instruction.is_load
+		&& dd_store_mask != 0;	// Skip if store mask is zero
 	assign dcache_request_addr = { dt_request_paddr[31:`CACHE_LINE_OFFSET_WIDTH], 
 		{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
 	assign cache_lane_idx = dt_request_paddr.offset[`CACHE_LINE_OFFSET_WIDTH - 1:2];
-	assign is_valid_cache_control = dt_instruction_valid
-		&& dt_tlb_hit
-		&& dt_instruction.is_cache_control 
-		&& !rollback_this_stage;
-	assign dd_flush_en = is_valid_cache_control
-		&& dt_instruction.cache_control_op == CACHE_DFLUSH
-		&& !is_io_address; // XXX should a cache control of IO address raise exception?
-	assign dd_iinvalidate_en = is_valid_cache_control
-		&& dt_instruction.cache_control_op == CACHE_IINVALIDATE
-		&& !is_io_address;
-	assign dd_dinvalidate_en = is_valid_cache_control
-		&& dt_instruction.cache_control_op == CACHE_DINVALIDATE
-		&& !is_io_address;
-	assign dd_membar_en = is_valid_cache_control
-		&& dt_instruction.cache_control_op == CACHE_MEMBAR;
-	assign creg_access_req = dt_instruction_valid 
-		&& dt_instruction.is_memory_access 
-		&& dt_instruction.memory_access_type == MEM_CONTROL_REG
-		&& !rollback_this_stage;
-	assign dd_creg_write_en = creg_access_req && !dt_instruction.is_load;
-	assign dd_creg_read_en = creg_access_req && dt_instruction.is_load;
-	assign dd_creg_write_val = dt_store_value[0];
-	assign dd_creg_index = dt_instruction.creg_index;
-
-	assign perf_dcache_hit = cache_hit && dcache_load_req;
-	assign perf_dcache_miss = !cache_hit && dt_tlb_hit && dcache_load_req; 
-	assign perf_store_count = dcache_store_req;
-	assign perf_dtlb_miss = mem_or_cachectrl_req && !dt_tlb_hit;
-
 	assign dd_store_bypass_addr = dt_request_paddr;
 	assign dd_store_bypass_thread_idx = dt_thread_idx;
 	assign dd_store_addr = dt_request_paddr;
 	assign dd_store_synchronized = is_synchronized;
 
-	assign io_access_req = dt_instruction_valid 
+	// Noncached I/O memory access
+	assign io_access_en = dt_instruction_valid 
+		&& !rollback_this_stage
 		&& dt_instruction.is_memory_access 
 		&& dt_instruction.memory_access_type != MEM_CONTROL_REG 
-		&& is_io_address 
-		&& !rollback_this_stage;
-	assign dd_io_write_en = io_access_req && !dt_instruction.is_load;
-	assign dd_io_read_en = io_access_req && dt_instruction.is_load;
+		&& is_io_address;
+	assign dd_io_write_en = io_access_en && !dt_instruction.is_load;
+	assign dd_io_read_en = io_access_en && dt_instruction.is_load;
 	assign dd_io_write_value = dt_store_value[0];
 	assign dd_io_thread_idx = dt_thread_idx;
 	assign dd_io_addr = { 16'd0, dt_request_paddr[15:0] };
+
+	// Cache control
+	assign cache_control_en = dt_instruction_valid
+		&& !rollback_this_stage
+		&& dt_instruction.is_cache_control;
+	assign dd_flush_en = cache_control_en
+		&& dt_instruction.cache_control_op == CACHE_DFLUSH
+		&& dt_tlb_hit
+		&& !is_io_address; // XXX should a cache control of IO address raise exception?
+	assign dd_iinvalidate_en = cache_control_en
+		&& dt_instruction.cache_control_op == CACHE_IINVALIDATE
+		&& !is_io_address;
+	assign dd_dinvalidate_en = cache_control_en
+		&& dt_instruction.cache_control_op == CACHE_DINVALIDATE
+		&& dt_tlb_hit
+		&& !is_io_address;
+	assign dd_membar_en = cache_control_en
+		&& dt_instruction.cache_control_op == CACHE_MEMBAR;
+		
+	// Control register access
+	assign creg_access_en = dt_instruction_valid 
+		&& !rollback_this_stage
+		&& dt_instruction.is_memory_access 
+		&& dt_instruction.memory_access_type == MEM_CONTROL_REG;
+	assign dd_creg_write_en = creg_access_en && !dt_instruction.is_load;
+	assign dd_creg_read_en = creg_access_en && dt_instruction.is_load;
+	assign dd_creg_write_val = dt_store_value[0];
+	assign dd_creg_index = dt_instruction.creg_index;
+
+	// Performance counters
+	assign perf_dcache_hit = cache_hit && dcache_load_en;
+	assign perf_dcache_miss = !cache_hit && dt_tlb_hit && dcache_load_en; 
+	assign perf_store_count = dcache_store_en;
+	assign perf_dtlb_miss = is_tlb_access && !dt_tlb_hit;
 	
 	// 
 	// Check for cache hit
@@ -325,10 +353,10 @@ module dcache_data_stage(
 	always_comb
 	begin
 		case (dt_instruction.memory_access_type)
-			MEM_S, MEM_SX: is_unaligned_access = dt_request_paddr.offset[0];
-			MEM_L, MEM_SYNC, MEM_SCGATH, MEM_SCGATH_M: is_unaligned_access = |dt_request_paddr.offset[1:0];
-			MEM_BLOCK, MEM_BLOCK_M: is_unaligned_access = dt_request_paddr.offset != 0;
-			default: is_unaligned_access = 0;
+			MEM_S, MEM_SX: is_unaligned = dt_request_paddr.offset[0];
+			MEM_L, MEM_SYNC, MEM_SCGATH, MEM_SCGATH_M: is_unaligned = |dt_request_paddr.offset[1:0];
+			MEM_BLOCK, MEM_BLOCK_M: is_unaligned = dt_request_paddr.offset != 0;
+			default: is_unaligned = 0;
 		endcase
 	end
 
@@ -356,7 +384,7 @@ module dcache_data_stage(
 		.READ_DURING_WRITE("NEW_DATA")
 	) l1d_data(
 		// Instruction pipeline access.
-		.read_en(cache_hit && dcache_load_req),
+		.read_en(cache_hit && dcache_load_en),
 		.read_addr({way_hit_idx, dt_request_paddr.set_idx}),
 		.read_data(dd_load_data),
 		
@@ -373,25 +401,25 @@ module dcache_data_stage(
 	// cache: it must do a round trip to the L2 cache to latch the address.
 	assign cache_near_miss = !cache_hit
 		&& dt_tlb_hit
-		&& dcache_load_req 
+		&& dcache_load_en 
 		&& |l2i_dtag_update_en_oh
 		&& l2i_dtag_update_set == dt_request_paddr.set_idx 
 		&& l2i_dtag_update_tag == dt_request_paddr.tag
 		&& !is_synchronized; 
 
-	assign dd_cache_miss = !cache_hit 
+	assign dd_cache_miss = dcache_load_en 
+		&& !cache_hit 
 		&& dt_tlb_hit
-		&& dcache_load_req 
 		&& !cache_near_miss 
-		&& !is_unaligned_access;
+		&& !is_unaligned;
 	assign dd_cache_miss_addr = dcache_request_addr;
 	assign dd_cache_miss_thread_idx = dt_thread_idx;
 	assign dd_cache_miss_synchronized = is_synchronized;
-	assign dd_store_en = dcache_store_req && !is_unaligned_access && dt_tlb_hit
+	assign dd_store_en = dcache_store_en && !is_unaligned && dt_tlb_hit
 		&& dt_tlb_writable;
 	assign dd_store_thread_idx = dt_thread_idx;
 
-	assign dd_update_lru_en = cache_hit && dcache_access_req && !is_unaligned_access;
+	assign dd_update_lru_en = cache_hit && dcache_access_en && !is_unaligned;
 	assign dd_update_lru_way = way_hit_idx;
 
 	// Always treat the first synchronized load as a cache miss, even if data is 
@@ -414,7 +442,7 @@ module dcache_data_stage(
 					// load, reset the sync load pending flag.
 					sync_load_pending[thread_idx] <= 0;
 				end 
-				else if (dcache_load_req && is_synchronized && dt_thread_idx == thread_idx_t'(thread_idx))
+				else if (dcache_load_en && is_synchronized && dt_thread_idx == thread_idx_t'(thread_idx))
 				begin
 					// Track if this is the first or restarted request.
 					sync_load_pending[thread_idx] <= !sync_load_pending[thread_idx];
@@ -447,7 +475,7 @@ module dcache_data_stage(
 		else
 		begin
 			// Make sure data is not present in more than one way.
-			assert(!dcache_load_req || $onehot0(way_hit_oh));
+			assert(!dcache_load_en || $onehot0(way_hit_oh));
 			dd_instruction_valid <= dt_instruction_valid && !rollback_this_stage;
 			dd_instruction <= dt_instruction;
 			dd_lane_mask <= dt_mask_value;
@@ -458,15 +486,19 @@ module dcache_data_stage(
 			dd_is_io_address <= is_io_address;
 
 			// Rollback on cache miss
-			dd_rollback_en <= dcache_load_req && !cache_hit && dt_tlb_hit;
+			dd_rollback_en <= dcache_load_en && !cache_hit && dt_tlb_hit;
 
 			// Suspend the thread if there is a cache miss.
 			// In the near miss case (described above), don't suspend thread.
-			dd_suspend_thread <= dcache_load_req && !cache_hit && !cache_near_miss
-				&& !is_unaligned_access && dt_tlb_hit;
-			dd_access_fault <= is_unaligned_access && dcache_access_req;
-			dd_write_fault <= !dt_tlb_writable && dcache_store_req;
-			dd_tlb_miss <= mem_or_cachectrl_req && !dt_tlb_hit;
+			dd_suspend_thread <= dcache_load_en 
+				&& dt_tlb_hit
+				&& !cache_hit 
+				&& !cache_near_miss
+				&& !is_unaligned;
+			dd_access_fault <= (dcache_load_en || dcache_store_en) && is_unaligned;
+			dd_write_fault <= !dt_tlb_writable && dcache_store_en;
+			dd_tlb_miss <= is_tlb_access
+				&& !dt_tlb_hit;
 		end
 	end
 endmodule
