@@ -23,7 +23,6 @@
 // Execution pipeline defines
 //
 
-`define PAGE_SIZE 'h1000
 `define VECTOR_LANES 16
 `define NUM_REGISTERS 32
 `define TOTAL_THREADS (`THREADS_PER_CORE * `NUM_CORES)
@@ -219,11 +218,12 @@ typedef struct packed {
 // Cache defines
 //
 
+`define PAGE_SIZE 'h1000
+`define PAGE_NUM_BITS (32 - $clog2(`PAGE_SIZE))
 `define CACHE_LINE_BYTES (`VECTOR_LANES * 4) // Cache line must currently be same as vector width
 `define CACHE_LINE_BITS (`CACHE_LINE_BYTES * 8)
 `define CACHE_LINE_WORDS (`CACHE_LINE_BYTES / 4)
-`define CACHE_LINE_OFFSET_WIDTH $clog2(`CACHE_LINE_BYTES)	// Offset into a cache line
-`define PAGE_NUM_BITS (32 - $clog2(`PAGE_SIZE))
+`define CACHE_LINE_OFFSET_WIDTH $clog2(`CACHE_LINE_BYTES)	// Byte offset into a cache line
 `define ICACHE_TAG_BITS (32 - (`CACHE_LINE_OFFSET_WIDTH + $clog2(`L1I_SETS)))
 `define DCACHE_TAG_BITS (32 - (`CACHE_LINE_OFFSET_WIDTH + $clog2(`L1D_SETS)))
 

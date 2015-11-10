@@ -121,7 +121,6 @@ module dcache_data_stage(
 	output logic                              perf_store_count,
 	output logic                              perf_dtlb_miss);
 
-	logic mem_or_cachectrl_req;
 	logic dcache_access_en;
 	logic creg_access_en;
 	vector_lane_mask_t word_store_mask;
@@ -423,9 +422,9 @@ module dcache_data_stage(
 	assign dd_update_lru_way = way_hit_idx;
 
 	// Always treat the first synchronized load as a cache miss, even if data is 
-	// present to register request with L2 cache. The second will not be a miss 
-	// if the data is in the cache (there is a window where it could be before the 
-	// thread can fetch it, in which case it will fail and restart).
+	// present. This is to register request with L2 cache. The second request will
+	// not be a miss if the data is in the cache (there is a window where it could 
+	// be evicted before the thread can fetch it, in which case it will retry. 
 	// sync_load_pending tracks if this is the first or second request. 
 	genvar thread_idx;
 	generate
