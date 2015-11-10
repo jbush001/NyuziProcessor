@@ -118,7 +118,7 @@ module dcache_data_stage(
 	// Performance counters
 	output logic                              perf_dcache_hit,
 	output logic                              perf_dcache_miss,
-	output logic                              perf_store_count,
+	output logic                              perf_store,
 	output logic                              perf_dtlb_miss);
 
 	logic dcache_access_en;
@@ -235,7 +235,7 @@ module dcache_data_stage(
 	// Performance counters
 	assign perf_dcache_hit = cache_hit && dcache_load_en;
 	assign perf_dcache_miss = !cache_hit && dt_tlb_hit && dcache_load_en; 
-	assign perf_store_count = dcache_store_en;
+	assign perf_store = dcache_store_en;
 	assign perf_dtlb_miss = is_tlb_access && !dt_tlb_hit;
 	
 	// 
@@ -475,6 +475,12 @@ module dcache_data_stage(
 		begin
 			// Make sure data is not present in more than one way.
 			assert(!dcache_load_en || $onehot0(way_hit_oh));
+
+			// Make sure this decodes only one type of instruction
+			assert($onehot0({dcache_load_en, dcache_store_en, dd_io_write_en, dd_io_read_en,
+				dd_flush_en, dd_iinvalidate_en, dd_dinvalidate_en, dd_membar_en,
+				dd_creg_write_en, dd_creg_read_en}));
+
 			dd_instruction_valid <= dt_instruction_valid && !rollback_this_stage;
 			dd_instruction <= dt_instruction;
 			dd_lane_mask <= dt_mask_value;

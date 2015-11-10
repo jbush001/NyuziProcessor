@@ -264,7 +264,7 @@ module core
 	logic		perf_instruction_issue;	// From thread_select_stage of thread_select_stage.v
 	logic		perf_instruction_retire;// From writeback_stage of writeback_stage.v
 	logic		perf_itlb_miss;		// From ifetch_data_stage of ifetch_data_stage.v
-	logic		perf_store_count;	// From dcache_data_stage of dcache_data_stage.v
+	logic		perf_store;	// From dcache_data_stage of dcache_data_stage.v
 	logic		perf_store_rollback;	// From writeback_stage of writeback_stage.v
 	logic		sq_rollback_en;		// From l2_cache_interface of l2_cache_interface.v
 	cache_line_data_t sq_store_bypass_data;	// From l2_cache_interface of l2_cache_interface.v
@@ -342,7 +342,7 @@ module core
 		perf_icache_miss,
 		perf_instruction_issue,
 		perf_instruction_retire,
-		perf_store_count,
+		perf_store,
 		perf_store_rollback
 	};
 endmodule
