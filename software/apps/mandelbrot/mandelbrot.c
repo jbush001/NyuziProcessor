@@ -39,6 +39,7 @@ const float kXStep = 2.5 / kScreenWidth;
 const float kYStep = 2.0 / kScreenHeight;
 const int kNumThreads = 4;
 const int kVectorLanes = 16;
+volatile int stopCount = 0;
 
 // All threads start execution here.
 int main()
@@ -86,4 +87,9 @@ int main()
 			x0 += makevectorf(kXStep * kVectorLanes);
 		}
 	}
+
+	// Wait for other threads, because returning from main will kill all of them.
+	__sync_fetch_and_add(&stopCount, 1);
+	while (stopCount != 4)
+		;
 }
