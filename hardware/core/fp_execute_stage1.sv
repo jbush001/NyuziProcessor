@@ -104,7 +104,7 @@ module fp_execute_stage1(
 			logic result_is_nan;
 			logic mul_exponent_underflow;
 			logic mul_exponent_carry;
-			logic[7:0] ftoi_rshift;	// XXX why is this 8 bits?
+			logic[5:0] ftoi_rshift;
 			logic[5:0] ftoi_lshift_nxt;
 
 			assign fop1 = of_operand1[lane_idx];
@@ -125,17 +125,17 @@ module fp_execute_stage1(
 			begin
 				if (fop2.exponent < 8'd118)
 				begin
-					ftoi_rshift = 32;	// Number is less than one, set to 0
+					ftoi_rshift = 6'd32;	// Number is less than one, set to 0
 					ftoi_lshift_nxt = 0;
 				end
 				else if (fop2.exponent < 8'd150)
 				begin
-					ftoi_rshift = 8'd150 - fop2.exponent;	// Truncate bits
+					ftoi_rshift = 6'(8'd150 - fop2.exponent);  // Truncate significand
 					ftoi_lshift_nxt = 0;
 				end
 				else
 				begin
-					ftoi_rshift = 8'd0;	// No fractional bits that fit in precision
+					ftoi_rshift = 6'd0;	// No fractional bits that fit in precision
 					ftoi_lshift_nxt = 6'(fop2.exponent - 8'd150); 
 				end
 			end
