@@ -147,8 +147,11 @@ module dcache_data_stage(
 	logic[$clog2(`VECTOR_LANES) - 1:0] scgath_lane;
 	logic is_tlb_access;
 
-	// rollback_this_stage indicates a rollback was requested from an earlier issued
-	// instruction, but it does not get set when this stage detects a rollback.
+	// Unlike earlier stages, this commits instruction side effects like stores,
+	// so it needs to check if there is a rollback (which would be for the
+	// instruction issued immediately before this one) and avoid updates if so. 
+	// rollback_this_stage indicates a rollback is requested from the previous
+	// instruction, but it does not get set when this stage requests a rollback.
 	assign rollback_this_stage = wb_rollback_en 
 		&& wb_rollback_thread_idx == dt_thread_idx
 		&& wb_rollback_pipeline == PIPE_MEM;
@@ -502,8 +505,7 @@ module dcache_data_stage(
 				&& !is_unaligned;
 			dd_access_fault <= (dcache_load_en || dcache_store_en) && is_unaligned;
 			dd_write_fault <= !dt_tlb_writable && dcache_store_en;
-			dd_tlb_miss <= is_tlb_access
-				&& !dt_tlb_hit;
+			dd_tlb_miss <= is_tlb_access && !dt_tlb_hit;
 		end
 	end
 endmodule
