@@ -153,6 +153,8 @@ typedef enum _FaultReason FaultReason;
 enum _CacheControlOp
 {
 	CC_DTLB_INSERT = 0,
+	CC_DINVALIDATE = 1,
+	CC_DFLUSH = 2,
 	CC_INVALIDATE_TLB = 5,
 	CC_INVALIDATE_TLB_ALL = 6,
 	CC_ITLB_INSERT = 7

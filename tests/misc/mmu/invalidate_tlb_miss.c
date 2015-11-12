@@ -68,13 +68,14 @@ int main(int argc, const char *argv[])
 	__builtin_nyuzi_write_control_reg(7, tlb_miss_handler);
 	__builtin_nyuzi_write_control_reg(4, (1 << 1) | (1 << 2));	// Turn on MMU in flags
 
-	// This dflush should already be present
-	asm("dflush %0" : : "s" (DATA_BASE));
+	// This dinvalidate should already be present (invalidate will remove the
+	// cache line, but not the TLB mapping)
+	asm("dinvalidate %0" : : "s" (DATA_BASE));
 
 	printf("FLUSH1\n");	// CHECK: FLUSH1
 
-	// This dflush should cause a TLB miss
-	asm("dflush %0" : : "s" (DATA_BASE + PAGE_SIZE)); // CHECK: FAULT 6 00101000
+	// This dinvalidate should cause a TLB miss
+	asm("dinvalidate %0" : : "s" (DATA_BASE + PAGE_SIZE)); // CHECK: FAULT 6 00101000
 
 	printf("didn't fault\n");
 

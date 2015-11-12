@@ -46,26 +46,6 @@ def test_alias_emulator(name):
 		if f.read(len(EXPECT_STRING)) != EXPECT_STRING:
 			raise test_harness.TestException('memory contents did not match')
 
-def test_flush_tlb_miss_verilator(name):
-	test_harness.compile_test(['flush_tlb_miss.c'])
-	result = test_harness.run_verilator()
-	test_harness.check_result('write_protect.c', result)
-	
-def test_flush_tlb_miss_emulator(name):
-	test_harness.compile_test(['flush_tlb_miss.c'])
-	result = test_harness.run_emulator()
-	test_harness.check_result('write_protect.c', result)
-
-def test_tlb_invalidate_verilator(name):
-	test_harness.compile_test(['invalidate.c'])
-	result = test_harness.run_verilator()
-	test_harness.check_result('invalidate.c', result)
-	
-def test_tlb_invalidate_emulator(name):
-	test_harness.compile_test(['invalidate.c'])
-	result = test_harness.run_emulator()
-	test_harness.check_result('invalidate.c', result)
-
 def test_fill_verilator(name):
 	test_harness.compile_test(['fill_test.c', 'wrap_tlb_miss_handler.s'])
 	result = test_harness.run_verilator()
@@ -108,63 +88,37 @@ def test_io_map_emulator(name):
 		if f.read(len('galumphing')) != 'galumphing':
 			raise test_harness.TestException('memory contents did not match')
 
-def test_duplicate_entry_verilator(name):
-	test_harness.compile_test(['duplicate_entry.c'])
-	result = test_harness.run_verilator()
-	test_harness.check_result('duplicate_entry.c', result)
+def run_generic_test(name):
+	if name.endswith('_emulator'):
+		basename = name[0:-len('_emulator')]
+		isverilator = False
+	elif name.endswith('_verilator'):
+		basename = name[0:-len('_verilator')]
+		isverilator = True
 	
-def test_duplicate_entry_emulator(name):
-	test_harness.compile_test(['duplicate_entry.c'])
-	result = test_harness.run_emulator()
-	test_harness.check_result('duplicate_entry.c', result)
+	test_harness.compile_test([basename + '.c'])
+	if isverilator:
+		result = test_harness.run_verilator()
+	else:
+		result = test_harness.run_emulator()
+		
+	test_harness.check_result(basename + '.c', result)
 
-def test_write_protect_verilator(name):
-	test_harness.compile_test(['write_protect.c'])
-	result = test_harness.run_verilator()
-	test_harness.check_result('write_protect.c', result)
-	
-def test_write_protect_emulator(name):
-	test_harness.compile_test(['write_protect.c'])
-	result = test_harness.run_emulator()
-	test_harness.check_result('write_protect.c', result)
-
-def test_data_supervisor_verilator(name):
-	test_harness.compile_test(['data_supervisor.c'])
-	result = test_harness.run_verilator()
-	test_harness.check_result('data_supervisor.c', result)
-	
-def test_data_supervisor_emulator(name):
-	test_harness.compile_test(['data_supervisor.c'])
-	result = test_harness.run_emulator()
-	test_harness.check_result('data_supervisor.c', result)
-
-def test_instruction_supervisor_verilator(name):
-	test_harness.compile_test(['instruction_supervisor.c'])
-	result = test_harness.run_verilator()
-	test_harness.check_result('instruction_supervisor.c', result)
-	
-def test_instruction_supervisor_emulator(name):
-	test_harness.compile_test(['instruction_supervisor.c'])
-	result = test_harness.run_emulator()
-	test_harness.check_result('instruction_supervisor.c', result)
+def register_generic_test(name):
+	test_harness.register_tests(run_generic_test, [name + '_verilator'])
+	test_harness.register_tests(run_generic_test, [name + '_emulator'])
 
 test_harness.register_tests(test_alias_verilator, ['alias_verilator'])
 test_harness.register_tests(test_alias_emulator, ['alias_emulator'])
-test_harness.register_tests(test_alias_verilator, ['flush_tlb_miss_verilator'])
-test_harness.register_tests(test_alias_emulator, ['flush_tlb_miss_emulator'])
-test_harness.register_tests(test_tlb_invalidate_verilator, ['tlb_invalidate_verilator'])
-test_harness.register_tests(test_tlb_invalidate_emulator, ['tlb_invalidate_emulator'])
 test_harness.register_tests(test_fill_verilator, ['fill_verilator'])
 test_harness.register_tests(test_fill_emulator, ['fill_emulator'])
 test_harness.register_tests(test_io_map_verilator, ['io_map_verilator'])
 test_harness.register_tests(test_io_map_emulator, ['io_map_emulator'])
-test_harness.register_tests(test_duplicate_entry_verilator, ['duplicate_entry_verilator'])
-test_harness.register_tests(test_duplicate_entry_emulator, ['duplicate_entry_emulator'])
-test_harness.register_tests(test_write_protect_verilator, ['write_protect_verilator'])
-test_harness.register_tests(test_write_protect_emulator, ['write_protect_emulator'])
-test_harness.register_tests(test_data_supervisor_verilator, ['data_supervisor_verilator'])
-test_harness.register_tests(test_data_supervisor_emulator, ['data_supervisor_emulator'])
-test_harness.register_tests(test_instruction_supervisor_verilator, ['instruction_supervisor_verilator'])
-test_harness.register_tests(test_instruction_supervisor_emulator, ['instruction_supervisor_emulator'])
-
+register_generic_test('flush_tlb_miss')
+register_generic_test('invalidate_tlb_miss')
+register_generic_test('duplicate_entry')
+register_generic_test('write_protect')
+register_generic_test('data_supervisor')
+register_generic_test('instruction_supervisor')
+register_generic_test('tlb_invalidate')
 test_harness.execute_tests()

@@ -1537,6 +1537,18 @@ static void executeCacheControlInst(Thread *thread, uint32_t instruction)
 
 	switch (op)
 	{
+		case CC_DINVALIDATE:
+		case CC_DFLUSH:
+		{
+			// This needs to fault if the TLB entry isn't present. translateAddress
+			// will do that as a side effect.
+			uint32_t offset = extractSignedBits(instruction, 15, 10);
+			uint32_t physicalAddress;
+			translateAddress(thread, getThreadScalarReg(thread, ptrReg) + offset,
+				&physicalAddress, true, false);
+			break;
+		}
+
 		case CC_DTLB_INSERT:
 		case CC_ITLB_INSERT:
 		{
