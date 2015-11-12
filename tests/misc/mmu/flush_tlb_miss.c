@@ -51,7 +51,7 @@ int main(int argc, const char *argv[])
 
 	// Set up miss handler
 	__builtin_nyuzi_write_control_reg(7, tlb_miss_handler);
-	__builtin_nyuzi_write_control_reg(4, (1 << 1));	// Turn on MMU in flags
+	__builtin_nyuzi_write_control_reg(4, (1 << 1) | (1 << 2));	// Turn on MMU in flags
 
 	// This dflush should already be present
 	asm("dflush %0" : : "s" (data_addr));

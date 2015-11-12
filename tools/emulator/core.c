@@ -62,9 +62,11 @@ struct Thread
 	uint32_t scratchpad0;
 	uint32_t scratchpad1;
 	bool enableInterrupt;
-	bool prevEnableInterrupt;
 	bool enableMmu;
+	bool enableSupervisor;
+	bool prevEnableInterrupt;
 	bool prevEnableMmu;
+	bool prevEnableSupervisor;
 	uint32_t faultSubcycle;
 	uint32_t currentSubcycle;
 	uint32_t scalarReg[NUM_REGISTERS - 1];	// 31 is PC, which is special
@@ -186,6 +188,8 @@ Core *initCore(uint32_t memorySize, uint32_t totalThreads, bool randomizeMemory)
 		core->threads[threadid].id = threadid;
 		core->threads[threadid].lastFaultReason = FR_RESET;
 		core->threads[threadid].linkedAddress = INVALID_LINK_ADDR;
+		core->threads[threadid].enableSupervisor = true;
+		core->threads[threadid].prevEnableSupervisor = true;
 	}
 
 	core->threadEnableMask = 1;
@@ -518,6 +522,7 @@ static void dispatchFault(Thread *thread, uint32_t faultAddress, FaultReason rea
 	thread->lastFaultPc = thread->currentPc - 4;
 	thread->prevEnableInterrupt = thread->enableInterrupt;
 	thread->prevEnableMmu = thread->enableMmu;
+	thread->prevEnableSupervisor = thread->enableSupervisor;
 	thread->faultSubcycle = thread->currentSubcycle;
 
 	// Update state
@@ -531,6 +536,7 @@ static void dispatchFault(Thread *thread, uint32_t faultAddress, FaultReason rea
 		thread->currentPc = thread->core->faultHandlerPc;
 
 	thread->currentSubcycle = 0;
+	thread->enableSupervisor = true;
 
 	// Save fault information
 	thread->lastFaultReason = reason;
@@ -550,7 +556,7 @@ static void memoryAccessFault(Thread *thread, uint32_t address, FaultReason reas
 	else
 	{
 		// Allow core to dispatch
-		if (reason == FR_IFETCH_FAULT)
+		if (reason == FR_IFETCH_ALIGNNMENT)
 			thread->currentPc += 4;
 			
 		dispatchFault(thread, address, reason);
@@ -609,6 +615,14 @@ static bool translateAddress(Thread *thread, uint32_t virtualAddress, uint32_t *
 			{
 				// Write protected page, raise a fault
 				memoryAccessFault(thread, virtualAddress, FR_ILLEGAL_WRITE, false);
+				return false;
+			}
+			
+			if ((setEntries[way].physAddrAndFlags & TLB_SUPERVISOR) != 0
+				&& !thread->enableSupervisor)
+			{
+				dispatchFault(thread, virtualAddress, dataFetch ? FR_DATA_SUPERVISOR
+					: FR_IFETCH_SUPERVISOR);
 				return false;
 			}
 			
@@ -985,7 +999,7 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instruction)
 	// Check alignment
 	if ((virtualAddress % accessSize) != 0)
 	{
-		memoryAccessFault(thread, virtualAddress, FR_ALIGNMENT_FAULT, isLoad);
+		memoryAccessFault(thread, virtualAddress, FR_DATA_ALIGNMENT, isLoad);
 		return;
 	}
 
@@ -1183,7 +1197,7 @@ static void executeBlockLoadStoreInst(Thread *thread, uint32_t instruction)
 	// Check alignment
 	if ((virtualAddress & (NUM_VECTOR_LANES * 4 - 1)) != 0)
 	{
-		memoryAccessFault(thread, virtualAddress, FR_ALIGNMENT_FAULT, isLoad);
+		memoryAccessFault(thread, virtualAddress, FR_DATA_ALIGNMENT, isLoad);
 		return;
 	}
 
@@ -1264,7 +1278,7 @@ static void executeScatterGatherInst(Thread *thread, uint32_t instruction)
 	virtualAddress = thread->vectorReg[ptrreg][lane] + offset;
 	if ((mask & (1 << lane)) && (virtualAddress & 3) != 0)
 	{
-		memoryAccessFault(thread, virtualAddress, FR_ALIGNMENT_FAULT, isLoad);
+		memoryAccessFault(thread, virtualAddress, FR_DATA_ALIGNMENT, isLoad);
 		return;
 	}
 
@@ -1326,12 +1340,14 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 				
 			case CR_FLAGS:
 				value = (thread->enableInterrupt ? 1 : 0)
-					| (thread->enableMmu ? 2 : 0);
+					| (thread->enableMmu ? 2 : 0)
+					| (thread->enableSupervisor ? 4 : 0);
 				break;
 
 			case CR_SAVED_FLAGS:
 				value = (thread->prevEnableInterrupt ? 1 : 0)
-					| (thread->enableMmu ? 2 : 0);
+					| (thread->prevEnableMmu ? 2 : 0)
+					| (thread->prevEnableSupervisor ? 4 : 0);
 				break;
 				
 			case CR_FAULT_ADDRESS:
@@ -1363,6 +1379,14 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 	}
 	else
 	{
+		// Only threads in supervisor mode can write to control
+		// registers.
+		if (!thread->enableSupervisor)
+		{
+			dispatchFault(thread, 0, FR_PRIVILEGED_OP);
+			return;
+		}
+
 		// Store
 		uint32_t value = getThreadScalarReg(thread, dstSrcReg);
 		switch (crIndex)
@@ -1378,11 +1402,13 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 			case CR_FLAGS:
 				thread->enableInterrupt = (value & 1) != 0;
 				thread->enableMmu = (value & 2) != 0;
+				thread->enableSupervisor = (value & 4) != 0;
 				break;
 
 			case CR_SAVED_FLAGS:
 				thread->prevEnableInterrupt = (value & 1) != 0;
 				thread->prevEnableMmu = (value & 2) != 0;
+				thread->prevEnableSupervisor = (value & 4) != 0;
 				break;
 
 			case CR_TLB_MISS_HANDLER:
@@ -1484,10 +1510,17 @@ static void executeBranchInst(Thread *thread, uint32_t instruction)
 			return; // Short circuit out, since we use register as destination.
 			
 		case BRANCH_ERET:
+			if (!thread->enableSupervisor)
+			{
+				dispatchFault(thread, 0, FR_PRIVILEGED_OP);
+				return;
+			}
+			
 			thread->enableInterrupt = thread->prevEnableInterrupt;
 			thread->enableMmu = thread->prevEnableMmu;
 			thread->currentPc = thread->lastFaultPc;
 	 		thread->currentSubcycle = thread->faultSubcycle;
+			thread->enableSupervisor = thread->prevEnableSupervisor;
 			return; // Short circuit out
 	}
 	
@@ -1590,7 +1623,7 @@ static int executeInstruction(Thread *thread)
 	// Check PC alignment
 	if ((thread->currentPc & 3) != 0)
 	{
-		memoryAccessFault(thread, thread->currentPc, FR_IFETCH_FAULT, true);
+		memoryAccessFault(thread, thread->currentPc, FR_IFETCH_ALIGNNMENT, true);
 		return 1;
 	}
 

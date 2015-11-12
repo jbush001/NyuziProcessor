@@ -52,3 +52,5 @@ fill_itlb:			getcr s1, CR_FAULT_ADDR			# Get virtual address
 done:				getcr s0, CR_SCRATCHPAD0        # Get saved s0 from scratchpad
 					getcr s1, CR_SCRATCHPAD1        # Get saved s1
 					eret
+
+					

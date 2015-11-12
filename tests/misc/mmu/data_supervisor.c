@@ -14,16 +14,13 @@
 // limitations under the License.
 // 
 
-//
-// Ensure we are properly translating I/O addresses, specifically that
-// we are using the physical address and not the virtual address to determine
-// if something is in the I/O range.
-// Map the I/O range at 1MB and the physical address 1MB into the virtual
-// range 0xffff0000 (where I/O is physically located).  
-//
+// Test that supervisor bits work properly for DTLB entries
 
 #define PAGE_SIZE 0x1000
 #define TLB_WRITE_ENABLE 2
+#define TLB_SUPERVISOR 8
+
+volatile unsigned int *data_addr = (unsigned int*) 0x100000;
 
 void add_itlb_mapping(unsigned int va, unsigned int pa)
 {
@@ -35,15 +32,23 @@ void add_dtlb_mapping(unsigned int va, unsigned int pa)
 	asm("dtlbinsert %0, %1" : : "r" (va), "r" (pa | TLB_WRITE_ENABLE));
 }
 
-void printmsg(const char *value)
+void fault_handler()
 {
-	const char *c;
-	
-	for (c = value; *c; c++)
-		*((volatile unsigned int*) 0x100020) = *c;
+	printf("FAULT %d %08x current flags %02x prev flags %02x\n", 
+		__builtin_nyuzi_read_control_reg(3),
+		__builtin_nyuzi_read_control_reg(5),
+		__builtin_nyuzi_read_control_reg(4),
+		__builtin_nyuzi_read_control_reg(8));
+	exit(0);
 }
 
-int main(void)
+// Make this a call to flush the pipeline
+void switch_to_user_mode() __attribute__((noinline))
+{
+	__builtin_nyuzi_write_control_reg(4, (1 << 1));
+}
+
+int main(int argc, const char *argv[])
 {
 	int i;
 	unsigned int stack_addr = (unsigned int) &i & ~(PAGE_SIZE - 1);
@@ -58,24 +63,22 @@ int main(void)
 	// Stack
 	add_dtlb_mapping(stack_addr, stack_addr);
 
-	// A data region. Map this where the I/O region normally goes
-	add_dtlb_mapping(0xffff0000, 0x100000);
+	// A data region
+	add_dtlb_mapping(data_addr, ((unsigned int) data_addr) | TLB_SUPERVISOR);
 
-	// I/O region. Put this outside its normal spot.
-	add_dtlb_mapping(0x100000, 0xffff0000);
+	// I/O registers
+	add_dtlb_mapping(0xffff0000, 0xffff0000);
 
-	// Enable MMU in flags register
+	__builtin_nyuzi_write_control_reg(1, fault_handler);
 	__builtin_nyuzi_write_control_reg(4, (1 << 1) | (1 << 2));
 
-	// Print a message
-	printmsg("jabberwocky");
+	// We are currently in supervisor mode. write then read to the page
+	*data_addr = 0x12345678;
+	printf("read1 data_addr %08x\n", *data_addr);	// CHECK: read1 data_addr 12345678
 
-	// Copy into memory
-	memcpy(0xffff0000, "galumphing", 10);
-	asm("dflush %0" : : "s" (0xffff0000));
-	
-	// Since I/O is remapped, need to halt using new address
-	*((volatile unsigned int*) 0x100064) = 1; 
-	
-	return 0;
+	// Switch to user mode, but leave MMU active
+	switch_to_user_mode();
+
+	printf("read2 data_addr %08x\n", *data_addr);	// CHECK: FAULT 8 00100000 current flags 06 prev flags 02
 }
+

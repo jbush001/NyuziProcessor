@@ -41,6 +41,7 @@ module dcache_data_stage(
 	input subcycle_t                          dt_subcycle,
 	input                                     dt_valid[`L1D_WAYS],
 	input l1d_tag_t                           dt_tag[`L1D_WAYS],
+	input                                     dt_tlb_supervisor,
 	
 	// To dcache_tag_stage
 	output logic                              dd_update_lru_en,
@@ -65,9 +66,14 @@ module dcache_data_stage(
 	output cache_line_data_t                  dd_load_data,
 	output logic                              dd_suspend_thread,
 	output logic                              dd_is_io_address,
-	output logic                              dd_access_fault,
+	output logic                              dd_alignment_fault,
 	output logic                              dd_write_fault,
 	output logic                              dd_tlb_miss,
+	output logic                              dd_supervisor_fault,
+	output logic                              dd_privilege_op_fault,
+
+	// From control registers
+	input logic                               cr_supervisor_en[`THREADS_PER_CORE],
 
 	// To control_registers 
 	// These signals are unregistered
@@ -230,7 +236,8 @@ module dcache_data_stage(
 		&& !rollback_this_stage
 		&& dt_instruction.is_memory_access 
 		&& dt_instruction.memory_access_type == MEM_CONTROL_REG;
-	assign dd_creg_write_en = creg_access_en && !dt_instruction.is_load;
+	assign dd_creg_write_en = creg_access_en && !dt_instruction.is_load
+		&& cr_supervisor_en[dt_thread_idx];
 	assign dd_creg_read_en = creg_access_en && dt_instruction.is_load;
 	assign dd_creg_write_val = dt_store_value[0];
 	assign dd_creg_index = dt_instruction.creg_index;
@@ -459,15 +466,17 @@ module dcache_data_stage(
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			dd_access_fault <= '0;
+			dd_alignment_fault <= '0;
 			dd_instruction <= '0;
 			dd_instruction_valid <= '0;
 			dd_is_io_address <= '0;
 			dd_lane_mask <= '0;
+			dd_privilege_op_fault <= '0;
 			dd_request_vaddr <= '0;
 			dd_rollback_en <= '0;
 			dd_rollback_pc <= '0;
 			dd_subcycle <= '0;
+			dd_supervisor_fault <= '0;
 			dd_suspend_thread <= '0;
 			dd_thread_idx <= '0;
 			dd_tlb_miss <= '0;
@@ -503,7 +512,11 @@ module dcache_data_stage(
 				&& !cache_hit 
 				&& !cache_near_miss
 				&& !is_unaligned;
-			dd_access_fault <= (dcache_load_en || dcache_store_en) && is_unaligned;
+			dd_alignment_fault <= (dcache_load_en || dcache_store_en) && is_unaligned;
+			dd_supervisor_fault <= dt_tlb_supervisor && !cr_supervisor_en[dt_thread_idx];
+			dd_privilege_op_fault <= !cr_supervisor_en[dt_thread_idx] 
+				&& creg_access_en 
+				&& !dt_instruction.is_load; 
 			dd_write_fault <= !dt_tlb_writable && dcache_store_en;
 			dd_tlb_miss <= is_tlb_access && !dt_tlb_hit;
 		end

@@ -14,17 +14,11 @@
 // limitations under the License.
 // 
 
-#include <stdio.h>
-#include <unistd.h>
+// Test that supervisor bits work properly for DTLB entries
 
 #define PAGE_SIZE 0x1000
 #define TLB_WRITE_ENABLE 2
-
-// Note: this aliases to virtual address. Ensure invalidate only removes the 
-// matching way.
-volatile unsigned int *data_addr = (unsigned int*) 0x100000;
-
-void tlb_miss_handler();
+#define TLB_SUPERVISOR 8
 
 void add_itlb_mapping(unsigned int va, unsigned int pa)
 {
@@ -36,11 +30,19 @@ void add_dtlb_mapping(unsigned int va, unsigned int pa)
 	asm("dtlbinsert %0, %1" : : "r" (va), "r" (pa | TLB_WRITE_ENABLE));
 }
 
-void tlb_miss_handler()
+void fault_handler()
 {
-	printf("%cTLB miss %08x\n", __builtin_nyuzi_read_control_reg(3) == 5 ? 'I' : 'D',
-		 __builtin_nyuzi_read_control_reg(5));
+	printf("FAULT %d current flags %02x prev flags %02x\n", 
+		__builtin_nyuzi_read_control_reg(3),
+		__builtin_nyuzi_read_control_reg(4),
+		__builtin_nyuzi_read_control_reg(8));
 	exit(0);
+}
+
+// Make this a call to flush the pipeline
+void switch_to_user_mode() __attribute__((noinline))
+{
+	__builtin_nyuzi_write_control_reg(4, (1 << 1));
 }
 
 int main(int argc, const char *argv[])
@@ -51,28 +53,31 @@ int main(int argc, const char *argv[])
 	// Map code & data
 	for (i = 0; i < 8; i++)
 	{
-		add_itlb_mapping(i * PAGE_SIZE, i * PAGE_SIZE);
-		add_dtlb_mapping(i * PAGE_SIZE, i * PAGE_SIZE);
+		add_itlb_mapping(i * PAGE_SIZE, i * PAGE_SIZE | TLB_SUPERVISOR);
+		add_dtlb_mapping(i * PAGE_SIZE, i * PAGE_SIZE | TLB_SUPERVISOR);
 	}
 
 	// Stack
 	add_dtlb_mapping(stack_addr, stack_addr);
 
-	// A data region
-	add_dtlb_mapping(data_addr, data_addr);
-
-	// I/O address
+	// I/O registers
 	add_dtlb_mapping(0xffff0000, 0xffff0000);
 
-	// Enable MMU in flags register
-	__builtin_nyuzi_write_control_reg(7, tlb_miss_handler);
+	__builtin_nyuzi_write_control_reg(1, fault_handler);
+	
+	// Enable MMU
 	__builtin_nyuzi_write_control_reg(4, (1 << 1) | (1 << 2));
 
-	*data_addr = 0x1f6818aa;
-	printf("data value %08x\n", *data_addr); // CHECK: data value 1f6818aa
+	printf("one flags %02x prev flags %02x\n",
+		__builtin_nyuzi_read_control_reg(4),
+		__builtin_nyuzi_read_control_reg(8)); // CHECK: one flags 06 prev flags 04
 
-	asm("tlbinval %0" : : "s" (data_addr));
+	// Switch to user mode, but leave MMU active
+	switch_to_user_mode();
 
-	printf("FAIL: read value %08x\n", *data_addr);	// CHECK: DTLB miss 00100000
-	return 0;
+	// This will fault on instruction fetch.  Interrupts should be enabled, but 
+	// the processor should be back in supervisor mode.
+	printf("THIS IS USER MODE\n");	// CHECK: FAULT 9 current flags 06 prev flags 02
+
 }
+

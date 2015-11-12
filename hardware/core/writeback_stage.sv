@@ -58,6 +58,7 @@ module writeback_stage(
 	input logic                           ix_rollback_en,
 	input scalar_t                        ix_rollback_pc,
 	input subcycle_t                      ix_subcycle,
+	input                                 ix_privileged_op_fault,
 	                               
 	// From dcache_data_stage      
 	input                                 dd_instruction_valid,
@@ -71,9 +72,11 @@ module writeback_stage(
 	input cache_line_data_t               dd_load_data,
 	input                                 dd_suspend_thread,
 	input                                 dd_is_io_address,
-	input                                 dd_access_fault,
+	input                                 dd_alignment_fault,
 	input                                 dd_write_fault,
 	input                                 dd_tlb_miss,
+	input                                 dd_supervisor_fault,
+	input                                 dd_privilege_op_fault,
 	
 	// From l1_store_queue
 	input [`CACHE_LINE_BYTES - 1:0]       sq_store_bypass_mask,
@@ -99,7 +102,7 @@ module writeback_stage(
 	output thread_idx_t                   wb_fault_thread_idx,
 	output scalar_t                       wb_fault_access_vaddr,
 	output subcycle_t                     wb_fault_subcycle,
-
+	
 	// Interrupt input
 	input                                 interrupt_pending,
 	input thread_idx_t                    interrupt_thread_idx,
@@ -177,10 +180,11 @@ module writeback_stage(
 		wb_fault_access_vaddr = 0;
 		wb_fault_subcycle = dd_subcycle;
 
-		if (ix_instruction_valid && (ix_instruction.illegal || ix_instruction.ifetch_fault
-			|| ix_instruction.tlb_miss))
+		if (ix_instruction_valid && (ix_instruction.illegal || ix_instruction.ifetch_alignment_fault
+			|| ix_instruction.tlb_miss || ix_privileged_op_fault))
 		begin
-			// Illegal instruction/ifetch fault
+			// Fault from integer stage, which would be an instruction fetch fault
+			// that bubbled through this stage or eret in non-privileged mode.
 			wb_rollback_en = 1'b1;
 			if (ix_instruction.tlb_miss)
 				wb_rollback_pc = cr_tlb_miss_handler;
@@ -192,8 +196,12 @@ module writeback_stage(
 			wb_fault = 1;
 			if (ix_instruction.tlb_miss)
 				wb_fault_reason = FR_ITLB_MISS;
-			else if (ix_instruction.ifetch_fault)
-				wb_fault_reason = FR_IFETCH_FAULT;
+			else if (ix_instruction.ifetch_alignment_fault)
+				wb_fault_reason = FR_IFETCH_ALIGNNMENT;
+			else if (ix_instruction.ifetch_supervisor_fault)
+				wb_fault_reason = FR_IFETCH_SUPERVISOR;
+			else if (ix_privileged_op_fault)
+				wb_fault_reason = FR_PRIVILEGED_OP;
 			else
 				wb_fault_reason = FR_ILLEGAL_INSTRUCTION;
 
@@ -201,7 +209,8 @@ module writeback_stage(
 			wb_fault_access_vaddr = ix_instruction.pc;
 			wb_fault_thread_idx = ix_thread_idx;
 		end
-		else if (dd_instruction_valid && (dd_access_fault || dd_tlb_miss || dd_write_fault))
+		else if (dd_instruction_valid && (dd_alignment_fault || dd_tlb_miss || dd_write_fault
+			|| dd_supervisor_fault || dd_privilege_op_fault))
 		begin
 			// Memory access fault
 			wb_rollback_en = 1'b1;
@@ -216,10 +225,14 @@ module writeback_stage(
 			else
 			begin
 				wb_rollback_pc = cr_fault_handler;
-				if (dd_write_fault)
+				if (dd_supervisor_fault)
+					wb_fault_reason = FR_DATA_SUPERVISOR;
+				else if (dd_write_fault)
 					wb_fault_reason = FR_ILLEGAL_WRITE;
+				else if (dd_privilege_op_fault)
+					wb_fault_reason = FR_PRIVILEGED_OP;
 				else
-					wb_fault_reason = FR_INVALID_ACCESS;
+					wb_fault_reason = FR_DATA_ALIGNMENT;
 			end
 			
 			wb_fault_pc = dd_instruction.pc;
@@ -604,6 +617,18 @@ module writeback_stage(
 			endcase
 		end
 	end	
+	
+`ifdef SIMULATION
+	always_ff @(posedge clk)
+	begin
+		if (wb_rollback_en && wb_rollback_pc == 0)
+		begin
+			$display("thread %0d rolled back to 0, reason %0d address %08x", wb_rollback_thread_idx,
+				wb_fault_reason, wb_fault_pc);
+			$finish;
+		end
+	end
+`endif
 endmodule
 
 // Local Variables:

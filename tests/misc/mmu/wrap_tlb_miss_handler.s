@@ -44,6 +44,6 @@ done:					getcr s0, CR_SCRATCHPAD0        # Get saved s0 from scratchpad
 
 						.globl enable_mmu
 enable_mmu:				setcr ra, CR_FAULT_PC			# Set exception PC to return address
-						move s0, 2
+						move s0, 6
 						setcr s0, CR_SAVED_FLAGS		# Set prev MMU enable
 						eret							# Enable everything and return

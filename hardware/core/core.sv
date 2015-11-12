@@ -55,7 +55,8 @@ module core
 	/*AUTOLOGIC*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	logic		cr_mmu_en [`THREADS_PER_CORE];// From control_registers of control_registers.v
-	logic		dd_access_fault;	// From dcache_data_stage of dcache_data_stage.v
+	logic		cr_supervisor_en [`THREADS_PER_CORE];// From control_registers of control_registers.v
+	logic		dd_alignment_fault;	// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_cache_miss;		// From dcache_data_stage of dcache_data_stage.v
 	scalar_t	dd_cache_miss_addr;	// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_cache_miss_synchronized;// From dcache_data_stage of dcache_data_stage.v
@@ -78,6 +79,7 @@ module core
 	vector_lane_mask_t dd_lane_mask;	// From dcache_data_stage of dcache_data_stage.v
 	cache_line_data_t dd_load_data;		// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_membar_en;		// From dcache_data_stage of dcache_data_stage.v
+	logic		dd_privilege_op_fault;	// From dcache_data_stage of dcache_data_stage.v
 	l1d_addr_t	dd_request_vaddr;	// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_rollback_en;		// From dcache_data_stage of dcache_data_stage.v
 	scalar_t	dd_rollback_pc;		// From dcache_data_stage of dcache_data_stage.v
@@ -90,6 +92,7 @@ module core
 	logic		dd_store_synchronized;	// From dcache_data_stage of dcache_data_stage.v
 	thread_idx_t	dd_store_thread_idx;	// From dcache_data_stage of dcache_data_stage.v
 	subcycle_t	dd_subcycle;		// From dcache_data_stage of dcache_data_stage.v
+	logic		dd_supervisor_fault;	// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_suspend_thread;	// From dcache_data_stage of dcache_data_stage.v
 	thread_idx_t	dd_thread_idx;		// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_tlb_miss;		// From dcache_data_stage of dcache_data_stage.v
@@ -112,9 +115,11 @@ module core
 	l1d_tag_t	dt_tag [`L1D_WAYS];	// From dcache_tag_stage of dcache_tag_stage.v
 	thread_idx_t	dt_thread_idx;		// From dcache_tag_stage of dcache_tag_stage.v
 	logic		dt_tlb_hit;		// From dcache_tag_stage of dcache_tag_stage.v
+	logic		dt_tlb_supervisor;	// From dcache_tag_stage of dcache_tag_stage.v
 	logic		dt_tlb_writable;	// From dcache_tag_stage of dcache_tag_stage.v
 	logic		dt_update_itlb_en;	// From dcache_tag_stage of dcache_tag_stage.v
 	page_index_t	dt_update_itlb_ppage_idx;// From dcache_tag_stage of dcache_tag_stage.v
+	logic		dt_update_itlb_supervisor;// From dcache_tag_stage of dcache_tag_stage.v
 	logic		dt_valid [`L1D_WAYS];	// From dcache_tag_stage of dcache_tag_stage.v
 	logic [`VECTOR_LANES-1:0] [7:0] fx1_add_exponent;// From fp_execute_stage1 of fp_execute_stage1.v
 	logic [`VECTOR_LANES-1:0] fx1_add_result_sign;// From fp_execute_stage1 of fp_execute_stage1.v
@@ -200,6 +205,7 @@ module core
 	logic		ifd_instruction_valid;	// From ifetch_data_stage of ifetch_data_stage.v
 	logic		ifd_near_miss;		// From ifetch_data_stage of ifetch_data_stage.v
 	scalar_t	ifd_pc;			// From ifetch_data_stage of ifetch_data_stage.v
+	logic		ifd_supervisor_fault;	// From ifetch_data_stage of ifetch_data_stage.v
 	thread_idx_t	ifd_thread_idx;		// From ifetch_data_stage of ifetch_data_stage.v
 	logic		ifd_tlb_miss;		// From ifetch_data_stage of ifetch_data_stage.v
 	logic		ifd_update_lru_en;	// From ifetch_data_stage of ifetch_data_stage.v
@@ -211,6 +217,7 @@ module core
 	l1i_tag_t	ift_tag [`L1I_WAYS];	// From ifetch_tag_stage of ifetch_tag_stage.v
 	thread_idx_t	ift_thread_idx;		// From ifetch_tag_stage of ifetch_tag_stage.v
 	logic		ift_tlb_hit;		// From ifetch_tag_stage of ifetch_tag_stage.v
+	logic		ift_tlb_supervisor;	// From ifetch_tag_stage of ifetch_tag_stage.v
 	logic		ift_valid [`L1I_WAYS];	// From ifetch_tag_stage of ifetch_tag_stage.v
 	scalar_t	ior_read_value;		// From io_request_queue of io_request_queue.v
 	logic		ior_rollback_en;	// From io_request_queue of io_request_queue.v
@@ -219,6 +226,7 @@ module core
 	logic		ix_instruction_valid;	// From int_execute_stage of int_execute_stage.v
 	logic		ix_is_eret;		// From int_execute_stage of int_execute_stage.v
 	vector_lane_mask_t ix_mask_value;	// From int_execute_stage of int_execute_stage.v
+	logic		ix_privileged_op_fault;	// From int_execute_stage of int_execute_stage.v
 	vector_t	ix_result;		// From int_execute_stage of int_execute_stage.v
 	logic		ix_rollback_en;		// From int_execute_stage of int_execute_stage.v
 	scalar_t	ix_rollback_pc;		// From int_execute_stage of int_execute_stage.v
@@ -264,7 +272,7 @@ module core
 	logic		perf_instruction_issue;	// From thread_select_stage of thread_select_stage.v
 	logic		perf_instruction_retire;// From writeback_stage of writeback_stage.v
 	logic		perf_itlb_miss;		// From ifetch_data_stage of ifetch_data_stage.v
-	logic		perf_store;	// From dcache_data_stage of dcache_data_stage.v
+	logic		perf_store;		// From dcache_data_stage of dcache_data_stage.v
 	logic		perf_store_rollback;	// From writeback_stage of writeback_stage.v
 	logic		sq_rollback_en;		// From l2_cache_interface of l2_cache_interface.v
 	cache_line_data_t sq_store_bypass_data;	// From l2_cache_interface of l2_cache_interface.v

@@ -49,6 +49,7 @@ module instruction_decode_stage(
 	input scalar_t                ifd_pc,
 	input thread_idx_t            ifd_thread_idx,
 	input                         ifd_alignment_fault,
+	input                         ifd_supervisor_fault,
 	input                         ifd_tlb_miss,
 
 	// To thread_select_stage
@@ -195,10 +196,12 @@ module instruction_decode_stage(
 	assign is_getlane = (is_fmt_r || is_fmt_i) && alu_op == OP_GETLANE;
 	
 	assign is_nop = ifd_instruction == `INSTRUCTION_NOP;
-	assign is_legal_instruction = !dlut_out.illegal && !ifd_alignment_fault && !ifd_tlb_miss;
+	assign is_legal_instruction = !dlut_out.illegal && !ifd_alignment_fault && !ifd_tlb_miss
+		&& !ifd_supervisor_fault;
 	
+	assign decoded_instr_nxt.ifetch_supervisor_fault = ifd_supervisor_fault;
 	assign decoded_instr_nxt.illegal = dlut_out.illegal;
-	assign decoded_instr_nxt.ifetch_fault = ifd_alignment_fault;
+	assign decoded_instr_nxt.ifetch_alignment_fault = ifd_alignment_fault;
 	assign decoded_instr_nxt.tlb_miss = ifd_tlb_miss;
 	assign decoded_instr_nxt.has_scalar1 = dlut_out.scalar1_loc != SCLR1_NONE && !is_nop
 		&& is_legal_instruction;
@@ -292,7 +295,7 @@ module instruction_decode_stage(
 	
 	always_comb
 	begin
-		if (dlut_out.illegal || ifd_alignment_fault || ifd_tlb_miss)
+		if (dlut_out.illegal || ifd_alignment_fault || ifd_tlb_miss || ifd_supervisor_fault)
 			decoded_instr_nxt.pipeline_sel = PIPE_SCYCLE_ARITH;
 		else if (is_fmt_r || is_fmt_i)
 		begin

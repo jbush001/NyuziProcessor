@@ -162,7 +162,8 @@ typedef enum logic [4:0] {
 typedef struct packed {
 	scalar_t pc;
 	logic illegal;
-	logic ifetch_fault;
+	logic ifetch_alignment_fault;
+	logic ifetch_supervisor_fault;
 	logic tlb_miss;
 	logic has_scalar1;
 	register_idx_t scalar_sel1;
@@ -197,12 +198,15 @@ typedef struct packed {
 typedef enum logic[3:0] {
 	FR_RESET,
 	FR_ILLEGAL_INSTRUCTION,
-	FR_INVALID_ACCESS,
+	FR_DATA_ALIGNMENT,
 	FR_INTERRUPT,
-	FR_IFETCH_FAULT,
+	FR_IFETCH_ALIGNNMENT,
 	FR_ITLB_MISS,
 	FR_DTLB_MISS,
-	FR_ILLEGAL_WRITE
+	FR_ILLEGAL_WRITE,
+	FR_DATA_SUPERVISOR,
+	FR_IFETCH_SUPERVISOR,
+	FR_PRIVILEGED_OP
 } fault_reason_t;
 
 `define IEEE754_B32_EXP_WIDTH 8
@@ -229,6 +233,15 @@ typedef struct packed {
 
 typedef logic[`CACHE_LINE_BITS - 1:0] cache_line_data_t;
 typedef logic[`PAGE_NUM_BITS - 1:0] page_index_t;
+
+typedef struct packed {
+	logic[`PAGE_NUM_BITS - 1:0] ppage_idx;
+	logic[32 - (`PAGE_NUM_BITS + 4) - 1:0] unused;
+	logic supervisor;
+	logic executable;
+	logic writable;
+	logic present;
+} tlb_entry_t;
 
 typedef logic[$clog2(`L1D_WAYS) - 1:0] l1d_way_idx_t;
 typedef logic[$clog2(`L1D_SETS) - 1:0] l1d_set_idx_t;

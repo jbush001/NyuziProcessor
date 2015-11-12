@@ -55,6 +55,7 @@ module dcache_tag_stage
 	output subcycle_t                           dt_subcycle,
 	output logic                                dt_valid[`L1D_WAYS],
 	output l1d_tag_t                            dt_tag[`L1D_WAYS],
+	output logic                                dt_tlb_supervisor,
 	
 	// from dcache_data_stage
 	input                                       dd_update_lru_en,
@@ -66,7 +67,7 @@ module dcache_tag_stage
 	output page_index_t                         dt_itlb_vpage_idx,
 	output                                      dt_update_itlb_en,
 	output page_index_t                         dt_update_itlb_ppage_idx,
-	
+	output                                      dt_update_itlb_supervisor,
 	
 	// From l2_cache_interface
 	input                                       l2i_dcache_lru_fill_en,
@@ -102,6 +103,8 @@ module dcache_tag_stage
 	logic is_valid_cache_control;
 	logic update_dtlb_en;
 	logic tlb_writable;
+	logic tlb_supervisor;
+	tlb_entry_t new_tlb_value;
 
 	assign instruction_valid = of_instruction_valid 
 		&& (!wb_rollback_en || wb_rollback_thread_idx != of_thread_idx) 
@@ -114,6 +117,7 @@ module dcache_tag_stage
 		&& of_instruction.is_load;
 	assign scgath_lane = ~of_subcycle;
 	assign request_addr_nxt = of_operand1[scgath_lane] + of_instruction.immediate_value;
+	assign new_tlb_value = of_store_value[0];
 	assign dt_invalidate_tlb_en = is_valid_cache_control
 		&& of_instruction.cache_control_op == CACHE_TLB_INVAL;
 	assign dt_invalidate_tlb_all_en = is_valid_cache_control
@@ -122,13 +126,14 @@ module dcache_tag_stage
 		&& of_instruction.cache_control_op == CACHE_DTLB_INSERT;
 	assign dt_update_itlb_en = is_valid_cache_control
 		&& of_instruction.cache_control_op == CACHE_ITLB_INSERT;
+	assign dt_update_itlb_supervisor = new_tlb_value.supervisor;
 	assign tlb_lookup_en = instruction_valid 
 		&& of_instruction.memory_access_type != MEM_CONTROL_REG
 		&& !update_dtlb_en
 		&& !dt_invalidate_tlb_en
 		&& !dt_invalidate_tlb_all_en;
 	assign dt_itlb_vpage_idx = of_operand1[0][31-:`PAGE_NUM_BITS];
-	assign dt_update_itlb_ppage_idx = of_store_value[0][31-:`PAGE_NUM_BITS];
+	assign dt_update_itlb_ppage_idx = new_tlb_value.ppage_idx;
 
 	initial 
 	begin
@@ -210,11 +215,13 @@ module dcache_tag_stage
 		.invalidate_en(dt_invalidate_tlb_en),
 		.invalidate_all_en(dt_invalidate_tlb_all_en),
 		.request_vpage_idx(request_addr_nxt[31-:`PAGE_NUM_BITS]),
-		.update_ppage_idx(of_store_value[0][31-:`PAGE_NUM_BITS]),
-		.update_writable(of_store_value[0][1]), // Bit 1 of the TLB entry is write enable
+		.update_ppage_idx(new_tlb_value.ppage_idx),
+		.update_writable(new_tlb_value.writable),
+		.update_supervisor(new_tlb_value.supervisor),
 		.lookup_ppage_idx(tlb_ppage_idx),
 		.lookup_hit(tlb_hit),
 		.lookup_writable(tlb_writable),
+		.lookup_supervisor(tlb_supervisor),
 		.*);
 		
 	// This combinational logic is after the flip flops,
@@ -226,12 +233,14 @@ module dcache_tag_stage
 		begin
 			dt_tlb_hit = tlb_hit;
 			dt_tlb_writable = tlb_writable;
+			dt_tlb_supervisor = tlb_supervisor;
 			ppage_idx = tlb_ppage_idx;
 		end
 		else
 		begin
 			dt_tlb_hit = 1;
 			dt_tlb_writable = 1;
+			dt_tlb_supervisor = 0;
 			ppage_idx = fetched_addr[31-:`PAGE_NUM_BITS];
 		end
 	end

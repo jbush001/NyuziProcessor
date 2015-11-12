@@ -29,6 +29,7 @@ module control_registers
 	// To multiple stages
 	output scalar_t                         cr_eret_address[`THREADS_PER_CORE],
 	output logic                            cr_mmu_en[`THREADS_PER_CORE],
+	output logic                            cr_supervisor_en[`THREADS_PER_CORE],
 	
 	// From int_execute_stage
 	input                                   ix_is_eret,
@@ -62,6 +63,7 @@ module control_registers
 	fault_reason_t fault_reason[`THREADS_PER_CORE];
 	logic interrupt_en_saved[`THREADS_PER_CORE];
 	logic mmu_en_saved[`THREADS_PER_CORE];
+	logic supervisor_en_saved[`THREADS_PER_CORE];
 	scalar_t scratchpad[`THREADS_PER_CORE * 2];
 	scalar_t cycle_count;
 
@@ -78,6 +80,8 @@ module control_registers
 				cr_mmu_en[i] <= 0;
 				mmu_en_saved[i] <= 0;
 				cr_eret_subcycle[i] <= 0;
+				cr_supervisor_en[i] <= 1;	// Threads start in supervisor mode
+				supervisor_en_saved[i] <= 1;
 			end
 
 			for (int i = 0; i < `THREADS_PER_CORE * 2; i++)
@@ -98,7 +102,9 @@ module control_registers
 			assert(!(dd_creg_write_en && dd_creg_read_en));
 		
 			// A fault and eret are triggered from the same stage, so they
-			// must not occur simultaneously.
+			// must not occur simultaneously (an eret can raise a fault if it
+			// is not in supervisor mode, but ix_is_eret should not be asserted 
+			// in that case)
 			assert(!(wb_fault && ix_is_eret));
 		
 			cycle_count <= cycle_count + 1;
@@ -109,12 +115,14 @@ module control_registers
 				cr_eret_address[wb_fault_thread_idx] <= wb_fault_pc;
 				fault_access_addr[wb_fault_thread_idx] <= wb_fault_access_vaddr;
 				cr_interrupt_en[wb_fault_thread_idx] <= 0;	// Disable interrupts for this thread
+				cr_supervisor_en[ix_thread_idx] <= 1; // Enter supervisor mode on fault
 				if (wb_fault_reason == FR_ITLB_MISS || wb_fault_reason == FR_DTLB_MISS)
 					cr_mmu_en[wb_fault_thread_idx] <= 0;
 
 				// Copy current flags to prev flags
 				interrupt_en_saved[wb_fault_thread_idx] <= cr_interrupt_en[wb_fault_thread_idx];
 				mmu_en_saved[wb_fault_thread_idx] <= cr_mmu_en[wb_fault_thread_idx];
+				supervisor_en_saved[wb_fault_thread_idx] <= cr_supervisor_en[ix_thread_idx];
 				cr_eret_subcycle[wb_fault_thread_idx] <= wb_fault_subcycle;
 			end
 			else if (ix_is_eret)
@@ -122,6 +130,7 @@ module control_registers
 				// Copy from prev flags to current flags
 				cr_interrupt_en[ix_thread_idx] <= interrupt_en_saved[ix_thread_idx];	
 				cr_mmu_en[ix_thread_idx] <= mmu_en_saved[ix_thread_idx];
+				cr_supervisor_en[ix_thread_idx] <= supervisor_en_saved[ix_thread_idx];
 			end
 
 			//
@@ -132,12 +141,14 @@ module control_registers
 				case (dd_creg_index)
 					CR_FLAGS:
 					begin
+						cr_supervisor_en[dt_thread_idx] <= dd_creg_write_val[2];
 						cr_mmu_en[dt_thread_idx] <= dd_creg_write_val[1];
 						cr_interrupt_en[dt_thread_idx] <= dd_creg_write_val[0];
 					end
 
 					CR_SAVED_FLAGS:
 					begin
+						supervisor_en_saved[dt_thread_idx] <= dd_creg_write_val[2];
 						mmu_en_saved[dt_thread_idx] <= dd_creg_write_val[1];
 						interrupt_en_saved[dt_thread_idx] <= dd_creg_write_val[0];
 					end
@@ -162,6 +173,7 @@ module control_registers
 					CR_FLAGS:
 					begin
 						cr_creg_read_val <= scalar_t'({
+							cr_supervisor_en[dt_thread_idx],
 							cr_mmu_en[dt_thread_idx],
 							cr_interrupt_en[dt_thread_idx] 
 						});
@@ -170,6 +182,7 @@ module control_registers
 					CR_SAVED_FLAGS:
 					begin
 						cr_creg_read_val <= scalar_t'({
+							supervisor_en_saved[dt_thread_idx],
 							mmu_en_saved[dt_thread_idx],
 							interrupt_en_saved[dt_thread_idx]
 						});

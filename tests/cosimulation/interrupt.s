@@ -28,7 +28,7 @@
 			    .type	main,@function
 _start:		    lea s0, interrupt_handler
 			    setcr s0, CR_FAULT_HANDLER
-				move s0, 1
+				move s0, 5
 				setcr s0, CR_FLAGS   # Enable interrupts
 				move s1, 1000
 				move s2, 7

@@ -66,7 +66,7 @@ int main(int argc, const char *argv[])
 
 	// Enable MMU in flags register
 	__builtin_nyuzi_write_control_reg(1, fault_handler);
-	__builtin_nyuzi_write_control_reg(4, (1 << 1));
+	__builtin_nyuzi_write_control_reg(4, (1 << 1) | (1 << 2));
 
 	*data_addr = 0x1f6818aa;
 	printf("data value %08x\n", *data_addr); // CHECK: data value 1f6818aa

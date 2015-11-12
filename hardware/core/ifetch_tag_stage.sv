@@ -41,6 +41,7 @@ module ifetch_tag_stage
 	output logic                        ift_tlb_hit,
 	output l1i_tag_t                    ift_tag[`L1I_WAYS],
 	output logic                        ift_valid[`L1I_WAYS],
+	output                              ift_tlb_supervisor,
 
 	// From ifetch_data_stage
 	input                               ifd_update_lru_en,
@@ -67,6 +68,7 @@ module ifetch_tag_stage
 	input                               dt_invalidate_tlb_all_en,
 	input page_index_t                  dt_itlb_vpage_idx,
 	input                               dt_update_itlb_en,
+	input                               dt_update_itlb_supervisor,
 	input page_index_t                  dt_update_itlb_ppage_idx,
 
 	// From writeback_stage
@@ -92,6 +94,7 @@ module ifetch_tag_stage
 	page_index_t tlb_ppage_idx;
 	page_index_t ppage_idx;
 	logic tlb_hit;
+	logic tlb_supervisor;
 
 	//
 	// Pick which thread to fetch next.
@@ -193,6 +196,7 @@ module ifetch_tag_stage
 		.lookup_en(cache_fetch_en),
 		.update_en(dt_update_itlb_en),
 		.update_writable(1'b0),
+		.update_supervisor(dt_update_itlb_supervisor),
 		.invalidate_en(dt_invalidate_tlb_en),
 		.invalidate_all_en(dt_invalidate_tlb_all_en),
 		.request_vpage_idx(cache_fetch_en ? pc_to_fetch[31-:`PAGE_NUM_BITS] : dt_itlb_vpage_idx),
@@ -200,6 +204,7 @@ module ifetch_tag_stage
 		.lookup_ppage_idx(tlb_ppage_idx),
 		.lookup_hit(tlb_hit),
 		.lookup_writable(),
+		.lookup_supervisor(tlb_supervisor),
 		.*);
 
 	// These combinational signals are after the output flops of this stage (and
@@ -209,18 +214,21 @@ module ifetch_tag_stage
 		if (cr_mmu_en[ift_thread_idx])
 		begin
 			ift_tlb_hit = tlb_hit;
+			ift_tlb_supervisor = tlb_supervisor;
 			ppage_idx = tlb_ppage_idx;
 		end
 		else
 		begin
 			// MMU disabled, identity map.
 			ift_tlb_hit = 1;
+			ift_tlb_supervisor = 0;
 			ppage_idx = last_selected_pc[31-:`PAGE_NUM_BITS];
 		end
 	end
 `else
 	// If MMU is disabled, identity map addresses
 	assign ift_tlb_hit = 1;
+	assign ift_tlb_supervisor = 0;
 	assign ppage_idx = last_selected_pc[31-:`PAGE_NUM_BITS];;
 `endif
 
@@ -270,13 +278,6 @@ module ifetch_tag_stage
 				&& !((ifd_cache_miss || ifd_near_miss) && ifd_cache_miss_thread_idx == selected_thread_idx)	
 				&& !(wb_rollback_en && wb_rollback_thread_idx == selected_thread_idx);
 			last_selected_thread_oh <= selected_thread_oh;
-`ifdef SIMULATION
-			if (wb_rollback_en && wb_rollback_pc == 0)
-			begin
-				$display("thread %d rolled back to 0", wb_rollback_thread_idx);
-				$finish;
-			end
-`endif
 		end
 	end
 	

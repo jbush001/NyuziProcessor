@@ -42,6 +42,7 @@ module int_execute_stage(
 	
 	// From control_registers
 	input scalar_t                    cr_eret_address[`THREADS_PER_CORE],
+	input                             cr_supervisor_en[`THREADS_PER_CORE],
 
 	// To control_registers
 	output logic                      ix_is_eret,
@@ -54,9 +55,12 @@ module int_execute_stage(
 	output thread_idx_t               ix_thread_idx,
 	output logic                      ix_rollback_en,
 	output scalar_t                   ix_rollback_pc,
-	output subcycle_t                 ix_subcycle);
+	output subcycle_t                 ix_subcycle,
+	output logic                      ix_privileged_op_fault);
 
 	vector_t vector_result;
+	logic is_eret;
+	logic privileged_op_fault;
 
 	genvar lane;
 	generate
@@ -238,6 +242,9 @@ module int_execute_stage(
 		end
 	endgenerate
 	
+	assign is_eret = of_instruction.is_branch && of_instruction.branch_type == BRANCH_ERET;
+	assign privileged_op_fault = is_eret && !cr_supervisor_en[of_thread_idx];
+	
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
@@ -249,6 +256,7 @@ module int_execute_stage(
 			ix_instruction_valid <= '0;
 			ix_is_eret <= '0;
 			ix_mask_value <= '0;
+			ix_privileged_op_fault <= '0;
 			ix_result <= '0;
 			ix_rollback_en <= '0;
 			ix_rollback_pc <= '0;
@@ -280,10 +288,14 @@ module int_execute_stage(
 						ix_rollback_pc <= of_instruction.pc + 4 + of_instruction.immediate_value;
 				endcase 
 
-				ix_is_eret <= of_instruction.is_branch && of_instruction.branch_type == BRANCH_ERET;
+				ix_is_eret <= is_eret && !privileged_op_fault;
+				ix_privileged_op_fault <= privileged_op_fault;
 
-				if (of_instruction.is_branch && !of_instruction.illegal
-					&& !of_instruction.ifetch_fault)
+				if (of_instruction.is_branch 
+					&& !of_instruction.illegal
+					&& !of_instruction.ifetch_alignment_fault
+					&& !of_instruction.ifetch_supervisor_fault
+					&& !privileged_op_fault)
 				begin
 					unique case (of_instruction.branch_type)
 						BRANCH_ALL:            ix_rollback_en <= of_operand1[0][15:0] == 16'hffff;

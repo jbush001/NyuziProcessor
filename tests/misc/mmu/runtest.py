@@ -128,6 +128,26 @@ def test_write_protect_emulator(name):
 	result = test_harness.run_emulator()
 	test_harness.check_result('write_protect.c', result)
 
+def test_data_supervisor_verilator(name):
+	test_harness.compile_test(['data_supervisor.c'])
+	result = test_harness.run_verilator()
+	test_harness.check_result('data_supervisor.c', result)
+	
+def test_data_supervisor_emulator(name):
+	test_harness.compile_test(['data_supervisor.c'])
+	result = test_harness.run_emulator()
+	test_harness.check_result('data_supervisor.c', result)
+
+def test_instruction_supervisor_verilator(name):
+	test_harness.compile_test(['instruction_supervisor.c'])
+	result = test_harness.run_verilator()
+	test_harness.check_result('instruction_supervisor.c', result)
+	
+def test_instruction_supervisor_emulator(name):
+	test_harness.compile_test(['instruction_supervisor.c'])
+	result = test_harness.run_emulator()
+	test_harness.check_result('instruction_supervisor.c', result)
+
 test_harness.register_tests(test_alias_verilator, ['alias_verilator'])
 test_harness.register_tests(test_alias_emulator, ['alias_emulator'])
 test_harness.register_tests(test_alias_verilator, ['flush_tlb_miss_verilator'])
@@ -142,5 +162,9 @@ test_harness.register_tests(test_duplicate_entry_verilator, ['duplicate_entry_ve
 test_harness.register_tests(test_duplicate_entry_emulator, ['duplicate_entry_emulator'])
 test_harness.register_tests(test_write_protect_verilator, ['write_protect_verilator'])
 test_harness.register_tests(test_write_protect_emulator, ['write_protect_emulator'])
+test_harness.register_tests(test_data_supervisor_verilator, ['data_supervisor_verilator'])
+test_harness.register_tests(test_data_supervisor_emulator, ['data_supervisor_emulator'])
+test_harness.register_tests(test_instruction_supervisor_verilator, ['instruction_supervisor_verilator'])
+test_harness.register_tests(test_instruction_supervisor_emulator, ['instruction_supervisor_emulator'])
 
 test_harness.execute_tests()

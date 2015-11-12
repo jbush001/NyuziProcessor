@@ -34,7 +34,7 @@ int main(int argc, const char *argv[])
 {
 	// Set up miss handler
 	__builtin_nyuzi_write_control_reg(7, tlb_miss_handler);
-	__builtin_nyuzi_write_control_reg(4, (1 << 1));	// Turn on MMU in flags
+	__builtin_nyuzi_write_control_reg(4, (1 << 1) | (1 << 2));	// Turn on MMU in flags
 
 	// Test that stores are properly translated. Test harness will read
 	// physical memory. This should be written to 1MB.

@@ -38,6 +38,7 @@ module ifetch_data_stage(
 	input                            ift_tlb_hit,
 	input l1i_tag_t                  ift_tag[`L1D_WAYS],
 	input                            ift_valid[`L1D_WAYS],
+	input                            ift_tlb_supervisor,
 
 	// To ifetch_tag_stage
 	output logic                     ifd_update_lru_en,
@@ -58,6 +59,9 @@ module ifetch_data_stage(
 	output scalar_t                  ifd_cache_miss_paddr,
 	output thread_idx_t              ifd_cache_miss_thread_idx,	// also to ifetch_tag
 
+	// From control registers
+	input logic                      cr_supervisor_en[`THREADS_PER_CORE],
+
 	// To instruction_decode_stage
 	output scalar_t                  ifd_instruction,
 	output logic                     ifd_instruction_valid,
@@ -65,6 +69,7 @@ module ifetch_data_stage(
 	output thread_idx_t              ifd_thread_idx,
 	output logic                     ifd_alignment_fault,
 	output logic                     ifd_tlb_miss,
+	output logic                     ifd_supervisor_fault,
                                     
 	// From writeback_stage         
 	input                            wb_rollback_en,
@@ -160,6 +165,7 @@ module ifetch_data_stage(
 			ifd_alignment_fault <= '0;
 			ifd_instruction_valid <= '0;
 			ifd_pc <= '0;
+			ifd_supervisor_fault <= '0;
 			ifd_thread_idx <= '0;
 			ifd_tlb_miss <= '0;
 			// End of automatics
@@ -174,6 +180,8 @@ module ifetch_data_stage(
 				&& cache_hit && ift_tlb_hit && !alignment_fault;
 			ifd_alignment_fault <= ift_instruction_requested && !rollback_this_stage
 				&& alignment_fault;
+			ifd_supervisor_fault <= ift_instruction_requested && ift_tlb_supervisor
+				&& !cr_supervisor_en[ift_thread_idx];
 			ifd_tlb_miss <= ift_instruction_requested && !rollback_this_stage
 				&& !ift_tlb_hit;
 			ifd_pc <= ift_pc_vaddr;
