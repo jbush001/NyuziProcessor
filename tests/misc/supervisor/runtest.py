@@ -21,28 +21,31 @@ import subprocess
 sys.path.insert(0, '../..')
 import test_harness
 
-def test_creg_non_supervisor_verilator(name):
-	test_harness.compile_test(['creg_non_supervisor.c'])
-	result = test_harness.run_verilator()
-	test_harness.check_result('creg_non_supervisor.c', result)
+def run_test(name):
+	if name.endswith('_emulator'):
+		basename = name[0:-len('_emulator')]
+		isverilator = False
+	elif name.endswith('_verilator'):
+		basename = name[0:-len('_verilator')]
+		isverilator = True
 	
-def test_creg_non_supervisor_emulator(name):
-	test_harness.compile_test(['creg_non_supervisor.c'])
-	result = test_harness.run_emulator()
-	test_harness.check_result('creg_non_supervisor.c', result)
+	test_harness.compile_test([basename + '.c'])
+	if isverilator:
+		result = test_harness.run_verilator()
+	else:
+		result = test_harness.run_emulator()
+		
+	test_harness.check_result(basename + '.c', result)
 
-def test_eret_non_supervisor_verilator(name):
-	test_harness.compile_test(['eret_non_supervisor.c'])
-	result = test_harness.run_verilator()
-	test_harness.check_result('eret_non_supervisor.c', result)
-	
-def test_eret_non_supervisor_emulator(name):
-	test_harness.compile_test(['eret_non_supervisor.c'])
-	result = test_harness.run_emulator()
-	test_harness.check_result('eret_non_supervisor.c', result)
+tests = [
+	'creg_non_supervisor',
+	'eret_non_supervisor',
+	'dtlb_non_supervisor',
+	'itlb_non_supervisor'
+]
 
-test_harness.register_tests(test_creg_non_supervisor_verilator, ['creg_non_supervisor_verilator'])
-test_harness.register_tests(test_creg_non_supervisor_emulator, ['creg_non_supervisor_emulator'])
-test_harness.register_tests(test_eret_non_supervisor_verilator, ['eret_non_supervisor_verilator'])
-test_harness.register_tests(test_eret_non_supervisor_emulator, ['eret_non_supervisor_emulator'])
+for name in tests:
+	test_harness.register_tests(run_test, [name + '_verilator'])
+	test_harness.register_tests(run_test, [name + '_emulator'])
+
 test_harness.execute_tests()

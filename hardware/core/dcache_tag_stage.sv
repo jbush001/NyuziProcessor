@@ -81,6 +81,7 @@ module dcache_tag_stage
 
 	// From control_registers
 	input                                       cr_mmu_en[`THREADS_PER_CORE],
+	input logic                                 cr_supervisor_en[`THREADS_PER_CORE],
 
 	// To l2_cache_interface
 	output logic                                dt_snoop_valid[`L1D_WAYS],
@@ -119,13 +120,17 @@ module dcache_tag_stage
 	assign request_addr_nxt = of_operand1[scgath_lane] + of_instruction.immediate_value;
 	assign new_tlb_value = of_store_value[0];
 	assign dt_invalidate_tlb_en = is_valid_cache_control
-		&& of_instruction.cache_control_op == CACHE_TLB_INVAL;
+		&& of_instruction.cache_control_op == CACHE_TLB_INVAL
+		&& cr_supervisor_en[of_thread_idx];
 	assign dt_invalidate_tlb_all_en = is_valid_cache_control
-		&& of_instruction.cache_control_op == CACHE_TLB_INVAL_ALL;
+		&& of_instruction.cache_control_op == CACHE_TLB_INVAL_ALL
+		&& cr_supervisor_en[of_thread_idx];
 	assign update_dtlb_en = is_valid_cache_control
-		&& of_instruction.cache_control_op == CACHE_DTLB_INSERT;
+		&& of_instruction.cache_control_op == CACHE_DTLB_INSERT
+		&& cr_supervisor_en[of_thread_idx];
 	assign dt_update_itlb_en = is_valid_cache_control
-		&& of_instruction.cache_control_op == CACHE_ITLB_INSERT;
+		&& of_instruction.cache_control_op == CACHE_ITLB_INSERT
+		&& cr_supervisor_en[of_thread_idx];
 	assign dt_update_itlb_supervisor = new_tlb_value.supervisor;
 	assign tlb_lookup_en = instruction_valid 
 		&& of_instruction.memory_access_type != MEM_CONTROL_REG

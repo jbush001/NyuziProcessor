@@ -152,6 +152,7 @@ module dcache_data_stage(
 	logic cache_control_en;
 	logic[$clog2(`VECTOR_LANES) - 1:0] scgath_lane;
 	logic is_tlb_access;
+	logic illegal_tlb_update;
 
 	// Unlike earlier stages, this commits instruction side effects like stores,
 	// so it needs to check if there is a rollback (which would be for the
@@ -230,7 +231,12 @@ module dcache_data_stage(
 		&& !is_io_address;
 	assign dd_membar_en = cache_control_en
 		&& dt_instruction.cache_control_op == CACHE_MEMBAR;
-		
+	assign illegal_tlb_update = cache_control_en
+		&& (dt_instruction.cache_control_op == CACHE_DTLB_INSERT
+			|| dt_instruction.cache_control_op == CACHE_ITLB_INSERT
+			|| dt_instruction.cache_control_op == CACHE_TLB_INVAL
+			|| dt_instruction.cache_control_op == CACHE_TLB_INVAL_ALL);
+
 	// Control register access
 	assign creg_access_en = dt_instruction_valid 
 		&& !rollback_this_stage
@@ -515,8 +521,8 @@ module dcache_data_stage(
 			dd_alignment_fault <= (dcache_load_en || dcache_store_en) && is_unaligned;
 			dd_supervisor_fault <= dt_tlb_supervisor && !cr_supervisor_en[dt_thread_idx];
 			dd_privilege_op_fault <= !cr_supervisor_en[dt_thread_idx] 
-				&& creg_access_en 
-				&& !dt_instruction.is_load; 
+				&& ((creg_access_en && !dt_instruction.is_load)
+				|| illegal_tlb_update);
 			dd_write_fault <= !dt_tlb_writable && dcache_store_en;
 			dd_tlb_miss <= is_tlb_access && !dt_tlb_hit;
 		end

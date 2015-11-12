@@ -1546,6 +1546,12 @@ static void executeCacheControlInst(Thread *thread, uint32_t instruction)
 			uint32_t *wayPtr;
 			TlbEntry *tlb;
 
+			if (!thread->enableSupervisor)
+			{
+				dispatchFault(thread, 0, FR_PRIVILEGED_OP);
+				return;
+			}
+
 			if (op == CC_DTLB_INSERT)
 			{
 				tlb = thread->core->dtlb;
