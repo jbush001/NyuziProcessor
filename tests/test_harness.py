@@ -324,7 +324,7 @@ def execute_tests():
 				
 		registered_tests = new_test_list
 
-	ALIGN = 30
+	ALIGN = 40
 	failing_tests = []
 	for func, param in registered_tests:
 		print param + (' ' * (ALIGN - len(param))),
