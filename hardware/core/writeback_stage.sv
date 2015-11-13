@@ -290,13 +290,15 @@ module writeback_stage(
 			&& (!ix_instruction_valid || ix_thread_idx == interrupt_thread_idx)
 			&& !fx5_instruction_valid)
 		begin	
-			// Do not flag an interrupt in the following cases:
-			// - In the same cycle as another type of rollback.
-			// - For a long latency (floating point) instruction, because there isn't logic in 
-			//   the thread select stage to invalidate the scoreboard entries.
-			// - For a memory operation, because a device IO read/write may have already 
-			//   occured in the last stage and rolling back here will cause them to happen
-			//   again.
+			// Do not dispatch an interrupt in the following cases:
+			// - In another rollback is occurring this cycle.
+			// - If an instruction from the floating point pipeline is being retired 
+			//   this cycle. There isn't logic in the thread select stage to invalidate
+			//   the scoreboard entries or squash the instructions in the pipeline.
+			// - If an instruction from the memory operation pipeline is being retired
+			//   this cycle. This instruction may have written or read from device IO 
+			//   memory in the last stage and rolling back here will cause them to 
+			//   happen again when the thread is restarted.
 			wb_rollback_en = 1;
 			wb_rollback_thread_idx = interrupt_thread_idx;
 			wb_rollback_pc = cr_fault_handler;	
@@ -321,8 +323,8 @@ module writeback_stage(
 	assign wb_suspend_thread_oh = (dd_suspend_thread || sq_rollback_en || ior_rollback_en) 
 		? thread_oh : thread_bitmap_t'(0);
 
-	// If there are pending stores that have not yet been acknowledged and been updated
-	// to the L1 cache, apply them now.
+	// If there is a pending store for the value that was just read, merge it into
+	// the data returned from the L1 data cache.
 	genvar byte_lane;
 	generate
 		for (byte_lane = 0; byte_lane < `CACHE_LINE_BYTES; byte_lane++)
@@ -336,7 +338,7 @@ module writeback_stage(
 	assign mem_load_lane_idx = ~dd_request_vaddr.offset[2+:$clog2(`CACHE_LINE_WORDS)];
 	assign mem_load_lane = bypassed_read_data[mem_load_lane_idx * 32+:32];
 
-	// Memory load byte aligner.
+	// Byte memory load aligner.
 	always_comb
 	begin
 		case (dd_request_vaddr.offset[1:0])
@@ -348,7 +350,7 @@ module writeback_stage(
 		endcase
 	end
 
-	// Memory load halfword aligner.
+	// Halfword memory load aligner.
 	always_comb
 	begin
 		case (dd_request_vaddr.offset[1])
