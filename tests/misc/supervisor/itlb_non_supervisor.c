@@ -37,6 +37,9 @@ int main(void)
 	switch_to_user_mode();
 
 	asm("itlbinsert %0, %1" : : "r" (0), "r" (0)); // CHECK: FAULT 10 current flags 04 prev flags 00
+
+	// XXX Does not validate that the entry wasn't inserted.
+
 	printf("executed instruction\n");
 }
 

@@ -80,5 +80,9 @@ int main(int argc, const char *argv[])
 	switch_to_user_mode();
 
 	printf("read2 data_addr %08x\n", *data_addr);	// CHECK: FAULT 8 00100000 current flags 06 prev flags 02
+
+	// XXX should also test writing to the page, and check in the fault handler
+	// that the write didn't go through (there could be a bug where it faults
+	// *and* writes to the page)
 }
 

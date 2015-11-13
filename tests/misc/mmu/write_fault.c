@@ -20,7 +20,8 @@
 #define PAGE_SIZE 0x1000
 #define TLB_WRITE_ENABLE 2
 
-unsigned int *data_addr = (unsigned int*) 0x100000;
+volatile unsigned int *data_addr = (unsigned int*) 0x100000;
+volatile unsigned int *data_addr2 = (unsigned int*) 0x101000;
 
 void add_itlb_mapping(unsigned int va, unsigned int pa)
 {
@@ -36,6 +37,7 @@ void fault_handler()
 {
 	printf("FAULT %d %08x\n", __builtin_nyuzi_read_control_reg(3),
 		__builtin_nyuzi_read_control_reg(5));
+	printf("data value = %08x\n", data_addr[PAGE_SIZE / sizeof(int)]);
 	exit(0);
 }
 
@@ -57,23 +59,35 @@ int main(int argc, const char *argv[])
 	// Writable data
 	add_dtlb_mapping(data_addr, data_addr, 1);
 
-	// Read only data
-	add_dtlb_mapping(data_addr + (PAGE_SIZE / sizeof(int)), data_addr + (PAGE_SIZE / sizeof(int)), 
-		0);
+	// Map and initialize value at data_addr2
+	add_dtlb_mapping(data_addr2, data_addr2, 1);
+	*data_addr2 = 0x12345678; 
 
 	// I/O address
 	add_dtlb_mapping(0xffff0000, 0xffff0000, 1);
 
+	// Make data_addr2 value non-writable. 
+	// XXX If I do this immediately after writing to *data_addr2, it fails.
+	// I believe this is because of write bypassing in the TLB.
+	add_dtlb_mapping(data_addr2, data_addr2, 0);
+
 	// Enable MMU in flags register
 	__builtin_nyuzi_write_control_reg(1, fault_handler);
+	__builtin_nyuzi_write_control_reg(7, fault_handler);
 	__builtin_nyuzi_write_control_reg(4, (1 << 1) | (1 << 2));
 
 	*data_addr = 0x1f6818aa;
 	printf("data value %08x\n", *data_addr); // CHECK: data value 1f6818aa
 
 	// Attempt to write to write protected page will fail.
-	data_addr[PAGE_SIZE / sizeof(int)] = 0x1f6818aa; // CHECK: FAULT 7 00101000
+	*data_addr2 = 0xdeadbeef; 
 
-	printf("FAIL: read value %08x\n", *data_addr);
+	// Ensure two things:
+	// - that a fault is raised
+	// - that the value isn't actually written
+	// CHECK: FAULT 7 00101000
+	// CHECK: data value = 12345678
+
+	printf("Did not fault\n", data_addr[PAGE_SIZE / sizeof(int)]);
 	return 0;
 }

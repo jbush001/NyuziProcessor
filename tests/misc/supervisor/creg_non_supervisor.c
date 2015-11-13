@@ -20,6 +20,7 @@ void fault_handler()
 		__builtin_nyuzi_read_control_reg(3),
 		__builtin_nyuzi_read_control_reg(4),
 		__builtin_nyuzi_read_control_reg(8));
+	printf("scratchpad = %08x\n", __builtin_nyuzi_read_control_reg(11));
 	exit(0);
 }
 
@@ -33,9 +34,19 @@ int main(int argc, const char *argv[])
 {
 	__builtin_nyuzi_write_control_reg(1, fault_handler);
 
+	// Initialize scratchpad0
+	__builtin_nyuzi_write_control_reg(11, 0x12345678);
+
 	// Switch to user mode, but leave MMU active
 	switch_to_user_mode();
 
-	__builtin_nyuzi_write_control_reg(1, 0); // CHECK: FAULT 10 current flags 04 prev flags 00
+	// Check two things:
+	// - That we raise a fault
+	// - That the control register isn't updated. Since the fault check and update 
+	//   use different logic, it's possible to update the register *and* fault,
+	//   which is still a security hole.
+	__builtin_nyuzi_write_control_reg(11, 0xdeadbeef); 
+	// CHECK: FAULT 10 current flags 04 prev flags 00
+	// CHECK: scratchpad = 12345678
 }
 
