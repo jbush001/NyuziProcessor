@@ -39,6 +39,13 @@ int main(void)
 	// Validate enabling MMU by setting saved flags and calling eret
 	enable_mmu();
 
+	// Make sure MMU is actually enabled
+	if (__builtin_nyuzi_read_control_reg(4) != 6)
+	{
+		printf("FAIL 1: MMU not enabled\n");
+		return 1;
+	}
+
 	// Fill memory region
 	rand_seed = 0x2e48fa04;
 	for (offset = 0; offset < FILL_SIZE / sizeof(int); offset += PAGE_SIZE 
@@ -60,6 +67,13 @@ int main(void)
 		}
 		
 		rand_seed = rand_seed * 1664525 + 1013904223;
+	}
+
+	// Make sure MMU is still enabled
+	if (__builtin_nyuzi_read_control_reg(4) != 6)
+	{
+		printf("FAIL 2: MMU not enabled\n");
+		return 1;
 	}
 	
 	printf("PASS\n");
