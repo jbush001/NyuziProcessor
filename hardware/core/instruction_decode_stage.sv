@@ -115,6 +115,7 @@ module instruction_decode_stage(
 	memory_op_t memory_access_type;
 	register_idx_t scalar_sel2;
 	logic is_legal_instruction;
+	logic is_syscall;
 
 	// I originally tried to structure the instruction set so that this could
 	// determine the format of the instruction from the first 7 bits. Those 
@@ -195,16 +196,18 @@ module instruction_decode_stage(
 	assign is_fmt_m = ifd_instruction[31:30] == 2'b10;
 	assign is_getlane = (is_fmt_r || is_fmt_i) && alu_op == OP_GETLANE;
 	
+	assign is_syscall = is_fmt_r && ifd_instruction[25:20] == 6'b111111;
 	assign is_nop = ifd_instruction == `INSTRUCTION_NOP;
 	assign is_legal_instruction = !dlut_out.illegal && !ifd_alignment_fault && !ifd_tlb_miss
 		&& !ifd_supervisor_fault;
 	
+	assign decoded_instr_nxt.is_syscall = is_syscall;
 	assign decoded_instr_nxt.ifetch_supervisor_fault = ifd_supervisor_fault;
 	assign decoded_instr_nxt.illegal = dlut_out.illegal;
 	assign decoded_instr_nxt.ifetch_alignment_fault = ifd_alignment_fault;
 	assign decoded_instr_nxt.tlb_miss = ifd_tlb_miss;
 	assign decoded_instr_nxt.has_scalar1 = dlut_out.scalar1_loc != SCLR1_NONE && !is_nop
-		&& is_legal_instruction;
+		&& is_legal_instruction && !is_syscall;
 	always_comb 
 	begin
 		case (dlut_out.scalar1_loc)
@@ -214,7 +217,7 @@ module instruction_decode_stage(
 	end
 
 	assign decoded_instr_nxt.has_scalar2 = dlut_out.scalar2_loc != SCLR2_NONE && !is_nop
-		&& is_legal_instruction;
+		&& is_legal_instruction && !is_syscall;
 
 	// XXX: assigning this directly to decoded_instr_nxt.scalar_sel2 causes Verilator issues when
 	// other blocks read it. Added another signal to work around this.
@@ -230,9 +233,11 @@ module instruction_decode_stage(
 	end
 	
 	assign decoded_instr_nxt.scalar_sel2 = scalar_sel2;
-	assign decoded_instr_nxt.has_vector1 = dlut_out.has_vector1 && !is_nop && is_legal_instruction;
+	assign decoded_instr_nxt.has_vector1 = dlut_out.has_vector1 && !is_nop && is_legal_instruction
+		&& !is_syscall;
 	assign decoded_instr_nxt.vector_sel1 = ifd_instruction[4:0];
-	assign decoded_instr_nxt.has_vector2 = dlut_out.has_vector2 && !is_nop && is_legal_instruction;
+	assign decoded_instr_nxt.has_vector2 = dlut_out.has_vector2 && !is_nop && is_legal_instruction
+		&& !is_syscall;
 	always_comb
 	begin
 		if (dlut_out.vector_sel2_is_9_5)
@@ -241,7 +246,8 @@ module instruction_decode_stage(
 			decoded_instr_nxt.vector_sel2 = ifd_instruction[19:15];
 	end
 
-	assign decoded_instr_nxt.has_dest = dlut_out.has_dest && !is_nop && is_legal_instruction;
+	assign decoded_instr_nxt.has_dest = dlut_out.has_dest && !is_nop && is_legal_instruction
+		&& !is_syscall;
 	
 	assign decoded_instr_nxt.dest_is_vector = dlut_out.dest_is_vector && !is_compare
 		&& !is_getlane;
@@ -295,7 +301,8 @@ module instruction_decode_stage(
 	
 	always_comb
 	begin
-		if (dlut_out.illegal || ifd_alignment_fault || ifd_tlb_miss || ifd_supervisor_fault)
+		if (dlut_out.illegal || ifd_alignment_fault || ifd_tlb_miss || ifd_supervisor_fault
+			|| is_syscall)
 			decoded_instr_nxt.pipeline_sel = PIPE_SCYCLE_ARITH;
 		else if (is_fmt_r || is_fmt_i)
 		begin

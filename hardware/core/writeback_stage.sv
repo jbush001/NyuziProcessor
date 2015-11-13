@@ -181,7 +181,7 @@ module writeback_stage(
 		wb_fault_subcycle = dd_subcycle;
 
 		if (ix_instruction_valid && (ix_instruction.illegal || ix_instruction.ifetch_alignment_fault
-			|| ix_instruction.tlb_miss || ix_privileged_op_fault))
+			|| ix_instruction.tlb_miss || ix_privileged_op_fault || ix_instruction.is_syscall))
 		begin
 			// Fault from integer stage, which would be an instruction fetch fault
 			// that bubbled through this stage or eret in non-privileged mode.
@@ -202,6 +202,8 @@ module writeback_stage(
 				wb_fault_reason = FR_IFETCH_SUPERVISOR;
 			else if (ix_privileged_op_fault)
 				wb_fault_reason = FR_PRIVILEGED_OP;
+			else if (ix_instruction.is_syscall)
+				wb_fault_reason = FR_SYSCALL;
 			else
 				wb_fault_reason = FR_ILLEGAL_INSTRUCTION;
 

@@ -165,6 +165,7 @@ typedef struct packed {
 	logic ifetch_alignment_fault;
 	logic ifetch_supervisor_fault;
 	logic tlb_miss;
+	logic is_syscall;
 	logic has_scalar1;
 	register_idx_t scalar_sel1;
 	logic has_scalar2;
@@ -206,7 +207,8 @@ typedef enum logic[3:0] {
 	FR_ILLEGAL_WRITE,
 	FR_DATA_SUPERVISOR,
 	FR_IFETCH_SUPERVISOR,
-	FR_PRIVILEGED_OP
+	FR_PRIVILEGED_OP,
+	FR_SYSCALL
 } fault_reason_t;
 
 `define IEEE754_B32_EXP_WIDTH 8

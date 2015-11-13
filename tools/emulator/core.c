@@ -740,6 +740,12 @@ static void executeRegisterArithInst(Thread *thread, uint32_t instruction)
 	uint32_t maskreg = extractUnsignedBits(instruction, 10, 5);
 	int lane;
 
+	if (op == OP_SYSCALL)
+	{
+		dispatchFault(thread, 0, FR_SYSCALL);
+		return;
+	}
+
 	TALLY_INSTRUCTION(reg_arith_inst);
 	if (op == OP_GETLANE)
 	{

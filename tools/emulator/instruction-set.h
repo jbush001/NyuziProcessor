@@ -65,7 +65,8 @@ enum _ArithmeticOp
 	OP_CMPLT_F = 46,
 	OP_CMPLE_F = 47,
 	OP_CMPEQ_F = 48,
-	OP_CMPNE_F = 49	
+	OP_CMPNE_F = 49,
+	OP_SYSCALL = 63
 };
 typedef enum _ArithmeticOp ArithmeticOp;
 
@@ -146,7 +147,8 @@ enum _FaultReason
 	FR_ILLEGAL_WRITE,
 	FR_DATA_SUPERVISOR,
 	FR_IFETCH_SUPERVISOR,
-	FR_PRIVILEGED_OP
+	FR_PRIVILEGED_OP,
+	FR_SYSCALL
 };
 typedef enum _FaultReason FaultReason;
 
