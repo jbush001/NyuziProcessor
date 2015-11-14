@@ -112,7 +112,7 @@ module ifetch_tag_stage
 	// If an instruction is updating the TLB, can't access it to translate the next
 	// address, so skip instruction fetch this cycle.
 	assign cache_fetch_en = |can_fetch_thread_bitmap && !dt_update_itlb_en
-		&& !dt_invalidate_tlb_en;
+		&& !dt_invalidate_tlb_en && !dt_invalidate_tlb_all_en;
 
 	arbiter #(.NUM_REQUESTERS(`THREADS_PER_CORE)) arbiter_thread_select(
 		.request(can_fetch_thread_bitmap),
