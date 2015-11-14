@@ -33,7 +33,6 @@ char *tmp2 = (char*) 0x900000;
 
 int main(void)
 {
-	// Set up miss handler
 	__builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, tlb_miss_handler);
 	__builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 

@@ -153,6 +153,7 @@ module dcache_data_stage(
 	logic[$clog2(`VECTOR_LANES) - 1:0] scgath_lane;
 	logic is_tlb_access;
 	logic is_tlb_update;
+	logic supervisor_fault;
 
 	// Unlike earlier stages, this commits instruction side effects like stores,
 	// so it needs to check if there is a rollback (which would be for the
@@ -185,6 +186,7 @@ module dcache_data_stage(
 	end
 
 	// L1 data cache or store buffer access
+	assign supervisor_fault = dt_tlb_supervisor && !cr_supervisor_en[dt_thread_idx];
 	assign dcache_access_en = dt_instruction_valid 
 		&& !rollback_this_stage
 		&& dt_instruction.is_memory_access
@@ -193,7 +195,7 @@ module dcache_data_stage(
 		&& !is_io_address;
 	assign dcache_load_en = dcache_access_en && dt_instruction.is_load;
 	assign dcache_store_en = dcache_access_en && !dt_instruction.is_load
-		&& dd_store_mask != 0;	// Skip if store mask is zero
+		&& dd_store_mask != 0;	
 	assign dcache_request_addr = { dt_request_paddr[31:`CACHE_LINE_OFFSET_WIDTH], 
 		{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
 	assign cache_lane_idx = dt_request_paddr.offset[`CACHE_LINE_OFFSET_WIDTH - 1:2];
@@ -208,8 +210,10 @@ module dcache_data_stage(
 		&& dt_instruction.is_memory_access 
 		&& dt_instruction.memory_access_type != MEM_CONTROL_REG 
 		&& is_io_address;
-	assign dd_io_write_en = io_access_en && !dt_instruction.is_load;
-	assign dd_io_read_en = io_access_en && dt_instruction.is_load;
+	assign dd_io_write_en = io_access_en && !dt_instruction.is_load
+		&& !supervisor_fault;
+	assign dd_io_read_en = io_access_en && dt_instruction.is_load
+		&& !supervisor_fault;
 	assign dd_io_write_value = dt_store_value[0];
 	assign dd_io_thread_idx = dt_thread_idx;
 	assign dd_io_addr = { 16'd0, dt_request_paddr[15:0] };
@@ -431,7 +435,7 @@ module dcache_data_stage(
 	assign dd_cache_miss_thread_idx = dt_thread_idx;
 	assign dd_cache_miss_synchronized = is_synchronized;
 	assign dd_store_en = dcache_store_en && !is_unaligned && dt_tlb_hit
-		&& dt_tlb_writable;
+		&& dt_tlb_writable && !supervisor_fault;
 	assign dd_store_thread_idx = dt_thread_idx;
 
 	assign dd_update_lru_en = cache_hit && dcache_access_en && !is_unaligned;
@@ -519,7 +523,7 @@ module dcache_data_stage(
 				&& !cache_near_miss
 				&& !is_unaligned;
 			dd_alignment_fault <= (dcache_load_en || dcache_store_en) && is_unaligned;
-			dd_supervisor_fault <= dt_tlb_supervisor && !cr_supervisor_en[dt_thread_idx];
+			dd_supervisor_fault <= supervisor_fault;
 			dd_privilege_op_fault <= !cr_supervisor_en[dt_thread_idx] 
 				&& ((creg_access_en && !dt_instruction.is_load)
 				|| is_tlb_update);

@@ -14,22 +14,26 @@
 // limitations under the License.
 // 
 
-#include <stdio.h>
-#include <unistd.h>
 #include "mmu-test-common.h"
 
-// Virtual addresses are chosen to not alias with code or other pages
-#define VADDR1 0x10a000
-#define PADDR1 0x100000
-#define PADDR2 0x101000
+// Test that reading from a supervisor page from user mode faults.
 
-void fault_handler(void)
+volatile unsigned int *data_addr = (unsigned int*) 0x100000;
+
+void fault_handler()
 {
-	printf("FAULT %d addr %08x pc %08x\n", 
+	printf("FAULT %d %08x current flags %02x prev flags %02x\n", 
 		__builtin_nyuzi_read_control_reg(CR_FAULT_REASON),
 		__builtin_nyuzi_read_control_reg(CR_FAULT_ADDRESS),
-		__builtin_nyuzi_read_control_reg(CR_FAULT_PC));
+		__builtin_nyuzi_read_control_reg(CR_FLAGS),
+		__builtin_nyuzi_read_control_reg(CR_SAVED_FLAGS));
 	exit(0);
+}
+
+// Make this a call to flush the pipeline
+void switch_to_user_mode() __attribute__((noinline))
+{
+	__builtin_nyuzi_write_control_reg(CR_FLAGS, (1 << 1));
 }
 
 int main(void)
@@ -41,35 +45,26 @@ int main(void)
 	// Map code & data
 	for (va = 0; va < 0x10000; va += PAGE_SIZE)
 	{
-		add_itlb_mapping(va, va | TLB_GLOBAL);
+		add_itlb_mapping(va, va);
 		add_dtlb_mapping(va, va | TLB_WRITABLE | TLB_GLOBAL);
 	}
 
-	add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE | TLB_GLOBAL);
-	add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE | TLB_GLOBAL);
+	add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE);
+	add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE);
 
-	// Map a private page into address space 1
-	set_asid(1);
-	add_dtlb_mapping(VADDR1, PADDR1);
-	*((unsigned int*) PADDR1) = 0xdeadbeef;
+	// Data region marked supervisor
+	add_dtlb_mapping(data_addr, ((unsigned int) data_addr) | TLB_SUPERVISOR | TLB_WRITABLE);
 
-	// Map a private page into address space 2
-	set_asid(2);
-	add_dtlb_mapping(VADDR1, PADDR2);
-	*((unsigned int*) PADDR2) = 0xabcdefed;
-
-	// Enable MMU in flags register
 	__builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);
-	__builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, fault_handler);
 	__builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
-	
-	// Read value from first address space
-	set_asid(1);
-	printf("A1 %08x\n", *((unsigned int*) VADDR1)); // CHECK: A1 deadbeef
-	
-	// Read value from the second address space
-	set_asid(2);
-	printf("A2 %08x\n", *((unsigned int*) VADDR1)); // CHECK: A2 abcdefed
 
-	return 0;
+	// We are currently in supervisor mode. write then read to the page
+	*data_addr = 0x12345678;
+	printf("read1 data_addr %08x\n", *data_addr);	// CHECK: read1 data_addr 12345678
+
+	// Switch to user mode, but leave MMU active
+	switch_to_user_mode();
+
+	printf("read2 data_addr %08x\n", *data_addr);	// CHECK: FAULT 8 00100000 current flags 06 prev flags 02
 }
+

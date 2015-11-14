@@ -16,7 +16,7 @@
 
 #include "mmu-test-common.h"
 
-// Test that supervisor bits work properly for DTLB entries
+// Test that writing to a supervisor page from user mode faults.
 
 volatile unsigned int *data_addr = (unsigned int*) 0x100000;
 
@@ -27,6 +27,7 @@ void fault_handler()
 		__builtin_nyuzi_read_control_reg(CR_FAULT_ADDRESS),
 		__builtin_nyuzi_read_control_reg(CR_FLAGS),
 		__builtin_nyuzi_read_control_reg(CR_SAVED_FLAGS));
+	printf("data_addr = %08x", *data_addr);
 	exit(0);
 }
 
@@ -65,10 +66,10 @@ int main(void)
 	// Switch to user mode, but leave MMU active
 	switch_to_user_mode();
 
-	printf("read2 data_addr %08x\n", *data_addr);	// CHECK: FAULT 8 00100000 current flags 06 prev flags 02
-
-	// XXX should also test writing to the page, and check in the fault handler
-	// that the write didn't go through (there could be a bug where it faults
-	// *and* writes to the page)
+	// This write will fail. Ensure this raises a fault and that the memory
+	// write failed.
+	*data_addr = 0xdeadbeef; 
+	// CHECK: FAULT 8 00100000 current flags 06 prev flags 02
+	// CHECK: data_addr = 12345678
 }
 
