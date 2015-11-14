@@ -80,7 +80,8 @@ typedef enum logic[5:0] {
 	OP_CMPGE_F		= 6'b101101,	// Floating point greater or equal
 	OP_CMPLE_F		= 6'b101111,	// Floating point less than or equal
 	OP_CMPEQ_F      = 6'b110000,	// Floating point equal
-	OP_CMPNE_F      = 6'b110001		// Floating point not-equal
+	OP_CMPNE_F      = 6'b110001,    // Floating point not-equal
+	OP_SYSCALL      = 6'b111111
 } alu_op_t;
 
 typedef enum logic[3:0] {

@@ -196,7 +196,7 @@ module instruction_decode_stage(
 	assign is_fmt_m = ifd_instruction[31:30] == 2'b10;
 	assign is_getlane = (is_fmt_r || is_fmt_i) && alu_op == OP_GETLANE;
 	
-	assign is_syscall = is_fmt_r && ifd_instruction[25:20] == 6'b111111;
+	assign is_syscall = is_fmt_r && ifd_instruction[25:20] == OP_SYSCALL;
 	assign is_nop = ifd_instruction == `INSTRUCTION_NOP;
 	assign is_legal_instruction = !dlut_out.illegal && !ifd_alignment_fault && !ifd_tlb_miss
 		&& !ifd_supervisor_fault;
