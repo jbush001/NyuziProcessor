@@ -15,9 +15,9 @@
 // 
 
 #include <stdio.h>
+#include "mmu-test-common.h"
 
 #define FILL_SIZE 0x80000
-#define PAGE_SIZE 0x1000
 
 extern void tlb_miss_handler();
 extern void enable_mmu();
@@ -34,13 +34,13 @@ int main(void)
 	int *mem_region = (int*) 0x400000;
 
 	// Enable MMU in flags register
-	__builtin_nyuzi_write_control_reg(7, tlb_miss_handler);
+	__builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, tlb_miss_handler);
 
 	// Validate enabling MMU by setting saved flags and calling eret
 	enable_mmu();
 
 	// Make sure MMU is actually enabled
-	if (__builtin_nyuzi_read_control_reg(4) != 6)
+	if (__builtin_nyuzi_read_control_reg(CR_FLAGS) != (FLAG_MMU_EN | FLAG_SUPERVISOR_EN))
 	{
 		printf("FAIL 1: MMU not enabled\n");
 		return 1;
@@ -70,7 +70,7 @@ int main(void)
 	}
 
 	// Make sure MMU is still enabled
-	if (__builtin_nyuzi_read_control_reg(4) != 6)
+	if (__builtin_nyuzi_read_control_reg(CR_FLAGS) != (FLAG_MMU_EN | FLAG_SUPERVISOR_EN))
 	{
 		printf("FAIL 2: MMU not enabled\n");
 		return 1;

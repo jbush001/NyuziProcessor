@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "mmu-test-common.h"
 
 //
 // This creates two virtual mappings to the same physical address
@@ -30,11 +31,11 @@ extern void tlb_miss_handler();
 char *tmp1 = (char*) 0x500000;
 char *tmp2 = (char*) 0x900000;
 
-int main(int argc, const char *argv[])
+int main(void)
 {
 	// Set up miss handler
-	__builtin_nyuzi_write_control_reg(7, tlb_miss_handler);
-	__builtin_nyuzi_write_control_reg(4, (1 << 1) | (1 << 2));	// Turn on MMU in flags
+	__builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, tlb_miss_handler);
+	__builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
 	// Test that stores are properly translated. Test harness will read
 	// physical memory. This should be written to 1MB.
@@ -43,7 +44,7 @@ int main(int argc, const char *argv[])
 	// Test that loads are properly mapped. This should alias to tmp1
 	printf("read %p \"%s\"\n", tmp2, tmp2);
 
-	// Make sure to flush first address so it will be in memory dump.
+	// Flush first address so it will be in memory dump.
 	asm("dflush %0" : : "s" (tmp1));
 
 	return 0;

@@ -16,9 +16,8 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "mmu-test-common.h"
 
-#define PAGE_SIZE 0x1000
-#define TLB_WRITE_ENABLE 2
 #define DATA_BASE 0x100000
 
 //
@@ -26,47 +25,32 @@
 // a mapping.
 //
 
-void add_itlb_mapping(unsigned int va, unsigned int pa)
-{
-	asm("itlbinsert %0, %1" : : "r" (va), "r" (pa));
-}
-
-void add_dtlb_mapping(unsigned int va, unsigned int pa)
-{
-	asm("dtlbinsert %0, %1" : : "r" (va), "r" (pa | TLB_WRITE_ENABLE));
-}
-
 void tlb_miss_handler()
 {
-	printf("FAULT %d %08x\n", __builtin_nyuzi_read_control_reg(3),
-		__builtin_nyuzi_read_control_reg(5));
+	printf("FAULT %d %08x\n", __builtin_nyuzi_read_control_reg(CR_FAULT_REASON),
+		__builtin_nyuzi_read_control_reg(CR_FAULT_ADDRESS));
 	exit(0);
 }
 
-int main(int argc, const char *argv[])
+int main(void)
 {
-	int i;
-	unsigned int stack_addr = (unsigned int) &i & ~(PAGE_SIZE - 1);
+	unsigned int va;
+	unsigned int stack_addr = (unsigned int) &va & ~(PAGE_SIZE - 1);
 
 	// Map code & data
-	for (i = 0; i < 8; i++)
+	for (va = 0; va < 0x10000; va += PAGE_SIZE)
 	{
-		add_itlb_mapping(i * PAGE_SIZE, i * PAGE_SIZE);
-		add_dtlb_mapping(i * PAGE_SIZE, i * PAGE_SIZE);
+		add_itlb_mapping(va, va);
+		add_dtlb_mapping(va, va | TLB_WRITABLE);
 	}
 
-	// Stack
-	add_dtlb_mapping(stack_addr, stack_addr);
-
-	// Data
-	add_dtlb_mapping(DATA_BASE, DATA_BASE);
-
-	// I/O registers
-	add_dtlb_mapping(0xffff0000, 0xffff0000);
+	add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE);
+	add_dtlb_mapping(DATA_BASE, DATA_BASE | TLB_WRITABLE);
+	add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE);
 
 	// Set up miss handler
-	__builtin_nyuzi_write_control_reg(7, tlb_miss_handler);
-	__builtin_nyuzi_write_control_reg(4, (1 << 1) | (1 << 2));	// Turn on MMU in flags
+	__builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, tlb_miss_handler);
+	__builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
 	// This dinvalidate should already be present (invalidate will remove the
 	// cache line, but not the TLB mapping)

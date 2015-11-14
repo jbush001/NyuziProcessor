@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+#include "mmu-test-common.h"
+
 //
 // Ensure we are properly translating I/O addresses, specifically that
 // we are using the physical address and not the virtual address to determine
@@ -21,19 +23,6 @@
 // Map the I/O range at 1MB and the physical address 1MB into the virtual
 // range 0xffff0000 (where I/O is physically located).  
 //
-
-#define PAGE_SIZE 0x1000
-#define TLB_WRITE_ENABLE 2
-
-void add_itlb_mapping(unsigned int va, unsigned int pa)
-{
-	asm("itlbinsert %0, %1" : : "r" (va), "r" (pa));
-}
-
-void add_dtlb_mapping(unsigned int va, unsigned int pa)
-{
-	asm("dtlbinsert %0, %1" : : "r" (va), "r" (pa | TLB_WRITE_ENABLE));
-}
 
 void printmsg(const char *value)
 {
@@ -45,34 +34,33 @@ void printmsg(const char *value)
 
 int main(void)
 {
-	int i;
-	unsigned int stack_addr = (unsigned int) &i & ~(PAGE_SIZE - 1);
+	unsigned int va;
+	unsigned int stack_addr = (unsigned int) &va & ~(PAGE_SIZE - 1);
 
 	// Map code & data
-	for (i = 0; i < 8; i++)
+	for (va = 0; va < 0x10000; va += PAGE_SIZE)
 	{
-		add_itlb_mapping(i * PAGE_SIZE, i * PAGE_SIZE);
-		add_dtlb_mapping(i * PAGE_SIZE, i * PAGE_SIZE);
+		add_itlb_mapping(va, va);
+		add_dtlb_mapping(va, va | TLB_WRITABLE);
 	}
 
-	// Stack
 	add_dtlb_mapping(stack_addr, stack_addr);
 
-	// A data region. Map this where the I/O region normally goes
-	add_dtlb_mapping(0xffff0000, 0x100000);
+	// Map data where the I/O region normally goes
+	add_dtlb_mapping(IO_REGION_BASE, 0x100000 | TLB_WRITABLE);
 
-	// I/O region. Put this outside its normal spot.
-	add_dtlb_mapping(0x100000, 0xffff0000);
+	// Map I/O region in different part of address space.
+	add_dtlb_mapping(0x100000, IO_REGION_BASE | TLB_WRITABLE);
 
 	// Enable MMU in flags register
-	__builtin_nyuzi_write_control_reg(4, (1 << 1) | (1 << 2));
+	__builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
 	// Print a message
 	printmsg("jabberwocky");
 
 	// Copy into memory
-	memcpy(0xffff0000, "galumphing", 10);
-	asm("dflush %0" : : "s" (0xffff0000));
+	memcpy(IO_REGION_BASE, "galumphing", 10);
+	asm("dflush %0" : : "s" (IO_REGION_BASE));
 	
 	// Since I/O is remapped, need to halt using new address
 	*((volatile unsigned int*) 0x100064) = 1; 
