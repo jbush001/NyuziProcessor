@@ -34,7 +34,7 @@ void fault_handler()
 // Make this a call to flush the pipeline
 void switch_to_user_mode() __attribute__((noinline))
 {
-	__builtin_nyuzi_write_control_reg(CR_FLAGS, (1 << 1));
+	__builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN);
 }
 
 int main(void)
@@ -54,12 +54,13 @@ int main(void)
 	add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_SUPERVISOR | TLB_WRITABLE);
 
 	// Alias mapping that we will use for test (the normal mapped region is used
-	// to halt the test). This is supervisor and non-writab
+	// to halt the test).
 	add_dtlb_mapping(0x100000, IO_REGION_BASE | TLB_SUPERVISOR | TLB_WRITABLE);
 	
 	__builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);
 	__builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
+	// Can write to page in supervisor mode
 	globaltmp = *((volatile unsigned int*) 0x100000);
 	printf("check1\n");
 	// CHECK: check1

@@ -30,7 +30,7 @@ void fault_handler()
 // Make this a call to flush the pipeline
 void switch_to_user_mode() __attribute__((noinline))
 {
-	__builtin_nyuzi_write_control_reg(4, (1 << 1));
+	__builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN);
 }
 
 int main(void)

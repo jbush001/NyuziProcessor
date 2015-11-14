@@ -203,16 +203,25 @@ module dcache_data_stage(
 	assign dd_store_bypass_thread_idx = dt_thread_idx;
 	assign dd_store_addr = dt_request_paddr;
 	assign dd_store_synchronized = is_synchronized;
+	assign dd_store_en = dcache_store_en 
+		&& !is_unaligned
+		&& dt_tlb_writable 
+		&& !supervisor_fault;
+	assign dd_store_thread_idx = dt_thread_idx;
 
 	// Noncached I/O memory access
 	assign io_access_en = dt_instruction_valid 
 		&& !rollback_this_stage
 		&& dt_instruction.is_memory_access 
 		&& dt_instruction.memory_access_type != MEM_CONTROL_REG 
+		&& dt_tlb_hit
 		&& is_io_address;
-	assign dd_io_write_en = io_access_en && !dt_instruction.is_load
-		&& !supervisor_fault;
-	assign dd_io_read_en = io_access_en && dt_instruction.is_load
+	assign dd_io_write_en = io_access_en 
+		&& !dt_instruction.is_load
+		&& !supervisor_fault 
+		&& dt_tlb_writable;
+	assign dd_io_read_en = io_access_en 
+		&& dt_instruction.is_load
 		&& !supervisor_fault;
 	assign dd_io_write_value = dt_store_value[0];
 	assign dd_io_thread_idx = dt_thread_idx;
@@ -434,9 +443,6 @@ module dcache_data_stage(
 	assign dd_cache_miss_addr = dcache_request_addr;
 	assign dd_cache_miss_thread_idx = dt_thread_idx;
 	assign dd_cache_miss_synchronized = is_synchronized;
-	assign dd_store_en = dcache_store_en && !is_unaligned && dt_tlb_hit
-		&& dt_tlb_writable && !supervisor_fault;
-	assign dd_store_thread_idx = dt_thread_idx;
 
 	assign dd_update_lru_en = cache_hit && dcache_access_en && !is_unaligned;
 	assign dd_update_lru_way = way_hit_idx;
@@ -527,7 +533,9 @@ module dcache_data_stage(
 			dd_privilege_op_fault <= !cr_supervisor_en[dt_thread_idx] 
 				&& ((creg_access_en && !dt_instruction.is_load)
 				|| is_tlb_update);
-			dd_write_fault <= !dt_tlb_writable && dcache_store_en;
+			dd_write_fault <= !dt_tlb_writable 
+				&& (dcache_store_en || (io_access_en && !dt_instruction.is_load))
+				&& !supervisor_fault;
 			dd_tlb_miss <= is_tlb_access && !dt_tlb_hit;
 		end
 	end

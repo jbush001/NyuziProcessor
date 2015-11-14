@@ -34,7 +34,7 @@ void fault_handler()
 // Make this a call to flush the pipeline
 void switch_to_user_mode() __attribute__((noinline))
 {
-	__builtin_nyuzi_write_control_reg(CR_FLAGS, (1 << 1));
+	__builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN);
 }
 
 int main(void)
@@ -60,6 +60,7 @@ int main(void)
 	__builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);
 	__builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
+	// Can read from page in supervisor mode
 	globaltmp = *((volatile unsigned int*) 0x100000);
 	printf("check1\n");
 	// CHECK: check1
@@ -67,7 +68,7 @@ int main(void)
 	// Switch to user mode, but leave MMU active
 	switch_to_user_mode();
 
-	printf("value2 = %08x\n", *((volatile unsigned int*) 0x100000));
+	globaltmp = *((volatile unsigned int*) 0x100000);
 	// CHECK: FAULT 8 00100000 current flags 06 prev flags 02
 	
 	// XXX no way to verify that the read wasn't sent to external bus

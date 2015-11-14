@@ -16,9 +16,10 @@
 
 #include "mmu-test-common.h"
 
-// Test that reading from a supervisor page from user mode faults.
+unsigned int globaltmp;
 
-volatile unsigned int *data_addr = (unsigned int*) 0x100000;
+// Test that writing memory mapped I/O from a supervisor page from 
+// user mode faults.
 
 void fault_handler()
 {
@@ -28,12 +29,6 @@ void fault_handler()
 		__builtin_nyuzi_read_control_reg(CR_FLAGS),
 		__builtin_nyuzi_read_control_reg(CR_SAVED_FLAGS));
 	exit(0);
-}
-
-// Make this a call to flush the pipeline
-void switch_to_user_mode() __attribute__((noinline))
-{
-	__builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN);
 }
 
 int main(void)
@@ -50,21 +45,19 @@ int main(void)
 	}
 
 	add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE);
-	add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE);
+	add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_SUPERVISOR | TLB_WRITABLE);
 
-	// Data region marked supervisor
-	add_dtlb_mapping(data_addr, ((unsigned int) data_addr) | TLB_SUPERVISOR | TLB_WRITABLE);
-
+	// Alias mapping that we will use for test (the normal mapped region is used
+	// to halt the test). This is supervisor and non-writab
+	add_dtlb_mapping(0x100000, IO_REGION_BASE);
+	
 	__builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);
 	__builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
+	
 
-	// We are currently in supervisor mode. write then read to the page
-	*data_addr = 0x12345678;
-	printf("read1 data_addr %08x\n", *data_addr);	// CHECK: read1 data_addr 12345678
+	*((volatile unsigned int*) 0x100000) = 0x12;
+	// CHECK: FAULT 7 00100000 current flags 06 prev flags 06
 
-	// Switch to user mode, but leave MMU active
-	switch_to_user_mode();
-
-	printf("read2 data_addr %08x\n", *data_addr);	// CHECK: FAULT 8 00100000 current flags 06 prev flags 02
+	// XXX no way to verify that the write wasn't sent to external bus
 }
 

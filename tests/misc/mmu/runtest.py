@@ -125,5 +125,5 @@ register_generic_test('tlb_invalidate')
 register_generic_test('asid')
 register_generic_test('io_supervisor_fault_read')
 register_generic_test('io_supervisor_fault_write')
-
+register_generic_test('io_write_fault')
 test_harness.execute_tests()

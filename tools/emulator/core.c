@@ -615,18 +615,18 @@ static bool translateAddress(Thread *thread, uint32_t virtualAddress, uint32_t *
 			&& ((setEntries[way].physAddrAndFlags & TLB_GLOBAL) != 0
 			|| setEntries[way].asid == thread->currentAsid))
 		{
-			if (isWrite && (setEntries[way].physAddrAndFlags & TLB_WRITE_ENABLE) == 0)
-			{
-				// Write protected page, raise a fault
-				memoryAccessFault(thread, virtualAddress, FR_ILLEGAL_WRITE, false);
-				return false;
-			}
-			
 			if ((setEntries[way].physAddrAndFlags & TLB_SUPERVISOR) != 0
 				&& !thread->enableSupervisor)
 			{
 				dispatchFault(thread, virtualAddress, dataFetch ? FR_DATA_SUPERVISOR
 					: FR_IFETCH_SUPERVISOR);
+				return false;
+			}
+
+			if (isWrite && (setEntries[way].physAddrAndFlags & TLB_WRITE_ENABLE) == 0)
+			{
+				// Write protected page, raise a fault
+				memoryAccessFault(thread, virtualAddress, FR_ILLEGAL_WRITE, false);
 				return false;
 			}
 			
