@@ -123,9 +123,7 @@ register_generic_test('data_supervisor_fault_write')
 register_generic_test('instruction_supervisor_fault')
 register_generic_test('tlb_invalidate')
 register_generic_test('asid')
-
-# XXX need tests:
-# - writing to a I/O page without writable bit fails
-# - reading & writing to an I/O page marked supervisor fails in user mode
+register_generic_test('io_supervisor_fault_read')
+register_generic_test('io_supervisor_fault_write')
 
 test_harness.execute_tests()
