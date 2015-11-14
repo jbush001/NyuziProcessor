@@ -23,6 +23,7 @@
 
 #define TLB_WRITE_ENABLE 2
 #define TLB_SUPERVISOR 8
+#define TLB_GLOBAL 16
 
 enum _ArithmeticOp
 {
@@ -129,6 +130,7 @@ enum _ControlRegister {
 	CR_CYCLE_COUNT = 6,
 	CR_TLB_MISS_HANDLER = 7,
 	CR_SAVED_FLAGS = 8,
+	CR_CURRENT_ASID = 9,
 	CR_SCRATCHPAD0 = 11,
 	CR_SCRATCHPAD1 = 12,
 	CR_SUBCYCLE = 13

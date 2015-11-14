@@ -53,29 +53,18 @@ int main(int argc, const char *argv[])
 		add_dtlb_mapping(i * PAGE_SIZE, i * PAGE_SIZE, 1);
 	}
 
-	// Stack
 	add_dtlb_mapping(stack_addr, stack_addr, 1);
-
-	// Writable data
-	add_dtlb_mapping(data_addr, data_addr, 1);
-
-	// Map and initialize value at data_addr2
-	add_dtlb_mapping(data_addr2, data_addr2, 1);
+	add_dtlb_mapping(data_addr, data_addr, 1);	// Writable
 	*data_addr2 = 0x12345678; 
-
-	// I/O address
-	add_dtlb_mapping(0xffff0000, 0xffff0000, 1);
-
-	// Make data_addr2 value non-writable. 
-	// XXX If I do this immediately after writing to *data_addr2, it fails.
-	// I believe this is because of write bypassing in the TLB.
-	add_dtlb_mapping(data_addr2, data_addr2, 0);
+	add_dtlb_mapping(data_addr2, data_addr2, 0); // Not writable
+	add_dtlb_mapping(0xffff0000, 0xffff0000, 1); // I/O
 
 	// Enable MMU in flags register
 	__builtin_nyuzi_write_control_reg(1, fault_handler);
 	__builtin_nyuzi_write_control_reg(7, fault_handler);
 	__builtin_nyuzi_write_control_reg(4, (1 << 1) | (1 << 2));
 
+	// This should write successfully
 	*data_addr = 0x1f6818aa;
 	printf("data value %08x\n", *data_addr); // CHECK: data value 1f6818aa
 

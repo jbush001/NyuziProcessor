@@ -61,6 +61,7 @@ struct Thread
 	uint32_t lastFaultAddress;
 	uint32_t scratchpad0;
 	uint32_t scratchpad1;
+	uint32_t currentAsid;
 	bool enableInterrupt;
 	bool enableMmu;
 	bool enableSupervisor;
@@ -75,6 +76,7 @@ struct Thread
 
 struct TlbEntry
 {
+	uint32_t asid;
 	uint32_t virtualAddress;
 	uint32_t physAddrAndFlags;
 };
@@ -609,7 +611,9 @@ static bool translateAddress(Thread *thread, uint32_t virtualAddress, uint32_t *
 	setEntries = (dataFetch ? thread->core->dtlb : thread->core->itlb) + tlbSet * TLB_WAYS;
 	for (way = 0; way < TLB_WAYS; way++)
 	{
-		if (setEntries[way].virtualAddress == ROUND_TO_PAGE(virtualAddress))
+		if (setEntries[way].virtualAddress == ROUND_TO_PAGE(virtualAddress)
+			&& ((setEntries[way].physAddrAndFlags & TLB_GLOBAL) != 0
+			|| setEntries[way].asid == thread->currentAsid))
 		{
 			if (isWrite && (setEntries[way].physAddrAndFlags & TLB_WRITE_ENABLE) == 0)
 			{
@@ -1356,6 +1360,10 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 					| (thread->prevEnableSupervisor ? 4 : 0);
 				break;
 				
+			case CR_CURRENT_ASID:
+				value = thread->currentAsid;
+				break;
+				
 			case CR_FAULT_ADDRESS:
 				value = thread->lastFaultAddress;
 				break;
@@ -1415,6 +1423,10 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 				thread->prevEnableInterrupt = (value & 1) != 0;
 				thread->prevEnableMmu = (value & 2) != 0;
 				thread->prevEnableSupervisor = (value & 4) != 0;
+				break;
+
+			case CR_CURRENT_ASID:
+				thread->currentAsid = value;
 				break;
 
 			case CR_TLB_MISS_HANDLER:
@@ -1585,7 +1597,9 @@ static void executeCacheControlInst(Thread *thread, uint32_t instruction)
 			updatedEntry = false;
 			for (way = 0; way < TLB_WAYS; way++)
 			{
-				if (entry[way].virtualAddress == virtualAddress)
+				if (entry[way].virtualAddress == virtualAddress
+					&& ((entry[way].physAddrAndFlags & TLB_GLOBAL) != 0 
+					|| entry[way].asid == thread->currentAsid))
 				{
 					// Found existing entry, update it
 					entry[way].physAddrAndFlags = physAddrAndFlags;
@@ -1599,6 +1613,7 @@ static void executeCacheControlInst(Thread *thread, uint32_t instruction)
 				// Replace entry with a new one
 				entry[*wayPtr].virtualAddress = virtualAddress;
 				entry[*wayPtr].physAddrAndFlags = physAddrAndFlags;
+				entry[*wayPtr].asid = thread->currentAsid;
 			}
 
 			*wayPtr = (*wayPtr + 1) % TLB_WAYS;

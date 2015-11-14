@@ -68,6 +68,7 @@ module dcache_tag_stage
 	output                                      dt_update_itlb_en,
 	output page_index_t                         dt_update_itlb_ppage_idx,
 	output                                      dt_update_itlb_supervisor,
+	output                                      dt_update_itlb_global,
 	
 	// From l2_cache_interface
 	input                                       l2i_dcache_lru_fill_en,
@@ -82,6 +83,7 @@ module dcache_tag_stage
 	// From control_registers
 	input                                       cr_mmu_en[`THREADS_PER_CORE],
 	input logic                                 cr_supervisor_en[`THREADS_PER_CORE],
+	input [`ASID_WIDTH - 1:0]                   cr_current_asid[`THREADS_PER_CORE],
 
 	// To l2_cache_interface
 	output logic                                dt_snoop_valid[`L1D_WAYS],
@@ -132,6 +134,7 @@ module dcache_tag_stage
 		&& of_instruction.cache_control_op == CACHE_ITLB_INSERT
 		&& cr_supervisor_en[of_thread_idx];
 	assign dt_update_itlb_supervisor = new_tlb_value.supervisor;
+	assign dt_update_itlb_global = new_tlb_value.global;
 	assign tlb_lookup_en = instruction_valid 
 		&& of_instruction.memory_access_type != MEM_CONTROL_REG
 		&& !update_dtlb_en
@@ -220,9 +223,11 @@ module dcache_tag_stage
 		.invalidate_en(dt_invalidate_tlb_en),
 		.invalidate_all_en(dt_invalidate_tlb_all_en),
 		.request_vpage_idx(request_addr_nxt[31-:`PAGE_NUM_BITS]),
+		.request_asid(cr_current_asid[of_thread_idx]),
 		.update_ppage_idx(new_tlb_value.ppage_idx),
 		.update_writable(new_tlb_value.writable),
 		.update_supervisor(new_tlb_value.supervisor),
+		.update_global(new_tlb_value.global),
 		.lookup_ppage_idx(tlb_ppage_idx),
 		.lookup_hit(tlb_hit),
 		.lookup_writable(tlb_writable),

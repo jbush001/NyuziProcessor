@@ -54,6 +54,7 @@ module core
 
 	/*AUTOLOGIC*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
+	logic [`ASID_WIDTH-1:0] cr_current_asid [`THREADS_PER_CORE];// From control_registers of control_registers.v
 	logic		cr_mmu_en [`THREADS_PER_CORE];// From control_registers of control_registers.v
 	logic		cr_supervisor_en [`THREADS_PER_CORE];// From control_registers of control_registers.v
 	logic		dd_alignment_fault;	// From dcache_data_stage of dcache_data_stage.v
@@ -118,6 +119,7 @@ module core
 	logic		dt_tlb_supervisor;	// From dcache_tag_stage of dcache_tag_stage.v
 	logic		dt_tlb_writable;	// From dcache_tag_stage of dcache_tag_stage.v
 	logic		dt_update_itlb_en;	// From dcache_tag_stage of dcache_tag_stage.v
+	logic		dt_update_itlb_global;	// From dcache_tag_stage of dcache_tag_stage.v
 	page_index_t	dt_update_itlb_ppage_idx;// From dcache_tag_stage of dcache_tag_stage.v
 	logic		dt_update_itlb_supervisor;// From dcache_tag_stage of dcache_tag_stage.v
 	logic		dt_valid [`L1D_WAYS];	// From dcache_tag_stage of dcache_tag_stage.v

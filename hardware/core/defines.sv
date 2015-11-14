@@ -154,6 +154,7 @@ typedef enum logic [4:0] {
 	CR_CYCLE_COUNT = 5'd6,
 	CR_TLB_MISS_HANDLER = 5'd7,
 	CR_SAVED_FLAGS = 5'd8,
+	CR_CURRENT_ASID = 5'd9,
 	CR_SCRATCHPAD0 = 5'd11,
 	CR_SCRATCHPAD1 = 5'd12,
 	CR_SUBCYCLE = 5'd13
@@ -226,6 +227,7 @@ typedef struct packed {
 
 `define PAGE_SIZE 'h1000
 `define PAGE_NUM_BITS (32 - $clog2(`PAGE_SIZE))
+`define ASID_WIDTH 8
 `define CACHE_LINE_BYTES (`VECTOR_LANES * 4) // Cache line must currently be same as vector width
 `define CACHE_LINE_BITS (`CACHE_LINE_BYTES * 8)
 `define CACHE_LINE_WORDS (`CACHE_LINE_BYTES / 4)
@@ -238,7 +240,8 @@ typedef logic[`PAGE_NUM_BITS - 1:0] page_index_t;
 
 typedef struct packed {
 	logic[`PAGE_NUM_BITS - 1:0] ppage_idx;
-	logic[32 - (`PAGE_NUM_BITS + 4) - 1:0] unused;
+	logic[32 - (`PAGE_NUM_BITS + 5) - 1:0] unused;
+	logic global;
 	logic supervisor;
 	logic executable;
 	logic writable;

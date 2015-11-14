@@ -30,6 +30,7 @@ module control_registers
 	output scalar_t                         cr_eret_address[`THREADS_PER_CORE],
 	output logic                            cr_mmu_en[`THREADS_PER_CORE],
 	output logic                            cr_supervisor_en[`THREADS_PER_CORE],
+	output logic[`ASID_WIDTH - 1:0]         cr_current_asid[`THREADS_PER_CORE],
 	
 	// From int_execute_stage
 	input                                   ix_is_eret,
@@ -82,6 +83,7 @@ module control_registers
 				cr_eret_subcycle[i] <= 0;
 				cr_supervisor_en[i] <= 1;	// Threads start in supervisor mode
 				supervisor_en_saved[i] <= 1;
+				cr_current_asid[i] <= 0;
 			end
 
 			for (int i = 0; i < `THREADS_PER_CORE * 2; i++)
@@ -159,6 +161,7 @@ module control_registers
 					CR_SCRATCHPAD0:      scratchpad[{1'b0, dt_thread_idx}] <= dd_creg_write_val;
 					CR_SCRATCHPAD1:      scratchpad[{1'b1, dt_thread_idx}] <= dd_creg_write_val;
 					CR_SUBCYCLE:         cr_eret_subcycle[dt_thread_idx] <= subcycle_t'(dd_creg_write_val);
+					CR_CURRENT_ASID:     cr_current_asid[dt_thread_idx] <= dd_creg_write_val[`ASID_WIDTH - 1:0];
 					default:
 						;
 				endcase
@@ -198,6 +201,7 @@ module control_registers
 					CR_SCRATCHPAD0:      cr_creg_read_val <= scratchpad[{1'b0, dt_thread_idx}];
 					CR_SCRATCHPAD1:      cr_creg_read_val <= scratchpad[{1'b1, dt_thread_idx}];
 					CR_SUBCYCLE:         cr_creg_read_val <= scalar_t'(cr_eret_subcycle[dt_thread_idx]);
+					CR_CURRENT_ASID:     cr_creg_read_val <= scalar_t'(cr_current_asid[dt_thread_idx]);
 					default:             cr_creg_read_val <= 32'hffffffff;
 				endcase
 			end

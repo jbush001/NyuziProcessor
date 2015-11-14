@@ -62,6 +62,7 @@ module ifetch_tag_stage
 
 	// From control_registers
 	input                               cr_mmu_en[`THREADS_PER_CORE],
+	input [`ASID_WIDTH - 1:0]           cr_current_asid[`THREADS_PER_CORE],
 
 	// From dcache_tag_stage
 	input                               dt_invalidate_tlb_en,
@@ -69,6 +70,7 @@ module ifetch_tag_stage
 	input page_index_t                  dt_itlb_vpage_idx,
 	input                               dt_update_itlb_en,
 	input                               dt_update_itlb_supervisor,
+	input                               dt_update_itlb_global,
 	input page_index_t                  dt_update_itlb_ppage_idx,
 
 	// From writeback_stage
@@ -197,9 +199,11 @@ module ifetch_tag_stage
 		.update_en(dt_update_itlb_en),
 		.update_writable(1'b0),
 		.update_supervisor(dt_update_itlb_supervisor),
+		.update_global(dt_update_itlb_global),
 		.invalidate_en(dt_invalidate_tlb_en),
 		.invalidate_all_en(dt_invalidate_tlb_all_en),
 		.request_vpage_idx(cache_fetch_en ? pc_to_fetch[31-:`PAGE_NUM_BITS] : dt_itlb_vpage_idx),
+		.request_asid(cr_current_asid[selected_thread_idx]),
 		.update_ppage_idx(dt_update_itlb_ppage_idx),
 		.lookup_ppage_idx(tlb_ppage_idx),
 		.lookup_hit(tlb_hit),

@@ -25,24 +25,26 @@ module tlb
 	#(parameter NUM_ENTRIES = 64,
 	parameter NUM_WAYS = 4)
 
-	(input               clk,
-	input                reset,
+	(input                    clk,
+	input                     reset,
 
 	// Command
-	input                lookup_en,
-	input                update_en,
-	input                invalidate_en,
-	input                invalidate_all_en,
-	input page_index_t   request_vpage_idx,
-	input page_index_t   update_ppage_idx,
-	input                update_writable,
-	input                update_supervisor,
+	input                     lookup_en,
+	input                     update_en,
+	input                     invalidate_en,
+	input                     invalidate_all_en,
+	input page_index_t        request_vpage_idx,
+	input [`ASID_WIDTH - 1:0] request_asid,
+	input page_index_t        update_ppage_idx,
+	input                     update_writable,
+	input                     update_supervisor,
+	input                     update_global,
 
 	// Response
-	output page_index_t  lookup_ppage_idx,
-	output logic         lookup_hit,
-	output logic         lookup_writable,
-	output logic         lookup_supervisor);
+	output page_index_t       lookup_ppage_idx,
+	output logic              lookup_hit,
+	output logic              lookup_writable,
+	output logic              lookup_supervisor);
 
 	localparam NUM_SETS = NUM_ENTRIES / NUM_WAYS;
 	localparam SET_INDEX_WIDTH = $clog2(NUM_SETS);
@@ -64,6 +66,8 @@ module tlb
 	logic[NUM_WAYS - 1:0] next_way_oh;
 	logic update_writable_latched;
 	logic update_supervisor_latched;
+	logic update_global_latched;
+	logic[`ASID_WIDTH - 1:0] request_asid_latched;
 
 	//
 	// Stage 1: lookup
@@ -79,20 +83,30 @@ module tlb
 			page_index_t way_vpage_idx;
 			logic way_valid;
 			logic entry_valid[NUM_SETS];
+			logic[`ASID_WIDTH - 1:0] way_asid;
+			logic way_global;
 		
 			sram_1r1w #(
 				.SIZE(NUM_SETS), 
-				.DATA_WIDTH(`PAGE_NUM_BITS * 2 + 2),
+				.DATA_WIDTH(`PAGE_NUM_BITS * 2 + 3 + `ASID_WIDTH),
 				.READ_DURING_WRITE("NEW_DATA")
 			) tlb_paddr_sram(
 				.read_en(tlb_read_en),
 				.read_addr(request_set_idx),
-				.read_data({way_vpage_idx, way_ppage_idx[way_idx], way_writable[way_idx], 
-					way_supervisor[way_idx]}),
+				.read_data({way_vpage_idx, 
+					way_asid, 
+					way_ppage_idx[way_idx], 
+					way_writable[way_idx], 
+					way_supervisor[way_idx], 
+					way_global}),
 				.write_en(way_update_oh[way_idx]),
 				.write_addr(update_set_idx),
-				.write_data({request_vpage_idx_latched, update_ppage_idx_latched, update_writable_latched,
-					update_supervisor_latched}),
+				.write_data({request_vpage_idx_latched, 
+					request_asid_latched, 
+					update_ppage_idx_latched, 
+					update_writable_latched, 
+					update_supervisor_latched, 
+					update_global_latched}),
 				.*);
 
 			always_ff @(posedge clk, posedge reset)
@@ -126,7 +140,9 @@ module tlb
 				end
 			end
 				
-			assign way_hit_oh[way_idx] = way_valid && way_vpage_idx == request_vpage_idx_latched;
+			assign way_hit_oh[way_idx] = way_valid 
+				&& way_vpage_idx == request_vpage_idx_latched
+				&& (way_asid == request_asid_latched || way_global);
 		end
 	endgenerate
 	
@@ -137,8 +153,10 @@ module tlb
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			invalidate_en_latched <= '0;
+			request_asid_latched <= '0;
 			request_vpage_idx_latched <= '0;
 			update_en_latched <= '0;
+			update_global_latched <= '0;
 			update_ppage_idx_latched <= '0;
 			update_supervisor_latched <= '0;
 			update_writable_latched <= '0;
@@ -155,6 +173,8 @@ module tlb
 			update_ppage_idx_latched <= update_ppage_idx;
 			update_writable_latched <= update_writable;
 			update_supervisor_latched <= update_supervisor;
+			update_global_latched <= update_global;
+			request_asid_latched <= request_asid;
 		end
 	end
 
