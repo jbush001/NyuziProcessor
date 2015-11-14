@@ -40,8 +40,6 @@ def run_test(name):
 tests = [
 	'creg_non_supervisor',
 	'eret_non_supervisor',
-	'dtlb_non_supervisor',
-	'itlb_non_supervisor',
 	'syscall'
 ]
 

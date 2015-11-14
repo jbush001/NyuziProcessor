@@ -46,6 +46,12 @@ void add_dtlb_mapping(unsigned int va, unsigned int pa)
 	asm volatile("dtlbinsert %0, %1" : : "r" (va), "r" (pa));
 }
 
+// Make this a call to flush the pipeline
+void switch_to_user_mode() __attribute__((noinline))
+{
+	__builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN);
+}
+
 // Make this an explicit call to flush the pipeline
 static void set_asid(int asid) __attribute__((noinline))
 {

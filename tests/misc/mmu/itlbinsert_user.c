@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+#include "mmu-test-common.h"
+
 void fault_handler()
 {
 	printf("FAULT %d current flags %02x prev flags %02x\n", 
@@ -23,12 +25,6 @@ void fault_handler()
 	exit(0);
 }
 
-// Make this a call to flush the pipeline
-void switch_to_user_mode() __attribute__((noinline))
-{
-	__builtin_nyuzi_write_control_reg(4, 0);
-}
-
 int main(void)
 {
 	__builtin_nyuzi_write_control_reg(1, fault_handler);
@@ -36,7 +32,7 @@ int main(void)
 	// Switch to user mode, but leave MMU active
 	switch_to_user_mode();
 
-	asm("dtlbinsert %0, %1" : : "r" (0), "r" (0)); // CHECK: FAULT 10 current flags 04 prev flags 00
+	asm("itlbinsert %0, %1" : : "r" (0), "r" (0)); // CHECK: FAULT 10 current flags 04 prev flags 00
 
 	// XXX Does not validate that the entry wasn't inserted.
 

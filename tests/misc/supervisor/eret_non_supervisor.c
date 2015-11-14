@@ -33,9 +33,9 @@ int main(int argc, const char *argv[])
 {
 	__builtin_nyuzi_write_control_reg(1, fault_handler);
 
-	// Switch to user mode, but leave MMU active
 	switch_to_user_mode();
 
+	// This will fault
 	asm("eret"); // CHECK: FAULT 10 current flags 04 prev flags 00
 }
 
