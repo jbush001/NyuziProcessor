@@ -18,15 +18,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#define GUARD_SIZE 64
-#define GUARD_FILL 0x66
 #define UNINIT_FILL 0x55
 #define DEST_FILL 0xcc
 
-
-unsigned char guard1[GUARD_SIZE] __attribute__ ((aligned (64)));
-unsigned char dest[256] __attribute__ ((aligned (64)));
-unsigned char guard2[GUARD_SIZE] __attribute__ ((aligned (64)));
+unsigned char dest[512] __attribute__ ((aligned (64)));
 
 int __attribute__ ((noinline)) memset_trial(int offset, int length)
 {
@@ -48,15 +43,6 @@ int __attribute__ ((noinline)) memset_trial(int offset, int length)
 		{
 			printf("clobber @%d (%d,%d) %02x\n", i, offset, length, dest[i]);
 			return 0;
-		}
-	}
-
-	for (int i = 0; i < GUARD_SIZE; i++)
-	{
-		if (guard1[i] != GUARD_FILL || guard2[i] != GUARD_FILL)
-		{
-			printf("guard is clobbered\n");
-			return 1;
 		}
 	}
 

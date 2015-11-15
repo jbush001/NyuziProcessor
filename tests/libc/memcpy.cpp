@@ -17,15 +17,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#define GUARD_SIZE 64
-#define GUARD_FILL 0xa5
 #define DEST_FILL 0xcc
 
-unsigned char guard1[GUARD_SIZE] __attribute__ ((aligned (64)));
-unsigned char source[256] __attribute__ ((aligned (64)));
-unsigned char guard2[GUARD_SIZE] __attribute__ ((aligned (64)));
-unsigned char dest[256] __attribute__ ((aligned (64)));
-unsigned char guard3[GUARD_SIZE] __attribute__ ((aligned (64)));
+unsigned char source[512] __attribute__ ((aligned (64)));
+unsigned char dest[512] __attribute__ ((aligned (64)));
 
 int __attribute__ ((noinline)) memcpy_trial(int destOffset, int sourceOffset, int length)
 {
@@ -50,15 +45,6 @@ int __attribute__ ((noinline)) memcpy_trial(int destOffset, int sourceOffset, in
 		}
 	}
 
-	for (int i = 0; i < GUARD_SIZE; i++)
-	{
-		if (guard1[i] != GUARD_FILL || guard2[i] != GUARD_FILL || guard3[i] != GUARD_FILL)
-		{
-			printf("guard is clobbered\n");
-			return 1;
-		}
-	}
-
 	return 1;
 }
 
@@ -76,10 +62,6 @@ int main()
 {
 	for (int i = 0; i < sizeof(source); i++)
 		source[i] = i ^ 0x67;
-	
-	memset(guard1, GUARD_FILL, GUARD_SIZE);
-	memset(guard2, GUARD_FILL, GUARD_SIZE);
-	memset(guard3, GUARD_FILL, GUARD_SIZE);
 
 	for (auto sourceOffset : kOffsets)
 	{
