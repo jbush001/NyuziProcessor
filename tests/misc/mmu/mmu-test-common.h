@@ -49,7 +49,8 @@ void add_dtlb_mapping(unsigned int va, unsigned int pa)
 // Make this a call to flush the pipeline
 void switch_to_user_mode() __attribute__((noinline))
 {
-	__builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN);
+	__builtin_nyuzi_write_control_reg(CR_FLAGS, __builtin_nyuzi_read_control_reg(CR_FLAGS)
+		& ~FLAG_SUPERVISOR_EN);
 }
 
 // Make this an explicit call to flush the pipeline

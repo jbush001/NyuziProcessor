@@ -27,7 +27,7 @@ void fault_handler()
 
 int main(void)
 {
-	__builtin_nyuzi_write_control_reg(1, fault_handler);
+	__builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);
 
 	// Switch to user mode, but leave MMU active
 	switch_to_user_mode();
