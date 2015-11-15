@@ -16,7 +16,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
-#include "mmu-test-common.h"
+#include "mmu_test_common.h"
 
 // Virtual addresses are chosen to not alias with code or other pages
 #define VADDR1 0x10a000
@@ -65,11 +65,11 @@ int main(void)
 	
 	// Read value from first address space
 	set_asid(1);
-	printf("A1 %08x\n", *((unsigned int*) VADDR1)); // CHECK: A1 deadbeef
+	printf("A1 %08x\n", *((volatile unsigned int*) VADDR1)); // CHECK: A1 deadbeef
 	
 	// Read value from the second address space
 	set_asid(2);
-	printf("A2 %08x\n", *((unsigned int*) VADDR1)); // CHECK: A2 abcdefed
+	printf("A2 %08x\n", *((volatile unsigned int*) VADDR1)); // CHECK: A2 abcdefed
 
 	return 0;
 }

@@ -14,7 +14,7 @@
 // limitations under the License.
 // 
 
-#include "mmu-test-common.h"
+#include "mmu_test_common.h"
 
 //
 // Ensure we are properly translating I/O addresses, specifically that

@@ -16,7 +16,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
-#include "mmu-test-common.h"
+#include "mmu_test_common.h"
 
 volatile unsigned int *data_addr = (unsigned int*) 0x100000;
 volatile unsigned int *data_addr2 = (unsigned int*) 0x101000;

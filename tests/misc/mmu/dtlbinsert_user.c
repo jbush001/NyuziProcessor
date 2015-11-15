@@ -14,7 +14,7 @@
 // limitations under the License.
 // 
 
-#include "mmu-test-common.h"
+#include "mmu_test_common.h"
 
 // Check that the processor faults and doesn't update the TLB is 
 // dtlbinsert is called from user mode.
@@ -30,7 +30,10 @@ void tlb_fault_handler()
 void general_fault_handler()
 {
 	printf("general fault %d\n", __builtin_nyuzi_read_control_reg(3));
-	printf("FAIL: data is %08x\n", *data); // This should fault because TLB wasn't updated
+	
+	// Attempt to read from address that dtlbinsert was called on.
+	// This should fault because TLB wasn't updated
+	printf("FAIL: data is %08x\n", *data); 
 }
 
 int main(void)

@@ -16,7 +16,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
-#include "mmu-test-common.h"
+#include "mmu_test_common.h"
 
 
 // Note: this aliases to virtual address. Ensure invalidate only removes the 

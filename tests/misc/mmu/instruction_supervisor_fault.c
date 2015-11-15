@@ -14,7 +14,7 @@
 // limitations under the License.
 // 
 
-#include "mmu-test-common.h"
+#include "mmu_test_common.h"
 
 // Test that supervisor bits work properly for DTLB entries
 

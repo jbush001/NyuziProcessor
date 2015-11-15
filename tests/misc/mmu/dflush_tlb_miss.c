@@ -16,12 +16,12 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "mmu-test-common.h"
+#include "mmu_test_common.h"
 
 #define DATA_BASE 0x100000
 
 //
-// Ensure cache control instructions will cause a TLB miss if there isn't
+// Ensure dflush will cause a TLB miss if there isn't
 // a mapping.
 //
 

@@ -16,7 +16,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
-#include "mmu-test-common.h"
+#include "mmu_test_common.h"
 
 //
 // Verify that inserting duplicate entries does not cause problems.

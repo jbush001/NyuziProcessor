@@ -14,11 +14,11 @@
 // limitations under the License.
 // 
 
-#include "mmu-test-common.h"
+#include "mmu_test_common.h"
 
 // Test that reading from a supervisor page from user mode faults.
 
-volatile unsigned int *data_addr = (unsigned int*) 0x100000;
+volatile unsigned int *data_addr = (volatile unsigned int*) 0x100000;
 
 void fault_handler()
 {

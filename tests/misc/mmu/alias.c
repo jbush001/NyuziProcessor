@@ -16,7 +16,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "mmu-test-common.h"
+#include "mmu_test_common.h"
 
 //
 // This creates two virtual mappings to the same physical address

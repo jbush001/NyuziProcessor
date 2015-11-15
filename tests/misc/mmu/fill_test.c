@@ -15,7 +15,7 @@
 // 
 
 #include <stdio.h>
-#include "mmu-test-common.h"
+#include "mmu_test_common.h"
 
 #define FILL_SIZE 0x80000
 
@@ -24,7 +24,8 @@ extern void enable_mmu();
 
 //
 // Fill a memory region with memory identity mapped, testing TLB
-// fault handling.
+// fault handling. This also validates that eret restores the MMU flag
+// correctly.
 //
 
 int main(void)
