@@ -144,12 +144,11 @@ def run_emulator(block_device=None, dump_file=None, dump_base=None, dump_length=
 	args += [HEX_FILE]
 
 	try:
-		output = subprocess.check_output(args)
+		output = str(subprocess.check_output(args))
 	except subprocess.CalledProcessError as exc:
 		raise TestException('Emulator returned error: ' + exc.output)
 	
 	return output
-
 
 def run_verilator(block_device=None, dump_file=None, dump_base=None, 
 	dump_length=None, extra_args=None):
@@ -187,7 +186,7 @@ def run_verilator(block_device=None, dump_file=None, dump_base=None,
 
 	args += ['+bin=' + HEX_FILE]
 	try:
-		output = subprocess.check_output(args)
+		output = str(subprocess.check_output(args))
 	except subprocess.CalledProcessError as exc:
 		raise TestException('Verilator returned error: ' + exc.output)
 

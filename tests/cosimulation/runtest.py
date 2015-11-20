@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #
 # Copyright 2011-2015 Jeff Bush
 #
@@ -68,9 +68,9 @@ def run_cosimulation_test(source_file):
 			break
 			
 		if verbose:
-			print(got)
+			print(str(got))
 		else:
-			output += got
+			output += str(got)
 
 	p2.wait()
 	time.sleep(1)	# Give verilator a chance to clean up 

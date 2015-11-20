@@ -22,7 +22,7 @@ sys.path.insert(0, '../..')
 import test_harness
 
 DUMP_FILE='obj/memdump.bin'
-EXPECT_STRING='Test String'
+EXPECT_STRING=bytearray('Test String', encoding='ascii')
 
 def test_alias_verilator(name):
 	test_harness.compile_test(['alias.c', 'identity_tlb_miss_handler.s'])
@@ -31,7 +31,7 @@ def test_alias_verilator(name):
 	if result.find('read 00900000 "Test String"') == -1:
 		raise test_harness.TestException('did not get correct read string:\n' + result)
 
-	with open(DUMP_FILE, 'r') as f:
+	with open(DUMP_FILE, 'rb') as f:
 		if f.read(len(EXPECT_STRING)) != EXPECT_STRING:
 			raise test_harness.TestException('memory contents did not match')
 
@@ -42,7 +42,7 @@ def test_alias_emulator(name):
 	if result.find('read 00900000 "Test String"') == -1:
 		raise test_harness.TestException('did not get correct read string:\n' + result)
 
-	with open(DUMP_FILE, 'r') as f:
+	with open(DUMP_FILE, 'rb') as f:
 		if f.read(len(EXPECT_STRING)) != EXPECT_STRING:
 			raise test_harness.TestException('memory contents did not match')
 
@@ -70,8 +70,8 @@ def test_io_map_verilator(name):
 		raise test_harness.TestException('did not get correct read string:\n' + result)
 
 	# Check value written to memory
-	with open(DUMP_FILE, 'r') as f:
-		if f.read(len('galumphing')) != 'galumphing':
+	with open(DUMP_FILE, 'rb') as f:
+		if f.read(len('galumphing')) != bytearray('galumphing', 'ascii'):
 			raise test_harness.TestException('memory contents did not match')
 	
 def test_io_map_emulator(name):
@@ -84,8 +84,8 @@ def test_io_map_emulator(name):
 		raise test_harness.TestException('did not get correct read string:\n' + result)
 
 	# Check value written to memory
-	with open(DUMP_FILE, 'r') as f:
-		if f.read(len('galumphing')) != 'galumphing':
+	with open(DUMP_FILE, 'rb') as f:
+		if f.read(len('galumphing')) != bytearray('galumphing', 'ascii'):
 			raise test_harness.TestException('memory contents did not match')
 
 def run_generic_test(name):

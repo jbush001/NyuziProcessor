@@ -16,6 +16,7 @@
 # 
 
 import sys
+import struct
 
 sys.path.insert(0, '../..')
 import test_harness
@@ -31,9 +32,10 @@ def dinvalidate_test(name):
 
 	# 2. Read the memory dump to ensure the proper value is flushed from the L2 cache
 	with open('obj/vmem.bin', 'rb') as f:
-		val = f.read(4)
-		if ord(val[0]) != 0xef or ord(val[1]) != 0xbe or ord(val[2]) != 0xad or ord(val[3]) != 0xde:
-			raise TestException('memory contents were incorrect')
+		numVal = struct.unpack('<L', f.read(4))[0]
+		if numVal != 0xdeadbeef:
+			print(hex(numVal))
+			raise test_harness.TestException('memory contents were incorrect')
 	
 test_harness.register_tests(dinvalidate_test, ['dinvalidate'])
 test_harness.execute_tests()

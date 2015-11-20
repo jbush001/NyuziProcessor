@@ -33,7 +33,7 @@ $(TARGET): $(BINDIR) FORCE test_verilator_version
 	cp obj/Vverilator_tb $(TARGET)
 
 core/srams.inc: $(TARGET)
-	$(TARGET) +dumpmems | python ../tools/misc/extract_mems.py > core/srams.inc
+	$(TARGET) +dumpmems | ../tools/misc/extract_mems.py > core/srams.inc
 
 # Expands AUTOWIRE/AUTOINST/etc. Requires emacs and verilog-mode module installed.
 autos: FORCE

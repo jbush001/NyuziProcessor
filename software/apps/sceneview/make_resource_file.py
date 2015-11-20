@@ -56,7 +56,7 @@ def read_image_file(filename, resizeToWidth=None, resizeToHeight=None):
 	out, err = p.communicate()
 
 	# This is a kludge.  Try to determine width and height from debug information
-	for line in err.split('\n'):
+	for line in str(err).split('\n'):
 		got = size_re1.search(line)
 		if got:
 			width = int(got.group('width'))

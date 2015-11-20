@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # 
 # Copyright 2011-2015 Jeff Bush
 # 
@@ -13,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # 
-
 
 #
 # Create non-parameterized instances of all FIFOs and SRAMS in the design, which may

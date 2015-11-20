@@ -34,7 +34,7 @@ def dflush_test(name):
 		index = 0
 		while True:
 			val = f.read(4)
-			if val == '':
+			if len(val):
 				break
 		
 			numVal = ord(val[0]) | (ord(val[1]) << 8) | (ord(val[2]) << 16) | (ord(val[3]) << 24)

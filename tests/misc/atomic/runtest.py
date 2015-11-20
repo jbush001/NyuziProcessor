@@ -16,6 +16,7 @@
 # 
 
 import sys
+import struct
 
 sys.path.insert(0, '../..')
 import test_harness
@@ -28,10 +29,10 @@ def atomic_test(name):
 	with open('obj/vmem.bin', 'rb') as f:
 		while True:
 			val = f.read(4)
-			if val == '':
+			if len(val) == 0:
 				break
 		
-			numVal = ord(val[0]) | (ord(val[1]) << 8) | (ord(val[2]) << 16) | (ord(val[3]) << 24)
+			numVal = struct.unpack('<L', val)[0]
 			if numVal != 10:
 				raise TestException('FAIL: mismatch: ' + str(numVal))
 
