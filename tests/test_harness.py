@@ -18,6 +18,7 @@
 # Utility functions for unit tests
 #
 
+from __future__ import print_function
 import subprocess
 import os
 import sys
@@ -319,7 +320,7 @@ def execute_tests():
 					new_test_list += [(func, param)]
 					break
 			else:
-				print 'Unknown test', requested
+				print('Unknown test ' + requested)
 				sys.exit(1)
 				
 		registered_tests = new_test_list
@@ -327,26 +328,26 @@ def execute_tests():
 	ALIGN = 40
 	failing_tests = []
 	for func, param in registered_tests:
-		print param + (' ' * (ALIGN - len(param))),
+		print(param + (' ' * (ALIGN - len(param))), end='')
 		try:
 			func(param)
-			print '[\x1b[32mPASS\x1b[0m]'
+			print('[\x1b[32mPASS\x1b[0m]')
 		except KeyboardInterrupt:
 			sys.exit(1)
 		except TestException as exc:
-			print '[\x1b[31mFAIL\x1b[0m]'
+			print('[\x1b[31mFAIL\x1b[0m]')
 			failing_tests += [(param, exc.output)]
 		except Exception as exc:
-			print '[\x1b[31mFAIL\x1b[0m]'
+			print('[\x1b[31mFAIL\x1b[0m]')
 			failing_tests += [(param, 'Caught exception ' + traceback.format_exc())]
 
 	if failing_tests:
-		print 'Failing tests:'
+		print('Failing tests:')
 		for name, output in failing_tests:
-			print name
-			print output
+			print(name)
+			print(output)
 
-	print str(len(failing_tests)) + '/' + str(len(registered_tests)) + ' tests failed'
+	print(str(len(failing_tests)) + '/' + str(len(registered_tests)) + ' tests failed')
 	if failing_tests != []:
 		sys.exit(1)
 

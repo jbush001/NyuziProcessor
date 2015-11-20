@@ -76,7 +76,7 @@ def read_image_file(filename, resizeToWidth=None, resizeToHeight=None):
 		textureData = f.read(expectedSize)
 
 	if resizeToWidth and len(textureData) != expectedSize:
-		print 'length mismatch', len(textureData), '!=', expectedSize
+		print('length mismatch' + str(len(textureData)) + ' != ' + str(expectedSize))
 
 	os.unlink(temppath)
 		
@@ -84,7 +84,7 @@ def read_image_file(filename, resizeToWidth=None, resizeToHeight=None):
 
 
 def read_texture(filename):
-	print 'read texture', filename
+	print('read texture ' + filename)
 	width, height, data = read_image_file(filename)
 
 	# Read in lower mip levels
@@ -98,7 +98,7 @@ def read_texture(filename):
 def read_mtl_file(filename):
 	global textureList, materialNameToTextureIdx
 
-	print 'read material file', filename
+	print('read material file ' + filename)
 	
 	currentName = ''
 	currentFile = ''
@@ -249,7 +249,7 @@ def print_stats():
 	maxz = float('-Inf')
 	
 	for _, vertices, indices in meshList:
-		totalTriangles += len(indices) / 3
+		totalTriangles += len(indices) // 3
 		totalVertices += len(vertices)
 		for x, y, z, _, _, _, _, _ in vertices:
 			minx = min(x, minx)
@@ -259,17 +259,17 @@ def print_stats():
 			maxy = max(y, maxy)
 			maxz = max(z, maxz)
 
-	print 'meshes', len(meshList) 
-	print 'triangles', totalTriangles
-	print 'vertices', totalVertices
-	print 'scene bounds'
-	print '  x', minx, maxx
-	print '  y', miny, maxy
-	print '  z', minz, maxz
+	print('meshes ' + str(len(meshList)))
+	print('triangles ' + str(totalTriangles))
+	print('vertices ' + str(totalVertices))
+	print('scene bounds ')
+	print('  x ' + str(minx) + ' ' + str(maxx))
+	print('  y ' + str(miny) + ' ' + str(maxy))
+	print('  z ' + str(minz) + ' ' + str(maxz))
 
 
 def align(addr, alignment):
-	return int((addr + alignment - 1) / alignment) * alignment
+	return int((addr + alignment - 1) // alignment) * alignment
 
 
 def write_resource_file(filename):
@@ -318,11 +318,11 @@ def write_resource_file(filename):
 		f.write(struct.pack('I', len(textureList))) # num textures
 		f.write(struct.pack('I', len(meshList))) # num meshes
 		
-		print 'wrote', filename
+		print('wrote ' + filename)
 
 # Main
 if len(sys.argv) < 2:
-	print 'enter the name of a .OBJ file'
+	print('enter the name of a .OBJ file')
 	sys.exit(1)
 
 read_obj_file(sys.argv[1])

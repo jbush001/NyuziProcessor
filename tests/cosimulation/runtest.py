@@ -68,7 +68,7 @@ def run_cosimulation_test(source_file):
 			break
 			
 		if verbose:
-			print got
+			print(got)
 		else:
 			output += got
 

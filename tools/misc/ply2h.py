@@ -51,32 +51,32 @@ for line in sys.stdin.readlines():
 				raise Exception('Unknown number of vertices or elements')
 			
 			state = STATE_VERTICES
-			print 'const int kNum' + prefix + 'Vertices = ' + str(numVertices) + ';'
-			print 'const float k' + prefix + 'Vertices[] = {'
+			print('const int kNum' + prefix + 'Vertices = ' + str(numVertices) + ';')
+			print('const float k' + prefix + 'Vertices[] = {')
 	elif state == STATE_VERTICES:
 		outline = '\t'
 		for x in fields:
 			outline += x + ', '
 		
-		print outline
+		print(outline)
 		numVertices -= 1
 		if numVertices == 0:
 			state = STATE_FACES
-			print '};\n'
-			print 'const int k' + prefix + 'Indices[] = {'
+			print('};\n')
+			print('const int k' + prefix + 'Indices[] = {')
 	elif state == STATE_FACES:
 		numIndices = int(fields[0])
 		if numIndices < 3:
 			raise Exception('bad number of indices')
 
 		for x in range(1, numIndices - 1):
-			print '\t' + fields[1] + ', ' + fields[x + 1] + ', ' + fields[x + 2]  + ','
+			print('\t' + fields[1] + ', ' + fields[x + 1] + ', ' + fields[x + 2]  + ',')
 			totalTriangles += 1
 
 
 		numFaces -= 1
 		if numFaces == 0:
-			print '};\n'
-			print 'const int kNum' + prefix + 'Indices = ' + str(totalTriangles * 3) + ';\n'
+			print('};\n')
+			print('const int kNum' + prefix + 'Indices = ' + str(totalTriangles * 3) + ';\n')
 			break
 

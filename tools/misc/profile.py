@@ -81,5 +81,5 @@ for count, name in sorted(sortedTab, key=lambda func: func[0], reverse=True):
 	if count == 0:
 		break
 		
-	print count, str(float(count * 10000 / totalCycles) / 100) + '%', name
+	print(str(count) + ' ' + str(float(count * 10000 / totalCycles) / 100) + '% ' + name)
 

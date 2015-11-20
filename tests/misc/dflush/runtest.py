@@ -38,7 +38,7 @@ def dflush_test(name):
 				break
 		
 			numVal = ord(val[0]) | (ord(val[1]) << 8) | (ord(val[2]) << 16) | (ord(val[3]) << 24)
-			expected = 0x1f0e6231 + (index / 16)
+			expected = 0x1f0e6231 + (index // 16)
 			if numVal != expected:
 				raise TestException('FAIL: mismatch at' + hex(BASE_ADDRESS + (index * 4)) + 'want' + str(expected) + 'got' + str(numVal)) 
 			

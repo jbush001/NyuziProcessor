@@ -21,6 +21,7 @@
 # directory and isn't called directly.
 #
 
+from __future__ import print_function
 import re
 import sys
 
@@ -39,18 +40,16 @@ for line in sys.stdin.readlines():
 				itemlist.append(pair)
 
 for regexp, itemlist, prefix, macro in patterns:
-	print '`ifdef '  + macro
+	print('`ifdef ' + macro)
 	first = True
 	for width, depth in itemlist:
 		if first:
 			first = False
 		else:
-			print 'else',
+			print('else', end='')
 		
-		print 'if (WIDTH == ' + str(width) + ' && SIZE == ' + str(depth) + ')'
+		print('if (WIDTH == ' + str(width) + ' && SIZE == ' + str(depth) + ')')
 		instancename = prefix + str(width) + 'x' + str(depth)
-		print '\t' + instancename  + ' ' + instancename + '(.*);'
+		print('\t' + instancename  + ' ' + instancename + '(.*);')
 
-	print ''
-	print '`endif'
-
+	print('\n`endif')

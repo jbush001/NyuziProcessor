@@ -437,12 +437,12 @@ enableInterrupts = args['i']
 numThreads = args['t']
 
 if (numInstructions + 120) * numThreads * 4 > 0x800000:
-	print 'Instruction space exceeds available memory.'
+	print('Instruction space exceeds available memory.')
 
 if args['m']:
 	for x in range(args['m']):
 		filename = 'random%04d.s' % x
-		print 'generating ' + filename
+		print('generating ' + filename)
 		generate_test(filename, numInstructions, numThreads, enableInterrupts)
 else:
 	generate_test(args['o'], numInstructions, numThreads, enableInterrupts)

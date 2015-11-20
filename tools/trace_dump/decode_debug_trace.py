@@ -14,8 +14,8 @@
 # limitations under the License.
 # 
 
-
 import sys
+from __future__ import print_function
 
 # Given a set of hex encoded packed data records with the format given in the fields array
 # (msb first), decode and print in CSV format.
@@ -38,19 +38,19 @@ fields = [
 
 hexstr = ''
 totalBits = (sum([width for name, width in fields]))
-BYTES_PER_TRACE=(totalBits + 7) / 8
+BYTES_PER_TRACE=(totalBits + 7) // 8
 
 for name, size in fields:
 	if name:
-		print name + ',',
+		print(name + ',', end='')
 		
-print ''
+print('')
 
 for line in sys.stdin.readlines():
 	hexstr = line[:2] + hexstr
 	if len(hexstr) == BYTES_PER_TRACE * 2:
 		if hexstr[0:2] != '55':
-			print 'bad trace record'
+			print('bad trace record')
 			break
 
 		bigval = int(hexstr, 16)
@@ -59,8 +59,8 @@ for line in sys.stdin.readlines():
 			lowoffset -= width
 			if name:
 				fieldval = (bigval >> lowoffset) & ((1 << width) - 1)
-				print hex(fieldval)[2:],
+				print(hex(fieldval)[2:], end='')
 
 			
 		hexstr = ''
-		print ''
+		print('')
