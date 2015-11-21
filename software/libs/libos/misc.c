@@ -18,10 +18,12 @@
 #include "registers.h"
 #include "unistd.h"
 
+#define CLOCKS_PER_US 50
+
 int usleep(useconds_t delay)
 {
-	clock_t expire = clock() + delay;
-	while (clock() < expire)
+	int expire = __builtin_nyuzi_read_control_reg(6) + delay * CLOCKS_PER_US;
+	while (__builtin_nyuzi_read_control_reg(6) < expire)
 		;
 
 	return 0;
