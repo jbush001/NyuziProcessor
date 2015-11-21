@@ -113,6 +113,13 @@ module control_registers
 
 			if (wb_fault)
 			begin
+				// Copy current flags to prev flags
+				interrupt_en_saved[wb_fault_thread_idx] <= cr_interrupt_en[wb_fault_thread_idx];
+				mmu_en_saved[wb_fault_thread_idx] <= cr_mmu_en[wb_fault_thread_idx];
+				supervisor_en_saved[wb_fault_thread_idx] <= cr_supervisor_en[ix_thread_idx];
+				cr_eret_subcycle[wb_fault_thread_idx] <= wb_fault_subcycle;
+
+				// Dispatch fault
 				fault_reason[wb_fault_thread_idx] <= wb_fault_reason;
 				cr_eret_address[wb_fault_thread_idx] <= wb_fault_pc;
 				fault_access_addr[wb_fault_thread_idx] <= wb_fault_access_vaddr;
@@ -120,12 +127,6 @@ module control_registers
 				cr_supervisor_en[ix_thread_idx] <= 1; // Enter supervisor mode on fault
 				if (wb_fault_reason == FR_ITLB_MISS || wb_fault_reason == FR_DTLB_MISS)
 					cr_mmu_en[wb_fault_thread_idx] <= 0;
-
-				// Copy current flags to prev flags
-				interrupt_en_saved[wb_fault_thread_idx] <= cr_interrupt_en[wb_fault_thread_idx];
-				mmu_en_saved[wb_fault_thread_idx] <= cr_mmu_en[wb_fault_thread_idx];
-				supervisor_en_saved[wb_fault_thread_idx] <= cr_supervisor_en[ix_thread_idx];
-				cr_eret_subcycle[wb_fault_thread_idx] <= wb_fault_subcycle;
 			end
 			else if (ix_is_eret)
 			begin	
