@@ -29,7 +29,7 @@ module axi_rom
 
 	localparam MAX_SIZE = 'h2000;
 
-	logic[31:0] burst_address;
+	logic[29:0] burst_address;
 	logic[7:0] burst_count;
 	logic burst_active;
 
@@ -64,7 +64,7 @@ module axi_rom
 			else
 			begin
 				axi_bus.s_rvalid <= 1;
-				axi_bus.s_rdata <= rom_data[burst_address];
+				axi_bus.s_rdata <= rom_data[burst_address[$clog2(MAX_SIZE) - 1:0]];
 				if (axi_bus.m_rready)
 				begin
 					burst_address <= burst_address + 1;

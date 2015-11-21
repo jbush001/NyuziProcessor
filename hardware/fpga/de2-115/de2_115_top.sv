@@ -66,6 +66,8 @@ module de2_115_top(
 	inout                       ps2_data);
 
 	localparam BOOT_ROM_BASE = 32'hfffee000;
+	localparam UART_BAUD = 921600;
+	localparam CLOCK_RATE = 50000000;
 
 	// We always access the full word width, so hard code these to active (low)
 	assign dram_dqm = 4'b0000;
@@ -191,7 +193,7 @@ module de2_115_top(
 	      .axi_bus(axi_bus_s1.master),
 		  .*);
 
-`ifdef DEBUG_TRACE
+`ifdef WITH_LOGIC_ANALYZER
 	logic[87:0] capture_data;
 	logic capture_enable;
 	logic trigger;
@@ -201,9 +203,9 @@ module de2_115_top(
 	assign capture_enable = 1;
 	assign trigger = event_count == 120;
 
-	debug_trace #(.CAPTURE_WIDTH_BITS($bits(capture_data)), 
+	logic_analyzer #(.CAPTURE_WIDTH_BITS($bits(capture_data)), 
 		.CAPTURE_SIZE(128),
-		.BAUD_DIVIDE(50000000 / 115200)) debug_trace(.*);
+		.BAUD_DIVIDE(CLOCK_RATE / UART_BAUD)) logic_analyzer(.*);
 
 	always_ff @(posedge clk, posedge reset)
 	begin
@@ -213,7 +215,7 @@ module de2_115_top(
 			event_count <= event_count + 1;
 	end
 `else	
-	uart #(.BASE_ADDRESS(24), .BAUD_DIVIDE(50000000 / 921600)) uart(
+	uart #(.BASE_ADDRESS(24), .BAUD_DIVIDE(CLOCK_RATE / UART_BAUD)) uart(
 		.io_read_data(uart_read_data),
 		.*);
 `endif
@@ -271,7 +273,7 @@ module de2_115_top(
 	begin
 		case (io_address)
 			'h18, 'h1c: io_read_data <= uart_read_data;
-			'h2c: io_read_data <= frame_toggle;
+			'h2c: io_read_data <= scalar_t'(frame_toggle);
 `ifdef BITBANG_SDMMC
 			'h5c: io_read_data <= gpio_read_data;
 `else

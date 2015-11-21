@@ -25,7 +25,7 @@
 // of capture_data.
 //
 
-module debug_trace
+module logic_analyzer
 	#(parameter CAPTURE_WIDTH_BITS = 32,
 	parameter CAPTURE_SIZE = 64,
 	parameter BAUD_DIVIDE = 1)
