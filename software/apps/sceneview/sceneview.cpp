@@ -18,6 +18,7 @@
 #include <schedule.h>
 #include <stdio.h>
 #include <Surface.h>
+#include <time.h>
 #include "DepthShader.h"
 #include "schedule.h"
 #include "TextureShader.h"

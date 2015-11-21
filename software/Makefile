@@ -22,12 +22,22 @@ all:
 	cd libs/librender && make
 	cd libs/libos && make
 	cd bootrom && make
+	cd apps/mandelbrot && make
+	cd apps/plasma && make
+	cd apps/quakeview && make
+	cd apps/rotozoom && make
+	cd apps/sceneview && make
 	
 clean:
 	cd libs/libc && make clean
 	cd libs/librender && make clean
 	cd libs/libos && make clean
 	cd bootrom && make clean
+	cd apps/mandelbrot && make clean
+	cd apps/plasma && make
+	cd apps/quakeview && make clean
+	cd apps/rotozoom && make clean
+	cd apps/sceneview && make clean
 
 FORCE:
 

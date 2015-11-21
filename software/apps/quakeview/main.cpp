@@ -258,6 +258,6 @@ int main()
 #endif
 		clock_t startTime = clock();
 		context->finish();
-		printf("rendered frame in %d uS\n", clock() - time);
+		printf("rendered frame in %d uS\n", clock() - startTime);
 	}
 }
