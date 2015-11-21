@@ -84,7 +84,6 @@ E = emulator, V = verilator.
 | ffff002c | r  | F   | VGA frame toggle |
 | ffff0038 | r  | FEV | PS/2 Keyboard status. 1 indicates there are scancodes in FIFO. |
 | ffff003c | r  | FEV | PS/2 Keyboard scancode. Remove from FIFO on read.<sup>2</sup> |
-| ffff0040 | r  |  E  | Real time clock, in microseconds |
 | ffff0044 |  w | FEV | SD SPI write byte<sup>3</sup> |
 | ffff0048 | r  | FEV | SD SPI read byte |
 | ffff004c | r  | FEV | SD SPI status (bit 0: ready) |

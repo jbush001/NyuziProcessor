@@ -21,6 +21,7 @@
 #include <SIMDMath.h>
 #include <stdio.h>
 #include <Surface.h>
+#include <time.h>
 #include "PakFile.h"
 #include "Render.h"
 #include "TextureShader.h"
@@ -255,9 +256,8 @@ int main()
 
 		renderScene(context, gCameraPos);
 #endif
-		int startInstructions = __builtin_nyuzi_read_control_reg(6);
+		clock_t startTime = clock();
 		context->finish();
-		printf("rendered frame in %d instructions.\n", __builtin_nyuzi_read_control_reg(6) 
-			- startInstructions);
+		printf("rendered frame in %d uS\n", clock() - time);
 	}
 }

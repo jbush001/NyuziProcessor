@@ -16,6 +16,7 @@
 
 #include <schedule.h>
 #include <stdio.h>
+#include <time.h>
 #include "Barrier.h"
 #include "image.h"
 #include "Matrix2x2.h"
@@ -38,7 +39,7 @@ Matrix2x2 displayMatrix;
 int main()
 {
 	int frameNum = 0;
-	int lastCycleCount = 0;
+	clock_t lastTime = 0;
 	
 	startAllThreads();
 
@@ -88,18 +89,16 @@ int main()
 		{
 			displayMatrix = displayMatrix * stepMatrix;
 
-			if ((frameNum++ & 15) == 0)
+			if ((frameNum++ & 31) == 0)
 			{
-				const float kClockRate = 50000000.0;
-				volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
-				unsigned int curCycleCount = __builtin_nyuzi_read_control_reg(6);
-				if (lastCycleCount != 0)
+				unsigned int currentTime = clock();
+				if (lastTime != 0)
 				{
-					// XXX this is only accurate in the hardware model, not emulator
-					printf("%g fps\n", kClockRate * 16 / (curCycleCount - lastCycleCount));
+					float deltaTime = (float)(currentTime - lastTime) / CLOCKS_PER_SEC;
+					printf("%g fps\n", (float) 32 / deltaTime);
 				}
 
-				lastCycleCount = curCycleCount;
+				lastTime = currentTime;
 			}
 		}
 

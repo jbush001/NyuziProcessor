@@ -1,5 +1,5 @@
 // 
-// Copyright 2015 Jeff Bush
+// Copyright 2011-2015 Jeff Bush
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,24 +14,18 @@
 // limitations under the License.
 // 
 
-#include <time.h>
-#include "registers.h"
-#include "unistd.h"
+#pragma once
 
-int usleep(useconds_t delay)
-{
-	clock_t expire = clock() + delay;
-	while (clock() < expire)
-		;
+#define CLOCKS_PER_SEC 1000000
 
-	return 0;
+typedef unsigned int clock_t;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+clock_t clock(void);
+
+#ifdef __cplusplus
 }
-
-void exit(int status) 
-{
-	(void) status;
-	
-	REGISTERS[REG_THREAD_HALT] = 0xffffffff;
-	while (1)
-		;
-}
+#endif

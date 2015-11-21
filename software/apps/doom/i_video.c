@@ -25,6 +25,7 @@ static const char
 rcsid[] = "$Id: i_x.c,v 1.6 1997/02/03 22:45:10 b1 Exp $";
 
 #include <stdint.h>
+#include <time.h>
 #include <keyboard.h>
 #include "doomstat.h"
 #include "i_system.h"
@@ -34,7 +35,9 @@ rcsid[] = "$Id: i_x.c,v 1.6 1997/02/03 22:45:10 b1 Exp $";
 
 #include "doomdef.h"
 
-unsigned int gPalette[256];
+static unsigned int gPalette[256];
+static clock_t lastFrameTime = 0;
+static int frameCount = 0;
 
 void I_ShutdownGraphics(void)
 {
@@ -149,11 +152,6 @@ void I_UpdateNoBlit (void)
 	// what is this?
 }
 
-static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
-static unsigned int lastCycleCount = 0;
-static unsigned int lastTimeUs = 0;
-static int frameCount = 0;
-
 //
 // I_FinishUpdate
 //
@@ -190,16 +188,11 @@ void I_FinishUpdate (void)
 	// Print some statistics
 	if (++frameCount == 20)
 	{
-		unsigned int curCycleCount;
-		unsigned int currentTimeUs;
-
-		currentTimeUs = REGISTERS[0x40 / 4];
-		curCycleCount = __builtin_nyuzi_read_control_reg(6);
-		printf("%g fps, %d instructions/frame\n", 1000000.0f * frameCount / (currentTimeUs - lastTimeUs) ,
-			(curCycleCount - lastCycleCount) / frameCount);
+		clock_t currentTime = clock();
+		float deltaTime = (float)(currentTime - lastFrameTime) / CLOCKS_PER_SEC;
+		printf("%g fps\n", (float) frameCount / deltaTime);
 		frameCount = 0;
-		lastTimeUs = currentTimeUs;
-		lastCycleCount = curCycleCount;
+		lastFrameTime = currentTime;
 	}
 }
 

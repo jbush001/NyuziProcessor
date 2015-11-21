@@ -21,7 +21,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
+#include <sys/time.h>
+#include <sys/types.h>
 #include "core.h"
 #include "cosimulation.h"
 #include "device.h"
@@ -1369,8 +1370,14 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 				break;
 				
 			case CR_CYCLE_COUNT:
-				value = (uint32_t) (thread->core->totalInstructions & 0xffffffff);
+			{
+				// Make clock appear to be running at 50Mhz real time, independent
+				// of the instruction rate of the emulator.
+				struct timeval tv;
+				gettimeofday(&tv, NULL);
+				value = (uint32_t)(tv.tv_sec * 50000000 + tv.tv_usec * 50);
 				break;
+			}
 
 			case CR_TLB_MISS_HANDLER:
 				value = thread->core->tlbMissHandlerPc;

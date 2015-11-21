@@ -33,7 +33,8 @@ SRCS=math.c \
 	qsort.c \
 	builtins.c \
 	setjmp.s \
-	memcpy.s
+	memcpy.s \
+	time.c
 
 OBJS := $(SRCS_TO_OBJS)
 DEPS := $(SRCS_TO_DEPS)

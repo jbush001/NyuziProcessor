@@ -18,6 +18,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <schedule.h>
+#include <time.h>
 #include "Barrier.h"
 
 //
@@ -153,7 +154,7 @@ uint32_t gPalette[NUM_PALETTE_ENTRIES];
 int main()
 {
 	int myThreadId = __builtin_nyuzi_read_control_reg(0);
-	int lastCycleCount = 0;
+	clock_t lastTime = 0;
 	
 	if (myThreadId == 0)
 	{
@@ -202,16 +203,14 @@ int main()
 		{
 			if ((gFrameNum++ & 15) == 0)
 			{
-				const float kClockRate = 50000000.0;
-				volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
-				unsigned int curCycleCount = __builtin_nyuzi_read_control_reg(6);
-				if (lastCycleCount != 0)
+				unsigned int currentTime = clock();
+				if (lastTime != 0)
 				{
-					// XXX this is only accurate in the hardware model, not emulator
-					printf("%g fps\n", kClockRate * 16 / (curCycleCount - lastCycleCount));
+					float deltaTime = (float)(currentTime - lastTime) / CLOCKS_PER_SEC;
+					printf("%g fps\n", (float) 16 / deltaTime);
 				}
 
-				lastCycleCount = curCycleCount;
+				lastTime = currentTime;
 			}
 		}
 

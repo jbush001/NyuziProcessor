@@ -19,8 +19,6 @@
 #include <stdio.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/types.h>
 #include <unistd.h>
 #include "core.h"
 #include "device.h"
@@ -72,13 +70,6 @@ uint32_t readDeviceRegister(uint32_t address)
 				value = 0;
 			
 			return value;
-
-		case REG_REAL_TIME_CLOCK:
-		{
-			struct timeval tv;
-			gettimeofday(&tv, NULL);
-			return (uint32_t)(tv.tv_sec * 1000000 + tv.tv_usec);
-		}
 
 		case REG_SD_READ_DATA:
 		case REG_SD_STATUS:

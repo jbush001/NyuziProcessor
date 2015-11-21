@@ -1,5 +1,5 @@
 // 
-// Copyright 2015 Jeff Bush
+// Copyright 2011-2015 Jeff Bush
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,23 +15,10 @@
 // 
 
 #include <time.h>
-#include "registers.h"
-#include "unistd.h"
 
-int usleep(useconds_t delay)
+#define CLOCK_HZ 50000000
+
+clock_t clock(void)
 {
-	clock_t expire = clock() + delay;
-	while (clock() < expire)
-		;
-
-	return 0;
-}
-
-void exit(int status) 
-{
-	(void) status;
-	
-	REGISTERS[REG_THREAD_HALT] = 0xffffffff;
-	while (1)
-		;
+	return __builtin_nyuzi_read_control_reg(6) / (CLOCK_HZ / CLOCKS_PER_SEC);
 }

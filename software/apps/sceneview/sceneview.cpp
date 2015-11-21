@@ -235,10 +235,9 @@ int main()
 			context->drawElements(&indexBuffers[meshIndex]);
 		}
 
-		int startInstructions = __builtin_nyuzi_read_control_reg(6);
+		clock_t startTime = clock();
 		context->finish();
-		printf("rendered frame in %d instructions\n", __builtin_nyuzi_read_control_reg(6) 
-			- startInstructions);
+		printf("rendered frame in %d uS\n", clock() - startTime);
 	}
 	
 	return 0;

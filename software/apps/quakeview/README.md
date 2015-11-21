@@ -44,9 +44,8 @@ make the following changes:
 1. At the bottom of the main loop in main.cpp, add a call to exit(). This exits the main
 loop and stops the worker threads:
 
-         		context->finish();
-         		printf("rendered frame in %d instructions\n", __builtin_nyuzi_read_control_reg(6) 
-         			- startInstructions);
+             context->finish();
+             printf("rendered frame in %d uS\n", clock() - time);
         +		exit(1);
          	}
  	
