@@ -21,7 +21,9 @@
 
 //
 // Reads binary data from serial port and prints in hex form to stdout.
-// This is used for reading traces produced by the debug_trace hardware module.
+// This is used for reading traces produced by the logic_analyzer hardware 
+// module. The output can then be converted to signal values by the 
+// decode_trace.py script.
 //
 
 int main(int argc, const char *argv[])
