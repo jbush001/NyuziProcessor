@@ -104,6 +104,7 @@ struct Core
 	bool enableTracing;
 	bool cosimEnable;
 	int64_t totalInstructions;
+	uint32_t start_cycle_count;
 #ifdef DUMP_INSTRUCTION_STATS
 	int64_t stat_vector_inst;
 	int64_t stat_load_inst;
@@ -153,6 +154,7 @@ Core *initCore(uint32_t memorySize, uint32_t totalThreads, bool randomizeMemory)
 	uint32_t threadid;
 	Core *core;
 	int i;
+	struct timeval tv;
 
 	// Currently limited by enable mask
 	assert(totalThreads <= 32);
@@ -200,6 +202,9 @@ Core *initCore(uint32_t memorySize, uint32_t totalThreads, bool randomizeMemory)
 	core->crashed = false;
 	core->enableTracing = false;
 	core->faultHandlerPc = 0;
+
+	gettimeofday(&tv, NULL);
+	core->start_cycle_count = (uint32_t)(tv.tv_sec * 50000000 + tv.tv_usec * 50);
 
 	return core;
 }
@@ -1376,7 +1381,8 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 				// of the instruction rate of the emulator.
 				struct timeval tv;
 				gettimeofday(&tv, NULL);
-				value = (uint32_t)(tv.tv_sec * 50000000 + tv.tv_usec * 50);
+				value = (uint32_t)(tv.tv_sec * 50000000 + tv.tv_usec * 50) 
+					- thread->core->start_cycle_count;
 				break;
 			}
 
