@@ -28,7 +28,7 @@ This requires Ubuntu 14 or later to get the proper package versions. It should
 work for other distributions, but you will probably need to change some package
 names.
 
-	sudo apt-get -y install cmake make gcc g++ bison flex python perl emacs curl openjdk-7-jdk swig zlib1g-dev python-dev libxml2-dev libedit-dev ncurses-dev libsdl2-dev gtkwave imagemagick 
+	sudo apt-get -y install autoconf cmake make gcc g++ bison flex python perl emacs openjdk-7-jdk swig zlib1g-dev python-dev libxml2-dev libedit-dev ncurses-dev libsdl2-dev gtkwave imagemagick 
 
 *Emacs is used for [verilog-mode](http://www.veripool.org/wiki/verilog-mode) AUTO macros. 
 The makefile executes this operation in batch mode*
@@ -57,11 +57,12 @@ Linux under a virtual machine like [VirtualBox](https://www.virtualbox.org/wiki/
 ## Build (Linux & MacOS)
 
 Download and build Verilator as follows (although some Linux package managers have
-it, it is out of date). From the top level directory of this project:
+it, it is way out of date). From the top level directory of this project:
 
-    cd tools
-    curl http://www.veripool.org/ftp/verilator-3.876.tgz | tar xz
-    cd verilator-3.876/ 
+    git clone http://git.veripool.org/git/verilator tools/verilator
+    cd tools/verilator 
+    git checkout verilator_3_876
+    autoconf
     ./configure 
     make
     sudo make install
