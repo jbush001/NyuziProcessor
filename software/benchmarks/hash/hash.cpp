@@ -14,6 +14,7 @@
 // limitations under the License.
 // 
 
+#include <nyuzi.h>
 #include <schedule.h>
 #include <stdint.h>
 #include <stdio.h>

@@ -27,6 +27,8 @@ all:
 	cd apps/quakeview && make
 	cd apps/rotozoom && make
 	cd apps/sceneview && make
+	cd benchmarks/hash && make
+	cd benchmarks/membench && make
 	
 clean:
 	cd libs/libc && make clean
@@ -38,6 +40,8 @@ clean:
 	cd apps/quakeview && make clean
 	cd apps/rotozoom && make clean
 	cd apps/sceneview && make clean
+	cd benchmarks/hash && make clean
+	cd benchmarks/membench && make clean
 
 FORCE:
 
