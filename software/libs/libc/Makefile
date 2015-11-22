@@ -25,7 +25,6 @@ SRCS=math.c \
 	stdio.c \
 	string.c \
 	dlmalloc.c \
-	sbrk.c \
 	cxx_runtime.cpp \
 	stdlib.c \
 	ashldi3.s \

@@ -34,7 +34,7 @@ clean:
 	cd libs/libos && make clean
 	cd bootrom && make clean
 	cd apps/mandelbrot && make clean
-	cd apps/plasma && make
+	cd apps/plasma && make clean
 	cd apps/quakeview && make clean
 	cd apps/rotozoom && make clean
 	cd apps/sceneview && make clean

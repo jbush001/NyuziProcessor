@@ -25,7 +25,8 @@ SRCS=schedule.c \
 	uart.c \
 	fs.c \
 	keyboard.c \
-	misc.c
+	misc.c \
+	sbrk.c
 
 OBJS := $(SRCS_TO_OBJS) 
 DEPS := $(SRCS_TO_DEPS)
