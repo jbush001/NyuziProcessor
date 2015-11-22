@@ -32,11 +32,14 @@ $(TARGET): $(BINDIR) FORCE test_verilator_version
 	make CXXFLAGS=-Wno-parentheses-equality OPT_FAST="-Os"  -C obj/ -f Vverilator_tb.mk Vverilator_tb
 	cp obj/Vverilator_tb $(TARGET)
 
+fpgalint:
+	verilator $(VERILATOR_OPTIONS) --lint-only fpga/de2-115/de2_115_top.sv
+
 core/srams.inc: $(TARGET)
 	$(TARGET) +dumpmems | ../tools/misc/extract_mems.py > core/srams.inc
 
 # Expands AUTOWIRE/AUTOINST/etc. Requires emacs and verilog-mode module installed.
-autos: FORCE
+autos: 
 	emacs --batch core/*.sv -f verilog-batch-auto -f save-buffer
 	emacs --batch testbench/*.sv  -f verilog-batch-auto -f save-buffer
 	emacs --batch fpga/common/*.sv  -f verilog-batch-auto -f save-buffer

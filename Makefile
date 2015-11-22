@@ -29,7 +29,8 @@ endif
 	
 test: all
 	cd tests/ && make test
-		
+	cd hardware && make fpgalint
+	
 clean:
 	cd tools/emulator && make clean
 	cd tools/serial_boot && make clean
