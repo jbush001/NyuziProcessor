@@ -14,6 +14,7 @@
 // limitations under the License.
 // 
 
+#include <nyuzi.h>
 #include <RenderContext.h>
 #include <schedule.h>
 #include <stdio.h>
@@ -136,7 +137,7 @@ Texture *createCheckerboardTexture()
 // All threads start execution here.
 int main()
 {
-	if (__builtin_nyuzi_read_control_reg(0) != 0)
+	if (get_current_thread_id() != 0)
 		workerThread();
 	
 	// Set up resource data

@@ -16,6 +16,7 @@
 
 #include <ctype.h>
 #include <keyboard.h>
+#include <nyuzi.h>
 #include <RenderContext.h>
 #include <schedule.h>
 #include <SIMDMath.h>
@@ -192,7 +193,7 @@ void parseCoordinateString(const char *string, float outCoord[3])
 // All threads start execution here.
 int main()
 {
-	if (__builtin_nyuzi_read_control_reg(0) != 0)
+	if (get_current_thread_id() != 0)
 		workerThread();
 	
 	// Set up render context

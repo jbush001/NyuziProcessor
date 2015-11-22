@@ -15,6 +15,7 @@
 //
 
 #include <math.h>
+#include <nyuzi.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <schedule.h>
@@ -153,7 +154,7 @@ uint32_t gPalette[NUM_PALETTE_ENTRIES];
 // All threads start here
 int main()
 {
-	int myThreadId = __builtin_nyuzi_read_control_reg(0);
+	int myThreadId = get_current_thread_id();
 	clock_t lastTime = 0;
 	
 	if (myThreadId == 0)

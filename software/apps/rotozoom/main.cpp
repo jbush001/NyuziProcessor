@@ -14,6 +14,7 @@
 // limitations under the License.
 // 
 
+#include <nyuzi.h>
 #include <schedule.h>
 #include <stdio.h>
 #include <time.h>
@@ -43,7 +44,7 @@ int main()
 	
 	startAllThreads();
 
-	int myThreadId = __builtin_nyuzi_read_control_reg(0);
+	int myThreadId = get_current_thread_id();
 	if (myThreadId == 0)
 		displayMatrix = Matrix2x2();
 
