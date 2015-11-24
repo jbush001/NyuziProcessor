@@ -150,7 +150,7 @@ typedef enum logic [4:0] {
 	CR_FAULT_HANDLER = 5'd1,
 	CR_FAULT_PC = 5'd2,
 	CR_FAULT_REASON = 5'd3,
-	CR_FLAGS = 5'd4,	// Maybe stuff some other flags here eventually
+	CR_FLAGS = 5'd4,
 	CR_FAULT_ADDRESS = 5'd5,
 	CR_CYCLE_COUNT = 5'd6,
 	CR_TLB_MISS_HANDLER = 5'd7,
