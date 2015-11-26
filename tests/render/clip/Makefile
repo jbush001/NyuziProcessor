@@ -17,7 +17,7 @@
 
 TOPDIR=../../../
 SRCS=main.cpp
-IMAGE_CHECKSUM="fa8a5b007861f82f11514a88a464f46af52ad845"
+IMAGE_CHECKSUM="16684108bc9ff9918440c910d1aed7e311b41b7b"
 
 include ../render-test.mk
 

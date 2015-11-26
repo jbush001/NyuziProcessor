@@ -27,7 +27,7 @@
 #include <stdlib.h>
 #include <Texture.h>
 #include "TextureShader.h"
-#include "crate-texture.h"
+#include "test_texture.h"
 #include "cube.h"
 
 using namespace librender;
@@ -58,7 +58,7 @@ int main()
 	context->bindVertexAttrs(&kVertices);
 
 	Texture *texture = new Texture();
-	texture->setMipSurface(0, new Surface(512, 512, (void*) kCrateTexture));
+	texture->setMipSurface(0, new Surface(128, 128, (void*) kTestTexture));
 	texture->enableBilinearFiltering(true);
 	context->bindTexture(0, texture);
 
