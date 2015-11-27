@@ -26,6 +26,6 @@ hardware/fpga/de2-115/incremental_db/
 hardware/fpga/de2-115/output_files/
 
 tools/NyuziToolchain
-tools/verilator-*
+tools/verilator
 
 
