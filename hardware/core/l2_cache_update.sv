@@ -33,8 +33,10 @@ module l2_cache_update(
 	input                                          l2r_cache_hit,
 	input logic[$clog2(`L2_WAYS * `L2_SETS) - 1:0] l2r_hit_cache_idx,
 	input                                          l2r_is_l2_fill,
+	input                                          l2r_is_restarted_flush,
 	input cache_line_data_t                        l2r_data_from_memory,
 	input                                          l2r_store_sync_success,
+	input                                          l2r_needs_writeback,
 	
 	// To l2_cache_read
 	output logic                                   l2u_write_en,
@@ -47,6 +49,7 @@ module l2_cache_update(
 	cache_line_data_t original_data;
 	logic update_data;
 	l2rsp_packet_type_t response_type;
+	logic is_completed_flush;
 	
 	assign original_data = l2r_is_l2_fill ? l2r_data_from_memory : l2r_data;
 	assign update_data = l2r_request.packet_type == L2REQ_STORE
@@ -93,6 +96,12 @@ module l2_cache_update(
 		endcase
 	end
 
+	// Check that this is either:
+	// - The first pass for a flush request and the data wasn't in the cache
+	// - The second pass for a flush request that has written its data back 
+	assign is_completed_flush = l2r_request.packet_type == L2REQ_FLUSH
+		&& (l2r_is_restarted_flush || !l2r_cache_hit || !l2r_needs_writeback);
+
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
@@ -100,9 +109,9 @@ module l2_cache_update(
 		else
 		begin
 			if (l2r_request.valid 
-				&& (l2r_cache_hit 
+				&& ((l2r_cache_hit && l2r_request.packet_type != L2REQ_FLUSH)
 				|| l2r_is_l2_fill 
-				|| l2r_request.packet_type == L2REQ_FLUSH
+				|| is_completed_flush
 				|| l2r_request.packet_type == L2REQ_DINVALIDATE
 				|| l2r_request.packet_type == L2REQ_IINVALIDATE))
 			begin

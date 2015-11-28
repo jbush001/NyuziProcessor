@@ -35,9 +35,9 @@ module l2_cache_arb(
 	output l2req_packet_t                 l2a_request,
 	output cache_line_data_t              l2a_data_from_memory,
 	output logic                          l2a_is_l2_fill,
+	output logic                          l2a_is_restarted_flush,
 	
 	// From l2_axi_bus_interface
-	input                                 l2bi_ready,
 	input l2req_packet_t                  l2bi_request,
 	input cache_line_data_t               l2bi_data_from_memory,
 	input                                 l2bi_stall,
@@ -47,8 +47,10 @@ module l2_cache_arb(
 	logic can_accept_request;
 	l2req_packet_t grant_request;
 	logic[`NUM_CORES - 1:0] grant_oh;
+	logic is_restarted_flush;
 	
-	assign can_accept_request = !l2bi_ready && !l2bi_stall;
+	assign can_accept_request = !l2bi_request.valid && !l2bi_stall;
+	assign is_restarted_flush = l2bi_request.packet_type == L2REQ_FLUSH;
 
 	genvar request_idx;
 	generate
@@ -98,11 +100,12 @@ module l2_cache_arb(
 			// Beginning of autoreset for uninitialized flops
 			l2a_data_from_memory <= '0;
 			l2a_is_l2_fill <= '0;
+			l2a_is_restarted_flush <= '0;
 			// End of automatics
 		end
 		else
 		begin
-			if (l2bi_ready)
+			if (l2bi_request.valid)
 			begin
 				// Restarted request from external bus interface
 
@@ -110,10 +113,10 @@ module l2_cache_arb(
 				// not be restarted
 				assert(l2bi_request.packet_type != L2REQ_IINVALIDATE);
 				assert(l2bi_request.packet_type != L2REQ_DINVALIDATE);
-				assert(l2bi_request.packet_type != L2REQ_FLUSH);
 					
 				l2a_request <= l2bi_request;
-				l2a_is_l2_fill <= !l2bi_collided_miss;
+				l2a_is_l2_fill <= !l2bi_collided_miss && !is_restarted_flush;
+				l2a_is_restarted_flush <= is_restarted_flush;
 				l2a_data_from_memory <= l2bi_data_from_memory;
 			end
 			else if (|grant_oh && can_accept_request)

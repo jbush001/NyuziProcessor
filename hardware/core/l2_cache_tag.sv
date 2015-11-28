@@ -29,6 +29,7 @@ module l2_cache_tag(
 	input l2req_packet_t                  l2a_request,
 	input cache_line_data_t               l2a_data_from_memory,
 	input                                 l2a_is_l2_fill,
+	input                                 l2a_is_restarted_flush,
 
 	// From l2_cache_read
 	input [`L2_WAYS - 1:0]                l2r_update_dirty_en,
@@ -48,7 +49,8 @@ module l2_cache_tag(
 	output logic                          l2t_dirty[`L2_WAYS],
 	output logic                          l2t_is_l2_fill,
 	output l2_way_idx_t                   l2t_fill_way,
-	output cache_line_data_t              l2t_data_from_memory);
+	output cache_line_data_t              l2t_data_from_memory,
+	output logic                          l2t_is_restarted_flush);
 
 	l2_addr_t l2_addr;
 	
@@ -133,6 +135,7 @@ module l2_cache_tag(
 			// Beginning of autoreset for uninitialized flops
 			l2t_data_from_memory <= '0;
 			l2t_is_l2_fill <= '0;
+			l2t_is_restarted_flush <= '0;
 			// End of automatics
 		end
 		else
@@ -140,6 +143,7 @@ module l2_cache_tag(
 			l2t_request <= l2a_request;
 			l2t_data_from_memory <= l2a_data_from_memory;
 			l2t_is_l2_fill <= l2a_is_l2_fill;
+			l2t_is_restarted_flush <= l2a_is_restarted_flush;
 		end
 	end
 endmodule

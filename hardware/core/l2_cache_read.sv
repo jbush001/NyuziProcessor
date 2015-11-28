@@ -44,6 +44,7 @@ module l2_cache_read(
 	input l2_tag_t                            l2t_tag[`L2_WAYS],
 	input                                     l2t_dirty[`L2_WAYS],
 	input                                     l2t_is_l2_fill,
+	input                                     l2t_is_restarted_flush,
 	input l2_way_idx_t                        l2t_fill_way,
 	input cache_line_data_t                   l2t_data_from_memory,
 	
@@ -59,17 +60,18 @@ module l2_cache_read(
 	output logic                              l2r_update_lru_en,
 	output l2_way_idx_t                       l2r_update_lru_hit_way,
                                              
-	// From l2_cache_write                   
+	// From l2_cache_update
 	input                                     l2u_write_en,
 	input [$clog2(`L2_WAYS * `L2_SETS) - 1:0] l2u_write_addr,
 	input cache_line_data_t                   l2u_write_data,
                                               
-	// To l2_cache_write                   
+	// To l2_cache_update
 	output l2req_packet_t                     l2r_request,
 	output cache_line_data_t                  l2r_data,	// Also to bus interface unit
 	output logic                              l2r_cache_hit,
 	output logic[$clog2(`L2_WAYS * `L2_SETS) - 1:0] l2r_hit_cache_idx,
 	output logic                              l2r_is_l2_fill,
+	output logic                              l2r_is_restarted_flush,
 	output cache_line_data_t                  l2r_data_from_memory,
 	output logic                              l2r_store_sync_success,
 	
@@ -96,7 +98,7 @@ module l2_cache_read(
 	logic is_store;
 	logic update_dirty;
 	logic update_tag;
-	logic is_flush;
+	logic is_flush_first_pass;
 	l2_way_idx_t writeback_way;
 	logic is_hit_or_miss;
 	logic is_dinvalidate;
@@ -108,8 +110,8 @@ module l2_cache_read(
 		|| l2t_request.packet_type == L2REQ_LOAD_SYNC;
 	assign is_store = l2t_request.packet_type == L2REQ_STORE 
 		|| l2t_request.packet_type == L2REQ_STORE_SYNC;
-	assign is_flush = l2t_request.packet_type == L2REQ_FLUSH;
-	assign writeback_way = is_flush ? hit_way_idx : l2t_fill_way;
+	assign writeback_way = l2t_request.packet_type == L2REQ_FLUSH 
+		? hit_way_idx : l2t_fill_way;
 	assign is_dinvalidate = l2t_request.packet_type == L2REQ_DINVALIDATE;
 
 	// 
@@ -154,8 +156,10 @@ module l2_cache_read(
 	// value depending on whether this is a write. If it is a cache hit, update the
 	// dirty bit only if this is a store.
 	//
+	assign is_flush_first_pass = l2t_request.packet_type == L2REQ_FLUSH
+		&& !l2t_is_restarted_flush;
 	assign update_dirty = l2t_request.valid && (l2t_is_l2_fill
-		|| (cache_hit && (is_store || is_flush)));
+		|| (cache_hit && (is_store || is_flush_first_pass)));
 	assign l2r_update_dirty_set = l2_addr.set_idx;
 	assign l2r_update_dirty_value = is_store;	// This is zero if this is a flush
 
@@ -224,6 +228,7 @@ module l2_cache_read(
 			l2r_data_from_memory <= '0;
 			l2r_hit_cache_idx <= '0;
 			l2r_is_l2_fill <= '0;
+			l2r_is_restarted_flush <= '0;
 			l2r_needs_writeback <= '0;
 			l2r_request <= '0;
 			l2r_store_sync_success <= '0;
@@ -245,6 +250,7 @@ module l2_cache_read(
 			l2r_needs_writeback <= l2t_dirty[writeback_way] && l2t_valid[writeback_way];
 			l2r_data_from_memory <= l2t_data_from_memory;
 			l2r_hit_cache_idx <= read_address;
+			l2r_is_restarted_flush <= l2t_is_restarted_flush;
 
 			if (l2t_request.valid && (cache_hit || l2t_is_l2_fill))
 			begin
