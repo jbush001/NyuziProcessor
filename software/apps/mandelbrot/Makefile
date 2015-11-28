@@ -31,6 +31,11 @@ $(OBJ_DIR)/mandelbrot.hex: $(OBJS)
 run: $(OBJ_DIR)/mandelbrot.hex
 	$(EMULATOR) -f 640x480 $(OBJ_DIR)/mandelbrot.hex
 
+verirun: $(OBJ_DIR)/mandelbrot.hex
+	@rm -f $(OBJ_DIR)/output.bin output.png
+	$(VERILATOR) +memdumpfile=$(OBJ_DIR)/output.bin +memdumpbase=0x200000 +memdumplen=0x12C000 +bin=$(OBJ_DIR)/mandelbrot.hex
+	@convert -depth 8 -size 640x480 rgba:$(OBJ_DIR)/output.bin output.png
+
 fpgarun: $(OBJ_DIR)/mandelbrot.hex
 	$(SERIAL_BOOT) $(SERIAL_PORT) $(OBJ_DIR)/mandelbrot.hex
 
