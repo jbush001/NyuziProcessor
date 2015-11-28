@@ -37,7 +37,7 @@
 #define PAGE_OFFSET(addr) ((addr) & (PAGE_SIZE - 1u))
 
 #ifdef DUMP_INSTRUCTION_STATS
-    #define TALLY_INSTRUCTION(type) thread->core->stat_ ## type++
+    #define TALLY_INSTRUCTION(type) thread->core->stat ## type++
 #else
     #define TALLY_INSTRUCTION(type) do { } while (0)
 #endif
@@ -104,14 +104,14 @@ struct Core
 	bool enableTracing;
 	bool cosimEnable;
 	int64_t totalInstructions;
-	uint32_t start_cycle_count;
+	uint32_t startCycleCount;
 #ifdef DUMP_INSTRUCTION_STATS
-	int64_t stat_vector_inst;
-	int64_t stat_load_inst;
-	int64_t stat_store_inst;
-	int64_t stat_branch_inst;
-	int64_t stat_imm_arith_inst;
-	int64_t stat_reg_arith_inst;
+	int64_t statVectorInst;
+	int64_t statLoadInst;
+	int64_t statStoreInst;
+	int64_t statBranchInst;
+	int64_t statImmArithInst;
+	int64_t statRegArithInst;
 #endif
 };
 
@@ -204,7 +204,7 @@ Core *initCore(uint32_t memorySize, uint32_t totalThreads, bool randomizeMemory)
 	core->faultHandlerPc = 0;
 
 	gettimeofday(&tv, NULL);
-	core->start_cycle_count = (uint32_t)(tv.tv_sec * 50000000 + tv.tv_usec * 50);
+	core->startCycleCount = (uint32_t)(tv.tv_sec * 50000000 + tv.tv_usec * 50);
 
 	return core;
 }
@@ -424,15 +424,15 @@ void dumpInstructionStats(Core *core)
 {
 	printf("%" PRId64 " total instructions\n", core->totalInstructions);
 #ifdef DUMP_INSTRUCTION_STATS
-	#define PRINT_STAT(name) printf("%s %" PRId64 " %.4g%%\n", #name, core->stat_ ## name, \
-		(double) core->stat_ ## name/ core->totalInstructions * 100);
+	#define PRINT_STAT(name) printf("%s %" PRId64 " %.4g%%\n", #name, core->stat ## name, \
+		(double) core->stat ## name/ core->totalInstructions * 100);
 
-	PRINT_STAT(vector_inst);
-	PRINT_STAT(load_inst);
-	PRINT_STAT(store_inst);
-	PRINT_STAT(branch_inst);
-	PRINT_STAT(imm_arith_inst);
-	PRINT_STAT(reg_arith_inst);
+	PRINT_STAT(VectorInst);
+	PRINT_STAT(LoadInst);
+	PRINT_STAT(StoreInst);
+	PRINT_STAT(BranchInst);
+	PRINT_STAT(ImmArithInst);
+	PRINT_STAT(RegArithInst);
 
 	#undef PRINT_STAT
 #endif
@@ -757,7 +757,7 @@ static void executeRegisterArithInst(Thread *thread, uint32_t instruction)
 		return;
 	}
 
-	TALLY_INSTRUCTION(reg_arith_inst);
+	TALLY_INSTRUCTION(RegArithInst);
 	if (op == OP_GETLANE)
 	{
 		setScalarReg(thread, destreg, thread->vectorReg[op1reg][NUM_VECTOR_LANES - 1 
@@ -775,7 +775,7 @@ static void executeRegisterArithInst(Thread *thread, uint32_t instruction)
 
 			case FMT_RA_VS:
 			case FMT_RA_VS_M:
-				TALLY_INSTRUCTION(vector_inst);
+				TALLY_INSTRUCTION(VectorInst);
 
 				// Vector compare results are packed together in the 16 low
 				// bits of a scalar register, one bit per lane.
@@ -793,7 +793,7 @@ static void executeRegisterArithInst(Thread *thread, uint32_t instruction)
 
 			case FMT_RA_VV:
 			case FMT_RA_VV_M:
-				TALLY_INSTRUCTION(vector_inst);
+				TALLY_INSTRUCTION(VectorInst);
 
 				// Vector/Vector operation
 				for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
@@ -824,7 +824,7 @@ static void executeRegisterArithInst(Thread *thread, uint32_t instruction)
 		uint32_t result[NUM_VECTOR_LANES];
 		uint32_t mask;
 
-		TALLY_INSTRUCTION(vector_inst);
+		TALLY_INSTRUCTION(VectorInst);
 		switch (fmt)
 		{
 			case FMT_RA_VS_M:
@@ -886,7 +886,7 @@ static void executeImmediateArithInst(Thread *thread, uint32_t instruction)
 	int lane;
 	uint32_t operand1;
 
-	TALLY_INSTRUCTION(imm_arith_inst);
+	TALLY_INSTRUCTION(ImmArithInst);
 	if (hasMask)
 		immValue = extractSignedBits(instruction, 15, 8);
 	else
@@ -895,7 +895,7 @@ static void executeImmediateArithInst(Thread *thread, uint32_t instruction)
 	if (op == OP_GETLANE)
 	{
 		// getlane
-		TALLY_INSTRUCTION(vector_inst);
+		TALLY_INSTRUCTION(VectorInst);
 		setScalarReg(thread, destreg, thread->vectorReg[op1reg][NUM_VECTOR_LANES - 1 - (immValue & 0xf)]);
 	}
 	else if (isCompareOp(op))
@@ -905,7 +905,7 @@ static void executeImmediateArithInst(Thread *thread, uint32_t instruction)
 		{
 			case FMT_IMM_VV:
 			case FMT_IMM_VV_M:
-				TALLY_INSTRUCTION(vector_inst);
+				TALLY_INSTRUCTION(VectorInst);
 
 				// Vector compares work a little differently than other arithmetic
 				// operations: the results are packed together in the 16 low
@@ -945,7 +945,7 @@ static void executeImmediateArithInst(Thread *thread, uint32_t instruction)
 		uint32_t result[NUM_VECTOR_LANES];
 		uint32_t mask;
 
-		TALLY_INSTRUCTION(vector_inst);
+		TALLY_INSTRUCTION(VectorInst);
 		switch (fmt)
 		{
 			case FMT_IMM_VV_M:
@@ -1190,7 +1190,7 @@ static void executeBlockLoadStoreInst(Thread *thread, uint32_t instruction)
 	uint32_t physicalAddress;
 	uint32_t *blockPtr;
 
-	TALLY_INSTRUCTION(vector_inst);
+	TALLY_INSTRUCTION(VectorInst);
 
 	// Compute mask value
 	switch (op)
@@ -1272,7 +1272,7 @@ static void executeScatterGatherInst(Thread *thread, uint32_t instruction)
 	uint32_t virtualAddress;
 	uint32_t physicalAddress;
 
-	TALLY_INSTRUCTION(vector_inst);
+	TALLY_INSTRUCTION(VectorInst);
 
 	// Compute mask value
 	switch (op)
@@ -1382,7 +1382,7 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 				struct timeval tv;
 				gettimeofday(&tv, NULL);
 				value = (uint32_t)(tv.tv_sec * 50000000 + tv.tv_usec * 50) 
-					- thread->core->start_cycle_count;
+					- thread->core->startCycleCount;
 				break;
 			}
 
@@ -1468,9 +1468,9 @@ static void executeMemoryAccessInst(Thread *thread, uint32_t instruction)
 	if (type != MEM_CONTROL_REG)	// Don't count control register transfers
 	{
 		if (extractUnsignedBits(instruction, 29, 1))
-			TALLY_INSTRUCTION(load_inst);
+			TALLY_INSTRUCTION(LoadInst);
 		else
-			TALLY_INSTRUCTION(store_inst);
+			TALLY_INSTRUCTION(StoreInst);
 	}
 
 	switch (type)
@@ -1508,7 +1508,7 @@ static void executeBranchInst(Thread *thread, uint32_t instruction)
 	bool branchTaken = false;
 	uint32_t srcReg = extractUnsignedBits(instruction, 0, 5);
 
-	TALLY_INSTRUCTION(branch_inst);
+	TALLY_INSTRUCTION(BranchInst);
 	switch (extractUnsignedBits(instruction, 25, 3))
 	{
 		case BRANCH_ALL: 
