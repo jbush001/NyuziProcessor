@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 `include "defines.sv"
 
@@ -26,8 +26,8 @@
 module l2_cache_update(
 	input                                          clk,
 	input                                          reset,
-                                               
-	// From l2_cache_read                          
+
+	// From l2_cache_read
 	input l2req_packet_t                           l2r_request,
 	input cache_line_data_t                        l2r_data,
 	input                                          l2r_cache_hit,
@@ -37,7 +37,7 @@ module l2_cache_update(
 	input cache_line_data_t                        l2r_data_from_memory,
 	input                                          l2r_store_sync_success,
 	input                                          l2r_needs_writeback,
-	
+
 	// To l2_cache_read
 	output logic                                   l2u_write_en,
 	output [$clog2(`L2_WAYS * `L2_SETS) - 1:0]     l2u_write_addr,
@@ -50,11 +50,11 @@ module l2_cache_update(
 	logic update_data;
 	l2rsp_packet_type_t response_type;
 	logic is_completed_flush;
-	
+
 	assign original_data = l2r_is_l2_fill ? l2r_data_from_memory : l2r_data;
 	assign update_data = l2r_request.packet_type == L2REQ_STORE
 		|| (l2r_request.packet_type == L2REQ_STORE_SYNC && l2r_store_sync_success);
-	
+
 	genvar byte_lane;
 	generate
 		for (byte_lane = 0; byte_lane < `CACHE_LINE_BYTES; byte_lane++)
@@ -64,9 +64,9 @@ module l2_cache_update(
 				: original_data[byte_lane * 8+:8];
 		end
 	endgenerate
-	
+
 	assign l2u_write_en = l2r_request.valid
-		&& (l2r_is_l2_fill || (l2r_cache_hit && (l2r_request.packet_type == L2REQ_STORE 
+		&& (l2r_is_l2_fill || (l2r_cache_hit && (l2r_request.packet_type == L2REQ_STORE
 		|| l2r_request.packet_type == L2REQ_STORE_SYNC)));
 	assign l2u_write_addr = l2r_hit_cache_idx;
 
@@ -77,20 +77,20 @@ module l2_cache_update(
 			L2REQ_LOAD,
 			L2REQ_LOAD_SYNC:
 				response_type = L2RSP_LOAD_ACK;
-				
+
 			L2REQ_STORE,
 			L2REQ_STORE_SYNC:
 				response_type = L2RSP_STORE_ACK;
-				
+
 			L2REQ_FLUSH:
 				response_type = L2RSP_FLUSH_ACK;
-				
+
 			L2REQ_IINVALIDATE:
 				response_type = L2RSP_IINVALIDATE_ACK;
-				
+
 			L2REQ_DINVALIDATE:
 				response_type = L2RSP_DINVALIDATE_ACK;
-				
+
 			default:
 				response_type = L2RSP_LOAD_ACK;
 		endcase
@@ -98,7 +98,7 @@ module l2_cache_update(
 
 	// Check that this is either:
 	// - The first pass for a flush request and the data wasn't in the cache
-	// - The second pass for a flush request that has written its data back 
+	// - The second pass for a flush request that has written its data back
 	assign is_completed_flush = l2r_request.packet_type == L2REQ_FLUSH
 		&& (l2r_is_restarted_flush || !l2r_cache_hit || !l2r_needs_writeback);
 
@@ -108,9 +108,9 @@ module l2_cache_update(
 			l2_response <= 0;
 		else
 		begin
-			if (l2r_request.valid 
+			if (l2r_request.valid
 				&& ((l2r_cache_hit && l2r_request.packet_type != L2REQ_FLUSH)
-				|| l2r_is_l2_fill 
+				|| l2r_is_l2_fill
 				|| is_completed_flush
 				|| l2r_request.packet_type == L2REQ_DINVALIDATE
 				|| l2r_request.packet_type == L2REQ_IINVALIDATE))

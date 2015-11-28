@@ -1,30 +1,30 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 `include "defines.sv"
 
 //
-// A single instruction pipeline with L1 instruction & data caches and L2 
+// A single instruction pipeline with L1 instruction & data caches and L2
 // interface logic.
-// 
+//
 
 module core
 	#(parameter core_id_t CORE_ID = '0,
 	parameter RESET_PC = '0)
-	
+
 	(input                                 clk,
 	input                                  reset,
 	input[`THREADS_PER_CORE - 1:0]         ny_thread_enable,
@@ -39,7 +39,7 @@ module core
 	output ioreq_packet_t                  ior_request,
 	input                                  ia_ready,
 	input iorsp_packet_t                   ia_response,
-	
+
 	// Performance events
 	output logic [`CORE_PERF_EVENTS - 1:0] core_perf_events);
 
@@ -306,7 +306,7 @@ module core
 	thread_idx_t	wb_writeback_thread_idx;// From writeback_stage of writeback_stage.v
 	vector_t	wb_writeback_value;	// From writeback_stage of writeback_stage.v
 	// End of automatics
-	
+
 	logic interrupt_pending;
 
 	always_ff @(posedge clk, posedge reset)
@@ -318,10 +318,10 @@ module core
 		else if (wb_interrupt_ack)
 			interrupt_pending <= 0;
 	end
-	
+
 	thread_idx_t interrupt_thread_idx = 0;	// XXX hard coded
 
-	// 
+	//
 	// Instruction Execution Pipeline
 	//
 	ifetch_tag_stage #(.RESET_PC(RESET_PC)) ifetch_tag_stage(.*);
@@ -342,7 +342,7 @@ module core
 	control_registers #(.CORE_ID(CORE_ID)) control_registers(.*);
 	l2_cache_interface #(.CORE_ID(CORE_ID)) l2_cache_interface(.*);
 	io_request_queue #(.CORE_ID(CORE_ID)) io_request_queue(.*);
-	
+
 	assign core_perf_events = {
 		perf_dtlb_miss,
 		perf_dcache_hit,

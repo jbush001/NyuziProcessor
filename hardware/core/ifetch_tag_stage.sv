@@ -1,27 +1,27 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 `include "defines.sv"
 
 //
 // Instruction Pipeline - Instruction Fetch Tag Stage
 // - Selects a program counter from one of the threads to fetch from the
-//   instruction cache. It tries to fetch an instruction from a different 
+//   instruction cache. It tries to fetch an instruction from a different
 //   thread every cycle whenever possible.
-// - Reads instruction cache tag memory to determine if the cache line is 
+// - Reads instruction cache tag memory to determine if the cache line is
 //   resident.
 // - Reads translation lookaside buffer to translate from virtual to physical
 //   address.
@@ -32,7 +32,7 @@ module ifetch_tag_stage
 
 	(input                              clk,
 	input                               reset,
-	
+
 	// To ifetch_data_stage
 	output logic                        ift_instruction_requested,
 	output l1i_addr_t                   ift_pc_paddr,
@@ -100,15 +100,15 @@ module ifetch_tag_stage
 
 	//
 	// Pick which thread to fetch next.
-	// Only consider threads that are not blocked, but do not skip threads that 
-	// are being rolled back in the current cycle because the rollback signals 
-	// have a long combinational path that is a critical path for clock speed. 
-	// Instead, when the selected thread is rolled back in the same cycle, 
-	// invalidate the instruction by deasserting ift_instruction_requested. This 
+	// Only consider threads that are not blocked, but do not skip threads that
+	// are being rolled back in the current cycle because the rollback signals
+	// have a long combinational path that is a critical path for clock speed.
+	// Instead, when the selected thread is rolled back in the same cycle,
+	// invalidate the instruction by deasserting ift_instruction_requested. This
 	// wastes a cycle, but this should be infrequent.
 	//
 	assign can_fetch_thread_bitmap = ts_fetch_en & ~icache_wait_threads;
-	
+
 	// If an instruction is updating the TLB, can't access it to translate the next
 	// address, so skip instruction fetch this cycle.
 	assign cache_fetch_en = |can_fetch_thread_bitmap && !dt_update_itlb_en
@@ -141,7 +141,7 @@ module ifetch_tag_stage
 			end
 		end
 	endgenerate
-	
+
 	assign pc_to_fetch = next_program_counter[selected_thread_idx];
 
 	//
@@ -156,7 +156,7 @@ module ifetch_tag_stage
 			logic line_valid[`L1I_SETS];
 
 			sram_1r1w #(
-				.DATA_WIDTH($bits(l1i_tag_t)), 
+				.DATA_WIDTH($bits(l1i_tag_t)),
 				.SIZE(`L1I_SETS),
 				.READ_DURING_WRITE("NEW_DATA")
 			) sram_tags(
@@ -175,11 +175,11 @@ module ifetch_tag_stage
 					for (int set_idx = 0; set_idx < `L1I_SETS; set_idx++)
 						line_valid[set_idx] <= 0;
 				end
-				else 
+				else
 				begin
 					if (l2i_itag_update_en[way_idx])
 						line_valid[l2i_itag_update_set] <= l2i_itag_update_valid;
-					
+
 					// Fetch cache line state for pipeline
 					if (l2i_itag_update_en[way_idx] && l2i_itag_update_set == pc_to_fetch.set_idx)
 						ift_valid[way_idx] <= l2i_itag_update_valid;	// Bypass
@@ -246,7 +246,7 @@ module ifetch_tag_stage
 		.access_update_way(ifd_update_lru_way),
 		.*);
 
-	// 
+	//
 	// Track which threads are waiting on instruction cache misses. Avoid fetching
 	// them until the L2 cache fills the miss. If a rollback occurs while a thread
 	// is waiting, wait until that miss to be filled by the L2 cache. This avoids
@@ -279,12 +279,12 @@ module ifetch_tag_stage
 			last_selected_pc <= pc_to_fetch;
 			ift_thread_idx <= selected_thread_idx;
 			ift_instruction_requested <= cache_fetch_en
-				&& !((ifd_cache_miss || ifd_near_miss) && ifd_cache_miss_thread_idx == selected_thread_idx)	
+				&& !((ifd_cache_miss || ifd_near_miss) && ifd_cache_miss_thread_idx == selected_thread_idx)
 				&& !(wb_rollback_en && wb_rollback_thread_idx == selected_thread_idx);
 			last_selected_thread_oh <= selected_thread_oh;
 		end
 	end
-	
+
 	assign ift_pc_paddr = {ppage_idx, last_selected_pc[31 - `PAGE_NUM_BITS:0]};
 	assign ift_pc_vaddr = last_selected_pc;
 endmodule

@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 //
 // Generate internal and external synchronization signals for VGA display.
@@ -22,8 +22,8 @@
 module vga_timing_generator(
 	input                   clk,  // clk is expected to be 50Mhz
 	input                   reset,
-	output logic            vga_vs, 
-	output logic            vga_hs, 
+	output logic            vga_vs,
+	output logic            vga_hs,
 	output                  in_visible_region,
 	output logic            pixel_en,
 	output                  new_frame);
@@ -57,7 +57,7 @@ module vga_timing_generator(
 	logic[10:0] vertical_counter;
 	logic hvisible_end;
 	logic vvisible_end;
-	
+
 	assign in_visible_region = hvisible && vvisible;
 	assign hvisible_end = horizontal_counter == HVISIBLE_END;
 	assign vvisible_end = vertical_counter == VVISIBLE_END;
@@ -95,7 +95,7 @@ module vga_timing_generator(
 						vvisible <= 0;
 						vertical_counter <= 0;
 					end
-					else 
+					else
 						vertical_counter <= vertical_counter + 11'd1;
 				end
 				else
@@ -107,7 +107,7 @@ module vga_timing_generator(
 					vga_vs <= 1;
 				else if (vertical_counter == VVISIBLE_START)
 					vvisible <= 1;
-	
+
 				if (horizontal_counter == HSYNC_START)
 					vga_hs <= 0;
 				else if (horizontal_counter == HSYNC_END)

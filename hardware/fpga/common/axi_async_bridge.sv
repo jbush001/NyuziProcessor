@@ -1,21 +1,21 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 //
-// Asynchronous AXI->AXI bridge.  This safely transfers AXI requests and 
+// Asynchronous AXI->AXI bridge.  This safely transfers AXI requests and
 // responses between two clock domains running at different speeds.
 //
 
@@ -24,7 +24,7 @@ module axi_async_bridge
 	parameter DATA_WIDTH = 32)
 
 	(input                      reset,
-	
+
 	// Slave Interface (from a master)
 	input                       clk_s,
 	axi4_interface.slave        axi_bus_s,
@@ -55,7 +55,7 @@ module axi_async_bridge
 
 	assign axi_bus_s.s_awready = !write_address_full;
 	assign axi_bus_m.m_awvalid = !write_address_empty;
-	
+
 	//
 	// Write data from master->slave
 	//
@@ -72,16 +72,16 @@ module axi_async_bridge
 		.read_enable(!write_data_empty && axi_bus_m.s_wready),
 		.read_data({axi_bus_m.m_wdata, axi_bus_m.m_wlast}),
 		.empty(write_data_empty));
-	
+
 	assign axi_bus_s.s_wready = !write_data_full;
 	assign axi_bus_m.m_wvalid = !write_data_empty;
-	
+
 	//
 	// Write response from slave->master
 	//
 	logic write_response_full;
 	logic write_response_empty;
-	
+
 	async_fifo #(1, CONTROL_FIFO_LENGTH) write_response_fifo(
 		.reset(reset),
 		.write_clock(clk_m),
@@ -95,8 +95,8 @@ module axi_async_bridge
 
 	assign axi_bus_s.s_bvalid = !write_response_empty;
 	assign axi_bus_m.m_bready = !write_response_full;
-	
-	// 
+
+	//
 	// Read address from master->slave
 	//
 	logic read_address_full;
@@ -116,12 +116,12 @@ module axi_async_bridge
 	assign axi_bus_s.s_arready = !read_address_full;
 	assign axi_bus_m.m_arvalid = !read_address_empty;
 
-	// 
+	//
 	// Read data from slave->master
 	//
 	logic read_data_full;
 	logic read_data_empty;
-	
+
 	async_fifo #(DATA_WIDTH, DATA_FIFO_LENGTH) read_data_fifo(
 		.reset(reset),
 		.write_clock(clk_m),
@@ -132,7 +132,7 @@ module axi_async_bridge
 		.read_enable(!read_data_empty && axi_bus_s.m_rready),
 		.read_data(axi_bus_s.s_rdata),
 		.empty(read_data_empty));
-	
+
 	assign axi_bus_m.m_rready = !read_data_full;
 	assign axi_bus_s.s_rvalid = !read_data_empty;
 endmodule

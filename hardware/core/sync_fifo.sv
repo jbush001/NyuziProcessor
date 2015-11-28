@@ -1,34 +1,34 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 `include "defines.sv"
 
 //
 // First-in, first-out queue, with synchronous read/write
 // - SIZE must be a power of two and greater than or equal to 4.
-// - almost_full asserts when there are ALMOST_FULL_THRESHOLD or more entries 
+// - almost_full asserts when there are ALMOST_FULL_THRESHOLD or more entries
 //   queued.
-// - almost_empty asserts when there are ALMOST_EMPTY_THRESHOLD or fewer 
+// - almost_empty asserts when there are ALMOST_EMPTY_THRESHOLD or fewer
 //   entries queued.
-// - almost_full asserts when full is asserted, as does almost_empty 
-//   when empty is asserted. 
-// - flush takes precedence over enqueue/dequeue if it is asserted 
+// - almost_full asserts when full is asserted, as does almost_empty
+//   when empty is asserted.
+// - flush takes precedence over enqueue/dequeue if it is asserted
 //   simultaneously. It is synchronous, unlike reset.
-// - It is not legal to assert enqueue when the FIFO is full or dequeue when it 
-//   is empty. This will trigger an error in the simulator and have incorrect 
+// - It is not legal to assert enqueue when the FIFO is full or dequeue when it
+//   is empty. This will trigger an error in the simulator and have incorrect
 //   behavior in synthesis.
 //
 
@@ -42,7 +42,7 @@ module sync_fifo
 	input                        reset,
 	input                        flush_en,	// flush is synchronous, unlike reset
 	output logic                 full,
-	output logic                 almost_full,	
+	output logic                 almost_full,
 	input                        enqueue_en,
 	input [WIDTH - 1:0]          value_i,
 	output logic                 empty,
@@ -114,16 +114,16 @@ module sync_fifo
 					tail <= tail + 1;
 					data[tail] <= value_i;
 				end
-				
+
 				if (dequeue_en)
 				begin
 					assert(!empty);
 					head <= head + 1;
 				end
-				
+
 				if (enqueue_en && !dequeue_en)
 					count <= count + 1;
-				else if (dequeue_en && !enqueue_en)	
+				else if (dequeue_en && !enqueue_en)
 					count <= count - 1;
 			end
 		end

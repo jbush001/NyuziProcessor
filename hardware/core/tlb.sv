@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 `include "defines.sv"
 
@@ -85,27 +85,27 @@ module tlb
 			logic entry_valid[NUM_SETS];
 			logic[`ASID_WIDTH - 1:0] way_asid;
 			logic way_global;
-		
+
 			sram_1r1w #(
-				.SIZE(NUM_SETS), 
+				.SIZE(NUM_SETS),
 				.DATA_WIDTH(`PAGE_NUM_BITS * 2 + 3 + `ASID_WIDTH),
 				.READ_DURING_WRITE("NEW_DATA")
 			) tlb_paddr_sram(
 				.read_en(tlb_read_en),
 				.read_addr(request_set_idx),
-				.read_data({way_vpage_idx, 
-					way_asid, 
-					way_ppage_idx[way_idx], 
-					way_writable[way_idx], 
-					way_supervisor[way_idx], 
+				.read_data({way_vpage_idx,
+					way_asid,
+					way_ppage_idx[way_idx],
+					way_writable[way_idx],
+					way_supervisor[way_idx],
 					way_global}),
 				.write_en(way_update_oh[way_idx]),
 				.write_addr(update_set_idx),
-				.write_data({request_vpage_idx_latched, 
-					request_asid_latched, 
-					update_ppage_idx_latched, 
-					update_writable_latched, 
-					update_supervisor_latched, 
+				.write_data({request_vpage_idx_latched,
+					request_asid_latched,
+					update_ppage_idx_latched,
+					update_writable_latched,
+					update_supervisor_latched,
 					update_global_latched}),
 				.*);
 
@@ -129,7 +129,7 @@ module tlb
 						way_valid <= entry_valid[request_set_idx];
 					else
 						way_valid <= 0;
-						
+
 					if (invalidate_all_en)
 					begin
 						for (int set_idx = 0; set_idx < NUM_SETS; set_idx++)
@@ -139,13 +139,13 @@ module tlb
 						entry_valid[update_set_idx] <= update_valid;
 				end
 			end
-				
-			assign way_hit_oh[way_idx] = way_valid 
+
+			assign way_hit_oh[way_idx] = way_valid
 				&& way_vpage_idx == request_vpage_idx_latched
 				&& (way_asid == request_asid_latched || way_global);
 		end
 	endgenerate
-	
+
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
@@ -167,7 +167,7 @@ module tlb
 			assert($onehot0({lookup_en, update_en, invalidate_en, invalidate_all_en}));
 			if (tlb_read_en)
 				request_vpage_idx_latched <= request_vpage_idx;
-				
+
 			update_en_latched <= update_en;
 			invalidate_en_latched <= invalidate_en;
 			update_ppage_idx_latched <= update_ppage_idx;
@@ -192,13 +192,13 @@ module tlb
 		begin
 			if (way_hit_oh[i])
 			begin
-				lookup_ppage_idx |= way_ppage_idx[i]; 
+				lookup_ppage_idx |= way_ppage_idx[i];
 				lookup_writable |= way_writable[i];
 				lookup_supervisor |= way_supervisor[i];
 			end
 		end
 	end
-	
+
 	always_comb
 	begin
 		if (update_en_latched || invalidate_en_latched)
@@ -214,7 +214,7 @@ module tlb
 
 	// If there is an invalidate, clear the valid bit
 	assign update_valid = update_en_latched;
-	
+
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)

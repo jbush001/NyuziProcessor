@@ -1,22 +1,22 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 //
 // Serial receive logic
-// BAUD_DIVIDE should be: clk rate / (target baud rate * 8) 
+// BAUD_DIVIDE should be: clk rate / (target baud rate * 8)
 //
 
 module uart_receive
@@ -40,7 +40,7 @@ module uart_receive
 	receive_state_t state_nxt;
 	logic[SAMPLE_COUNT_WIDTH - 1:0] sample_count_ff;
 	logic[SAMPLE_COUNT_WIDTH - 1:0] sample_count_nxt;
-	logic[7:0] shift_register;	
+	logic[7:0] shift_register;
 	logic[3:0] bit_count_ff;
 	logic[3:0] bit_count_nxt;
 	logic do_shift;
@@ -65,7 +65,7 @@ module uart_receive
 		sample_count_nxt = sample_count_ff;
 		rx_char_valid = 0;
 		do_shift = 0;
-		
+
 		unique case (state_ff)
 			STATE_WAIT_START:
 			begin
@@ -112,7 +112,7 @@ module uart_receive
 			end
 		endcase
 	end
-	
+
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)

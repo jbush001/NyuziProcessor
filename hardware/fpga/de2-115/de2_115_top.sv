@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 `include "defines.sv"
 
@@ -29,23 +29,23 @@ module de2_115_top(
 	output logic[6:0]           hex1,
 	output logic[6:0]           hex2,
 	output logic[6:0]           hex3,
-	
+
 	// UART
 	output                      uart_tx,
 	input                       uart_rx,
 
-	// SDRAM	
+	// SDRAM
 	output                      dram_clk,
-	output                      dram_cke, 
-	output                      dram_cs_n, 
-	output                      dram_ras_n, 
-	output                      dram_cas_n, 
+	output                      dram_cke,
+	output                      dram_cs_n,
+	output                      dram_ras_n,
+	output                      dram_cas_n,
 	output                      dram_we_n,
-	output [1:0]                dram_ba,	
+	output [1:0]                dram_ba,
 	output [12:0]               dram_addr,
 	output [3:0]                dram_dqm,
 	inout [31:0]                dram_dq,
-	
+
 	// VGA
 	output [7:0]                vga_r,
 	output [7:0]                vga_g,
@@ -55,13 +55,13 @@ module de2_115_top(
 	output                      vga_hs,
 	output                      vga_vs,
 	output                      vga_sync_n,
-	
+
 	// SD card
 	output                      sd_clk,
-	inout                       sd_cmd,	
+	inout                       sd_cmd,
 	inout[3:0]                  sd_dat,
-	
-	// PS/2 
+
+	// PS/2
 	inout                       ps2_clk,
 	inout                       ps2_data);
 
@@ -98,7 +98,7 @@ module de2_115_top(
 	scalar_t sdcard_read_data;
 	scalar_t gpio_read_data;
 	scalar_t ps2_read_data;
-	
+
 	assign clk = clk50;
 
 	/* nyuzi AUTO_TEMPLATE(
@@ -120,7 +120,7 @@ module de2_115_top(
 						.clk		(clk),
 						.reset		(reset),
 						.io_read_data	(io_read_data));
-	
+
 	axi_interconnect #(.M1_BASE_ADDRESS(BOOT_ROM_BASE)) axi_interconnect(
 		/*AUTOINST*/
 									     // Interfaces
@@ -149,24 +149,24 @@ module de2_115_top(
 									    // Inputs
 									    .clk		(clk),
 									    .reset		(reset));
-		
+
 	/* sdram_controller AUTO_TEMPLATE(
 		.clk(clk),
 		.axi_bus(axi_bus_m0.slave),);
 	*/
 	sdram_controller #(
-			.DATA_WIDTH(32), 
-			.ROW_ADDR_WIDTH(13), 
+			.DATA_WIDTH(32),
+			.ROW_ADDR_WIDTH(13),
 			.COL_ADDR_WIDTH(10),
 
 			// 50 Mhz = 20ns clock.  Each value is clocks of delay minus one.
 			// Timing values based on datasheet for A3V64S40ETP SDRAM parts
 			// on the DE2-115 board.
-			.T_REFRESH(390),          // 64 ms / 8192 rows = 7.8125 uS  
-			.T_POWERUP(10000),        // 200 us		
-			.T_ROW_PRECHARGE(1),      // 21 ns	
+			.T_REFRESH(390),          // 64 ms / 8192 rows = 7.8125 uS
+			.T_POWERUP(10000),        // 200 us
+			.T_ROW_PRECHARGE(1),      // 21 ns
 			.T_AUTO_REFRESH_CYCLE(3), // 75 ns
-			.T_RAS_CAS_DELAY(1),      // 21 ns	
+			.T_RAS_CAS_DELAY(1),      // 21 ns
 			.T_CAS_LATENCY(1)		  // 21 ns (2 cycles)
 		) sdram_controller(
 			/*AUTOINST*/
@@ -198,12 +198,12 @@ module de2_115_top(
 	logic capture_enable;
 	logic trigger;
 	logic[31:0] event_count;
-	
+
 	assign capture_data = {};
 	assign capture_enable = 1;
 	assign trigger = event_count == 120;
 
-	logic_analyzer #(.CAPTURE_WIDTH_BITS($bits(capture_data)), 
+	logic_analyzer #(.CAPTURE_WIDTH_BITS($bits(capture_data)),
 		.CAPTURE_SIZE(128),
 		.BAUD_DIVIDE(CLOCK_RATE / UART_BAUD)) logic_analyzer(.*);
 
@@ -214,7 +214,7 @@ module de2_115_top(
 		else if (capture_enable)
 			event_count <= event_count + 1;
 	end
-`else	
+`else
 	uart #(.BASE_ADDRESS(24), .BAUD_DIVIDE(CLOCK_RATE / UART_BAUD)) uart(
 		.io_read_data(uart_read_data),
 		.*);
@@ -241,7 +241,7 @@ module de2_115_top(
 
 	assign fb_new_base = io_write_data;
 	assign fb_base_update_en = io_write_en && io_address == 'h28;
-					  
+
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)

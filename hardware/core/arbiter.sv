@@ -1,26 +1,26 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 //
 // Round robin arbiter
 // Units that want to access a shared resource assert their bit in the 'request'
 // bitmap. The arbiter picks a unit and sets the appropriate bit in the one hot
-// signal grant_oh. This does not register grant_oh, which is valid the same 
-// cycle as the request. The update_lru signal indicates the granted unit has 
-// used the resource and should not receive access again until other requestors 
+// signal grant_oh. This does not register grant_oh, which is valid the same
+// cycle as the request. The update_lru signal indicates the granted unit has
+// used the resource and should not receive access again until other requestors
 // have had a turn.
 //
 
@@ -46,9 +46,9 @@ module arbiter
 			for (int priority_idx = 0; priority_idx < NUM_REQUESTERS; priority_idx++)
 			begin
 				logic is_granted;
-				
+
 				is_granted = request[grant_idx] & priority_oh[priority_idx];
-				for (logic[BIT_IDX_WIDTH - 1:0] bit_idx = priority_idx[BIT_IDX_WIDTH - 1:0]; 
+				for (logic[BIT_IDX_WIDTH - 1:0] bit_idx = priority_idx[BIT_IDX_WIDTH - 1:0];
 					bit_idx != grant_idx[BIT_IDX_WIDTH - 1:0]; bit_idx++)
 				begin
 					is_granted &= !request[bit_idx];
@@ -60,7 +60,7 @@ module arbiter
 	end
 
 	// rotate left
-	assign priority_oh_nxt = {grant_oh[NUM_REQUESTERS - 2:0], 
+	assign priority_oh_nxt = {grant_oh[NUM_REQUESTERS - 2:0],
 		grant_oh[NUM_REQUESTERS - 1]};
 
 	always_ff @(posedge clk, posedge reset)

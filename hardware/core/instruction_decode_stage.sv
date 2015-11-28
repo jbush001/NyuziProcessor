@@ -1,29 +1,29 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 `include "defines.sv"
 
 //
 // Instruction Pipeline - Instruction Decode Stage
 // Populate the decoded_instruction_t structure with fields from
-// the instruction. The structure contains control fields will be 
+// the instruction. The structure contains control fields will be
 // used later in the pipeline.
 //
 // Register port to operand mapping
-//                                               store 
+//                                               store
 //       format           op1     op2    mask    value
 // +-------------------+-------+-------+-------+-------+
 // | R - scalar/scalar |   s1  |   s2  |       |       |
@@ -42,7 +42,7 @@
 module instruction_decode_stage(
 	input                         clk,
 	input                         reset,
-	
+
 	// From ifetch_data_stage
 	input                         ifd_instruction_valid,
 	input scalar_t                ifd_instruction,
@@ -56,7 +56,7 @@ module instruction_decode_stage(
 	output decoded_instruction_t  id_instruction,
 	output logic                  id_instruction_valid,
 	output thread_idx_t           id_thread_idx,
-	
+
 	// From writeback_stage
 	input                         wb_rollback_en,
 	input thread_idx_t            wb_rollback_thread_idx);
@@ -72,9 +72,9 @@ module instruction_decode_stage(
 		IMM_24_10, // Unmasked memory access
 		IMM_24_5   // Branch offset
 	} imm_loc_t;
-	
+
 	typedef enum logic[1:0] {
-		SCLR1_NONE,	
+		SCLR1_NONE,
 		SCLR1_14_10,
 		SCLR1_4_0
 	} scalar1_loc_t;
@@ -118,9 +118,9 @@ module instruction_decode_stage(
 	logic is_syscall;
 
 	// I originally tried to structure the instruction set so that this could
-	// determine the format of the instruction from the first 7 bits. Those 
-	// index into this ROM table that returns the decoded information. This 
-	// has become less true as the instruction set has evolved. Also, synthesis 
+	// determine the format of the instruction from the first 7 bits. Those
+	// index into this ROM table that returns the decoded information. This
+	// has become less true as the instruction set has evolved. Also, synthesis
 	// tools just turn this into random logic. Should revisit this at some point.
 	always_comb
 	begin
@@ -138,7 +138,7 @@ module instruction_decode_stage(
 			7'b0_010_???: dlut_out = {F, T, T, IMM_22_15, SCLR1_4_0, SCLR2_14_10,    T, F, F, T, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, F, F};
 			7'b0_100_???: dlut_out = {F, T, T, IMM_22_10, SCLR1_4_0, SCLR2_NONE,       F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
 			7'b0_101_???: dlut_out = {F, T, T, IMM_22_15, SCLR1_4_0, SCLR2_14_10,    F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, F, F};
-			
+
 			// Format M (memory)
 			// Store
 			7'b10_0_0000: dlut_out = {F, F, F, IMM_24_10, SCLR1_4_0, SCLR2_9_5,     F, F, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
@@ -165,7 +165,7 @@ module instruction_decode_stage(
 			7'b10_1_1000: dlut_out = {F, T, T, IMM_24_15, SCLR1_4_0, SCLR2_14_10, T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, F, F};
 			7'b10_1_1101: dlut_out = {F, T, T, IMM_24_10, SCLR1_4_0, SCLR2_NONE,    T, T, F, T, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
 			7'b10_1_1110: dlut_out = {F, T, T, IMM_24_15, SCLR1_4_0, SCLR2_14_10, T, T, F, T, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, F, F};
-			
+
 			// Format C (cache control)
 			7'b1110_000: dlut_out = {F, F, F,  IMM_24_15, SCLR1_4_0, SCLR2_9_5,  F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
 			7'b1110_001: dlut_out = {F, F, F,  IMM_24_15, SCLR1_4_0, SCLR2_NONE,  F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
@@ -175,7 +175,7 @@ module instruction_decode_stage(
 			7'b1110_101: dlut_out = {F, F, F,  IMM_24_15, SCLR1_4_0, SCLR2_NONE,  F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
 			7'b1110_110: dlut_out = {F, F, F,  IMM_24_15, SCLR1_NONE, SCLR2_NONE, F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
 			7'b1110_111: dlut_out = {F, F, F,  IMM_24_15, SCLR1_4_0, SCLR2_9_5,  F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
-			
+
 			// Format B (branch)
 			7'b1111_000: dlut_out = {F, F, F, IMM_24_5, SCLR1_4_0, SCLR2_NONE,   F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
 			7'b1111_001: dlut_out = {F, F, F, IMM_24_5, SCLR1_4_0, SCLR2_NONE,   F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
@@ -190,17 +190,17 @@ module instruction_decode_stage(
 			default: dlut_out = {T, F, F, IMM_ZERO, SCLR1_NONE, SCLR2_NONE, F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
 		endcase
 	end
-	
+
 	assign is_fmt_r = ifd_instruction[31:29] == 3'b110;	// register arithmetic
 	assign is_fmt_i = ifd_instruction[31] == 1'b0;	// immediate arithmetic
 	assign is_fmt_m = ifd_instruction[31:30] == 2'b10;
 	assign is_getlane = (is_fmt_r || is_fmt_i) && alu_op == OP_GETLANE;
-	
+
 	assign is_syscall = is_fmt_r && ifd_instruction[25:20] == OP_SYSCALL;
 	assign is_nop = ifd_instruction == `INSTRUCTION_NOP;
 	assign is_legal_instruction = !dlut_out.illegal && !ifd_alignment_fault && !ifd_tlb_miss
 		&& !ifd_supervisor_fault;
-	
+
 	assign decoded_instr_nxt.is_syscall = is_syscall;
 	assign decoded_instr_nxt.ifetch_supervisor_fault = ifd_supervisor_fault;
 	assign decoded_instr_nxt.illegal = dlut_out.illegal;
@@ -208,7 +208,7 @@ module instruction_decode_stage(
 	assign decoded_instr_nxt.tlb_miss = ifd_tlb_miss;
 	assign decoded_instr_nxt.has_scalar1 = dlut_out.scalar1_loc != SCLR1_NONE && !is_nop
 		&& is_legal_instruction && !is_syscall;
-	always_comb 
+	always_comb
 	begin
 		case (dlut_out.scalar1_loc)
 			SCLR1_14_10:  decoded_instr_nxt.scalar_sel1 = ifd_instruction[14:10];
@@ -221,17 +221,17 @@ module instruction_decode_stage(
 
 	// XXX: assigning this directly to decoded_instr_nxt.scalar_sel2 causes Verilator issues when
 	// other blocks read it. Added another signal to work around this.
-	always_comb 
+	always_comb
 	begin
 		case (dlut_out.scalar2_loc)
-			SCLR2_14_10: scalar_sel2 = ifd_instruction[14:10];	
+			SCLR2_14_10: scalar_sel2 = ifd_instruction[14:10];
 			SCLR2_19_15: scalar_sel2 = ifd_instruction[19:15];
 			SCLR2_9_5: scalar_sel2 = ifd_instruction[9:5];
 			SCLR2_PC: scalar_sel2 = `REG_PC;
 			default: scalar_sel2 = 0;
 		endcase
 	end
-	
+
 	assign decoded_instr_nxt.scalar_sel2 = scalar_sel2;
 	assign decoded_instr_nxt.has_vector1 = dlut_out.has_vector1 && !is_nop && is_legal_instruction
 		&& !is_syscall;
@@ -248,7 +248,7 @@ module instruction_decode_stage(
 
 	assign decoded_instr_nxt.has_dest = dlut_out.has_dest && !is_nop && is_legal_instruction
 		&& !is_syscall;
-	
+
 	assign decoded_instr_nxt.dest_is_vector = dlut_out.dest_is_vector && !is_compare
 		&& !is_getlane;
 	assign decoded_instr_nxt.dest_reg = dlut_out.is_call ? `REG_RA : ifd_instruction[9:5];
@@ -275,7 +275,7 @@ module instruction_decode_stage(
 			decoded_instr_nxt.op1_src = OP1_SRC_PC;
 		else
 			decoded_instr_nxt.op1_src = OP1_SRC_SCALAR1;
-			
+
 		if (dlut_out.op2_src == OP2_SRC_SCALAR2 && scalar_sel2 == `REG_PC)
 			decoded_instr_nxt.op2_src = OP2_SRC_PC;
 		else
@@ -298,7 +298,7 @@ module instruction_decode_stage(
 	assign decoded_instr_nxt.is_branch = ifd_instruction[31:28] == 4'b1111
 		&& is_legal_instruction;
 	assign decoded_instr_nxt.pc = ifd_pc;
-	
+
 	always_comb
 	begin
 		if (dlut_out.illegal || ifd_alignment_fault || ifd_tlb_miss || ifd_supervisor_fault
@@ -306,7 +306,7 @@ module instruction_decode_stage(
 			decoded_instr_nxt.pipeline_sel = PIPE_SCYCLE_ARITH;
 		else if (is_fmt_r || is_fmt_i)
 		begin
-			if (alu_op[5] || alu_op == OP_MULL_I || alu_op == OP_MULH_U 
+			if (alu_op[5] || alu_op == OP_MULL_I || alu_op == OP_MULH_U
 				 || alu_op == OP_MULH_I || alu_op == OP_FTOI)
 				decoded_instr_nxt.pipeline_sel = PIPE_MCYCLE_ARITH;
 			else
@@ -315,9 +315,9 @@ module instruction_decode_stage(
 		else if (ifd_instruction[31:28] == 4'b1111)
 			decoded_instr_nxt.pipeline_sel = PIPE_SCYCLE_ARITH;	// branches are evaluated in single cycle pipeline
 		else
-			decoded_instr_nxt.pipeline_sel = PIPE_MEM;	
+			decoded_instr_nxt.pipeline_sel = PIPE_MEM;
 	end
-	
+
 	assign memory_access_type = memory_op_t'(ifd_instruction[28:25]);
 	assign decoded_instr_nxt.memory_access_type = memory_access_type;
 	assign decoded_instr_nxt.is_memory_access = ifd_instruction[31:30] == 2'b10
@@ -327,7 +327,7 @@ module instruction_decode_stage(
 	assign decoded_instr_nxt.is_cache_control = ifd_instruction[31:28] == 4'b1110
 		 && is_legal_instruction;
 	assign decoded_instr_nxt.cache_control_op = cache_op_t'(ifd_instruction[27:25]);
-	
+
 	always_comb
 	begin
 		if (ifd_instruction[31:30] == 2'b10
@@ -342,7 +342,7 @@ module instruction_decode_stage(
 	end
 
 	assign decoded_instr_nxt.creg_index = control_register_t'(ifd_instruction[4:0]);
-	
+
 	assign is_compare = (is_fmt_r || is_fmt_i)
 		&& (alu_op == OP_CMPEQ_I
 		|| alu_op == OP_CMPNE_I
@@ -361,7 +361,7 @@ module instruction_decode_stage(
 		|| alu_op == OP_CMPEQ_F
 		|| alu_op == OP_CMPNE_F);
 	assign decoded_instr_nxt.is_compare = is_compare;
-	
+
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
@@ -377,7 +377,7 @@ module instruction_decode_stage(
 		begin
 			// Piggyback ifetch faults and TLB misses inside instructions, marking
 			// the instruction valid if these conditions occur
-			id_instruction_valid <= (ifd_instruction_valid || ifd_tlb_miss || ifd_alignment_fault) 
+			id_instruction_valid <= (ifd_instruction_valid || ifd_tlb_miss || ifd_alignment_fault)
 				&& (!wb_rollback_en || wb_rollback_thread_idx != ifd_thread_idx);
 			id_instruction <= decoded_instr_nxt;
 			id_thread_idx <= ifd_thread_idx;

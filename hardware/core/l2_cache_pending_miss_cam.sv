@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 `include "defines.sv"
 
@@ -28,7 +28,7 @@
 // another transaction for that line is pending.
 //
 // The pending miss for the line may be anywhere in the L2 pipeline,
-// not just the SMI queue. Because of this, QUEUE_SIZE must be >= the number of 
+// not just the SMI queue. Because of this, QUEUE_SIZE must be >= the number of
 // entries in the system memory request queue + the number of pipeline stages.
 //
 
@@ -50,7 +50,7 @@ module l2_cache_pending_miss_cam
 	logic[QUEUE_ADDR_WIDTH - 1:0] next_empty;
 
 	assign next_empty_oh = empty_entries & ~(empty_entries - QUEUE_SIZE'(1));
-	
+
 	oh_to_idx #(.NUM_SIGNALS(QUEUE_SIZE)) oh_to_idx_next_empty(
 		.one_hot(next_empty_oh),
 		.index(next_empty));
@@ -72,7 +72,7 @@ module l2_cache_pending_miss_cam
 	always_ff @(posedge clk, posedge reset)
 	begin
 		// Make sure the queue isn't full
-		assert(reset || empty_entries != 0);	
+		assert(reset || empty_entries != 0);
 
 		if (reset)
 			empty_entries <= {QUEUE_SIZE{1'b1}};

@@ -1,22 +1,22 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 //
-// Serial port interface. 
-// BAUD_DIVIDE should be clk rate / (target baud rate * 8) 
+// Serial port interface.
+// BAUD_DIVIDE should be clk rate / (target baud rate * 8)
 //
 
 module uart
@@ -25,14 +25,14 @@ module uart
 
 	(input              clk,
 	input               reset,
-	
+
 	// IO bus interface
 	input [31:0]        io_address,
-	input               io_read_en,	
+	input               io_read_en,
 	input [31:0]        io_write_data,
 	input               io_write_en,
 	output logic[31:0]  io_read_data,
-	
+
 	// UART interface
 	output              uart_tx,
 	input               uart_rx);
@@ -63,7 +63,7 @@ module uart
 	begin
 		case (io_address)
 			STATUS_REG:
-			begin 
+			begin
 				io_read_data[31:4] = 0;
 				io_read_data[3:0] = {rx_fifo_frame_error, rx_fifo_overrun, !rx_fifo_empty, tx_ready};
 			end
@@ -74,7 +74,7 @@ module uart
 			end
 		endcase
 	end
-	
+
 	assign tx_enable = io_write_en && io_address == TX_REG;
 
 	uart_transmit #(.BAUD_DIVIDE(BAUD_DIVIDE)) uart_transmit(
@@ -133,8 +133,8 @@ module uart
 	// automatically dequeued and OE bit is asserted when a character is queued
 	// after this point. The OE bit is deasserted when rx_fifo_read or the
 	// number of stored characters is lower than the threshold.
-	sync_fifo #(.WIDTH(9), .SIZE(FIFO_LENGTH), 
-		.ALMOST_FULL_THRESHOLD(FIFO_LENGTH - 1)) 
+	sync_fifo #(.WIDTH(9), .SIZE(FIFO_LENGTH),
+		.ALMOST_FULL_THRESHOLD(FIFO_LENGTH - 1))
 		rx_fifo(
 		.clk(clk),
 		.reset(reset),

@@ -1,22 +1,22 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 //
-// Drive a 640x480 VGA display.  This is an AXI master that will DMA color 
-// data from a memory framebuffer, hard coded at address 0x10000000 (32 BPP 
+// Drive a 640x480 VGA display.  This is an AXI master that will DMA color
+// data from a memory framebuffer, hard coded at address 0x10000000 (32 BPP
 // RGBA), then send it to an ADV7123 VGA DAC with appropriate timing.
 //
 
@@ -37,14 +37,14 @@ module vga_controller(
 	output                  vga_hs,
 	output                  vga_vs,
 	output                  vga_sync_n,
-	
+
 	// To AXI interconnect
 	axi4_interface.master   axi_bus);
 
 	localparam TOTAL_PIXELS = 640 * 480;
-	
-	// We choose the burst length to be twice that of a CPU cache line fill 
-	// to ensure we get sufficient memory bandwidth even when we are 
+
+	// We choose the burst length to be twice that of a CPU cache line fill
+	// to ensure we get sufficient memory bandwidth even when we are
 	// ping-ponging.
 	localparam BURST_LENGTH = 64;
 	localparam PIXEL_FIFO_LENGTH = 128;
@@ -81,8 +81,8 @@ module vga_controller(
 	// Note that we clear the FIFO at the beginning of the vblank period to allow
 	// it to resynchronize if there was an underrun.
 	sync_fifo #(
-		.WIDTH(32), 
-		.SIZE(PIXEL_FIFO_LENGTH), 
+		.WIDTH(32),
+		.SIZE(PIXEL_FIFO_LENGTH),
 		.ALMOST_EMPTY_THRESHOLD(PIXEL_FIFO_LENGTH - BURST_LENGTH - 1)) pixel_fifo(
 		.clk(clk),
 		.reset(reset),
@@ -95,7 +95,7 @@ module vga_controller(
 		.enqueue_en(axi_bus.s_rvalid),
 		.full(),
 		.dequeue_en(pixel_en && in_visible_region && !pixel_fifo_empty));
-		
+
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
@@ -104,21 +104,21 @@ module vga_controller(
 			vram_addr <= DEFAULT_FB_ADDR;
 			axi_state <= STATE_WAIT_FRAME_START;
 			frame_toggle <= 0;
-			
+
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			burst_count <= '0;
 			pixel_count <= '0;
 			// End of automatics
 		end
-		else 
+		else
 		begin
 			// Check for FIFO underrun
 			assert(!(pixel_en && in_visible_region && pixel_fifo_empty));
-			
+
 			if (fb_base_update_en)
 				fb_base_address <= fb_new_base;
-			
+
 			unique case (axi_state)
 				STATE_WAIT_FRAME_START:
 				begin
@@ -142,7 +142,7 @@ module vga_controller(
 				STATE_ISSUE_ADDR:
 				begin
 					if (axi_bus.s_arready)
-						axi_state <= STATE_BURST_ACTIVE;				
+						axi_state <= STATE_BURST_ACTIVE;
 				end
 
 				STATE_BURST_ACTIVE:
@@ -160,11 +160,11 @@ module vga_controller(
 									axi_state <= STATE_ISSUE_ADDR;
 								else
 									axi_state <= STATE_WAIT_FIFO_EMPTY;
-								
+
 								vram_addr <= vram_addr + BURST_LENGTH * 4;
 								pixel_count <= pixel_count + 19'(BURST_LENGTH);
 							end
-						end	
+						end
 						else
 							burst_count <= burst_count + 8'd1;
 					end
@@ -174,7 +174,7 @@ module vga_controller(
 			endcase
 		end
 	end
-	
+
 	assign axi_bus.m_rready = 1'b1;	// We always have enough room when a request is made.
 	assign axi_bus.m_arlen = 8'(BURST_LENGTH - 1);
 	assign axi_bus.m_arvalid = axi_state == STATE_ISSUE_ADDR;

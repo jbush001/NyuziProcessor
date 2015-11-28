@@ -1,25 +1,25 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 `include "defines.sv"
 
 //
-// l2 request arbiter stage. Selects among core L2 requests and restarted 
-// request from fill interface. l2_ready depends combinationally on the valid 
-// signals in the request packets, so valid bits must not be dependent on 
+// l2 request arbiter stage. Selects among core L2 requests and restarted
+// request from fill interface. l2_ready depends combinationally on the valid
+// signals in the request packets, so valid bits must not be dependent on
 // l2_ready to avoid a combinational loop.
 //
 
@@ -36,7 +36,7 @@ module l2_cache_arb(
 	output cache_line_data_t              l2a_data_from_memory,
 	output logic                          l2a_is_l2_fill,
 	output logic                          l2a_is_restarted_flush,
-	
+
 	// From l2_axi_bus_interface
 	input l2req_packet_t                  l2bi_request,
 	input cache_line_data_t               l2bi_data_from_memory,
@@ -48,7 +48,7 @@ module l2_cache_arb(
 	l2req_packet_t grant_request;
 	logic[`NUM_CORES - 1:0] grant_oh;
 	logic is_restarted_flush;
-	
+
 	assign can_accept_request = !l2bi_request.valid && !l2bi_stall;
 	assign is_restarted_flush = l2bi_request.packet_type == L2REQ_FLUSH;
 
@@ -75,7 +75,7 @@ module l2_cache_arb(
 			oh_to_idx #(.NUM_SIGNALS(`NUM_CORES)) oh_to_idx_grant(
 				.one_hot(grant_oh),
 				.index(grant_idx));
-				
+
 			assign grant_request = l2i_request[grant_idx];
 		end
 		else
@@ -95,7 +95,7 @@ module l2_cache_arb(
 			// Suppress autoreset
 			l2a_request.valid <= '0;
 			`endif
-			
+
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			l2a_data_from_memory <= '0;
@@ -109,11 +109,11 @@ module l2_cache_arb(
 			begin
 				// Restarted request from external bus interface
 
-				// These messages types should not cause a cache miss, and thus should 
+				// These messages types should not cause a cache miss, and thus should
 				// not be restarted
 				assert(l2bi_request.packet_type != L2REQ_IINVALIDATE);
 				assert(l2bi_request.packet_type != L2REQ_DINVALIDATE);
-					
+
 				l2a_request <= l2bi_request;
 				l2a_is_l2_fill <= !l2bi_collided_miss && !is_restarted_flush;
 				l2a_is_restarted_flush <= is_restarted_flush;

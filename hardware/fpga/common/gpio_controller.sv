@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 //
 // General Purpose Input/Output
@@ -25,20 +25,20 @@ module gpio_controller
 
 	(input				  clk,
 	input				  reset,
-	                      
-	// IO bus interface   
+
+	// IO bus interface
 	input [31:0]          io_address,
-	input                 io_read_en,	
+	input                 io_read_en,
 	input [31:0]          io_write_data,
 	input                 io_write_en,
 	output logic[31:0]    io_read_data,
 
 	// To/from SD card
-	inout[NUM_PINS - 1:0] gpio_value);	
+	inout[NUM_PINS - 1:0] gpio_value);
 
 	localparam DIRECTION_REG = BASE_ADDRESS;
 	localparam VALUE_REG = BASE_ADDRESS + 4;
-	
+
 	logic[NUM_PINS - 1:0] direction;
 	logic[NUM_PINS - 1:0] output_value;
 
@@ -46,7 +46,7 @@ module gpio_controller
 	generate
 		for (pin_idx = 0; pin_idx < NUM_PINS; pin_idx++)
 		begin : pin_dir_gen
-			assign gpio_value[pin_idx] = direction[pin_idx] 
+			assign gpio_value[pin_idx] = direction[pin_idx]
 				? output_value[pin_idx] : 1'bZ;
 		end
 	endgenerate

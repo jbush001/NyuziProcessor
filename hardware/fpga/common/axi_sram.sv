@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 
 
@@ -26,11 +26,11 @@ module axi_sram
 
 	(input                      clk,
 	input                       reset,
-	
+
 	// AXI interface
 	axi4_interface.slave        axi_bus,
-	
-	// External loader interface. It is valid to access these when the 
+
+	// External loader interface. It is valid to access these when the
 	// part is in reset; the reset signal only applies to the AXI state machine.
 	input                       loader_we,
 	input[31:0]                 loader_addr,
@@ -54,8 +54,8 @@ module axi_sram
 	logic[31:0] wr_addr;
 	logic[31:0] wr_data;
 
-	localparam SRAM_ADDR_WIDTH = $clog2(MEM_SIZE); 
-	
+	localparam SRAM_ADDR_WIDTH = $clog2(MEM_SIZE);
+
 	always_comb
 	begin
 		if (loader_we)
@@ -93,7 +93,7 @@ module axi_sram
 			STATE_READ_BURST:  axi_bus.s_rvalid = 1;
 			STATE_WRITE_BURST: axi_bus.s_wready = 1;
 			STATE_WRITE_ACK:   axi_bus.s_bvalid = 1;
-		endcase	
+		endcase
 	end
 
 	// Next state logic
@@ -104,15 +104,15 @@ module axi_sram
 		burst_address_nxt = burst_address;
 		burst_count_nxt = burst_count;
 		state_nxt = state;
-		
+
 		unique case (state)
 			STATE_IDLE:
 			begin
 				// I've cheated here.  It's legal per the spec for s_arready/s_awready to go low
-				// but not if m_arvalid/m_awvalid are already asserted (respectively), because 
-				// the client would assume the transfer completed (AMBA AXI and ACE protocol 
-				// spec rev E A3.2.1: "If READY is asserted, it is permitted to deassert READY 
-				// before VALID is asserted.")  I know that the client never asserts both 
+				// but not if m_arvalid/m_awvalid are already asserted (respectively), because
+				// the client would assume the transfer completed (AMBA AXI and ACE protocol
+				// spec rev E A3.2.1: "If READY is asserted, it is permitted to deassert READY
+				// before VALID is asserted.")  I know that the client never asserts both
 				// simultaneously, so I don't bother latching addresses separately.
 				if (axi_bus.m_awvalid)
 				begin
@@ -128,7 +128,7 @@ module axi_sram
 					state_nxt = STATE_READ_BURST;
 				end
 			end
-			
+
 			STATE_READ_BURST:
 			begin
 				if (axi_bus.m_rready)
@@ -143,7 +143,7 @@ module axi_sram
 					end
 				end
 			end
-			
+
 			STATE_WRITE_BURST:
 			begin
 				if (axi_bus.m_wvalid)
@@ -158,7 +158,7 @@ module axi_sram
 					end
 				end
 			end
-			
+
 			STATE_WRITE_ACK:
 			begin
 				if (axi_bus.m_bready)
@@ -167,7 +167,7 @@ module axi_sram
 
 			default:
 				state_nxt = STATE_IDLE;
-		endcase	
+		endcase
 	end
 
 	always_ff @(posedge clk, posedge reset)

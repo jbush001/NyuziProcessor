@@ -1,23 +1,23 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 `include "defines.sv"
 
 //
-// Tracks pending L1 misses. Detects and consolidates multiple misses 
+// Tracks pending L1 misses. Detects and consolidates multiple misses
 // for the same address. Wakes threads when loads complete.
 //
 
@@ -50,18 +50,18 @@ module l1_load_miss_queue(
 		scalar_t address;
 		logic synchronized;
 	} pending_entries[`THREADS_PER_CORE];
-	
+
 	thread_bitmap_t collided_miss_oh;
 	thread_bitmap_t miss_thread_oh;
 	logic request_unique;
 	thread_bitmap_t send_grant_oh;
 	thread_bitmap_t arbiter_request;
 	thread_idx_t send_grant_idx;
-	
+
 	idx_to_oh #(.NUM_SIGNALS(`THREADS_PER_CORE)) idx_to_oh_miss_thread(
 		.index(cache_miss_thread_idx),
 		.one_hot(miss_thread_oh));
-		
+
 	arbiter #(.NUM_REQUESTERS(`THREADS_PER_CORE)) arbiter_send(
 		.request(arbiter_request),
 		.update_lru(1'b1),
@@ -77,9 +77,9 @@ module l1_load_miss_queue(
 	assign dequeue_addr = pending_entries[send_grant_idx].address;
 	assign dequeue_idx = send_grant_idx;
 	assign dequeue_synchronized = pending_entries[send_grant_idx].synchronized;
-	
+
 	assign request_unique = !(|collided_miss_oh);
-	
+
 	assign wake_bitmap = l2_response_valid ? pending_entries[l2_response_idx].waiting_threads : thread_bitmap_t'(0);
 
 	genvar wait_entry;
@@ -87,7 +87,7 @@ module l1_load_miss_queue(
 		for (wait_entry = 0; wait_entry < `THREADS_PER_CORE; wait_entry++)
 		begin : wait_logic_gen
 			// Synchronized requests cannot be combined with other requests.
-			assign collided_miss_oh[wait_entry] = pending_entries[wait_entry].valid 
+			assign collided_miss_oh[wait_entry] = pending_entries[wait_entry].valid
 				&& pending_entries[wait_entry].address == cache_miss_addr
 				&& !pending_entries[wait_entry].synchronized
 				&& !cache_miss_synchronized;
@@ -141,7 +141,7 @@ module l1_load_miss_queue(
 						// Miss is already pending, add waiting thread
 						pending_entries[wait_entry].waiting_threads <= pending_entries[wait_entry].waiting_threads
 							| miss_thread_oh;
-	
+
 						// Upper level 'near_miss' logic prevents triggering a miss in the same
 						// cycle it is satisfied.
 						assert(!(l2_response_valid && l2_response_idx == l1_miss_entry_idx_t'(wait_entry)));
@@ -150,7 +150,7 @@ module l1_load_miss_queue(
 			end
 		end
 	endgenerate
-	
+
 `ifdef SIMULATION
 	always_ff @(posedge clk, posedge reset)
 	begin

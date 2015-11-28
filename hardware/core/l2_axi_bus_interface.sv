@@ -1,29 +1,29 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 `include "defines.sv"
 
 //
 // L2 AXI Bus Interface
-// Receives L2 cache misses and writeback requests from the L2 pipeline and 
-// controls AXI system memory interface to fulfill them. When fills complete, 
+// Receives L2 cache misses and writeback requests from the L2 pipeline and
+// controls AXI system memory interface to fulfill them. When fills complete,
 // this reissues them to the L2 pipeline via the arbiter.
 //
-// If this is already handling the request for a line, it set a flag that 
-// causes it to reissue the request to the L2 pipeline, but doesn't read 
+// If this is already handling the request for a line, it set a flag that
+// causes it to reissue the request to the L2 pipeline, but doesn't read
 // or write system memory.
 //
 // The interface to system memory is the AMBA AXI interface.
@@ -38,7 +38,7 @@ module l2_axi_bus_interface(
 	input                                  reset,
 
 	axi4_interface.master                  axi_bus,
-	
+
 	// to l2_cache_arb
 	output l2req_packet_t                  l2bi_request,
 	output cache_line_data_t               l2bi_data_from_memory,
@@ -77,10 +77,10 @@ module l2_axi_bus_interface(
 	localparam REQUEST_QUEUE_LENGTH = 8;
 
 	// This is the number of stages before this one in the pipeline. Assert the
-	// signal to stop accepting new packets this number of cycles early so 
+	// signal to stop accepting new packets this number of cycles early so
 	// requests that are already in the L2 pipeline don't overrun the FIFOs.
 	localparam L2REQ_LATENCY = 4;
-	localparam BURST_BEATS = `CACHE_LINE_BITS / `AXI_DATA_WIDTH;	
+	localparam BURST_BEATS = `CACHE_LINE_BITS / `AXI_DATA_WIDTH;
 	localparam BURST_OFFSET_WIDTH = $clog2(BURST_BEATS);
 
 	l2_addr_t miss_addr;
@@ -88,7 +88,7 @@ module l2_axi_bus_interface(
 	logic enqueue_writeback_request;
 	logic enqueue_load_request;
 	logic duplicate_request;
-	cache_line_data_t bif_writeback_data;	
+	cache_line_data_t bif_writeback_data;
 	logic[`AXI_DATA_WIDTH - 1:0] bif_writeback_lanes[BURST_BEATS];
 	logic writeback_queue_empty;
 	logic load_queue_empty;
@@ -107,10 +107,10 @@ module l2_axi_bus_interface(
 	l2req_packet_t lmq_out_request;
 	writeback_queue_entry_t writeback_queue_in;
 	writeback_queue_entry_t writeback_queue_out;
-	
+
 	assign miss_addr = l2r_request.address;
 	assign enqueue_writeback_request = l2r_request.valid && l2r_needs_writeback
-		&& ((l2r_request.packet_type == L2REQ_FLUSH && l2r_cache_hit && !l2r_is_restarted_flush) 
+		&& ((l2r_request.packet_type == L2REQ_FLUSH && l2r_cache_hit && !l2r_is_restarted_flush)
 		|| l2r_is_l2_fill);
 	assign enqueue_load_request = l2r_request.valid && !l2r_cache_hit && !l2r_is_l2_fill
 		&& (l2r_request.packet_type == L2REQ_LOAD
@@ -133,8 +133,8 @@ module l2_axi_bus_interface(
 	assign writeback_queue_in.core = l2r_request.core;
 	assign writeback_queue_in.id = l2r_request.id;
 
-	sync_fifo #(.WIDTH($bits(writeback_queue_entry_t)), 
-		.SIZE(REQUEST_QUEUE_LENGTH), 
+	sync_fifo #(.WIDTH($bits(writeback_queue_entry_t)),
+		.SIZE(REQUEST_QUEUE_LENGTH),
 		.ALMOST_FULL_THRESHOLD(REQUEST_QUEUE_LENGTH - L2REQ_LATENCY)) sync_fifo_pending_writeback(
 		.clk(clk),
 		.reset(reset),
@@ -151,8 +151,8 @@ module l2_axi_bus_interface(
 	assign bif_writeback_address = writeback_queue_out.address;
 	assign bif_writeback_data = writeback_queue_out.data;
 
-	sync_fifo #(.WIDTH($bits(l2req_packet_t) + 1), 
-		.SIZE(REQUEST_QUEUE_LENGTH), 
+	sync_fifo #(.WIDTH($bits(l2req_packet_t) + 1),
+		.SIZE(REQUEST_QUEUE_LENGTH),
 		.ALMOST_FULL_THRESHOLD(REQUEST_QUEUE_LENGTH - L2REQ_LATENCY)) sync_fifo_pending_load(
 		.clk(clk),
 		.reset(reset),
@@ -171,18 +171,18 @@ module l2_axi_bus_interface(
 			lmq_out_request
 		}),
 		.full(/* ignore */));
-			
+
 	// Stop accepting new L2 packets until space is available in the queues
 	assign l2bi_stall = load_queue_almost_full || writeback_queue_almost_full;
 
 	// AMBA AXI and ACE Protocol Specification, rev E, A3.4.1:
 	// length field is is burst length - 1
-	assign axi_bus.m_awlen = 8'(BURST_BEATS - 1);	
-	assign axi_bus.m_arlen = 8'(BURST_BEATS - 1);	
+	assign axi_bus.m_awlen = 8'(BURST_BEATS - 1);
+	assign axi_bus.m_arlen = 8'(BURST_BEATS - 1);
 	assign axi_bus.m_bready = 1'b1;
-	
+
 	// ibid, Table A3-2
-	assign axi_bus.m_arsize = `AXI_DATA_WIDTH == 1 ? 3'd0 : 3'($clog2(`AXI_DATA_WIDTH / 8));	
+	assign axi_bus.m_arsize = `AXI_DATA_WIDTH == 1 ? 3'd0 : 3'($clog2(`AXI_DATA_WIDTH / 8));
 	assign axi_bus.m_awsize = axi_bus.m_arsize;
 
 	assign axi_bus.m_awburst = AXI_BURST_INCR;
@@ -192,7 +192,7 @@ module l2_axi_bus_interface(
 	// ibid, Table A4-3/A4-4
 	assign axi_bus.m_awcache = 4'b1110;	// Allocate, Modifiable, Not-Bufferable
 	assign axi_bus.m_arcache = 4'b1110;
-	
+
 	// Flatten array
 	genvar load_buffer_idx;
 	generate
@@ -216,8 +216,8 @@ module l2_axi_bus_interface(
 
 		unique case (state_ff)
 			STATE_IDLE:
-			begin	
-				// Writebacks take precendence over loads to avoid a race condition 
+			begin
+				// Writebacks take precendence over loads to avoid a race condition
 				// where this loads stale data. Since loads can also enqueue writebacks,
 				// it ensures this doesn't overrun the write FIFO.
 				if (writeback_pending)
@@ -227,14 +227,14 @@ module l2_axi_bus_interface(
 				end
 				else if (load_request_pending)
 				begin
-					if (l2bi_collided_miss 
+					if (l2bi_collided_miss
 						|| (lmq_out_request.store_mask == {`CACHE_LINE_BYTES{1'b1}}
 						&& lmq_out_request.packet_type == L2REQ_STORE))
 					begin
 						// Skip the read and restart the request immediately if:
-						// 1. If there is already a pending L2 miss for this cache 
-						//    line. Some other request has filled it, so 
-						//    don't need to do anything but (try to) pick up the 
+						// 1. If there is already a pending L2 miss for this cache
+						//    line. Some other request has filled it, so
+						//    don't need to do anything but (try to) pick up the
 						//    result. That could result in another miss in some
 						//    cases, in which case must make another pass through
 						//    here.
@@ -313,7 +313,7 @@ module l2_axi_bus_interface(
 		l2bi_request = lmq_out_request;
 		if (restart_flush_request)
 		begin
-			// For this request, the other fields in the request packet are ignored. 
+			// For this request, the other fields in the request packet are ignored.
 			// To avoid creating a mux for them, we just leave them assigned to
 			// the load_reuqest fields.
 			l2bi_request.valid = 1'b1;
@@ -332,7 +332,7 @@ module l2_axi_bus_interface(
 		begin
 			for (int i = 0; i < BURST_BEATS; i++)
 				bif_load_buffer[i] <= 0;
-		
+
 			state_ff <= STATE_IDLE;
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
@@ -354,7 +354,7 @@ module l2_axi_bus_interface(
 			burst_offset_ff <= burst_offset_nxt;
 			if (state_ff == STATE_READ_TRANSFER && axi_bus.s_rvalid)
 				bif_load_buffer[burst_offset_ff] <= axi_bus.s_rdata;
-	
+
 			// Write response state machine
 			if (state_ff == STATE_WRITE_ISSUE_ADDRESS)
 				wait_axi_write_response <= 1;
@@ -363,14 +363,14 @@ module l2_axi_bus_interface(
 
 			// Register AXI output signals
 			axi_bus.m_arvalid <= state_nxt == STATE_READ_ISSUE_ADDRESS;
-			axi_bus.m_araddr <= {l2bi_request.address[31:`CACHE_LINE_OFFSET_WIDTH], 
-				{`CACHE_LINE_OFFSET_WIDTH{1'b0}}};	
+			axi_bus.m_araddr <= {l2bi_request.address[31:`CACHE_LINE_OFFSET_WIDTH],
+				{`CACHE_LINE_OFFSET_WIDTH{1'b0}}};
 			axi_bus.m_rready <= state_nxt == STATE_READ_TRANSFER;
 			axi_bus.m_awvalid <= state_nxt == STATE_WRITE_ISSUE_ADDRESS;
 			axi_bus.m_awaddr <= {bif_writeback_address, {`CACHE_LINE_OFFSET_WIDTH{1'b0}}};
 			axi_bus.m_wvalid <= state_nxt == STATE_WRITE_TRANSFER;
 			axi_bus.m_wdata <= bif_writeback_lanes[~burst_offset_nxt];
-			axi_bus.m_wlast <= state_nxt == STATE_WRITE_TRANSFER	
+			axi_bus.m_wlast <= state_nxt == STATE_WRITE_TRANSFER
 				&& axi_bus.s_wready
 				&& burst_offset_ff == BURST_OFFSET_WIDTH'(BURST_BEATS) - 2;
 		end

@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 `include "defines.sv"
 
@@ -24,8 +24,8 @@
 module l2_cache_tag(
 	input                                 clk,
 	input                                 reset,
-                                          
-	// From l2_cache_arb            
+
+	// From l2_cache_arb
 	input l2req_packet_t                  l2a_request,
 	input cache_line_data_t               l2a_data_from_memory,
 	input                                 l2a_is_l2_fill,
@@ -41,8 +41,8 @@ module l2_cache_tag(
 	input l2_tag_t                        l2r_update_tag_value,
 	input                                 l2r_update_lru_en,
 	input l2_way_idx_t                    l2r_update_lru_hit_way,
-                                          
-	// To l2_cache_read             
+
+	// To l2_cache_read
 	output l2req_packet_t                 l2t_request,
 	output logic                          l2t_valid[`L2_WAYS],
 	output l2_tag_t                       l2t_tag[`L2_WAYS],
@@ -53,7 +53,7 @@ module l2_cache_tag(
 	output logic                          l2t_is_restarted_flush);
 
 	l2_addr_t l2_addr;
-	
+
 	assign l2_addr = l2a_request.address;
 
 	cache_lru #(.NUM_SETS(`L2_SETS), .NUM_WAYS(`L2_WAYS)) cache_lru(
@@ -76,7 +76,7 @@ module l2_cache_tag(
 			logic line_valid[`L2_SETS];
 
 			sram_1r1w #(
-				.DATA_WIDTH($bits(l2_tag_t)), 
+				.DATA_WIDTH($bits(l2_tag_t)),
 				.SIZE(`L2_SETS),
 				.READ_DURING_WRITE("NEW_DATA")
 			) sram_tags(
@@ -89,7 +89,7 @@ module l2_cache_tag(
 				.*);
 
 			sram_1r1w #(
-				.DATA_WIDTH(1), 
+				.DATA_WIDTH(1),
 				.SIZE(`L2_SETS),
 				.READ_DURING_WRITE("NEW_DATA")
 			) sram_dirty_flags(
@@ -106,19 +106,19 @@ module l2_cache_tag(
 				if (reset)
 				begin
 					for (int set_idx = 0; set_idx < `L2_SETS; set_idx++)
-						line_valid[set_idx] <= 0;	
+						line_valid[set_idx] <= 0;
 				end
-				else 
+				else
 				begin
 					if (l2a_request.valid)
 					begin
-						if (l2r_update_tag_en[way_idx] && l2r_update_tag_set 
+						if (l2r_update_tag_en[way_idx] && l2r_update_tag_set
 							== l2_addr.set_idx)
 							l2t_valid[way_idx] <= l2r_update_tag_valid;	// Bypass
 						else
 							l2t_valid[way_idx] <= line_valid[l2_addr.set_idx];
 					end
-						
+
 					if (l2r_update_tag_en[way_idx])
 						line_valid[l2r_update_tag_set] <= l2r_update_tag_valid;
 				end

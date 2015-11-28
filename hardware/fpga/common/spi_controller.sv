@@ -1,32 +1,32 @@
-// 
+//
 // Copyright 2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 //
 // Serial Peripheral Interface bus controller
-// 
+//
 
 module spi_controller
 	#(parameter			BASE_ADDRESS = 0)
 
 	(input              clk,
 	input               reset,
-	
+
 	// IO bus interface
 	input [31:0]        io_address,
-	input               io_read_en,	
+	input               io_read_en,
 	input [31:0]        io_write_data,
 	input               io_write_en,
 	output logic[31:0]  io_read_data,
@@ -35,21 +35,21 @@ module spi_controller
 	output logic        spi_clk,
 	output logic        spi_cs_n,
 	input               spi_miso,
-	output logic        spi_mosi);	
+	output logic        spi_mosi);
 
 	localparam TX_REG = BASE_ADDRESS;
 	localparam RX_REG = BASE_ADDRESS + 4;
 	localparam RX_STATUS_REG = BASE_ADDRESS + 8;
 	localparam CONTROL_REG = BASE_ADDRESS + 12;
 	localparam DIVISOR_REG = BASE_ADDRESS + 16;
-	
+
 	logic transfer_active;
 	logic[2:0] transfer_count;
 	logic[7:0] miso_byte;	// Master in slave out
 	logic[7:0] mosi_byte;	// Master out slave in
 	logic[7:0] divider_countdown;
 	logic[7:0] divider_rate;
-	
+
 	always_comb
 	begin
 		if (io_address == RX_REG)
@@ -57,14 +57,14 @@ module spi_controller
 		else // RX_STATUS_REG
 			io_read_data = scalar_t'(!transfer_active);
 	end
-	
+
 	always_ff @(posedge reset, posedge clk)
 	begin
 		if (reset)
 		begin
 			transfer_active <= 0;
 			spi_clk <= 0;
-			spi_cs_n <= 1; 
+			spi_cs_n <= 1;
 			divider_rate <= 1;
 			spi_mosi <= 1;
 		end
@@ -93,7 +93,7 @@ module spi_controller
 						else
 						begin
 							transfer_count <= transfer_count - 1;
-							
+
 							// Shift out a bit
 							{spi_mosi, mosi_byte} <= {mosi_byte, 1'd0};
 						end
@@ -115,7 +115,7 @@ module spi_controller
 				transfer_active <= 1;
 				transfer_count <= 7;
 				divider_countdown <= divider_rate;
-				
+
 				// Set up first bit
 				{spi_mosi, mosi_byte} <= {io_write_data[7:0], 1'd0};
 			end

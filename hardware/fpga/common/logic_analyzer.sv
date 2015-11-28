@@ -1,22 +1,22 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 //
 // Quick and dirty embedded logic analyzer
-// BAUD_DIVIDE should be: clk rate / target baud rate 
+// BAUD_DIVIDE should be: clk rate / target baud rate
 // Each cycle that capture_enable is asserted, capture_data is
 // stored into a circular buffer.  When trigger is asserted (it only
 // needs to be asserted for one cycle), this will transmit the contents
@@ -87,7 +87,7 @@ module logic_analyzer
 	begin
 		dump_entry_nxt = dump_entry;
 		dump_byte_nxt = dump_byte;
-	
+
 		case (state)
 			STATE_CAPTURE:
 			begin
@@ -97,18 +97,18 @@ module logic_analyzer
 						dump_entry_nxt = capture_entry + 1;
 					else
 						dump_entry_nxt = 0;
-						
+
 					dump_byte_nxt = 0;
 				end
 			end
-			
+
 			STATE_DUMP:
 			begin
 				if (tx_ready)
 				begin
 					if (dump_byte == CAPTURE_WIDTH_BYTES - 1)
 						dump_entry_nxt = dump_entry + 1;
-						
+
 					if (tx_ready && tx_enable)
 					begin
 						if (dump_byte == CAPTURE_WIDTH_BYTES - 1)
@@ -148,7 +148,7 @@ module logic_analyzer
 						if (capture_entry == CAPTURE_SIZE- 1)
 							wrapped <= 1;
 					end
-			
+
 					if (trigger)
 						state <= STATE_DUMP;
 				end
@@ -164,7 +164,7 @@ module logic_analyzer
 							state <= STATE_STOPPED;
 					end
 				end
-			
+
 				STATE_STOPPED:
 					tx_enable <= 0;
 			endcase

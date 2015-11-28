@@ -1,28 +1,28 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 `include "defines.sv"
 
 //
 // Instruction Pipeline Thread Select Stage
 // - Contains an instruction FIFO for each thread
-// - Each cycle, picks a thread to issue using a round robin scheduling 
+// - Each cycle, picks a thread to issue using a round robin scheduling
 //   algorithm, avoid various types of conflicts:
 //   * inter-instruction register dependencies, tracked using a scoreboard
-//     for each thread. 
+//     for each thread.
 //   * writeback hazards between the pipelines of different lengths, tracked
 //     with a shared shift register.
 // - Tracks dcache misses and suspends threads until they are resolved.
@@ -31,7 +31,7 @@
 module thread_select_stage(
 	input                              clk,
 	input                              reset,
-	
+
 	// From instruction_decode_stage
 	input decoded_instruction_t        id_instruction,
 	input                              id_instruction_valid,
@@ -45,7 +45,7 @@ module thread_select_stage(
 	output decoded_instruction_t       ts_instruction,
 	output thread_idx_t                ts_thread_idx,
 	output subcycle_t                  ts_subcycle,
-	
+
 	// From writeback_stage
 	input                              wb_writeback_en,
 	input thread_idx_t                 wb_writeback_thread_idx,
@@ -59,12 +59,12 @@ module thread_select_stage(
 
 	// From top level module
 	input thread_bitmap_t              ny_thread_enable,
-	
+
 	// From dcache_data_stage
 	input thread_bitmap_t              wb_suspend_thread_oh,
 	input thread_bitmap_t              l2i_dcache_wake_bitmap,
 	input thread_bitmap_t              ior_wake_bitmap,
-	
+
 	// Performace counters
 	output logic                       perf_instruction_issue);
 
@@ -74,7 +74,7 @@ module thread_select_stage(
 	localparam ROLLBACK_STAGES = 5;
 
 	// Difference between longest and shortest execution pipeline
-	localparam WRITEBACK_ALLOC_STAGES = 4;	
+	localparam WRITEBACK_ALLOC_STAGES = 4;
 
 	decoded_instruction_t thread_instr[`THREADS_PER_CORE];
 	decoded_instruction_t issue_instr;
@@ -86,7 +86,7 @@ module thread_select_stage(
 	logic[WRITEBACK_ALLOC_STAGES - 1:0] writeback_allocate_nxt;
 	subcycle_t current_subcycle[`THREADS_PER_CORE];
 	logic issue_last_subcycle[`THREADS_PER_CORE];
-	
+
 	// The scoreboard tracks registers that are busy (have a result pending), with one bit
 	// per register. Bits 0-31 are scalar registers and 32-63 are vector registers.
 	logic[`NUM_REGISTERS * 2 - 1:0] scoreboard[`THREADS_PER_CORE];
@@ -129,13 +129,13 @@ module thread_select_stage(
 			logic writeback_conflict;
 			logic rollback_this_thread;
 			logic instruction_latch_en;
-			
+
 			assign rollback_this_thread = wb_rollback_en && wb_rollback_thread_idx == thread_idx_t'(thread_idx);
-			
+
 			sync_fifo #(
-				.WIDTH($bits(id_instruction)), 
-				.SIZE(THREAD_FIFO_SIZE), 
-				.ALMOST_FULL_THRESHOLD(THREAD_FIFO_SIZE - 3) 
+				.WIDTH($bits(id_instruction)),
+				.SIZE(THREAD_FIFO_SIZE),
+				.ALMOST_FULL_THRESHOLD(THREAD_FIFO_SIZE - 3)
 			) instruction_fifo(
 				.flush_en(rollback_this_thread),
 				.full(),
@@ -148,11 +148,11 @@ module thread_select_stage(
 				.value_o(thread_instr_nxt),
 				.*);
 
-			assign issue_last_subcycle[thread_idx] = thread_issue_oh[thread_idx] 
+			assign issue_last_subcycle[thread_idx] = thread_issue_oh[thread_idx]
 				&& current_subcycle[thread_idx] == thread_instr[thread_idx].last_subcycle;
 
 			// This signal goes back to the thread fetch stage to enable fetching more
-			// instructions. Deassert fetch enable a few cycles before the FIFO 
+			// instructions. Deassert fetch enable a few cycles before the FIFO
 			// fills up because there are several stages in-between.
 			assign ts_fetch_en[thread_idx] = !ififo_almost_full && ny_thread_enable[thread_idx];
 
@@ -171,8 +171,8 @@ module thread_select_stage(
 				end
 			end
 
-			// Generate scoreboard dependency bitmap for next instruction this thread 
-			// will issue. This includes source registers (to detect RAW dependencies) 
+			// Generate scoreboard dependency bitmap for next instruction this thread
+			// will issue. This includes source registers (to detect RAW dependencies)
 			// and the destination register (to handle WAW and WAR dependencies)
 			always_comb
 			begin
@@ -187,23 +187,23 @@ module thread_select_stage(
 
 				if (thread_instr_nxt.has_scalar1)
 					scoreboard_dep_bitmap_nxt[{1'b0, thread_instr_nxt.scalar_sel1}] = 1;
-					
+
 				if (thread_instr_nxt.has_scalar2)
 					scoreboard_dep_bitmap_nxt[{1'b0, thread_instr_nxt.scalar_sel2}] = 1;
-					
+
 				if (thread_instr_nxt.has_vector1)
 					scoreboard_dep_bitmap_nxt[{1'b1, thread_instr_nxt.vector_sel1}] = 1;
 
 				if (thread_instr_nxt.has_vector2)
 					scoreboard_dep_bitmap_nxt[{1'b1, thread_instr_nxt.vector_sel2}] = 1;
 			end
-			
+
 			// There is one cycle of latency after the instruction comes out of the
 			// instruction FIFO to determine the scoreboard values. Registered them
 			// here.
-			assign instruction_latch_en = !ififo_empty && (!instruction_latched 
+			assign instruction_latch_en = !ififo_empty && (!instruction_latched
 				|| issue_last_subcycle[thread_idx]);
-			
+
 			always_ff @(posedge clk, posedge reset)
 			begin
 				if (reset)
@@ -234,10 +234,10 @@ module thread_select_stage(
 			always_comb
 			begin
 				// Clear scoreboard entries for completed instructions. Only do this on the
-				// last subcycle of an instruction. Since this doesn't wait on the scoreboard to 
+				// last subcycle of an instruction. Since this doesn't wait on the scoreboard to
 				// issue intermediate subcycles, we must do this for correctness.
 				scoreboard_clear_bitmap = 0;
-				if (wb_writeback_en && wb_writeback_thread_idx == thread_idx_t'(thread_idx) 
+				if (wb_writeback_en && wb_writeback_thread_idx == thread_idx_t'(thread_idx)
 					&& wb_writeback_is_last_subcycle)
 				begin
 					if (wb_writeback_is_vector)
@@ -245,8 +245,8 @@ module thread_select_stage(
 					else
 						scoreboard_clear_bitmap[{1'b0, wb_writeback_reg}] = 1;
 				end
-				
-				// Clear scoreboard entries for rolled back threads. 
+
+				// Clear scoreboard entries for rolled back threads.
 				if (wb_rollback_en && wb_rollback_thread_idx == thread_idx_t'(thread_idx))
 				begin
 					for (int i = 0; i < ROLLBACK_STAGES - 1; i++)
@@ -254,10 +254,10 @@ module thread_select_stage(
 						if (rollback_dest[i].valid && rollback_dest[i].thread_idx == thread_idx_t'(thread_idx))
 							scoreboard_clear_bitmap |= rollback_dest[i].scoreboard_bitmap;
 					end
-					
+
 					// The memory pipeline is one stage longer than the single cycle arithmetic pipeline,
 					// so only invalidate the last stage if this originated there.
-					if (rollback_dest[ROLLBACK_STAGES - 1].valid 
+					if (rollback_dest[ROLLBACK_STAGES - 1].valid
 						&& rollback_dest[ROLLBACK_STAGES - 1].thread_idx == thread_idx_t'(thread_idx)
 						&& wb_rollback_pipeline == PIPE_MEM)
 					begin
@@ -268,7 +268,7 @@ module thread_select_stage(
 
 			always_comb
 			begin
-				// There can be a writeback conflict even if the instruction doesn't 
+				// There can be a writeback conflict even if the instruction doesn't
 				// write back to a register (it cause a rollback, for example)
 				case (thread_instr[thread_idx].pipeline_sel)
 					PIPE_SCYCLE_ARITH: writeback_conflict = writeback_allocate[0];
@@ -278,9 +278,9 @@ module thread_select_stage(
 			end
 
 			// Only check the scoreboard on the first subcycle. The scoreboard only
-			// tracks register granularity, not individual vector lanes. In most 
-			// cases, this is fine, but with a multi-cycle operation (like a gather 
-			// load), which writes back to the same register multiple times, this 
+			// tracks register granularity, not individual vector lanes. In most
+			// cases, this is fine, but with a multi-cycle operation (like a gather
+			// load), which writes back to the same register multiple times, this
 			// would delay the load.
 			assign can_issue_thread[thread_idx] = instruction_latched
 				&& ((scoreboard[thread_idx] & scoreboard_dep_bitmap) == 0 || current_subcycle[thread_idx] != 0)
@@ -332,12 +332,12 @@ module thread_select_stage(
 `endif
 		end
 	endgenerate
-	
+
 	// At the writeback stage, pipelines of different lengths merge. This results
-	// in a structural hazard where two instructions issued in different cycles 
+	// in a structural hazard where two instructions issued in different cycles
 	// could arrive during the same cycle. Avoid that by tracking instruction issue
-	// and not scheduling instructions that would conflict. Must track instructions 
-	// even if they don't write back to a register, since they may have other side 
+	// and not scheduling instructions that would conflict. Must track instructions
+	// even if they don't write back to a register, since they may have other side
 	// effects.
 	always_comb
 	begin
@@ -353,7 +353,7 @@ module thread_select_stage(
 		end
 	end
 
-	// 
+	//
 	// Choose which thread to issue
 	//
 	arbiter #(.NUM_REQUESTERS(`THREADS_PER_CORE)) thread_select_arbiter(
@@ -376,7 +376,7 @@ module thread_select_stage(
 			ts_instruction <= 0;
 			for (int i = 0; i < ROLLBACK_STAGES; i++)
 				rollback_dest[i].valid <= 0;
-			
+
 			`ifdef NEVER
 			// Suppress autoreset
 			scoreboard_bitmap <= '0;
@@ -416,9 +416,9 @@ module thread_select_stage(
 			ts_subcycle <= current_subcycle[issue_thread_idx];
 
 			// The writeback stage asserts the suspend signal a cycle after a dcache
-			// miss occurs. It is possible a cache miss is already pending for that 
-			// address, and that it gets filled in the next cycle. In this case, 
-			// suspend and wake will be asserted simultaneously. Wake will win 
+			// miss occurs. It is possible a cache miss is already pending for that
+			// address, and that it gets filled in the next cycle. In this case,
+			// suspend and wake will be asserted simultaneously. Wake will win
 			// because of the order of this expression. This is intended, since
 			// cache data is now available and the thread won't be rolled back.
 			thread_blocked <= (thread_blocked | wb_suspend_thread_oh) & ~(l2i_dcache_wake_bitmap

@@ -1,35 +1,35 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 `include "defines.sv"
 
 //
-// Queues store requests from the instruction pipeline, sends store requests to 
-// L2 interconnect, and processes responses. Cache control commands go through 
+// Queues store requests from the instruction pipeline, sends store requests to
+// L2 interconnect, and processes responses. Cache control commands go through
 // here as well.
 // A memory barrier request waits until all pending store requests finish.
-// It acts like a store for rollback logic, but doesn't enqueue anything if 
+// It acts like a store for rollback logic, but doesn't enqueue anything if
 // the store buffer is empty.
 //
 
 module l1_store_queue(
 	input                                  clk,
 	input                                  reset,
-                                           
-	// From dache_data_stage               
+
+	// From dache_data_stage
 	input                                  dd_store_en,
 	input                                  dd_flush_en,
 	input                                  dd_membar_en,
@@ -42,13 +42,13 @@ module l1_store_queue(
 	input thread_idx_t                     dd_store_thread_idx,
 	input l1d_addr_t                       dd_store_bypass_addr,
 	input thread_idx_t                     dd_store_bypass_thread_idx,
-	
+
 	// To writeback_stage
 	output logic [`CACHE_LINE_BYTES - 1:0] sq_store_bypass_mask,
 	output cache_line_data_t               sq_store_bypass_data,
 	output logic                           sq_store_sync_success,
-                                           
-	// To l2_cache_interface           
+
+	// To l2_cache_interface
 	output logic                           sq_dequeue_ready,
 	output scalar_t                        sq_dequeue_addr,
 	output l1_miss_entry_idx_t             sq_dequeue_idx,
@@ -94,7 +94,7 @@ module l1_store_queue(
 	assign cache_aligned_bypass_addr.tag = dd_store_bypass_addr.tag;
 	assign cache_aligned_bypass_addr.set_idx = dd_store_bypass_addr.set_idx;
 	assign cache_aligned_bypass_addr.offset = 0;
-	
+
 	arbiter #(.NUM_REQUESTERS(`THREADS_PER_CORE)) arbiter_send(
 		.request(send_request),
 		.update_lru(1'b1),
@@ -123,9 +123,9 @@ module l1_store_queue(
 			assign store_requested_this_entry = dd_store_en && dd_store_thread_idx == thread_idx_t'(thread_idx);
 			assign membar_requested_this_entry = dd_membar_en && dd_store_thread_idx == thread_idx_t'(thread_idx);
 			assign send_this_cycle = send_grant_oh[thread_idx] && sq_dequeue_ack;
-			assign can_write_combine = pending_stores[thread_idx].valid 
+			assign can_write_combine = pending_stores[thread_idx].valid
 				&& pending_stores[thread_idx].address == cache_aligned_store_addr
-				&& !pending_stores[thread_idx].synchronized 
+				&& !pending_stores[thread_idx].synchronized
 				&& !pending_stores[thread_idx].flush
 				&& !pending_stores[thread_idx].iinvalidate
 				&& !pending_stores[thread_idx].dinvalidate
@@ -138,14 +138,14 @@ module l1_store_queue(
 			assign is_restarted_sync_request = pending_stores[thread_idx].valid
 				&& pending_stores[thread_idx].response_received
 				&& pending_stores[thread_idx].synchronized;
-			assign update_store_entry = store_requested_this_entry 
-				&& (!pending_stores[thread_idx].valid || can_write_combine || got_response_this_entry) 
+			assign update_store_entry = store_requested_this_entry
+				&& (!pending_stores[thread_idx].valid || can_write_combine || got_response_this_entry)
 				&& !is_restarted_sync_request;
-			assign got_response_this_entry = storebuf_l2_response_valid 
+			assign got_response_this_entry = storebuf_l2_response_valid
 				&& storebuf_l2_response_idx == thread_idx_t'(thread_idx);
-			assign sq_wake_bitmap[thread_idx] = got_response_this_entry 
+			assign sq_wake_bitmap[thread_idx] = got_response_this_entry
 				&& pending_stores[thread_idx].thread_waiting;
-			assign enqueue_cache_control = dd_store_thread_idx == thread_idx_t'(thread_idx) 
+			assign enqueue_cache_control = dd_store_thread_idx == thread_idx_t'(thread_idx)
 				&& (!pending_stores[thread_idx].valid || got_response_this_entry)
 				&& (dd_flush_en || dd_dinvalidate_en || dd_iinvalidate_en);
 
@@ -156,9 +156,9 @@ module l1_store_queue(
 					 && (dd_flush_en || dd_dinvalidate_en || dd_iinvalidate_en || dd_store_en))
 				begin
 					// Trigger a rollback if the store buffer is full.
-					// - On the first synchronized store request, always suspend the thread, even 
+					// - On the first synchronized store request, always suspend the thread, even
 					//   when there is space in the buffer, because this must wait for a response.
-					// - If the store entry is full, but it got a response this cycle, 
+					// - If the store entry is full, but it got a response this cycle,
 					//   allow enqueuing a new one. This is simpler, because it avoids
 					//   needing to handle the lost wakeup issue (like the near miss case
 					//   in the data cache)
@@ -179,7 +179,7 @@ module l1_store_queue(
 				begin
 					pending_stores[thread_idx] <= 0;
 				end
-				else 
+				else
 				begin
 					if (send_this_cycle)
 						pending_stores[thread_idx].request_sent <= 1;
@@ -187,13 +187,13 @@ module l1_store_queue(
 					if (update_store_entry)
 					begin
 						assert(!enqueue_cache_control);
-					
+
 						for (int byte_lane = 0; byte_lane < `CACHE_LINE_BYTES; byte_lane++)
 						begin
 							if (dd_store_mask[byte_lane])
 								pending_stores[thread_idx].data[byte_lane * 8+:8] <= dd_store_data[byte_lane * 8+:8];
 						end
-							
+
 						if (can_write_combine)
 							pending_stores[thread_idx].mask <= pending_stores[thread_idx].mask | dd_store_mask;
 						else
@@ -207,7 +207,7 @@ module l1_store_queue(
 
 					if (store_requested_this_entry)
 					begin
-						// Attempt to enqueue a new request. This may happen the same cycle 
+						// Attempt to enqueue a new request. This may happen the same cycle
 						// an old request is satisfied. In this case, replace the old entry.
 						if (is_restarted_sync_request)
 						begin
@@ -224,13 +224,13 @@ module l1_store_queue(
 						else if (update_store_entry && !can_write_combine)
 						begin
 							// New store
-							
-							// Ensure this entry isn't in use (or that it is being cleared this 
+
+							// Ensure this entry isn't in use (or that it is being cleared this
 							// cycle)
 							assert(!pending_stores[thread_idx].valid || got_response_this_entry);
 
 							assert(!enqueue_cache_control);
-							
+
 							pending_stores[thread_idx].valid <= 1;
 							pending_stores[thread_idx].address <= cache_aligned_store_addr;
 							pending_stores[thread_idx].synchronized <= dd_store_synchronized;
@@ -244,7 +244,7 @@ module l1_store_queue(
 					else if (enqueue_cache_control)
 					begin
 						assert(!rollback[thread_idx]);
-					
+
 						pending_stores[thread_idx].valid <= 1;
 						pending_stores[thread_idx].address <= cache_aligned_store_addr;
 						pending_stores[thread_idx].synchronized <= 0;
@@ -266,9 +266,9 @@ module l1_store_queue(
 
 						// Ensure a response isn't sent multiple times
 						assert(!pending_stores[thread_idx].response_received);
-						
+
 						// When the L2 cache responds to a synchronized memory transaction, the
-						// entry is still valid until the thread wakes back up and retrives the 
+						// entry is still valid until the thread wakes back up and retrives the
 						// result. If it is not synchronized, finish the transaction.
 						if (pending_stores[thread_idx].synchronized)
 						begin
@@ -282,8 +282,8 @@ module l1_store_queue(
 			end
 		end
 	endgenerate
-	
-	// New request out. 
+
+	// New request out.
 	// XXX may want to register this to reduce latency.
 	assign sq_dequeue_ready = |send_grant_oh;
 	assign sq_dequeue_idx = send_grant_idx;
@@ -294,7 +294,7 @@ module l1_store_queue(
 	assign sq_dequeue_flush = pending_stores[send_grant_idx].flush;
 	assign sq_dequeue_iinvalidate = pending_stores[send_grant_idx].iinvalidate;
 	assign sq_dequeue_dinvalidate = pending_stores[send_grant_idx].dinvalidate;
-	
+
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
@@ -310,9 +310,9 @@ module l1_store_queue(
 		else
 		begin
 			// Only one request can be active per cycle.
-			assert($onehot0({dd_store_en, dd_flush_en, dd_membar_en, dd_iinvalidate_en, 
+			assert($onehot0({dd_store_en, dd_flush_en, dd_membar_en, dd_iinvalidate_en,
 				dd_dinvalidate_en}));
-				
+
 			// Check that above is true for dequeued entries
 			assert(!sq_dequeue_ready || $onehot0({pending_stores[send_grant_idx].flush,
 				pending_stores[send_grant_idx].dinvalidate, pending_stores[send_grant_idx].iinvalidate,
@@ -333,7 +333,7 @@ module l1_store_queue(
 			end
 			else
 				sq_store_bypass_mask <= 0;
-		
+
 			sq_store_sync_success <= pending_stores[dd_store_thread_idx].sync_success;
 			sq_rollback_en <= |rollback;
 		end

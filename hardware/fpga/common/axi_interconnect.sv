@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 
 `include "defines.sv"
@@ -33,7 +33,7 @@ module axi_interconnect
 	// connected slave)
 	axi4_interface.master    axi_bus_m0,
 
-	// Master Interface 1 (address M1_BASE_ADDRESS - 0xfffeffff) 
+	// Master Interface 1 (address M1_BASE_ADDRESS - 0xfffeffff)
 	axi4_interface.master    axi_bus_m1,
 
 	// Slave Interface 0 (CPU/L2 cache)
@@ -87,10 +87,10 @@ module axi_interconnect
 	assign axi_bus_m1.m_wstrb = axi_bus_s0.m_wstrb;
 	assign axi_bus_m1.m_awburst = axi_bus_s0.m_awburst;
 	assign axi_bus_m1.m_awsize = axi_bus_s0.m_awsize;
-	
+
 	assign axi_bus_m0.m_awvalid = write_master_select == 0 && write_state == STATE_ISSUE_ADDRESS;
 	assign axi_bus_m1.m_awvalid = write_master_select == 1 && write_state == STATE_ISSUE_ADDRESS;
-	
+
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
@@ -128,7 +128,7 @@ module axi_interconnect
 			write_state <= STATE_ISSUE_ADDRESS;
 		end
 	end
-	
+
 	always_comb
 	begin
 		if (write_master_select == 0)
@@ -150,14 +150,14 @@ module axi_interconnect
 			axi_bus_s0.s_bvalid = axi_bus_m1.s_bvalid;
 		end
 	end
-	
+
 	//
 	// Read handling.  Slave interface 1 has priority.
 	//
 	assign axi_arready_m = read_selected_master ? axi_bus_m1.s_arready : axi_bus_m0.s_arready;
 	assign axi_rready_m = read_selected_master ? axi_bus_m1.m_rready : axi_bus_m0.m_rready;
 	assign axi_rvalid_m = read_selected_master ? axi_bus_m1.s_rvalid : axi_bus_m0.s_rvalid;
-	
+
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
@@ -223,16 +223,16 @@ module axi_interconnect
 		begin
 			axi_bus_s0.s_rvalid = axi_rvalid_m;
 			axi_bus_s1.s_rvalid = 0;
-			axi_bus_m0.m_rready = axi_bus_s0.m_rready && read_selected_master == 0; 
+			axi_bus_m0.m_rready = axi_bus_s0.m_rready && read_selected_master == 0;
 			axi_bus_m1.m_rready = axi_bus_s0.m_rready && read_selected_master == 1;
 			axi_bus_s0.s_arready = axi_arready_m && read_state == STATE_ISSUE_ADDRESS;
 			axi_bus_s1.s_arready = 0;
 		end
-		else 
+		else
 		begin
 			axi_bus_s0.s_rvalid = 0;
 			axi_bus_s1.s_rvalid = axi_rvalid_m;
-			axi_bus_m0.m_rready = axi_bus_s1.m_rready && read_selected_master == 0; 
+			axi_bus_m0.m_rready = axi_bus_s1.m_rready && read_selected_master == 0;
 			axi_bus_m1.m_rready = axi_bus_s1.m_rready && read_selected_master == 1;
 			axi_bus_s0.s_arready = 0;
 			axi_bus_s1.s_arready = axi_arready_m && read_state == STATE_ISSUE_ADDRESS;

@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 `include "defines.sv"
 
@@ -21,7 +21,7 @@
 //
 // Floating Point Addition
 // - Determine which operand has the larger absolute value
-// - Swap if necessary so the larger operand is in the larger-exponent lane 
+// - Swap if necessary so the larger operand is in the larger-exponent lane
 //   (_le)
 // - Compute alignment shift count
 // Float to int conversion
@@ -34,11 +34,11 @@ module fp_execute_stage1(
 	input                                          clk,
 	input                                          reset,
 
-	// From writeback_stage                        
+	// From writeback_stage
 	input logic                                    wb_rollback_en,
 	input thread_idx_t                             wb_rollback_thread_idx,
-	                                               
-	// From operand_fetch_stage                    
+
+	// From operand_fetch_stage
 	input vector_t                                 of_operand1,
 	input vector_t                                 of_operand2,
 	input vector_lane_mask_t                       of_mask_value,
@@ -46,8 +46,8 @@ module fp_execute_stage1(
 	input decoded_instruction_t                    of_instruction,
 	input thread_idx_t                             of_thread_idx,
 	input subcycle_t                               of_subcycle,
-	                                               
-	// To fp_execute_stage2                               
+
+	// To fp_execute_stage2
 	output logic                                   fx1_instruction_valid,
 	output decoded_instruction_t                   fx1_instruction,
 	output vector_lane_mask_t                      fx1_mask_value,
@@ -56,15 +56,15 @@ module fp_execute_stage1(
 	output logic[`VECTOR_LANES - 1:0]              fx1_result_is_inf,
 	output logic[`VECTOR_LANES - 1:0]              fx1_result_is_nan,
 	output logic[`VECTOR_LANES - 1:0][5:0]         fx1_ftoi_lshift,
-	                                               
+
 	// Floating point addition/subtraction
-	output scalar_t[`VECTOR_LANES - 1:0]           fx1_significand_le,	// Larger exponent 
+	output scalar_t[`VECTOR_LANES - 1:0]           fx1_significand_le,	// Larger exponent
 	output scalar_t[`VECTOR_LANES - 1:0]           fx1_significand_se,  // Smaller exponent
 	output logic[`VECTOR_LANES - 1:0][5:0]         fx1_se_align_shift,
 	output logic[`VECTOR_LANES - 1:0][7:0]         fx1_add_exponent,
 	output logic[`VECTOR_LANES - 1:0]              fx1_logical_subtract,
 	output logic[`VECTOR_LANES - 1:0]              fx1_add_result_sign,
-	
+
 	// Floating point multiplication
 	output logic[`VECTOR_LANES - 1:0][31:0]        fx1_multiplicand,
 	output logic[`VECTOR_LANES - 1:0][31:0]        fx1_multiplier,
@@ -81,7 +81,7 @@ module fp_execute_stage1(
 		|| of_instruction.alu_op == OP_MULH_I;
 	assign is_ftoi = of_instruction.alu_op == OP_FTOI;
 	assign is_itof = of_instruction.alu_op == OP_ITOF;
-	
+
 	genvar lane_idx;
 	generate
 		for (lane_idx = 0; lane_idx < `VECTOR_LANES; lane_idx++)
@@ -136,7 +136,7 @@ module fp_execute_stage1(
 				else
 				begin
 					ftoi_rshift = 6'd0;	// No fractional bits that fit in precision
-					ftoi_lshift_nxt = 6'(fop2.exponent - 8'd150); 
+					ftoi_lshift_nxt = 6'(fop2.exponent - 8'd150);
 				end
 			end
 
@@ -149,7 +149,7 @@ module fp_execute_stage1(
 				else
 					logical_subtract = fop1.sign ^ fop2.sign ^ is_subtract;
 			end
-			
+
 			always_comb
 			begin
 				if (is_itof)
@@ -162,30 +162,30 @@ module fp_execute_stage1(
 				else
 					result_is_nan = fop1_is_nan || fop2_is_nan || (fop1_is_inf && fop2_is_inf && logical_subtract);
 			end
-			
+
 			// The result exponent for multiplication is the sum of the exponents. Convert these
 			// from biased to unbiased representation by inverting the MSB, then add.
 			// XXX handle underflow
 			assign {mul_exponent_underflow, mul_exponent_carry, mul_exponent}
 				=  {2'd0, fop1.exponent} + {2'd0, fop2.exponent} - 10'd127;
 
-			// Subtle: In the case where values are equal, leave operand1 in the _le slot. This properly 
+			// Subtle: In the case where values are equal, leave operand1 in the _le slot. This properly
 			// handles the sign for +/- zero.
-			assign op1_is_larger = fop1.exponent > fop2.exponent 
+			assign op1_is_larger = fop1.exponent > fop2.exponent
 					|| (fop1.exponent == fop2.exponent && full_significand1 >= full_significand2);
 			assign exp_difference = op1_is_larger ? fop1.exponent - fop2.exponent
 				: fop2.exponent - fop1.exponent;
-			
+
 			always_ff @(posedge clk)
 			begin
 				fx1_result_is_nan[lane_idx] <= result_is_nan;
 				fx1_result_is_inf[lane_idx] <= !is_itof && !result_is_nan && (fop1_is_inf || fop2_is_inf
 					|| (is_fmul && mul_exponent_carry && !mul_exponent_underflow));
-			
-				// Floating point addition pipeline. 
+
+				// Floating point addition pipeline.
 				// - If this is a float<->int conversion, the value goes down the small exponent path.
 				//   The large exponent is set to zero.
-				// - For addition/subtraction, sort into significand_le (the larger value) and 
+				// - For addition/subtraction, sort into significand_le (the larger value) and
 				//   sigificand_se (the smaller).
 				if (op1_is_larger || is_ftoi || is_itof)
 				begin
@@ -220,23 +220,23 @@ module fp_execute_stage1(
 
 				fx1_logical_subtract[lane_idx] <= logical_subtract;
 				if (is_itof)
-					fx1_se_align_shift[lane_idx] <= 0;	
+					fx1_se_align_shift[lane_idx] <= 0;
 				else if (is_ftoi)
 				begin
 					// Shift to truncate fractional bits
-					fx1_se_align_shift[lane_idx] <= ftoi_rshift[5:0];	
+					fx1_se_align_shift[lane_idx] <= ftoi_rshift[5:0];
 				end
 				else
 				begin
 					// Compute how much to shift significand to make exponents be equal.
-					// Shift up to 27 bits, even though the significand is only 24 bits. 
+					// Shift up to 27 bits, even though the significand is only 24 bits.
 					// This allows shifting out the guard and round bits.
-					fx1_se_align_shift[lane_idx] <= exp_difference < 8'd27 ? 6'(exp_difference) : 6'd27;	
+					fx1_se_align_shift[lane_idx] <= exp_difference < 8'd27 ? 6'(exp_difference) : 6'd27;
 				end
-				
+
 				fx1_ftoi_lshift[lane_idx] <= ftoi_lshift_nxt;
-				
-				// Multiplication pipeline. 
+
+				// Multiplication pipeline.
 				// XXX this is a pass through now. For a more optimal implementation, this could do
 				// booth encoding.
 				if (is_imul)
@@ -256,7 +256,7 @@ module fp_execute_stage1(
 			end
 		end
 	endgenerate
-	
+
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)

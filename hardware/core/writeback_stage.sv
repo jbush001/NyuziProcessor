@@ -1,39 +1,39 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 `include "defines.sv"
 
-// 
+//
 // Instruction Pipeline Writeback Stage
 // - Controls signals to write results back to register file
 // - Selects result from appropriate pipeline.
 // - Aligns memory read results
-// - Flags rollbacks. Most are detected earlier in the pipeline, but we 
-//   handle them here to avoid having to reconcile multiple rollbacks in 
+// - Flags rollbacks. Most are detected earlier in the pipeline, but we
+//   handle them here to avoid having to reconcile multiple rollbacks in
 //   the same cycle.
 //   * Branch
 //   * Data cache miss
 //   * Exception
 //
 // Exceptions and interrupts are precise in this architecture.
-// Instructions may retire out of order because the execution pipelines have 
-// different lengths. It's also possible, after a rollback, for earlier 
-// instructions from the same thread to arrive at this stage (because they were 
-// in the longer floating point pipeline). The rollback signal does not flush 
-// later stages of the multicycle pipeline for this reason. This can be 
+// Instructions may retire out of order because the execution pipelines have
+// different lengths. It's also possible, after a rollback, for earlier
+// instructions from the same thread to arrive at this stage (because they were
+// in the longer floating point pipeline). The rollback signal does not flush
+// later stages of the multicycle pipeline for this reason. This can be
 // challenging to visualize.
 //
 
@@ -59,8 +59,8 @@ module writeback_stage(
 	input scalar_t                        ix_rollback_pc,
 	input subcycle_t                      ix_subcycle,
 	input                                 ix_privileged_op_fault,
-	                               
-	// From dcache_data_stage      
+
+	// From dcache_data_stage
 	input                                 dd_instruction_valid,
 	input decoded_instruction_t           dd_instruction,
 	input vector_lane_mask_t              dd_lane_mask,
@@ -77,7 +77,7 @@ module writeback_stage(
 	input                                 dd_tlb_miss,
 	input                                 dd_supervisor_fault,
 	input                                 dd_privilege_op_fault,
-	
+
 	// From l1_store_queue
 	input [`CACHE_LINE_BYTES - 1:0]       sq_store_bypass_mask,
 	input cache_line_data_t               sq_store_bypass_data,
@@ -87,7 +87,7 @@ module writeback_stage(
 	// From io_request_queue
 	input scalar_t                        ior_read_value,
 	input logic                           ior_rollback_en,
-	
+
 	// From control_registers
 	input scalar_t                        cr_creg_read_val,
 	input thread_bitmap_t                 cr_interrupt_en,
@@ -102,7 +102,7 @@ module writeback_stage(
 	output thread_idx_t                   wb_fault_thread_idx,
 	output scalar_t                       wb_fault_access_vaddr,
 	output subcycle_t                     wb_fault_subcycle,
-	
+
 	// Interrupt input
 	input                                 interrupt_pending,
 	input thread_idx_t                    interrupt_thread_idx,
@@ -126,7 +126,7 @@ module writeback_stage(
 
 	// To thread_select_stage
 	output thread_bitmap_t                wb_suspend_thread_oh,
-	
+
 	// Performance counters
 	output logic                          perf_instruction_retire,
 	output logic                          perf_store_rollback);
@@ -153,16 +153,16 @@ module writeback_stage(
 	logic is_last_subcycle_sx;
 	logic is_last_subcycle_mx;
 	logic[4:0] writeback_counter;
- 	
+
 	assign perf_instruction_retire = fx5_instruction_valid || ix_instruction_valid || dd_instruction_valid;
 	assign perf_store_rollback = sq_rollback_en;
 
 	//
 	// Rollback control logic
 	//
-	// These signals are not registered because the next instruction may be a 
+	// These signals are not registered because the next instruction may be a
 	// memory store and we must squash it before it applies its side effects.
-	// This stage handles all rollbacks, so there can be only one asserted at a 
+	// This stage handles all rollbacks, so there can be only one asserted at a
 	// time.
 	//
 	always_comb
@@ -190,7 +190,7 @@ module writeback_stage(
 				wb_rollback_pc = cr_tlb_miss_handler;
 			else
 				wb_rollback_pc = cr_fault_handler;
-			
+
 			wb_rollback_thread_idx = ix_thread_idx;
 			wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
 			wb_fault = 1;
@@ -236,7 +236,7 @@ module writeback_stage(
 				else
 					wb_fault_reason = FR_DATA_ALIGNMENT;
 			end
-			
+
 			wb_fault_pc = dd_instruction.pc;
 			wb_fault_thread_idx = dd_thread_idx;
 			wb_fault_access_vaddr = dd_request_vaddr;
@@ -244,19 +244,19 @@ module writeback_stage(
 		else if (ix_instruction_valid && ix_instruction.has_dest && ix_instruction.dest_reg == `REG_PC
 			&& !ix_instruction.dest_is_vector)
 		begin
-			// Arithmetic with PC destination 
+			// Arithmetic with PC destination
 			wb_rollback_en = 1'b1;
-			wb_rollback_pc = ix_result[0];	
+			wb_rollback_pc = ix_result[0];
 			wb_rollback_thread_idx = ix_thread_idx;
 			wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
 		end
 		else if (dd_instruction_valid && dd_instruction.has_dest && dd_instruction.dest_reg == `REG_PC
 			&& !dd_instruction.dest_is_vector && !dd_rollback_en)
 		begin
-			// Memory load with PC destination. Check dd_rollback_en to ensure this 
+			// Memory load with PC destination. Check dd_rollback_en to ensure this
 			// isn't a cache miss (if it was, handle it in below)
 			wb_rollback_en = 1'b1;
-			wb_rollback_pc = swapped_word_value;	
+			wb_rollback_pc = swapped_word_value;
 			wb_rollback_thread_idx = dd_thread_idx;
 			wb_rollback_pipeline = PIPE_MEM;
 		end
@@ -284,25 +284,25 @@ module writeback_stage(
 			wb_rollback_pipeline = PIPE_MEM;
 			wb_rollback_subcycle = dd_subcycle;
 		end
-		else if (interrupt_pending 
-			&& cr_interrupt_en[interrupt_thread_idx] 
+		else if (interrupt_pending
+			&& cr_interrupt_en[interrupt_thread_idx]
 			&& !dd_instruction_valid
 			&& (!ix_instruction_valid || ix_thread_idx == interrupt_thread_idx)
 			&& !fx5_instruction_valid)
-		begin	
+		begin
 			// Do not dispatch an interrupt in the following cases:
 			// - In another rollback is occurring this cycle.
-			// - If an instruction from the floating point pipeline is being retired 
+			// - If an instruction from the floating point pipeline is being retired
 			//   this cycle. There isn't logic in the thread select stage to invalidate
 			//   the scoreboard entries or squash the instructions in the pipeline.
 			// - If an instruction from the memory operation pipeline is being retired
-			//   this cycle. This instruction may have written or read from device IO 
-			//   memory in the last stage and rolling back here will cause them to 
+			//   this cycle. This instruction may have written or read from device IO
+			//   memory in the last stage and rolling back here will cause them to
 			//   happen again when the thread is restarted.
 			wb_rollback_en = 1;
 			wb_rollback_thread_idx = interrupt_thread_idx;
-			wb_rollback_pc = cr_fault_handler;	
-			wb_rollback_pipeline = PIPE_MEM; 
+			wb_rollback_pc = cr_fault_handler;
+			wb_rollback_pipeline = PIPE_MEM;
 			wb_rollback_subcycle = 0;
 			wb_fault = 1;
 			wb_fault_pc = last_retire_pc[interrupt_thread_idx] + 4;
@@ -320,7 +320,7 @@ module writeback_stage(
 		.index(dd_thread_idx));
 
 	// Suspend thread if necessary
-	assign wb_suspend_thread_oh = (dd_suspend_thread || sq_rollback_en || ior_rollback_en) 
+	assign wb_suspend_thread_oh = (dd_suspend_thread || sq_rollback_en || ior_rollback_en)
 		? thread_oh : thread_bitmap_t'(0);
 
 	// If there is a pending store for the value that was just read, merge it into
@@ -359,14 +359,14 @@ module writeback_stage(
 			default: half_aligned = '0;
 		endcase
 	end
-	
+
 	assign swapped_word_value = {
-		mem_load_lane[7:0], 
-		mem_load_lane[15:8], 
+		mem_load_lane[7:0],
+		mem_load_lane[15:8],
 		mem_load_lane[23:16],
-		mem_load_lane[31:24] 
+		mem_load_lane[31:24]
 	};
-	
+
 	// Endian swap memory load
 	genvar swap_word;
 	generate
@@ -411,7 +411,7 @@ module writeback_stage(
 			__debug_is_sync_store <= '0;
 			__debug_wb_pc <= '0;
 `endif
-			
+
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			wb_writeback_en <= '0;
@@ -428,10 +428,10 @@ module writeback_stage(
 		begin
 			// Don't cause rollback if there isn't an instruction
 			assert(!(sq_rollback_en && !dd_instruction_valid));
-			
+
 			// Only one pipeline should attempt to retire an instruction per cycle
 			assert($onehot0({ix_instruction_valid, dd_instruction_valid, fx5_instruction_valid}));
-		
+
 `ifdef SIMULATION
 			// Used by testbench for cosimulation output
 			__debug_is_sync_store <= dd_instruction_valid && !dd_instruction.is_load
@@ -446,7 +446,7 @@ module writeback_stage(
 				writeback_counter <= {1'b0, writeback_counter[4:1]};
 				if (ix_instruction_valid && ix_rollback_en)
 					last_retire_pc[ix_thread_idx] <= ix_rollback_pc;
-					
+
 				// XXX pc load from memory?
 			end
 			else if (fx5_instruction_valid)
@@ -468,8 +468,8 @@ module writeback_stage(
 			else
 				writeback_counter <= {1'b0, writeback_counter[4:1]};
 
-			// wb_rollback_en is derived combinatorially from the instruction 
-			// that is about to retire, so this doesn't need to check 
+			// wb_rollback_en is derived combinatorially from the instruction
+			// that is about to retire, so this doesn't need to check
 			// wb_rollback_thread_idx like other places.
 			case ({fx5_instruction_valid, ix_instruction_valid, dd_instruction_valid})
 				//
@@ -488,7 +488,7 @@ module writeback_stage(
 						wb_writeback_value <= vector_t'(mcycle_vcompare_result);
 					else
 						wb_writeback_value <= fx5_result;
-					
+
 					wb_writeback_mask <= fx5_mask_value;
 					wb_writeback_reg <= fx5_instruction.dest_reg;
 					wb_writeback_is_last_subcycle <= is_last_subcycle_mx;
@@ -509,7 +509,7 @@ module writeback_stage(
 						|| ix_instruction.branch_type == BRANCH_CALL_REGISTER))
 					begin
 						// Call is a special case: it both rolls back and writes back a register (ra)
-						wb_writeback_en <= 1;	
+						wb_writeback_en <= 1;
 					end
 					else if (ix_instruction.has_dest && !wb_rollback_en)
 						wb_writeback_en <= 1;	// This is a normal, non-rolled-back instruction
@@ -522,7 +522,7 @@ module writeback_stage(
 						wb_writeback_value <= vector_t'(scycle_vcompare_result);
 					else
 						wb_writeback_value <= ix_result;
-					
+
 					wb_writeback_mask <= ix_mask_value;
 					wb_writeback_reg <= ix_instruction.dest_reg;
 					wb_writeback_is_last_subcycle <= is_last_subcycle_sx;
@@ -533,7 +533,7 @@ module writeback_stage(
 					__debug_wb_pipeline <= PIPE_SCYCLE_ARITH;
 `endif
 				end
-				
+
 				//
 				// Memory pipeline result
 				//
@@ -544,14 +544,14 @@ module writeback_stage(
 					wb_writeback_is_vector <= dd_instruction.dest_is_vector;
 					wb_writeback_reg <= dd_instruction.dest_reg;
 					wb_writeback_is_last_subcycle <= is_last_subcycle_dd;
-				
+
 					if (!dd_instruction.is_cache_control)
 					begin
 						if (dd_instruction.is_load)
 						begin
 							// Loads should always have a destination register.
 							assert(dd_instruction.has_dest);
-						
+
 							unique case (memory_op)
 								MEM_B:  wb_writeback_value[0] <= {24'b0, byte_aligned};
 								MEM_BX: wb_writeback_value[0] <= {{24{byte_aligned[7]}}, byte_aligned};
@@ -565,38 +565,38 @@ module writeback_stage(
 
 									if (dd_is_io_address)
 									begin
-										wb_writeback_value[0] <= ior_read_value; 
+										wb_writeback_value[0] <= ior_read_value;
 										wb_writeback_mask <= {`VECTOR_LANES{1'b1}};
 									end
 									else
 									begin
-										wb_writeback_value[0] <= swapped_word_value; 
+										wb_writeback_value[0] <= swapped_word_value;
 										wb_writeback_mask <= {`VECTOR_LANES{1'b1}};
 									end
 								end
-					
+
 								MEM_CONTROL_REG:
 								begin
-									wb_writeback_value[0] <= cr_creg_read_val; 
+									wb_writeback_value[0] <= cr_creg_read_val;
 									wb_writeback_mask <= {`VECTOR_LANES{1'b1}};
 									assert(!dd_instruction.dest_is_vector);
 								end
-					
+
 								MEM_BLOCK,
 								MEM_BLOCK_M:
 								begin
 									// Block load
-									wb_writeback_mask <= dd_lane_mask;	
+									wb_writeback_mask <= dd_lane_mask;
 									wb_writeback_value <= endian_twiddled_data;
 									assert(dd_instruction.dest_is_vector);
 								end
-					
+
 								default:
 								begin
 									// gather load
 									// Grab the appropriate lane.
 									wb_writeback_value <= {`VECTOR_LANES{swapped_word_value}};
-									wb_writeback_mask <= dd_vector_lane_oh & dd_lane_mask;	
+									wb_writeback_mask <= dd_vector_lane_oh & dd_lane_mask;
 								end
 							endcase
 						end
@@ -615,13 +615,13 @@ module writeback_stage(
 					__debug_wb_pipeline <= PIPE_MEM;
 `endif
 				end
-				
+
 				3'b000: wb_writeback_en <= 0;
 				default: wb_writeback_en <= 0;
 			endcase
 		end
-	end	
-	
+	end
+
 `ifdef SIMULATION
 	always_ff @(posedge clk)
 	begin

@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 `ifndef __DEFINES_SV
 `define __DEFINES_SV
@@ -46,8 +46,8 @@ typedef enum logic[5:0] {
 	OP_XOR			= 6'b000011,
 	OP_ADD_I		= 6'b000101,
 	OP_SUB_I		= 6'b000110,
-	OP_MULL_I		= 6'b000111,	// Multiply low	
-	OP_MULH_U		= 6'b001000,	// Unsigned multiply high 
+	OP_MULL_I		= 6'b000111,	// Multiply low
+	OP_MULH_U		= 6'b001000,	// Unsigned multiply high
 	OP_ASHR			= 6'b001001,	// Arithmetic shift right (sign extend)
 	OP_SHR			= 6'b001010,	// Logical shift right (no sign extend)
 	OP_SHL			= 6'b001011,	// Logical shift left
@@ -68,7 +68,7 @@ typedef enum logic[5:0] {
 	OP_GETLANE		= 6'b011010,	// Getlane
 	OP_FTOI			= 6'b011011,
 	OP_RECIPROCAL	= 6'b011100,	// Reciprocal estimate
-	OP_SEXT8		= 6'b011101,	
+	OP_SEXT8		= 6'b011101,
 	OP_SEXT16		= 6'b011110,
 	OP_MULH_I		= 6'b011111,	// Signed multiply high
 	OP_ADD_F		= 6'b100000,
@@ -193,7 +193,7 @@ typedef struct packed {
 	logic is_load;
 	logic is_compare;
 	subcycle_t last_subcycle;
-	control_register_t creg_index;  
+	control_register_t creg_index;
 	logic is_cache_control;
 	cache_op_t cache_control_op;
 } decoded_instruction_t;
@@ -355,50 +355,50 @@ typedef enum logic[1:0] {
 
 // AMBA AXI-4 bus interface
 interface axi4_interface;
-	// Write address channel (Table A2-2)   
-	logic [31:0] m_awaddr;   
-	logic [7:0] m_awlen;    
+	// Write address channel (Table A2-2)
+	logic [31:0] m_awaddr;
+	logic [7:0] m_awlen;
 	logic [2:0] m_awsize;
 	axi_burst_type_t m_awburst;
 	logic [3:0] m_awcache;
-	logic m_awvalid;  
-	logic s_awready;  
+	logic m_awvalid;
+	logic s_awready;
 
 	// Write data channel (Table A2-3)
-	logic [`AXI_DATA_WIDTH - 1:0] m_wdata;    
+	logic [`AXI_DATA_WIDTH - 1:0] m_wdata;
 	logic [`AXI_DATA_WIDTH / 8 - 1:0] m_wstrb;
-	logic m_wlast;    
-	logic m_wvalid;   
-	logic s_wready;   
+	logic m_wlast;
+	logic m_wvalid;
+	logic s_wready;
 
 	// Write response channel (Table A2-4)
-	logic s_bvalid;   
-	logic m_bready;   
+	logic s_bvalid;
+	logic m_bready;
 
 	// Read address channel (Table A2-5)
-	logic [31:0] m_araddr;   
-	logic [7:0] m_arlen;    
+	logic [31:0] m_araddr;
+	logic [7:0] m_arlen;
 	logic [2:0] m_arsize;
 	axi_burst_type_t m_arburst;
 	logic [3:0] m_arcache;
-	logic m_arvalid;  
+	logic m_arvalid;
 	logic s_arready;
 
 	// Read data channel (Table A2-6)
-	logic [`AXI_DATA_WIDTH - 1:0] s_rdata;    
-	logic s_rvalid;   
-	logic m_rready;   
-	
+	logic [`AXI_DATA_WIDTH - 1:0] s_rdata;
+	logic s_rvalid;
+	logic m_rready;
+
 	modport master(input s_awready, s_wready, s_bvalid, s_arready, s_rvalid, s_rdata,
-		output m_awaddr, m_awlen, m_awvalid, m_wdata, m_wlast, m_wvalid, m_bready, m_araddr, m_arlen, 
+		output m_awaddr, m_awlen, m_awvalid, m_wdata, m_wlast, m_wvalid, m_bready, m_araddr, m_arlen,
 		m_arvalid, m_rready, m_awsize, m_awburst, m_wstrb, m_arsize, m_arburst, m_awcache, m_arcache);
-	modport slave(input m_awaddr, m_awlen, m_awvalid, m_wdata, m_wlast, m_wvalid, m_bready, m_araddr,  
-		m_arlen, m_arvalid, m_rready, m_awsize, m_awburst, m_wstrb, m_arsize, m_arburst, 
+	modport slave(input m_awaddr, m_awlen, m_awvalid, m_wdata, m_wlast, m_wvalid, m_bready, m_araddr,
+		m_arlen, m_arvalid, m_rready, m_awsize, m_awburst, m_wstrb, m_arsize, m_arburst,
 		m_awcache, m_arcache,
 		output s_awready, s_wready, s_bvalid, s_arready, s_rvalid, s_rdata);
 endinterface
 
-`define CORE_PERF_EVENTS 10	
+`define CORE_PERF_EVENTS 10
 `define L2_PERF_EVENTS 3
 `define TOTAL_PERF_EVENTS (`L2_PERF_EVENTS + `CORE_PERF_EVENTS * `NUM_CORES)
 

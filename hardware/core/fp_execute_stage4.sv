@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 `include "defines.sv"
 
@@ -20,17 +20,17 @@
 // Floating Point Execute Stage 4
 //
 // Floating point addition/multiplication
-// - Finds leading zero to determine how much to shift to normalize for 
+// - Finds leading zero to determine how much to shift to normalize for
 //   addition
-// - Passes through multiplication result. Could have second stage of wallace 
+// - Passes through multiplication result. Could have second stage of wallace
 //   tree here.
-// 
+//
 
 module fp_execute_stage4(
 	input                                    clk,
 	input                                    reset,
-	                                        
-	// From fp_execute_stage3                       
+
+	// From fp_execute_stage3
 	input vector_lane_mask_t                 fx3_mask_value,
 	input                                    fx3_instruction_valid,
 	input decoded_instruction_t              fx3_instruction,
@@ -39,8 +39,8 @@ module fp_execute_stage4(
 	input [`VECTOR_LANES - 1:0]              fx3_result_is_inf,
 	input [`VECTOR_LANES - 1:0]              fx3_result_is_nan,
 	input [`VECTOR_LANES - 1:0][5:0]         fx3_ftoi_lshift,
-	                                        
-	// Floating point addition/subtraction                    
+
+	// Floating point addition/subtraction
 	input scalar_t[`VECTOR_LANES - 1:0]      fx3_add_significand,
 	input[`VECTOR_LANES - 1:0][7:0]          fx3_add_exponent,
 	input[`VECTOR_LANES - 1:0]               fx3_add_result_sign,
@@ -50,8 +50,8 @@ module fp_execute_stage4(
 	input [`VECTOR_LANES - 1:0][63:0]        fx3_significand_product,
 	input [`VECTOR_LANES - 1:0][7:0]         fx3_mul_exponent,
 	input [`VECTOR_LANES - 1:0]              fx3_mul_sign,
-	                                        
-	// To fp_execute_stage5                         
+
+	// To fp_execute_stage5
 	output logic                             fx4_instruction_valid,
 	output decoded_instruction_t             fx4_instruction,
 	output vector_lane_mask_t                fx4_mask_value,
@@ -59,14 +59,14 @@ module fp_execute_stage4(
 	output subcycle_t                        fx4_subcycle,
 	output logic [`VECTOR_LANES - 1:0]       fx4_result_is_inf,
 	output logic [`VECTOR_LANES - 1:0]       fx4_result_is_nan,
-	
-	// Floating point addition/subtraction                    
+
+	// Floating point addition/subtraction
 	output logic[`VECTOR_LANES - 1:0][7:0]   fx4_add_exponent,
 	output logic[`VECTOR_LANES - 1:0][31:0]  fx4_add_significand,
 	output logic[`VECTOR_LANES - 1:0]        fx4_add_result_sign,
 	output logic[`VECTOR_LANES - 1:0]        fx4_logical_subtract,
 	output logic[`VECTOR_LANES - 1:0][5:0]   fx4_norm_shift,
-	
+
 	// Floating point multiplication
 	output logic[`VECTOR_LANES - 1:0][63:0]  fx4_significand_product,
 	output logic[`VECTOR_LANES - 1:0][7:0]   fx4_mul_exponent,
@@ -75,21 +75,21 @@ module fp_execute_stage4(
 	logic is_ftoi;
 
 	assign is_ftoi = fx3_instruction.alu_op == OP_FTOI;
-	
+
 	genvar lane_idx;
 	generate
 		for (lane_idx = 0; lane_idx < `VECTOR_LANES; lane_idx++)
 		begin : lane_logic_gen
 			logic[5:0] leading_zeroes;
-			
+
 			// Determine normalization shift count for add/sub.
 			always_comb
 			begin
 				// The 24th and 0th bit positions will get chopped already. The
-				// normalization shift measures how far the value needs to be shifted to 
+				// normalization shift measures how far the value needs to be shifted to
 				// make the leading one be truncated.
 				leading_zeroes = 0;
-				casez (fx3_add_significand[lane_idx])	
+				casez (fx3_add_significand[lane_idx])
 					32'b1???????????????????????????????: leading_zeroes = 0;
 					32'b01??????????????????????????????: leading_zeroes = 1;
 					32'b001?????????????????????????????: leading_zeroes = 2;
@@ -142,7 +142,7 @@ module fp_execute_stage4(
 			end
 		end
 	endgenerate
-	
+
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)

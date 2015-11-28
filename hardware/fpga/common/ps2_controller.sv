@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 
 //
@@ -24,14 +24,14 @@ module ps2_controller
 
 	(input              clk,
 	input               reset,
-	
+
 	// IO bus interface
 	input [31:0]        io_address,
-	input               io_read_en,	
+	input               io_read_en,
 	input [31:0]        io_write_data,
 	input               io_write_en,
 	output logic[31:0]  io_read_data,
-	
+
 	// PS/2 Interface
 	inout               ps2_clk,
 	inout               ps2_data);
@@ -65,7 +65,7 @@ module ps2_controller
 
 	// If the FIFO hits the almost full threshold, we dequeue an entry (dropping the oldest
 	// character). Use the almost full threshold instead of full because the Altera specs
-	// say it is not allowed to enqueue into a full FIFO. Although it seems like this should 
+	// say it is not allowed to enqueue into a full FIFO. Although it seems like this should
 	// be legal if read is also asserted, I'm being conservative.
 	sync_fifo #(.WIDTH(8), .SIZE(FIFO_LENGTH), .ALMOST_FULL_THRESHOLD(FIFO_LENGTH - 1)) input_fifo(
 		.flush_en(0),
@@ -83,7 +83,7 @@ module ps2_controller
 	begin
 		if (io_address == STATUS_REG)
 			io_read_data = scalar_t'(!read_fifo_empty);
-		else 
+		else
 			io_read_data = scalar_t'(dequeue_data);
 	end
 
@@ -118,21 +118,21 @@ module ps2_controller
 						bit_count <= bit_count + 3'd1;
 						if (bit_count == 7)
 							state_ff <= STATE_READ_PARITY;
-							
+
 						receive_byte <= {ps2_data_sync, receive_byte[7:1]};
 					end
 
 					STATE_READ_PARITY:
 					begin
 						// XXX not checking parity
-						
+
 						state_ff <= STATE_READ_STOP_BIT;
 					end
 
 					STATE_READ_STOP_BIT:
 					begin
 						// XXX not checking that stop bit is high
-					
+
 						state_ff <= STATE_WAIT_START;
 						enqueue_en <= 1;
 					end

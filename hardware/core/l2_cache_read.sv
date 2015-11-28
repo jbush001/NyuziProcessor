@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 `include "defines.sv"
 
@@ -26,7 +26,7 @@
 //     system memory.
 //   * If this is a cache flush request and this was a cache hit, reads
 //     the data in the line to write back.
-//   * If this is a cache hit, reads the data in the line. 
+//   * If this is a cache hit, reads the data in the line.
 // - Drives signals to update dirty flags in previous stage
 //   * If this is a flush request, clears the dirty bit
 //   * If this is a store request, sets the dirty bit
@@ -38,7 +38,7 @@ module l2_cache_read(
 	input                                     clk,
 	input                                     reset,
 
-	// From l2_cache_tag                     
+	// From l2_cache_tag
 	input l2req_packet_t                      l2t_request,
 	input                                     l2t_valid[`L2_WAYS],
 	input l2_tag_t                            l2t_tag[`L2_WAYS],
@@ -47,8 +47,8 @@ module l2_cache_read(
 	input                                     l2t_is_restarted_flush,
 	input l2_way_idx_t                        l2t_fill_way,
 	input cache_line_data_t                   l2t_data_from_memory,
-	
-	// To l2_cache_tag 
+
+	// To l2_cache_tag
 	// Update metadata.
 	output logic[`L2_WAYS - 1:0]              l2r_update_dirty_en,
 	output l2_set_idx_t                       l2r_update_dirty_set,
@@ -59,12 +59,12 @@ module l2_cache_read(
 	output l2_tag_t                           l2r_update_tag_value,
 	output logic                              l2r_update_lru_en,
 	output l2_way_idx_t                       l2r_update_lru_hit_way,
-                                             
+
 	// From l2_cache_update
 	input                                     l2u_write_en,
 	input [$clog2(`L2_WAYS * `L2_SETS) - 1:0] l2u_write_addr,
 	input cache_line_data_t                   l2u_write_data,
-                                              
+
 	// To l2_cache_update
 	output l2req_packet_t                     l2r_request,
 	output cache_line_data_t                  l2r_data,	// Also to bus interface unit
@@ -74,18 +74,18 @@ module l2_cache_read(
 	output logic                              l2r_is_restarted_flush,
 	output cache_line_data_t                  l2r_data_from_memory,
 	output logic                              l2r_store_sync_success,
-	
+
 	// To l2_axi_bus_interface
 	output l2_tag_t                           l2r_writeback_tag,
 	output logic                              l2r_needs_writeback,
-	
+
 	// Performance counters
 	output logic                              perf_l2_miss,
 	output logic                              perf_l2_hit);
 
 	// Track synchronized load/stores, and determine if a synchronized store
 	// was successful.
-	cache_line_index_t sync_load_address[`TOTAL_THREADS]; 
+	cache_line_index_t sync_load_address[`TOTAL_THREADS];
 	logic sync_load_address_valid[`TOTAL_THREADS];
 	logic can_store_sync;
 
@@ -104,24 +104,24 @@ module l2_cache_read(
 	logic is_dinvalidate;
 	l2_way_idx_t tag_update_way;
 	logic[$clog2(`TOTAL_THREADS) - 1:0] request_sync_slot;
-	
+
 	assign l2_addr = l2t_request.address;
-	assign is_load = l2t_request.packet_type == L2REQ_LOAD 
+	assign is_load = l2t_request.packet_type == L2REQ_LOAD
 		|| l2t_request.packet_type == L2REQ_LOAD_SYNC;
-	assign is_store = l2t_request.packet_type == L2REQ_STORE 
+	assign is_store = l2t_request.packet_type == L2REQ_STORE
 		|| l2t_request.packet_type == L2REQ_STORE_SYNC;
-	assign writeback_way = l2t_request.packet_type == L2REQ_FLUSH 
+	assign writeback_way = l2t_request.packet_type == L2REQ_FLUSH
 		? hit_way_idx : l2t_fill_way;
 	assign is_dinvalidate = l2t_request.packet_type == L2REQ_DINVALIDATE;
 
-	// 
+	//
 	// Check for cache hit
 	//
 	genvar way_idx;
 	generate
 		for (way_idx = 0; way_idx < `L2_WAYS; way_idx++)
 		begin : hit_way_gen
-			assign hit_way_oh[way_idx] = l2_addr.tag == l2t_tag[way_idx] && l2t_valid[way_idx]; 
+			assign hit_way_oh[way_idx] = l2_addr.tag == l2t_tag[way_idx] && l2t_valid[way_idx];
 		end
 	endgenerate
 
@@ -139,14 +139,14 @@ module l2_cache_read(
 	// Cache memory
 	//
 	sram_1r1w #(
-		.DATA_WIDTH(`CACHE_LINE_BITS), 
+		.DATA_WIDTH(`CACHE_LINE_BITS),
 		.SIZE(`L2_WAYS * `L2_SETS),
 		.READ_DURING_WRITE("NEW_DATA")
 	) sram_l2_data(
 		.read_en(l2t_request.valid && (cache_hit || l2t_is_l2_fill)),
 		.read_addr(read_address),
 		.read_data(l2r_data),
-		.write_en(l2u_write_en),	
+		.write_en(l2u_write_en),
 		.write_addr(l2u_write_addr),
 		.write_data(l2u_write_data),
 		.*);
@@ -167,12 +167,12 @@ module l2_cache_read(
 	generate
 		for (dirty_update_idx = 0; dirty_update_idx < `L2_WAYS; dirty_update_idx++)
 		begin : dirty_update_gen
-			assign l2r_update_dirty_en[dirty_update_idx] = update_dirty 
-				&& (l2t_is_l2_fill ? l2t_fill_way == l2_way_idx_t'(dirty_update_idx) 
+			assign l2r_update_dirty_en[dirty_update_idx] = update_dirty
+				&& (l2t_is_l2_fill ? l2t_fill_way == l2_way_idx_t'(dirty_update_idx)
 				: hit_way_oh[dirty_update_idx]);
 		end
 	endgenerate
-	
+
 	//
 	// Update tag memory. If this is a fill, make the new line valid. If it is an
 	// invalidate make it invalid.
@@ -191,7 +191,7 @@ module l2_cache_read(
 	assign l2r_update_tag_valid = !is_dinvalidate;
 	assign l2r_update_tag_value = l2_addr.tag;
 
-	// 
+	//
 	// Update LRU
 	//
 	assign l2r_update_lru_en = cache_hit && (is_load || is_store);
@@ -201,8 +201,8 @@ module l2_cache_read(
 	// Synchronized requests
 	//
 	assign request_sync_slot = $size(request_sync_slot)'({l2t_request.core, l2t_request.id});
-	assign can_store_sync = sync_load_address[request_sync_slot] 
-		== {l2_addr.tag, l2_addr.set_idx} 
+	assign can_store_sync = sync_load_address[request_sync_slot]
+		== {l2_addr.tag, l2_addr.set_idx}
 		&& sync_load_address_valid[request_sync_slot]
 		&& l2t_request.packet_type == L2REQ_STORE_SYNC;
 
@@ -239,7 +239,7 @@ module l2_cache_read(
 		begin
 			// A fill and cache hit cannot occur at the same time.
 			assert(!l2t_is_l2_fill || !cache_hit);
-			
+
 			// Make sure there isn't a hit on more than one way
 			assert(!l2t_request.valid || $onehot0(hit_way_oh));
 
@@ -261,11 +261,11 @@ module l2_cache_read(
 						sync_load_address[request_sync_slot] <= {l2_addr.tag, l2_addr.set_idx};
 						sync_load_address_valid[request_sync_slot] <= 1;
 					end
-		
+
 					L2REQ_STORE,
 					L2REQ_STORE_SYNC:
 					begin
-						// Don't invalidate if the sync store is not successful. Otherwise 
+						// Don't invalidate if the sync store is not successful. Otherwise
 						// threads can livelock.
 						if (l2t_request.packet_type == L2REQ_STORE || can_store_sync)
 						begin
@@ -277,7 +277,7 @@ module l2_cache_read(
 							end
 						end
 					end
-					
+
 					default:
 						;
 				endcase

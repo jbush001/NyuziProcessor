@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 
 `include "defines.sv"
@@ -25,18 +25,18 @@ module control_registers
 	#(parameter core_id_t CORE_ID = 0)
 	(input                                  clk,
 	input                                   reset,
-	
+
 	// To multiple stages
 	output scalar_t                         cr_eret_address[`THREADS_PER_CORE],
 	output logic                            cr_mmu_en[`THREADS_PER_CORE],
 	output logic                            cr_supervisor_en[`THREADS_PER_CORE],
 	output logic[`ASID_WIDTH - 1:0]         cr_current_asid[`THREADS_PER_CORE],
-	
+
 	// From int_execute_stage
 	input                                   ix_is_eret,
 	input thread_idx_t                      ix_thread_idx,
-	
-	// From dcache_data_stage 
+
+	// From dcache_data_stage
 	// dd_xxx signals are unregistered. dt_thread_idx represents thread going into
 	// dcache_data_stage)
 	input thread_idx_t                      dt_thread_idx,
@@ -59,7 +59,7 @@ module control_registers
 	output subcycle_t                       cr_eret_subcycle[`THREADS_PER_CORE],
 	output scalar_t                         cr_fault_handler,
 	output scalar_t                         cr_tlb_miss_handler);
-	
+
 	scalar_t fault_access_addr[`THREADS_PER_CORE];
 	fault_reason_t fault_reason[`THREADS_PER_CORE];
 	logic interrupt_en_saved[`THREADS_PER_CORE];
@@ -102,13 +102,13 @@ module control_registers
 		begin
 			// Ensure a read and write don't occur in the same cycle
 			assert(!(dd_creg_write_en && dd_creg_read_en));
-		
+
 			// A fault and eret are triggered from the same stage, so they
 			// must not occur simultaneously (an eret can raise a fault if it
-			// is not in supervisor mode, but ix_is_eret should not be asserted 
+			// is not in supervisor mode, but ix_is_eret should not be asserted
 			// in that case)
 			assert(!(wb_fault && ix_is_eret));
-		
+
 			cycle_count <= cycle_count + 1;
 
 			if (wb_fault)
@@ -129,9 +129,9 @@ module control_registers
 					cr_mmu_en[wb_fault_thread_idx] <= 0;
 			end
 			else if (ix_is_eret)
-			begin	
+			begin
 				// Copy from prev flags to current flags
-				cr_interrupt_en[ix_thread_idx] <= interrupt_en_saved[ix_thread_idx];	
+				cr_interrupt_en[ix_thread_idx] <= interrupt_en_saved[ix_thread_idx];
 				cr_mmu_en[ix_thread_idx] <= mmu_en_saved[ix_thread_idx];
 				cr_supervisor_en[ix_thread_idx] <= supervisor_en_saved[ix_thread_idx];
 			end
@@ -167,7 +167,7 @@ module control_registers
 						;
 				endcase
 			end
-			
+
 			//
 			// Read logic
 			//
@@ -179,7 +179,7 @@ module control_registers
 						cr_creg_read_val <= scalar_t'({
 							cr_supervisor_en[dt_thread_idx],
 							cr_mmu_en[dt_thread_idx],
-							cr_interrupt_en[dt_thread_idx] 
+							cr_interrupt_en[dt_thread_idx]
 						});
 					end
 
@@ -214,4 +214,4 @@ endmodule
 // verilog-typedef-regexp:"_t$"
 // verilog-auto-reset-widths:unbased
 // End:
-	
+

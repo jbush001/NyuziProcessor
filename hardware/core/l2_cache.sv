@@ -1,28 +1,28 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 `include "defines.sv"
 
 //
-// L2 cache. If there is a cache miss, this puts the request into a queue and 
-// fills it from system memory. When it completes the fill, it feeds the 
+// L2 cache. If there is a cache miss, this puts the request into a queue and
+// fills it from system memory. When it completes the fill, it feeds the
 // request back into the L2 cache pipeline.
 // The L2 cache has a four stage pipeline:
 //  - Arbitrate: chooses among requests from cores, or a restarted request
-//    filled from system memory. Restarted requests always take precedence to 
+//    filled from system memory. Restarted requests always take precedence to
 //    avoid deadlock.
 //  - Tag: issues address to tag ram ways, checks LRU.
 //  - Read: checks for cache hit, reads cache memory
