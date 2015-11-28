@@ -220,11 +220,6 @@ module l2_axi_bus_interface(
 				// Writebacks take precendence over loads to avoid a race condition 
 				// where this loads stale data. Since loads can also enqueue writebacks,
 				// it ensures this doesn't overrun the write FIFO.
-				//
-				// In the normal case, writebacks can only be initiated as the side 
-				// effect of a load, so they can't starve them. The flush 
-				// instruction introduces a bit of a wrinkle here, because they *can* 
-				// starve loads.
 				if (writeback_pending)
 				begin
 					if (!wait_axi_write_response)
