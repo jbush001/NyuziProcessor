@@ -2,19 +2,19 @@
 
 Copyright (c) 2005-2008, Simon Howard
 
-Permission to use, copy, modify, and/or distribute this software 
-for any purpose with or without fee is hereby granted, provided 
-that the above copyright notice and this permission notice appear 
-in all copies. 
+Permission to use, copy, modify, and/or distribute this software
+for any purpose with or without fee is hereby granted, provided
+that the above copyright notice and this permission notice appear
+in all copies.
 
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL 
-WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED 
-WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE 
-AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR 
-CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM 
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, 
-NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN      
-CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. 
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
+CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  */
 
@@ -27,11 +27,11 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  * @brief Balanced binary tree
  *
- * The AVL tree structure is a balanced binary tree which stores 
+ * The AVL tree structure is a balanced binary tree which stores
  * a collection of nodes (see @ref AVLTreeNode).  Each node has
  * a key and a value associated with it.  The nodes are sorted
  * within the tree based on the order of their keys. Modifications
- * to the tree are constructed such that the tree remains 
+ * to the tree are constructed such that the tree remains
  * balanced at all times (there are always roughly equal numbers
  * of nodes on either side of the tree).
  *
@@ -46,10 +46,10 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  * @ref avl_tree_insert.  To remove an entry from an
  * AVL tree, use @ref avl_tree_remove or @ref avl_tree_remove_node.
  *
- * To search an AVL tree, use @ref avl_tree_lookup or 
+ * To search an AVL tree, use @ref avl_tree_lookup or
  * @ref avl_tree_lookup_node.
  *
- * Tree nodes can be queried using the 
+ * Tree nodes can be queried using the
  * @ref avl_tree_node_child,
  * @ref avl_tree_node_parent,
  * @ref avl_tree_node_key and
@@ -88,7 +88,7 @@ typedef void *AVLTreeValue;
  * @see avl_tree_node_left_child
  * @see avl_tree_node_right_child
  * @see avl_tree_node_parent
- * @see avl_tree_node_key 
+ * @see avl_tree_node_key
  * @see avl_tree_node_value
  */
 
@@ -109,7 +109,7 @@ typedef enum {
  * @param value1           The first key.
  * @param value2           The second key.
  * @return                 A negative number if value1 should be sorted
- *                         before value2, a positive number if value2 should 
+ *                         before value2, a positive number if value2 should
  *                         be sorted before value1, zero if the two keys
  *                         are equal.
  */
@@ -123,7 +123,7 @@ int int_compare(void *vlocation1, void *vlocation2);
  * Create a new AVL tree.
  *
  * @param compare_func    Function to use when comparing keys in the tree.
- * @return                A new AVL tree, or NULL if it was not possible 
+ * @return                A new AVL tree, or NULL if it was not possible
  *                        to allocate the memory.
  */
 
@@ -131,7 +131,7 @@ AVLTree *avl_tree_new(AVLTreeCompareFunc compare_func);
 
 /**
  * Destroy an AVL tree.
- * 
+ *
  * @param tree            The tree to destroy.
  */
 
@@ -186,14 +186,14 @@ AVLTreeNode *avl_tree_lookup_node(AVLTree *tree, AVLTreeKey key);
 
 /**
  * Search an AVL tree for a value corresponding to a particular key.
- * This uses the tree as a mapping.  Note that this performs 
+ * This uses the tree as a mapping.  Note that this performs
  * identically to @ref avl_tree_lookup_node, except that the value
  * at the node is returned rather than the node itself.
  *
  * @param tree            The AVL tree to search.
  * @param key             The key to search for.
- * @return                The value associated with the given key, or 
- *                        @ref AVL_TREE_NULL if no entry with the given key is 
+ * @return                The value associated with the given key, or
+ *                        @ref AVL_TREE_NULL if no entry with the given key is
  *                        found.
  */
 
@@ -203,7 +203,7 @@ AVLTreeValue avl_tree_lookup(AVLTree *tree, AVLTreeKey key);
  * Find the root node of a tree.
  *
  * @param tree            The tree.
- * @return                The root node of the tree, or NULL if the tree is 
+ * @return                The root node of the tree, or NULL if the tree is
  *                        empty.
  */
 
@@ -218,7 +218,7 @@ AVLTreeNode *avl_tree_root_node(AVLTree *tree);
 
 AVLTreeKey avl_tree_node_key(AVLTreeNode *node);
 
-/** 
+/**
  * Retrieve the value at a given tree node.
  *
  * @param node            The tree node.
@@ -242,7 +242,7 @@ AVLTreeNode *avl_tree_node_child(AVLTreeNode *node, AVLTreeNodeSide side);
  * Find the parent node of a given tree node.
  *
  * @param node            The tree node.
- * @return                The parent node of the tree node, or NULL if 
+ * @return                The parent node of the tree node, or NULL if
  *                        this is the root node.
  */
 
@@ -258,7 +258,7 @@ AVLTreeNode *avl_tree_node_parent(AVLTreeNode *node);
 int avl_tree_subtree_height(AVLTreeNode *node);
 
 /**
- * Convert the keys in an AVL tree into a C array.  This allows 
+ * Convert the keys in an AVL tree into a C array.  This allows
  * the tree to be used as an ordered set.
  *
  * @param tree            The tree.
@@ -303,9 +303,9 @@ AVLTree *avl_tree_new(AVLTreeCompareFunc compare_func)
 	new_tree = (AVLTree *) malloc(sizeof(AVLTree));
 
 	if (new_tree == NULL) {
-		return NULL; 
+		return NULL;
 	}
-	
+
 	new_tree->root_node = NULL;
 	new_tree->compare_func = compare_func;
 	new_tree->num_nodes = 0;
@@ -328,7 +328,7 @@ static void avl_tree_free_subtree(AVLTree *tree, AVLTreeNode *node)
 void avl_tree_free(AVLTree *tree)
 {
 	/* Destroy all nodes */
-	
+
 	avl_tree_free_subtree(tree, tree->root_node);
 
 	/* Free back the main tree data structure */
@@ -415,7 +415,7 @@ static void avl_tree_node_replace(AVLTree *tree, AVLTreeNode *node1,
  *    A   D                         B   E
  *       / \                       / \
  *      C   E                     A   C
- 
+
  * is rotated to:              is rotated to:
  *
  *        D                           B
@@ -434,9 +434,9 @@ static AVLTreeNode *avl_tree_rotate(AVLTree *tree, AVLTreeNode *node,
 	   for a left rotation, it is the right child, and vice versa. */
 
 	new_root = node->children[1-direction];
-	
+
 	/* Make new_root the root, update parent pointers. */
-	
+
 	avl_tree_node_replace(tree, node, new_root);
 
 	/* Rearrange pointers */
@@ -484,7 +484,7 @@ static AVLTreeNode *avl_tree_node_balance(AVLTree *tree, AVLTreeNode *node)
 	     - avl_tree_subtree_height(left_subtree);
 
 	if (diff >= 2) {
-		
+
 		/* Biased toward the right side too much. */
 
 		child = right_subtree;
@@ -582,7 +582,7 @@ AVLTreeNode *avl_tree_insert(AVLTree *tree, AVLTreeKey key, AVLTreeValue value)
 	if (new_node == NULL) {
 		return NULL;
 	}
-	
+
 	new_node->children[AVL_TREE_NODE_LEFT] = NULL;
 	new_node->children[AVL_TREE_NODE_RIGHT] = NULL;
 	new_node->parent = previous_node;
@@ -605,7 +605,7 @@ AVLTreeNode *avl_tree_insert(AVLTree *tree, AVLTreeKey key, AVLTreeValue value)
 	return new_node;
 }
 
-/* Find the nearest node to the given node, to replace it. 
+/* Find the nearest node to the given node, to replace it.
  * The node returned is unlinked from the tree.
  * Returns NULL if the node has no children. */
 
@@ -639,7 +639,7 @@ static AVLTreeNode *avl_tree_node_get_replacement(AVLTree *tree,
 	} else {
 		side = AVL_TREE_NODE_LEFT;
 	}
-	
+
 	/* Search down the tree, back towards the center. */
 
 	result = node->children[side];
@@ -650,7 +650,7 @@ static AVLTreeNode *avl_tree_node_get_replacement(AVLTree *tree,
 
 	/* Unlink the result node, and hook in its remaining child
 	 * (if it has one) to replace it. */
- 
+
 	child = result->children[side];
 	avl_tree_node_replace(tree, result, child);
 
@@ -742,7 +742,7 @@ int avl_tree_remove(AVLTree *tree, AVLTreeKey key)
 
 	if (node == NULL) {
 		/* Not found in tree */
-		
+
 		return 0;
 	}
 
@@ -757,22 +757,22 @@ AVLTreeNode *avl_tree_lookup_node(AVLTree *tree, AVLTreeKey key)
 {
 	AVLTreeNode *node;
 	int diff;
-	
-	/* Search down the tree and attempt to find the node which 
+
+	/* Search down the tree and attempt to find the node which
 	 * has the specified key */
 
 	node = tree->root_node;
 
 	while (node != NULL) {
-		
+
 		diff = tree->compare_func(key, node->key);
 
 		if (diff == 0) {
 
 			/* Keys are equal: return this node */
-			
+
 			return node;
-			
+
 		} else if (diff < 0) {
 			node = node->children[AVL_TREE_NODE_LEFT];
 		} else {
@@ -834,21 +834,21 @@ int avl_tree_num_entries(AVLTree *tree)
 	return tree->num_nodes;
 }
 
-static void avl_tree_to_array_add_subtree(AVLTreeNode *subtree, 
-                                         AVLTreeValue *array, 
+static void avl_tree_to_array_add_subtree(AVLTreeNode *subtree,
+                                         AVLTreeValue *array,
                                          int *index)
 {
 	if (subtree == NULL) {
 		return;
 	}
-		
+
 	/* Add left subtree first */
 
 	avl_tree_to_array_add_subtree(subtree->children[AVL_TREE_NODE_LEFT],
 	                              array, index);
-	
+
 	/* Add this node */
-	
+
 	array[*index] = subtree->key;
 	++*index;
 
@@ -864,17 +864,17 @@ AVLTreeValue *avl_tree_to_array(AVLTree *tree)
 	int index;
 
 	/* Allocate the array */
-	
+
 	array = malloc(sizeof(AVLTreeValue) * tree->num_nodes);
 
 	if (array == NULL) {
 		return NULL;
 	}
-	
+
 	index = 0;
 
 	/* Add all keys */
-	
+
 	avl_tree_to_array_add_subtree(tree->root_node, array, &index);
 
 	return array;
@@ -943,10 +943,10 @@ int validate_subtree(AVLTreeNode *node)
 
 	assert(*key > counter);
 	counter = *key;
-	
+
 	right_height = validate_subtree(right_node);
 
-	/* Check that the returned height value matches the 
+	/* Check that the returned height value matches the
 	 * result of avl_tree_subtree_height(). */
 
 	assert(avl_tree_subtree_height(left_node) == left_height);
@@ -994,7 +994,7 @@ AVLTree *create_tree(void)
 		test_array[i] = i;
 		avl_tree_insert(tree, &test_array[i], &test_array[i]);
 	}
-	
+
 	return tree;
 }
 
@@ -1005,7 +1005,7 @@ void test_avl_tree_insert_lookup(void)
 	int i;
 	int *value;
 
-	/* Create a tree containing some values. Validate the 
+	/* Create a tree containing some values. Validate the
 	 * tree is consistent at all stages. */
 
 	tree = avl_tree_new((AVLTreeCompareFunc) int_compare);
@@ -1051,7 +1051,7 @@ void test_avl_tree_child(void)
 	int *p;
 	int i;
 
-	/* Create a tree containing some values. Validate the 
+	/* Create a tree containing some values. Validate the
 	 * tree is consistent at all stages. */
 
 	tree = avl_tree_new((AVLTreeCompareFunc) int_compare);
@@ -1087,7 +1087,7 @@ void test_avl_tree_child(void)
 void test_avl_tree_free(void)
 {
 	AVLTree *tree;
-	
+
 	/* Try freeing an empty tree */
 
 	tree = avl_tree_new((AVLTreeCompareFunc) int_compare);
@@ -1149,7 +1149,7 @@ void test_avl_tree_remove(void)
 
 	expected_entries = NUM_TEST_VALUES;
 
-	/* This looping arrangement causes nodes to be removed in a 
+	/* This looping arrangement causes nodes to be removed in a
 	 * randomish fashion from all over the tree. */
 
 	for (x=0; x<4; ++x) {
@@ -1182,13 +1182,13 @@ void test_avl_tree_to_array(void)
 	int **array;
 
 	/* Add all entries to the tree */
-	
+
 	tree = avl_tree_new((AVLTreeCompareFunc) int_compare);
 
 	for (i=0; i<num_entries; ++i) {
 		avl_tree_insert(tree, &entries[i], NULL);
 	}
-	
+
 	assert(avl_tree_num_entries(tree) == num_entries);
 
 	/* Convert to an array and check the contents */
@@ -1202,7 +1202,7 @@ void test_avl_tree_to_array(void)
 	free(array);
 }
 
-	
+
 int int_compare(void *vlocation1, void *vlocation2)
 {
 	int *location1;
@@ -1219,7 +1219,7 @@ int int_compare(void *vlocation1, void *vlocation2)
 		return 0;
 	}
 }
-	
+
 int main(int argc, char *argv[])
 {
 	test_avl_tree_free();

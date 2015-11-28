@@ -23,7 +23,7 @@ without express or implied warranty of any kind.
 These notices must be retained in any copies of any part of this
 documentation and/or software.
  */
- 
+
 #include <stdio.h>
 #include <string.h>
 
@@ -357,7 +357,7 @@ int main()
 {
 	MDString("");  // CHECK: MD5  = d41d8cd98f00b204e9800998ecf8427e
 	MDString("a");  // CHECK: MD5 a = 0cc175b9c0f1b6a831c399e269772661
-	MDString("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");  
+	MDString("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
 	// CHECK: MD5 ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 = d174ab98d277d9f5a5611c2c9f419d9f
 
 	return 0;

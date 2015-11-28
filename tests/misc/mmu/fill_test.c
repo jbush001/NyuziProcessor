@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 #include <stdio.h>
 #include "mmu_test_common.h"
@@ -49,7 +49,7 @@ int main(void)
 
 	// Fill memory region
 	rand_seed = 0x2e48fa04;
-	for (offset = 0; offset < FILL_SIZE / sizeof(int); offset += PAGE_SIZE 
+	for (offset = 0; offset < FILL_SIZE / sizeof(int); offset += PAGE_SIZE
 		/ sizeof(int))
 	{
 		mem_region[offset] = rand_seed;
@@ -58,7 +58,7 @@ int main(void)
 
 	// Check memory region
 	rand_seed = 0x2e48fa04;
-	for (offset = 0; offset < FILL_SIZE / sizeof(int); offset += PAGE_SIZE 
+	for (offset = 0; offset < FILL_SIZE / sizeof(int); offset += PAGE_SIZE
 		/ sizeof(int))
 	{
 		if (mem_region[offset] != rand_seed)
@@ -66,7 +66,7 @@ int main(void)
 			printf("FAIL: Mismatch at offset %d\n", offset);
 			exit(1);
 		}
-		
+
 		rand_seed = rand_seed * 1664525 + 1013904223;
 	}
 
@@ -76,6 +76,6 @@ int main(void)
 		printf("FAIL 2: MMU not enabled\n");
 		return 1;
 	}
-	
+
 	printf("PASS\n");
 }

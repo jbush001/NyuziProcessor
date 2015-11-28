@@ -95,13 +95,13 @@ module spi_controller
 							transfer_count <= transfer_count - 1;
 							
 							// Shift out a bit
-							{ spi_mosi, mosi_byte } <= { mosi_byte, 1'd0 };
+							{spi_mosi, mosi_byte} <= {mosi_byte, 1'd0};
 						end
 					end
 					else
 					begin
 						// Rising edge
-						miso_byte <= { miso_byte[6:0], spi_miso };
+						miso_byte <= {miso_byte[6:0], spi_miso};
 					end
 				end
 				else
@@ -117,7 +117,7 @@ module spi_controller
 				divider_countdown <= divider_rate;
 				
 				// Set up first bit
-				{ spi_mosi, mosi_byte } <= { io_write_data[7:0], 1'd0 };
+				{spi_mosi, mosi_byte} <= {io_write_data[7:0], 1'd0};
 			end
 		end
 	end

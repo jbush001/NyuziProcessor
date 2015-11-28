@@ -67,11 +67,11 @@ fannkuch( int n )
     r = n; didpr = 0; flipsMax = 0;
     for(;;) {
 	if( didpr < 30 ) {
-	    for( i=0 ; i<n ; ++i ) 
+	    for( i=0 ; i<n ; ++i )
 	    {
 			printf("%c", (char)('0' + (1+perm1[i])));
 	    }
-	    
+
 		printf("\n");
 	    ++didpr;
 	}

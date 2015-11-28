@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 
 #include <stdio.h>
@@ -27,7 +27,7 @@ void __attribute__ ((noinline)) printBs(int count)
 	switch (count & 7)
 	{
         case 0: do {    putchar('B');
-        case 7:         putchar('B'); 
+        case 7:         putchar('B');
         case 6:         putchar('B');
         case 5:         putchar('B');
         case 4:         putchar('B');
@@ -47,7 +47,7 @@ int main()
 		putchar('C');
 		putchar('\n');
 	}
-	
+
 	// CHECK: ABBBBBBBBBBBBBBBC
 	// CHECK: ABBBBBBBBBBBBBBC
 	// CHECK: ABBBBBBBBBBBBBC

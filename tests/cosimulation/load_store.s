@@ -1,18 +1,18 @@
-# 
+#
 # Copyright 2011-2015 Jeff Bush
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# 
+#
 
 .include "macros.inc"
 
@@ -27,7 +27,7 @@
 		.align	4
 		.type	main,@function
 _start:	lea s1, testvar1
-		
+
 		# Scalar loads (signed and unsigned, all widths and valid alignments)
 		load_u8 s2, (s1)	# Byte
 		load_u8 s3, 1(s1)
@@ -55,7 +55,7 @@ _start:	lea s1, testvar1
 		store_16 s6, 8(s1)
 		store_16 s7, 10(s1)
 		store_32 s8, 12(s1)
-		
+
 		# Reload stored words to ensure they come back correctly
 		load_32 s15, 4(s1)
 		load_32 s16, 8(s1)
@@ -69,18 +69,18 @@ _start:	lea s1, testvar1
 
 		# Gather load/scatter store
 		load_v v4, shuffleIdx1
-		load_v v5, shuffleIdx2	
+		load_v v5, shuffleIdx2
 		lea s1, testvar2
 		add_i v4, v4, s1
 		add_i v5, v5, s1
 		load_32 s2, mask
-		
+
 		load_gath v6, (v4)
 		move v7, 0
 		load_gath_mask v7, s2, (v4)
 		store_scat v7, (v4)
 		store_scat_mask v6, s2, (v5)
-		
+
 		# Synchronized
 		lea s0, test_sync
 		load_sync s1, (s0)
@@ -97,7 +97,7 @@ _start:	lea s1, testvar1
 			.align 4
 testvar1: 	.long 0x1234abcd, 0, 0, 0
 test_sync:  .long 0
-mask: 		.long 0x5a5a 
+mask: 		.long 0x5a5a
 			.align 64
 testvar2:	.long 0x2aa7d2c1, 0xeeb91caf, 0x304010ad, 0x96981e0d, 0x3a03b41f, 0x81363fee, 0x32d7bd42, 0xeaa8df61
 			.long 0x9228d73e, 0xfcf12265, 0x2515fbeb, 0x6cd307a0, 0x2c18c1b8, 0xda8e48d5, 0x1f5c4bd2, 0xace51435
@@ -108,4 +108,4 @@ shuffleIdx1: .long 56, 40, 0, 4, 24, 52, 16, 8, 12, 36, 44, 20, 32, 28, 60, 48
 # Note: last lane is unaligned, but it is masked off so it shouldn't generate a fault.
 shuffleIdx2: .long 12, 60, 16, 28, 48, 0, 52, 56, 40, 24, 8, 44, 4, 20, 36, 3
 
-			
+

@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 #include <assert.h>
 #include <fcntl.h>
@@ -79,7 +79,7 @@ int openBlockDevice(const char *filename)
 		return -1;
 	}
 
-	gBlockDevSize = (uint32_t) fs.st_size;	
+	gBlockDevSize = (uint32_t) fs.st_size;
 	gBlockFd = open(filename, O_RDONLY);
 	if (gBlockFd < 0)
 	{
@@ -87,7 +87,7 @@ int openBlockDevice(const char *filename)
 		return -1;
 	}
 
-	gBlockDevData = mmap(NULL, gBlockDevSize, PROT_READ, MAP_SHARED, gBlockFd, 0); 
+	gBlockDevData = mmap(NULL, gBlockDevSize, PROT_READ, MAP_SHARED, gBlockFd, 0);
 	if (gBlockDevData == NULL)
 		return -1;
 
@@ -115,8 +115,8 @@ static void processCommand(const uint8_t *command)
 			gCurrentState = STATE_SEND_RESULT;
 			gCommandResult = 1;
 			break;
-		
-		case CMD_SEND_OP_COND:	
+
+		case CMD_SEND_OP_COND:
 			if (gResetDelay)
 			{
 				gCommandResult = 1;
@@ -124,11 +124,11 @@ static void processCommand(const uint8_t *command)
 			}
 			else
 				gCommandResult = 0;
-			
+
 			gCurrentState = STATE_SEND_RESULT;
 			break;
 
-		case CMD_SET_BLOCKLEN: 
+		case CMD_SET_BLOCKLEN:
 			if (!gIsReady)
 			{
 				printf("CMD_SET_BLOCKLEN: card not ready\n");
@@ -139,8 +139,8 @@ static void processCommand(const uint8_t *command)
 			gCurrentState = STATE_SEND_RESULT;
 			gCommandResult = 0;
 			break;
-			
-		case CMD_READ_SINGLE_BLOCK: 
+
+		case CMD_READ_SINGLE_BLOCK:
 			if (!gIsReady)
 			{
 				printf("CMD_READ_SINGLE_BLOCK: card not ready\n");
@@ -150,7 +150,7 @@ static void processCommand(const uint8_t *command)
 			gReadOffset = readLittleEndian(command + 1) * gBlockLength;
 			gCurrentState = STATE_WAIT_READ_RESPONSE;
 			gStateDelay = rand() & 0xf;	// Wait a random amount of time
-			gResponseValue = 0;	
+			gResponseValue = 0;
 			break;
 	}
 }
@@ -169,9 +169,9 @@ void writeSdCardRegister(uint32_t address, uint32_t value)
 						printf("sdmmc error: command posted before card initialized 1\n");
 						exit(1);
 					}
-				
+
 					// Falls through
-					
+
 				case STATE_IDLE:
 					if (!gChipSelect && (value & 0xc0) == 0x40)
 					{
@@ -181,7 +181,7 @@ void writeSdCardRegister(uint32_t address, uint32_t value)
 					}
 
 					break;
-					
+
 				case STATE_RECEIVE_COMMAND:
 					if (!gChipSelect)
 					{
@@ -194,12 +194,12 @@ void writeSdCardRegister(uint32_t address, uint32_t value)
 					}
 
 					break;
-					
+
 				case STATE_SEND_RESULT:
 					gResponseValue = gCommandResult;
 					gCurrentState = STATE_IDLE;
 					break;
-					
+
 				case STATE_WAIT_READ_RESPONSE:
 					if (gStateDelay == 0)
 					{
@@ -212,7 +212,7 @@ void writeSdCardRegister(uint32_t address, uint32_t value)
 						gStateDelay--;
 						gResponseValue = 0xff;	// Signal busy
 					}
-					
+
 					break;
 
 				case STATE_DO_READ:
@@ -224,16 +224,16 @@ void writeSdCardRegister(uint32_t address, uint32_t value)
 
 					if (gStateDelay == 0)
 						gCurrentState = STATE_IDLE;
-						
+
 					break;
 			}
-			
+
 			break;
 
 		case REG_SD_CONTROL:
 			gChipSelect = value & 1;
 			break;
-			
+
 		default:
 			assert("Should not be here" && 0);
 	}
@@ -245,10 +245,10 @@ unsigned readSdCardRegister(uint32_t address)
 	{
 		case REG_SD_READ_DATA:
 			return gResponseValue;
-	
-		case REG_SD_STATUS: 
+
+		case REG_SD_STATUS:
 			return 0x01;
-	
+
 		default:
 			assert("Should not be here" && 0);
 	}

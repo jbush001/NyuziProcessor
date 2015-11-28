@@ -1,4 +1,4 @@
-// Emacs style mode select	 -*- C++ -*- 
+// Emacs style mode select	 -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // $Id:$
@@ -128,7 +128,7 @@ typedef struct
 	int			count;
 	int			maxlight;
 	int			minlight;
-	
+
 } fireflicker_t;
 
 
@@ -142,7 +142,7 @@ typedef struct
 	int			minlight;
 	int			maxtime;
 	int			mintime;
-	
+
 } lightflash_t;
 
 
@@ -156,7 +156,7 @@ typedef struct
 	int			maxlight;
 	int			darktime;
 	int			brighttime;
-	
+
 } strobe_t;
 
 
@@ -211,7 +211,7 @@ typedef struct
 	char		name1[9];
 	char		name2[9];
 	short		episode;
-	
+
 } switchlist_t;
 
 
@@ -243,10 +243,10 @@ typedef struct
  // 4 players, 4 buttons each at once, max.
 #define MAXBUTTONS				16
 
- // 1 second, in ticks. 
-#define BUTTONTIME		35			   
+ // 1 second, in ticks.
+#define BUTTONTIME		35
 
-extern button_t buttonlist[MAXBUTTONS]; 
+extern button_t buttonlist[MAXBUTTONS];
 
 void
 P_ChangeSwitchTexture
@@ -296,7 +296,7 @@ typedef struct
 	boolean		crush;
 	int			tag;
 	plattype_e	type;
-	
+
 } plat_t;
 
 
@@ -350,13 +350,13 @@ typedef struct
 
 	// 1 = up, 0 = waiting at top, -1 = down
 	int				direction;
-	
+
 	// tics to wait at the top
 	int				topwait;
 	// (keep in case a door going down is reset)
 	// when it reaches 0, start going down
 	int				topcountdown;
-	
+
 } vldoor_t;
 
 
@@ -441,7 +441,7 @@ typedef struct
 	char		backFrame2[9];
 	char		backFrame3[9];
 	char		backFrame4[9];
-	
+
 } slidename_t;
 
 
@@ -462,7 +462,7 @@ typedef struct
 #define SWAITTICS				4
 
 // how many diff. types of anims
-#define MAXSLIDEDOORS	5							 
+#define MAXSLIDEDOORS	5
 
 void P_InitSlidingDoorFrames(void);
 
@@ -504,9 +504,9 @@ typedef struct
 	int			direction;
 
 	// ID
-	int			tag;				   
+	int			tag;
 	int			olddirection;
-	
+
 } ceiling_t;
 
 
@@ -538,35 +538,35 @@ typedef enum
 {
 	// lower floor to highest surrounding floor
 	lowerFloor,
-	
+
 	// lower floor to lowest surrounding floor
 	lowerFloorToLowest,
-	
+
 	// lower floor to highest surrounding floor VERY FAST
 	turboLower,
-	
+
 	// raise floor to lowest surrounding CEILING
 	raiseFloor,
-	
+
 	// raise floor to next highest surrounding floor
 	raiseFloorToNearest,
 
 	// raise floor to shortest height texture around it
 	raiseToTexture,
-	
+
 	// lower floor to lowest surrounding floor
 	//	and change floorpic
 	lowerAndChange,
-  
+
 	raiseFloor24,
 	raiseFloor24AndChange,
 	raiseFloorCrush,
 
 	 // raise to next highest floor, turbo-speed
-	raiseFloorTurbo,	   
+	raiseFloorTurbo,
 	donutRaise,
 	raiseFloor512
-	
+
 } floor_e;
 
 
@@ -576,7 +576,7 @@ typedef enum
 {
 	build8,		// slowly build by 8
 	turbo16		// quickly build by 16
-	
+
 } stair_e;
 
 
@@ -604,7 +604,7 @@ typedef enum
 	ok,
 	crushed,
 	pastdest
-	
+
 } result_e;
 
 result_e

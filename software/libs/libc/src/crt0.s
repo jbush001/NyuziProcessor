@@ -1,24 +1,24 @@
-# 
+#
 # Copyright 2011-2015 Jeff Bush
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# 
+#
 
 #
 # C runtime startup code. When the processor boots, only hardware thread 0 is
 # active. It begins execution at _start, which performs static initialization
 # (for example, calling global constructors), then calls the program's main
-# function. Main may set a control register to enable the other threads, which 
+# function. Main may set a control register to enable the other threads, which
 # will also begins execution at _start. However, they will branch over the
 # initialization routine and go to main directly.
 #
@@ -38,7 +38,7 @@
 					.globl _start
 					.align 4
 					.type _start,@function
-_start:				
+_start:
 					# Set up stack
 					getcr s0, 0			# get my thread ID
 					shl s0, s0, 14		# 16k bytes per stack
@@ -62,7 +62,7 @@ init_loop:			cmpeq_i s0, s24, s25
 
 do_main:			move s0, 0	# Set argc to 0
 					call main
-					
+
 					# Main has returned. Halt all threads.
 					move s0, -1
 					load_32 s1, thread_halt_addr

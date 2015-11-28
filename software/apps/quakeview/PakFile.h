@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 //
 // Code for reading and interpreting data in the .PAK file and its
@@ -34,7 +34,7 @@ struct EntityAttribute
 	const char *value;
 	EntityAttribute *next;
 };
-	
+
 struct Entity
 {
 	const char *getAttribute(const char *name)
@@ -42,14 +42,14 @@ struct Entity
 		for (EntityAttribute *attr = attributeList; attr; attr = attr->next)
 			if (strcmp(attr->name, name) == 0)
 				return attr->value;
-		
+
 		return nullptr;
 	}
 
 	EntityAttribute *attributeList = nullptr;
 	Entity *next;
-};	
-	
+};
+
 class PakFile
 {
 public:
@@ -71,25 +71,25 @@ public:
 	{
 		return fBspNodes;	// First node is root
 	}
-	
+
 	const uint8_t *getPvsList()
 	{
 		return fPvsData;
 	}
-	
+
 	int getNumInteriorNodes() const
 	{
 		return fNumInteriorNodes;
 	}
-	
+
 	int getNumLeaves() const
 	{
 		return fNumBspLeaves;
 	}
-	
+
 	Entity *findEntityByClassName(const char *className);
 	void dumpEntities() const;
-	
+
 private:
 	struct AtlasEntry
 	{

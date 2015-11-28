@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 #include "mmu_test_common.h"
 
@@ -22,7 +22,7 @@ volatile unsigned int *data_addr = (unsigned int*) 0x100000;
 
 void fault_handler()
 {
-	printf("FAULT %d %08x current flags %02x prev flags %02x\n", 
+	printf("FAULT %d %08x current flags %02x prev flags %02x\n",
 		__builtin_nyuzi_read_control_reg(CR_FAULT_REASON),
 		__builtin_nyuzi_read_control_reg(CR_FAULT_ADDRESS),
 		__builtin_nyuzi_read_control_reg(CR_FLAGS),
@@ -62,7 +62,7 @@ int main(void)
 
 	// This write will fail. Ensure this raises a fault and that the memory
 	// write failed.
-	*data_addr = 0xdeadbeef; 
+	*data_addr = 0xdeadbeef;
 	// CHECK: FAULT 8 00100000 current flags 06 prev flags 02
 	// CHECK: data_addr = 12345678
 }

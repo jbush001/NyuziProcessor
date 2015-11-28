@@ -60,8 +60,8 @@ module arbiter
 	end
 
 	// rotate left
-	assign priority_oh_nxt = { grant_oh[NUM_REQUESTERS - 2:0], 
-		grant_oh[NUM_REQUESTERS - 1] };
+	assign priority_oh_nxt = {grant_oh[NUM_REQUESTERS - 2:0], 
+		grant_oh[NUM_REQUESTERS - 1]};
 
 	always_ff @(posedge clk, posedge reset)
 	begin

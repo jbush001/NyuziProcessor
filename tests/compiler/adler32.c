@@ -92,7 +92,7 @@ int main()
 {
 	printf("0x%08x", adler32(1, (const unsigned char*) kBuffer, 22));
 	// CHECK: 0x592b080e
-	
+
 	return 0;
 }
 

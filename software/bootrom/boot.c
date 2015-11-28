@@ -1,25 +1,25 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 #include "protocol.h"
 
 //
 // First stage serial bootloader. This is synthesized into ROM in high memory
 // on FPGA. It communicates with a loader program on the host (tools/serial_boot),
-// which loads a program into memory. Because this is running in ROM, it cannot 
+// which loads a program into memory. Because this is running in ROM, it cannot
 // use global variables.
 //
 
@@ -35,9 +35,9 @@ enum register_index
 
 unsigned int read_serial_byte(void)
 {
-	while ((REGISTERS[REG_UART_STATUS] & 2) == 0)	
+	while ((REGISTERS[REG_UART_STATUS] & 2) == 0)
 		;
-	
+
 	return REGISTERS[REG_UART_RX];
 }
 
@@ -45,7 +45,7 @@ void write_serial_byte(unsigned int ch)
 {
 	while ((REGISTERS[REG_UART_STATUS] & 1) == 0)	// Wait for ready
 		;
-	
+
 	REGISTERS[REG_UART_TX] = ch;
 }
 
@@ -80,7 +80,7 @@ void *memset(void *_dest, int value, unsigned int length)
 			*((unsigned int*) dest) = wideVal;
 			dest += 4;
 			length -= 4;
-		}		
+		}
 	}
 
 	// Write one byte at a time
@@ -89,15 +89,15 @@ void *memset(void *_dest, int value, unsigned int length)
 		*dest++ = value;
 		length--;
 	}
-	
-	return _dest;	
+
+	return _dest;
 }
 
 int main()
 {
 	// Turn on red LED to indicate bootloader is waiting
-	REGISTERS[REG_RED_LED] = 0x1; 
-	
+	REGISTERS[REG_RED_LED] = 0x1;
+
 	for (;;)
 	{
 		switch (read_serial_byte())
@@ -110,7 +110,7 @@ int main()
 				// Compute fletcher checksum of data
 				unsigned int checksuma = 0;
 				unsigned int checksumb = 0;
-				
+
 				for (int i = 0; i < length; i++)
 				{
 					unsigned int ch = read_serial_byte();
@@ -123,7 +123,7 @@ int main()
 				write_serial_long((checksuma & 0xffff) | ((checksumb & 0xffff) << 16));
 				break;
 			}
-			
+
 			case CLEAR_MEMORY_REQ:
 			{
 				unsigned int base_address = read_serial_long();
@@ -132,18 +132,18 @@ int main()
 				write_serial_byte(CLEAR_MEMORY_ACK);
 				break;
 			}
-			
+
 			case EXECUTE_REQ:
 			{
 				REGISTERS[REG_RED_LED] = 0;	// Turn off LED
 				write_serial_byte(EXECUTE_ACK);
 				return 0;	// Break out of main
 			}
-			
+
 			case PING_REQ:
 				write_serial_byte(PING_ACK);
 				break;
-			
+
 			default:
 				write_serial_byte(BAD_COMMAND);
 		}

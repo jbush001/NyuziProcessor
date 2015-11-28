@@ -18,7 +18,7 @@
 /* See the GNU Library General Public License for more details.    */
 /* You should have received a copy of the GNU Library General      */
 /* Public License along with this library; if not, write to the    */
-/* Free Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA   */ 
+/* Free Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA   */
 /* 02111-1307  USA                                                 */
 
 /* Copyright (C) 1997 Makoto Matsumoto and Takuji Nishimura.       */
@@ -34,14 +34,14 @@
 
 #include <stdio.h>
 
-/* Period parameters */  
+/* Period parameters */
 #define N 624
 #define M 397
 #define MATRIX_A 0x9908b0df   /* constant vector a */
 #define UPPER_MASK 0x80000000 /* most significant w-r bits */
 #define LOWER_MASK 0x7fffffff /* least significant r bits */
 
-/* Tempering parameters */   
+/* Tempering parameters */
 #define TEMPERING_MASK_B 0x9d2c5680
 #define TEMPERING_MASK_C 0xefc60000
 #define TEMPERING_SHIFT_U(y)  (y >> 11)
@@ -65,7 +65,7 @@ sgenrand(unsigned int seed)
         mt[mti] = (69069 * mt[mti-1]) & 0xffffffff;
 }
 
-unsigned int 
+unsigned int
 genrand()
 {
     unsigned int y;
@@ -91,18 +91,18 @@ genrand()
 
         mti = 0;
     }
-  
+
     y = mt[mti++];
     y ^= TEMPERING_SHIFT_U(y);
     y ^= TEMPERING_SHIFT_S(y) & TEMPERING_MASK_B;
     y ^= TEMPERING_SHIFT_T(y) & TEMPERING_MASK_C;
     y ^= TEMPERING_SHIFT_L(y);
 
-    return y; 
+    return y;
 }
 
 int main()
-{ 
+{
     int j;
 
     sgenrand(4357); /* any nonzero integer can be used as a seed */
@@ -113,11 +113,11 @@ int main()
     putchar('\n');
 }
 
-// CHECK: 0xd13c8af5 0xffc27482 0x82a6958b 0x21ac240a 
-// CHECK: 0x09110bba 0xfe127bc0 0xa02e7212 0x10060698 
-// CHECK: 0x692452f5 0x2280870e 0xfb1a7281 0xd65f6aa9 
-// CHECK: 0xf72cdf2e 0x38a64b65 0x71c6a7fc 0x568bd78a 
-// CHECK: 0xb4914c36 0x087f92b3 0x5e664962 0x6c480ade 
-// CHECK: 0x96d45948 0x4fde3e48 0xe6eecdc2 0xb573569d 
-// CHECK: 0x74fb2b75 0x8a89d69c 0x127e83d2 0x3a79201f 
-// CHECK: 0x36221122 0xc8fbafb9 0x85cdaf55 0x28460952 
+// CHECK: 0xd13c8af5 0xffc27482 0x82a6958b 0x21ac240a
+// CHECK: 0x09110bba 0xfe127bc0 0xa02e7212 0x10060698
+// CHECK: 0x692452f5 0x2280870e 0xfb1a7281 0xd65f6aa9
+// CHECK: 0xf72cdf2e 0x38a64b65 0x71c6a7fc 0x568bd78a
+// CHECK: 0xb4914c36 0x087f92b3 0x5e664962 0x6c480ade
+// CHECK: 0x96d45948 0x4fde3e48 0xe6eecdc2 0xb573569d
+// CHECK: 0x74fb2b75 0x8a89d69c 0x127e83d2 0x3a79201f
+// CHECK: 0x36221122 0xc8fbafb9 0x85cdaf55 0x28460952

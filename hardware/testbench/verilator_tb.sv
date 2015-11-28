@@ -202,7 +202,7 @@ module verilator_tb(
 		for (int line_offset = 0; line_offset < `CACHE_LINE_WORDS; line_offset++)
 		begin
 			`MEMORY[(int'(tag) * `L2_SETS + int'(set)) * `CACHE_LINE_WORDS + line_offset] = 
-				int'(nyuzi.l2_cache.l2_cache_read.sram_l2_data.data[{ way, set }]
+				int'(nyuzi.l2_cache.l2_cache_read.sram_l2_data.data[{way, set}]
 				 >> ((`CACHE_LINE_WORDS - 1 - line_offset) * 32));
 		end
 	end

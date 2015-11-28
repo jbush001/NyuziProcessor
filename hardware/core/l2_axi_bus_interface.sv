@@ -159,14 +159,14 @@ module l2_axi_bus_interface(
 		.flush_en(1'b0),
 		.almost_full(load_queue_almost_full),
 		.enqueue_en(enqueue_load_request),
-		.value_i({ 
+		.value_i({
 			duplicate_request,
 			l2r_request
 		}),
 		.empty(load_queue_empty),
 		.almost_empty(),
 		.dequeue_en(load_dequeue_en),
-		.value_o({ 
+		.value_o({
 			l2bi_collided_miss,
 			lmq_out_request
 		}),
@@ -363,11 +363,11 @@ module l2_axi_bus_interface(
 
 			// Register AXI output signals
 			axi_bus.m_arvalid <= state_nxt == STATE_READ_ISSUE_ADDRESS;
-			axi_bus.m_araddr <= { l2bi_request.address[31:`CACHE_LINE_OFFSET_WIDTH], 
-				{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };	
+			axi_bus.m_araddr <= {l2bi_request.address[31:`CACHE_LINE_OFFSET_WIDTH], 
+				{`CACHE_LINE_OFFSET_WIDTH{1'b0}}};	
 			axi_bus.m_rready <= state_nxt == STATE_READ_TRANSFER;
 			axi_bus.m_awvalid <= state_nxt == STATE_WRITE_ISSUE_ADDRESS;
-			axi_bus.m_awaddr <= { bif_writeback_address, {`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
+			axi_bus.m_awaddr <= {bif_writeback_address, {`CACHE_LINE_OFFSET_WIDTH{1'b0}}};
 			axi_bus.m_wvalid <= state_nxt == STATE_WRITE_TRANSFER;
 			axi_bus.m_wdata <= bif_writeback_lanes[~burst_offset_nxt];
 			axi_bus.m_wlast <= state_nxt == STATE_WRITE_TRANSFER	

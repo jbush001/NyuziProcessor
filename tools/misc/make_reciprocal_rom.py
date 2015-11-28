@@ -1,19 +1,19 @@
 #!/usr/bin/env python
-# 
+#
 # Copyright 2011-2015 Jeff Bush
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# 
+#
 
 
 #
@@ -27,7 +27,7 @@ import sys
 if len(sys.argv) != 2:
 	print('enter number of entries')
 	sys.exit(1)
-	
+
 NUM_ENTRIES = int(sys.argv[1])
 if (NUM_ENTRIES & (NUM_ENTRIES - 1)) != 0:
 	# Must be power of two
@@ -53,7 +53,7 @@ for x in range(0, NUM_ENTRIES):
 	significand = NUM_ENTRIES | x
 	reciprocal = int((NUM_ENTRIES * NUM_ENTRIES * 2) / significand)
 	print('\t\t\t%d\'h%x: reciprocal_estimate = %d\'h%x;' % (WIDTH, x, WIDTH, reciprocal & (NUM_ENTRIES - 1)))
-	
+
 print('''\t\t\tdefault: reciprocal_estimate = 6'h0;
 \t\tendcase
 \tend

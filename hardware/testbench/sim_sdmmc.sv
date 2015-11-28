@@ -99,7 +99,7 @@ module sim_sdmmc(
 		miso_byte = 'hff;
 	end
 	
-	assign mosi_byte_nxt = { mosi_byte_ff[6:0], sd_di };
+	assign mosi_byte_nxt = {mosi_byte_ff[6:0], sd_di};
 
 	// Shift out data on the falling edge of SD clock
 	always_ff @(negedge sd_sclk)
@@ -150,7 +150,7 @@ module sim_sdmmc(
 							current_state <= SD_WAIT_READ_RESPONSE;
 							state_delay <= $random() & 'hf;	// Simulate random delay
 							command_result <= 1;
-							read_address <= { command[1], command[2], command[3], command[4] } 
+							read_address <= {command[1], command[2], command[3], command[4]} 
 								* block_length;
 							miso_byte <= 'hff;	// wait
 						end
@@ -160,7 +160,7 @@ module sim_sdmmc(
 							assert(card_ready);
 							state_delay <= 5;
 							current_state <= SD_SEND_RESULT;
-							block_length <= { command[1], command[2], command[3], command[4] };
+							block_length <= {command[1], command[2], command[3], command[4]};
 						end		
 						
 						default:

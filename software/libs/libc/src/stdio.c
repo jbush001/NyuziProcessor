@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 #include <ctype.h>
 #include <stdio.h>
@@ -50,7 +50,7 @@ int vfprintf(FILE *f, const char *format, va_list args)
 	int prefixes = 0;
 	int width = 0;
 	int precision = 0;
-	
+
 	enum {
 		kScanText,
 		kScanFlags,
@@ -72,25 +72,25 @@ int vfprintf(FILE *f, const char *format, va_list args)
 					precision = 0;
 				} else
 					fputc(*format++, f);
-				
+
 				break;
-				
+
 			case kScanFlags: {
 				const char *c;
-				
+
 				if (*format == '%') {
 					fputc(*format++, f);
 					state = kScanText;
 					break;
 				}
-			
+
 				c = strchr(kFlagCharacters, *format);
 				if (c) {
 					SET_FLAG(*format);
 					format++;
 				} else
 					state = kScanWidth;
-				
+
 				break;
 			}
 
@@ -102,17 +102,17 @@ int vfprintf(FILE *f, const char *format, va_list args)
 					format++;
 				} else
 					state = kScanPrefix;
-					
+
 				break;
-				
+
 			case kScanPrecision:
 				if (isdigit(*format))
 					precision = precision * 10 + *format++ - '0';
 				else
 					state = kScanPrefix;
-					
+
 				break;
-				
+
 			case kScanPrefix: {
 				const char *c = strchr(kPrefixCharacters, *format);
 				if (c) {
@@ -130,12 +130,12 @@ int vfprintf(FILE *f, const char *format, va_list args)
 				char pad_char;
 				int pad_count;
 				int radix = 10;
-			
+
 				switch (*format) {
 					case 'p':	/* pointer */
 						width = 8;
 						SET_FLAG('0');
-						 
+
 						/* falls through */
 
 					case 'x':
@@ -170,14 +170,14 @@ int vfprintf(FILE *f, const char *format, va_list args)
 							value /= radix;
 							if (value == 0)
 								break;
-						
+
 							if (index == 0)
 								break;
-								
+
 							index--;
 						}
 
-						/* figure out width pad char */						
+						/* figure out width pad char */
 						if (FLAG_IS_SET('0'))
 							pad_char = '0';
 						else
@@ -186,7 +186,7 @@ int vfprintf(FILE *f, const char *format, va_list args)
 						/* write width padding */
 						for (pad_count = (64 - index); pad_count < width; pad_count++)
 							fputc(pad_char, f);
-						
+
 						/* write precision padding */
 						for (; pad_count < precision; pad_count++)
 							fputc('0', f);
@@ -194,7 +194,7 @@ int vfprintf(FILE *f, const char *format, va_list args)
 						/* write the string */
 						while (index < 64)
 							fputc(temp_string[index++], f);
-				
+
 						break;
 					}
 
@@ -202,11 +202,11 @@ int vfprintf(FILE *f, const char *format, va_list args)
 					case 'c':	/* Single character */
 						fputc(va_arg(args, int), f);
 						break;
-				
+
 					case 's': {	/* string */
 						int max_width;
 						char *c = va_arg(args, char*);
-						
+
 						if (precision == 0)
 							max_width = 0x7fffffff;
 						else
@@ -222,7 +222,7 @@ int vfprintf(FILE *f, const char *format, va_list args)
 
 						break;
 					}
-					
+
 					case 'f':
 					case 'g':
 					{
@@ -243,7 +243,7 @@ int vfprintf(FILE *f, const char *format, va_list args)
 
 						wholePart = (int) floatval;
 						frac = floatval - wholePart;
-		
+
 						// Print the whole part (XXX ignores padding)
 						if (wholePart == 0)
 							fputc('0', f);
@@ -261,27 +261,27 @@ int vfprintf(FILE *f, const char *format, va_list args)
 							while (wholeOffs < sizeof(wholeStr))
 								fputc(wholeStr[wholeOffs++], f);
 						}
-		
+
 						fputc('.', f);
 
 						// Print the fractional part, not especially accurately
 						int maxDigits = precision > 0 ? precision : 7;
 						do
 						{
-							frac = frac * 10;	
+							frac = frac * 10;
 							int digit = (int) frac;
 							frac -= digit;
 							fputc((digit + '0'), f);
 						}
 						while (frac > 0.0f && maxDigits-- > 0);
-						
+
 						break;
-					}						
+					}
 				}
-				
+
 				format++;
 				state = kScanText;
-				break;				
+				break;
 			}
 		}
 	}
@@ -344,20 +344,20 @@ int vsnprintf(char *buf, size_t length, const char *fmt, va_list arglist)
 
 	vfprintf(&str, fmt, arglist);
 	fputc('\0', &str);	// Null terminate
-	
+
 	return str.write_offset;
 }
 
-static FILE __stdout = { 
-	.write_buf = NULL, 
+static FILE __stdout = {
+	.write_buf = NULL,
 	.write_offset = 0,
-	.write_buf_len = 0 
+	.write_buf_len = 0
 };
 
 static FILE __stdin = {
-	.write_buf = NULL, 
+	.write_buf = NULL,
 	.write_offset = 0,
-	.write_buf_len = 0 
+	.write_buf_len = 0
 };
 
 FILE *stdout = &__stdout;
@@ -410,7 +410,7 @@ int fgetc(FILE *f)
 	int got = read(f->fd, &c, 1);
 	if (got < 0)
 		return -1;
-	
+
 	return c;
 }
 
@@ -419,7 +419,7 @@ FILE *fopen(const char *filename, const char *mode)
 	int fd  = open(filename, 0);
 	if (fd < 0)
 		return NULL;
-	
+
 	FILE *fptr = (FILE*) malloc(sizeof(FILE));
 	fptr->write_buf = 0;
 	fptr->fd = fd;
@@ -433,7 +433,7 @@ size_t fwrite(const void *ptr, size_t size, size_t count, FILE *file)
 	const char *out = ptr;
 	while (left--)
 		fputc(*out++, file);
-	
+
 	return count;
 }
 
@@ -442,7 +442,7 @@ size_t fread(void *ptr, size_t size, size_t nelem, FILE *f)
 	int got = read(f->fd, ptr, size * nelem);
 	if (got < 0)
 		return 0;
-	
+
 	return got / size;
 }
 

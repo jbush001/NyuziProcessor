@@ -1,4 +1,4 @@
-// Emacs style mode select	 -*- C++ -*- 
+// Emacs style mode select	 -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // $Id:$
@@ -49,12 +49,12 @@ void P_ArchivePlayers (void)
 	int			i;
 	int			j;
 	player_t*	dest;
-				
+
 	for (i=0 ; i<MAXPLAYERS ; i++)
 	{
 		if (!playeringame[i])
 			continue;
-		
+
 		PADSAVEP();
 
 		dest = (player_t *)save_p;
@@ -64,7 +64,7 @@ void P_ArchivePlayers (void)
 		{
 			if (dest->psprites[j].state)
 			{
-				dest->psprites[j].state 
+				dest->psprites[j].state
 					= (state_t *)(dest->psprites[j].state-states);
 			}
 		}
@@ -80,19 +80,19 @@ void P_UnArchivePlayers (void)
 {
 	int			i;
 	int			j;
-		
+
 	for (i=0 ; i<MAXPLAYERS ; i++)
 	{
 		if (!playeringame[i])
 			continue;
-		
+
 		PADSAVEP();
 
 		memcpy (&players[i],save_p, sizeof(player_t));
 		save_p += sizeof(player_t);
-		
+
 		// will be set when unarc thinker
-		players[i].mo = NULL;	
+		players[i].mo = NULL;
 		players[i].message = NULL;
 		players[i].attacker = NULL;
 
@@ -100,7 +100,7 @@ void P_UnArchivePlayers (void)
 		{
 			if (players[i]. psprites[j].state)
 			{
-				players[i]. psprites[j].state 
+				players[i]. psprites[j].state
 					= &states[ (int)players[i].psprites[j].state ];
 			}
 		}
@@ -119,9 +119,9 @@ void P_ArchiveWorld (void)
 	line_t*				li;
 	side_t*				si;
 	short*				put;
-		
+
 	put = (short *)save_p;
-	
+
 	// do sectors
 	for (i=0, sec = sectors ; i<numsectors ; i++,sec++)
 	{
@@ -134,7 +134,7 @@ void P_ArchiveWorld (void)
 		*put++ = sec->tag;				// needed?
 	}
 
-	
+
 	// do lines
 	for (i=0, li = lines ; i<numlines ; i++,li++)
 	{
@@ -145,17 +145,17 @@ void P_ArchiveWorld (void)
 		{
 			if (li->sidenum[j] == -1)
 				continue;
-			
+
 			si = &sides[li->sidenum[j]];
 
 			*put++ = si->textureoffset >> FRACBITS;
 			*put++ = si->rowoffset >> FRACBITS;
 			*put++ = si->toptexture;
 			*put++ = si->bottomtexture;
-			*put++ = si->midtexture;	
+			*put++ = si->midtexture;
 		}
 	}
-		
+
 	save_p = (byte *)put;
 }
 
@@ -172,9 +172,9 @@ void P_UnArchiveWorld (void)
 	line_t*				li;
 	side_t*				si;
 	short*				get;
-		
+
 	get = (short *)save_p;
-	
+
 	// do sectors
 	for (i=0, sec = sectors ; i<numsectors ; i++,sec++)
 	{
@@ -188,7 +188,7 @@ void P_UnArchiveWorld (void)
 		sec->specialdata = 0;
 		sec->soundtarget = 0;
 	}
-	
+
 	// do lines
 	for (i=0, li = lines ; i<numlines ; i++,li++)
 	{
@@ -207,7 +207,7 @@ void P_UnArchiveWorld (void)
 			si->midtexture = *get++;
 		}
 	}
-	save_p = (byte *)get;		
+	save_p = (byte *)get;
 }
 
 
@@ -233,7 +233,7 @@ void P_ArchiveThinkers (void)
 {
 	thinker_t*			th;
 	mobj_t*				mobj;
-		
+
 	// save off the current thinkers
 	for (th = thinkercap.next ; th != &thinkercap ; th=th->next)
 	{
@@ -245,17 +245,17 @@ void P_ArchiveThinkers (void)
 			memcpy (mobj, th, sizeof(*mobj));
 			save_p += sizeof(*mobj);
 			mobj->state = (state_t *)(mobj->state - states);
-			
+
 			if (mobj->player)
 				mobj->player = (player_t *)((mobj->player-players) + 1);
 			continue;
 		}
-				
+
 		// I_Error ("P_ArchiveThinkers: Unknown thinker function");
 	}
 
 	// add a terminating marker
-	*save_p++ = tc_end; 
+	*save_p++ = tc_end;
 }
 
 
@@ -269,13 +269,13 @@ void P_UnArchiveThinkers (void)
 	thinker_t*			currentthinker;
 	thinker_t*			next;
 	mobj_t*				mobj;
-	
+
 	// remove all the current thinkers
 	currentthinker = thinkercap.next;
 	while (currentthinker != &thinkercap)
 	{
 		next = currentthinker->next;
-		
+
 		if (currentthinker->function.acp1 == (actionf_p1)P_MobjThinker)
 			P_RemoveMobj ((mobj_t *)currentthinker);
 		else
@@ -284,7 +284,7 @@ void P_UnArchiveThinkers (void)
 		currentthinker = next;
 	}
 	P_InitThinkers ();
-		
+
 	// read in saved thinkers
 	while (1)
 	{
@@ -293,7 +293,7 @@ void P_UnArchiveThinkers (void)
 		{
 		  case tc_end:
 			return;		// end of list
-						
+
 		  case tc_mobj:
 			PADSAVEP();
 			mobj = Z_Malloc (sizeof(*mobj), PU_LEVEL, NULL);
@@ -313,11 +313,11 @@ void P_UnArchiveThinkers (void)
 			mobj->thinker.function.acp1 = (actionf_p1)P_MobjThinker;
 			P_AddThinker (&mobj->thinker);
 			break;
-						
+
 		  default:
 			I_Error ("Unknown tclass %i in savegame",tclass);
 		}
-		
+
 	}
 
 }
@@ -337,7 +337,7 @@ enum
 	tc_glow,
 	tc_endspecials
 
-} specials_e;	
+} specials_e;
 
 
 
@@ -363,7 +363,7 @@ void P_ArchiveSpecials (void)
 	strobe_t*			strobe;
 	glow_t*				glow;
 	int					i;
-		
+
 	// save off the current thinkers
 	for (th = thinkercap.next ; th != &thinkercap ; th=th->next)
 	{
@@ -372,7 +372,7 @@ void P_ArchiveSpecials (void)
 			for (i = 0; i < MAXCEILINGS;i++)
 				if (activeceilings[i] == (ceiling_t *)th)
 					break;
-			
+
 			if (i<MAXCEILINGS)
 			{
 				*save_p++ = tc_ceiling;
@@ -384,7 +384,7 @@ void P_ArchiveSpecials (void)
 			}
 			continue;
 		}
-						
+
 		if (th->function.acp1 == (actionf_p1)T_MoveCeiling)
 		{
 			*save_p++ = tc_ceiling;
@@ -395,7 +395,7 @@ void P_ArchiveSpecials (void)
 			ceiling->sector = (sector_t *)(ceiling->sector - sectors);
 			continue;
 		}
-						
+
 		if (th->function.acp1 == (actionf_p1)T_VerticalDoor)
 		{
 			*save_p++ = tc_door;
@@ -406,7 +406,7 @@ void P_ArchiveSpecials (void)
 			door->sector = (sector_t *)(door->sector - sectors);
 			continue;
 		}
-						
+
 		if (th->function.acp1 == (actionf_p1)T_MoveFloor)
 		{
 			*save_p++ = tc_floor;
@@ -417,7 +417,7 @@ void P_ArchiveSpecials (void)
 			floor->sector = (sector_t *)(floor->sector - sectors);
 			continue;
 		}
-						
+
 		if (th->function.acp1 == (actionf_p1)T_PlatRaise)
 		{
 			*save_p++ = tc_plat;
@@ -428,7 +428,7 @@ void P_ArchiveSpecials (void)
 			plat->sector = (sector_t *)(plat->sector - sectors);
 			continue;
 		}
-						
+
 		if (th->function.acp1 == (actionf_p1)T_LightFlash)
 		{
 			*save_p++ = tc_flash;
@@ -439,7 +439,7 @@ void P_ArchiveSpecials (void)
 			flash->sector = (sector_t *)(flash->sector - sectors);
 			continue;
 		}
-						
+
 		if (th->function.acp1 == (actionf_p1)T_StrobeFlash)
 		{
 			*save_p++ = tc_strobe;
@@ -450,7 +450,7 @@ void P_ArchiveSpecials (void)
 			strobe->sector = (sector_t *)(strobe->sector - sectors);
 			continue;
 		}
-						
+
 		if (th->function.acp1 == (actionf_p1)T_Glow)
 		{
 			*save_p++ = tc_glow;
@@ -462,9 +462,9 @@ void P_ArchiveSpecials (void)
 			continue;
 		}
 	}
-		
+
 	// add a terminating marker
-	*save_p++ = tc_endspecials; 
+	*save_p++ = tc_endspecials;
 
 }
 
@@ -482,8 +482,8 @@ void P_UnArchiveSpecials (void)
 	lightflash_t*		flash;
 	strobe_t*			strobe;
 	glow_t*				glow;
-		
-		
+
+
 	// read in saved thinkers
 	while (1)
 	{
@@ -492,7 +492,7 @@ void P_UnArchiveSpecials (void)
 		{
 		  case tc_endspecials:
 			return;		// end of list
-						
+
 		  case tc_ceiling:
 			PADSAVEP();
 			ceiling = Z_Malloc (sizeof(*ceiling), PU_LEVEL, NULL);
@@ -507,7 +507,7 @@ void P_UnArchiveSpecials (void)
 			P_AddThinker (&ceiling->thinker);
 			P_AddActiveCeiling(ceiling);
 			break;
-								
+
 		  case tc_door:
 			PADSAVEP();
 			door = Z_Malloc (sizeof(*door), PU_LEVEL, NULL);
@@ -518,7 +518,7 @@ void P_UnArchiveSpecials (void)
 			door->thinker.function.acp1 = (actionf_p1)T_VerticalDoor;
 			P_AddThinker (&door->thinker);
 			break;
-								
+
 		  case tc_floor:
 			PADSAVEP();
 			floor = Z_Malloc (sizeof(*floor), PU_LEVEL, NULL);
@@ -529,7 +529,7 @@ void P_UnArchiveSpecials (void)
 			floor->thinker.function.acp1 = (actionf_p1)T_MoveFloor;
 			P_AddThinker (&floor->thinker);
 			break;
-								
+
 		  case tc_plat:
 			PADSAVEP();
 			plat = Z_Malloc (sizeof(*plat), PU_LEVEL, NULL);
@@ -544,7 +544,7 @@ void P_UnArchiveSpecials (void)
 			P_AddThinker (&plat->thinker);
 			P_AddActivePlat(plat);
 			break;
-								
+
 		  case tc_flash:
 			PADSAVEP();
 			flash = Z_Malloc (sizeof(*flash), PU_LEVEL, NULL);
@@ -554,7 +554,7 @@ void P_UnArchiveSpecials (void)
 			flash->thinker.function.acp1 = (actionf_p1)T_LightFlash;
 			P_AddThinker (&flash->thinker);
 			break;
-								
+
 		  case tc_strobe:
 			PADSAVEP();
 			strobe = Z_Malloc (sizeof(*strobe), PU_LEVEL, NULL);
@@ -564,7 +564,7 @@ void P_UnArchiveSpecials (void)
 			strobe->thinker.function.acp1 = (actionf_p1)T_StrobeFlash;
 			P_AddThinker (&strobe->thinker);
 			break;
-								
+
 		  case tc_glow:
 			PADSAVEP();
 			glow = Z_Malloc (sizeof(*glow), PU_LEVEL, NULL);
@@ -574,12 +574,12 @@ void P_UnArchiveSpecials (void)
 			glow->thinker.function.acp1 = (actionf_p1)T_Glow;
 			P_AddThinker (&glow->thinker);
 			break;
-								
+
 		  default:
 			I_Error ("P_UnarchiveSpecials:Unknown tclass %i "
 					 "in savegame",tclass);
 		}
-		
+
 	}
 
 }

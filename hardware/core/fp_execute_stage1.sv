@@ -111,8 +111,8 @@ module fp_execute_stage1(
 			assign fop2 = of_operand2[lane_idx];
 			assign op1_hidden_bit = fop1.exponent != 0;	// Check for subnormal numbers
 			assign op2_hidden_bit = fop2.exponent != 0;
-			assign full_significand1 = { op1_hidden_bit, fop1.significand };
-			assign full_significand2 = { op2_hidden_bit, fop2.significand };
+			assign full_significand1 = {op1_hidden_bit, fop1.significand};
+			assign full_significand2 = {op2_hidden_bit, fop2.significand};
 			assign is_subtract = of_instruction.alu_op != OP_ADD_F;	// This also include compares
 			assign fop1_is_inf = fop1.exponent == 8'hff && fop1.significand == 0;
 			assign fop1_is_nan = fop1.exponent == 8'hff && fop1.significand != 0;
@@ -166,8 +166,8 @@ module fp_execute_stage1(
 			// The result exponent for multiplication is the sum of the exponents. Convert these
 			// from biased to unbiased representation by inverting the MSB, then add.
 			// XXX handle underflow
-			assign { mul_exponent_underflow, mul_exponent_carry, mul_exponent }
-				=  { 2'd0, fop1.exponent } + { 2'd0, fop2.exponent } - 10'd127;
+			assign {mul_exponent_underflow, mul_exponent_carry, mul_exponent}
+				=  {2'd0, fop1.exponent} + {2'd0, fop2.exponent} - 10'd127;
 
 			// Subtle: In the case where values are equal, leave operand1 in the _le slot. This properly 
 			// handles the sign for +/- zero.

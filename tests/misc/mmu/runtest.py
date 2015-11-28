@@ -1,19 +1,19 @@
 #!/usr/bin/env python
-# 
+#
 # Copyright 2011-2015 Jeff Bush
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# 
+#
 
 import sys
 import subprocess
@@ -51,9 +51,9 @@ def test_fill_verilator(name):
 	result = test_harness.run_verilator()
 	if result.find('FAIL') != -1 or result.find('PASS') == -1:
 		raise test_harness.TestException(result + '\ntest did not signal pass')
-	
+
 	# XXX check number of DTLB misses to ensure it is above/below thresholds
-	
+
 def test_fill_emulator(name):
 	test_harness.compile_test(['fill_test.c', 'wrap_tlb_miss_handler.s'])
 	result = test_harness.run_emulator()
@@ -64,7 +64,7 @@ def test_io_map_verilator(name):
 	test_harness.compile_test(['io_map.c'])
 	result = test_harness.run_verilator(dump_file=DUMP_FILE, dump_base=0x100000,
 		dump_length=32)
-	
+
 	# Check value printed via virtual serial port
 	if result.find('jabberwocky') == -1:
 		raise test_harness.TestException('did not get correct read string:\n' + result)
@@ -73,12 +73,12 @@ def test_io_map_verilator(name):
 	with open(DUMP_FILE, 'rb') as f:
 		if f.read(len('galumphing')) != bytearray('galumphing', 'ascii'):
 			raise test_harness.TestException('memory contents did not match')
-	
+
 def test_io_map_emulator(name):
 	test_harness.compile_test(['io_map.c'])
 	result = test_harness.run_emulator(dump_file=DUMP_FILE, dump_base=0x100000,
 		dump_length=32)
-	
+
 	# Check value printed via virtual serial port
 	if result.find('jabberwocky') == -1:
 		raise test_harness.TestException('did not get correct read string:\n' + result)
@@ -95,13 +95,13 @@ def run_generic_test(name):
 	elif name.endswith('_verilator'):
 		basename = name[0:-len('_verilator')]
 		isverilator = True
-	
+
 	test_harness.compile_test([basename + '.c'])
 	if isverilator:
 		result = test_harness.run_verilator()
 	else:
 		result = test_harness.run_emulator()
-		
+
 	test_harness.check_result(basename + '.c', result)
 
 def register_generic_test(name):

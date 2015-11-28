@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 
 #pragma once
@@ -21,12 +21,12 @@
 
 namespace librender
 {
-	
+
 //
-// Dynamic array with a fast, lock-free append. This allocates memory using 
+// Dynamic array with a fast, lock-free append. This allocates memory using
 // RegionAllocator.
 //
-	
+
 template <typename T, int BUCKET_SIZE = 32>
 class CommandQueue
 {
@@ -37,12 +37,12 @@ public:
 	CommandQueue() {}
 	CommandQueue(const CommandQueue&) = delete;
 	CommandQueue& operator=(const CommandQueue&) = delete;
-	
+
 	void setAllocator(RegionAllocator *allocator)
 	{
 		fAllocator = allocator;
 	}
-	
+
 	void sort()
 	{
 		if (!fFirstBucket)
@@ -63,12 +63,12 @@ public:
 			}
 		}
 	}
-	
+
 	void append(const T &copyFrom)
 	{
 		int index;
 		Bucket *bucket;
-		
+
 		while (true)
 		{
 			// When a new bucket is appended because the previous one is
@@ -90,8 +90,8 @@ public:
 
 		bucket->items[index] = copyFrom;
 	}
-	
-	// reset() must be called on this object before calling reset() on the 
+
+	// reset() must be called on this object before calling reset() on the
 	// RegionAllocator this object is using to properly clean up objects and
 	// to avoid stale pointers.
 	void reset()
@@ -117,11 +117,11 @@ public:
 		{
 			return fBucket == iter.fBucket && fIndex == iter.fIndex;
 		}
-		
+
 		const iterator &operator++()
 		{
 			// subtle: don't advance to next bucket if it is
-			// null, otherwise the iterator will not be equal to 
+			// null, otherwise the iterator will not be equal to
 			// end() when it advances past the last item.
 			if (++fIndex == BUCKET_SIZE && fBucket->next)
 			{
@@ -131,7 +131,7 @@ public:
 
 			return *this;
 		}
-		
+
 		const iterator &operator--()
 		{
 			if (--fIndex < 0)
@@ -139,10 +139,10 @@ public:
 				fBucket = fBucket->prev;
 				fIndex = BUCKET_SIZE - 1;
 			}
-			
+
 			return *this;
 		}
-		
+
 		T& operator*() const
 		{
 			return fBucket->items[fIndex];
@@ -154,7 +154,7 @@ public:
 			++tmp;
 			return tmp;
 		}
-		
+
 		iterator prev() const
 		{
 			iterator tmp = *this;
@@ -164,7 +164,7 @@ public:
 
 	private:
 		friend class CommandQueue;
-		
+
 		iterator(Bucket *bucket, int index)
 			: 	fBucket(bucket),
 				fIndex(index)
@@ -178,12 +178,12 @@ public:
 	{
 		return iterator(fFirstBucket, 0);
 	}
-	
+
 	iterator end() const
 	{
 		return iterator(fLastBucket, fNextBucketIndex);
 	}
-	
+
 private:
 	struct Bucket
 	{
@@ -206,7 +206,7 @@ private:
 				;
 		}
 		while (!__sync_bool_compare_and_swap(&fSpinLock, 0, 1));
-		
+
 		// Check that someone didn't beat us to allocating the bucket.
 		if (fNextBucketIndex == BUCKET_SIZE || fLastBucket == nullptr)
 		{
@@ -226,11 +226,11 @@ private:
 			}
 
 			// We must update fNextBucketIndex after fLastBucket to avoid a race
-			// condition with append.  Because they are volatile, the compiler won't 
+			// condition with append.  Because they are volatile, the compiler won't
 			// reorder them.
 			fNextBucketIndex = 0;
 		}
-		
+
 		fSpinLock = 0;
 		__sync_synchronize();
 	}

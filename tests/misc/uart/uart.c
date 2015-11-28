@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2015 Pipat Methavanitpong
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 /// Check UART Overrun bit to assert and deassert properly
 /// Recommend to turn on UART Overrun print in
@@ -37,7 +37,7 @@ enum UartRegs
 	kTx = 2
 };
 
-void writeLoopbackUart(char ch) 
+void writeLoopbackUart(char ch)
 {
 	int timeout = 0;
 	LOOPBACK_UART[kTx] = ch;
@@ -70,21 +70,21 @@ void setLoopbackUartMask(int value)
 	LOOPBACK_UART[3] = value;
 }
 
-int main () 
+int main ()
 {
 	int fifoCount;
 	int i;
 	char txChar = 1;
 	char rxChar = 1;
 	int readCount;
-	
+
 	// Overrun Error Test
 	for (fifoCount = 1; fifoCount < kMaxFifoDepth + 3; fifoCount++)
 	{
 		for (i = 0; i < fifoCount; i++)
 		{
 			writeLoopbackUart(txChar++);
-			
+
 			// Ensure the overrun bit is set if we've filled the FIFO,
 			// not set if we have not
 			if (i >= kMaxFifoDepth)
@@ -92,20 +92,20 @@ int main ()
 			else
 				CHECK((LOOPBACK_UART[kStatus] & UART_OVERRUN) == 0);
 		}
-		
+
 		// Account for dropped characters
 		if (fifoCount > kMaxFifoDepth)
 			rxChar += fifoCount - kMaxFifoDepth;
-		
+
 		readCount = fifoCount;
 		if (readCount > kMaxFifoDepth)
 			readCount = kMaxFifoDepth;
-		
+
 		for (i = 0; i < readCount; i++)
 		{
 			CHECK((LOOPBACK_UART[kStatus] & UART_FRAME_ERR) == 0);
 			CHECK(readLoopbackUart() == rxChar++);
-			
+
 			// Reading from the UART should clear the overflow bit
 			// if it was set.
 			CHECK((LOOPBACK_UART[kStatus] & UART_OVERRUN) == 0);

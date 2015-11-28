@@ -165,9 +165,9 @@ module thread_select_stage(
 				if (thread_instr_nxt.has_dest)
 				begin
 					if (thread_instr_nxt.dest_is_vector)
-						scoreboard_dest_bitmap_nxt[{ 1'b1, thread_instr_nxt.dest_reg }] = 1;
+						scoreboard_dest_bitmap_nxt[{1'b1, thread_instr_nxt.dest_reg}] = 1;
 					else
-						scoreboard_dest_bitmap_nxt[{ 1'b0, thread_instr_nxt.dest_reg }] = 1;
+						scoreboard_dest_bitmap_nxt[{1'b0, thread_instr_nxt.dest_reg}] = 1;
 				end
 			end
 
@@ -180,22 +180,22 @@ module thread_select_stage(
 				if (thread_instr_nxt.has_dest)
 				begin
 					if (thread_instr_nxt.dest_is_vector)
-						scoreboard_dep_bitmap_nxt[{ 1'b1, thread_instr_nxt.dest_reg }] = 1;
+						scoreboard_dep_bitmap_nxt[{1'b1, thread_instr_nxt.dest_reg}] = 1;
 					else
-						scoreboard_dep_bitmap_nxt[{ 1'b0, thread_instr_nxt.dest_reg }] = 1;
+						scoreboard_dep_bitmap_nxt[{1'b0, thread_instr_nxt.dest_reg}] = 1;
 				end
 
 				if (thread_instr_nxt.has_scalar1)
-					scoreboard_dep_bitmap_nxt[{ 1'b0, thread_instr_nxt.scalar_sel1 }] = 1;
+					scoreboard_dep_bitmap_nxt[{1'b0, thread_instr_nxt.scalar_sel1}] = 1;
 					
 				if (thread_instr_nxt.has_scalar2)
-					scoreboard_dep_bitmap_nxt[{ 1'b0, thread_instr_nxt.scalar_sel2 }] = 1;
+					scoreboard_dep_bitmap_nxt[{1'b0, thread_instr_nxt.scalar_sel2}] = 1;
 					
 				if (thread_instr_nxt.has_vector1)
-					scoreboard_dep_bitmap_nxt[{ 1'b1, thread_instr_nxt.vector_sel1 }] = 1;
+					scoreboard_dep_bitmap_nxt[{1'b1, thread_instr_nxt.vector_sel1}] = 1;
 
 				if (thread_instr_nxt.has_vector2)
-					scoreboard_dep_bitmap_nxt[{ 1'b1, thread_instr_nxt.vector_sel2 }] = 1;
+					scoreboard_dep_bitmap_nxt[{1'b1, thread_instr_nxt.vector_sel2}] = 1;
 			end
 			
 			// There is one cycle of latency after the instruction comes out of the
@@ -241,9 +241,9 @@ module thread_select_stage(
 					&& wb_writeback_is_last_subcycle)
 				begin
 					if (wb_writeback_is_vector)
-						scoreboard_clear_bitmap[{ 1'b1, wb_writeback_reg }] = 1;
+						scoreboard_clear_bitmap[{1'b1, wb_writeback_reg}] = 1;
 					else
-						scoreboard_clear_bitmap[{ 1'b0, wb_writeback_reg }] = 1;
+						scoreboard_clear_bitmap[{1'b0, wb_writeback_reg}] = 1;
 				end
 				
 				// Clear scoreboard entries for rolled back threads. 
@@ -341,7 +341,7 @@ module thread_select_stage(
 	// effects.
 	always_comb
 	begin
-		writeback_allocate_nxt = {1'b0, writeback_allocate[WRITEBACK_ALLOC_STAGES - 1:1] };
+		writeback_allocate_nxt = {1'b0, writeback_allocate[WRITEBACK_ALLOC_STAGES - 1:1]};
 		if (|thread_issue_oh)
 		begin
 			case (issue_instr.pipeline_sel)

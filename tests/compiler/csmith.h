@@ -46,13 +46,13 @@
 static uint32_t crc32_tab[256];
 static uint32_t crc32_context = 0xFFFFFFFFUL;
 
-static void 
+static void
 crc32_gentab (void)
 {
 	uint32_t crc;
 	const uint32_t poly = 0xEDB88320UL;
 	int i, j;
-	
+
 	for (i = 0; i < 256; i++) {
 		crc = i;
 		for (j = 8; j > 0; j--) {
@@ -66,14 +66,14 @@ crc32_gentab (void)
 	}
 }
 
-static void 
+static void
 crc32_byte (uint8_t b) {
-	crc32_context = 
-		((crc32_context >> 8) & 0x00FFFFFF) ^ 
+	crc32_context =
+		((crc32_context >> 8) & 0x00FFFFFF) ^
 		crc32_tab[(crc32_context ^ b) & 0xFF];
 }
 
-static void 
+static void
 crc32_8bytes (uint32_t val)
 {
 	crc32_byte ((val>>0) & 0xff);
@@ -82,7 +82,7 @@ crc32_8bytes (uint32_t val)
 	crc32_byte ((val>>24) & 0xff);
 }
 
-static void 
+static void
 transparent_crc (uint32_t val, char* vname, int flag)
 {
 	crc32_8bytes(val);
@@ -195,7 +195,7 @@ platform_main_end(uint32_t crc, int flag)
 		  || ((((int8_t)(si1))<((int8_t)0)) && (((int8_t)(si2))<((int8_t)0)) && (((int8_t)(si1)) < ((INT8_MIN)-((int8_t)(si2)))))) ? \
 		 ((int8_t)(si1)) :						\
 		 (((int8_t)(si1)) + ((int8_t)(si2)))				\
-		;}) 
+		;})
 
 #define safe_sub_func_int8_t_s_s(_si1,_si2) \
 		({ int8_t si1 = (_si1); int8_t si2 = (_si2) ; \
@@ -274,7 +274,7 @@ platform_main_end(uint32_t crc, int flag)
 		  || ((((int16_t)(si1))<((int16_t)0)) && (((int16_t)(si2))<((int16_t)0)) && (((int16_t)(si1)) < ((INT16_MIN)-((int16_t)(si2)))))) ? \
 		 ((int16_t)(si1)) :						\
 		 (((int16_t)(si1)) + ((int16_t)(si2)))				\
-		;}) 
+		;})
 
 #define safe_sub_func_int16_t_s_s(_si1,_si2) \
 		({ int16_t si1 = (_si1); int16_t si2 = (_si2) ; \
@@ -353,7 +353,7 @@ platform_main_end(uint32_t crc, int flag)
 		  || ((((int32_t)(si1))<((int32_t)0)) && (((int32_t)(si2))<((int32_t)0)) && (((int32_t)(si1)) < ((INT32_MIN)-((int32_t)(si2)))))) ? \
 		 ((int32_t)(si1)) :						\
 		 (((int32_t)(si1)) + ((int32_t)(si2)))				\
-		;}) 
+		;})
 
 #define safe_sub_func_int32_t_s_s(_si1,_si2) \
 		({ int32_t si1 = (_si1); int32_t si2 = (_si2) ; \
@@ -432,7 +432,7 @@ platform_main_end(uint32_t crc, int flag)
 		  || ((((int64_t)(si1))<((int64_t)0)) && (((int64_t)(si2))<((int64_t)0)) && (((int64_t)(si1)) < ((INT64_MIN)-((int64_t)(si2)))))) ? \
 		 ((int64_t)(si1)) :						\
 		 (((int64_t)(si1)) + ((int64_t)(si2)))				\
-		;}) 
+		;})
 
 #define safe_sub_func_int64_t_s_s(_si1,_si2) \
 		({ int64_t si1 = (_si1); int64_t si2 = (_si2) ; \

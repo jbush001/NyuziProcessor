@@ -1,21 +1,21 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 
-// 
+//
 // Render the Utah Teapot with a directional lighting model.
 //
 
@@ -32,7 +32,7 @@ using namespace librender;
 
 const int kFbWidth = 640;
 const int kFbHeight = 480;
-	
+
 // All threads start execution here.
 int main()
 {
@@ -53,9 +53,9 @@ int main()
 
 	PhongUniforms uniforms;
 	uniforms.fLightVector[0] = 0.7071067811f;
-	uniforms.fLightVector[1] = -0.7071067811f; 
+	uniforms.fLightVector[1] = -0.7071067811f;
 	uniforms.fLightVector[2] = 0.0f;
-	uniforms.fDirectional = 0.6f;		
+	uniforms.fDirectional = 0.6f;
 	uniforms.fAmbient = 0.2f;
 
 	const RenderBuffer kVertices(kTeapotVertices, kNumTeapotVertices, 6 * sizeof(float));
@@ -79,6 +79,6 @@ int main()
 		context->finish();
 		modelViewMatrix *= rotationMatrix;
 	}
-	
+
 	return 0;
 }

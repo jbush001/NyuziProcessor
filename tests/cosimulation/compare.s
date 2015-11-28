@@ -1,18 +1,18 @@
-# 
+#
 # Copyright 2011-2015 Jeff Bush
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# 
+#
 
 .include "macros.inc"
 
@@ -20,8 +20,8 @@
 # Test various comparisions
 #
 
-.equ BU, 0xc0800018	
-.equ BS, 0x60123498	
+.equ BU, 0xc0800018
+.equ BS, 0x60123498
 .equ SM, 1
 
 			.globl _start
@@ -53,7 +53,7 @@ _start:		lea s0, ivec1
 			cmplt_u s7, v0, s20
 			cmpge_u s8, v0, s20
 			cmple_u s9, v0, s20
-			
+
 			// Scalar integer comparison
 			load_32 s21, ival4
 			cmpeq_i s0, s21, s20
@@ -103,7 +103,7 @@ _start:		lea s0, ivec1
 			.align 64
 fvec1: .float -7.5, -6.5, -5.5, -4.5, -3.5, -2.5, -1.5, -0.5, 0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5
 fvec2: .float 7.5, 6.5, 5.5, 4.5, 3.5, 2.5, 1.5, 0.5, -0.5, -1.5, -2.5, -3.5, -4.5, -5.5, -6.5, -7.5
-ivec1: .long BU, BS, BU, BS, BU, SM, BS, SM, BU, BS, BU, BS, BU, SM, BS, SM 
+ivec1: .long BU, BS, BU, BS, BU, SM, BS, SM, BU, BS, BU, BS, BU, SM, BS, SM
 ivec2: .long BU, BS, BS, BU, SM, BU, SM, BS, BU, BS, BS, BU, SM, BU, SM, BS
 ival3: .long BU
 ival4: .long BS

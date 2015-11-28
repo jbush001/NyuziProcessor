@@ -1,4 +1,4 @@
-// Emacs style mode select	 -*- C++ -*- 
+// Emacs style mode select	 -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // $Id:$
@@ -23,7 +23,7 @@
 //-----------------------------------------------------------------------------
 
 
-static const char 
+static const char
 rcsid[] = "$Id: sounds.c,v 1.3 1997/01/29 22:40:44 b1 Exp $";
 
 
@@ -103,7 +103,7 @@ musicinfo_t S_music[] =
 	{ "ultima", 0 },
 	{ "read_m", 0 },
 	{ "dm2ttl", 0 },
-	{ "dm2int", 0 } 
+	{ "dm2int", 0 }
 };
 
 
@@ -223,6 +223,6 @@ sfxinfo_t S_sfx[] =
   { "skeact", false, 70, 0, -1, -1, 0 },
   { "skesit", false, 70, 0, -1, -1, 0 },
   { "skeatk", false, 70, 0, -1, -1, 0 },
-  { "radio", false, 60, 0, -1, -1, 0 } 
+  { "radio", false, 60, 0, -1, -1, 0 }
 };
 

@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 //
 // Parallel mandelbrot set renderer. The screen is divided between threads
@@ -65,7 +65,7 @@ int main()
 			vecf16_t y = makevectorf(0.0);
 			veci16_t iteration = makevectori(0);
 			int activeLanes = 0xffff;
-	
+
 			// Escape loop
 			while (1)
 			{
@@ -75,14 +75,14 @@ int main()
 				activeLanes &= mask_cmpi_ult(iteration, makevectori(kMaxIterations));
 				if (!activeLanes)
 					break;
-		
+
 				y = x * y * makevectorf(2.0) + makevectorf(y0);
 				x = xSquared - ySquared + x0;
 				iteration = vector_mixi(activeLanes, iteration + makevectori(1), iteration);
 			}
 
 			// Set pixels inside set black and increase contrast
-			*ptr = makevectori(0xff000000) | vector_mixi(mask_cmpi_uge(iteration, makevectori(255)), 
+			*ptr = makevectori(0xff000000) | vector_mixi(mask_cmpi_uge(iteration, makevectori(255)),
 				makevectori(0), (iteration << makevectori(2)) + makevectori(80));
 			asm("dflush %0" : : "s" (ptr++));
 			x0 += makevectorf(kXStep * kVectorLanes);

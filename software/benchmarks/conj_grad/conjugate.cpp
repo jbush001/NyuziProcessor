@@ -1,11 +1,11 @@
 /* Copyright 2015 Pipat Methavanitpong
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * 	Unless required by applicable law or agreed to in writing, software
  * 	distributed under the License is distributed on an "AS IS" BASIS,
  * 	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,7 @@
 
 float total(const vecf16 &v1)
 {
-	int i; 
+	int i;
 	float sum = 0;
 	for (i = 0; i < 16; i++)
 		sum += v1[i];
@@ -87,7 +87,7 @@ matrix_t genSpace()
 	for (i = 0; i < 16; i++)
 		for (j = 0; j < 16; j++)
 			m1.rows[i][j] = rand() / 1000000000.0;	// the const makes the rand() low enough
-	
+
 	// C * transpose(C)
 	for (i = 0; i < 16; i++)
 	{

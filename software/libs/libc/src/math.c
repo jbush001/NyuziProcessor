@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 #include <math.h>
 
@@ -33,7 +33,7 @@ double fmod(double val1, double val2)
 
 static const int kNumTerms = 6;
 
-static const double kDenominators[] = { 
+static const double kDenominators[] = {
 	-0.166666666666667f,  // 1 / 3!
 	0.008333333333333f,   // 1 / 5!
 	-0.000198412698413f,  // 1 / 7!
@@ -71,13 +71,13 @@ double sin(double angle)
 	double angleSquared = angle * angle;
 	double numerator = angle;
 	double result = angle;
-	
+
 	for (int i = 0; i < kNumTerms; i++)
 	{
-		numerator *= angleSquared;		
+		numerator *= angleSquared;
 		result += numerator * kDenominators[i];
 	}
-	
+
 	return result * resultSign;
 }
 
@@ -120,7 +120,7 @@ float ceilf(float value)
 	float floorval = floorf(value);
 	if (value > floorval)
 		return floorval + 1.0;
-	
+
 	return floorval;
 }
 

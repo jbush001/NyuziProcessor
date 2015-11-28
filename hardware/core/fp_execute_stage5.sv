@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 
 `include "defines.sv"
@@ -23,13 +23,13 @@
 // Floating point addition/multiplication
 // - Normalization shift
 // - Post normalization rounding (for addition overflow)
-// 
+//
 
 module fp_execute_stage5(
 	input                               clk,
 	input                               reset,
-	                                    
-	// From fp_execute_stage4                   
+
+	// From fp_execute_stage4
 	input vector_lane_mask_t            fx4_mask_value,
 	input                               fx4_instruction_valid,
 	input decoded_instruction_t         fx4_instruction,
@@ -37,20 +37,20 @@ module fp_execute_stage5(
 	input subcycle_t                    fx4_subcycle,
 	input [`VECTOR_LANES - 1:0]         fx4_result_is_inf,
 	input [`VECTOR_LANES - 1:0]         fx4_result_is_nan,
-	
-	// Floating point addition/subtraction                    
+
+	// Floating point addition/subtraction
 	input [`VECTOR_LANES - 1:0][7:0]    fx4_add_exponent,
 	input scalar_t[`VECTOR_LANES - 1:0] fx4_add_significand,
 	input [`VECTOR_LANES - 1:0]         fx4_add_result_sign,
 	input [`VECTOR_LANES - 1:0]         fx4_logical_subtract,
 	input [`VECTOR_LANES - 1:0][5:0]    fx4_norm_shift,
-                                        
-	// Floating point multiplication    
+
+	// Floating point multiplication
 	input [`VECTOR_LANES - 1:0][63:0]   fx4_significand_product,
 	input [`VECTOR_LANES - 1:0][7:0]    fx4_mul_exponent,
 	input [`VECTOR_LANES - 1:0]         fx4_mul_sign,
-	                                    
-	// To writeback_stage               
+
+	// To writeback_stage
 	output logic                        fx5_instruction_valid,
 	output decoded_instruction_t        fx5_instruction,
 	output vector_lane_mask_t           fx5_mask_value,
@@ -96,7 +96,7 @@ module fp_execute_stage5(
 			logic mul_hidden_bit;
 			logic mul_round_overflow;
 
-			assign adjusted_add_exponent = fx4_add_exponent[lane_idx] 
+			assign adjusted_add_exponent = fx4_add_exponent[lane_idx]
 				- `IEEE754_B32_EXP_WIDTH'(fx4_norm_shift[lane_idx]) + `IEEE754_B32_EXP_WIDTH'd8;
 			assign add_is_subnormal = fx4_add_exponent[lane_idx] == 0 || fx4_add_significand[lane_idx] == 0;
 			assign shifted_significand = fx4_add_significand[lane_idx] << fx4_norm_shift[lane_idx];
@@ -105,26 +105,26 @@ module fp_execute_stage5(
 			// shifted_significand[7] is the guard bit. shifted_significand[8] indicates whether
 			// the result is even or odd.
 			assign add_round = shifted_significand[7] && shifted_significand[8] && !fx4_logical_subtract[lane_idx];
-			assign add_result_significand = add_is_subnormal ? fx4_add_significand[lane_idx][22:0] 
+			assign add_result_significand = add_is_subnormal ? fx4_add_significand[lane_idx][22:0]
 				: (shifted_significand[30:8] + `IEEE754_B32_SIG_WIDTH'(add_round));	// Round up using truncated bit
 			assign add_result_exponent = add_is_subnormal ? '0 : adjusted_add_exponent;
 
 			always_comb
 			begin
 				if (fx4_result_is_inf[lane_idx])
-					add_result = { fx4_add_result_sign[lane_idx], 8'hff, 23'd0 };
+					add_result = {fx4_add_result_sign[lane_idx], 8'hff, 23'd0};
 				else if (fx4_result_is_nan[lane_idx])
-					add_result = { 32'h7fffffff };
+					add_result = {32'h7fffffff};
 				else if (add_result_significand == 0 && add_is_subnormal)
 				begin
-					// IEEE754-2008, 6.3: "When the sum of two operands with opposite signs 
-					// (or the difference of two operands with like signs) is exactly zero, 
+					// IEEE754-2008, 6.3: "When the sum of two operands with opposite signs
+					// (or the difference of two operands with like signs) is exactly zero,
 					// the sign of that sum (or difference) shall be +0.
 					// XXX this will pick up some additional cases like -0.0 + 0.0."
 					add_result = 0;
 				end
 				else
-					add_result = { fx4_add_result_sign[lane_idx], add_result_exponent, add_result_significand };
+					add_result = {fx4_add_result_sign[lane_idx], add_result_exponent, add_result_significand};
 			end
 
 			assign sum_is_zero = add_is_subnormal && add_result_significand == 0;
@@ -143,12 +143,12 @@ module fp_execute_stage5(
 				endcase
 			end
 
-			// If the operands for multiplication are both normalized (start with a leading 1), then the 
+			// If the operands for multiplication are both normalized (start with a leading 1), then the
 			// the maximum normalization shift is one place.
 			// XXX does not handle subnormal product
 			assign mul_normalize_shift = !fx4_significand_product[lane_idx][47];
-			assign { mul_normalized_significand, mul_guard, mul_round, mul_sticky_bits } = mul_normalize_shift 
-				? { fx4_significand_product[lane_idx][45:0], 1'b0 }
+			assign {mul_normalized_significand, mul_guard, mul_round, mul_sticky_bits} = mul_normalize_shift
+				? {fx4_significand_product[lane_idx][45:0], 1'b0}
 				: fx4_significand_product[lane_idx][46:0];
 			assign mul_sticky = |mul_sticky_bits;
 			assign mul_round_tie = mul_guard && !(mul_round || mul_sticky);
@@ -164,17 +164,17 @@ module fp_execute_stage5(
 				else if (mul_normalize_shift && !mul_round_overflow)
 					mul_exponent = fx4_mul_exponent[lane_idx];
 				else
-					mul_exponent = fx4_mul_exponent[lane_idx] + `IEEE754_B32_EXP_WIDTH'd1;			
+					mul_exponent = fx4_mul_exponent[lane_idx] + `IEEE754_B32_EXP_WIDTH'd1;
 			end
-			
+
 			always_comb
 			begin
 				if (fx4_result_is_inf[lane_idx])
-					fmul_result = { fx4_mul_sign[lane_idx], 8'hff, 23'd0 };
+					fmul_result = {fx4_mul_sign[lane_idx], 8'hff, 23'd0};
 				else if (fx4_result_is_nan[lane_idx])
-					fmul_result = { 32'h7fffffff };
+					fmul_result = {32'h7fffffff};
 				else
-					fmul_result = { fx4_mul_sign[lane_idx], mul_exponent, mul_rounded_significand };
+					fmul_result = {fx4_mul_sign[lane_idx], mul_exponent, mul_rounded_significand};
 			end
 
 			always_ff @(posedge clk)
@@ -199,7 +199,7 @@ module fp_execute_stage5(
 			end
 		end
 	endgenerate
-	
+
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)

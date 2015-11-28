@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 #include <errno.h>
 #include <getopt.h>
@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
 	uint32_t totalThreads = 4;
 	char *separator;
 	uint32_t memorySize = 0x1000000;
-	
+
 	enum
 	{
 		MODE_NORMAL,
@@ -93,11 +93,11 @@ int main(int argc, char *argv[])
 			case 'v':
 				verbose = true;
 				break;
-				
+
 			case 'r':
 				gScreenRefreshRate = parseNumArg(optarg);
 				break;
-				
+
 			case 'f':
 				enableFbWindow = true;
 				separator = strchr(optarg, 'x');
@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
 				fbWidth = parseNumArg(optarg);
 				fbHeight = parseNumArg(separator + 1);
 				break;
-				
+
 			case 'm':
 				if (strcmp(optarg, "normal") == 0)
 					mode = MODE_NORMAL;
@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
 				}
 
 				break;
-				
+
 			case 'd':
 				// Memory dump, of the form:
 				//  filename,start,length
@@ -136,11 +136,11 @@ int main(int argc, char *argv[])
 					usage();
 					return 1;
 				}
-				
+
 				strncpy(memDumpFilename, optarg, separator - optarg);
 				memDumpFilename[separator - optarg] = '\0';
 				memDumpBase = parseNumArg(separator + 1);
-	
+
 				separator = strchr(separator + 1, ',');
 				if (separator == NULL)
 				{
@@ -148,22 +148,22 @@ int main(int argc, char *argv[])
 					usage();
 					return 1;
 				}
-				
+
 				memDumpLength = parseNumArg(separator + 1);
 				enableMemoryDump = true;
 				break;
-				
+
 			case 'b':
 				if (openBlockDevice(optarg) < 0)
 					return 1;
-				
+
 				blockDeviceOpen = true;
 				break;
-			
+
 			case 'c':
 				memorySize = parseNumArg(optarg);
 				break;
-				
+
 			case 't':
 				totalThreads = parseNumArg(optarg);
 				if (totalThreads < 1 || totalThreads > 32)
@@ -171,9 +171,9 @@ int main(int argc, char *argv[])
 					fprintf(stderr, "Total threads must be between 1 and 32\n");
 					return 1;
 				}
-				
+
 				break;
-				
+
 			case '?':
 				usage();
 				return 1;
@@ -187,13 +187,13 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	// We don't randomize memory for cosimulation mode, because 
+	// We don't randomize memory for cosimulation mode, because
 	// memory is checked against the hardware model to ensure a match
 
 	core = initCore(memorySize, totalThreads, mode != MODE_COSIMULATION);
 	if (core == NULL)
 		return 1;
-	
+
 	if (loadHexFile(core, argv[optind]) < 0)
 	{
 		fprintf(stderr, "Error reading image %s\n", argv[optind]);
@@ -211,7 +211,7 @@ int main(int argc, char *argv[])
 		case MODE_NORMAL:
 			if (verbose)
 				enableTracing(core);
-			
+
 			setStopOnFault(core, false);
 			if (enableFbWindow)
 			{
@@ -232,7 +232,7 @@ int main(int argc, char *argv[])
 				return 1;	// Failed
 
 			break;
-			
+
 		case MODE_GDB_REMOTE_DEBUG:
 			setStopOnFault(core, true);
 			remoteGdbMainLoop(core, enableFbWindow);
@@ -245,9 +245,9 @@ int main(int argc, char *argv[])
 	dumpInstructionStats(core);
 	if (blockDeviceOpen)
 		closeBlockDevice();
-	
+
 	if (stoppedOnFault(core))
 		return 1;
-	
+
 	return 0;
 }

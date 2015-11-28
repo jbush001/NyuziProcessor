@@ -1,4 +1,4 @@
-// Emacs style mode select	 -*- C++ -*- 
+// Emacs style mode select	 -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // $Id:$
@@ -35,7 +35,7 @@ typedef struct
 {
 	unsigned char*		sequence;
 	unsigned char*		p;
-	
+
 } cheatseq_t;
 
 int

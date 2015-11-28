@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 #include <stdio.h>
 #include <sdmmc.h>
@@ -22,7 +22,7 @@
 int main()
 {
 	char *buf = (char*) 0x200000;
-		
+
 	if (initSdmmcDevice() < 0)
 	{
 		printf("error initializing card\n");
@@ -32,6 +32,6 @@ int main()
 	// Read blocks in reverse order to verify address is set correctly.
 	for (int i = TRANSFER_LENGTH - 1; i >= 0; i--)
 		readSdmmcDevice(i, buf + i * BLOCK_SIZE);
-	
+
 	return 0;
 }

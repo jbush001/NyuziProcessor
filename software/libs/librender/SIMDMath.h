@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 
 #pragma once
@@ -69,8 +69,8 @@ inline vecu16_t saturateuv(vecu16_t in)
 
 inline vecf16_t minfv(vecf16_t a, vecf16_t b)
 {
-	// This function follows the convention that, if a scalar is used, it is 
-	// the second parameter. Structuring the comparison as below uses two 
+	// This function follows the convention that, if a scalar is used, it is
+	// the second parameter. Structuring the comparison as below uses two
 	// instructions instead of three.
 	return __builtin_nyuzi_vector_mixf(__builtin_nyuzi_mask_cmpf_gt(a, b), b, a);
 }
@@ -110,7 +110,7 @@ inline vecf16_t sqrtfv(vecf16_t value)
 	for (int iteration = 0; iteration < 6; iteration++)
 		guess = ((value / guess) + guess) / splatf(2.0f);
 
-	return guess;	
+	return guess;
 }
 
 // "Quake" fast inverse square root
@@ -119,7 +119,7 @@ inline vecf16_t sqrtfv(vecf16_t value)
 inline vecf16_t isqrtfv(vecf16_t number)
 {
 	vecf16_t x2 = number * splatf(0.5f);
-	vecf16_t y = vecf16_t(splati(0x5f3759df) - (veci16_t(number) >> splati(1))); 
+	vecf16_t y = vecf16_t(splati(0x5f3759df) - (veci16_t(number) >> splati(1)));
 	y = y * (splatf(1.5f) - (x2 * y * y));
 	return y;
 }

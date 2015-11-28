@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 
 #pragma once
@@ -49,29 +49,29 @@ public:
         int ) const override
 	{
         const PhongUniforms *uniforms = static_cast<const PhongUniforms*>(_uniforms);
-        
+
 		// Multiply by mvp matrix
 		vecf16_t coord[4];
 		for (int i = 0; i < 3; i++)
 			coord[i] = inAttribs[i];
-			
+
 		coord[3] = splatf(1.0f);
-		uniforms->fMVPMatrix.mulVec(outParams, coord); 
+		uniforms->fMVPMatrix.mulVec(outParams, coord);
 
 		for (int i = 0; i < 3; i++)
 			coord[i] = inAttribs[i + 3];
-			
+
 		coord[3] = splatf(1.0f);
-		
-		uniforms->fNormalMatrix.mulVec(outParams + 4, coord); 
+
+		uniforms->fNormalMatrix.mulVec(outParams + 4, coord);
 	}
 
-	void shadePixels(vecf16_t *outColor, const vecf16_t *inParams, 
+	void shadePixels(vecf16_t *outColor, const vecf16_t *inParams,
 		const void *_castToUniforms, const Texture * const *,
 		unsigned short ) const override
 	{
 		const PhongUniforms *uniforms = static_cast<const PhongUniforms*>(_castToUniforms);
-		
+
 		// Normalize surface normal.
 		vecf16_t nx = inParams[0];
 		vecf16_t ny = inParams[1];
@@ -101,7 +101,7 @@ public:
 		outColor[kColorR] = __builtin_nyuzi_vector_mixf(cmp, splatf(0.6f), outColor[kColorR]);
 		outColor[kColorG] = __builtin_nyuzi_vector_mixf(cmp, splatf(0.3f), outColor[kColorG]);
 		outColor[kColorB] = __builtin_nyuzi_vector_mixf(cmp, splatf(0.3f), outColor[kColorB]);
-		
+
 		cmp = __builtin_nyuzi_mask_cmpf_gt(dot, splatf(0.95f));
 		outColor[kColorR] = __builtin_nyuzi_vector_mixf(cmp, splatf(1.0f), outColor[kColorR]);
 		outColor[kColorG] = __builtin_nyuzi_vector_mixf(cmp, splatf(0.5f), outColor[kColorG]);

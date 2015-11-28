@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 #include <ctype.h>
 #include <keyboard.h>
@@ -41,7 +41,7 @@ enum Button
 	kDKey
 };
 
-namespace 
+namespace
 {
 
 Vec3 gCameraPos;
@@ -85,18 +85,18 @@ void processKeyboardEvents()
 			case 'u':
 				gKeyPressed[kUKey] = pressed;
 				break;
-			
+
 			case 'd':
 				gKeyPressed[kDKey] = pressed;
 				break;
-				
+
 			// Toggle gWireframeRendering
 			case 'w':
 				if (keyCode & KBD_PRESSED)
 					gWireframeRendering = !gWireframeRendering;
 
 				break;
-			
+
 			// Toggle lightmap
 			case 'l':
 				if (keyCode & KBD_PRESSED)
@@ -116,16 +116,16 @@ void processKeyboardEvents()
 					else
 						gEnableLightmap = true;
 				}
-				
+
 				break;
-			
+
 			// Toggle gBilinearFiltering filtering
 			case 'b':
 				if (keyCode & KBD_PRESSED)
 					gBilinearFiltering = !gBilinearFiltering;
 
 				break;
-			
+
 		}
 	}
 
@@ -135,7 +135,7 @@ void processKeyboardEvents()
 		gFacingAngle -= M_PI / 16;
 		if (gFacingAngle < 0)
 			gFacingAngle += M_PI * 2;
-		
+
 		gFacingVector = Vec3(cos(gFacingAngle), sin(gFacingAngle), 0);
 	}
 	else if (gKeyPressed[kLeftArrow])
@@ -146,12 +146,12 @@ void processKeyboardEvents()
 
 		gFacingVector = Vec3(cos(gFacingAngle), sin(gFacingAngle), 0);
 	}
-		
+
 	if (gKeyPressed[kUpArrow])
 		gCameraPos = gCameraPos + gFacingVector * 30;
 	else if (gKeyPressed[kDownArrow])
 		gCameraPos = gCameraPos - gFacingVector * 30;
-	
+
 	if (gKeyPressed[kUKey])
 		gCameraPos = gCameraPos + Vec3(0, 0, 30);
 	else if (gKeyPressed[kDKey])
@@ -161,29 +161,29 @@ void processKeyboardEvents()
 void parseCoordinateString(const char *string, float outCoord[3])
 {
 	const char *c = string;
-	
+
 	for (int coordIndex = 0; coordIndex < 3 && *c; coordIndex++)
 	{
 		while (*c && !isdigit(*c) && *c != '-')
 			c++;
-		
+
 		bool isNegative = false;
 		if (*c == '-')
 		{
 			isNegative = true;
 			c++;
 		}
-		
+
 		int value = 0;
 		while (*c && isdigit(*c))
 		{
 			value = value * 10 + *c - '0';
 			c++;
 		}
-		
+
 		if (isNegative)
 			value = -value;
-		
+
 		outCoord[coordIndex] = value;
 	}
 }
@@ -195,7 +195,7 @@ int main()
 {
 	if (get_current_thread_id() != 0)
 		workerThread();
-	
+
 	// Set up render context
 	RenderContext *context = new RenderContext(0x1000000);
 	RenderTarget *renderTarget = new RenderTarget();
@@ -212,7 +212,7 @@ int main()
 	pak.open("pak0.pak");
 	pak.readBspFile("maps/e1m1.bsp");
 	Texture *atlasTexture = pak.getTextureAtlasTexture();
-	setBspData(pak.getBspTree(), pak.getPvsList(), pak.getBspTree() + pak.getNumInteriorNodes(), 
+	setBspData(pak.getBspTree(), pak.getPvsList(), pak.getBspTree() + pak.getNumInteriorNodes(),
 		pak.getNumLeaves(), atlasTexture, pak.getLightmapAtlasTexture());
 	Entity *ent = pak.findEntityByClassName("info_player_start");
 	if (!ent)
@@ -232,10 +232,10 @@ int main()
 
 	// Start worker threads
 	startAllThreads();
-	
+
 	TextureUniforms uniforms;
 	Matrix projectionMatrix = Matrix::getProjectionMatrix(FB_WIDTH, FB_HEIGHT);
-	
+
 	for (int frame = 0; ; frame++)
 	{
 		processKeyboardEvents();

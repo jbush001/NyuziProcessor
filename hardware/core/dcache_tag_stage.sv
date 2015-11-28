@@ -299,7 +299,7 @@ module dcache_tag_stage
 		end
 	end
 	
-	assign dt_request_paddr = { ppage_idx, fetched_addr[31 - `PAGE_NUM_BITS:0] };
+	assign dt_request_paddr = {ppage_idx, fetched_addr[31 - `PAGE_NUM_BITS:0]};
 	assign dt_request_vaddr = fetched_addr;
 endmodule
 

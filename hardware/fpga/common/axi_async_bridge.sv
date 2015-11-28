@@ -46,11 +46,11 @@ module axi_async_bridge
 		.reset(reset),
 		.write_clock(clk_s),
 		.write_enable(!write_address_full && axi_bus_s.m_awvalid),
-		.write_data({ axi_bus_s.m_awaddr, axi_bus_s.m_awlen }),
+		.write_data({axi_bus_s.m_awaddr, axi_bus_s.m_awlen}),
 		.full(write_address_full),
 		.read_clock(clk_m),
 		.read_enable(!write_address_empty && axi_bus_m.s_awready),
-		.read_data({ axi_bus_m.m_awaddr, axi_bus_m.m_awlen }),
+		.read_data({axi_bus_m.m_awaddr, axi_bus_m.m_awlen}),
 		.empty(write_address_empty));
 
 	assign axi_bus_s.s_awready = !write_address_full;
@@ -66,11 +66,11 @@ module axi_async_bridge
 		.reset(reset),
 		.write_clock(clk_s),
 		.write_enable(!write_data_full && axi_bus_s.m_wvalid),
-		.write_data({ axi_bus_s.m_wdata, axi_bus_s.m_wlast }),
+		.write_data({axi_bus_s.m_wdata, axi_bus_s.m_wlast}),
 		.full(write_data_full),
 		.read_clock(clk_m),
 		.read_enable(!write_data_empty && axi_bus_m.s_wready),
-		.read_data({ axi_bus_m.m_wdata, axi_bus_m.m_wlast }),
+		.read_data({axi_bus_m.m_wdata, axi_bus_m.m_wlast}),
 		.empty(write_data_empty));
 	
 	assign axi_bus_s.s_wready = !write_data_full;
@@ -106,11 +106,11 @@ module axi_async_bridge
 		.reset(reset),
 		.write_clock(clk_s),
 		.write_enable(!read_address_full && axi_bus_s.m_arvalid),
-		.write_data({ axi_bus_s.m_araddr, axi_bus_s.m_arlen }),
+		.write_data({axi_bus_s.m_araddr, axi_bus_s.m_arlen}),
 		.full(read_address_full),
 		.read_clock(clk_m),
 		.read_enable(!read_address_empty && axi_bus_m.s_arready),
-		.read_data({ axi_bus_m.m_araddr, axi_bus_m.m_arlen }),
+		.read_data({axi_bus_m.m_araddr, axi_bus_m.m_arlen}),
 		.empty(read_address_empty));
 
 	assign axi_bus_s.s_arready = !read_address_full;

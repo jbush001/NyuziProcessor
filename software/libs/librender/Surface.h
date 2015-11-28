@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 
 #pragma once
@@ -63,14 +63,14 @@ public:
 		veci16_t ptrs = f4x4AtOrigin + splati(left * 4 + top * fStride);
 		__builtin_nyuzi_scatter_storei_masked(ptrs, values, mask);
 	}
-	
+
 	// Read values from a 4x4 block, in same order as writeBlockMasked
 	veci16_t readBlock(int left, int top) const
 	{
 		veci16_t ptrs = f4x4AtOrigin + splati(left * 4 + top * fStride);
 		return __builtin_nyuzi_gather_loadi(ptrs);
 	}
-	
+
 	// Set all 32-bit values in a tile to a predefined value.
 	void clearTile(int left, int top, unsigned int value)
 	{
@@ -95,24 +95,24 @@ public:
 
 	// Push a tile from the L2 cache back to system memory
 	void flushTile(int left, int top);
-	
+
 	veci16_t readPixels(veci16_t tx, veci16_t ty, unsigned short mask) const
 	{
-		veci16_t pointers = (ty * splati(fStride) + tx * splati(kBytesPerPixel)) 
+		veci16_t pointers = (ty * splati(fStride) + tx * splati(kBytesPerPixel))
 			+ splati(fBaseAddress);
 		return __builtin_nyuzi_gather_loadi_masked(pointers, mask);
 	}
 
-	inline int getWidth() const 
+	inline int getWidth() const
 	{
 		return fWidth;
 	}
-	
+
 	inline int getHeight() const
 	{
 		return fHeight;
 	}
-	
+
 	inline int getStride() const
 	{
 		return fStride;
@@ -123,17 +123,17 @@ public:
 		return reinterpret_cast<void*>(fBaseAddress);
 	}
 
-	void *operator new(size_t size) 
+	void *operator new(size_t size)
 	{
 		// Because this structure has vector members, it must be vector width aligned
 		return memalign(sizeof(vecu16_t), size);
 	}
-	
+
 	vecf16_t getXStep() const
 	{
 		return fXStep;
 	}
-	
+
 	vecf16_t getYStep() const
 	{
 		return fYStep;
@@ -142,10 +142,10 @@ public:
 private:
 	void initializeOffsetVectors();
 	void clearTileSlow(int left, int top, unsigned int value);
-	
+
 	vecu16_t f4x4AtOrigin;
 
-	// For each pixel in a 4x4 grid, these represent the distance in 
+	// For each pixel in a 4x4 grid, these represent the distance in
 	// screen coordinates (-1.0 to 1.0) from the upper left pixel.
 	vecf16_t fXStep;
 	vecf16_t fYStep;

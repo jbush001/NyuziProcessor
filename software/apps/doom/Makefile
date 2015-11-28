@@ -107,6 +107,6 @@ fsimage.bin: DOOM1.WAD
 DOOM1.WAD:
 	@echo "Need to provide DOOM1.WAD. See README"
 	exit 1
-	
+
 -include $(DEPS)
 

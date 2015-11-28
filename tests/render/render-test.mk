@@ -1,20 +1,20 @@
-# 
+#
 # Copyright (C) 2011-2014 Jeff Bush
-# 
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-# 
+#
 
 # This file is included in the sub makefiles
 
@@ -28,8 +28,8 @@ DEPS := $(SRCS_TO_DEPS)
 
 $(OBJ_DIR)/program.hex: $(OBJ_DIR)/program.elf
 	$(ELF2HEX) -o $@ $<
-	
-$(OBJ_DIR)/program.elf: $(DEPS) $(OBJS) 
+
+$(OBJ_DIR)/program.elf: $(DEPS) $(OBJS)
 	$(LD) -o $@ $(OBJS) $(LDFLAGS) $(LIBS)
 
 program.lst: $(OBJ_DIR)/program.elf
@@ -63,7 +63,7 @@ fpgarun: $(OBJ_DIR)/program.hex
 # Run in emulator under debugger
 debug: $(OBJ_DIR)/program.hex
 	$(EMULATOR) -m gdb $(OBJ_DIR)/program.hex &
-	$(COMPILER_DIR)/lldb --arch nyuzi $(OBJ_DIR)/program.elf -o "gdb-remote 8000" 
+	$(COMPILER_DIR)/lldb --arch nyuzi $(OBJ_DIR)/program.elf -o "gdb-remote 8000"
 
 # Generate a profile
 profile: $(OBJ_DIR)/program.hex FORCE

@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -26,7 +26,7 @@ static void printCosimExpected(void);
 static int cosimStep(Core*, uint32_t threadId);
 static int compareMasked(uint32_t mask, const uint32_t *values1, const uint32_t *values2);
 
-static enum 
+static enum
 {
 	EVENT_NONE,
 	EVENT_MEM_STORE,
@@ -88,7 +88,7 @@ int runCosimulation(Core *core, bool verbose)
 			memcpy(gExpectedValues, vectorValues, sizeof(uint32_t) * NUM_VECTOR_LANES);
 			if (!cosimStep(core, threadId))
 				return -1;
-		} 
+		}
 		else if (sscanf(line, "vwriteback %x %x %x %" PRIx64 " %s", &pc, &threadId, &reg, &writeMask, valueStr) == 5)
 		{
 			// Vector writeback
@@ -165,14 +165,14 @@ void cosimSetScalarReg(Core *core, uint32_t pc, uint32_t reg, uint32_t value)
 		printf("Hardware:  ");
 		printCosimExpected();
 		return;
-	}	
+	}
 }
 
-void cosimSetVectorReg(Core *core, uint32_t pc, uint32_t reg, uint32_t mask, 
+void cosimSetVectorReg(Core *core, uint32_t pc, uint32_t reg, uint32_t mask,
 	const uint32_t *values)
 {
 	int lane;
-	
+
 	gEventTriggered = true;
 	if (gExpectedEvent != EVENT_VECTOR_WRITEBACK
 		|| gExpectedPc != pc
@@ -194,12 +194,12 @@ void cosimSetVectorReg(Core *core, uint32_t pc, uint32_t reg, uint32_t mask,
 	}
 }
 
-void cosimWriteBlock(Core *core, uint32_t pc, uint32_t address, uint32_t mask, 
+void cosimWriteBlock(Core *core, uint32_t pc, uint32_t address, uint32_t mask,
 	const uint32_t *values)
 {
 	uint64_t byteMask;
 	int lane;
-	
+
 	byteMask = 0;
 	for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 	{
@@ -211,7 +211,7 @@ void cosimWriteBlock(Core *core, uint32_t pc, uint32_t address, uint32_t mask,
 	if (gExpectedEvent != EVENT_MEM_STORE
 		|| gExpectedPc != pc
 		|| gExpectedAddress != (address & ~(NUM_VECTOR_LANES * 4u - 1))
-		|| gExpectedMask != byteMask 
+		|| gExpectedMask != byteMask
 		|| !compareMasked(mask, gExpectedValues, values))
 	{
 		gError = true;
@@ -227,12 +227,12 @@ void cosimWriteBlock(Core *core, uint32_t pc, uint32_t address, uint32_t mask,
 	}
 }
 
-void cosimWriteMemory(Core *core, uint32_t pc, uint32_t address, uint32_t size, 
+void cosimWriteMemory(Core *core, uint32_t pc, uint32_t address, uint32_t size,
 	uint32_t value)
 {
 	uint32_t hardwareValue;
 	uint64_t referenceMask;
-	
+
 	hardwareValue = gExpectedValues[(address & CACHE_LINE_MASK) / 4];
 	if (size < 4)
 	{
@@ -240,7 +240,7 @@ void cosimWriteMemory(Core *core, uint32_t pc, uint32_t address, uint32_t size,
 		hardwareValue &= mask;
 		value &= mask;
 	}
-	
+
 	referenceMask = ((1ull << size) - 1ull) << (CACHE_LINE_MASK - (address & CACHE_LINE_MASK) - (size - 1));
 	gEventTriggered = true;
 	if (gExpectedEvent != EVENT_MEM_STORE
@@ -252,7 +252,7 @@ void cosimWriteMemory(Core *core, uint32_t pc, uint32_t address, uint32_t size,
 		gError = true;
 		printRegisters(core, gExpectedThread);
 		printf("COSIM MISMATCH, thread %d\n", gExpectedThread);
-		printf("Reference: %08x memory[%x]{%016" PRIx64 "} <= %08x\n", pc, address & ~CACHE_LINE_MASK, 
+		printf("Reference: %08x memory[%x]{%016" PRIx64 "} <= %08x\n", pc, address & ~CACHE_LINE_MASK,
 			referenceMask, value);
 		printf("Hardware:  ");
 		printCosimExpected();
@@ -265,30 +265,30 @@ static void printCosimExpected(void)
 	int lane;
 
 	printf("%08x ", gExpectedPc);
-	
+
 	switch (gExpectedEvent)
 	{
 		case EVENT_NONE:
 			printf(" HALTED\n");
 			break;
-		
+
 		case EVENT_MEM_STORE:
 			printf("memory[%x]{%016" PRIx64 "} <= ", gExpectedAddress, gExpectedMask);
 			for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
 				printf("%08x ", gExpectedValues[lane]);
-				
+
 			printf("\n");
 			break;
 
 		case EVENT_VECTOR_WRITEBACK:
-			printf("v%d{%04x} <= ", gExpectedRegister, (uint32_t) 
+			printf("v%d{%04x} <= ", gExpectedRegister, (uint32_t)
 				gExpectedMask & 0xffff);
 			for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
 				printf("%08x ", gExpectedValues[lane]);
 
 			printf("\n");
 			break;
-			
+
 		case EVENT_SCALAR_WRITEBACK:
 			printf("s%d <= %08x\n", gExpectedRegister, gExpectedValues[0]);
 			break;
@@ -310,15 +310,15 @@ static int cosimStep(Core *core, uint32_t threadId)
 		printf("Simulator program in infinite loop? No event occurred.  Was expecting:\n");
 		printCosimExpected();
 	}
-	
+
 	return gEventTriggered && !gError;
-}		
+}
 
 // Returns 1 if the masked values match, 0 otherwise
 static int compareMasked(uint32_t mask, const uint32_t *values1, const uint32_t *values2)
 {
 	int lane;
-	
+
 	for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 	{
 		if (mask & (1 << lane))

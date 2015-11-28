@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 
 #pragma once
@@ -53,12 +53,12 @@ public:
 
 	// XXX Unlike other state changes, this will be invalidated when finish() is called.
 	void bindUniforms(const void *uniforms, size_t size);
-	
+
 	void enableDepthBuffer(bool enabled)
 	{
 		fCurrentState.fEnableDepthBuffer = enabled;
 	}
-	
+
 	void enableBlend(bool enabled)
 	{
 		fCurrentState.fEnableBlend = enabled;
@@ -67,7 +67,7 @@ public:
 	// Draw primitives using currently bound state.  Indices reference into bound
 	// vertex attribute buffer.
 	void drawElements(const RenderBuffer *indices);
-	
+
 	// Execute all submitted drawing commands. No rendering occurs until this is called.
 	void finish();
 
@@ -80,9 +80,9 @@ public:
 	{
 		fCurrentState.cullingMode = mode;
 	}
-		
+
 private:
-	struct Triangle 
+	struct Triangle
 	{
 		int sequenceNumber;
 		const RenderState *state;
@@ -108,12 +108,12 @@ private:
 		const float *params2);
 	void clipTwo(int sequence, const RenderState &command, const float *params0, const float *params1,
 		const float *params2);
-	void enqueueTriangle(int sequence, const RenderState &command, const float *params0, 
+	void enqueueTriangle(int sequence, const RenderState &command, const float *params0,
 		const float *params1, const float *params2);
-	
+
 	typedef CommandQueue<Triangle, 64> TriangleArray;
 	typedef CommandQueue<RenderState, 32> DrawQueue;
-		
+
 	bool fClearColorBuffer;
 	RenderTarget *fRenderTarget = nullptr;
 	TriangleArray *fTiles = nullptr;

@@ -52,7 +52,7 @@ def compile_test(source_file, optlevel='3'):
 
 	Returns:
 		Name of hex file created
-	
+
 	Raises:
 		TestException if compilation failed, will contain compiler output
 	"""
@@ -60,13 +60,13 @@ def compile_test(source_file, optlevel='3'):
 	if not os.path.exists(OBJ_DIR):
 		os.makedirs(OBJ_DIR)
 
-	compiler_args = [COMPILER_DIR + 'clang', 
-		'-o', ELF_FILE, 
+	compiler_args = [COMPILER_DIR + 'clang',
+		'-o', ELF_FILE,
 		'-w',
 		'-O' + optlevel,
 		'-I' + LIB_DIR + 'libc/include',
 		'-I' + LIB_DIR + 'libos']
-	
+
 	if isinstance(source_file, list):
 		compiler_args += source_file		# List of files
 	else:
@@ -82,12 +82,12 @@ def compile_test(source_file, optlevel='3'):
 			stderr=subprocess.STDOUT)
 	except subprocess.CalledProcessError as exc:
 		raise TestException('Compilation failed:\n' + exc.output)
-	
+
 	return HEX_FILE
-	
+
 def assemble_test(source_file):
-	"""Assemble a file and write the executable as test.hex. 
-	
+	"""Assemble a file and write the executable as test.hex.
+
 	The file is expected to be standalone; other libraries will not be linked.
 	It converts the binary to a hex file that can be loaded into memory.
 
@@ -100,7 +100,7 @@ def assemble_test(source_file):
 	Raises:
 		TestException if assembly failed, will contain assembler output
 	"""
-	
+
 	if not os.path.exists(OBJ_DIR):
 		os.makedirs(OBJ_DIR)
 
@@ -111,12 +111,12 @@ def assemble_test(source_file):
 		raise TestException('Assembly failed:\n' + exc.output)
 
 	return HEX_FILE
-	
+
 def run_emulator(block_device=None, dump_file=None, dump_base=None, dump_length=None):
 	"""Run test program in emulator.
 
 	This uses the hex file produced by assemble_test or compile_test.
-	
+
 	Args:
 		block_device: Relative path to a file that contains a filesystem image.
 		   If passed, contents will appear as a virtual SDMMC device.
@@ -133,7 +133,7 @@ def run_emulator(block_device=None, dump_file=None, dump_base=None, dump_length=
 		TestException if emulated program crashes or the emulator cannot
 		  execute for some other reason.
 	"""
-	
+
 	args = [BIN_DIR + 'emulator']
 	if block_device:
 		args += ['-b', block_device]
@@ -147,10 +147,10 @@ def run_emulator(block_device=None, dump_file=None, dump_base=None, dump_length=
 		output = str(subprocess.check_output(args))
 	except subprocess.CalledProcessError as exc:
 		raise TestException('Emulator returned error: ' + exc.output)
-	
+
 	return output
 
-def run_verilator(block_device=None, dump_file=None, dump_base=None, 
+def run_verilator(block_device=None, dump_file=None, dump_base=None,
 	dump_length=None, extra_args=None):
 	"""Run test program in Verilog simulator
 
@@ -176,9 +176,9 @@ def run_verilator(block_device=None, dump_file=None, dump_base=None,
 	args = [BIN_DIR + 'verilator_model']
 	if block_device:
 		args += ['+block=' + block_device]
-		
+
 	if dump_file:
-		args += ['+memdumpfile=' + dump_file, '+memdumpbase=' + hex(dump_base)[2:], 
+		args += ['+memdumpfile=' + dump_file, '+memdumpbase=' + hex(dump_base)[2:],
 			'+memdumplen=' + hex(dump_length)[2:]]
 
 	if extra_args:
@@ -192,7 +192,7 @@ def run_verilator(block_device=None, dump_file=None, dump_base=None,
 
 	if output.find('***HALTED***') == -1:
 		raise TestException(output + '\nProgram did not halt normally')
-	
+
 	return output
 
 
@@ -206,7 +206,7 @@ def assert_files_equal(file1, file2, error_msg=''):
 
 	Returns:
 		Nothing
-	
+
 	Raises:
 		TestException if the files don't match. Exception test contains
 		details about where the mismatch occurred.
@@ -256,8 +256,8 @@ registered_tests = []
 
 
 def register_tests(func, names):
-	"""Add a list of tests to be run when execute_tests is called. 
-	
+	"""Add a list of tests to be run when execute_tests is called.
+
 	This function can be called multiple times, it will append passed
 	tests to the existing list.
 
@@ -272,7 +272,7 @@ def register_tests(func, names):
 	Raises:
 		Nothing
 	 """
-	
+
 	global registered_tests
 	registered_tests += [(func, name) for name in names]
 
@@ -307,7 +307,7 @@ def execute_tests():
 	Raises:
 		Nothing
 	"""
-	
+
 	global registered_tests
 
 	if len(sys.argv) > 1:
@@ -321,7 +321,7 @@ def execute_tests():
 			else:
 				print('Unknown test ' + requested)
 				sys.exit(1)
-				
+
 		registered_tests = new_test_list
 
 	ALIGN = 40
@@ -352,9 +352,9 @@ def execute_tests():
 
 def check_result(source_file, program_output):
 	"""Check output of a program based on embedded comments in source code.
-	
+
 	For each pattern in a source file that begins with 'CHECK:', search
-	to see if the regular expression that follows it occurs in program_output. 
+	to see if the regular expression that follows it occurs in program_output.
 	The strings must occur in order, but this ignores anything between them.
 
 	Args:
@@ -366,7 +366,7 @@ def check_result(source_file, program_output):
 	Raises:
 		TestException if a string is not found.
 	"""
-	
+
 	PREFIX = 'CHECK: '
 
 	output_offset = 0
@@ -391,5 +391,5 @@ def check_result(source_file, program_output):
 
 	if not foundCheckLines:
 		raise TestException('FAIL: no lines with CHECK: were found')
-		
+
 	return True

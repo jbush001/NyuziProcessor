@@ -119,7 +119,7 @@ module ps2_controller
 						if (bit_count == 7)
 							state_ff <= STATE_READ_PARITY;
 							
-						receive_byte <= { ps2_data_sync, receive_byte[7:1] };
+						receive_byte <= {ps2_data_sync, receive_byte[7:1]};
 					end
 
 					STATE_READ_PARITY:

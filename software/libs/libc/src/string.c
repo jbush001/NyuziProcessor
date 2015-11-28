@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 #include <ctype.h>
 #include <stddef.h>
@@ -29,7 +29,7 @@ void* memset(void *_dest, int value, size_t length)
 	if ((((unsigned int) dest) & 63) == 0)
 	{
 		// Write 64 bytes at a time.
-		veci16_t reallyWideValue = __builtin_nyuzi_makevectori(value | (value << 8) | (value << 16) 
+		veci16_t reallyWideValue = __builtin_nyuzi_makevectori(value | (value << 8) | (value << 16)
 			| (value << 24));
 		while (length > 64)
 		{
@@ -48,7 +48,7 @@ void* memset(void *_dest, int value, size_t length)
 			*((unsigned int*) dest) = wideVal;
 			dest += 4;
 			length -= 4;
-		}		
+		}
 	}
 
 	// Write one byte at a time
@@ -57,7 +57,7 @@ void* memset(void *_dest, int value, size_t length)
 		*dest++ = value;
 		length--;
 	}
-	
+
 	return _dest;
 }
 
@@ -76,7 +76,7 @@ int strncmp(const char *str1, const char *str2, size_t length)
 {
 	if (length-- == 0)
 		return 0;
-	
+
 	while (*str1 && length && *str1 == *str2)
 	{
 		str1++;
@@ -91,7 +91,7 @@ int memcmp(const void *_str1, const void *_str2, size_t len)
 {
 	const char *str1 = _str1;
 	const char *str2 = _str2;
-	
+
 	while (len--)
 	{
 		int diff = *str1++ - *str2++;
@@ -117,7 +117,7 @@ int strncasecmp(const char *str1, const char *str2, size_t length)
 {
 	if (length-- == 0)
 		return 0;
-	
+
 	while (*str1 && length && toupper(*str1) == toupper(*str2))
 	{
 		str1++;
@@ -169,13 +169,13 @@ char *strchr(const char *string, int c)
 void *memchr(const void *_s, int c, size_t n)
 {
 	const char *s = (const char*) _s;
-	
+
 	for (unsigned int i = 0; i < n; i++)
 	{
 		if (s[i] == c)
 			return (void*) &s[i];
 	}
-	
+
 	return 0;
 }
 
@@ -185,10 +185,10 @@ char *strcat(char *c, const char *s)
 	char *ret = c;
 	while (*c)
 		c++;
-	
+
 	while (*s)
 		*c++ = *s++;
-	
+
 	*c = '\0';
 	return ret;
 }
@@ -197,7 +197,7 @@ int isdigit(int c)
 {
 	if (c >= '0' && c <= '9')
 		return 1;
-	
+
 	return 0;
 }
 
@@ -205,7 +205,7 @@ int toupper(int val)
 {
 	if (val >= 'a' && val <= 'z')
 		return val - ('a' - 'A');
-	
+
 	return val;
 }
 

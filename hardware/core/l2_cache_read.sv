@@ -133,7 +133,7 @@ module l2_cache_read(
 
 	// If this is a fill, read the old (potentially dirty line) so it can be written back.
 	// If it is a cache hit, read the line data.
-	assign read_address = { (l2t_is_l2_fill ? l2t_fill_way : hit_way_idx), l2_addr.set_idx };
+	assign read_address = {(l2t_is_l2_fill ? l2t_fill_way : hit_way_idx), l2_addr.set_idx};
 
 	//
 	// Cache memory
@@ -200,7 +200,7 @@ module l2_cache_read(
 	//
 	// Synchronized requests
 	//
-	assign request_sync_slot = $size(request_sync_slot)'({ l2t_request.core, l2t_request.id});
+	assign request_sync_slot = $size(request_sync_slot)'({l2t_request.core, l2t_request.id});
 	assign can_store_sync = sync_load_address[request_sync_slot] 
 		== {l2_addr.tag, l2_addr.set_idx} 
 		&& sync_load_address_valid[request_sync_slot]

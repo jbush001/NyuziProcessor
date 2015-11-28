@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 
 #pragma once
@@ -41,7 +41,7 @@ public:
 		fValues[2][2] = 1.0f;
 		fValues[3][3] = 1.0f;
 	}
-	
+
 	Matrix(const float values[4][4])
 	{
 		for (int row = 0; row < 4; row++)
@@ -50,22 +50,22 @@ public:
 				fValues[row][col] = values[row][col];
 		}
 	}
-	
+
 	Matrix(const Matrix &rhs)
 	{
 		memcpy((void*) fValues, rhs.fValues, sizeof(float) * 16);
 	}
-	
+
 	Matrix &operator=(const Matrix &rhs)
 	{
 		memcpy((void*) fValues, rhs.fValues, sizeof(float) * 16);
 		return *this;
 	}
-	
+
 	Matrix operator*(const Matrix &rhs) const
 	{
 		Matrix newMat;
-	
+
 		for (int col = 0; col < 4; col++)
 		{
 			for (int row = 0; row < 4; row++)
@@ -73,11 +73,11 @@ public:
 				float sum = 0.0f;
 				for (int i = 0; i < 4; i++)
 					sum += fValues[row][i] * rhs.fValues[i][col];
-				
+
 				newMat.fValues[row][col] = sum;
 			}
 		}
-		
+
 		return newMat;
 	}
 
@@ -87,19 +87,19 @@ public:
 		return *this;
 	}
 
-	// Multiply 16 Vec3s by this matrix.	
+	// Multiply 16 Vec3s by this matrix.
 	void mulVec(vecf16_t *outVec, const vecf16_t *inVec) const
 	{
 		for (int row = 0; row < 4; row++)
 		{
 			vecf16_t sum = splatf(0.0f);
 			for (int col = 0; col < 4; col++)
-				sum += splatf(fValues[row][col]) * inVec[col];			
-			
+				sum += splatf(fValues[row][col]) * inVec[col];
+
 			outVec[row] = sum;
 		}
 	}
-	
+
 	Matrix upper3x3() const
 	{
 		Matrix newMat = *this;
@@ -109,10 +109,10 @@ public:
 		newMat.fValues[3][0] = 0.0f;
 		newMat.fValues[3][1] = 0.0f;
 		newMat.fValues[3][2] = 0.0f;
-	
+
 		return newMat;
 	}
-	
+
 	Matrix inverse() const
 	{
 		float newVals[4][4];
@@ -132,7 +132,7 @@ public:
 		float c0 = fValues[2][0] * fValues[3][1] - fValues[3][0] * fValues[2][1];
 
 		float invdet = 1.0f / (s0 * c5 - s1 * c4 + s2 * c3 + s3 * c2 - s4 * c1 + s5 * c0);
-		
+
 		newVals[0][0] = (fValues[1][1] * c5 - fValues[1][2] * c4 + fValues[1][3] * c3) * invdet;
 		newVals[0][1] = (-fValues[0][1] * c5 + fValues[0][2] * c4 - fValues[0][3] * c3) * invdet;
 		newVals[0][2] = (fValues[3][1] * s5 - fValues[3][2] * s4 + fValues[3][3] * s3) * invdet;
@@ -155,7 +155,7 @@ public:
 
 		return Matrix(newVals);
 	}
-	
+
 	Matrix transpose() const
 	{
 		float newVals[4][4];
@@ -164,7 +164,7 @@ public:
 			for (int col = 0; col < 4; col++)
 				newVals[row][col] = fValues[col][row];
 		}
-		
+
 		return Matrix(newVals);
 	}
 
@@ -174,11 +174,11 @@ public:
 		{
 			for (int col = 0; col < 4; col++)
 				printf("%g ", fValues[row][col]);
-			
+
 			printf("\n");
 		}
 	}
-	
+
 	// Rotate about an axis (which is expected to be unit length)
 	static Matrix getRotationMatrix(float angle, const Vec3 &around)
 	{
@@ -193,17 +193,17 @@ public:
 			{ (t * a[0] * a[1] - s * a[1]), (t * a[1] * a[2] + s * a[0]), (t * a[2] * a[2] + c), 0.0f },
 			{ 0.0f, 0.0f, 0.0f, 1.0f }
 		};
-	
+
 		return Matrix(kMat1);
 	}
-	
+
 	static Matrix getTranslationMatrix(const Vec3 &trans)
 	{
 		const float kValues[4][4] = {
-			{ 1.0f, 0.0f, 0.0f, trans[0] }, 
-			{ 0.0f, 1.0f, 0.0f, trans[1] }, 
-			{ 0.0f, 0.0f, 1.0f, trans[2] }, 
-			{ 0.0f, 0.0f, 0.0f, 1.0f }, 
+			{ 1.0f, 0.0f, 0.0f, trans[0] },
+			{ 0.0f, 1.0f, 0.0f, trans[1] },
+			{ 0.0f, 0.0f, 1.0f, trans[2] },
+			{ 0.0f, 0.0f, 0.0f, 1.0f },
 		};
 
 		return Matrix(kValues);
@@ -218,22 +218,22 @@ public:
 			{ 0.0, 0.0, 1.0, 0 },
 			{ 0.0, 0.0, -1.0, 0.0 },
 		};
-		
+
 		return Matrix(kProjCoeff);
 	}
-	
+
 	static Matrix getScaleMatrix(float scale)
 	{
 		const float kValues[4][4] = {
-			{ scale, 0.0f, 0.0f, 0.0f }, 
-			{ 0.0f, scale, 0.0f, 0.0f }, 
-			{ 0.0f, 0.0f, scale, 0.0f }, 
-			{ 0.0f, 0.0f, 0.0f, 1.0f }, 
+			{ scale, 0.0f, 0.0f, 0.0f },
+			{ 0.0f, scale, 0.0f, 0.0f },
+			{ 0.0f, 0.0f, scale, 0.0f },
+			{ 0.0f, 0.0f, 0.0f, 1.0f },
 		};
 
 		return Matrix(kValues);
 	}
-	
+
 	static Matrix lookAt(const Vec3 &location, const Vec3 &lookAt, const Vec3 &up)
 	{
 		Vec3 z = (lookAt - location).normalized();
@@ -247,7 +247,7 @@ public:
 			{ 0, 0, 0, 1 }
 		};
 
-		return Matrix(cameraValues) * getTranslationMatrix(-location);		
+		return Matrix(cameraValues) * getTranslationMatrix(-location);
 	}
 
 private:

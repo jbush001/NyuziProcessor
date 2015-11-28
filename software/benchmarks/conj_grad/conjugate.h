@@ -1,11 +1,11 @@
 /* Copyright 2015 Pipat Methavanitpong
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * 	Unless required by applicable law or agreed to in writing, software
  * 	distributed under the License is distributed on an "AS IS" BASIS,
  * 	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ float total(const vecf16 &v1);
 float dot(const vecf16 &v1, const vecf16 &v2);
 float mag2(const vecf16 &v1);
 vecf16 mul(const matrix &m1, const vecf16 &v2);
-matrix_t mul(const matrix &m1, const matrix &m2); 
+matrix_t mul(const matrix &m1, const matrix &m2);
 matrix_t transpose(const matrix &m1);
 /***  utility  ***/
 matrix_t genSpace();

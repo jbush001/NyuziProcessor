@@ -73,10 +73,10 @@ module operand_fetch_stage(
 		.READ_DURING_WRITE("DONT_CARE")
 	) scalar_registers(
 		.read1_en(ts_instruction_valid && ts_instruction.has_scalar1),
-		.read1_addr({ ts_thread_idx, ts_instruction.scalar_sel1 }),
+		.read1_addr({ts_thread_idx, ts_instruction.scalar_sel1}),
 		.read1_data(scalar_val1),
 		.read2_en(ts_instruction_valid && ts_instruction.has_scalar2),
-		.read2_addr({ ts_thread_idx, ts_instruction.scalar_sel2 }),
+		.read2_addr({ts_thread_idx, ts_instruction.scalar_sel2}),
 		.read2_data(scalar_val2),
 		.write_en(wb_writeback_en && !wb_writeback_is_vector),
 		.write_addr({wb_writeback_thread_idx, wb_writeback_reg}),
@@ -93,10 +93,10 @@ module operand_fetch_stage(
 				.READ_DURING_WRITE("DONT_CARE")
 			) vector_registers (
 				.read1_en(ts_instruction.has_vector1),
-				.read1_addr({ ts_thread_idx, ts_instruction.vector_sel1 }),
+				.read1_addr({ts_thread_idx, ts_instruction.vector_sel1}),
 				.read1_data(vector_val1[lane]),
 				.read2_en(ts_instruction.has_vector2),
-				.read2_addr({ ts_thread_idx, ts_instruction.vector_sel2 }),
+				.read2_addr({ts_thread_idx, ts_instruction.vector_sel2}),
 				.read2_data(vector_val2[lane]),
 				.write_en(wb_writeback_en && wb_writeback_is_vector && wb_writeback_mask[lane]),
 				.write_addr({wb_writeback_thread_idx, wb_writeback_reg}),
@@ -168,7 +168,7 @@ module operand_fetch_stage(
 
 		of_store_value <= cyc1_instruction.store_value_is_vector 
 			? vector_val2
-			: { {`VECTOR_LANES - 1{32'd0}}, scalar_val2 };
+			: {{`VECTOR_LANES - 1{32'd0}}, scalar_val2};
 	end
 endmodule
 

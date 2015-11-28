@@ -1,23 +1,23 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 //
-// The basic approach is based on this article: 
+// The basic approach is based on this article:
 // http://www.drdobbs.com/parallel/rasterization-on-larrabee/217200602
-// And is also described in "Hierarchical polygon tiling with coverage 
+// And is also described in "Hierarchical polygon tiling with coverage
 // masks" Proceedings of ACM SIGGRAPH 93, Ned Greene.
 //
 
@@ -26,15 +26,15 @@
 
 using namespace librender;
 
-namespace 
+namespace
 {
 
 const int kMaxSweep = 0;
 const veci16_t kXStep = { 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3 };
 const veci16_t kYStep = { 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3 };
 
-void setupRecurseEdge(int tileLeft, int tileTop, int x1, int y1, 
-	int x2, int y2, int &outAcceptEdgeValue, int &outRejectEdgeValue, 
+void setupRecurseEdge(int tileLeft, int tileTop, int x1, int y1,
+	int x2, int y2, int &outAcceptEdgeValue, int &outRejectEdgeValue,
 	veci16_t &outAcceptStepMatrix, veci16_t &outRejectStepMatrix)
 {
 	veci16_t xAcceptStepValues = kXStep * splati(kTileSize / 4);
@@ -80,7 +80,7 @@ void setupRecurseEdge(int tileLeft, int tileTop, int x1, int y1,
 		// This is a top or left edge.  We adjust the edge equation values by one
 		// so it doesn't overlap (top left fill convention).
 		outAcceptEdgeValue++;
-		outRejectEdgeValue++;	
+		outRejectEdgeValue++;
 	}
 
 	// Set up xStepValues
@@ -90,27 +90,27 @@ void setupRecurseEdge(int tileLeft, int tileTop, int x1, int y1,
 	// Set up yStepValues
 	yAcceptStepValues *= splati(yStep);
 	yRejectStepValues *= splati(yStep);
-	
+
 	// Add together
 	outAcceptStepMatrix = xAcceptStepValues - yAcceptStepValues;
 	outRejectStepMatrix = xRejectStepValues - yRejectStepValues;
 }
 
 // Workhorse of recursive rasterization.  Subdivides tile into 4x4 grids.
-void subdivideTile( 
+void subdivideTile(
 	TriangleFiller &filler,
-	const int acceptCornerValue1, 
-	const int acceptCornerValue2, 
+	const int acceptCornerValue1,
+	const int acceptCornerValue2,
 	const int acceptCornerValue3,
-	const int rejectCornerValue1, 
+	const int rejectCornerValue1,
 	const int rejectCornerValue2,
 	const int rejectCornerValue3,
-	const veci16_t acceptStep1, 
-	const veci16_t acceptStep2, 
-	const veci16_t acceptStep3, 
-	const veci16_t rejectStep1, 
-	const veci16_t rejectStep2, 
-	const veci16_t rejectStep3, 
+	const veci16_t acceptStep1,
+	const veci16_t acceptStep2,
+	const veci16_t acceptStep3,
+	const veci16_t rejectStep1,
+	const veci16_t rejectStep2,
+	const veci16_t rejectStep3,
 	const int tileSizeBits,	// log2 tile size (1 << tileSizeBits = pixels)
 	const int tileLeft,
 	const int tileTop,
@@ -140,7 +140,7 @@ void subdivideTile(
 	if (trivialAcceptMask != 0)
 	{
 		int currentMask = trivialAcceptMask;
-	
+
 		while (currentMask)
 		{
 			const int index = __builtin_clz(currentMask) - 16;
@@ -172,7 +172,7 @@ void subdivideTile(
 	if (recurseMask)
 	{
 		// Divide each step matrix by 4
-		const veci16_t subAcceptStep1 = acceptStep1 >> splati(2);	
+		const veci16_t subAcceptStep1 = acceptStep1 >> splati(2);
 		const veci16_t subAcceptStep2 = acceptStep2 >> splati(2);
 		const veci16_t subAcceptStep3 = acceptStep3 >> splati(2);
 		const veci16_t subRejectStep1 = rejectStep1 >> splati(2);
@@ -203,10 +203,10 @@ void subdivideTile(
 				subRejectStep2,
 				subRejectStep3,
 				subTileSizeBits,
-				x, 
+				x,
 				y,
 				clipRight,
-				clipBottom);			
+				clipBottom);
 		}
 	}
 }
@@ -230,11 +230,11 @@ void rasterizeRecursive(TriangleFiller &filler,
 
 	// This assumes counter-clockwise winding for triangles that are
 	// facing the camera.
-	setupRecurseEdge(tileLeft, tileTop, x1, y1, x3, y3, acceptValue1, rejectValue1, 
+	setupRecurseEdge(tileLeft, tileTop, x1, y1, x3, y3, acceptValue1, rejectValue1,
 		acceptStepMatrix1, rejectStepMatrix1);
-	setupRecurseEdge(tileLeft, tileTop, x3, y3, x2, y2, acceptValue2, rejectValue2, 
+	setupRecurseEdge(tileLeft, tileTop, x3, y3, x2, y2, acceptValue2, rejectValue2,
 		acceptStepMatrix2, rejectStepMatrix2);
-	setupRecurseEdge(tileLeft, tileTop, x2, y2, x1, y1, acceptValue3, rejectValue3, 
+	setupRecurseEdge(tileLeft, tileTop, x2, y2, x1, y1, acceptValue3, rejectValue3,
 		acceptStepMatrix3, rejectStepMatrix3);
 
 	subdivideTile(
@@ -252,7 +252,7 @@ void rasterizeRecursive(TriangleFiller &filler,
 		rejectStepMatrix2,
 		rejectStepMatrix3,
 		__builtin_ctz(kTileSize),
-		tileLeft, 
+		tileLeft,
 		tileTop,
 		clipRight,
 		clipBottom);
@@ -347,7 +347,7 @@ void rasterizeSweep(TriangleFiller &filler,
 }
 
 void librender::fillTriangle(TriangleFiller &filler,
-	int tileLeft, int tileTop, 
+	int tileLeft, int tileTop,
 	int x1, int y1, int x2, int y2, int x3, int y3,
 	int clipRight, int clipBottom)
 {
@@ -360,7 +360,7 @@ void librender::fillTriangle(TriangleFiller &filler,
 		rasterizeSweep(filler, bbLeft, bbTop, bbRight, bbBottom, x1, y1, x2, y2, x3, y3);
 	else
 	{
-		rasterizeRecursive(filler, tileLeft, tileTop, clipRight, clipBottom, 
+		rasterizeRecursive(filler, tileLeft, tileTop, clipRight, clipBottom,
 			x1, y1, x2, y2, x3, y3);
 	}
 }

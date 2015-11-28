@@ -1,11 +1,11 @@
 /* Copyright 2015 Pipat Methavanitpong
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * 	Unless required by applicable law or agreed to in writing, software
  * 	distributed under the License is distributed on an "AS IS" BASIS,
  * 	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,7 @@
 #ifdef __NYUZI__
 #include <stdio.h>
 #include <stdlib.h>
-#ifndef SEED			// defined in a compiler option 
+#ifndef SEED			// defined in a compiler option
 #define SEED	9999	// if not, set your random seed here
 #endif
 #else /* !__NYUZI__ */
@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
 	repr(x_ans);
 	printf("b = \n");
 	repr(b);
-	
+
 	vecf16 x[2], p[2], r[3], s;		// x = solution, p = direction, r = residue
 	float alpha, beta;				// vector scalers
 	x[0] = VEC_ZERO;				// Set initial guess to origin
@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
 		prev_r =  (cur_r - 1 < 0) ? (cur_r - 1) + 3 : cur_r - 1;
 		prev2_r = (cur_r - 2 < 0) ? (cur_r - 2) + 3 : cur_r - 2;
 		prev_x = prev_p = (cur_p - 1 < 0) ? (cur_p - 1) + 2 : cur_p - 1;
-		
+
 		if (iter == 1) { p[1] = r[0]; }
 #ifdef __NYUZI__
 		else
@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
 		r[cur_r] = r[prev_r] - (s * alpha);
 #endif /* __NYUZI__ */
 	}
-	
+
 	// show result
 	printf("iteration = %d\n", iter);
 	printf("x = \n");

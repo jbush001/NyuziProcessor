@@ -225,7 +225,7 @@ module sim_sdram
 		if (burst_active && cke_ff && burst_w)
 			memory[burst_address] <= dram_dq;	// Write
 		else if (req_write_burst)
-			memory[{ bank_active_row[dram_ba], dram_ba, dram_addr[COL_ADDR_WIDTH - 1:0] }] <= dram_dq;	// Latch first word
+			memory[{bank_active_row[dram_ba], dram_ba, dram_addr[COL_ADDR_WIDTH - 1:0]}] <= dram_dq;	// Latch first word
 
 		// XXX check if data is still high-z
 //		if ((burst_active && cke_ff && burst_w) || req_write_burst)
@@ -271,5 +271,5 @@ module sim_sdram
 	assign burst_address_offset = burst_interleaved
 		? 8'(burst_column_address) ^ 8'(burst_count_ff)
 		: 8'(burst_column_address) + 8'(burst_count_ff);
-	assign burst_address = { bank_active_row[burst_bank], burst_bank, burst_address_offset };
+	assign burst_address = {bank_active_row[burst_bank], burst_bank, burst_address_offset};
 endmodule

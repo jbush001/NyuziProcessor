@@ -131,7 +131,7 @@ module uart_receive
 			sample_count_ff <= sample_count_nxt;
 			bit_count_ff <= bit_count_nxt;
 			if (do_shift)
-				shift_register <= { rx_sync, shift_register[7:1] };
+				shift_register <= {rx_sync, shift_register[7:1]};
 		end
 	end
 endmodule

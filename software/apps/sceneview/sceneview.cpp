@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 #include <nyuzi.h>
 #include <RenderContext.h>
@@ -74,9 +74,9 @@ char *readResourceFile()
 		printf("error reading resource file header\n");
 		return nullptr;
 	}
-	
+
 	printf("reading resource file, %d bytes\n", header.fileSize);
-	
+
 	resourceData = (char*) malloc(header.fileSize);
 	fseek(fp, 0, SEEK_SET);
 	if (fread(resourceData, header.fileSize, 1, fp) != 1)
@@ -84,7 +84,7 @@ char *readResourceFile()
 		printf("error reading resource file\n");
 		return nullptr;
 	}
-	
+
 	fclose(fp);
 
 	return resourceData;
@@ -104,7 +104,7 @@ Texture *createCheckerboardTexture()
 		0x000000ff,
 		0x00ff00ff,
 	};
-	
+
 	Texture *texture = new Texture;
 	for (int mipLevel = 0; mipLevel < 4; mipLevel++)
 	{
@@ -123,10 +123,10 @@ Texture *createCheckerboardTexture()
 					bits[y * mipSize + x] = 0xffffffff;
 			}
 		}
-		
+
 		texture->setMipSurface(mipLevel, surface);
 	}
-	
+
 	return texture;
 }
 
@@ -139,7 +139,7 @@ int main()
 {
 	if (get_current_thread_id() != 0)
 		workerThread();
-	
+
 	// Set up resource data
 	char *resourceData = readResourceFile();
 	const FileHeader *resourceHeader = (FileHeader*) resourceData;
@@ -169,16 +169,16 @@ int main()
 		}
 #endif
 	}
-	
+
 	// Create Render Buffers
 	RenderBuffer *vertexBuffers = new RenderBuffer[resourceHeader->numMeshes];
 	RenderBuffer *indexBuffers = new RenderBuffer[resourceHeader->numMeshes];
 	for (unsigned int meshIndex = 0; meshIndex < resourceHeader->numMeshes; meshIndex++)
 	{
 		const MeshEntry &entry = meshHeader[meshIndex];
-		vertexBuffers[meshIndex].setData(resourceData + entry.offset, 
+		vertexBuffers[meshIndex].setData(resourceData + entry.offset,
 			entry.numVertices, sizeof(float) * kAttrsPerVertex);
-		indexBuffers[meshIndex].setData(resourceData + entry.offset + entry.numVertices 
+		indexBuffers[meshIndex].setData(resourceData + entry.offset + entry.numVertices
 			* kAttrsPerVertex * sizeof(float), entry.numIndices, sizeof(int));
 	}
 
@@ -202,7 +202,7 @@ int main()
 
 	TextureUniforms uniforms;
 	uniforms.fLightDirection = Vec3(-1, -0.5, 1).normalized();
-	uniforms.fDirectional = 0.5f;		
+	uniforms.fDirectional = 0.5f;
 	uniforms.fAmbient = 0.4f;
 	float theta = 0.0;
 
@@ -210,15 +210,15 @@ int main()
 
 	for (int frame = 0; ; frame++)
 	{
-		Matrix modelViewMatrix = Matrix::lookAt(Vec3(cos(theta) * 6, 3, sin(theta) * 6), Vec3(0, 3.1, 0), 
+		Matrix modelViewMatrix = Matrix::lookAt(Vec3(cos(theta) * 6, 3, sin(theta) * 6), Vec3(0, 3.1, 0),
 			Vec3(0, 1, 0));
 		theta = theta + M_PI / 8;
 		if (theta > M_PI * 2)
 			theta -= M_PI * 2;
-		
+
 		uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
 		uniforms.fNormalMatrix = modelViewMatrix.upper3x3();
-		
+
 		context->clearColorBuffer();
 		for (unsigned int meshIndex = 0; meshIndex < resourceHeader->numMeshes; meshIndex++)
 		{
@@ -231,7 +231,7 @@ int main()
 			}
 			else
 				uniforms.fHasTexture = false;
-			
+
 			context->bindUniforms(&uniforms, sizeof(uniforms));
 			context->bindVertexAttrs(&vertexBuffers[meshIndex]);
 			context->drawElements(&indexBuffers[meshIndex]);
@@ -241,7 +241,7 @@ int main()
 		context->finish();
 		printf("rendered frame in %d uS\n", clock() - startTime);
 	}
-	
+
 	return 0;
 }
 

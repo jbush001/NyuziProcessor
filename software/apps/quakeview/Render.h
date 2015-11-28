@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 #pragma once
 
@@ -25,7 +25,7 @@ struct RenderBspNode
 	{
 		return (x * normal[0] + y * normal[1] + z * normal[2] - distance) > 0;
 	}
-	
+
 	float normal[3];
 	float distance;
 	RenderBspNode *frontChild = nullptr;
@@ -37,7 +37,7 @@ struct RenderBspNode
 	int markNumber;
 };
 
-void setBspData(RenderBspNode *root, const uint8_t *pvsList, RenderBspNode *leaves, 
+void setBspData(RenderBspNode *root, const uint8_t *pvsList, RenderBspNode *leaves,
 	int numLeaves, librender::Texture *atlasTexture, librender::Texture *lightmapAtlas);
 void renderScene(librender::RenderContext *context, librender::Vec3 cameraPos);
 void renderTextureAtlas(librender::RenderContext *context);

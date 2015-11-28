@@ -27,7 +27,7 @@ unsigned long long board = 0xFFFC000000000000ULL;
  * from one end to the other along 12 hexagonal directions.
  *
  *   Piece 0   Piece 1   Piece 2   Piece 3   Piece 4
- *                   
+ *
  *  O O O O    O   O O   O O O     O O O     O   O
  *         O    O O           O       O       O O
  *                           O         O         O
@@ -71,7 +71,7 @@ char piece_def[10][4] = {
    {  E,  E,  E, SW}
 };
 
- 
+
 /* To minimize the amount of work done in the recursive solve function below,
  * I'm going to allocate enough space for all legal rotations of each piece
  * at each position on the board. That's 10 pieces x 50 board positions x
@@ -167,7 +167,7 @@ char out_of_bounds(char cell, char dir) {
       case E:
          return cell % 5 == 4;
       case ESE:
-         i = cell % 10;   
+         i = cell % 10;
          return i == 4 || i == 8 || i == 9 || cell >= 45;
       case SE:
          return cell % 10 == 9 || cell >= 45;
@@ -176,12 +176,12 @@ char out_of_bounds(char cell, char dir) {
       case SW:
          return cell % 10 == 0 || cell >= 45;
       case WSW:
-         i = cell % 10;   
+         i = cell % 10;
          return i == 0 || i == 1 || i == 5 || cell >= 45;
       case W:
          return cell % 5 == 0;
       case WNW:
-         i = cell % 10;   
+         i = cell % 10;
          return i == 0 || i == 1 || i == 5 || cell < 5;
       case NW:
          return cell % 10 == 0 || cell < 5;
@@ -190,7 +190,7 @@ char out_of_bounds(char cell, char dir) {
       case NE:
          return cell % 10 == 9 || cell < 5;
       case ENE:
-         i = cell % 10;   
+         i = cell % 10;
          return i == 4 || i == 8 || i == 9 || cell < 5;
       default:
          return FALSE;
@@ -223,8 +223,8 @@ void calc_cell_indices(char *cell, int piece, char index) {
 /* Convenience function to quickly calculate if a piece fits on the board */
 int cells_fit_on_board(char *cell, int piece) {
    return (!out_of_bounds(cell[0], piece_def[piece][0]) &&
-         !out_of_bounds(cell[1], piece_def[piece][1]) && 
-         !out_of_bounds(cell[2], piece_def[piece][2]) && 
+         !out_of_bounds(cell[1], piece_def[piece][1]) &&
+         !out_of_bounds(cell[2], piece_def[piece][2]) &&
          !out_of_bounds(cell[3], piece_def[piece][3]));
 }
 
@@ -272,7 +272,7 @@ void record_piece(int piece, int minimum, char first_empty,
       unsigned long long piece_mask) {
    pieces[piece][minimum][piece_counts[piece][minimum]] = piece_mask;
    next_cell[piece][minimum][piece_counts[piece][minimum]] = first_empty;
-   piece_counts[piece][minimum]++;         
+   piece_counts[piece][minimum]++;
 }
 
 
@@ -284,17 +284,17 @@ void fill_contiguous_space(char *board, int index) {
       return;
    board[index] = 1;
    if(!out_of_bounds(index, E))
-      fill_contiguous_space(board, shift(index, E));   
+      fill_contiguous_space(board, shift(index, E));
    if(!out_of_bounds(index, SE))
-      fill_contiguous_space(board, shift(index, SE));   
+      fill_contiguous_space(board, shift(index, SE));
    if(!out_of_bounds(index, SW))
-      fill_contiguous_space(board, shift(index, SW));   
+      fill_contiguous_space(board, shift(index, SW));
    if(!out_of_bounds(index, W))
-      fill_contiguous_space(board, shift(index, W));   
+      fill_contiguous_space(board, shift(index, W));
    if(!out_of_bounds(index, NW))
-      fill_contiguous_space(board, shift(index, NW));   
+      fill_contiguous_space(board, shift(index, NW));
    if(!out_of_bounds(index, NE))
-      fill_contiguous_space(board, shift(index, NE));   
+      fill_contiguous_space(board, shift(index, NE));
 }
 
 
@@ -324,7 +324,7 @@ int has_island(char *cell, int piece) {
          (c % 5 == 0 && piece == 0))
       return FALSE;
    else
-      return TRUE;   
+      return TRUE;
 }
 
 
@@ -341,7 +341,7 @@ int has_island(char *cell, int piece) {
    unsigned long long piece_mask;
 
    for(rotation = 0; rotation < 6; rotation++) {
-      if(piece != 3 || rotation < 3) { 
+      if(piece != 3 || rotation < 3) {
          calc_cell_indices(cell, piece, index);
          if(cells_fit_on_board(cell, piece) && !has_island(cell, piece)) {
             minimum = minimum_of_cells(cell);
@@ -526,7 +526,7 @@ void solve(int depth, int cell) {
    int piece, rotation, max_rots;
    unsigned long long *piece_mask;
    short piece_no_mask;
-   
+
    if(solution_count >= max_solutions)
       return;
 
@@ -595,26 +595,26 @@ int main(int argc, char **argv) {
 }
 
 // CHECK: 10 solutions found
-// CHECK: 
-// CHECK: 0 0 0 0 1 
-// CHECK:  2 2 2 0 1 
-// CHECK: 2 6 6 1 1 
-// CHECK:  2 6 1 5 5 
-// CHECK: 8 6 5 5 5 
-// CHECK:  8 6 3 3 3 
-// CHECK: 4 8 8 9 3 
-// CHECK:  4 4 8 9 3 
-// CHECK: 4 7 4 7 9 
-// CHECK:  7 7 7 9 9 
-// CHECK: 
-// CHECK: 9 9 9 9 4 
-// CHECK:  9 8 8 8 4 
-// CHECK: 8 8 3 4 4 
-// CHECK:  6 3 3 3 4 
-// CHECK: 6 3 5 5 5 
-// CHECK:  6 5 5 7 7 
-// CHECK: 6 6 1 7 2 
-// CHECK:  1 1 7 7 2 
-// CHECK: 1 0 2 2 2 
-// CHECK:  1 0 0 0 0 
+// CHECK:
+// CHECK: 0 0 0 0 1
+// CHECK:  2 2 2 0 1
+// CHECK: 2 6 6 1 1
+// CHECK:  2 6 1 5 5
+// CHECK: 8 6 5 5 5
+// CHECK:  8 6 3 3 3
+// CHECK: 4 8 8 9 3
+// CHECK:  4 4 8 9 3
+// CHECK: 4 7 4 7 9
+// CHECK:  7 7 7 9 9
+// CHECK:
+// CHECK: 9 9 9 9 4
+// CHECK:  9 8 8 8 4
+// CHECK: 8 8 3 4 4
+// CHECK:  6 3 3 3 4
+// CHECK: 6 3 5 5 5
+// CHECK:  6 5 5 7 7
+// CHECK: 6 6 1 7 2
+// CHECK:  1 1 7 7 2
+// CHECK: 1 0 2 2 2
+// CHECK:  1 0 0 0 0
 

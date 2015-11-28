@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 
 #ifndef __CORE_H
@@ -32,7 +32,7 @@ typedef struct Core Core;
 Core *initCore(uint32_t memsize, uint32_t totalThreads, bool randomizeMemory);
 void enableTracing(Core*);
 int loadHexFile(Core*, const char *filename);
-void writeMemoryToFile(const Core*, const char *filename, uint32_t baseAddress, 
+void writeMemoryToFile(const Core*, const char *filename, uint32_t baseAddress,
 	uint32_t length);
 void *getFramebuffer(Core*);
 void printRegisters(const Core*, uint32_t threadId);
@@ -43,11 +43,11 @@ bool coreHalted(const Core*);
 bool stoppedOnFault(const Core*);
 
 //
-// Returns: 
+// Returns:
 //  0 - This stopped when it hit a breakpoint
 //  1 - Ran the full number of instructions passed
 //
-// threadId of ALL_THREADS means run all threads in a round robin fashion. 
+// threadId of ALL_THREADS means run all threads in a round robin fashion.
 // Otherwise, run just the indicated thread.
 //
 uint32_t executeInstructions(Core*, uint32_t threadId, uint32_t instructions);

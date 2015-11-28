@@ -1,4 +1,4 @@
-// Emacs style mode select	 -*- C++ -*- 
+// Emacs style mode select	 -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // $Id:$
@@ -40,7 +40,7 @@ extern int				rw_stopx;
 extern boolean			segtextured;
 
 // false if the back side is the same plane
-extern boolean			markfloor;				
+extern boolean			markfloor;
 extern boolean			markceiling;
 
 extern boolean			skymap;

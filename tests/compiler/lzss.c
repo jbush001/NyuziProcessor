@@ -85,7 +85,7 @@ void InsertNode(int r)
 void DeleteNode(int p)  /* deletes node p from tree */
 {
 	int  q;
-	
+
 	if (dad[p] == NIL) return;  /* not in tree */
 	if (rson[p] == NIL) q = lson[p];
 	else if (lson[p] == NIL) q = rson[p];
@@ -109,7 +109,7 @@ int Encode(unsigned char *output, const unsigned char *input, int inputLength)
 	unsigned char  code_buf[17], mask;
 	int inputOffset = 0;
 	int outputOffset = 0;
-	
+
 	InitTree();  /* initialize trees */
 	code_buf[0] = 0;  /* code_buf[1..16] saves eight units of code, and
 		code_buf[0] works as eight flags, "1" representing that the unit
@@ -172,7 +172,7 @@ int Encode(unsigned char *output, const unsigned char *input, int inputLength)
 		for (i = 0; i < code_buf_ptr; i++) output[outputOffset++] = code_buf[i];
 		codesize += code_buf_ptr;
 	}
-	
+
 	return outputOffset;
 }
 
@@ -183,7 +183,7 @@ int Decode(unsigned char *output, const unsigned char *input, int inputLength)
 	unsigned int  flags;
 	int inputOffset = 0;
 	int outputOffset = 0;
-	
+
 	for (i = 0; i < N - F; i++) text_buf[i] = ' ';
 	r = N - F;  flags = 0;
 	for ( ; ; ) {
@@ -213,13 +213,13 @@ int Decode(unsigned char *output, const unsigned char *input, int inputLength)
 			i |= ((j & 0xf0) << 4);  j = (j & 0x0f) + THRESHOLD;
 			for (k = 0; k <= j; k++) {
 				c = text_buf[(i + k) & (N - 1)];
-				output[outputOffset++] = c;  
-				text_buf[r++] = c;  
+				output[outputOffset++] = c;
+				text_buf[r++] = c;
 				r &= (N - 1);
 			}
 		}
 	}
-	
+
 	return outputOffset;
 }
 
@@ -233,17 +233,17 @@ char decodedBuffer[4096];
 int main(int argc, char *argv[])
 {
 	int inLength = strlen(kRawText) + 1;
-	int encodedLength = Encode((unsigned char*) encodedBuffer, (unsigned char*) kRawText, 
+	int encodedLength = Encode((unsigned char*) encodedBuffer, (unsigned char*) kRawText,
 		inLength);
-	int decodedLength = Decode((unsigned char*) decodedBuffer, (unsigned char*) encodedBuffer, 
+	int decodedLength = Decode((unsigned char*) decodedBuffer, (unsigned char*) encodedBuffer,
 		encodedLength);
 
 	printf("decodedLength 0x%08x\n", decodedLength);
 	// CHECK: decodedLength 0x000005c0
-	
+
 	puts(decodedBuffer);
 	putchar('\n');
-	
+
 	// CHECK: Four score and seven years ago our fathers brought forth on this continent, a new nation, conceived in Liberty
 	// CHECK: of the people, by the people, for the people, shall not perish from the earth.
 

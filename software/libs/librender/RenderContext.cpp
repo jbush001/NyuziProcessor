@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 #include <schedule.h>
 #include <string.h>
@@ -97,7 +97,7 @@ void RenderContext::finish()
 {
 	int kMaxTiles = fTileColumns * fTileRows;
 	fTiles = new (fAllocator) TriangleArray[kMaxTiles];
-	for (int i = 0; i < kMaxTiles; i++)	
+	for (int i = 0; i < kMaxTiles; i++)
 		fTiles[i].setAllocator(&fAllocator);
 
 	// Geometry phase.  Walk through each draw command and perform two steps
@@ -105,13 +105,13 @@ void RenderContext::finish()
 	// 1. Call vertex shader on attributes (shadeVertices)
 	// 2. Perform triangle setup and binning (setUpTriangle)
 	fBaseSequenceNumber = 0;
-	for (fRenderCommandIterator = fDrawQueue.begin(); fRenderCommandIterator != fDrawQueue.end(); 
+	for (fRenderCommandIterator = fDrawQueue.begin(); fRenderCommandIterator != fDrawQueue.end();
 		++fRenderCommandIterator)
 	{
 		RenderState &state = *fRenderCommandIterator;
 		int numVertices = state.fVertexAttrBuffer->getNumElements();
 		int numTriangles = state.fIndexBuffer->getNumElements() / 3;
-		state.fVertexParams = static_cast<float*>(fAllocator.alloc(numVertices 
+		state.fVertexParams = static_cast<float*>(fAllocator.alloc(numVertices
 			* state.fShader->getNumParams() * sizeof(float)));
 		parallelExecute(_shadeVertices, this, (numVertices + 15) / 16);
 		parallelExecute(_setUpTriangle, this, numTriangles);
@@ -126,9 +126,9 @@ void RenderContext::finish()
 
 #if DISPLAY_STATS
 	printf("total triangles = %d\n", fBaseSequenceNumber);
-	printf("used %d bytes\n", fAllocator.bytesUsed()); 
+	printf("used %d bytes\n", fAllocator.bytesUsed());
 #endif
-	
+
 	// Clean up memory
 	// First reset draw queue to clean up, then allocator, which frees
 	// memory it is using.
@@ -160,14 +160,14 @@ void RenderContext::shadeVertices(int index)
 	int startIndex = index * 16;
 	for (int attrib = 0; attrib < attribsPerVertex; attrib++)
 	{
-		packedAttribs[attrib] = state.fVertexAttrBuffer->gatherElements(startIndex, attrib, 
-			numVertices); 
+		packedAttribs[attrib] = state.fVertexAttrBuffer->gatherElements(startIndex, attrib,
+			numVertices);
 	}
 
 	int paramsPerVertex = state.fShader->getNumParams();
 	vecf16_t packedParams[paramsPerVertex];
 	state.fShader->shadeVertices(packedParams, packedAttribs, state.fUniforms, mask);
-		
+
 	const veci16_t kStepVector = { 0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60 };
 	const veci16_t paramStepVector = kStepVector * splati(paramsPerVertex);
 	float *outBuf = state.fVertexParams + paramsPerVertex * index * 16;
@@ -183,7 +183,7 @@ namespace {
 
 const float kNearWClip = 1.0;
 
-void interpolate(float *outParams, const float *inParams0, const float *inParams1, int numParams, 
+void interpolate(float *outParams, const float *inParams0, const float *inParams1, int numParams,
 	float distance)
 {
 	for (int i = 0; i < numParams; i++)
@@ -208,12 +208,12 @@ void interpolate(float *outParams, const float *inParams0, const float *inParams
 //      0
 //
 
-void RenderContext::clipOne(int sequence, const RenderState &state, const float *params0, 
+void RenderContext::clipOne(int sequence, const RenderState &state, const float *params0,
 	const float *params1, const float *params2)
 {
 	float newPoint1[kMaxParams];
 	float newPoint2[kMaxParams];
-	
+
 	interpolate(newPoint1, params1, params0, state.fParamsPerVertex, (params1[kParamW] - kNearWClip)
 		/ (params1[kParamW] - params0[kParamW]));
 	interpolate(newPoint2, params2, params0, state.fParamsPerVertex, (params2[kParamW] - kNearWClip)
@@ -224,11 +224,11 @@ void RenderContext::clipOne(int sequence, const RenderState &state, const float 
 
 //
 // Clip a triangle where two vertices are past the near clip plane.
-// The clipped vertices are always param0 and params1. Adjust the 
+// The clipped vertices are always param0 and params1. Adjust the
 // bottom two points of the triangle.
 //
 //                 2
-//                 +  
+//                 +
 //               / |
 //              /  |
 //             /   |
@@ -240,7 +240,7 @@ void RenderContext::clipOne(int sequence, const RenderState &state, const float 
 //        1        0
 //
 
-void RenderContext::clipTwo(int sequence, const RenderState &state, const float *params0, 
+void RenderContext::clipTwo(int sequence, const RenderState &state, const float *params0,
 	const float *params1, const float *params2)
 {
 	float newPoint1[kMaxParams];
@@ -265,8 +265,8 @@ void RenderContext::setUpTriangle(int triangleIndex)
 	const float *params1 = &state.fVertexParams[offset1];
 	const float *params2 = &state.fVertexParams[offset2];
 
-	// Determine which point (if any) are clipped against the near plane, call 
-	// appropriate clip routine with triangle rotated appropriately. We don't 
+	// Determine which point (if any) are clipped against the near plane, call
+	// appropriate clip routine with triangle rotated appropriately. We don't
 	// clip against other planes.
 	// XXX This is not quite correct; it needs to perform homogenous clipping.  Also,
 	// the viewing volume is zNear = -1, zFar = -inf
@@ -276,7 +276,7 @@ void RenderContext::setUpTriangle(int triangleIndex)
 	{
 		case 0:
 			// Not clipped at all.
-			enqueueTriangle(fBaseSequenceNumber + triangleIndex, state, 
+			enqueueTriangle(fBaseSequenceNumber + triangleIndex, state,
 				params0, params1, params2);
 			break;
 
@@ -287,7 +287,7 @@ void RenderContext::setUpTriangle(int triangleIndex)
 		case 2:
 			clipOne(fBaseSequenceNumber + triangleIndex, state, params1, params2, params0);
 			break;
-			
+
 		case 4:
 			clipOne(fBaseSequenceNumber + triangleIndex, state, params2, params0, params1);
 			break;
@@ -299,7 +299,7 @@ void RenderContext::setUpTriangle(int triangleIndex)
 		case 6:
 			clipTwo(fBaseSequenceNumber + triangleIndex, state, params1, params2, params0);
 			break;
-			
+
 		case 5:
 			clipTwo(fBaseSequenceNumber + triangleIndex, state, params2, params0, params1);
 			break;
@@ -313,9 +313,9 @@ void RenderContext::setUpTriangle(int triangleIndex)
 // division, backface culling, and binning.
 //
 
-void RenderContext::enqueueTriangle(int sequence, const RenderState &state, const float *params0, 
+void RenderContext::enqueueTriangle(int sequence, const RenderState &state, const float *params0,
 	const float *params1, const float *params2)
-{	
+{
 	Triangle tri;
 	tri.sequenceNumber = sequence;
 	tri.state = &state;
@@ -334,7 +334,7 @@ void RenderContext::enqueueTriangle(int sequence, const RenderState &state, cons
 	tri.x2 = params2[kParamX] * oneOverW2;
 	tri.y2 = params2[kParamY] * oneOverW2;
 	tri.z2 = params2[kParamZ];
-	
+
 	// Convert screen space coordinates to raster coordinates
 	int halfWidth = fFbWidth / 2;
 	int halfHeight = fFbHeight / 2;
@@ -344,8 +344,8 @@ void RenderContext::enqueueTriangle(int sequence, const RenderState &state, cons
 	tri.y1Rast = -tri.y1 * halfHeight + halfHeight;
 	tri.x2Rast = tri.x2 * halfWidth + halfWidth;
 	tri.y2Rast = -tri.y2 * halfHeight + halfHeight;
-	
-	int winding = (tri.x1Rast - tri.x0Rast) * (tri.y2Rast - tri.y0Rast) - (tri.y1Rast - tri.y0Rast) 
+
+	int winding = (tri.x1Rast - tri.x0Rast) * (tri.y2Rast - tri.y0Rast) - (tri.y1Rast - tri.y0Rast)
 		* (tri.x2Rast - tri.x0Rast);
 	if (winding == 0)
 		return;	// remove edge-on triangles, which won't be rasterized correctly.
@@ -356,7 +356,7 @@ void RenderContext::enqueueTriangle(int sequence, const RenderState &state, cons
 	if ((state.cullingMode == RenderState::kCullCW && !tri.woundCCW)
 		|| (state.cullingMode == RenderState::kCullCCW && tri.woundCCW))
 		return;
-	
+
 	// Compute bounding box
 	int bbLeft = tri.x0Rast < tri.x1Rast ? tri.x0Rast : tri.x1Rast;
 	bbLeft = tri.x2Rast < bbLeft ? tri.x2Rast : bbLeft;
@@ -365,8 +365,8 @@ void RenderContext::enqueueTriangle(int sequence, const RenderState &state, cons
 	int bbRight = tri.x0Rast > tri.x1Rast ? tri.x0Rast : tri.x1Rast;
 	bbRight = tri.x2Rast > bbRight ? tri.x2Rast : bbRight;
 	int bbBottom = tri.y0Rast > tri.y1Rast ? tri.y0Rast : tri.y1Rast;
-	bbBottom = tri.y2Rast > bbBottom ? tri.y2Rast : bbBottom;	
-	
+	bbBottom = tri.y2Rast > bbBottom ? tri.y2Rast : bbBottom;
+
 	// Cull triangles that are outside the sides of the view frustum
 	if (bbRight < 0 || bbLeft >= fFbWidth || bbBottom < 0 || bbTop >= fFbHeight)
 		return;
@@ -393,7 +393,7 @@ void RenderContext::enqueueTriangle(int sequence, const RenderState &state, cons
 	}
 }
 
-namespace 
+namespace
 {
 
 // These assume counterclockwise winding
@@ -403,7 +403,7 @@ bool edgeRejected(int left, int top, int right, int bottom,
 	// Find a reject corner
 	int cx = y2 > y1 ? right : left;
 	int cy = x2 > x1 ? top : bottom;
-	
+
 	return (x2 - x1) * (cy - y1) - (y2 - y1) * (cx - x1) > 0;
 }
 
@@ -463,14 +463,14 @@ void RenderContext::fillTile(int index)
 				continue;
 			}
 		}
-				
+
 		// Set up parameters and rasterize triangle.
-		filler.setUpTriangle(&state, tri.x0, tri.y0, tri.z0, tri.x1, tri.y1, tri.z1, tri.x2, 
+		filler.setUpTriangle(&state, tri.x0, tri.y0, tri.z0, tri.x1, tri.y1, tri.z1, tri.x2,
 			tri.y2, tri.z2);
 		for (int paramI = 0; paramI < state.fParamsPerVertex; paramI++)
 		{
 			filler.setUpParam(tri.params[paramI],
-				tri.params[(state.fParamsPerVertex - 4) + paramI], 
+				tri.params[(state.fParamsPerVertex - 4) + paramI],
 				tri.params[(state.fParamsPerVertex - 4) * 2 + paramI]);
 		}
 
@@ -478,16 +478,16 @@ void RenderContext::fillTile(int index)
 		{
 			fillTriangle(filler, tileX, tileY,
 				tri.x0Rast, tri.y0Rast, tri.x1Rast, tri.y1Rast, tri.x2Rast, tri.y2Rast,
-				fFbWidth, fFbHeight);	
+				fFbWidth, fFbHeight);
 		}
 		else
 		{
 			fillTriangle(filler, tileX, tileY,
 				tri.x0Rast, tri.y0Rast, tri.x2Rast, tri.y2Rast, tri.x1Rast, tri.y1Rast,
-				fFbWidth, fFbHeight);	
+				fFbWidth, fFbHeight);
 		}
 	}
-		
+
 	colorBuffer->flushTile(tileX, tileY);
 }
 
@@ -509,7 +509,7 @@ void RenderContext::wireframeTile(int index)
 	int rightClip = tileX + kTileSize - 1;
 	if (bottomClip >= colorBuffer->getHeight())
 		bottomClip = colorBuffer->getHeight() - 1;
-	
+
 	if (rightClip >= colorBuffer->getWidth())
 		rightClip = colorBuffer->getWidth() - 1;
 
@@ -522,6 +522,6 @@ void RenderContext::wireframeTile(int index)
 		drawLineClipped(colorBuffer, tri.x2Rast, tri.y2Rast, tri.x0Rast, tri.y0Rast, 0xffffffff,
 			tileX, tileY, rightClip, bottomClip);
 	}
-	
+
 	colorBuffer->flushTile(tileX, tileY);
 }

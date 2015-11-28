@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 // The .PAK file is big, and the quakeview test program only needs a few
 // files from it. This is inconvenient when transfering it over the serial
@@ -64,17 +64,17 @@ int main(int argc, char * const argv[])
 			case 'o':
 				outputFilename = optarg;
 				break;
-				
+
 			case 'l':
 				listFiles = 1;
 				break;
-				
+
 			case '?':
 				usage();
 				return 0;
 		}
 	}
-	
+
 	if (argc < optind + 2 && !listFiles)
 	{
 		printf("optind %d argc %d\n", optind, argc);
@@ -82,21 +82,21 @@ int main(int argc, char * const argv[])
 		usage();
 		return 1;
 	}
-	
+
 	FILE *inputFile = fopen(argv[optind], "rb");
 	if (!inputFile)
 	{
 		perror("can't open file");
 		return 1;
 	}
-	
+
 	pakheader_t header;
 	if (fread(&header, sizeof(header), 1, inputFile) != 1)
 	{
 		perror("error reading file");
 		return 1;
 	}
-	
+
 	if (::memcmp(header.id, "PACK", 4) != 0)
 	{
 		printf("bad file type\n");
@@ -111,13 +111,13 @@ int main(int argc, char * const argv[])
 		perror("error reading directory");
 		return 1;
 	}
-	
+
 	if (listFiles)
 	{
 		printf("%d directory entries\n", numOldDirEntries);
 		for (int i = 0; i < numOldDirEntries; i++)
 			printf("  %s\n", oldDirectory[i].name);
-		
+
 		return 0;
 	}
 
@@ -130,7 +130,7 @@ int main(int argc, char * const argv[])
 		perror("Couldn't write output file");
 		return 1;
 	}
-	
+
 	// Write new header
 	pakheader_t newHeader;
 	memcpy(newHeader.id, "PACK", 4);
@@ -141,14 +141,14 @@ int main(int argc, char * const argv[])
 		perror("fwrite failed");
 		return 1;
 	}
-	
+
 	int newDataOffset = numKeepEntries * sizeof(pakfile_t) + sizeof(pakheader_t);
 	for (int newDirIndex = 0; newDirIndex < numKeepEntries; newDirIndex++)
 	{
 		const char *filename = argv[newDirIndex + optind + 1];
 		strcpy(newDirectory[newDirIndex].name, filename);
 		newDirectory[newDirIndex].offset = newDataOffset;
-		
+
 		// Search the old directory to find this file
 		bool foundOldEntry = false;
 		for (int i = 0; i < numOldDirEntries; i++)
@@ -171,7 +171,7 @@ int main(int argc, char * const argv[])
 					perror("error reading old file");
 					return 1;
 				}
-				
+
 				if (fseek(outputFile, newDataOffset, SEEK_SET))
 				{
 					perror("error seeking new file");
@@ -183,36 +183,36 @@ int main(int argc, char * const argv[])
 					perror("error writing new file");
 					return 1;
 				}
-				
+
 				free(tmp);
 				foundOldEntry = true;
 				newDataOffset += oldDirectory[i].size;
 				break;
 			}
 		}
-		
+
 		if (!foundOldEntry)
 		{
 			printf("Couldn't find %s in original file\n", filename);
 			return 1;
 		}
 	}
-	
+
 	// Write directory to new file
 	if (fseek(outputFile, sizeof(pakheader_t), SEEK_SET))
 	{
 		perror("error seeking in output file");
 		return 1;
 	}
-	
+
 	if (fwrite(newDirectory, sizeof(pakfile_t), numKeepEntries, outputFile) != numKeepEntries)
 	{
 		perror("failed to write directory");
 		return 1;
 	}
-	
+
 	fclose(inputFile);
 	fclose(outputFile);
-		
+
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	
+/*
  * Copyright 2001-2010 Georges Menie (www.menie.org)
  * All rights reserved.
  * Redistribution and use in source and binary forms, with or without
@@ -79,6 +79,6 @@ int main()
 {
 	printf("0x%08x\n", crc16_ccitt((const unsigned char*) kBuffer, 22));
 	// CHECK: 0x00008d41
-	
+
 	return 0;
 }

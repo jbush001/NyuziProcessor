@@ -1077,9 +1077,9 @@ int main()
 	rijndaelKeySetupEnc(rk, kCipherKey, 128);
 	rijndaelEncrypt(rk, 10, kPlainText, cipherText);
 
-	rijndaelKeySetupDec(rk, kCipherKey, 128); 
-	rijndaelDecrypt(rk, 10, cipherText, decodedText); 
-	
+	rijndaelKeySetupDec(rk, kCipherKey, 128);
+	rijndaelDecrypt(rk, 10, cipherText, decodedText);
+
 	printf("%s\n", decodedText);
 	// CHECK: abcdefghijklmno
 

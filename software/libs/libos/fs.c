@@ -1,22 +1,22 @@
-// 
+//
 // Copyright 2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 //
-// This module exposes the standard filesystem calls read, write, open, close, 
-// lseek. It uses a very simple read-only filesystem format that is created by 
+// This module exposes the standard filesystem calls read, write, open, close,
+// lseek. It uses a very simple read-only filesystem format that is created by
 // tools/mkfs.  It reads the raw data from the sdmmc driver.
 //
 // THESE ARE NOT THREAD SAFE. Only one thread should call them.
@@ -89,7 +89,7 @@ static int initFileSystem()
 		printf("SDMMC init failed, using ramdisk\n");
 		useRamdisk = 1;
 	}
-	
+
 	// Read directory
 	if (readBlock(0, superBlock) <= 0)
 	{
@@ -104,8 +104,8 @@ static int initFileSystem()
 		errno = EIO;
 		return -1;
 	}
-	
-	numDirectoryBlocks = ((header->numDirectoryEntries - 1) * sizeof(DirectoryEntry) 
+
+	numDirectoryBlocks = ((header->numDirectoryEntries - 1) * sizeof(DirectoryEntry)
 		+ sizeof(FsHeader) + BLOCK_SIZE - 1) / BLOCK_SIZE;
 	gDirectory = (FsHeader*) malloc(numDirectoryBlocks * BLOCK_SIZE);
 	memcpy(gDirectory, superBlock, BLOCK_SIZE);
@@ -117,7 +117,7 @@ static int initFileSystem()
 			return -1;
 		}
 	}
-	
+
 	return 0;
 }
 
@@ -136,13 +136,13 @@ static DirectoryEntry *lookupFile(const char *path)
 }
 
 int open(const char *path, int mode)
-{	
+{
 	int fd;
 	struct FileDescriptor *fdPtr;
 	DirectoryEntry *entry;
 
 	(void) mode;	// mode is ignored
-	
+
 	if (!gInitialized)
 	{
 		if (initFileSystem() < 0)
@@ -150,13 +150,13 @@ int open(const char *path, int mode)
 
 		gInitialized = 1;
 	}
-	
+
 	for (fd = 0; fd < MAX_DESCRIPTORS; fd++)
 	{
 		if (!gFileDescriptors[fd].isOpen)
 			break;
 	}
-	
+
 	if (fd == MAX_DESCRIPTORS)
 	{
 		// Too many files open
@@ -165,7 +165,7 @@ int open(const char *path, int mode)
 	}
 
 	fdPtr = &gFileDescriptors[fd];
-	
+
 	// Search for file
 	entry = lookupFile(path);
 	if (entry)
@@ -176,7 +176,7 @@ int open(const char *path, int mode)
 		fdPtr->currentOffset = 0;
 		return fd;
 	}
-	
+
 	errno = ENOENT;
 	return -1;
 }
@@ -188,7 +188,7 @@ int close(int fd)
 		errno = EBADF;
 		return -1;
 	}
-	
+
 	gFileDescriptors[fd].isOpen = 0;
 	return 0;
 }
@@ -208,7 +208,7 @@ int read(int fd, void *buf, unsigned int nbytes)
 		errno = EBADF;
 		return -1;
 	}
-	
+
 	fdPtr = &gFileDescriptors[fd];
 	if (!fdPtr->isOpen)
 	{
@@ -219,7 +219,7 @@ int read(int fd, void *buf, unsigned int nbytes)
 	sizeToCopy = fdPtr->fileLength - fdPtr->currentOffset;
 	if (sizeToCopy <= 0)
 		return 0;	// End of file
-	
+
 	if (nbytes > sizeToCopy)
 		nbytes = sizeToCopy;
 
@@ -229,7 +229,7 @@ int read(int fd, void *buf, unsigned int nbytes)
 	totalRead = 0;
 	while (totalRead < nbytes)
 	{
-		if (offsetInBlock == 0 && (nbytes - totalRead) >= BLOCK_SIZE) 
+		if (offsetInBlock == 0 && (nbytes - totalRead) >= BLOCK_SIZE)
 		{
 			if (readBlock(blockNumber, (char*) buf + totalRead) <= 0)
 			{
@@ -239,8 +239,8 @@ int read(int fd, void *buf, unsigned int nbytes)
 
 			totalRead += BLOCK_SIZE;
 			blockNumber++;
-		} 
-		else 
+		}
+		else
 		{
 			if (readBlock(blockNumber, currentBlock) <= 0)
 			{
@@ -278,24 +278,24 @@ off_t lseek(int fd, off_t offset, int whence)
 		errno = EBADF;
 		return -1;
 	}
-	
+
 	fdPtr = &gFileDescriptors[fd];
 	if (!fdPtr->isOpen)
 	{
 		errno = EBADF;
 		return -1;
 	}
-	
+
 	switch (whence)
 	{
 		case SEEK_SET:
 			fdPtr->currentOffset = offset;
 			break;
-			
+
 		case SEEK_CUR:
 			fdPtr->currentOffset += offset;
 			break;
-			
+
 		case SEEK_END:
 			fdPtr->currentOffset = fdPtr->fileLength - offset;
 			break;
@@ -314,16 +314,16 @@ off_t lseek(int fd, off_t offset, int whence)
 int stat(const char *path, struct stat *buf)
 {
 	DirectoryEntry *entry;
-	
+
 	entry = lookupFile(path);
 	if (!entry)
 	{
 		errno = ENOENT;
 		return -1;
 	}
-	
+
 	buf->st_size = entry->length;
-	
+
 	return 0;
 }
 
@@ -335,7 +335,7 @@ int fstat(int fd, struct stat *buf)
 		errno = EBADF;
 		return -1;
 	}
-	
+
 	fdPtr = &gFileDescriptors[fd];
 	if (!fdPtr->isOpen)
 	{
@@ -344,14 +344,14 @@ int fstat(int fd, struct stat *buf)
 	}
 
 	buf->st_size = fdPtr->fileLength;
-	
+
 	return 0;
 }
 
 int access(const char *path, int mode)
 {
 	DirectoryEntry *entry;
-	
+
 	entry = lookupFile(path);
 	if (!entry)
 	{

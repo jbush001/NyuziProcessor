@@ -1,4 +1,4 @@
-// Emacs style mode select	 -*- C++ -*- 
+// Emacs style mode select	 -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // $Id:$
@@ -128,7 +128,7 @@ void I_EndRead(void)
 byte*	I_AllocLow(int length)
 {
 	byte*		mem;
-		
+
 	mem = (byte *)malloc (length);
 	memset (mem,0,length);
 	return mem;
@@ -158,6 +158,6 @@ void I_Error (char *error, ...)
 
 	D_QuitNetGame ();
 	I_ShutdownGraphics();
-	
+
 	exit(-1);
 }

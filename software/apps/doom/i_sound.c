@@ -1,4 +1,4 @@
-// Emacs style mode select	 -*- C++ -*- 
+// Emacs style mode select	 -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // $Id:$
@@ -42,9 +42,9 @@ rcsid[] = "$Id: i_unix.c,v 1.5 1997/02/03 22:45:10 b1 Exp $";
 //
 void I_SetChannels()
 {
-}		
+}
 
- 
+
 void I_SetSfxVolume(int volume)
 {
 }
@@ -120,10 +120,10 @@ void I_UpdateSound( void )
 }
 
 
-// 
+//
 // This would be used to write out the mixbuffer
 //	during each game loop update.
-// Updates sound buffer and audio device at runtime. 
+// Updates sound buffer and audio device at runtime.
 // It is called during Timer interrupt with SNDINTR.
 // Mixing now done synchronous, and
 //	only output be done asynchronous?
@@ -148,12 +148,12 @@ I_UpdateSoundParams
 
 
 void I_ShutdownSound(void)
-{	 
+{
 }
 
 void
 I_InitSound()
-{ 
+{
 }
 
 

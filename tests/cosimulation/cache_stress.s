@@ -1,18 +1,18 @@
-# 
+#
 # Copyright 2011-2015 Jeff Bush
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# 
+#
 
 .include "macros.inc"
 
@@ -36,7 +36,7 @@ _start:			START_ALL_THREADS
 				getcr s8, CR_CURRENT_THREAD # get thread ID
 				shl s8, s8, 2		# Compute thread write offset (thread * 4)
 				move s0, 7			# Initialize value to write
-				
+
 main_loop:		mull_i s1, s1, s2	# Generate next random number
 				add_i s1, s1, s3
 
@@ -50,13 +50,13 @@ main_loop:		mull_i s1, s1, s2	# Generate next random number
 				add_i s0, s0, 13	# Increment write value
 				sub_i s5, s5, 1		# Decrement count
 				btrue s5, main_loop
-				
+
 				HALT_CURRENT_THREAD
 
 generator_a:    .long 1103515245
-generator_c:    .long 12345   
+generator_c:    .long 12345
 num_iterations: .long 10000
 
 
 
-				
+

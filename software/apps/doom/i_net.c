@@ -1,4 +1,4 @@
-// Emacs style mode select	 -*- C++ -*- 
+// Emacs style mode select	 -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // $Id:$
@@ -53,6 +53,6 @@ void I_InitNetwork (void)
 
 void I_NetCmd (void)
 {
- 
+
 }
 

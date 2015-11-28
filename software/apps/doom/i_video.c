@@ -1,4 +1,4 @@
-// Emacs style mode select	 -*- C++ -*- 
+// Emacs style mode select	 -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // $Id:$
@@ -64,7 +64,7 @@ void I_StartTic (void)
 	if (code != 0xffffffff)
 	{
 		event_t event;
-		
+
 		switch (code & 0xffff)
 		{
 			case KBD_F1:
@@ -138,8 +138,8 @@ void I_StartTic (void)
 			event.type = ev_keydown;
 		else
 			event.type = ev_keyup;
-			
-		D_PostEvent(&event);		
+
+		D_PostEvent(&event);
 	}
 }
 
@@ -162,7 +162,7 @@ void I_FinishUpdate (void)
 	const unsigned char *src = screens[0];
 	veci16_t pixelVals;
 	int mask;
-	
+
 	// Copy to framebuffer and expand palette
 	for (y = 0; y < SCREENHEIGHT; y++)
 	{
@@ -171,7 +171,7 @@ void I_FinishUpdate (void)
 			mask = 0xc000;
 			for (offs = 0; offs < 8; offs++, mask >>= 2)
 			{
-				pixelVals = __builtin_nyuzi_vector_mixi(mask, __builtin_nyuzi_makevectori(gPalette[*src++]), 
+				pixelVals = __builtin_nyuzi_vector_mixi(mask, __builtin_nyuzi_makevectori(gPalette[*src++]),
 					pixelVals);
 			}
 
@@ -212,7 +212,7 @@ void I_ReadScreen (byte* scr)
 void I_SetPalette (byte* palette)
 {
 	int i;
-	
+
 	for (i = 0; i < 256; i++)
 	{
 		byte r = gammatable[usegamma][*palette++];

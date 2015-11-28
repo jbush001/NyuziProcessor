@@ -1,18 +1,18 @@
-# 
+#
 # Copyright 2011-2015 Jeff Bush
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# 
+#
 
 
 
@@ -23,19 +23,19 @@
 					.global memcpy
 					.type memcpy,@function
 memcpy:				move s6, s0				# Save source pointer, which we will return
-					
+
 					# Check if the source and dest have the same alignment
-					# modulo 64. If so, we can do block vector copy 
+					# modulo 64. If so, we can do block vector copy
 					and s3, s0, 63
 					and s4, s1, 63
 					cmpeq_i s5, s3, s4
 					bfalse s5, copy_word_check	# Not aligned, see if we can copy words
-				
+
 					# ...Falls through, we can do vector copies
-				
+
 					# There may be leading bytes before alignment.  Copy up to that.
 copy_vector_lead_in: and s4, s0, 63			# Aligned yet?
-					bfalse s4, copy_vector 	# Yes, time to do big copies		
+					bfalse s4, copy_vector 	# Yes, time to do big copies
 					bfalse s2, copy_done	# Bail if we are done.
 					load_u8 s4, (s1)
 					store_8 s4, (s0)

@@ -354,13 +354,13 @@ module writeback_stage(
 	always_comb
 	begin
 		case (dd_request_vaddr.offset[1])
-			1'd0: half_aligned = { mem_load_lane[23:16], mem_load_lane[31:24] };
-			1'd1: half_aligned = { mem_load_lane[7:0], mem_load_lane[15:8] };
+			1'd0: half_aligned = {mem_load_lane[23:16], mem_load_lane[31:24]};
+			1'd1: half_aligned = {mem_load_lane[7:0], mem_load_lane[15:8]};
 			default: half_aligned = '0;
 		endcase
 	end
 	
-	assign swapped_word_value = { 
+	assign swapped_word_value = {
 		mem_load_lane[7:0], 
 		mem_load_lane[15:8], 
 		mem_load_lane[23:16],
@@ -443,7 +443,7 @@ module writeback_stage(
 			// retired later.
 			if (wb_rollback_en)
 			begin
-				writeback_counter <= { 1'b0, writeback_counter[4:1] };
+				writeback_counter <= {1'b0, writeback_counter[4:1]};
 				if (ix_instruction_valid && ix_rollback_en)
 					last_retire_pc[ix_thread_idx] <= ix_rollback_pc;
 					
@@ -466,12 +466,12 @@ module writeback_stage(
 				last_retire_pc[ix_thread_idx] <= ix_instruction.pc;
 			end
 			else
-				writeback_counter <= { 1'b0, writeback_counter[4:1] };
+				writeback_counter <= {1'b0, writeback_counter[4:1]};
 
 			// wb_rollback_en is derived combinatorially from the instruction 
 			// that is about to retire, so this doesn't need to check 
 			// wb_rollback_thread_idx like other places.
-			case ({ fx5_instruction_valid, ix_instruction_valid, dd_instruction_valid })
+			case ({fx5_instruction_valid, ix_instruction_valid, dd_instruction_valid})
 				//
 				// floating point pipeline result
 				//
@@ -553,10 +553,10 @@ module writeback_stage(
 							assert(dd_instruction.has_dest);
 						
 							unique case (memory_op)
-								MEM_B:  wb_writeback_value[0] <= { 24'b0, byte_aligned };
-								MEM_BX: wb_writeback_value[0] <= { {24{byte_aligned[7]}}, byte_aligned };
-								MEM_S:  wb_writeback_value[0] <= { 16'b0, half_aligned };
-								MEM_SX: wb_writeback_value[0] <= { {16{half_aligned[15]}}, half_aligned };
+								MEM_B:  wb_writeback_value[0] <= {24'b0, byte_aligned};
+								MEM_BX: wb_writeback_value[0] <= {{24{byte_aligned[7]}}, byte_aligned};
+								MEM_S:  wb_writeback_value[0] <= {16'b0, half_aligned};
+								MEM_SX: wb_writeback_value[0] <= {{16{half_aligned[15]}}, half_aligned};
 								MEM_SYNC: wb_writeback_value[0] <= swapped_word_value;
 								MEM_L:
 								begin

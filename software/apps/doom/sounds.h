@@ -1,4 +1,4 @@
-// Emacs style mode select	 -*- C++ -*- 
+// Emacs style mode select	 -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // $Id:$
@@ -58,7 +58,7 @@ struct sfxinfo_struct
 	int			usefulness;
 
 	// lump number of sfx
-	int			lumpnum;				
+	int			lumpnum;
 };
 
 
@@ -74,13 +74,13 @@ typedef struct
 
 	// lump number of music
 	int			lumpnum;
-	
+
 	// music data
 	void*		data;
 
 	// music handle once registered
 	int handle;
-	
+
 } musicinfo_t;
 
 

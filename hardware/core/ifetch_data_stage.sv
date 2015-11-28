@@ -124,7 +124,7 @@ module ifetch_data_stage(
 		&& ift_tlb_hit
 		&& ift_instruction_requested 
 		&& !ifd_near_miss;
-	assign ifd_cache_miss_paddr = { ift_pc_paddr.tag, ift_pc_paddr.set_idx, {`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
+	assign ifd_cache_miss_paddr = {ift_pc_paddr.tag, ift_pc_paddr.set_idx, {`CACHE_LINE_OFFSET_WIDTH{1'b0}}};
 	assign ifd_cache_miss_thread_idx = ift_thread_idx;
 	assign perf_icache_hit = cache_hit && ift_instruction_requested;
 	assign perf_icache_miss = !cache_hit && ift_tlb_hit && ift_instruction_requested;
@@ -149,7 +149,7 @@ module ifetch_data_stage(
 
 	assign cache_lane_idx = ~ifd_pc[`CACHE_LINE_OFFSET_WIDTH - 1:2];
 	assign fetched_word = fetched_cache_line[32 * cache_lane_idx+:32];
-	assign ifd_instruction = { fetched_word[7:0], fetched_word[15:8], fetched_word[23:16], fetched_word[31:24] };
+	assign ifd_instruction = {fetched_word[7:0], fetched_word[15:8], fetched_word[23:16], fetched_word[31:24]};
 
 	assign ifd_update_lru_en = cache_hit && ift_instruction_requested;
 	assign ifd_update_lru_way = way_hit_idx;

@@ -57,7 +57,7 @@ if verbose:
 def run_cosimulation_test(source_file):
 	global emulator_args
 	global verilator_args
-	
+
 	hexfile = test_harness.assemble_test(source_file)
 	p1 = subprocess.Popen(verilator_args + [ '+bin=' + hexfile ], stdout=subprocess.PIPE)
 	p2 = subprocess.Popen(emulator_args + [ hexfile ], stdin=p1.stdout, stdout=subprocess.PIPE)
@@ -66,14 +66,14 @@ def run_cosimulation_test(source_file):
 		got = p2.stdout.read(0x1000)
 		if not got:
 			break
-			
+
 		if verbose:
 			print(str(got))
 		else:
 			output += str(got)
 
 	p2.wait()
-	time.sleep(1)	# Give verilator a chance to clean up 
+	time.sleep(1)	# Give verilator a chance to clean up
 	p1.kill() 	# Make sure verilator has exited
 	if p2.returncode != 0:
 		raise test_harness.TestException('FAIL: cosimulation mismatch\n' + output)

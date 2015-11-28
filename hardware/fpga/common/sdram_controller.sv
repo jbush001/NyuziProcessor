@@ -162,11 +162,11 @@ module sdram_controller
 		.enqueue_en(axi_bus.s_wready && axi_bus.m_wvalid),
 		.empty());
 	
-	assign { dram_cs_n, dram_ras_n, dram_cas_n, dram_we_n } = command;
+	assign {dram_cs_n, dram_ras_n, dram_cas_n, dram_we_n} = command;
 	assign dram_cke = 1;
 	assign dram_clk = clk;
-	assign { write_row, write_bank, write_column } = write_address;
-	assign { read_row, read_bank, read_column } = read_address;
+	assign {write_row, write_bank, write_column} = write_address;
+	assign {read_row, read_bank, read_column} = read_address;
 		
 	assign dram_dq = output_enable ? write_data : {DATA_WIDTH{1'hZ}};
 	

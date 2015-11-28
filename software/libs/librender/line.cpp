@@ -1,24 +1,24 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 #include "line.h"
 
 using namespace librender;
 
-namespace 
+namespace
 {
 
 // Clip masks
@@ -69,9 +69,9 @@ void librender::drawLineClipped(Surface *dest, int x1, int y1, int x2, int y2, u
 	unsigned point2mask = clipmask(clippedX2, clippedY2, left, top, right, bottom);
 
 	bool rejected = false;
-	while (point1mask != 0 || point2mask != 0) 
+	while (point1mask != 0 || point2mask != 0)
 	{
-		if ((point1mask & point2mask) != 0) 
+		if ((point1mask & point2mask) != 0)
 		{
 			rejected = true;
 			break;
@@ -79,35 +79,35 @@ void librender::drawLineClipped(Surface *dest, int x1, int y1, int x2, int y2, u
 
 		unsigned  mask = point1mask ? point1mask : point2mask;
 		int x, y;
-		if (mask & kBottom) 
+		if (mask & kBottom)
 		{
 			y = bottom;
 			x = horzClip(clippedX1, clippedY1, clippedX2, clippedY2, y);
-		} 
-		else if (mask & kTop) 
+		}
+		else if (mask & kTop)
 		{
 			y = top;
 			x = horzClip(clippedX1, clippedY1, clippedX2, clippedY2, y);
-		} 
-		else if (mask & kRight) 
+		}
+		else if (mask & kRight)
 		{
 			x = right;
 			y = vertClip(clippedX1, clippedY1, clippedX2, clippedY2, x);
-		} 
-		else if (mask & kLeft) 
+		}
+		else if (mask & kLeft)
 		{
 			x = left;
 			y = vertClip(clippedX1, clippedY1, clippedX2, clippedY2, x);
 		}
 
-		if (point1mask) 
+		if (point1mask)
 		{
 			// Clip point 1
 			point1mask = clipmask(x, y, left, top, right, bottom);
 			clippedX1 = x;
 			clippedY1 = y;
-		} 
-		else 
+		}
+		else
 		{
 			// Clip point 2
 			point2mask = clipmask(x, y, left, top, right, bottom);
@@ -115,7 +115,7 @@ void librender::drawLineClipped(Surface *dest, int x1, int y1, int x2, int y2, u
 			clippedY2 = y;
 		}
 	}
-	
+
 	if (!rejected)
 		drawLine(dest, clippedX1, clippedY1, clippedX2, clippedY2, color);
 }
@@ -123,7 +123,7 @@ void librender::drawLineClipped(Surface *dest, int x1, int y1, int x2, int y2, u
 void librender::drawLine(Surface *dest, int x1, int y1, int x2, int y2, unsigned int color)
 {
 	// Swap if necessary so we always draw top to bottom
-	if (y1 > y2) 
+	if (y1 > y2)
 	{
 		int temp = y1;
 		y1 = y2;
@@ -141,33 +141,33 @@ void librender::drawLine(Surface *dest, int x1, int y1, int x2, int y2, unsigned
 	unsigned int *ptr = (static_cast<unsigned int*>(dest->bits())) + x1 + y1 * dest->getWidth();
 	int stride = dest->getWidth();
 
-	if (deltaX == 0) 
+	if (deltaX == 0)
 	{
 		// Vertical line
-		for (int y = deltaY; y > 0; y--) 
+		for (int y = deltaY; y > 0; y--)
 		{
 			*ptr = color;
 			ptr += stride;
 		}
-	} 
-	else if (deltaY == 0) 
+	}
+	else if (deltaY == 0)
 	{
 		// Horizontal line
-		for (int x = deltaX; x > 0; x--) 
+		for (int x = deltaX; x > 0; x--)
 		{
 			*ptr = color;
 			ptr += xDir;
 		}
-	} 
-	else if (deltaX > deltaY) 
+	}
+	else if (deltaX > deltaY)
 	{
 		// Diagonal with horizontal major axis
 		int x = x1;
-		for (;;) 
+		for (;;)
 		{
 			*ptr = color;
 			error += deltaY;
-			if (error > deltaX) 
+			if (error > deltaX)
 			{
 				ptr += stride;
 				error -= deltaX;
@@ -179,15 +179,15 @@ void librender::drawLine(Surface *dest, int x1, int y1, int x2, int y2, unsigned
 
 			x += xDir;
 		}
-	} 
-	else 
+	}
+	else
 	{
 		// Diagonal with vertical major axis
-		for (int y = y1; y <= y2; y++) 
+		for (int y = y1; y <= y2; y++)
 		{
 			*ptr = color;
 			error += deltaX;
-			if (error > deltaY) 
+			if (error > deltaY)
 			{
 				ptr += xDir;
 				error -= deltaY;

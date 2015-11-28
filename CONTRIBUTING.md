@@ -5,7 +5,7 @@ software and hardware. Here are some examples of areas to help out, which are
 by no means exhaustive:
 
 1. Hardware - Improve performance, increase clock speed, reduce area, add new
-   instructions or memory mapped fixed function blocks. Synthesize for other 
+   instructions or memory mapped fixed function blocks. Synthesize for other
    FPGAs or ASICs (fix errors, add build scripts and config files)
 2. Verification - Create new tests and test frameworks, improve existing ones.
 3. Compiler - Improve code generation, port other language frontends
@@ -57,7 +57,7 @@ To submit a change:
 
    ```
    git checkout -b my-new-feature
-   ```   
+   ```
 
 3. Make changes and check into your local repository.
 4. Rebase the changes and squash them into one commit.
@@ -69,9 +69,9 @@ http://eli.thegreenplace.net/2014/02/19/squashing-github-pull-requests-into-a-si
    ```
    git push origin my-new-feature
    ```
-  
-6. Follow the instructions [here](https://help.github.com/articles/creating-a-pull-request) 
-to create a pull request: 
+
+6. Follow the instructions [here](https://help.github.com/articles/creating-a-pull-request)
+to create a pull request:
 
 When a pull request has been accepted, you can sync it to your master branch
 as described in step 1 above.
@@ -130,19 +130,24 @@ errors than Verilator. Also verify:
    ; 61.22 MHz  ; 61.22 MHz       ; clk50               ;      ;
    ...
    ```
- 
+
 4. For compiler and emulator changes, compile and execute run apps in software/apps.
- 
+
 # Coding Style
 
-When in doubt, be consistent with existing code. The OpenCores guidelines give
-a good set of rules, which this project generally follows (with some
-exceptions, which should be obvious)
+When in doubt, be consistent with existing code.
 
+Source files use tabs for indentation, spaces for alignment to the right of
+text. Strip trailing whitespace before submitting patches. Many editors can
+do this automatically.
+
+The OpenCores guidelines give a good set of rules for SystemVerilog sources,
+which this project generally follows (with some exceptions, which should be
+obvious)
 
 http://cdn.opencores.org/downloads/opencores_coding_guidelines.pdf
 
-This project uses a few other conventions:
+This project also uses the following additional conventions:
 
 - Use `logic` to define nets and flops rather than `reg` and `wire`
 - For non-generic components, make the instance name be the same as the component name<br>
@@ -160,14 +165,14 @@ This project uses a few other conventions:
 
 - Use verilog-2001 style port definitions, specifying direction and type in one
   definition. Group module ports by source/destination and add a comment for
-  each group. Prefix signals that go between non-generic components with an 
+  each group. Prefix signals that go between non-generic components with an
   abbreviation of the source module
-   
+
    ```SystemVerilog
 	// From io_request_queue
 	input scalar_t                ior_read_value,
 	input logic                   ior_rollback_en,
-	
+
 	// From control registers
 	input scalar_t                cr_creg_read_val,
 	input thread_bitmap_t         cr_interrupt_en,

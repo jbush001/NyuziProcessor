@@ -1,19 +1,19 @@
 #!/usr/bin/env python
-# 
+#
 # Copyright 2011-2015 Jeff Bush
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# 
+#
 
 #
 # Read a Wavefront .OBJ file and convert it into a flat file that can be read
@@ -69,7 +69,7 @@ def read_image_file(filename, resizeToWidth=None, resizeToHeight=None):
 
 	if width is None or height is None:
 		raise Exception('Could not determine dimensions of texture ' + filename)
-			
+
 	# Imagemagick often leaves junk at the end of the file, so explicitly truncate here.
 	expectedSize = resizeToWidth * resizeToHeight * 4 if resizeToWidth else width * height * 4
 	with open(temppath, 'rb') as f:
@@ -79,7 +79,7 @@ def read_image_file(filename, resizeToWidth=None, resizeToHeight=None):
 		print('length mismatch' + str(len(textureData)) + ' != ' + str(expectedSize))
 
 	os.unlink(temppath)
-		
+
 	return (width, height, textureData)
 
 
@@ -91,7 +91,7 @@ def read_texture(filename):
 	for level in range(1, NUM_MIP_LEVELS + 1):
 		_, _, sub_data = read_image_file(filename, width >> level, height >> level)
 		data += sub_data
-		
+
 	return width, height, data
 
 
@@ -99,14 +99,14 @@ def read_mtl_file(filename):
 	global textureList, materialNameToTextureIdx
 
 	print('read material file ' + filename)
-	
+
 	currentName = ''
 	currentFile = ''
 	with open(filename) as f:
 		for line in f:
 			if line[0] == '#' or line.strip() == '':
 				continue
-			
+
 			fields = [s for s in line.strip().split(' ') if s]
 			if fields[0] == 'newmtl':
 				currentName = fields[1]
@@ -132,17 +132,17 @@ def compute_normal(vertex1, vertex2, vertex3):
 	bx = vertex3[0] - vertex1[0]
 	by = vertex3[1] - vertex1[1]
 	bz = vertex3[2] - vertex1[2]
-	
+
 	# Cross product
 	cx = ay * bz - az * by
 	cy = az * bx - ax * bz
 	cz = ax * by - ay * bx
-	
+
 	# Normalize
 	mag = math.sqrt(cx * cx + cy * cy + cz * cz)
 	if mag == 0:
 		return (0, 0, 0)
-	
+
 	return (cx / mag, cy / mag, cz / mag)
 
 
@@ -152,7 +152,7 @@ def zero_to_one_based_index(x):
 
 def read_obj_file(filename):
 	global meshList
-	
+
 	vertexPositions = []
 	textureCoordinates = []
 	normals = []
@@ -166,7 +166,7 @@ def read_obj_file(filename):
 		for line in f:
 			if line[0] == '#' or line.strip() == '':
 				continue
-			
+
 			fields = [s for s in line.strip().split(' ') if s]
 			if fields[0] == 'v':
 				vertexPositions.append((float(fields[1]), float(fields[2]), float(fields[3])))
@@ -191,7 +191,7 @@ def read_obj_file(filename):
 					# XXX this isn't perfect because the vertex normal should be the
 					# combination of all face normals, but it's good enough for
 					# our purposes.
-					faceNormal = compute_normal(vertexPositions[parsedIndices[0][0]], 
+					faceNormal = compute_normal(vertexPositions[parsedIndices[0][0]],
 						vertexPositions[parsedIndices[1][0]],
 						vertexPositions[parsedIndices[2][0]])
 				else:
@@ -205,16 +205,16 @@ def read_obj_file(filename):
 						vertexAttrs += textureCoordinates[indices[1]]
 					else:
 						vertexAttrs += (0, 0)
-						
+
 					if faceNormal:
 						vertexAttrs += faceNormal
 					else:
 						vertexAttrs += normals[indices[2]]
-					
+
 					if vertexAttrs not in vertexToIndex:
 						vertexToIndex[vertexAttrs] = len(combinedVertices)
 						combinedVertices += [vertexAttrs]
-				
+
 					polygonIndices += [vertexToIndex[vertexAttrs]]
 
 				# faceList is made up of polygons. Convert to triangles
@@ -247,7 +247,7 @@ def print_stats():
 	maxy = float('-Inf')
 	minz = float('Inf')
 	maxz = float('-Inf')
-	
+
 	for _, vertices, indices in meshList:
 		totalTriangles += len(indices) // 3
 		totalVertices += len(vertices)
@@ -275,7 +275,7 @@ def align(addr, alignment):
 def write_resource_file(filename):
 	global textureList
 	global meshList
-	
+
 	currentDataOffset = 12 + len(textureList) * 12 + len(meshList) * 16  # Skip header
 	currentHeaderOffset = 12
 
@@ -291,7 +291,7 @@ def write_resource_file(filename):
 			f.seek(currentDataOffset)
 			f.write(data)
 			currentDataOffset = align(currentDataOffset + len(data), 4)
-			
+
 		# Write meshes
 		for textureIdx, vertices, indices in meshList:
 			currentDataOffset = align(currentDataOffset, 4)
@@ -307,7 +307,7 @@ def write_resource_file(filename):
 				for val in vert:
 					f.write(struct.pack('f', val))
 					currentDataOffset += 4
-				
+
 			for index in indices:
 				f.write(struct.pack('I', index))
 				currentDataOffset += 4
@@ -317,7 +317,7 @@ def write_resource_file(filename):
 		f.write(struct.pack('I', currentDataOffset)) # total size
 		f.write(struct.pack('I', len(textureList))) # num textures
 		f.write(struct.pack('I', len(meshList))) # num meshes
-		
+
 		print('wrote ' + filename)
 
 # Main

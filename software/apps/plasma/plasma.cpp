@@ -110,12 +110,12 @@ vecf16_t fast_sinfv(vecf16_t angle)
 {
 	const float B = 4.0 / M_PI;
 	const float C = -4.0 / (M_PI * M_PI);
-	
-	// Wrap angle so it is in range -pi to pi (polynomial diverges outside 
+
+	// Wrap angle so it is in range -pi to pi (polynomial diverges outside
 	// this range).
 	veci16_t whole = __builtin_convertvector(angle / splatf(M_PI), veci16_t);
 	angle -= __builtin_convertvector(whole, vecf16_t) * splatf(M_PI);
-	
+
 	// Compute polynomial value
 	vecf16_t result = angle * splatf(B) + angle * absfv(angle) * splatf(C);
 
@@ -129,7 +129,7 @@ inline vecf16_t fast_sqrtfv(vecf16_t number)
 	// "Quake" fast square inverse root
 	// https://en.wikipedia.org/wiki/Fast_inverse_square_root
 	vecf16_t x2 = number * splatf(0.5f);
-	vecf16_t y = vecf16_t(splati(0x5f3759df) - (veci16_t(number) >> splati(1))); 
+	vecf16_t y = vecf16_t(splati(0x5f3759df) - (veci16_t(number) >> splati(1)));
 	y = y * (splatf(1.5f) - (x2 * y * y));
 
 	// y is the inverse square root. Invert again to get the square root.
@@ -156,7 +156,7 @@ int main()
 {
 	int myThreadId = get_current_thread_id();
 	clock_t lastTime = 0;
-	
+
 	if (myThreadId == 0)
 	{
 		for (int i = 0; i < NUM_PALETTE_ENTRIES; i++)
@@ -173,7 +173,7 @@ int main()
 
 		startAllThreads();
 	}
-	
+
 	for (;;)
 	{
 		for (int y = myThreadId; y < kScreenHeight; y += kNumThreads)

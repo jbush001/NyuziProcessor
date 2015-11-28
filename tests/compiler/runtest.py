@@ -23,14 +23,14 @@ from os import path
 sys.path.insert(0, '..')
 import test_harness
 
-	
+
 use_verilator = 'USE_VERILATOR' in os.environ
 
 def run_verilator_test(source_file):
 	test_harness.compile_test(source_file, optlevel='3')
 	result = test_harness.run_verilator()
 	test_harness.check_result(source_file, result)
-	
+
 def run_host_test(source_file):
 	subprocess.check_call(['c++', '-w', source_file, '-o', 'obj/a.out'])
 	result = subprocess.check_output('obj/a.out')

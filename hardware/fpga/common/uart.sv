@@ -65,7 +65,7 @@ module uart
 			STATUS_REG:
 			begin 
 				io_read_data[31:4] = 0;
-				io_read_data[3:0] = { rx_fifo_frame_error, rx_fifo_overrun, !rx_fifo_empty, tx_ready };
+				io_read_data[3:0] = {rx_fifo_frame_error, rx_fifo_overrun, !rx_fifo_empty, tx_ready};
 			end
 			default:
 			begin

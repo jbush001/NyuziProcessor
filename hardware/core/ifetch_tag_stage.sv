@@ -285,7 +285,7 @@ module ifetch_tag_stage
 		end
 	end
 	
-	assign ift_pc_paddr = { ppage_idx, last_selected_pc[31 - `PAGE_NUM_BITS:0] };
+	assign ift_pc_paddr = {ppage_idx, last_selected_pc[31 - `PAGE_NUM_BITS:0]};
 	assign ift_pc_vaddr = last_selected_pc;
 endmodule
 

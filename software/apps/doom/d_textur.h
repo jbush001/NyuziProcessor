@@ -1,4 +1,4 @@
-// Emacs style mode select	 -*- C++ -*- 
+// Emacs style mode select	 -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // $Id:$
@@ -17,7 +17,7 @@
 // DESCRIPTION:
 //		Typedefs related to to textures etc.,
 //		 isolated here to make it easier separating modules.
-//	  
+//
 //-----------------------------------------------------------------------------
 
 

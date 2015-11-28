@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 #include <stdio.h>
 #include <unistd.h>
@@ -43,7 +43,7 @@ int main(void)
 
 	add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE);
 	add_dtlb_mapping(data_addr, ((unsigned int)data_addr) | TLB_WRITABLE);	// Writable
-	*data_addr2 = 0x12345678; 
+	*data_addr2 = 0x12345678;
 	add_dtlb_mapping(data_addr2, data_addr2); // Not writable
 	add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE); // I/O
 
@@ -57,7 +57,7 @@ int main(void)
 	printf("data value %08x\n", *data_addr); // CHECK: data value 1f6818aa
 
 	// Attempt to write to write protected page will fail.
-	*data_addr2 = 0xdeadbeef; 
+	*data_addr2 = 0xdeadbeef;
 
 	// Ensure two things:
 	// - that a fault is raised

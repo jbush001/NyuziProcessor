@@ -85,7 +85,7 @@ module int_execute_stage(
 			
 			assign lane_operand1 = of_operand1[lane];
 			assign lane_operand2 = of_operand2[lane];
-			assign { borrow, difference } = { 1'b0, lane_operand1 } - { 1'b0, lane_operand2 };
+			assign {borrow, difference} = {1'b0, lane_operand1} - {1'b0, lane_operand2};
 			assign negative = difference[31]; 
 			assign overflow = lane_operand2[31] == negative && lane_operand1[31] != lane_operand2[31];
 			assign zero = difference == 0;
