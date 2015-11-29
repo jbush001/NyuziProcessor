@@ -124,11 +124,14 @@ module l2_cache_arb(
 				// New request from a core
 				l2a_request <= grant_request;
 				l2a_is_l2_fill <= 0;
+				l2a_is_restarted_flush <= 0;
 			end
 			else
 			begin
+				// No request this cycle
 				l2a_request.valid <= 0;
 				l2a_is_l2_fill <= 0;
+				l2a_is_restarted_flush <= 0;
 			end
 		end
 	end
