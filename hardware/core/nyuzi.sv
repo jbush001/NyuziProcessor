@@ -39,17 +39,20 @@ module nyuzi
 
 	l2req_packet_t l2i_request[`NUM_CORES];
 	ioreq_packet_t io_request[`NUM_CORES];
-	logic[`TOTAL_THREADS - 1:0] ny_thread_enable;
 	logic[`TOTAL_PERF_EVENTS - 1:0] perf_events;
+	logic[`NUM_CORES - 1:0] ic_interrupt_pending;
+	logic[`NUM_CORES - 1:0] wb_interrupt_ack;
+	scalar_t ic_io_read_data;	// Currently not used
 
 	// XXX AUTOLOGIC not generating these
 	l2rsp_packet_t l2_response;
 	iorsp_packet_t ia_response;
-
+	thread_idx_t ic_interrupt_thread_idx;
 
 	/*AUTOLOGIC*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	logic		ia_ready [`NUM_CORES];	// From io_arbiter of io_arbiter.v
+	logic [`TOTAL_THREADS-1:0] ic_thread_en;// From interrupt_controller of interrupt_controller.v
 	logic		l2_ready [`NUM_CORES];	// From l2_cache of l2_cache.v
 	// End of automatics
 
@@ -58,8 +61,6 @@ module nyuzi
 		assert(`NUM_CORES >= 1 && `NUM_CORES <= (1 << `CORE_ID_WIDTH));
 	end
 
-	assign processor_halt = ny_thread_enable == 0;
-
 	genvar core_idx;
 	generate
 		for (core_idx = 0; core_idx < `NUM_CORES; core_idx++)
@@ -67,7 +68,9 @@ module nyuzi
 			core #(.CORE_ID(core_id_t'(core_idx)), .RESET_PC(RESET_PC)) core(
 				.l2i_request(l2i_request[core_idx]),
 				.l2_ready(l2_ready[core_idx]),
-				.ny_thread_enable(ny_thread_enable[core_idx * `THREADS_PER_CORE+:`THREADS_PER_CORE]),
+				.ic_thread_en(ic_thread_en[core_idx * `THREADS_PER_CORE+:`THREADS_PER_CORE]),
+				.ic_interrupt_pending(ic_interrupt_pending[core_idx]),
+				.wb_interrupt_ack(wb_interrupt_ack[core_idx]),
 				.ior_request(io_request[core_idx]),
 				.ia_ready(ia_ready[core_idx]),
 				.ia_response(ia_response),
@@ -76,22 +79,9 @@ module nyuzi
 		end
 	endgenerate
 
-	// Thread enable flag handling. A set of memory mapped registers halt and
-	// resume threads.
-	always_ff @(posedge clk, posedge reset)
-	begin
-		if (reset)
-			ny_thread_enable <= 1;
-		else if (io_write_en)
-		begin
-			// Thread mask  This is limited to 32 threads.
-			// To add more, put the next 32 bits in subsequent io addresses.
-			if (io_address == 'h60) // resume thread
-				ny_thread_enable <= ny_thread_enable | io_write_data[`TOTAL_THREADS - 1:0];
-			else if (io_address == 'h64) // halt thread
-				ny_thread_enable <= ny_thread_enable & ~io_write_data[`TOTAL_THREADS - 1:0];
-		end
-	end
+	interrupt_controller #(.BASE_ADDRESS('h60)) interrupt_controller(
+		.io_read_data(ic_io_read_data),
+		.*);
 
 	l2_cache l2_cache(
 		.l2_perf_events(perf_events[`L2_PERF_EVENTS - 1:0]),

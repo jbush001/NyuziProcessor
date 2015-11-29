@@ -286,9 +286,11 @@ typedef enum logic {
 	CT_DCACHE
 } cache_type_t;
 
-`define CORE_ID_WIDTH 3
+`define CORE_ID_WIDTH $clog2(`NUM_CORES)
 
-typedef logic[`CORE_ID_WIDTH - 1:0] core_id_t;
+// The width for core ID is hardcoded because using $clog2 doesn't
+// work for one core. This limits to 16 cores.
+typedef logic[3:0] core_id_t;
 typedef logic[$clog2(`THREADS_PER_CORE) - 1:0] l1_miss_entry_idx_t;
 
 typedef enum logic[2:0] {

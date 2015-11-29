@@ -58,7 +58,7 @@ module thread_select_stage(
 	input subcycle_t                   wb_rollback_subcycle,
 
 	// From top level module
-	input thread_bitmap_t              ny_thread_enable,
+	input thread_bitmap_t              ic_thread_en,
 
 	// From dcache_data_stage
 	input thread_bitmap_t              wb_suspend_thread_oh,
@@ -154,7 +154,7 @@ module thread_select_stage(
 			// This signal goes back to the thread fetch stage to enable fetching more
 			// instructions. Deassert fetch enable a few cycles before the FIFO
 			// fills up because there are several stages in-between.
-			assign ts_fetch_en[thread_idx] = !ififo_almost_full && ny_thread_enable[thread_idx];
+			assign ts_fetch_en[thread_idx] = !ififo_almost_full && ic_thread_en[thread_idx];
 
 			/// XXX Treat PC specially for scoreboard?
 
@@ -284,7 +284,7 @@ module thread_select_stage(
 			// would delay the load.
 			assign can_issue_thread[thread_idx] = instruction_latched
 				&& ((scoreboard[thread_idx] & scoreboard_dep_bitmap) == 0 || current_subcycle[thread_idx] != 0)
-				&& ny_thread_enable[thread_idx]
+				&& ic_thread_en[thread_idx]
 				&& !rollback_this_thread
 				&& !writeback_conflict
 				&& !thread_blocked[thread_idx];

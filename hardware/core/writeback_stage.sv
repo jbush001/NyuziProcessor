@@ -104,8 +104,8 @@ module writeback_stage(
 	output subcycle_t                     wb_fault_subcycle,
 
 	// Interrupt input
-	input                                 interrupt_pending,
-	input thread_idx_t                    interrupt_thread_idx,
+	input                                 ic_interrupt_pending,
+	input thread_idx_t                    ic_interrupt_thread_idx,
 	output logic                          wb_interrupt_ack,
 
 	// Rollback signals to all stages
@@ -284,10 +284,10 @@ module writeback_stage(
 			wb_rollback_pipeline = PIPE_MEM;
 			wb_rollback_subcycle = dd_subcycle;
 		end
-		else if (interrupt_pending
-			&& cr_interrupt_en[interrupt_thread_idx]
+		else if (ic_interrupt_pending
+			&& cr_interrupt_en[ic_interrupt_thread_idx]
 			&& !dd_instruction_valid
-			&& (!ix_instruction_valid || ix_thread_idx == interrupt_thread_idx)
+			&& (!ix_instruction_valid || ix_thread_idx == ic_interrupt_thread_idx)
 			&& !fx5_instruction_valid)
 		begin
 			// Do not dispatch an interrupt in the following cases:
@@ -300,14 +300,14 @@ module writeback_stage(
 			//   memory in the last stage and rolling back here will cause them to
 			//   happen again when the thread is restarted.
 			wb_rollback_en = 1;
-			wb_rollback_thread_idx = interrupt_thread_idx;
+			wb_rollback_thread_idx = ic_interrupt_thread_idx;
 			wb_rollback_pc = cr_fault_handler;
 			wb_rollback_pipeline = PIPE_MEM;
 			wb_rollback_subcycle = 0;
 			wb_fault = 1;
-			wb_fault_pc = last_retire_pc[interrupt_thread_idx] + 4;
+			wb_fault_pc = last_retire_pc[ic_interrupt_thread_idx] + 4;
 			wb_fault_reason = FR_INTERRUPT;
-			wb_fault_thread_idx = interrupt_thread_idx;
+			wb_fault_thread_idx = ic_interrupt_thread_idx;
 			wb_interrupt_ack = 1;
 			if (ix_instruction_valid)
 				wb_fault_subcycle = ix_subcycle;

@@ -74,9 +74,9 @@ module l2_cache_arb(
 
 			oh_to_idx #(.NUM_SIGNALS(`NUM_CORES)) oh_to_idx_grant(
 				.one_hot(grant_oh),
-				.index(grant_idx));
+				.index(grant_idx[`CORE_ID_WIDTH - 1:0]));
 
-			assign grant_request = l2i_request[grant_idx];
+			assign grant_request = l2i_request[grant_idx[`CORE_ID_WIDTH - 1:0]];
 		end
 		else
 		begin

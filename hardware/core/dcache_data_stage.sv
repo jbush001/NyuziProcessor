@@ -112,8 +112,8 @@ module dcache_data_stage(
 	// Interrupt input. Interrupts are diferent than rollbacks because
 	// they can occur in the middle of a synchronized load/store. Detect
 	// these and cancel the operation.
-	input                                     interrupt_pending,
-	input thread_idx_t                        interrupt_thread_idx,
+	input                                     ic_interrupt_pending,
+	input thread_idx_t                        ic_interrupt_thread_idx,
 	input                                     wb_interrupt_ack,
 
 	// From writeback_stage
@@ -460,8 +460,8 @@ module dcache_data_stage(
 			begin
 				if (reset)
 					sync_load_pending[thread_idx] <= 0;
-				else if (interrupt_pending && wb_interrupt_ack
-					&& interrupt_thread_idx == thread_idx_t'(thread_idx))
+				else if (ic_interrupt_pending && wb_interrupt_ack
+					&& ic_interrupt_thread_idx == thread_idx_t'(thread_idx))
 				begin
 					// If a thread dispatches an interrupt while waiting on a synchronized
 					// load, reset the sync load pending flag.

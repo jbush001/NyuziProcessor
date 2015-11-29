@@ -27,8 +27,10 @@ module core
 
 	(input                                 clk,
 	input                                  reset,
-	input[`THREADS_PER_CORE - 1:0]         ny_thread_enable,
-	input                                  interrupt_req,
+	input[`THREADS_PER_CORE - 1:0]         ic_thread_en,
+	input                                  ic_interrupt_pending,
+	input thread_idx_t                     ic_interrupt_thread_idx,
+	output                                 wb_interrupt_ack,
 
 	// L2 interface
 	input                                  l2_ready,
@@ -291,7 +293,6 @@ module core
 	fault_reason_t	wb_fault_reason;	// From writeback_stage of writeback_stage.v
 	subcycle_t	wb_fault_subcycle;	// From writeback_stage of writeback_stage.v
 	thread_idx_t	wb_fault_thread_idx;	// From writeback_stage of writeback_stage.v
-	logic		wb_interrupt_ack;	// From writeback_stage of writeback_stage.v
 	logic		wb_rollback_en;		// From writeback_stage of writeback_stage.v
 	scalar_t	wb_rollback_pc;		// From writeback_stage of writeback_stage.v
 	pipeline_sel_t	wb_rollback_pipeline;	// From writeback_stage of writeback_stage.v
@@ -306,20 +307,6 @@ module core
 	thread_idx_t	wb_writeback_thread_idx;// From writeback_stage of writeback_stage.v
 	vector_t	wb_writeback_value;	// From writeback_stage of writeback_stage.v
 	// End of automatics
-
-	logic interrupt_pending;
-
-	always_ff @(posedge clk, posedge reset)
-	begin
-		if (reset)
-			interrupt_pending <= 0;
-		else if (!interrupt_pending && interrupt_req)
-			interrupt_pending <= 1;
-		else if (wb_interrupt_ack)
-			interrupt_pending <= 0;
-	end
-
-	thread_idx_t interrupt_thread_idx = 0;	// XXX hard coded
 
 	//
 	// Instruction Execution Pipeline
