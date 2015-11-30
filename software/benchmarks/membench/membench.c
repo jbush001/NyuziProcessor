@@ -45,7 +45,7 @@ void endParallel()
 	while (gActiveThreadCount > 0)
 		;
 
-	if (get_current_thread_id() == 0)
+	if (getCurrentThreadId() == 0)
 	{
 		// Stop all but me
 		*((unsigned int*) 0xffff0064) = ~1;
@@ -54,13 +54,13 @@ void endParallel()
 
 void copyTest()
 {
-	veci16_t *dest = (veci16_t*) region1Base + get_current_thread_id() * LOOP_UNROLL;
-	veci16_t *src = (veci16_t*) region2Base + get_current_thread_id() * LOOP_UNROLL;
+	veci16_t *dest = (veci16_t*) region1Base + getCurrentThreadId() * LOOP_UNROLL;
+	veci16_t *src = (veci16_t*) region2Base + getCurrentThreadId() * LOOP_UNROLL;
 	veci16_t values = __builtin_nyuzi_makevectori(0xdeadbeef);
 	int transferCount = kTransferSize / (64 * NUM_THREADS * LOOP_UNROLL);
 	int unrollCount;
 
-	int startTime = get_cycle_count();
+	int startTime = getCycleCount();
 	startParallel();
 	do
 	{
@@ -73,9 +73,9 @@ void copyTest()
 	}
 	while (--transferCount);
 	endParallel();
-	if (get_current_thread_id() == 0)
+	if (getCurrentThreadId() == 0)
 	{
-		int endTime = get_cycle_count();
+		int endTime = getCycleCount();
 		printf("copy: %g bytes/cycle\n", (float) kTransferSize / (endTime - startTime));
 	}
 }
@@ -83,12 +83,12 @@ void copyTest()
 void readTest()
 {
 	// Because src is volatile, the loads below will not be optimized away
-	volatile veci16_t *src = (veci16_t*) region1Base + get_current_thread_id() * LOOP_UNROLL;
+	volatile veci16_t *src = (veci16_t*) region1Base + getCurrentThreadId() * LOOP_UNROLL;
 	veci16_t result;
 	int transferCount = kTransferSize / (64 * NUM_THREADS * LOOP_UNROLL);
 	int unrollCount;
 
-	int startTime = get_cycle_count();
+	int startTime = getCycleCount();
 	startParallel();
 	do
 	{
@@ -100,21 +100,21 @@ void readTest()
 	}
 	while (--transferCount);
 	endParallel();
-	if (get_current_thread_id() == 0)
+	if (getCurrentThreadId() == 0)
 	{
-		int endTime = get_cycle_count();
+		int endTime = getCycleCount();
 		printf("read: %g bytes/cycle\n", (float) kTransferSize / (endTime - startTime));
 	}
 }
 
 void writeTest()
 {
-	veci16_t *dest = (veci16_t*) region1Base + get_current_thread_id() * LOOP_UNROLL;
+	veci16_t *dest = (veci16_t*) region1Base + getCurrentThreadId() * LOOP_UNROLL;
 	const veci16_t values = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 11, 14, 15 };
 	int transferCount = kTransferSize / (64 * NUM_THREADS * LOOP_UNROLL);
 	int unrollCount;
 
-	int startTime = get_cycle_count();
+	int startTime = getCycleCount();
 	startParallel();
 	do
 	{
@@ -126,9 +126,9 @@ void writeTest()
 	}
 	while (--transferCount);
 	endParallel();
-	if (get_current_thread_id() == 0)
+	if (getCurrentThreadId() == 0)
 	{
-		int endTime = get_cycle_count();
+		int endTime = getCycleCount();
 		printf("write: %g bytes/cycle\n", (float) kTransferSize / (endTime - startTime));
 	}
 }
@@ -141,7 +141,7 @@ void ioReadTest()
 	int endTime;
 	int total;
 
-	startTime = get_cycle_count();
+	startTime = getCycleCount();
 	startParallel();
 	for (transferCount = 0; transferCount < 1024; transferCount += 8)
 	{
@@ -156,9 +156,9 @@ void ioReadTest()
 	}
 	endParallel();
 
-	if (get_current_thread_id() == 0)
+	if (getCurrentThreadId() == 0)
 	{
-		endTime = get_cycle_count();
+		endTime = getCycleCount();
 		printf("ioRead: %g cycles/transfer\n", (float)(endTime - startTime)
 			/ (transferCount * NUM_THREADS));
 	}
@@ -172,7 +172,7 @@ void ioWriteTest()
 	int endTime;
 	int total;
 
-	startTime = get_cycle_count();
+	startTime = getCycleCount();
 	startParallel();
 	for (transferCount = 0; transferCount < 1024; transferCount += 8)
 	{
@@ -187,9 +187,9 @@ void ioWriteTest()
 	}
 	endParallel();
 
-	if (get_current_thread_id() == 0)
+	if (getCurrentThreadId() == 0)
 	{
-		endTime = get_cycle_count();
+		endTime = getCycleCount();
 		printf("ioWrite: %g cycles/transfer\n", (float)(endTime - startTime)
 			/ (transferCount * NUM_THREADS));
 	}

@@ -23,7 +23,6 @@
 // the SPI interface must be enabled by making sure the define BITBANG_SDMMC
 // is not set in hardware/fpga/fpga_top.sv.
 
-#define SYS_CLOCK_HZ 50000000
 #define MAX_RETRIES 100
 
 typedef enum

@@ -17,12 +17,12 @@
 #ifndef __NYUZI_H
 #define __NYUZI_H
 
-inline int get_current_thread_id()
+inline int getCurrentThreadId()
 {
 	return __builtin_nyuzi_read_control_reg(0);
 }
 
-inline unsigned int get_cycle_count()
+inline unsigned int getCycleCount()
 {
 	return __builtin_nyuzi_read_control_reg(6);
 }

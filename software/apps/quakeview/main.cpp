@@ -193,7 +193,7 @@ void parseCoordinateString(const char *string, float outCoord[3])
 // All threads start execution here.
 int main()
 {
-	if (get_current_thread_id() != 0)
+	if (getCurrentThreadId() != 0)
 		workerThread();
 
 	// Set up render context

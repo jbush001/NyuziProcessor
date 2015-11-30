@@ -154,7 +154,7 @@ uint32_t gPalette[NUM_PALETTE_ENTRIES];
 // All threads start here
 int main()
 {
-	int myThreadId = get_current_thread_id();
+	int myThreadId = getCurrentThreadId();
 	clock_t lastTime = 0;
 
 	if (myThreadId == 0)

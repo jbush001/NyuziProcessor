@@ -154,7 +154,7 @@ int main()
 	const int kNumBuffers = 2;
 	const int kNumLanes = 16;
 
-	unsigned int basePtr = 0x100000 + get_current_thread_id() * (kHashSize * kNumLanes * kNumBuffers)
+	unsigned int basePtr = 0x100000 + getCurrentThreadId() * (kHashSize * kNumLanes * kNumBuffers)
 		+ (kSourceBlockSize * kNumLanes);
 	const vecu16_t kStepVector = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 	vecu16_t inputPtr = __builtin_nyuzi_makevectori(basePtr) + (kStepVector * __builtin_nyuzi_makevectori(kHashSize));
@@ -171,12 +171,12 @@ int main()
 	}
 
 	__sync_fetch_and_add(&gActiveThreadCount, -1);
-	if (get_current_thread_id() == 0)
+	if (getCurrentThreadId() == 0)
 	{
 		while (gActiveThreadCount > 0)
 			;
 
-		int endTime = get_cycle_count();
+		int endTime = getCycleCount();
 		printf("%g cycles per hash\n", (float) endTime / 256);
 	}
 	else

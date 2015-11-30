@@ -16,11 +16,10 @@
 
 #
 # C runtime startup code. When the processor boots, only hardware thread 0 is
-# active. It begins execution at _start, which performs static initialization
-# (for example, calling global constructors), then calls the program's main
-# function. Main may set a control register to enable the other threads, which
-# will also begins execution at _start. However, they will branch over the
-# initialization routine and go to main directly.
+# running. It begins execution at _start, which sets up the stack, calls global
+# constructors, and jumps to main(). If the program starts the other hardware
+# threads, they also begins execution at _start, but they skip calling global
+# constructors and jump directly to main.
 #
 # Memory map:
 # 00000000   +---------------+
@@ -53,11 +52,11 @@ _start:
 					# Call global initializers
 					load_32 s24, init_array_start
 					load_32 s25, init_array_end
-init_loop:			cmpeq_i s0, s24, s25
-					btrue s0, do_main
-					load_32 s0, (s24)
-					add_i s24, s24, 4
-					call s0
+init_loop:			cmpeq_i s0, s24, s25	# End of array?
+					btrue s0, do_main		# If so, exit loop
+					load_32 s0, (s24)		# Load ctor address
+					add_i s24, s24, 4		# Next array index
+					call s0					# Call constructor
 					goto init_loop
 
 do_main:			move s0, 0	# Set argc to 0

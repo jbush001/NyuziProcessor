@@ -137,7 +137,7 @@ Texture *createCheckerboardTexture()
 // All threads start execution here.
 int main()
 {
-	if (get_current_thread_id() != 0)
+	if (getCurrentThreadId() != 0)
 		workerThread();
 
 	// Set up resource data

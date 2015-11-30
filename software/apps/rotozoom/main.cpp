@@ -44,7 +44,7 @@ int main()
 
 	startAllThreads();
 
-	int myThreadId = get_current_thread_id();
+	int myThreadId = getCurrentThreadId();
 	if (myThreadId == 0)
 		displayMatrix = Matrix2x2();
 
