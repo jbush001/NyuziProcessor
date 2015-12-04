@@ -82,7 +82,7 @@ module dcache_data_stage(
 	output control_register_t                 dd_creg_index,
 	output scalar_t                           dd_creg_write_val,
 
-	// From l2_cache_interface
+	// From l1_l2_interface
 	input                                     l2i_ddata_update_en,
 	input l1d_way_idx_t                       l2i_ddata_update_way,
 	input l1d_set_idx_t                       l2i_ddata_update_set,
@@ -91,7 +91,7 @@ module dcache_data_stage(
 	input l1d_set_idx_t                       l2i_dtag_update_set,
 	input l1d_tag_t                           l2i_dtag_update_tag,
 
- 	// To l2_cache_interface
+ 	// To l1_l2_interface
 	output logic                              dd_cache_miss,
 	output scalar_t                           dd_cache_miss_addr,
 	output thread_idx_t                       dd_cache_miss_thread_idx,

@@ -23,11 +23,11 @@
 // - Format a response packet to send back to cores.
 //
 
-module l2_cache_update(
+module l2_cache_update_stage(
 	input                                          clk,
 	input                                          reset,
 
-	// From l2_cache_read
+	// From l2_cache_read_stage
 	input l2req_packet_t                           l2r_request,
 	input cache_line_data_t                        l2r_data,
 	input                                          l2r_cache_hit,
@@ -38,7 +38,7 @@ module l2_cache_update(
 	input                                          l2r_store_sync_success,
 	input                                          l2r_needs_writeback,
 
-	// To l2_cache_read
+	// To l2_cache_read_stage
 	output logic                                   l2u_write_en,
 	output [$clog2(`L2_WAYS * `L2_SETS) - 1:0]     l2u_write_addr,
 	output cache_line_data_t                       l2u_write_data,

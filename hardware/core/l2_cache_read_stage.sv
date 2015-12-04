@@ -34,11 +34,11 @@
 // - Tracks synchronized load/store state.
 //
 
-module l2_cache_read(
+module l2_cache_read_stage(
 	input                                     clk,
 	input                                     reset,
 
-	// From l2_cache_tag
+	// From l2_cache_tag_stage
 	input l2req_packet_t                      l2t_request,
 	input                                     l2t_valid[`L2_WAYS],
 	input l2_tag_t                            l2t_tag[`L2_WAYS],
@@ -48,7 +48,7 @@ module l2_cache_read(
 	input l2_way_idx_t                        l2t_fill_way,
 	input cache_line_data_t                   l2t_data_from_memory,
 
-	// To l2_cache_tag
+	// To l2_cache_tag_stage
 	// Update metadata.
 	output logic[`L2_WAYS - 1:0]              l2r_update_dirty_en,
 	output l2_set_idx_t                       l2r_update_dirty_set,
@@ -60,12 +60,12 @@ module l2_cache_read(
 	output logic                              l2r_update_lru_en,
 	output l2_way_idx_t                       l2r_update_lru_hit_way,
 
-	// From l2_cache_update
+	// From l2_cache_update_stage
 	input                                     l2u_write_en,
 	input [$clog2(`L2_WAYS * `L2_SETS) - 1:0] l2u_write_addr,
 	input cache_line_data_t                   l2u_write_data,
 
-	// To l2_cache_update
+	// To l2_cache_update_stage
 	output l2req_packet_t                     l2r_request,
 	output cache_line_data_t                  l2r_data,	// Also to bus interface unit
 	output logic                              l2r_cache_hit,

@@ -23,7 +23,7 @@
 // l2_ready to avoid a combinational loop.
 //
 
-module l2_cache_arb(
+module l2_cache_arb_stage(
 	input                                 clk,
 	input                                 reset,
 
@@ -31,7 +31,7 @@ module l2_cache_arb(
 	input l2req_packet_t                  l2i_request[`NUM_CORES],
 	output logic                          l2_ready[`NUM_CORES],
 
-	// To l2_cache_tag
+	// To l2_cache_tag_stage
 	output l2req_packet_t                 l2a_request,
 	output cache_line_data_t              l2a_data_from_memory,
 	output logic                          l2a_is_l2_fill,

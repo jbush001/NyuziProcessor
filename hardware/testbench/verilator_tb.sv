@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 `include "../core/defines.sv"
 
@@ -20,7 +20,7 @@
 // Testbench for CPU
 //
 module verilator_tb(
-	input       clk, 
+	input       clk,
 	input       reset);
 
 	localparam MEM_SIZE = 'h1000000;
@@ -74,7 +74,7 @@ module verilator_tb(
 
 	`define CORE0 nyuzi.core_gen[0].core
 
-`ifdef SIMULATE_BOOT_ROM 
+`ifdef SIMULATE_BOOT_ROM
 	// This will simulate with the boot ROM to test that it is generating
 	// the proper memory transactions, but the bootrom doesn't work correctly
 	// in the simulation environment, so it won't do anything else.
@@ -107,7 +107,7 @@ module verilator_tb(
 	localparam SDRAM_NUM_BANKS = 4;
 	localparam SDRAM_DATA_WIDTH = 32;
 	localparam SDRAM_ROW_ADDR_WIDTH = 12;
-	localparam SDRAM_COL_ADDR_WIDTH = $clog2(MEM_SIZE / ((1 << SDRAM_ROW_ADDR_WIDTH) 
+	localparam SDRAM_COL_ADDR_WIDTH = $clog2(MEM_SIZE / ((1 << SDRAM_ROW_ADDR_WIDTH)
 		* SDRAM_NUM_BANKS * (SDRAM_DATA_WIDTH / 8)));
 
 	`define MEMORY memory.memory
@@ -201,8 +201,8 @@ module verilator_tb(
 	begin
 		for (int line_offset = 0; line_offset < `CACHE_LINE_WORDS; line_offset++)
 		begin
-			`MEMORY[(int'(tag) * `L2_SETS + int'(set)) * `CACHE_LINE_WORDS + line_offset] = 
-				int'(nyuzi.l2_cache.l2_cache_read.sram_l2_data.data[{way, set}]
+			`MEMORY[(int'(tag) * `L2_SETS + int'(set)) * `CACHE_LINE_WORDS + line_offset] =
+				int'(nyuzi.l2_cache.l2_cache_read_stage.sram_l2_data.data[{way, set}]
 				 >> ((`CACHE_LINE_WORDS - 1 - line_offset) * 32));
 		end
 	end
@@ -210,14 +210,14 @@ module verilator_tb(
 
 	// Manually copy lines from the L2 cache back to memory so we can
 	// validate it there.
-	`define L2_TAG_WAY nyuzi.l2_cache.l2_cache_tag.way_tags_gen
+	`define L2_TAG_WAY nyuzi.l2_cache.l2_cache_tag_stage.way_tags_gen
 
 	task flush_l2_cache;
 	begin
 		for (int set = 0; set < `L2_SETS; set++)
 		begin
-			// XXX these need to be manually commented out when changing 
-			// the number of L2 ways, since (per IEEE 1800-2012) an 
+			// XXX these need to be manually commented out when changing
+			// the number of L2 ways, since (per IEEE 1800-2012) an
 			// instance select must be a constant expression.
 			if (`L2_TAG_WAY[0].line_valid[set])
 				flush_l2_line(`L2_TAG_WAY[0].sram_tags.data[set], l2_set_idx_t'(set), l2_way_idx_t'(0));
@@ -230,7 +230,7 @@ module verilator_tb(
 
 			if (`L2_TAG_WAY[3].line_valid[set])
 				flush_l2_line(`L2_TAG_WAY[3].sram_tags.data[set], l2_set_idx_t'(set), l2_way_idx_t'(3));
-		
+
 			if (`L2_TAG_WAY[4].line_valid[set])
 				flush_l2_line(`L2_TAG_WAY[4].sram_tags.data[set], l2_set_idx_t'(set), l2_way_idx_t'(4));
 
@@ -249,7 +249,7 @@ module verilator_tb(
 	initial
 	begin
 		$display("cores %0d|threads per core %0d|l1i$ %0dk %0d ways|l1d$ %0dk %0d ways|l2$ %0dk %0d ways|itlb %0d entries|dtlb %0d entries",
-			`NUM_CORES, `THREADS_PER_CORE, 
+			`NUM_CORES, `THREADS_PER_CORE,
 			`L1I_WAYS * `L1I_SETS * `CACHE_LINE_BYTES / 1024, `L1I_WAYS,
 			`L1D_WAYS * `L1D_SETS * `CACHE_LINE_BYTES / 1024, `L1D_WAYS,
 			`L2_WAYS * `L2_SETS * `CACHE_LINE_BYTES / 1024, `L2_WAYS,
@@ -262,7 +262,7 @@ module verilator_tb(
 		end
 		else
 			state_dump_en = 0;
-			
+
 		if ($value$plusargs("profile=%s", filename) != 0)
 		begin
 			profile_en = 1;
@@ -307,11 +307,11 @@ module verilator_tb(
 			end
 
 			$fclose(dump_fp);
-		end	
-		
+		end
+
 		if (state_dump_en)
 			$fclose(state_dump_fd);
-			
+
 		if (profile_en)
 			$fclose(profile_fd);
 
@@ -319,7 +319,7 @@ module verilator_tb(
 		$display("      l2_writeback          %0d", nyuzi.performance_counters.event_counter[0]);
 		$display("      l2_miss               %0d", nyuzi.performance_counters.event_counter[1]);
 		$display("      l2_hit                %0d", nyuzi.performance_counters.event_counter[2]);
-		
+
 		for (int i = 0; i < `NUM_CORES; i++)
 		begin
 			$display("\n      core %0d", i);
@@ -334,7 +334,7 @@ module verilator_tb(
 			$display("      l1d_hit               %0d", nyuzi.performance_counters.event_counter[11 + `NUM_CORES * i]);
 			$display("      dtlb_miss             %0d", nyuzi.performance_counters.event_counter[12 + `NUM_CORES * i]);
 		end
-		
+
 		// Do this last so emulator doesn't kill us with SIGPIPE during cosimulation.
 		if (processor_halt)
 			$display("***HALTED***");
@@ -352,7 +352,7 @@ module verilator_tb(
 			interrupt_counter <= 0;
 			interrupt_req <= 1;
 		end
-		else 
+		else
 		begin
 			interrupt_counter <= interrupt_counter + 1;
 			interrupt_req <= 0;
@@ -384,12 +384,12 @@ module verilator_tb(
 			//
 			// Device registers
 			//
-		
+
 			if (io_write_en)
 			begin
 				case (io_address)
 					// Serial output
-					'h20: $write("%c", io_write_data[7:0]);	
+					'h20: $write("%c", io_write_data[7:0]);
 
 					// Loopback UART
 					'h10c: loopback_uart_mask <= io_write_data[0];
@@ -401,10 +401,10 @@ module verilator_tb(
 				case (io_address)
 					// Hack for cosimulation tests
 					'h4,
-					'h8: io_read_data <= 32'hffffffff;	
+					'h8: io_read_data <= 32'hffffffff;
 
-					// Serial status 
-					'h18: io_read_data <= 1;	
+					// Serial status
+					'h18: io_read_data <= 1;
 
 					// PS2
 					'h38,
@@ -416,7 +416,7 @@ module verilator_tb(
 
 					// External UART 0
 					'h100,
-					'h104: io_read_data <= loopback_uart_read_data;	
+					'h104: io_read_data <= loopback_uart_read_data;
 
 					default: io_read_data <= $random();
 				endcase
@@ -428,13 +428,13 @@ module verilator_tb(
 				begin
 					if (i != 0)
 						$fwrite(state_dump_fd, ",");
-			
+
 					$fwrite(state_dump_fd, "%d", `CORE0.thread_select_stage.thread_state[i]);
 				end
 
 				$fwrite(state_dump_fd, "\n");
 			end
-		
+
 			// Randomly sample a program counter for a thread and output to profile file
 			if (profile_en && ($random() & 63) == 0)
 				$fwrite(profile_fd, "%x\n", `CORE0.ifetch_tag_stage.next_program_counter[$random() % `THREADS_PER_CORE]);

@@ -39,13 +39,13 @@ module l2_axi_bus_interface(
 
 	axi4_interface.master                  axi_bus,
 
-	// to l2_cache_arb
+	// to l2_cache_arb_stage
 	output l2req_packet_t                  l2bi_request,
 	output cache_line_data_t               l2bi_data_from_memory,
 	output logic                           l2bi_stall,
 	output                                 l2bi_collided_miss,
 
-	// From l2_cache_read
+	// From l2_cache_read_stage
 	input                                  l2r_needs_writeback,
 	input l2_tag_t                         l2r_writeback_tag,
 	input cache_line_data_t                l2r_data,

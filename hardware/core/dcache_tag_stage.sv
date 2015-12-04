@@ -70,7 +70,7 @@ module dcache_tag_stage
 	output                                      dt_update_itlb_supervisor,
 	output                                      dt_update_itlb_global,
 
-	// From l2_cache_interface
+	// From l1_l2_interface
 	input                                       l2i_dcache_lru_fill_en,
 	input l1d_set_idx_t                         l2i_dcache_lru_fill_set,
 	input [`L1D_WAYS - 1:0]                     l2i_dtag_update_en_oh,
@@ -85,7 +85,7 @@ module dcache_tag_stage
 	input logic                                 cr_supervisor_en[`THREADS_PER_CORE],
 	input [`ASID_WIDTH - 1:0]                   cr_current_asid[`THREADS_PER_CORE],
 
-	// To l2_cache_interface
+	// To l1_l2_interface
 	output logic                                dt_snoop_valid[`L1D_WAYS],
 	output l1d_tag_t                            dt_snoop_tag[`L1D_WAYS],
 	output l1d_way_idx_t                        dt_fill_lru,

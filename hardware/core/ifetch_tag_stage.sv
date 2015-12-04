@@ -50,7 +50,7 @@ module ifetch_tag_stage
 	input                               ifd_near_miss,
 	input thread_idx_t                  ifd_cache_miss_thread_idx,
 
-	// From l2_cache_interface
+	// From l1_l2_interface
 	input                               l2i_icache_lru_fill_en,
 	input l1i_set_idx_t                 l2i_icache_lru_fill_set,
 	input [`L1I_WAYS - 1:0]             l2i_itag_update_en,

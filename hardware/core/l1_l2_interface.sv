@@ -37,10 +37,10 @@
 //    by the instruction pipeline during load accesses.
 //
 // l2_request does not depend combinationally on l2_ready (to avoid a loop),
-// but the opposite is not true (see l2_cache_arb).
+// but the opposite is not true (see l2_cache_arb_stage).
 //
 
-module l2_cache_interface
+module l1_l2_interface
 	#(parameter core_id_t CORE_ID = 0)
 	(input                                        clk,
 	input                                         reset,

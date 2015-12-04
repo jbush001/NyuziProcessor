@@ -21,17 +21,17 @@
 // Performs tag lookup. Results will be available in the next stage.
 //
 
-module l2_cache_tag(
+module l2_cache_tag_stage(
 	input                                 clk,
 	input                                 reset,
 
-	// From l2_cache_arb
+	// From l2_cache_arb_stage
 	input l2req_packet_t                  l2a_request,
 	input cache_line_data_t               l2a_data_from_memory,
 	input                                 l2a_is_l2_fill,
 	input                                 l2a_is_restarted_flush,
 
-	// From l2_cache_read
+	// From l2_cache_read_stage
 	input [`L2_WAYS - 1:0]                l2r_update_dirty_en,
 	input l2_set_idx_t                    l2r_update_dirty_set,
 	input                                 l2r_update_dirty_value,
@@ -42,7 +42,7 @@ module l2_cache_tag(
 	input                                 l2r_update_lru_en,
 	input l2_way_idx_t                    l2r_update_lru_hit_way,
 
-	// To l2_cache_read
+	// To l2_cache_read_stage
 	output l2req_packet_t                 l2t_request,
 	output logic                          l2t_valid[`L2_WAYS],
 	output l2_tag_t                       l2t_tag[`L2_WAYS],

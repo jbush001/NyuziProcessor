@@ -236,30 +236,30 @@ module core
 	scalar_t	ix_rollback_pc;		// From int_execute_stage of int_execute_stage.v
 	subcycle_t	ix_subcycle;		// From int_execute_stage of int_execute_stage.v
 	thread_idx_t	ix_thread_idx;		// From int_execute_stage of int_execute_stage.v
-	logic		l2i_dcache_lru_fill_en;	// From l2_cache_interface of l2_cache_interface.v
-	l1d_set_idx_t	l2i_dcache_lru_fill_set;// From l2_cache_interface of l2_cache_interface.v
-	thread_bitmap_t	l2i_dcache_wake_bitmap;	// From l2_cache_interface of l2_cache_interface.v
-	cache_line_data_t l2i_ddata_update_data;// From l2_cache_interface of l2_cache_interface.v
-	logic		l2i_ddata_update_en;	// From l2_cache_interface of l2_cache_interface.v
-	l1d_set_idx_t	l2i_ddata_update_set;	// From l2_cache_interface of l2_cache_interface.v
-	l1d_way_idx_t	l2i_ddata_update_way;	// From l2_cache_interface of l2_cache_interface.v
-	logic [`L1D_WAYS-1:0] l2i_dtag_update_en_oh;// From l2_cache_interface of l2_cache_interface.v
-	l1d_set_idx_t	l2i_dtag_update_set;	// From l2_cache_interface of l2_cache_interface.v
-	l1d_tag_t	l2i_dtag_update_tag;	// From l2_cache_interface of l2_cache_interface.v
-	logic		l2i_dtag_update_valid;	// From l2_cache_interface of l2_cache_interface.v
-	logic		l2i_icache_lru_fill_en;	// From l2_cache_interface of l2_cache_interface.v
-	l1i_set_idx_t	l2i_icache_lru_fill_set;// From l2_cache_interface of l2_cache_interface.v
-	thread_bitmap_t	l2i_icache_wake_bitmap;	// From l2_cache_interface of l2_cache_interface.v
-	cache_line_data_t l2i_idata_update_data;// From l2_cache_interface of l2_cache_interface.v
-	logic		l2i_idata_update_en;	// From l2_cache_interface of l2_cache_interface.v
-	l1i_set_idx_t	l2i_idata_update_set;	// From l2_cache_interface of l2_cache_interface.v
-	l1i_way_idx_t	l2i_idata_update_way;	// From l2_cache_interface of l2_cache_interface.v
-	logic [`L1I_WAYS-1:0] l2i_itag_update_en;// From l2_cache_interface of l2_cache_interface.v
-	l1i_set_idx_t	l2i_itag_update_set;	// From l2_cache_interface of l2_cache_interface.v
-	l1i_tag_t	l2i_itag_update_tag;	// From l2_cache_interface of l2_cache_interface.v
-	logic		l2i_itag_update_valid;	// From l2_cache_interface of l2_cache_interface.v
-	logic		l2i_snoop_en;		// From l2_cache_interface of l2_cache_interface.v
-	l1d_set_idx_t	l2i_snoop_set;		// From l2_cache_interface of l2_cache_interface.v
+	logic		l2i_dcache_lru_fill_en;	// From l1_l2_interface of l1_l2_interface.v
+	l1d_set_idx_t	l2i_dcache_lru_fill_set;// From l1_l2_interface of l1_l2_interface.v
+	thread_bitmap_t	l2i_dcache_wake_bitmap;	// From l1_l2_interface of l1_l2_interface.v
+	cache_line_data_t l2i_ddata_update_data;// From l1_l2_interface of l1_l2_interface.v
+	logic		l2i_ddata_update_en;	// From l1_l2_interface of l1_l2_interface.v
+	l1d_set_idx_t	l2i_ddata_update_set;	// From l1_l2_interface of l1_l2_interface.v
+	l1d_way_idx_t	l2i_ddata_update_way;	// From l1_l2_interface of l1_l2_interface.v
+	logic [`L1D_WAYS-1:0] l2i_dtag_update_en_oh;// From l1_l2_interface of l1_l2_interface.v
+	l1d_set_idx_t	l2i_dtag_update_set;	// From l1_l2_interface of l1_l2_interface.v
+	l1d_tag_t	l2i_dtag_update_tag;	// From l1_l2_interface of l1_l2_interface.v
+	logic		l2i_dtag_update_valid;	// From l1_l2_interface of l1_l2_interface.v
+	logic		l2i_icache_lru_fill_en;	// From l1_l2_interface of l1_l2_interface.v
+	l1i_set_idx_t	l2i_icache_lru_fill_set;// From l1_l2_interface of l1_l2_interface.v
+	thread_bitmap_t	l2i_icache_wake_bitmap;	// From l1_l2_interface of l1_l2_interface.v
+	cache_line_data_t l2i_idata_update_data;// From l1_l2_interface of l1_l2_interface.v
+	logic		l2i_idata_update_en;	// From l1_l2_interface of l1_l2_interface.v
+	l1i_set_idx_t	l2i_idata_update_set;	// From l1_l2_interface of l1_l2_interface.v
+	l1i_way_idx_t	l2i_idata_update_way;	// From l1_l2_interface of l1_l2_interface.v
+	logic [`L1I_WAYS-1:0] l2i_itag_update_en;// From l1_l2_interface of l1_l2_interface.v
+	l1i_set_idx_t	l2i_itag_update_set;	// From l1_l2_interface of l1_l2_interface.v
+	l1i_tag_t	l2i_itag_update_tag;	// From l1_l2_interface of l1_l2_interface.v
+	logic		l2i_itag_update_valid;	// From l1_l2_interface of l1_l2_interface.v
+	logic		l2i_snoop_en;		// From l1_l2_interface of l1_l2_interface.v
+	l1d_set_idx_t	l2i_snoop_set;		// From l1_l2_interface of l1_l2_interface.v
 	decoded_instruction_t of_instruction;	// From operand_fetch_stage of operand_fetch_stage.v
 	logic		of_instruction_valid;	// From operand_fetch_stage of operand_fetch_stage.v
 	vector_lane_mask_t of_mask_value;	// From operand_fetch_stage of operand_fetch_stage.v
@@ -278,10 +278,10 @@ module core
 	logic		perf_itlb_miss;		// From ifetch_data_stage of ifetch_data_stage.v
 	logic		perf_store;		// From dcache_data_stage of dcache_data_stage.v
 	logic		perf_store_rollback;	// From writeback_stage of writeback_stage.v
-	logic		sq_rollback_en;		// From l2_cache_interface of l2_cache_interface.v
-	cache_line_data_t sq_store_bypass_data;	// From l2_cache_interface of l2_cache_interface.v
-	logic [`CACHE_LINE_BYTES-1:0] sq_store_bypass_mask;// From l2_cache_interface of l2_cache_interface.v
-	logic		sq_store_sync_success;	// From l2_cache_interface of l2_cache_interface.v
+	logic		sq_rollback_en;		// From l1_l2_interface of l1_l2_interface.v
+	cache_line_data_t sq_store_bypass_data;	// From l1_l2_interface of l1_l2_interface.v
+	logic [`CACHE_LINE_BYTES-1:0] sq_store_bypass_mask;// From l1_l2_interface of l1_l2_interface.v
+	logic		sq_store_sync_success;	// From l1_l2_interface of l1_l2_interface.v
 	thread_bitmap_t	ts_fetch_en;		// From thread_select_stage of thread_select_stage.v
 	decoded_instruction_t ts_instruction;	// From thread_select_stage of thread_select_stage.v
 	logic		ts_instruction_valid;	// From thread_select_stage of thread_select_stage.v
@@ -327,7 +327,7 @@ module core
 	writeback_stage writeback_stage(.*);
 
 	control_registers #(.CORE_ID(CORE_ID)) control_registers(.*);
-	l2_cache_interface #(.CORE_ID(CORE_ID)) l2_cache_interface(.*);
+	l1_l2_interface #(.CORE_ID(CORE_ID)) l1_l2_interface(.*);
 	io_request_queue #(.CORE_ID(CORE_ID)) io_request_queue(.*);
 
 	assign core_perf_events = {
