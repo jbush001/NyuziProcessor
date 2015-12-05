@@ -17,16 +17,18 @@
 `include "defines.sv"
 
 //
-// L2 cache. If there is a cache miss, this puts the request into a queue and
-// fills it from system memory. When it completes the fill, it feeds the
-// request back into the L2 cache pipeline.
 // The L2 cache has a four stage pipeline:
-//  - Arbitrate: chooses among requests from cores, or a restarted request
-//    filled from system memory. Restarted requests always take precedence to
-//    avoid deadlock.
+//  - Arbitrate: selects one request from cores, or a restarted request
+//    (described below) to send to the next stage.
 //  - Tag: issues address to tag ram ways, checks LRU.
 //  - Read: checks for cache hit, reads cache memory
-//  - Update: generates signals to update cache memory and sends response packet
+//  - Update: generates signals to update cache memory and broadcasts response
+//    to cores.
+// When the cache detects a cache miss (after the read stage), it puts it into
+// a fill request queue. The system memory interface fetches the data, then
+// restarts the request (with the new data) at the beginning of the L2 pipeline.
+// If the evicted line has unwritten data, the read stage reads it from cache
+// memory and puts it into a writeback queue in the system memory interface.
 //
 
 module l2_cache(

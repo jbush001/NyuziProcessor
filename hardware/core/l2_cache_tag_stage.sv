@@ -19,6 +19,7 @@
 //
 // L2 cache pipeline - tag stage.
 // Performs tag lookup. Results will be available in the next stage.
+// Also reads the LRU
 //
 
 module l2_cache_tag_stage(
