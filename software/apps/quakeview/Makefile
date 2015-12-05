@@ -46,7 +46,6 @@ clean:
 
 # Run in emulator
 run: $(OBJ_DIR)/program.hex fsimage.bin
-	rm -f $(OBJ_DIR)/output.bin output.png
 	$(EMULATOR) -c 0x$(MEMORY_SIZE) -f $(FB_WIDTH)x$(FB_HEIGHT) -b fsimage.bin $(OBJ_DIR)/program.hex
 
 # Run in emulator under debugger
