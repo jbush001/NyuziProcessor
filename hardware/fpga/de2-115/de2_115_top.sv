@@ -138,7 +138,9 @@ module de2_115_top(
 		.data_o(reset),
 		.data_i(!reset_btn));	// Reset button goes low when pressed
 
-	// Boot ROM.  Execution starts here.
+	// Boot ROM.  Execution starts here. The boot ROM path is relative
+	// to the directory that the synthesis tool is invoked from (this
+	// directory).
 	/* axi_rom AUTO_TEMPLATE(
 		.axi_bus(axi_bus_m1.slave),);
 	*/

@@ -18,6 +18,10 @@
 
 `include "defines.sv"
 
+//
+// Read only memory that uses AMBA AXI bus interface
+//
+
 module axi_rom
 	#(parameter FILENAME = "")
 
@@ -37,7 +41,7 @@ module axi_rom
 
 	initial
 	begin
-		// This will synthesize memory with the appropriate initialization
+		// This is used during *synthesis* to load the contents of ROM memory.
 		$readmemh(FILENAME, rom_data);
 	end
 
