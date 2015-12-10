@@ -111,9 +111,14 @@ static void processCommand(const uint8_t *command)
 	switch (command[0] & 0x3f)
 	{
 		case CMD_GO_IDLE:
-			gIsReady = true;
-			gCurrentState = STATE_SEND_RESULT;
-			gCommandResult = 1;
+			// If a virtual block device wasn't specified, don't initialize
+			if (gBlockDevData)
+			{
+				gIsReady = true;
+				gCurrentState = STATE_SEND_RESULT;
+				gCommandResult = 1;
+			}
+
 			break;
 
 		case CMD_SEND_OP_COND:
@@ -219,8 +224,10 @@ void writeSdCardRegister(uint32_t address, uint32_t value)
 					// Ignore transmitted byte, put read byte in buffer
 					if (--gStateDelay < 2)
 						gResponseValue = 0xff;	// Checksum
-					else
+					else if (gReadOffset < gBlockDevSize)
 						gResponseValue = gBlockDevData[gReadOffset++];
+					else
+						gResponseValue = 0xff;
 
 					if (gStateDelay == 0)
 						gCurrentState = STATE_IDLE;
