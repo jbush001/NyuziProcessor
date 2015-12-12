@@ -604,7 +604,8 @@ static bool translateAddress(Thread *thread, uint32_t virtualAddress, uint32_t *
 		{
 			// This isn't an actual fault supported by the hardware, but a debugging
 			// aid only available in the emulator.
-			printf("Memory access out of range %08x, pc %08x\n", virtualAddress, thread->currentPc - 4);
+			printf("Memory access out of range %08x, pc %08x (MMU not enabled)\n",
+				virtualAddress, thread->currentPc - 4);
 			printThreadRegisters(thread);
 			thread->core->crashed = true;
 			return false;
@@ -644,7 +645,8 @@ static bool translateAddress(Thread *thread, uint32_t virtualAddress, uint32_t *
 			{
 				// This isn't an actual fault supported by the hardware, but a debugging
 				// aid only available in the emulator.
-				printf("Memory access out of range %08x, pc %08x\n", virtualAddress, thread->currentPc - 4);
+				printf("Translated physical address out of range. va %08x pa %08x pc %08x\n",
+					virtualAddress, *outPhysicalAddress, thread->currentPc - 4);
 				printThreadRegisters(thread);
 				thread->core->crashed = true;
 				return false;
