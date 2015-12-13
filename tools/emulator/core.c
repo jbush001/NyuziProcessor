@@ -454,7 +454,18 @@ static void printThreadRegisters(const Thread *thread)
 			printf("\n");
 	}
 
-	printf("s31 %08x\n\n", thread->currentPc - 4);
+	printf("s31 %08x\n", thread->currentPc - 4);
+	printf("Flags: ");
+	if (thread->enableInterrupt)
+		printf("I");
+
+	if (thread->enableMmu)
+		printf("M");
+
+	if(thread->enableSupervisor)
+		printf("S");
+
+	printf("\n\n");
 	for (reg = 0; reg < NUM_REGISTERS; reg++)
 	{
 		if (reg < 10)
