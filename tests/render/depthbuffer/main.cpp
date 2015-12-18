@@ -25,6 +25,7 @@
 #include <RenderTarget.h>
 #include <schedule.h>
 #include <stdlib.h>
+#include <vga.h>
 #include "ColorShader.h"
 
 using namespace librender;
@@ -49,7 +50,9 @@ static int kTriangleIndices[] = { 0, 1, 2, 3, 4, 5 };
 // All threads start execution here.
 int main()
 {
-	if (__builtin_nyuzi_read_control_reg(0) != 0)
+	if (__builtin_nyuzi_read_control_reg(0) == 0)
+		init_vga(VGA_MODE_640x480);
+	else
 		workerThread();
 
 	startAllThreads();

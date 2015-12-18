@@ -24,6 +24,7 @@
 #include <nyuzi.h>
 #include <schedule.h>
 #include <stdint.h>
+#include <vga.h>
 
 #define makevectorf __builtin_nyuzi_makevectorf
 #define makevectori __builtin_nyuzi_makevectori
@@ -45,10 +46,13 @@ volatile int stopCount = 0;
 // All threads start execution here.
 int main()
 {
+	int myThreadId = getCurrentThreadId();
+	if (myThreadId == 0)
+		init_vga(VGA_MODE_640x480);
+
 	// Start other threads
 	startAllThreads();
 
-	int myThreadId = getCurrentThreadId();
 	vecf16_t kInitialX0 = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 	kInitialX0 = kInitialX0 * makevectorf(kXStep) - makevectorf(2.0);
 

@@ -26,6 +26,7 @@
 #include <schedule.h>
 #include <stdlib.h>
 #include <Texture.h>
+#include <vga.h>
 #include "TextureShader.h"
 #include "test_texture.h"
 #include "cube.h"
@@ -38,7 +39,9 @@ const int kFbHeight = 480;
 // All threads start execution here.
 int main()
 {
-	if (__builtin_nyuzi_read_control_reg(0) != 0)
+	if (__builtin_nyuzi_read_control_reg(0) == 0)
+		init_vga(VGA_MODE_640x480);
+	else
 		workerThread();
 
 	startAllThreads();

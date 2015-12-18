@@ -31,8 +31,6 @@ enum RegisterIndex
 	REG_UART_STATUS         = 0x0018 / 4,
 	REG_UART_RX             = 0x001c / 4,
 	REG_UART_TX             = 0x0020 / 4,
-	REG_VGA_BASE            = 0x0028 / 4,
-	REG_VGA_FRAME_TOGGLE    = 0x002c / 4,
 	REG_KB_STATUS           = 0x0038 / 4,
 	REG_KB_SCANCODE         = 0x003c / 4,
 	REG_SD_SPI_WRITE        = 0x0044 / 4,
@@ -43,6 +41,10 @@ enum RegisterIndex
 	REG_SD_GPIO_DIRECTION   = 0x0058 / 4,
 	REG_SD_GPIO_VALUE       = 0x005c / 4,
 	REG_THREAD_RESUME       = 0x0060 / 4,
-	REG_THREAD_HALT         = 0x0064 / 4
+	REG_THREAD_HALT         = 0x0064 / 4,
+	REG_VGA_ENABLE          = 0x0110 / 4,
+	REG_VGA_MICROCODE       = 0x0114 / 4,
+	REG_VGA_BASE            = 0x0118 / 4,
+	REG_VGA_LENGTH          = 0x011c / 4
 };
 

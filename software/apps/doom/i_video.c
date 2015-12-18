@@ -27,6 +27,7 @@ rcsid[] = "$Id: i_x.c,v 1.6 1997/02/03 22:45:10 b1 Exp $";
 #include <stdint.h>
 #include <time.h>
 #include <keyboard.h>
+#include <vga.h>
 #include "doomstat.h"
 #include "i_system.h"
 #include "v_video.h"
@@ -225,6 +226,7 @@ void I_SetPalette (byte* palette)
 
 void I_InitGraphics(void)
 {
+   init_vga(VGA_MODE_640x400);
 }
 
 

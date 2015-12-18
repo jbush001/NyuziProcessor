@@ -1,5 +1,5 @@
 //
-// Copyright 2011-2015 Jeff Bush
+// Copyright 2015 Jeff Bush
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,27 +14,17 @@
 // limitations under the License.
 //
 
-#ifndef __DEVICE_H
-#define __DEVICE_H
+#pragma once
 
-#include <stdint.h>
+#define VGA_MODE_640x480 1
+#define VGA_MODE_640x400 2
 
-enum DeviceAddress
-{
-	REG_SERIAL_STATUS = 0x18,
-	REG_SERIAL_OUTPUT = 0x20,
-	REG_KEYBOARD_STATUS = 0x38,
-	REG_KEYBOARD_READ = 0x3c,
-	REG_SD_WRITE_DATA = 0x44,
-	REG_SD_READ_DATA = 0x48,
-	REG_SD_STATUS = 0x4c,
-	REG_SD_CONTROL = 0x50,
-	REG_VGA_ENABLE = 0x110,
-	REG_VGA_BASE = 0x118
-};
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-void writeDeviceRegister(uint32_t address, uint32_t value);
-uint32_t readDeviceRegister(uint32_t address);
-void enqueueKey(uint32_t scanCode);
+int init_vga(int mode);
 
+#ifdef __cplusplus
+}
 #endif

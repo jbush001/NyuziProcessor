@@ -217,7 +217,7 @@ int main(int argc, char *argv[])
 			{
 				while (executeInstructions(core, ALL_THREADS, gScreenRefreshRate))
 				{
-					updateFramebuffer(getFramebuffer(core));
+					updateFramebuffer(core);
 					pollEvent();
 				}
 			}

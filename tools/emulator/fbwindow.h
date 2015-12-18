@@ -17,9 +17,13 @@
 #ifndef __FBWINDOW_H
 #define __FBWINDOW_H
 
+#include "core.h"
+
 int initFramebuffer(uint32_t width, uint32_t height);
-void updateFramebuffer(const void *base);
+void updateFramebuffer(Core*);
 void pollEvent(void);
+void enableFramebuffer(bool enable);
+void setFramebufferAddress(uint32_t address);
 
 extern uint32_t gScreenRefreshRate;
 

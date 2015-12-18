@@ -15,6 +15,7 @@
 //
 
 #include <SDL.h>
+#include <stdbool.h>
 #include "device.h"
 #include "fbwindow.h"
 
@@ -22,6 +23,9 @@ static SDL_Window *gWindow;
 static SDL_Renderer *gRenderer;
 static SDL_Texture *gFrameBuffer;
 static uint32_t gFbWidth;
+static uint32_t gFbHeight;
+static uint32_t gFbAddress;
+static bool gFbEnabled;
 uint32_t gScreenRefreshRate = 500000;
 
 int initFramebuffer(uint32_t width, uint32_t height)
@@ -48,6 +52,7 @@ int initFramebuffer(uint32_t width, uint32_t height)
 	}
 
 	gFbWidth = width;
+	gFbHeight = height;
 	gFrameBuffer = SDL_CreateTexture(gRenderer, SDL_PIXELFORMAT_ABGR8888,
 		SDL_TEXTUREACCESS_STREAMING, (int) width, (int) height);
 	if (!gFrameBuffer)
@@ -206,9 +211,23 @@ void pollEvent(void)
 	}
 }
 
-void updateFramebuffer(const void *base)
+void enableFramebuffer(bool enable)
 {
-	if (SDL_UpdateTexture(gFrameBuffer, NULL, base, (int)(gFbWidth * 4)) != 0)
+	gFbEnabled = enable;
+}
+
+void setFramebufferAddress(uint32_t address)
+{
+	gFbAddress = address;
+}
+
+void updateFramebuffer(Core *core)
+{
+	if (!gFbEnabled)
+		return;
+
+	if (SDL_UpdateTexture(gFrameBuffer, NULL, getMemoryRegionPtr(core, gFbAddress,
+		gFbWidth * gFbHeight * 4), (int)(gFbWidth * 4)) != 0)
 	{
 		printf("SDL_UpdateTexture failed: %s\n", SDL_GetError());
 		abort();

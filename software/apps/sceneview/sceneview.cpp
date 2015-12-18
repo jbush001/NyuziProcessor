@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <Surface.h>
 #include <time.h>
+#include <vga.h>
 #include "DepthShader.h"
 #include "schedule.h"
 #include "TextureShader.h"
@@ -137,7 +138,9 @@ Texture *createCheckerboardTexture()
 // All threads start execution here.
 int main()
 {
-	if (getCurrentThreadId() != 0)
+	if (getCurrentThreadId() == 0)
+		init_vga(VGA_MODE_640x480);
+	else
 		workerThread();
 
 	// Set up resource data

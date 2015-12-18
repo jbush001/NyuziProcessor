@@ -15,18 +15,20 @@
 //
 
 //
-// Drive a 640x480 VGA display.  This is an AXI master that will DMA color
+// Drive VGA display.  This is an AXI master that will DMA color
 // data from a memory framebuffer, hard coded at address 0x10000000 (32 BPP
 // RGBA), then send it to an ADV7123 VGA DAC with appropriate timing.
 //
 
-module vga_controller(
-	input                   clk,
+module vga_controller
+	#(parameter BASE_ADDRESS = 0)
+	(input                  clk,
 	input                   reset,
 
-	input                   fb_base_update_en,
-	input [31:0]            fb_new_base,
-	output logic            frame_toggle,
+	// I/O interface
+	input [31:0]            io_address,
+	input [31:0]            io_write_data,
+	input                   io_write_en,
 
 	// To DAC
 	output [7:0]            vga_r,
@@ -41,11 +43,8 @@ module vga_controller(
 	// To AXI interconnect
 	axi4_interface.master   axi_bus);
 
-	localparam TOTAL_PIXELS = 640 * 480;
-
-	// We choose the burst length to be twice that of a CPU cache line fill
-	// to ensure we get sufficient memory bandwidth even when we are
-	// ping-ponging.
+	// The burst length is twice that of a CPU cache line fill to ensure
+	// sufficient memory bandwidth even when ping-ponging.
 	localparam BURST_LENGTH = 64;
 	localparam PIXEL_FIFO_LENGTH = 128;
 	localparam DEFAULT_FB_ADDR = 32'h200000;
@@ -59,27 +58,29 @@ module vga_controller(
 
 	/*AUTOLOGIC*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	logic		in_visible_region;	// From timing_generator of vga_timing_generator.v
-	logic		new_frame;		// From timing_generator of vga_timing_generator.v
-	logic		pixel_en;		// From timing_generator of vga_timing_generator.v
+	logic		in_visible_region;	// From vga_sequencer of vga_sequencer.v
+	logic		new_frame;		// From vga_sequencer of vga_sequencer.v
+	logic		pixel_en;		// From vga_sequencer of vga_sequencer.v
 	// End of automatics
 	logic[31:0] vram_addr;
 	logic[7:0] _ignore_alpha;
 	logic pixel_fifo_empty;
 	logic pixel_fifo_almost_empty;
 	logic[31:0] fb_base_address;
+	logic[31:0] fb_length;
 	frame_state_t axi_state;
 	logic[7:0] burst_count;
 	logic[18:0] pixel_count;
+	logic sequencer_en;
 
 	assign vga_blank_n = in_visible_region;
 	assign vga_sync_n = 1'b0;	// Not used
 	assign vga_clk = pixel_en;	// This is a bid odd: using enable as external clock.
 
-	// Buffers data to the display from SDRAM.  The enqueue threshold
-	// is set to ensure there is capacity to enqueue an entire burst from memory.
-	// Note that we clear the FIFO at the beginning of the vblank period to allow
-	// it to resynchronize if there was an underrun.
+	// Buffer data to the display from SDRAM. The enqueue threshold is set to
+	// ensure there is capacity to enqueue an entire burst from memory. Clear
+	// the FIFO at the beginning of the vblank period so it will resynchronize
+	// if there was an underrun.
 	sync_fifo #(
 		.WIDTH(32),
 		.SIZE(PIXEL_FIFO_LENGTH),
@@ -100,10 +101,8 @@ module vga_controller(
 	begin
 		if (reset)
 		begin
-			fb_base_address <= DEFAULT_FB_ADDR;
 			vram_addr <= DEFAULT_FB_ADDR;
 			axi_state <= STATE_WAIT_FRAME_START;
-			frame_toggle <= 0;
 
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
@@ -116,20 +115,20 @@ module vga_controller(
 			// Check for FIFO underrun
 			assert(!(pixel_en && in_visible_region && pixel_fifo_empty));
 
-			if (fb_base_update_en)
-				fb_base_address <= fb_new_base;
-
 			unique case (axi_state)
 				STATE_WAIT_FRAME_START:
 				begin
-					// Since we know the FIFO will be flushed with the new
-					// frame, we can skip STATE_WAIT_FIFO_EMPTY.
-					if (new_frame)
+					// Since the FIFO will be flushed with the new frame, skip
+					// STATE_WAIT_FIFO_EMPTY.
+					if (new_frame && sequencer_en)
 					begin
+						// Ensure there is no data left in the FIFO (which
+						// would imply we fetched too much)
+						assert(pixel_fifo_empty);
+
 						axi_state <= STATE_ISSUE_ADDR;
 						pixel_count <= 0;
 						vram_addr <= fb_base_address;
-						frame_toggle <= !frame_toggle;
 					end
 				end
 
@@ -151,12 +150,18 @@ module vga_controller(
 					begin
 						if (burst_count == BURST_LENGTH - 1)
 						begin
+							// Burst complete
 							burst_count <= 0;
-							if (pixel_count == TOTAL_PIXELS - BURST_LENGTH)
+							if (pixel_count == 19'(fb_length - BURST_LENGTH))
+							begin
+								// Frame complete
 								axi_state <= STATE_WAIT_FRAME_START;
+							end
 							else
 							begin
-								if (pixel_fifo_almost_empty)
+								if (!sequencer_en)
+									axi_state <= STATE_WAIT_FRAME_START; // Abort frame
+								else if (pixel_fifo_almost_empty)
 									axi_state <= STATE_ISSUE_ADDR;
 								else
 									axi_state <= STATE_WAIT_FIFO_EMPTY;
@@ -175,22 +180,33 @@ module vga_controller(
 		end
 	end
 
-	assign axi_bus.m_rready = 1'b1;	// We always have enough room when a request is made.
+	assign axi_bus.m_rready = 1'b1;	// The request is only made when there is enough room.
 	assign axi_bus.m_arlen = 8'(BURST_LENGTH - 1);
 	assign axi_bus.m_arvalid = axi_state == STATE_ISSUE_ADDR;
 	assign axi_bus.m_araddr = vram_addr;
 
-	vga_timing_generator timing_generator(
-		/*AUTOINST*/
-					      // Outputs
-					      .vga_vs		(vga_vs),
-					      .vga_hs		(vga_hs),
-					      .in_visible_region(in_visible_region),
-					      .pixel_en		(pixel_en),
-					      .new_frame	(new_frame),
-					      // Inputs
-					      .clk		(clk),
-					      .reset		(reset));
+	always_ff @(posedge clk, posedge reset)
+	begin
+		if (reset)
+		begin
+			sequencer_en <= 0;
+			fb_base_address <= '0;
+			fb_length <= '0;
+		end
+		else if (io_write_en)
+		begin
+			case (io_address)
+				BASE_ADDRESS: sequencer_en <= io_write_data[0];
+				BASE_ADDRESS + 8: fb_base_address <= io_write_data;
+				BASE_ADDRESS + 12: fb_length <= io_write_data;
+			endcase
+		end
+	end
+
+	vga_sequencer vga_sequencer(
+		.prog_write_en(io_write_en && io_address == BASE_ADDRESS + 4),
+		.prog_data(io_write_data),
+		.*);
 endmodule
 
 // Local Variables:

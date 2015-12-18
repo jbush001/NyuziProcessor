@@ -263,9 +263,15 @@ void writeMemoryToFile(const Core *core, const char *filename, uint32_t baseAddr
 	fclose(file);
 }
 
-void *getFramebuffer(Core *core)
+const void *getMemoryRegionPtr(const Core *core, uint32_t address, uint32_t length)
 {
-	return ((uint8_t*) core->memory) + 0x200000;
+	assert(length < core->memorySize);
+
+	// Prevent overrun for bad address
+	if (address > core->memorySize || address + length > core->memorySize)
+		return core->memory;
+
+	return ((const uint8_t*) core->memory) + address;
 }
 
 void printRegisters(const Core *core, uint32_t threadId)

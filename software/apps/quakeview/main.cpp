@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <Surface.h>
 #include <time.h>
+#include <vga.h>
 #include "PakFile.h"
 #include "Render.h"
 #include "TextureShader.h"
@@ -193,7 +194,9 @@ void parseCoordinateString(const char *string, float outCoord[3])
 // All threads start execution here.
 int main()
 {
-	if (getCurrentThreadId() != 0)
+	if (getCurrentThreadId() == 0)
+		init_vga(VGA_MODE_640x480);
+	else
 		workerThread();
 
 	// Set up render context

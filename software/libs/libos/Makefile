@@ -26,7 +26,8 @@ SRCS=schedule.c \
 	fs.c \
 	keyboard.c \
 	misc.c \
-	sbrk.c
+	sbrk.c \
+	vga.c
 
 OBJS := $(SRCS_TO_OBJS)
 DEPS := $(SRCS_TO_DEPS)

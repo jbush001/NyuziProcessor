@@ -18,6 +18,7 @@
 #include <schedule.h>
 #include <stdio.h>
 #include <time.h>
+#include <vga.h>
 #include "Barrier.h"
 #include "image.h"
 #include "Matrix2x2.h"
@@ -42,11 +43,14 @@ int main()
 	int frameNum = 0;
 	clock_t lastTime = 0;
 
-	startAllThreads();
-
 	int myThreadId = getCurrentThreadId();
 	if (myThreadId == 0)
+	{
+		init_vga(VGA_MODE_640x480);
 		displayMatrix = Matrix2x2();
+	}
+
+	startAllThreads();
 
 	// 1/64 step rotation
 	Matrix2x2 stepMatrix(

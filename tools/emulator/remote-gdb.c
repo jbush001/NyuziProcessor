@@ -148,7 +148,7 @@ static void runUntilInterrupt(Core *core, uint32_t threadId, bool enableFbWindow
 
 		if (enableFbWindow)
 		{
-			updateFramebuffer(getFramebuffer(core));
+			updateFramebuffer(core);
 			pollEvent();
 		}
 

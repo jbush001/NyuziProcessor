@@ -74,7 +74,6 @@ module de2_115_top(
 
 	logic fb_base_update_en;
 	logic [31:0] fb_new_base;
-	logic frame_toggle;
 
 	/*AUTOLOGIC*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -191,7 +190,7 @@ module de2_115_top(
 				   .clk			(clk),		 // Templated
 				   .reset		(reset));
 
-	vga_controller vga_controller(
+	vga_controller #(.BASE_ADDRESS('h110)) vga_controller(
 	      .axi_bus(axi_bus_s1.master),
 		  .*);
 
@@ -241,9 +240,6 @@ module de2_115_top(
 		.io_read_data(ps2_read_data),
 		.*);
 
-	assign fb_new_base = io_write_data;
-	assign fb_base_update_en = io_write_en && io_address == 'h28;
-
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
@@ -275,7 +271,6 @@ module de2_115_top(
 	begin
 		case (io_address)
 			'h18, 'h1c: io_read_data <= uart_read_data;
-			'h2c: io_read_data <= scalar_t'(frame_toggle);
 `ifdef BITBANG_SDMMC
 			'h5c: io_read_data <= gpio_read_data;
 `else

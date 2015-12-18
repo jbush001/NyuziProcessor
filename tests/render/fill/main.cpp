@@ -14,8 +14,6 @@
 // limitations under the License.
 //
 
-
-
 //
 // Fill the entire framebuffer with a solid color.
 // Validates rasterizer viewport clipping and all
@@ -28,6 +26,7 @@
 #include <RenderTarget.h>
 #include <schedule.h>
 #include <stdlib.h>
+#include <vga.h>
 #include "ColorShader.h"
 
 // Ensure clipping works correctly by filling entire framebuffer
@@ -49,7 +48,9 @@ static int kSquareIndices[] = { 0, 1, 2, 2, 3, 0 };
 // All threads start execution here.
 int main()
 {
-	if (__builtin_nyuzi_read_control_reg(0) != 0)
+	if (__builtin_nyuzi_read_control_reg(0) == 0)
+		init_vga(VGA_MODE_640x480);
+	else
 		workerThread();
 
 	startAllThreads();

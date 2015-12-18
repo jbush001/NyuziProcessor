@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include "core.h"
 #include "device.h"
+#include "fbwindow.h"
 #include "sdmmc.h"
 
 #define KEY_BUFFER_SIZE 64
@@ -41,6 +42,14 @@ void writeDeviceRegister(uint32_t address, uint32_t value)
 		case REG_SD_WRITE_DATA:
 		case REG_SD_CONTROL:
 			writeSdCardRegister(address, value);
+			break;
+
+		case REG_VGA_ENABLE:
+			enableFramebuffer(value & 1);
+			break;
+
+		case REG_VGA_BASE:
+			setFramebufferAddress(value);
 			break;
 	}
 }

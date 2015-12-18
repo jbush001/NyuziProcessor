@@ -70,6 +70,14 @@ module verilator_tb(
 	logic		ps2_clk;		// From sim_ps2 of sim_ps2.v
 	logic		ps2_data;		// From sim_ps2 of sim_ps2.v
 	logic		sd_do;			// From sim_sdmmc of sim_sdmmc.v
+	logic [7:0]	vga_b;			// From vga_controller of vga_controller.v
+	logic		vga_blank_n;		// From vga_controller of vga_controller.v
+	logic		vga_clk;		// From vga_controller of vga_controller.v
+	logic [7:0]	vga_g;			// From vga_controller of vga_controller.v
+	logic		vga_hs;			// From vga_controller of vga_controller.v
+	logic [7:0]	vga_r;			// From vga_controller of vga_controller.v
+	logic		vga_sync_n;		// From vga_controller of vga_controller.v
+	logic		vga_vs;			// From vga_controller of vga_controller.v
 	// End of automatics
 
 	`define CORE0 nyuzi.core_gen[0].core
@@ -156,6 +164,17 @@ module verilator_tb(
 	ps2_controller #(.BASE_ADDRESS('h38)) ps2_controller(
 		.io_read_data(ps2_read_data),
 		.*);
+
+`ifdef SIMULATE_VGA
+	// There is no automated test for VGA currently, so I test as follows:
+	// - Modify the makefile to add --trace-depth 1 to VERILATOR_OPTIONS
+	// - Rebuild hardware: DUMP_WAVEFORM=1 make
+	// - Run one of the apps (like mandelbrot) for maybe 20 seconds, ctrl-C to stop
+	// - Look the resulting waveform in GtkWave to check that the timings are correct.
+	vga_controller #(.BASE_ADDRESS('h110)) vga_controller(
+		.axi_bus(axi_bus_s1.master),
+		.*);
+`endif
 
 	trace_logger trace_logger(
 		.wb_writeback_en(`CORE0.wb_writeback_en),
