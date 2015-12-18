@@ -70,18 +70,20 @@ module interrupt_controller
 	assign processor_halt = ic_thread_en == 0;
 
 	genvar core_idx;
-	for (core_idx = 0; core_idx < `NUM_CORES; core_idx++)
-	begin : core_int_gen
-		always_ff @(posedge clk, posedge reset)
-		begin
-			if (reset)
-				ic_interrupt_pending[core_idx] <= 0;
-			else if (!ic_interrupt_pending[core_idx] && interrupt_req && core_idx == 0) // XXX hardcoded
-				ic_interrupt_pending[core_idx] <= 1;
-			else if (wb_interrupt_ack[core_idx])
-				ic_interrupt_pending[core_idx] <= 0;
+	generate
+		for (core_idx = 0; core_idx < `NUM_CORES; core_idx++)
+		begin : core_int_gen
+			always_ff @(posedge clk, posedge reset)
+			begin
+				if (reset)
+					ic_interrupt_pending[core_idx] <= 0;
+				else if (!ic_interrupt_pending[core_idx] && interrupt_req && core_idx == 0) // XXX hardcoded
+					ic_interrupt_pending[core_idx] <= 1;
+				else if (wb_interrupt_ack[core_idx])
+					ic_interrupt_pending[core_idx] <= 0;
+			end
 		end
-	end
+	endgenerate
 
 	assign ic_interrupt_thread_idx = 0; // XXX hardcoded
 endmodule

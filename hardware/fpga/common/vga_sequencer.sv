@@ -44,11 +44,13 @@ module vga_sequencer(
 	typedef logic[$clog2(MAX_INSTRUCTIONS) - 1:0] progaddr_t;
 	typedef logic[12:0] counter_t;
 
+	typedef enum logic {
+		INITCNT,
+		LOOP
+	} instruction_type_t;
+
 	typedef struct packed {
-		enum logic {
-			INITCNT = 0,
-			LOOP = 1
-		} instruction_type;
+		instruction_type_t instruction_type;
 		logic counter_select;
 		counter_t immediate_value;
 
