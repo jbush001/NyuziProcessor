@@ -16,8 +16,8 @@
 
 //
 // Drive VGA display.  This is an AXI master that will DMA color
-// data from a memory framebuffer, hard coded at address 0x10000000 (32 BPP
-// RGBA), then send it to an ADV7123 VGA DAC with appropriate timing.
+// data from a memory framebuffer and send it to an ADV7123 VGA
+// DAC with appropriate timing signals.
 //
 
 module vga_controller
@@ -77,10 +77,10 @@ module vga_controller
 	assign vga_sync_n = 1'b0;	// Not used
 	assign vga_clk = pixel_en;	// This is a bid odd: using enable as external clock.
 
-	// Buffer data to the display from SDRAM. The enqueue threshold is set to
-	// ensure there is capacity to enqueue an entire burst from memory. Clear
-	// the FIFO at the beginning of the vblank period so it will resynchronize
-	// if there was an underrun.
+	// Buffer data to the display from SDRAM. The enqueue threshold is large
+	// enough to enqueue an entire burst from memory. Empty the FIFO at the
+	// beginning of the vblank period so it will resynchronize if there was
+	// an underrun.
 	sync_fifo #(
 		.WIDTH(32),
 		.SIZE(PIXEL_FIFO_LENGTH),
