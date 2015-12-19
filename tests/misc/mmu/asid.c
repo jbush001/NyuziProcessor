@@ -18,6 +18,13 @@
 #include <unistd.h>
 #include "mmu_test_common.h"
 
+// This test allocates two address space identifiers, then adds a TLB
+// entry for each. The two TLB entries have the same virtual address, but
+// map to different physical addresses. This test checks that the entries
+// map correctly. It also validates that the global TLB bit is observed
+// and those entries appear in both address spaces.
+//
+
 // Virtual addresses are chosen to not alias with code or other pages
 #define VADDR1 0x10a000
 #define PADDR1 0x100000

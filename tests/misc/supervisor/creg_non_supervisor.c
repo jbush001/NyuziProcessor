@@ -14,6 +14,11 @@
 // limitations under the License.
 //
 
+//
+// Ensure that attempting to write to a control register while in
+// user mode raises a fault and doesn't update the register.
+//
+
 void fault_handler()
 {
 	printf("FAULT %d current flags %02x prev flags %02x\n",

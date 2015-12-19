@@ -26,8 +26,8 @@
 
 extern void tlb_miss_handler();
 
-// The TLB handle makes memory wrap every 4 MB
-// The MMU maps these to 0x100000.
+// The TLB handler makes memory wrap every 4 MB
+// The MMU maps these to physical address 0x100000.
 char *tmp1 = (char*) 0x500000;
 char *tmp2 = (char*) 0x900000;
 

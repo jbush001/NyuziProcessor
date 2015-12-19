@@ -17,6 +17,8 @@
 
 import sys
 
+# Test PS/2 keyboard peripheral
+
 sys.path.insert(0, '../..')
 import test_harness
 

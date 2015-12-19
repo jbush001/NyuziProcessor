@@ -25,7 +25,8 @@ tools/misc/extract_mems.py to change the module names or parameter formats.
 ## Command Line Arguments
 
 Typing make in this directory compiles an executable 'verilator_model' in the
-bin/ directory. It accepts the following command line arguments:
+bin/ directory. It accepts the following command line arguments (Verilog prefixes
+arguments with a plus sign):
 
 |          Argument               | Meaning        |
 |---------------------------------|----------------|
@@ -46,7 +47,7 @@ bin/ directory. It accepts the following command line arguments:
 increase it, change the parameter MAX_BLOCK_DEVICE_SIZE in
 testbench/sim_sdmmc.sv
 
-The amount of RAM available in the Verilog simulator defaults to 16MB. To alter
+The amount of RAM available in the Verilog simulator is hard coded to 16MB. To alter
 it, change MEM_SIZE in testbench/verilator_tb.sv.
 
 The simulator exits when all threads halt by writing to the appropriate control
@@ -77,21 +78,21 @@ E = emulator, V = verilator.
 | ffff000c |  w | F   | Set value of 7 segment display 1 |
 | ffff0010 |  w | F   | Set value of 7 segment display 2 |
 | ffff0014 |  w | F   | Set value of 7 segment display 3 |
-| ffff0018 | r  | FEV | Serial status. Bit 0: bytes in read FIFO. Bit 1: space available in write FIFO |
+| ffff0018 | r  | FEV | Serial status.<sup>1</sup> |
 | ffff001c | r  | F   | Serial read |
-| ffff0020 |  w | FEV | Serial write<sup>1</sup> |
+| ffff0020 |  w | FEV | Serial write<sup>2</sup> |
 | ffff0038 | r  | FEV | PS/2 Keyboard status. 1 indicates there are scancodes in FIFO. |
-| ffff003c | r  | FEV | PS/2 Keyboard scancode. Remove from FIFO on read.<sup>2</sup> |
-| ffff0044 |  w | FEV | SD SPI write byte<sup>3</sup> |
+| ffff003c | r  | FEV | PS/2 Keyboard scancode. Remove from FIFO on read.<sup>3</sup> |
+| ffff0044 |  w | FEV | SD SPI write byte<sup>4</sup> |
 | ffff0048 | r  | FEV | SD SPI read byte |
 | ffff004c | r  | FEV | SD SPI status (bit 0: ready) |
 | ffff0050 |  w | FEV | SD SPI control (bit 0: chip select) |
 | ffff0054 |  w | F V | SD clock divider |
-| ffff0058 |  w | F   | SD GPIO direction<sup>4</sup> |
+| ffff0058 |  w | F   | SD GPIO direction<sup>5</sup> |
 | ffff005c |  w | F   | SD GPIO value |
 | ffff0060 |  w | FEV | Thread resume mask. A 1 bit starts a thread. (bit 0 = thread 0) |
 | ffff0064 |  w | FEV | Thread halt mask. A 1 bit halts a thread. (bit 0 = thread 0) |
-| ffff0100 | r  |   V | Loopback UART Status<sup>5</sup> (same as above) |
+| ffff0100 | r  |   V | Loopback UART Status<sup>6</sup> (same as above) |
 | ffff0104 | r  |   V | Loopback UART read |
 | ffff0108 |  w |   V | Loopback UART write |
 | ffff010c |  w |   V | Toggle UART tx line (used to force framing error in test) |
@@ -100,14 +101,23 @@ E = emulator, V = verilator.
 | ffff0118 |  w | FE  | VGA frame buffer base address |
 | ffff011c |  w | F   | VGA frame buffer length |
 
-1. Serial writes (including printfs from software) print to standard out in
+1. Serial status bits:
+
+    | Bit | Meaning |
+	|---- | ------- |
+	|  0  | Bytes in read FIFO |
+	|  1  | Space available in write FIFO |
+	|  2  | Receive FIFO overrun |
+	|  3  | Receive Framing error |
+
+2. Serial writes (including printfs from software) print to standard out in
 Verilator and the emulator.
-2. In the Verilator environment, keyboard scancodes are just an incrementing
+3. In the Verilator environment, keyboard scancodes are just an incrementing
 pattern. For the emulator, they are only returned if the framebuffer window is
 displayed and in focus. For the FPGA, they come from the PS/2 port on the board.
-3. SD GPIO and SD SPI are mutually exclusive. SD GPIO is if BITBANG_SDMMC is
+4. SD GPIO and SD SPI are mutually exclusive. SD GPIO is if BITBANG_SDMMC is
 set in hardware/fpga/de2_115/de2_115_top.sv, SPI otherwise.
-4. SD GPIO pins map to the following direction/value register bits:
+5. SD GPIO pins map to the following direction/value register bits:
 
     |Bit |Connection|
     |----|----------|
@@ -118,5 +128,5 @@ set in hardware/fpga/de2_115/de2_115_top.sv, SPI otherwise.
     |  4 | cmd      |
     |  5 | clk      |
 
-5. The loopback UART has its transmit and receive signals connected. It's used
-for testing the UART implementation.
+6. The loopback UART has its transmit and receive signals connected. It's used
+by UART unit tests.

@@ -18,6 +18,9 @@
 import sys
 import struct
 
+# Test load_sync/store_sync instructions by having four threads update
+# variables round-robin.
+
 sys.path.insert(0, '../..')
 import test_harness
 

@@ -16,6 +16,9 @@
 
 #include "mmu_test_common.h"
 
+// Test that attempting to peform itlbinsert while in user mode raises a fault
+// XXX Does not validate that the entry wasn't inserted.
+
 void fault_handler()
 {
 	printf("FAULT %d current flags %02x prev flags %02x\n",
@@ -33,8 +36,6 @@ int main(void)
 	switch_to_user_mode();
 
 	asm("itlbinsert %0, %1" : : "r" (0), "r" (0)); // CHECK: FAULT 10 current flags 04 prev flags 00
-
-	// XXX Does not validate that the entry wasn't inserted.
 
 	printf("executed instruction\n");
 }

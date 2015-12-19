@@ -18,6 +18,10 @@
 import sys
 import os
 
+#
+# Test reading blocks from SDMMC device
+#
+
 sys.path.insert(0, '../..')
 import test_harness
 

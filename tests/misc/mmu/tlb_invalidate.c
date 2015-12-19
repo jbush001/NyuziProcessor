@@ -19,6 +19,12 @@
 #include "mmu_test_common.h"
 
 
+//
+// Check that tlbinval instruction will remove a TLB entry from DTLB by
+// mapping a page, ensuring it can be accessed, invalidating, then
+// attempting to access it again. The second access will raise a fault.
+//
+
 // Note: this aliases to virtual address. Ensure invalidate only removes the
 // matching way.
 volatile unsigned int *data_addr = (unsigned int*) 0x100000;

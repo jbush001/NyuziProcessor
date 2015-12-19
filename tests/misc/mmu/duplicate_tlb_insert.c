@@ -19,7 +19,8 @@
 #include "mmu_test_common.h"
 
 //
-// Verify that inserting duplicate entries does not cause problems.
+// Verify that inserting duplicate entries does not cause problems. The
+// second insertion should replace the first.
 //
 
 volatile unsigned int *data_addr = (unsigned int*) 0x100000;

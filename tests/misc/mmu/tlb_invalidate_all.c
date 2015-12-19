@@ -18,6 +18,12 @@
 #include <unistd.h>
 #include "mmu_test_common.h"
 
+//
+// Ensure the tlbinvalall instruction invalidates TLB entries
+// XXX I can't check that all entries are missing, just that tlbinvalall removed
+// at least the next page I attempted to access
+//
+
 void tlb_miss_handler()
 {
 	printf("TLB miss\n");
@@ -49,6 +55,5 @@ int main(void)
 
 	printf("FAIL: should have faulted\n");	// CHECK: TLB miss
 
-	// XXX I can't check that all entries are missing, just that tlbinvalall did *something*.
 	return 0;
 }

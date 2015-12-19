@@ -18,6 +18,11 @@
 #include <unistd.h>
 #include "mmu_test_common.h"
 
+//
+// Ensure attempting to store to a page that does not have the write enable
+// bit set will raise a fault and will not update the data in the page.
+//
+
 volatile unsigned int *data_addr = (unsigned int*) 0x100000;
 volatile unsigned int *data_addr2 = (unsigned int*) 0x101000;
 

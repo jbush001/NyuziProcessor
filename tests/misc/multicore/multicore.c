@@ -19,7 +19,8 @@
 
 //
 // This test only works with 8 cores enabled
-// In hardware/core/config.sv, set NUM_CORES to 8
+// In hardware/core/config.sv, set NUM_CORES to 8. Each core prints its
+// identifier round-robin.
 //
 
 static volatile int gCurrentThread = 0;

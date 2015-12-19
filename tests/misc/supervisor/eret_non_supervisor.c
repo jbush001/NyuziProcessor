@@ -14,6 +14,11 @@
 // limitations under the License.
 //
 
+//
+// Ensure that attempting to execute the 'eret' instruction faults if the
+// thread is in user mode/
+//
+
 void fault_handler()
 {
 	printf("FAULT %d current flags %02x prev flags %02x\n",

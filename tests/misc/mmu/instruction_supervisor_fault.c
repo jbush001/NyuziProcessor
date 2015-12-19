@@ -16,7 +16,9 @@
 
 #include "mmu_test_common.h"
 
-// Test that supervisor bits work properly for DTLB entries
+// Test that supervisor bits work properly for ITLB entries: if the processor
+// is in supervisor mode, it should be able to execute from pages with the
+// supervisor bit set, but if it is in user mode, it should fault.
 
 void fault_handler()
 {

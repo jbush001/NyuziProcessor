@@ -14,10 +14,9 @@
 // limitations under the License.
 //
 
-/// Check UART Overrun bit to assert and deassert properly
-/// Recommend to turn on UART Overrun print in
-///     hardware/fpga/common/uart.sv
-/// to check contents in its FIFO
+// UART tests.
+// - Basic character transmission
+// - Test overrun and frame error tests
 
 #include <stdio.h>
 #include <unistd.h>
