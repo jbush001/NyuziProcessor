@@ -43,6 +43,13 @@ module nyuzi
 	logic[`NUM_CORES - 1:0] ic_interrupt_pending;
 	logic[`NUM_CORES - 1:0] wb_interrupt_ack;
 	scalar_t ic_io_read_data;	// Currently not used
+	logic[31:0] perf_io_read_data;
+	logic[31:0] selected_io_read_data;
+	enum logic[1:0] {
+		IO_PERF_COUNTERS,
+		IO_INT_CONTROLLER,
+		IO_ARBITER
+	} io_read_source;
 
 	// XXX AUTOLOGIC not generating these
 	l2rsp_packet_t l2_response;
@@ -61,6 +68,45 @@ module nyuzi
 		assert(`NUM_CORES >= 1 && `NUM_CORES <= (1 << `CORE_ID_WIDTH));
 	end
 
+	interrupt_controller #(.BASE_ADDRESS('h60)) interrupt_controller(
+		.io_read_data(ic_io_read_data),
+		.*);
+
+	l2_cache l2_cache(
+		.l2_perf_events(perf_events[`L2_PERF_EVENTS - 1:0]),
+		.*);
+
+	always_ff @(posedge clk)
+	begin
+		if (io_address >= 'h130 && io_address <= 'h13c)
+			io_read_source <= IO_PERF_COUNTERS;
+		else
+			io_read_source <= IO_ARBITER;
+
+		// XXX currently interrupt controller has no read sources,
+		// but it will.
+	end
+
+	always_comb
+	begin
+		case (io_read_source)
+			IO_PERF_COUNTERS: selected_io_read_data = perf_io_read_data;
+			IO_INT_CONTROLLER: selected_io_read_data = ic_io_read_data;
+			default: selected_io_read_data = io_read_data; // External read
+		endcase
+	end
+
+	io_arbiter io_arbiter(
+		.io_read_data(selected_io_read_data),
+		.*);
+
+	performance_counters #(
+		.NUM_EVENTS(`TOTAL_PERF_EVENTS),
+		.BASE_ADDRESS('h120)
+	) performance_counters(
+		.io_read_data(perf_io_read_data),
+		.*);
+
 	genvar core_idx;
 	generate
 		for (core_idx = 0; core_idx < `NUM_CORES; core_idx++)
@@ -78,19 +124,6 @@ module nyuzi
 				.*);
 		end
 	endgenerate
-
-	interrupt_controller #(.BASE_ADDRESS('h60)) interrupt_controller(
-		.io_read_data(ic_io_read_data),
-		.*);
-
-	l2_cache l2_cache(
-		.l2_perf_events(perf_events[`L2_PERF_EVENTS - 1:0]),
-		.*);
-
-	io_arbiter io_arbiter(.*);
-
-	performance_counters #(.NUM_COUNTERS(`TOTAL_PERF_EVENTS)) performance_counters(
-		.*);
 endmodule
 
 // Local Variables:

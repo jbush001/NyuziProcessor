@@ -21,30 +21,59 @@
 //
 
 module performance_counters
-	#(parameter	NUM_COUNTERS = 1)
+	#(parameter BASE_ADDRESS = 0,
+	parameter NUM_EVENTS = 1)
 
-	(input                      clk,
-	input                       reset,
-	input[NUM_COUNTERS - 1:0]   perf_events);
+	(input                           clk,
+	input                            reset,
 
-	localparam PRFC_WIDTH = 48;
+	input[NUM_EVENTS - 1:0]          perf_events,
 
-	logic[PRFC_WIDTH - 1:0] event_counter[NUM_COUNTERS];
+	// IO bus interface
+	input [31:0]                     io_address,
+	input                            io_read_en,
+	input [31:0]                     io_write_data,
+	input                            io_write_en,
+	output logic[31:0]               io_read_data);
+
+	localparam NUM_COUNTERS = 4;
+	localparam COUNTER_IDX_WIDTH = $clog2(NUM_COUNTERS);
+	localparam EVENT_IDX_WIDTH = $clog2(NUM_EVENTS);
+
+	// Address 0 to (NUM_COUNTERS - 1): event select (write)
+	// Address NUM_COUNTERS to (NUM_COUNTERS * 2 - 1): event count (read)
+
+	logic[31:0] event_counter[NUM_COUNTERS];
+	logic[EVENT_IDX_WIDTH - 1:0] event_select[NUM_COUNTERS];
+	logic[31:0] read_counter_value;
+	logic[31:0] read_addr;
+	logic[COUNTER_IDX_WIDTH - 1:0] read_idx;
+
+	assign read_addr = io_address - (BASE_ADDRESS + NUM_COUNTERS * 4);
+	assign read_idx = read_addr[2+:COUNTER_IDX_WIDTH];
 
 	always_ff @(posedge clk, posedge reset)
 	begin : update
 		if (reset)
 		begin
 			for (int i = 0; i < NUM_COUNTERS; i++)
+			begin
 				event_counter[i] <= 0;
+				event_select[i] <= 0;
+			end
 		end
 		else
 		begin
 			for (int i = 0; i < NUM_COUNTERS; i++)
 			begin
-				if (perf_events[i])
-					event_counter[i] <= event_counter[i] + 1;
+				if (perf_events[event_select[COUNTER_IDX_WIDTH'(i)]])
+					event_counter[COUNTER_IDX_WIDTH'(i)] <= event_counter[COUNTER_IDX_WIDTH'(i)] + 1;
+
+				if (io_write_en && io_address == BASE_ADDRESS + (i * 4))
+					event_select[i] <= io_write_data[EVENT_IDX_WIDTH - 1:0];
 			end
+
+			io_read_data <= event_counter[read_idx];
 		end
 	end
 endmodule

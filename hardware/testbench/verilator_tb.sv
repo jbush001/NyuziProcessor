@@ -334,26 +334,6 @@ module verilator_tb(
 		if (profile_en)
 			$fclose(profile_fd);
 
-		$display("performance counters:");
-		$display("      l2_writeback          %0d", nyuzi.performance_counters.event_counter[0]);
-		$display("      l2_miss               %0d", nyuzi.performance_counters.event_counter[1]);
-		$display("      l2_hit                %0d", nyuzi.performance_counters.event_counter[2]);
-
-		for (int i = 0; i < `NUM_CORES; i++)
-		begin
-			$display("\n      core %0d", i);
-			$display("      store rollback count  %0d", nyuzi.performance_counters.event_counter[3 + `NUM_CORES * i]);
-			$display("      store count           %0d", nyuzi.performance_counters.event_counter[4 + `NUM_CORES * i]);
-			$display("      instruction_retire    %0d", nyuzi.performance_counters.event_counter[5 + `NUM_CORES * i]);
-			$display("      instruction_issue     %0d", nyuzi.performance_counters.event_counter[6 + `NUM_CORES * i]);
-			$display("      l1i_miss              %0d", nyuzi.performance_counters.event_counter[7 + `NUM_CORES * i]);
-			$display("      l1i_hit               %0d", nyuzi.performance_counters.event_counter[8 + `NUM_CORES * i]);
-			$display("      itlb_miss             %0d", nyuzi.performance_counters.event_counter[9 + `NUM_CORES * i]);
-			$display("      l1d_miss              %0d", nyuzi.performance_counters.event_counter[10 + `NUM_CORES * i]);
-			$display("      l1d_hit               %0d", nyuzi.performance_counters.event_counter[11 + `NUM_CORES * i]);
-			$display("      dtlb_miss             %0d", nyuzi.performance_counters.event_counter[12 + `NUM_CORES * i]);
-		end
-
 		// Do this last so emulator doesn't kill us with SIGPIPE during cosimulation.
 		if (processor_halt)
 			$display("***HALTED***");

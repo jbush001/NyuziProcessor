@@ -100,6 +100,14 @@ E = emulator, V = verilator.
 | ffff0114 |  w | F   | VGA microcode write |
 | ffff0118 |  w | FE  | VGA frame buffer base address |
 | ffff011c |  w | F   | VGA frame buffer length |
+| ffff0120 |  w | F V | Performance counter 0 event select<sup>7</sup> |
+| ffff0124 |  w | F V | Performance counter 1 event select |
+| ffff0128 |  w | F V | Performance counter 2 event select |
+| ffff012c |  w | F V | Performance counter 3 event select |
+| ffff0130 | r  | F V | Performance counter 0 count |
+| ffff0134 | r  | F V | Performance counter 1 count |
+| ffff0138 | r  | F V | Performance counter 2 count |
+| ffff013c | r  | F V | Performance counter 3 count |
 
 1. Serial status bits:
 
@@ -130,3 +138,22 @@ set in hardware/fpga/de2_115/de2_115_top.sv, SPI otherwise.
 
 6. The loopback UART has its transmit and receive signals connected. It's used
 by UART unit tests.
+7. The following performance events are available
+
+    | Index | Event |
+    |-------|-------|
+    | 0     | L2 writeback |
+    | 1     | L2 cache miss |
+    | 2     | L2 cache hit |
+    | 3     | Store rollback (core 0) |
+    | 4     | Store |
+    | 5     | Instruction retired |
+    | 6     | Instruction issued |
+    | 7     | L1 instruction cache miss |
+    | 8     | L1 instruction cache hit |
+    | 9     | Instruction TLB miss |
+    | 10    | L1 data cache miss |
+    | 11    | L1 data cache hit |
+    | 12    | Data TLB miss |
+
+    Events 3-12 are duplicated for each core, starting at index 13
