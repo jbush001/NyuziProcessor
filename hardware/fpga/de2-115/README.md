@@ -29,7 +29,7 @@ For a Prolific USB based dongle, for example, the path is.
 4. Make sure the Quartus binary directory is in your PATH environment variable.
    The default install path is ~/altera/[version]/quartus/bin/
 
-       export PATH=$PATH:<Path to quartus>
+        export PATH=$PATH:<Path to Quartus bin directory>
 
 5. Make sure the FPGA board is in JTAG mode by setting SW19 to 'RUN'
 
