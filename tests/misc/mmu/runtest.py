@@ -50,7 +50,7 @@ def test_fill_verilator(name):
 	test_harness.compile_test(['fill_test.c', 'wrap_tlb_miss_handler.s'])
 	result = test_harness.run_verilator()
 	if result.find('FAIL') != -1 or result.find('PASS') == -1:
-		raise test_harness.TestException(result + '\ntest did not signal pass')
+		raise test_harness.TestException(result + '\ntest did not signal pass\n' + result)
 
 	# XXX check number of DTLB misses to ensure it is above/below thresholds
 
@@ -58,7 +58,7 @@ def test_fill_emulator(name):
 	test_harness.compile_test(['fill_test.c', 'wrap_tlb_miss_handler.s'])
 	result = test_harness.run_emulator()
 	if result.find('FAIL') != -1 or result.find('PASS') == -1:
-		raise test_harness.TestException(result + '\ntest did not signal pass')
+		raise test_harness.TestException(result + '\ntest did not signal pass\n' + result)
 
 def test_io_map_verilator(name):
 	test_harness.compile_test(['io_map.c'])

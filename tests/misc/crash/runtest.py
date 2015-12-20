@@ -31,7 +31,7 @@ def emulator_crash(name):
 
 		# The test program deliberately crashes. If the harness doesn't throw
 		# an exception, that is a failure.
-		raise TestException('Did not catch crash')
+		raise test_harness.TestException('Did not catch crash')
 	except:
 		# ...and vice versa
 		pass
@@ -40,11 +40,11 @@ def verilator_crash(name):
 	test_harness.compile_test('crash.c')
 	try:
 		result = test_harness.run_verilator()
-		raise TestException('Did not catch crash')
+		raise test_harness.TestException('Did not catch crash')
 	except:
 		pass
 
-test_harness.register_tests(emulator_crash, ['crash (emulator)'])
-test_harness.register_tests(verilator_crash, ['crash (verilator)'])
+test_harness.register_tests(emulator_crash, ['crash_emulator'])
+test_harness.register_tests(verilator_crash, ['crash_verilator'])
 test_harness.execute_tests()
 

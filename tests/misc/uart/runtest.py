@@ -24,7 +24,7 @@ def test_uart(name):
 	test_harness.compile_test('uart.c')
 	result = test_harness.run_verilator()
 	if result.find('PASS') == -1:
-		raise TestException('test did not indicate pass')
+		raise test_harness.TestException('test did not indicate pass\n' + result)
 
 test_harness.register_tests(test_uart, ['uart'])
 test_harness.execute_tests()

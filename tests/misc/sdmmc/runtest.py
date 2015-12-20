@@ -46,7 +46,7 @@ def test_verilator(name):
 		dump_length=FILE_SIZE, extra_args=['+autoflushl2=1'])
 	test_harness.assert_files_equal(SOURCE_BLOCK_DEV, VERILATOR_OUTPUT, 'file mismatch')
 
-test_harness.register_tests(test_emulator, ['sdmmc (emulator)'])
-test_harness.register_tests(test_verilator, ['sdmmc (verilator)'])
+test_harness.register_tests(test_emulator, ['sdmmc_emulator'])
+test_harness.register_tests(test_verilator, ['sdmmc_verilator'])
 test_harness.execute_tests()
 

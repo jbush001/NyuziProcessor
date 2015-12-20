@@ -37,7 +37,7 @@ def atomic_test(name):
 
 			numVal = struct.unpack('<L', val)[0]
 			if numVal != 10:
-				raise TestException('FAIL: mismatch: ' + str(numVal))
+				raise test_harness.TestException('FAIL: mismatch: ' + str(numVal))
 
 test_harness.register_tests(atomic_test, ['atomic'])
 test_harness.execute_tests()

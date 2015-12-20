@@ -28,7 +28,7 @@ def dinvalidate_test(name):
 
 	# 1. Check that the proper value was read into s2
 	if result.find('02 deadbeef') == -1:
-		raise TestException('incorrect value was written back ' + result)
+		raise test_harness.TestException('incorrect value was written back ' + result)
 
 	# 2. Read the memory dump to ensure the proper value is flushed from the L2 cache
 	with open('obj/vmem.bin', 'rb') as f:

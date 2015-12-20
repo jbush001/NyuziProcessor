@@ -26,7 +26,7 @@ def ps2_test(name):
 	test_harness.compile_test('ps2.c')
 	result = test_harness.run_verilator()
 	if result.find('PASS') == -1:
-		raise Exception('program did not indicate pass')
+		raise test_harness.TestException('program did not indicate pass\n' + result)
 
 test_harness.register_tests(ps2_test, ['ps2'])
 test_harness.execute_tests()

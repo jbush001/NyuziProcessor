@@ -26,7 +26,7 @@ def fs_test(name):
 	subprocess.check_output(['../../../bin/mkfs', 'obj/fsimage.bin', 'test.txt'], stderr=subprocess.STDOUT)
 	result = test_harness.run_emulator(block_device='obj/fsimage.bin')
 	if result.find('PASS') == -1:
-		raise TestException('test program did not indicate pass')
+		raise test_harness.TestException('test program did not indicate pass\n' + result)
 
 test_harness.register_tests(fs_test, ['fs'])
 test_harness.execute_tests()
