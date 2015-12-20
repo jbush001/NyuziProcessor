@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 
 
@@ -20,19 +20,19 @@
 // Simulates SDR SDRAM
 //
 
-//`define SDRAM_DEBUG 
+//`define SDRAM_DEBUG
 
 module sim_sdram
 	#(parameter DATA_WIDTH = 32,
 	parameter ROW_ADDR_WIDTH = 12, // 4096 rows
 	parameter COL_ADDR_WIDTH = 8, // 256 columns
-	parameter MAX_REFRESH_INTERVAL = 800) 
+	parameter MAX_REFRESH_INTERVAL = 800)
 
-	(input					dram_clk, 
-	input					dram_cke, 
-	input					dram_cs_n, 
-	input					dram_ras_n, 
-	input					dram_cas_n, 
+	(input					dram_clk,
+	input					dram_cke,
+	input					dram_cs_n,
+	input					dram_ras_n,
+	input					dram_cas_n,
 	input					dram_we_n,		// Write enable
 	input[1:0]				dram_ba, 		// Bank select
 	input[12:0]				dram_addr,
@@ -53,7 +53,7 @@ module sim_sdram
 	logic burst_active = '0;
 	logic[3:0] burst_count_ff = '0;	// How many transfers have occurred
 	logic[1:0] burst_bank = '0;
-	logic burst_auto_precharge = '0;	
+	logic burst_auto_precharge = '0;
 	logic[10:0] burst_column_address = '0;
 	logic[3:0] burst_read_delay_count = '0;
 	logic cke_ff = '0;
@@ -122,7 +122,7 @@ module sim_sdram
 `endif
 				bank_active[dram_ba] <= 1'b0;	// precharge
 			end
-			
+
 			initialized <= 1;
 		end
 		else if (req_activate)
@@ -138,8 +138,8 @@ module sim_sdram
 		end
 		else if (burst_count_ff == burst_length - 1 && burst_active && cke_ff
 			&& burst_auto_precharge)
-			bank_active[burst_bank] <= 1'b0;	// Auto-precharge				
-	end	
+			bank_active[burst_bank] <= 1'b0;	// Auto-precharge
+	end
 
 	// Mode register
 	always_ff @(posedge dram_clk)
@@ -180,12 +180,12 @@ module sim_sdram
 		begin
 			// Bank must be active to start burst
 			assert(bank_active[dram_ba]);
-			
+
 			// Ensure CAS latency is respected.
 			assert(bank_cas_delay[dram_ba] == 0);
 
 `ifdef SDRAM_DEBUG
-			$display("start %s transfer bank %d row %d column %d", 
+			$display("start %s transfer bank %d row %d column %d",
 				req_write_burst ? "write" : "read", dram_ba,
 				bank_active_row[dram_ba], dram_addr[COL_ADDR_WIDTH - 1:0]);
 `endif
@@ -198,15 +198,12 @@ module sim_sdram
 		begin
 			// Do not auto refresh with open rows
 			assert(bank_active == 0);
-
-			// XXX perhaps record time of this refresh, which we can check
-			// later
 `ifdef SDRAM_DEBUG
 			$display("auto refresh");
 `endif
 		end
 	end
-	
+
 	// Check that we're being refreshed frequently enough
 	always_ff @(posedge dram_clk)
 	begin
@@ -217,7 +214,7 @@ module sim_sdram
 		else if (initialized)
 			refresh_delay <= refresh_delay + 1;
 	end
-	
+
 
 	// RAM write
 	always_ff @(posedge dram_clk)
@@ -227,16 +224,19 @@ module sim_sdram
 		else if (req_write_burst)
 			memory[{bank_active_row[dram_ba], dram_ba, dram_addr[COL_ADDR_WIDTH - 1:0]}] <= dram_dq;	// Latch first word
 
-		// XXX check if data is still high-z
-//		if ((burst_active && cke_ff && burst_w) || req_write_burst)
-//		begin
-//			if ((dram_dq ^ dram_dq) !== 0)
-//			begin
-//				// Z or X value.
-//				$display("%m: write value is %d", dram_dq);
-//				$finish;
-//			end
-//		end
+`ifndef VERILATOR
+		// Check if data is still high-z. This doesn't work on verilator, because
+		// it doesn't support Z or X.
+		if ((burst_active && cke_ff && burst_w) || req_write_burst)
+		begin
+			if ((dram_dq ^ dram_dq) !== 0)
+			begin
+				// Z or X value.
+				$display("%m: write value is %d", dram_dq);
+				$finish;
+			end
+		end
+`endif
 
 `ifdef SDRAM_DEBUG
 	if ((burst_active && cke_ff && burst_w) || req_write_burst)
@@ -267,7 +267,7 @@ module sim_sdram
 	// Burst count logic
 	//
 	assign burst_length = 1 << mode_register_ff[2:0];
-	assign burst_interleaved = mode_register_ff[3];	
+	assign burst_interleaved = mode_register_ff[3];
 	assign burst_address_offset = burst_interleaved
 		? 8'(burst_column_address) ^ 8'(burst_count_ff)
 		: 8'(burst_column_address) + 8'(burst_count_ff);

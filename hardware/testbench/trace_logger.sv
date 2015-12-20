@@ -1,18 +1,18 @@
-// 
+//
 // Copyright 2011-2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 `include "defines.sv"
 
@@ -20,8 +20,8 @@
 // This prints register updates and memory writes to the console. The emulator
 // uses this information to verify the hardware is working correctly in
 // cosimulation.
-// 
-// This captures instructions as the pipeline retires them. This is necessary 
+//
+// This captures instructions as the pipeline retires them. This is necessary
 // to get the results of arithmetic operations. The problem is that the
 // pipeline doesn't always retire instructions in program order like the
 // emulator. To be able to compare the results , this uses a queue to reorder
@@ -29,7 +29,7 @@
 //
 
 module trace_logger(
-	input                            clk, 
+	input                            clk,
 	input                            reset,
 
 	// From writeback stage
@@ -155,7 +155,7 @@ module trace_logger(
 
 			for (int i = 0; i < TRACE_REORDER_QUEUE_LEN - 1; i++)
 				trace_reorder_queue[i] <= trace_reorder_queue[i + 1];
-			
+
 			trace_reorder_queue[TRACE_REORDER_QUEUE_LEN - 1] <= 0;
 
 			// Note that we only record the memory event for a synchronized store, not the register
@@ -163,7 +163,7 @@ module trace_logger(
 			if (wb_writeback_en && !debug_is_sync_store)
 			begin : dump_trace_event
 				int tindex;
-	
+
 				if (debug_wb_pipeline == PIPE_SCYCLE_ARITH)
 					tindex = 4;
 				else if (debug_wb_pipeline == PIPE_MEM)
@@ -180,14 +180,14 @@ module trace_logger(
 				trace_reorder_queue[tindex].pc <= debug_wb_pc;
 				trace_reorder_queue[tindex].thread_idx <= wb_writeback_thread_idx;
 				trace_reorder_queue[tindex].writeback_reg <= wb_writeback_reg;
-				trace_reorder_queue[tindex].mask <= {{`CACHE_LINE_BYTES - `VECTOR_LANES{1'b0}}, 
+				trace_reorder_queue[tindex].mask <= {{`CACHE_LINE_BYTES - `VECTOR_LANES{1'b0}},
 					wb_writeback_mask};
 				trace_reorder_queue[tindex].data <= wb_writeback_value;
 			end
 
 			// Handle PC destination.
-			if (ix_instruction_valid 
-				&& ix_instruction_has_dest 
+			if (ix_instruction_valid
+				&& ix_instruction_has_dest
 				&& ix_instruction_dest_reg == `REG_PC
 				&& !ix_instruction_dest_is_vector)
 			begin
@@ -198,7 +198,7 @@ module trace_logger(
 				trace_reorder_queue[5].writeback_reg <= 31;
 				trace_reorder_queue[5].data[0] <= wb_rollback_pc;
 			end
-			else if (dd_instruction_valid 
+			else if (dd_instruction_valid
 				&& dd_instruction_has_dest
 				&& dd_instruction_dest_reg == `REG_PC
 				&& !dd_instruction_dest_is_vector
@@ -229,9 +229,9 @@ module trace_logger(
 			// Invalidate the store instruction if it was rolled back.
 			if (sq_rollback_en && dd_instruction_valid)
 				trace_reorder_queue[4].event_type <= EVENT_INVALID;
-			
+
 			// Invalidate the store instruction if a synchronized store failed
-			if (dd_instruction_valid 
+			if (dd_instruction_valid
 				&& dd_instruction_memory_access_type == MEM_SYNC
 				&& !dd_instruction_is_load
 				&& !sq_store_sync_success)

@@ -1,21 +1,21 @@
-// 
+//
 // Copyright 2015 Jeff Bush
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 //
-// Simulates SPI mode SD card 
+// Simulates SPI mode SD card. Currently read-only.
 // XXX this is work in progress and is missing many commands
 //
 
@@ -87,9 +87,9 @@ module sim_sdmmc(
 			end
 
 			$fclose(fd);
-			
+
 			$display("read %0d into block device", offset - 1);
-		end	
+		end
 
 		current_state = SD_INIT_WAIT_FOR_CLOCKS;
 		mosi_byte_ff = 0;
@@ -98,7 +98,7 @@ module sim_sdmmc(
 		card_ready = 0;
 		miso_byte = 'hff;
 	end
-	
+
 	assign mosi_byte_nxt = {mosi_byte_ff[6:0], sd_di};
 
 	// Shift out data on the falling edge of SD clock
@@ -114,7 +114,7 @@ module sim_sdmmc(
 				$display("command sent to SD card before initialized");
 				$finish;
 			end
-		
+
 			SD_IDLE:
 			begin
 				if (mosi_byte_nxt[7:6] == 2'b01)
@@ -137,7 +137,7 @@ module sim_sdmmc(
 							current_state <= SD_SEND_RESULT;
 							command_result <= 1;
 						end
-					
+
 						CMD_SEND_OP_COND:
 						begin
 							current_state <= SD_SEND_RESULT;
@@ -150,24 +150,24 @@ module sim_sdmmc(
 							current_state <= SD_WAIT_READ_RESPONSE;
 							state_delay <= $random() & 'hf;	// Simulate random delay
 							command_result <= 1;
-							read_address <= {command[1], command[2], command[3], command[4]} 
+							read_address <= {command[1], command[2], command[3], command[4]}
 								* block_length;
 							miso_byte <= 'hff;	// wait
 						end
-					
+
 						CMD_SET_BLOCKLEN:
 						begin
 							assert(card_ready);
 							state_delay <= 5;
 							current_state <= SD_SEND_RESULT;
 							block_length <= {command[1], command[2], command[3], command[4]};
-						end		
-						
+						end
+
 						default:
 						begin
 							$display("invalid command %02x", command[0]);
 							current_state <= SD_IDLE;
-						end					
+						end
 					endcase
 				end
 				else
@@ -181,7 +181,7 @@ module sim_sdmmc(
 			end
 
 			SD_WAIT_READ_RESPONSE:
-			begin	
+			begin
 				if (state_delay == 0)
 				begin
 					current_state <= SD_DO_READ;
@@ -205,11 +205,11 @@ module sim_sdmmc(
 					read_address <= read_address + 1;
 					miso_byte <= block_device_data[read_address];
 				end
-				
+
 				if (state_delay == 0)
 					current_state <= SD_IDLE;
 			end
-		endcase	
+		endcase
 	endtask
 
 	always_ff @(posedge sd_sclk)
@@ -231,7 +231,7 @@ module sim_sdmmc(
 			else
 			begin
 				shift_count <= shift_count + 1;
-				mosi_byte_ff <= mosi_byte_nxt;	
+				mosi_byte_ff <= mosi_byte_nxt;
 			end
 		end
 		else
