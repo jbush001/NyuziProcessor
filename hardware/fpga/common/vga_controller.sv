@@ -15,9 +15,9 @@
 //
 
 //
-// Drive VGA display.  This is an AXI master that will DMA color
-// data from a memory framebuffer and send it to an ADV7123 VGA
-// DAC with appropriate timing signals.
+// Drive VGA display.  This is an AXI master that DMAs color
+// data from a memory framebuffer and sends it to an ADV7123 VGA
+// DAC with timing signals.
 //
 
 module vga_controller
@@ -51,15 +51,15 @@ module vga_controller
 
 	typedef enum {
 		STATE_WAIT_FRAME_START,
-		STATE_WAIT_FIFO_EMPTY,
+		STATE_WAIT_FIFO_SPACE,
 		STATE_ISSUE_ADDR,
 		STATE_BURST_ACTIVE
-	} frame_state_t;
+	} dma_state_t;
 
 	/*AUTOLOGIC*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	logic		in_visible_region;	// From vga_sequencer of vga_sequencer.v
-	logic		new_frame;		// From vga_sequencer of vga_sequencer.v
+	logic		start_dma;		// From vga_sequencer of vga_sequencer.v
 	logic		pixel_en;		// From vga_sequencer of vga_sequencer.v
 	// End of automatics
 	logic[31:0] vram_addr;
@@ -68,7 +68,7 @@ module vga_controller
 	logic pixel_fifo_almost_empty;
 	logic[31:0] fb_base_address;
 	logic[31:0] fb_length;
-	frame_state_t axi_state;
+	dma_state_t axi_state;
 	logic[7:0] burst_count;
 	logic[18:0] pixel_count;
 	logic sequencer_en;
@@ -87,7 +87,7 @@ module vga_controller
 		.ALMOST_EMPTY_THRESHOLD(PIXEL_FIFO_LENGTH - BURST_LENGTH - 1)) pixel_fifo(
 		.clk(clk),
 		.reset(reset),
-		.flush_en(new_frame),
+		.flush_en(start_dma),
 		.almost_full(),
 		.empty(pixel_fifo_empty),
 		.almost_empty(pixel_fifo_almost_empty),
@@ -116,11 +116,12 @@ module vga_controller
 			assert(!(pixel_en && in_visible_region && pixel_fifo_empty));
 
 			unique case (axi_state)
+				// This state exists so this will automatically resynchronize in the event
+				// of a FIFO underrun. At the beginning of the vblank interval,
+				// simultaneously clear the FIFO and start the first DMA transaction.
 				STATE_WAIT_FRAME_START:
 				begin
-					// Since the FIFO will be flushed with the new frame, skip
-					// STATE_WAIT_FIFO_EMPTY.
-					if (new_frame && sequencer_en)
+					if (start_dma && sequencer_en)
 					begin
 						// Ensure there is no data left in the FIFO (which
 						// would imply we fetched too much)
@@ -132,7 +133,9 @@ module vga_controller
 					end
 				end
 
-				STATE_WAIT_FIFO_EMPTY:
+				// Wait until there is enough free space in the FIFO to accept
+				// an entire burst from memory.
+				STATE_WAIT_FIFO_SPACE:
 				begin
 					if (pixel_fifo_almost_empty)
 						axi_state <= STATE_ISSUE_ADDR;
@@ -164,7 +167,7 @@ module vga_controller
 								else if (pixel_fifo_almost_empty)
 									axi_state <= STATE_ISSUE_ADDR;
 								else
-									axi_state <= STATE_WAIT_FIFO_EMPTY;
+									axi_state <= STATE_WAIT_FIFO_SPACE;
 
 								vram_addr <= vram_addr + BURST_LENGTH * 4;
 								pixel_count <= pixel_count + 19'(BURST_LENGTH);

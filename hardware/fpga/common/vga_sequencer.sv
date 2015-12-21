@@ -16,8 +16,8 @@
 
 //
 // This generates timing signals for the VGA interface.
-// It runs a small microcode program that software uploads. The sequencer
-// contains two counters and supports two instruction types:
+// Software uploads a small microcode program that this runs. It
+// contains two counters and supports two instructions:
 // INITCNT: load a value into the selected counter
 // LOOP: decrement the selected counter and branch to an address if the
 //       value is not zero.
@@ -32,7 +32,7 @@ module vga_sequencer(
 	input                       reset,
 	output                      vga_vs,
 	output                      vga_hs,
-	output                      new_frame,
+	output                      start_dma,
 	output                      in_visible_region,
 	output logic                pixel_en,
 	input                       sequencer_en,
@@ -86,7 +86,7 @@ module vga_sequencer(
 		: counter[current_uop.counter_select] - 1;
 	assign vga_vs = current_uop.vsync && sequencer_en;
 	assign vga_hs = current_uop.hsync && sequencer_en;
-	assign new_frame = pc == 0 && sequencer_en;
+	assign start_dma = pc == 0 && sequencer_en;
 	assign in_visible_region = current_uop.in_visible_region && sequencer_en;
 	assign branch_en = current_uop.frame_done || (current_uop.instruction_type == LOOP
 		&& counter_nxt != 0);
