@@ -31,7 +31,8 @@
 #define LOOP(counter, target) (CTL_LOOP | ((counter) << 17) | ((target) << 4))
 
 //
-// Load microcode into sequencer to generate timing for a given resolution
+// Load microcode into microsequencer to generate synchronization signals
+// for a given resolution
 // - hpf: horizontal front porch length (pixel clocks)
 // - hs: horizontal sync pulse length
 // - hbp: horizontal back porch length
@@ -54,11 +55,11 @@ void load_microcode(int hfp, int hs, int hbp, int hpol, int hres,
 	unsigned int UPGM[] = {
 			// Vertical front porch
 	/*0*/	INITCNT(1, vfp) | nosync,
-			INITCNT(0, hfp - 1) | nosync,  // Horizontal Front porch (16 clocks)
+			INITCNT(0, hfp - 1) | nosync,  // Horizontal Front porch
 			LOOP(0, 2) | nosync,
-			INITCNT(0, hs - 1) | hsync,    // Horizontal Sync pulse (neg, 96 clocks)
+			INITCNT(0, hs - 1) | hsync,    // Horizontal Sync pulse
 	/*4*/	LOOP(0, 4) | hsync,
-			INITCNT(0, hbp - 1) | nosync,  // Horizontal Back porch (48 clocks)
+			INITCNT(0, hbp - 1) | nosync,  // Horizontal Back porch
 			LOOP(0, 6) | nosync,
 			INITCNT(0, hres - 1) | nosync, // Scanline
 	/*8*/	LOOP(0, 8) | nosync,
