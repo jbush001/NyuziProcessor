@@ -19,7 +19,7 @@
 //
 // Block SRAM with 1 read port and 1 write port.
 // Reads and writes are performed synchronously. The read value appears
-// on the next clock edge after the address and readx_en are asserted
+// on the next clock edge after the address and read_en are asserted
 // If read_en is not asserted, the value of read_data is undefined during
 // the next cycle. The READ_DURING_WRITE parameter determines what happens
 // if a read and a write are performed to the same address in the same cycle:
