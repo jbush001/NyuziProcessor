@@ -41,7 +41,7 @@
 //
 
 module l1_l2_interface
-	#(parameter core_id_t CORE_ID = 0)
+	#(parameter CORE_ID = 0)
 	(input                                        clk,
 	input                                         reset,
 

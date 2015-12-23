@@ -22,7 +22,7 @@
 //
 
 module core
-	#(parameter core_id_t CORE_ID = '0,
+	#(parameter CORE_ID = '0,
 	parameter RESET_PC = '0)
 
 	(input                                 clk,
