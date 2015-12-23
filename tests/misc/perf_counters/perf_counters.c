@@ -43,6 +43,25 @@ int main(int argc, const char *argv[])
 	int event;
 	int perf_count[NUM_EVENTS];
 	int values[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+	const struct
+	{
+		int min;
+		int max;
+	} expected_ranges[] = {
+		0, 0,		// PERF_L2_WRITEBACK
+		2, 2,		// PERF_L2_MISS
+		4, 4,		// PERF_L2_HIT
+		0, 0,		// PERF_STORE_ROLLBACK
+		5, 10,		// PERF_STORE
+		80, 120,	// PERF_INSTRUCTION_RETIRED
+		80, 120,	// PERF_INSTRUCTION_ISSUED
+		0, 0,		// PERF_ICACHE_MISS
+		200, 300,	// PERF_ICACHE_HIT
+		0, 0,		// PERF_ITLB_MISS
+		0, 0,		// PERF_DCACHE_MISS
+		5, 20,		// PERF_DCACHE_HIT
+		0, 0,		// PERF_DTLB_MISS
+	};
 
 	for (base_event = 0; base_event < NUM_EVENTS; base_event += NUM_COUNTERS)
 	{
@@ -58,24 +77,14 @@ int main(int argc, const char *argv[])
 			perf_count[base_event + counter] = read_perf_counter(counter) - perf_count[base_event + counter];
 	}
 
-	// CHeck some basic invariants
-	CHECK(perf_count[PERF_STORE_ROLLBACK] < perf_count[PERF_STORE]);
-	CHECK(perf_count[PERF_ICACHE_HIT] >= perf_count[PERF_INSTRUCTION_ISSUED]);
-	CHECK(perf_count[PERF_INSTRUCTION_ISSUED] <= perf_count[PERF_INSTRUCTION_RETIRED]);
-
-	// Chat that values seem to be in the proper range
-	CHECK(perf_count[PERF_L2_WRITEBACK] == 0);
-	CHECK(perf_count[PERF_L2_MISS] < 10);
-	CHECK(perf_count[PERF_L2_HIT] > 0 && perf_count[PERF_L2_HIT] < 10);
-	CHECK(perf_count[PERF_STORE_ROLLBACK] < 10);
-	CHECK(perf_count[PERF_STORE] < 10);
-	CHECK(perf_count[PERF_ICACHE_HIT] > 0);
-	CHECK(perf_count[PERF_INSTRUCTION_ISSUED] > 0);
-	CHECK(perf_count[PERF_INSTRUCTION_RETIRED] > 0);
-
-	// MMU not enabled, these must be zero
-	CHECK(perf_count[PERF_DTLB_MISS] == 0);
-	CHECK(perf_count[PERF_ITLB_MISS] == 0);
+	for (event = 0; event < NUM_EVENTS; event++)
+	{
+		if (perf_count[event] < expected_ranges[event].min || perf_count[event] > expected_ranges[event].max)
+		{
+			printf("Invalid counter %d: %d\n", event, perf_count[event]);
+			exit(1);
+		}
+	}
 
 	printf("PASS\n");
 
