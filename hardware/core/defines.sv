@@ -164,10 +164,15 @@ typedef enum logic [4:0] {
 typedef struct packed {
 	scalar_t pc;
 	logic illegal;
+
+	// Piggybacked exceptions
 	logic ifetch_alignment_fault;
 	logic ifetch_supervisor_fault;
 	logic tlb_miss;
 	logic is_syscall;
+	logic interrupt_request;
+
+	// Decoded instruction fields
 	logic has_scalar1;
 	register_idx_t scalar_sel1;
 	logic has_scalar2;

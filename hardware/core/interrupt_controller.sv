@@ -43,12 +43,11 @@ module interrupt_controller
 
 	// To cores
 	output logic[`TOTAL_THREADS - 1:0]    ic_thread_en,
-	output logic[`NUM_CORES - 1:0]        ic_interrupt_pending,
-	output thread_idx_t                   ic_interrupt_thread_idx,
+	output logic[`TOTAL_THREADS - 1:0]    ic_interrupt_pending,
 	output                                processor_halt,
 
 	// From cores
-	input [`NUM_CORES - 1:0]              wb_interrupt_ack);
+	input [`TOTAL_THREADS - 1:0]          wb_interrupt_ack);
 
 	// Thread enable flag handling. A set of memory mapped registers halt and
 	// resume threads.
@@ -69,21 +68,19 @@ module interrupt_controller
 
 	assign processor_halt = ic_thread_en == 0;
 
-	genvar core_idx;
+	genvar thread_idx;
 	generate
-		for (core_idx = 0; core_idx < `NUM_CORES; core_idx++)
+		for (thread_idx = 0; thread_idx < `TOTAL_THREADS; thread_idx++)
 		begin : core_int_gen
 			always_ff @(posedge clk, posedge reset)
 			begin
 				if (reset)
-					ic_interrupt_pending[core_idx] <= 0;
-				else if (!ic_interrupt_pending[core_idx] && interrupt_req && core_idx == 0) // XXX hardcoded
-					ic_interrupt_pending[core_idx] <= 1;
-				else if (wb_interrupt_ack[core_idx])
-					ic_interrupt_pending[core_idx] <= 0;
+					ic_interrupt_pending[thread_idx] <= 0;
+				else if (!ic_interrupt_pending[thread_idx] && interrupt_req && thread_idx == 0) // XXX hardcoded
+					ic_interrupt_pending[thread_idx] <= 1;
+				else if (wb_interrupt_ack[thread_idx])
+					ic_interrupt_pending[thread_idx] <= 0;
 			end
 		end
 	endgenerate
-
-	assign ic_interrupt_thread_idx = 0; // XXX hardcoded
 endmodule

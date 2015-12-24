@@ -27,10 +27,9 @@ module core
 
 	(input                                 clk,
 	input                                  reset,
-	input[`THREADS_PER_CORE - 1:0]         ic_thread_en,
-	input                                  ic_interrupt_pending,
-	input thread_idx_t                     ic_interrupt_thread_idx,
-	output                                 wb_interrupt_ack,
+	input thread_bitmap_t                  ic_thread_en,
+	input thread_bitmap_t                  ic_interrupt_pending,
+	output thread_bitmap_t                 wb_interrupt_ack,
 
 	// L2 interface
 	input                                  l2_ready,

@@ -57,6 +57,12 @@ module instruction_decode_stage(
 	output logic                  id_instruction_valid,
 	output thread_idx_t           id_thread_idx,
 
+	// From interrupt_controller
+	input thread_bitmap_t         ic_interrupt_pending,
+
+	// From control_registers
+	input thread_bitmap_t         cr_interrupt_en,
+
 	// From writeback_stage
 	input                         wb_rollback_en,
 	input thread_idx_t            wb_rollback_thread_idx);
@@ -116,6 +122,7 @@ module instruction_decode_stage(
 	register_idx_t scalar_sel2;
 	logic is_legal_instruction;
 	logic is_syscall;
+	logic raise_interrupt;
 
 	// I originally tried to structure the instruction set so that this could
 	// determine the format of the instruction from the first 7 bits. Those
@@ -201,6 +208,9 @@ module instruction_decode_stage(
 	assign is_legal_instruction = !dlut_out.illegal && !ifd_alignment_fault && !ifd_tlb_miss
 		&& !ifd_supervisor_fault;
 
+	assign raise_interrupt = ic_interrupt_pending[ifd_thread_idx]
+		& cr_interrupt_en[ifd_thread_idx];
+	assign decoded_instr_nxt.interrupt_request = raise_interrupt;
 	assign decoded_instr_nxt.is_syscall = is_syscall;
 	assign decoded_instr_nxt.ifetch_supervisor_fault = ifd_supervisor_fault;
 	assign decoded_instr_nxt.illegal = dlut_out.illegal;
@@ -302,7 +312,7 @@ module instruction_decode_stage(
 	always_comb
 	begin
 		if (dlut_out.illegal || ifd_alignment_fault || ifd_tlb_miss || ifd_supervisor_fault
-			|| is_syscall)
+			|| is_syscall || raise_interrupt)
 			decoded_instr_nxt.pipeline_sel = PIPE_SCYCLE_ARITH;
 		else if (is_fmt_r || is_fmt_i)
 		begin

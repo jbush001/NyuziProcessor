@@ -90,7 +90,6 @@ module writeback_stage(
 
 	// From control_registers
 	input scalar_t                        cr_creg_read_val,
-	input thread_bitmap_t                 cr_interrupt_en,
 	input scalar_t                        cr_fault_handler,
 	input scalar_t                        cr_tlb_miss_handler,
 	input subcycle_t                      cr_eret_subcycle[`THREADS_PER_CORE],
@@ -104,9 +103,7 @@ module writeback_stage(
 	output subcycle_t                     wb_fault_subcycle,
 
 	// Interrupt input
-	input                                 ic_interrupt_pending,
-	input thread_idx_t                    ic_interrupt_thread_idx,
-	output logic                          wb_interrupt_ack,
+	output thread_bitmap_t                wb_interrupt_ack,
 
 	// Rollback signals to all stages
 	output logic                          wb_rollback_en,
@@ -147,12 +144,10 @@ module writeback_stage(
 	logic[`VECTOR_LANES - 1:0] mcycle_vcompare_result;
 	vector_lane_mask_t dd_vector_lane_oh;
 	cache_line_data_t bypassed_read_data;
-	thread_bitmap_t thread_oh;
-	scalar_t last_retire_pc[`THREADS_PER_CORE];
+	thread_bitmap_t thread_dd_oh;
  	logic is_last_subcycle_dd;
 	logic is_last_subcycle_sx;
 	logic is_last_subcycle_mx;
-	logic[4:0] writeback_counter;
 
 	assign perf_instruction_retire = fx5_instruction_valid || ix_instruction_valid || dd_instruction_valid;
 	assign perf_store_rollback = sq_rollback_en;
@@ -176,12 +171,13 @@ module writeback_stage(
 		wb_fault_reason = FR_RESET;
 		wb_fault_pc = 0;
 		wb_fault_thread_idx = 0;
-		wb_interrupt_ack = 0;
+		wb_interrupt_ack = '0;
 		wb_fault_access_vaddr = 0;
 		wb_fault_subcycle = dd_subcycle;
 
 		if (ix_instruction_valid && (ix_instruction.illegal || ix_instruction.ifetch_alignment_fault
-			|| ix_instruction.tlb_miss || ix_privileged_op_fault || ix_instruction.is_syscall))
+			|| ix_instruction.tlb_miss || ix_privileged_op_fault || ix_instruction.is_syscall
+			|| ix_instruction.interrupt_request))
 		begin
 			// Fault from integer stage, which would be an instruction fetch fault
 			// that bubbled through this stage or eret in non-privileged mode.
@@ -194,7 +190,12 @@ module writeback_stage(
 			wb_rollback_thread_idx = ix_thread_idx;
 			wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
 			wb_fault = 1;
-			if (ix_instruction.tlb_miss)
+			if (ix_instruction.interrupt_request)
+			begin
+				wb_fault_reason = FR_INTERRUPT;
+				wb_interrupt_ack[ix_thread_idx] = 1'b1;
+			end
+			else if (ix_instruction.tlb_miss)
 				wb_fault_reason = FR_ITLB_MISS;
 			else if (ix_instruction.ifetch_alignment_fault)
 				wb_fault_reason = FR_IFETCH_ALIGNNMENT;
@@ -284,44 +285,15 @@ module writeback_stage(
 			wb_rollback_pipeline = PIPE_MEM;
 			wb_rollback_subcycle = dd_subcycle;
 		end
-		else if (ic_interrupt_pending
-			&& cr_interrupt_en[ic_interrupt_thread_idx]
-			&& !dd_instruction_valid
-			&& (!ix_instruction_valid || ix_thread_idx == ic_interrupt_thread_idx)
-			&& !fx5_instruction_valid)
-		begin
-			// Do not dispatch an interrupt in the following cases:
-			// - In another rollback is occurring this cycle.
-			// - If an instruction from the floating point pipeline is being retired
-			//   this cycle. There isn't logic in the thread select stage to invalidate
-			//   the scoreboard entries or squash the instructions in the pipeline.
-			// - If an instruction from the memory operation pipeline is being retired
-			//   this cycle. This instruction may have written or read from device IO
-			//   memory in the last stage and rolling back here will cause them to
-			//   happen again when the thread is restarted.
-			wb_rollback_en = 1;
-			wb_rollback_thread_idx = ic_interrupt_thread_idx;
-			wb_rollback_pc = cr_fault_handler;
-			wb_rollback_pipeline = PIPE_MEM;
-			wb_rollback_subcycle = 0;
-			wb_fault = 1;
-			wb_fault_pc = last_retire_pc[ic_interrupt_thread_idx] + 4;
-			wb_fault_reason = FR_INTERRUPT;
-			wb_fault_thread_idx = ic_interrupt_thread_idx;
-			wb_interrupt_ack = 1;
-			if (ix_instruction_valid)
-				wb_fault_subcycle = ix_subcycle;
-			// else dd_subcycle by default
-		end
 	end
 
 	idx_to_oh #(.NUM_SIGNALS(`THREADS_PER_CORE), .DIRECTION("LSB0")) idx_to_oh_thread(
-		.one_hot(thread_oh),
+		.one_hot(thread_dd_oh),
 		.index(dd_thread_idx));
 
 	// Suspend thread if necessary
 	assign wb_suspend_thread_oh = (dd_suspend_thread || sq_rollback_en || ior_rollback_en)
-		? thread_oh : thread_bitmap_t'(0);
+		? thread_dd_oh : thread_bitmap_t'(0);
 
 	// If there is a pending store for the value that was just read, merge it into
 	// the data returned from the L1 data cache.
@@ -401,10 +373,6 @@ module writeback_stage(
 	begin
 		if (reset)
 		begin
-			for (int i = 0; i < `THREADS_PER_CORE; i++)
-			begin
-				last_retire_pc[i] <= 0;
-			end
 
 `ifdef SIMULATION
 			__debug_wb_pipeline <= PIPE_MEM;
@@ -421,7 +389,6 @@ module writeback_stage(
 			wb_writeback_reg <= '0;
 			wb_writeback_thread_idx <= '0;
 			wb_writeback_value <= '0;
-			writeback_counter <= '0;
 			// End of automatics
 		end
 		else
@@ -437,37 +404,6 @@ module writeback_stage(
 			__debug_is_sync_store <= dd_instruction_valid && !dd_instruction.is_load
 				&& memory_op == MEM_SYNC;
 `endif
-			// Latch the last *issued* instruction to save for interrupt handling.
-			// Because instructions can retire out of order, ensure this
-			// don't incorrectly latch an instruction that issued earlier but
-			// retired later.
-			if (wb_rollback_en)
-			begin
-				writeback_counter <= {1'b0, writeback_counter[4:1]};
-				if (ix_instruction_valid && ix_rollback_en)
-					last_retire_pc[ix_thread_idx] <= ix_rollback_pc;
-
-				// XXX pc load from memory?
-			end
-			else if (fx5_instruction_valid)
-			begin
-				if (writeback_counter == 0)
-					last_retire_pc[fx5_thread_idx] <= fx5_instruction.pc;
-			end
-			else if (dd_instruction_valid)
-			begin
-				writeback_counter <= 5'b01111;
-				if (!writeback_counter[4])
-					last_retire_pc[dd_thread_idx] <= dd_instruction.pc;
-			end
-			else if (ix_instruction_valid)
-			begin
-				writeback_counter <= 5'b11111;
-				last_retire_pc[ix_thread_idx] <= ix_instruction.pc;
-			end
-			else
-				writeback_counter <= {1'b0, writeback_counter[4:1]};
-
 			// wb_rollback_en is derived combinatorially from the instruction
 			// that is about to retire, so this doesn't need to check
 			// wb_rollback_thread_idx like other places.

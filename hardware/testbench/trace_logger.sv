@@ -40,7 +40,7 @@ module trace_logger(
 	input vector_t	                 wb_writeback_value,
 	input vector_lane_mask_t         wb_writeback_mask,
 	input thread_idx_t               wb_rollback_thread_idx,
-	input                            wb_interrupt_ack,
+	input thread_bitmap_t            wb_interrupt_ack,
 	input scalar_t                   wb_fault_pc,
 	input scalar_t                   wb_rollback_pc,
 	input                            debug_is_sync_store,
@@ -237,14 +237,9 @@ module trace_logger(
 				&& !sq_store_sync_success)
 				trace_reorder_queue[4].event_type <= EVENT_INVALID;
 
-			// Signal interrupt to emulator.  Put this at the end of the queue so all
-			// instructions that have already been retired will appear before the interrupt
-			// in the trace.
-			// Note that there would be a problem in instructions fetched after the interrupt
-			// handler jumped in front of the interrupt in the queue.  However, that can't
-			// happen because the thread is restarted and by the time they reach the
-			// writeback stage, this interrupt will already have been processed.
-			if (wb_interrupt_ack)
+			// Signal interrupt to emulator. These are piggybacked on instructions
+			// and flow down the integer pipeline.
+			if (wb_interrupt_ack != 0)
 			begin
 				trace_reorder_queue[5].interrupt_active <= 1;
 				trace_reorder_queue[5].interrupt_thread_idx <= wb_rollback_thread_idx;

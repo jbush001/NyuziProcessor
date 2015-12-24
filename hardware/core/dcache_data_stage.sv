@@ -109,14 +109,8 @@ module dcache_data_stage(
 	output scalar_t                           dd_store_bypass_addr,
 	output thread_idx_t                       dd_store_bypass_thread_idx,
 
-	// Interrupt input. Interrupts are diferent than rollbacks because
-	// they can occur in the middle of a synchronized load/store. Detect
-	// these and cancel the operation.
-	input                                     ic_interrupt_pending,
-	input thread_idx_t                        ic_interrupt_thread_idx,
-	input                                     wb_interrupt_ack,
-
 	// From writeback_stage
+	input thread_bitmap_t                     wb_interrupt_ack,
 	input logic                               wb_rollback_en,
 	input thread_idx_t                        wb_rollback_thread_idx,
 	input pipeline_sel_t                      wb_rollback_pipeline,
@@ -452,6 +446,9 @@ module dcache_data_stage(
 	// not be a miss if the data is in the cache (there is a window where it could
 	// be evicted before the thread can fetch it, in which case it will retry.
 	// sync_load_pending tracks if this is the first or second request.
+	//
+	// Interrupts are different than rollbacks because they can occur in the middle
+	// of a synchronized load/store. Detect these and cancel the operation.
 	genvar thread_idx;
 	generate
 		for (thread_idx = 0; thread_idx < `THREADS_PER_CORE; thread_idx++)
@@ -460,8 +457,7 @@ module dcache_data_stage(
 			begin
 				if (reset)
 					sync_load_pending[thread_idx] <= 0;
-				else if (ic_interrupt_pending && wb_interrupt_ack
-					&& ic_interrupt_thread_idx == thread_idx_t'(thread_idx))
+				else if (wb_interrupt_ack[thread_idx])
 				begin
 					// If a thread dispatches an interrupt while waiting on a synchronized
 					// load, reset the sync load pending flag.

@@ -40,8 +40,8 @@ module nyuzi
 	l2req_packet_t l2i_request[`NUM_CORES];
 	ioreq_packet_t io_request[`NUM_CORES];
 	logic[`TOTAL_PERF_EVENTS - 1:0] perf_events;
-	logic[`NUM_CORES - 1:0] ic_interrupt_pending;
-	logic[`NUM_CORES - 1:0] wb_interrupt_ack;
+	logic[`TOTAL_THREADS - 1:0] ic_interrupt_pending;
+	logic[`TOTAL_THREADS - 1:0] wb_interrupt_ack;
 	scalar_t ic_io_read_data;	// Currently not used
 	logic[31:0] perf_io_read_data;
 	logic[31:0] selected_io_read_data;
@@ -115,8 +115,8 @@ module nyuzi
 				.l2i_request(l2i_request[core_idx]),
 				.l2_ready(l2_ready[core_idx]),
 				.ic_thread_en(ic_thread_en[core_idx * `THREADS_PER_CORE+:`THREADS_PER_CORE]),
-				.ic_interrupt_pending(ic_interrupt_pending[core_idx]),
-				.wb_interrupt_ack(wb_interrupt_ack[core_idx]),
+				.ic_interrupt_pending(ic_interrupt_pending[core_idx * `THREADS_PER_CORE+:`THREADS_PER_CORE]),
+				.wb_interrupt_ack(wb_interrupt_ack[core_idx * `THREADS_PER_CORE+:`THREADS_PER_CORE]),
 				.ior_request(io_request[core_idx]),
 				.ia_ready(ia_ready[core_idx]),
 				.ia_response(ia_response),
