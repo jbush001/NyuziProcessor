@@ -49,20 +49,21 @@ module interrupt_controller
 	// From cores
 	input [`TOTAL_THREADS - 1:0]          wb_interrupt_ack);
 
-	// Thread enable flag handling. A set of memory mapped registers halt and
-	// resume threads.
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 			ic_thread_en <= 1;
 		else if (io_write_en)
 		begin
-			// Thread mask  This is limited to 32 threads.
-			// To add more, put the next 32 bits in subsequent io addresses.
-			if (io_address == BASE_ADDRESS) // resume thread
-				ic_thread_en <= ic_thread_en | io_write_data[`TOTAL_THREADS - 1:0];
-			else if (io_address == BASE_ADDRESS + 4) // halt thread
-				ic_thread_en <= ic_thread_en & ~io_write_data[`TOTAL_THREADS - 1:0];
+			case (io_address)
+				// Thread enable flag handling. This is limited to 32 threads.
+				// To add more, put the next 32 bits in subsequent io addresses.
+				BASE_ADDRESS: // resume thread
+					ic_thread_en <= ic_thread_en | io_write_data[`TOTAL_THREADS - 1:0];
+
+				BASE_ADDRESS + 4: // halt thread
+					ic_thread_en <= ic_thread_en & ~io_write_data[`TOTAL_THREADS - 1:0];
+			endcase
 		end
 	end
 
