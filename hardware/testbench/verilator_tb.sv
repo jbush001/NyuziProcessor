@@ -210,7 +210,7 @@ module verilator_tb(
 		.dt_request_virt_addr(`CORE0.dt_request_vaddr),
 		.sq_rollback_en(`CORE0.sq_rollback_en),
 		.sq_store_sync_success(`CORE0.sq_store_sync_success),
-		.wb_fault_pc(`CORE0.wb_fault_pc),
+		.wb_trap_pc(`CORE0.wb_trap_pc),
 		.*);
 
 	task flush_l2_line;

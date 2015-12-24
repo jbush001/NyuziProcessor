@@ -59,8 +59,8 @@ module vga_controller
 	/*AUTOLOGIC*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	logic		in_visible_region;	// From vga_sequencer of vga_sequencer.v
-	logic		start_dma;		// From vga_sequencer of vga_sequencer.v
 	logic		pixel_en;		// From vga_sequencer of vga_sequencer.v
+	logic		start_dma;		// From vga_sequencer of vga_sequencer.v
 	// End of automatics
 	logic[31:0] vram_addr;
 	logic[7:0] _ignore_alpha;

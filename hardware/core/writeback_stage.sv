@@ -90,17 +90,17 @@ module writeback_stage(
 
 	// From control_registers
 	input scalar_t                        cr_creg_read_val,
-	input scalar_t                        cr_fault_handler,
+	input scalar_t                        cr_trap_handler,
 	input scalar_t                        cr_tlb_miss_handler,
 	input subcycle_t                      cr_eret_subcycle[`THREADS_PER_CORE],
 
 	// To control_registers
-	output logic                          wb_fault,
-	output fault_reason_t                 wb_fault_reason,
-	output scalar_t                       wb_fault_pc,
-	output thread_idx_t                   wb_fault_thread_idx,
-	output scalar_t                       wb_fault_access_vaddr,
-	output subcycle_t                     wb_fault_subcycle,
+	output logic                          wb_trap,
+	output trap_reason_t                  wb_trap_reason,
+	output scalar_t                       wb_trap_pc,
+	output thread_idx_t                   wb_trap_thread_idx,
+	output scalar_t                       wb_trap_access_vaddr,
+	output subcycle_t                     wb_trap_subcycle,
 
 	// Interrupt input
 	output thread_bitmap_t                wb_interrupt_ack,
@@ -167,13 +167,13 @@ module writeback_stage(
 		wb_rollback_pc = 0;
 		wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
 		wb_rollback_subcycle = 0;
-		wb_fault = 0;
-		wb_fault_reason = FR_RESET;
-		wb_fault_pc = 0;
-		wb_fault_thread_idx = 0;
+		wb_trap = 0;
+		wb_trap_reason = TR_RESET;
+		wb_trap_pc = 0;
+		wb_trap_thread_idx = 0;
 		wb_interrupt_ack = '0;
-		wb_fault_access_vaddr = 0;
-		wb_fault_subcycle = dd_subcycle;
+		wb_trap_access_vaddr = 0;
+		wb_trap_subcycle = dd_subcycle;
 
 		if (ix_instruction_valid && (ix_instruction.illegal || ix_instruction.ifetch_alignment_fault
 			|| ix_instruction.tlb_miss || ix_privileged_op_fault || ix_instruction.is_syscall
@@ -185,32 +185,32 @@ module writeback_stage(
 			if (ix_instruction.tlb_miss)
 				wb_rollback_pc = cr_tlb_miss_handler;
 			else
-				wb_rollback_pc = cr_fault_handler;
+				wb_rollback_pc = cr_trap_handler;
 
 			wb_rollback_thread_idx = ix_thread_idx;
 			wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
-			wb_fault = 1;
+			wb_trap = 1;
 			if (ix_instruction.interrupt_request)
 			begin
-				wb_fault_reason = FR_INTERRUPT;
+				wb_trap_reason = TR_INTERRUPT;
 				wb_interrupt_ack[ix_thread_idx] = 1'b1;
 			end
 			else if (ix_instruction.tlb_miss)
-				wb_fault_reason = FR_ITLB_MISS;
+				wb_trap_reason = TR_ITLB_MISS;
 			else if (ix_instruction.ifetch_alignment_fault)
-				wb_fault_reason = FR_IFETCH_ALIGNNMENT;
+				wb_trap_reason = TR_IFETCH_ALIGNNMENT;
 			else if (ix_instruction.ifetch_supervisor_fault)
-				wb_fault_reason = FR_IFETCH_SUPERVISOR;
+				wb_trap_reason = TR_IFETCH_SUPERVISOR;
 			else if (ix_privileged_op_fault)
-				wb_fault_reason = FR_PRIVILEGED_OP;
+				wb_trap_reason = TR_PRIVILEGED_OP;
 			else if (ix_instruction.is_syscall)
-				wb_fault_reason = FR_SYSCALL;
+				wb_trap_reason = TR_SYSCALL;
 			else
-				wb_fault_reason = FR_ILLEGAL_INSTRUCTION;
+				wb_trap_reason = TR_ILLEGAL_INSTRUCTION;
 
-			wb_fault_pc = ix_instruction.pc;
-			wb_fault_access_vaddr = ix_instruction.pc;
-			wb_fault_thread_idx = ix_thread_idx;
+			wb_trap_pc = ix_instruction.pc;
+			wb_trap_access_vaddr = ix_instruction.pc;
+			wb_trap_thread_idx = ix_thread_idx;
 		end
 		else if (dd_instruction_valid && (dd_alignment_fault || dd_tlb_miss || dd_write_fault
 			|| dd_supervisor_fault || dd_privilege_op_fault))
@@ -219,28 +219,28 @@ module writeback_stage(
 			wb_rollback_en = 1'b1;
 			wb_rollback_thread_idx = dd_thread_idx;
 			wb_rollback_pipeline = PIPE_MEM;
-			wb_fault = 1;
+			wb_trap = 1;
 			if (dd_tlb_miss)
 			begin
 				wb_rollback_pc = cr_tlb_miss_handler;
-				wb_fault_reason = FR_DTLB_MISS;
+				wb_trap_reason = TR_DTLB_MISS;
 			end
 			else
 			begin
-				wb_rollback_pc = cr_fault_handler;
+				wb_rollback_pc = cr_trap_handler;
 				if (dd_supervisor_fault)
-					wb_fault_reason = FR_DATA_SUPERVISOR;
+					wb_trap_reason = TR_DATA_SUPERVISOR;
 				else if (dd_write_fault)
-					wb_fault_reason = FR_ILLEGAL_WRITE;
+					wb_trap_reason = TR_ILLEGAL_WRITE;
 				else if (dd_privilege_op_fault)
-					wb_fault_reason = FR_PRIVILEGED_OP;
+					wb_trap_reason = TR_PRIVILEGED_OP;
 				else
-					wb_fault_reason = FR_DATA_ALIGNMENT;
+					wb_trap_reason = TR_DATA_ALIGNMENT;
 			end
 
-			wb_fault_pc = dd_instruction.pc;
-			wb_fault_thread_idx = dd_thread_idx;
-			wb_fault_access_vaddr = dd_request_vaddr;
+			wb_trap_pc = dd_instruction.pc;
+			wb_trap_thread_idx = dd_thread_idx;
+			wb_trap_access_vaddr = dd_request_vaddr;
 		end
 		else if (ix_instruction_valid && ix_instruction.has_dest && ix_instruction.dest_reg == `REG_PC
 			&& !ix_instruction.dest_is_vector)
@@ -564,7 +564,7 @@ module writeback_stage(
 		if (wb_rollback_en && wb_rollback_pc == 0)
 		begin
 			$display("thread %0d rolled back to 0, reason %0d address %08x", wb_rollback_thread_idx,
-				wb_fault_reason, wb_fault_pc);
+				wb_trap_reason, wb_trap_pc);
 			$finish;
 		end
 	end

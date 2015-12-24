@@ -41,7 +41,7 @@ module trace_logger(
 	input vector_lane_mask_t         wb_writeback_mask,
 	input thread_idx_t               wb_rollback_thread_idx,
 	input thread_bitmap_t            wb_interrupt_ack,
-	input scalar_t                   wb_fault_pc,
+	input scalar_t                   wb_trap_pc,
 	input scalar_t                   wb_rollback_pc,
 	input                            debug_is_sync_store,
 	input pipeline_sel_t             debug_wb_pipeline,
@@ -243,7 +243,7 @@ module trace_logger(
 			begin
 				trace_reorder_queue[5].interrupt_active <= 1;
 				trace_reorder_queue[5].interrupt_thread_idx <= wb_rollback_thread_idx;
-				trace_reorder_queue[5].interrupt_pc <= wb_fault_pc;
+				trace_reorder_queue[5].interrupt_pc <= wb_trap_pc;
 			end
 		end
 	end

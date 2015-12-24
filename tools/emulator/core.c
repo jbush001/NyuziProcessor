@@ -58,7 +58,7 @@ struct Thread
 	uint32_t id;
 	uint32_t linkedAddress; // For synchronized store/load. Cache line (addr / 64)
 	uint32_t currentPc;
-	FaultReason lastFaultReason;
+	TrapReason lastTrapReason;
 	uint32_t lastFaultPc;
 	uint32_t lastFaultAddress;
 	uint32_t scratchpad0;
@@ -70,7 +70,7 @@ struct Thread
 	bool prevEnableInterrupt;
 	bool prevEnableMmu;
 	bool prevEnableSupervisor;
-	uint32_t faultSubcycle;
+	uint32_t prevSubcycle;
 	uint32_t currentSubcycle;
 	uint32_t scalarReg[NUM_REGISTERS - 1];	// 31 is PC, which is special
 	uint32_t vectorReg[NUM_REGISTERS][NUM_VECTOR_LANES];
@@ -91,7 +91,7 @@ struct Core
 	uint32_t memorySize;
 	uint32_t totalThreads;
 	uint32_t threadEnableMask;
-	uint32_t faultHandlerPc;
+	uint32_t trapHandlerPc;
 	uint32_t tlbMissHandlerPc;
 	uint32_t physTlbUpdateAddr;
 	TlbEntry *itlb;
@@ -129,9 +129,9 @@ static void setScalarReg(Thread*, uint32_t reg, uint32_t value);
 static void setVectorReg(Thread*, uint32_t reg, uint32_t mask,
 	uint32_t *values);
 static void invalidateSyncAddress(Core*, uint32_t address);
-static void dispatchFault(Thread*, uint32_t address, FaultReason);
-static void memoryAccessFault(Thread*, uint32_t address, FaultReason, bool isLoad);
-static void illegalInstruction(Thread*, uint32_t instruction);
+static void raiseTrap(Thread*, uint32_t address, TrapReason);
+static void raiseAccessFault(Thread*, uint32_t address, TrapReason, bool isLoad);
+static void raiseIllegalInstructionFault(Thread*, uint32_t instruction);
 static bool translateAddress(Thread*, uint32_t virtualAddress, uint32_t
 	*physicalAddress, bool data, bool isWrite);
 static uint32_t scalarArithmeticOp(ArithmeticOp, uint32_t value1, uint32_t value2);
@@ -192,7 +192,7 @@ Core *initCore(uint32_t memorySize, uint32_t totalThreads, bool randomizeMemory)
 	{
 		core->threads[threadid].core = core;
 		core->threads[threadid].id = threadid;
-		core->threads[threadid].lastFaultReason = FR_RESET;
+		core->threads[threadid].lastTrapReason = TR_RESET;
 		core->threads[threadid].linkedAddress = INVALID_LINK_ADDR;
 		core->threads[threadid].enableSupervisor = true;
 		core->threads[threadid].prevEnableSupervisor = true;
@@ -201,7 +201,7 @@ Core *initCore(uint32_t memorySize, uint32_t totalThreads, bool randomizeMemory)
 	core->threadEnableMask = 1;
 	core->crashed = false;
 	core->enableTracing = false;
-	core->faultHandlerPc = 0;
+	core->trapHandlerPc = 0;
 
 	gettimeofday(&tv, NULL);
 	core->startCycleCount = (uint32_t)(tv.tv_sec * 50000000 + tv.tv_usec * 50);
@@ -289,7 +289,7 @@ void cosimInterrupt(Core *core, uint32_t threadId, uint32_t pc)
 {
 	Thread *thread = &core->threads[threadId];
 	thread->currentPc = pc + 4;
-	dispatchFault(thread, 0, FR_INTERRUPT);
+	raiseTrap(thread, 0, TR_INTERRUPT);
 }
 
 uint32_t getTotalThreads(const Core *core)
@@ -542,36 +542,36 @@ static void invalidateSyncAddress(Core *core, uint32_t address)
 	}
 }
 
-static void dispatchFault(Thread *thread, uint32_t faultAddress, FaultReason reason)
+static void raiseTrap(Thread *thread, uint32_t trapAddress, TrapReason reason)
 {
 	// Save old state
 	thread->lastFaultPc = thread->currentPc - 4;
 	thread->prevEnableInterrupt = thread->enableInterrupt;
 	thread->prevEnableMmu = thread->enableMmu;
 	thread->prevEnableSupervisor = thread->enableSupervisor;
-	thread->faultSubcycle = thread->currentSubcycle;
+	thread->prevSubcycle = thread->currentSubcycle;
 
 	// Update state
 	thread->enableInterrupt = false;
-	if (reason == FR_ITLB_MISS || reason == FR_DTLB_MISS)
+	if (reason == TR_ITLB_MISS || reason == TR_DTLB_MISS)
 	{
 		thread->currentPc = thread->core->tlbMissHandlerPc;
 		thread->enableMmu = false;
 	}
 	else
-		thread->currentPc = thread->core->faultHandlerPc;
+		thread->currentPc = thread->core->trapHandlerPc;
 
 	thread->currentSubcycle = 0;
 	thread->enableSupervisor = true;
 
-	// Save fault information
-	thread->lastFaultReason = reason;
-	thread->lastFaultAddress = faultAddress;
+	// Save trap information
+	thread->lastTrapReason = reason;
+	thread->lastFaultAddress = trapAddress;
 }
 
-static void memoryAccessFault(Thread *thread, uint32_t address, FaultReason reason, bool isLoad)
+static void raiseAccessFault(Thread *thread, uint32_t address, TrapReason reason, bool isLoad)
 {
-	if (thread->core->stopOnFault || thread->core->faultHandlerPc == 0)
+	if (thread->core->stopOnFault || thread->core->trapHandlerPc == 0)
 	{
 		printf("Invalid %s access thread %d PC %08x address %08x\n",
 			isLoad ? "load" : "store",
@@ -582,16 +582,16 @@ static void memoryAccessFault(Thread *thread, uint32_t address, FaultReason reas
 	else
 	{
 		// Allow core to dispatch
-		if (reason == FR_IFETCH_ALIGNNMENT)
+		if (reason == TR_IFETCH_ALIGNNMENT)
 			thread->currentPc += 4;
 
-		dispatchFault(thread, address, reason);
+		raiseTrap(thread, address, reason);
 	}
 }
 
-static void illegalInstruction(Thread *thread, uint32_t instruction)
+static void raiseIllegalInstructionFault(Thread *thread, uint32_t instruction)
 {
-	if (thread->core->stopOnFault || thread->core->faultHandlerPc == 0)
+	if (thread->core->stopOnFault || thread->core->trapHandlerPc == 0)
 	{
 		printf("Illegal instruction %08x thread %d PC %08x\n", instruction, thread->id,
 			thread->currentPc - 4);
@@ -601,7 +601,7 @@ static void illegalInstruction(Thread *thread, uint32_t instruction)
 	else
 	{
 		// Allow core to dispatch
-		dispatchFault(thread, 0, FR_ILLEGAL_INSTRUCTION);
+		raiseTrap(thread, 0, TR_ILLEGAL_INSTRUCTION);
 	}
 }
 
@@ -643,15 +643,15 @@ static bool translateAddress(Thread *thread, uint32_t virtualAddress, uint32_t *
 			if ((setEntries[way].physAddrAndFlags & TLB_SUPERVISOR) != 0
 				&& !thread->enableSupervisor)
 			{
-				dispatchFault(thread, virtualAddress, dataFetch ? FR_DATA_SUPERVISOR
-					: FR_IFETCH_SUPERVISOR);
+				raiseTrap(thread, virtualAddress, dataFetch ? TR_DATA_SUPERVISOR
+					: TR_IFETCH_SUPERVISOR);
 				return false;
 			}
 
 			if (isWrite && (setEntries[way].physAddrAndFlags & TLB_WRITE_ENABLE) == 0)
 			{
 				// Write protected page, raise a fault
-				memoryAccessFault(thread, virtualAddress, FR_ILLEGAL_WRITE, false);
+				raiseAccessFault(thread, virtualAddress, TR_ILLEGAL_WRITE, false);
 				return false;
 			}
 
@@ -675,11 +675,11 @@ static bool translateAddress(Thread *thread, uint32_t virtualAddress, uint32_t *
 
 	// No translation found, raise exception
 	if (dataFetch)
-		dispatchFault(thread, virtualAddress, FR_DTLB_MISS);
+		raiseTrap(thread, virtualAddress, TR_DTLB_MISS);
 	else
 	{
 		thread->currentPc += 4;	// In instruction fetch, hadn't been incremented yet
-		dispatchFault(thread, virtualAddress, FR_ITLB_MISS);
+		raiseTrap(thread, virtualAddress, TR_ITLB_MISS);
 	}
 
 	return false;
@@ -772,7 +772,7 @@ static void executeRegisterArithInst(Thread *thread, uint32_t instruction)
 
 	if (op == OP_SYSCALL)
 	{
-		dispatchFault(thread, 0, FR_SYSCALL);
+		raiseTrap(thread, 0, TR_SYSCALL);
 		return;
 	}
 
@@ -825,7 +825,7 @@ static void executeRegisterArithInst(Thread *thread, uint32_t instruction)
 				break;
 
 			default:
-				illegalInstruction(thread, instruction);
+				raiseIllegalInstructionFault(thread, instruction);
 				return;
 		}
 
@@ -857,7 +857,7 @@ static void executeRegisterArithInst(Thread *thread, uint32_t instruction)
 				break;
 
 			default:
-				illegalInstruction(thread, instruction);
+				raiseIllegalInstructionFault(thread, instruction);
 				return;
 		}
 
@@ -946,7 +946,7 @@ static void executeImmediateArithInst(Thread *thread, uint32_t instruction)
 				break;
 
 			default:
-				illegalInstruction(thread, instruction);
+				raiseIllegalInstructionFault(thread, instruction);
 				return;
 		}
 
@@ -978,7 +978,7 @@ static void executeImmediateArithInst(Thread *thread, uint32_t instruction)
 				break;
 
 			default:
-				illegalInstruction(thread, instruction);
+				raiseIllegalInstructionFault(thread, instruction);
 				return;
 		}
 
@@ -1035,7 +1035,7 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instruction)
 	// Check alignment
 	if ((virtualAddress % accessSize) != 0)
 	{
-		memoryAccessFault(thread, virtualAddress, FR_DATA_ALIGNMENT, isLoad);
+		raiseAccessFault(thread, virtualAddress, TR_DATA_ALIGNMENT, isLoad);
 		return;
 	}
 
@@ -1093,7 +1093,7 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instruction)
 				assert(0);	// Should have been handled in caller
 
 			default:
-				illegalInstruction(thread, instruction);
+				raiseIllegalInstructionFault(thread, instruction);
 				return;
 		}
 
@@ -1173,7 +1173,7 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instruction)
 				assert(0);	// Should have been handled in caller
 
 			default:
-				illegalInstruction(thread, instruction);
+				raiseIllegalInstructionFault(thread, instruction);
 				return;
 		}
 
@@ -1233,7 +1233,7 @@ static void executeBlockLoadStoreInst(Thread *thread, uint32_t instruction)
 	// Check alignment
 	if ((virtualAddress & (NUM_VECTOR_LANES * 4 - 1)) != 0)
 	{
-		memoryAccessFault(thread, virtualAddress, FR_DATA_ALIGNMENT, isLoad);
+		raiseAccessFault(thread, virtualAddress, TR_DATA_ALIGNMENT, isLoad);
 		return;
 	}
 
@@ -1314,7 +1314,7 @@ static void executeScatterGatherInst(Thread *thread, uint32_t instruction)
 	virtualAddress = thread->vectorReg[ptrreg][lane] + offset;
 	if ((mask & (1 << lane)) && (virtualAddress & 3) != 0)
 	{
-		memoryAccessFault(thread, virtualAddress, FR_DATA_ALIGNMENT, isLoad);
+		raiseAccessFault(thread, virtualAddress, TR_DATA_ALIGNMENT, isLoad);
 		return;
 	}
 
@@ -1363,7 +1363,7 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 				break;
 
 			case CR_FAULT_HANDLER:
-				value = thread->core->faultHandlerPc;
+				value = thread->core->trapHandlerPc;
 				break;
 
 			case CR_FAULT_PC:
@@ -1371,7 +1371,7 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 				break;
 
 			case CR_FAULT_REASON:
-				value = thread->lastFaultReason;
+				value = thread->lastTrapReason;
 				break;
 
 			case CR_FLAGS:
@@ -1418,7 +1418,7 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 				break;
 
 			case CR_SUBCYCLE:
-				value = thread->faultSubcycle;
+				value = thread->prevSubcycle;
 				break;
 		}
 
@@ -1430,7 +1430,7 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 		// registers.
 		if (!thread->enableSupervisor)
 		{
-			dispatchFault(thread, 0, FR_PRIVILEGED_OP);
+			raiseTrap(thread, 0, TR_PRIVILEGED_OP);
 			return;
 		}
 
@@ -1439,7 +1439,7 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 		switch (crIndex)
 		{
 			case CR_FAULT_HANDLER:
-				thread->core->faultHandlerPc = value;
+				thread->core->trapHandlerPc = value;
 				break;
 
 			case CR_FAULT_PC:
@@ -1475,7 +1475,7 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 				break;
 
 			case CR_SUBCYCLE:
-				thread->faultSubcycle = value;
+				thread->prevSubcycle = value;
 				break;
 		}
 	}
@@ -1518,7 +1518,7 @@ static void executeMemoryAccessInst(Thread *thread, uint32_t instruction)
 			break;
 
 		default:
-			illegalInstruction(thread, instruction);
+			raiseIllegalInstructionFault(thread, instruction);
 	}
 }
 
@@ -1563,14 +1563,14 @@ static void executeBranchInst(Thread *thread, uint32_t instruction)
 		case BRANCH_ERET:
 			if (!thread->enableSupervisor)
 			{
-				dispatchFault(thread, 0, FR_PRIVILEGED_OP);
+				raiseTrap(thread, 0, TR_PRIVILEGED_OP);
 				return;
 			}
 
 			thread->enableInterrupt = thread->prevEnableInterrupt;
 			thread->enableMmu = thread->prevEnableMmu;
 			thread->currentPc = thread->lastFaultPc;
-	 		thread->currentSubcycle = thread->faultSubcycle;
+	 		thread->currentSubcycle = thread->prevSubcycle;
 			thread->enableSupervisor = thread->prevEnableSupervisor;
 			return; // Short circuit out
 	}
@@ -1611,7 +1611,7 @@ static void executeCacheControlInst(Thread *thread, uint32_t instruction)
 
 			if (!thread->enableSupervisor)
 			{
-				dispatchFault(thread, 0, FR_PRIVILEGED_OP);
+				raiseTrap(thread, 0, TR_PRIVILEGED_OP);
 				return;
 			}
 
@@ -1695,7 +1695,7 @@ static int executeInstruction(Thread *thread)
 	// Check PC alignment
 	if ((thread->currentPc & 3) != 0)
 	{
-		memoryAccessFault(thread, thread->currentPc, FR_IFETCH_ALIGNNMENT, true);
+		raiseAccessFault(thread, thread->currentPc, TR_IFETCH_ALIGNNMENT, true);
 		return 1;
 	}
 
@@ -1717,7 +1717,7 @@ restart:
 			if (breakpoint == NULL)
 			{
 				thread->currentPc += 4;
-				illegalInstruction(thread, instruction);
+				raiseIllegalInstructionFault(thread, instruction);
 				return 1;
 			}
 

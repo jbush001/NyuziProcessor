@@ -49,7 +49,7 @@ module core
 	scalar_t cr_creg_read_val;
 	thread_bitmap_t cr_interrupt_en;
 	scalar_t cr_eret_address[`THREADS_PER_CORE];
-	scalar_t cr_fault_handler;
+	scalar_t cr_trap_handler;
 	scalar_t cr_tlb_miss_handler;
 	subcycle_t cr_eret_subcycle[`THREADS_PER_CORE];
 
@@ -286,18 +286,18 @@ module core
 	logic		ts_instruction_valid;	// From thread_select_stage of thread_select_stage.v
 	subcycle_t	ts_subcycle;		// From thread_select_stage of thread_select_stage.v
 	thread_idx_t	ts_thread_idx;		// From thread_select_stage of thread_select_stage.v
-	logic		wb_fault;		// From writeback_stage of writeback_stage.v
-	scalar_t	wb_fault_access_vaddr;	// From writeback_stage of writeback_stage.v
-	scalar_t	wb_fault_pc;		// From writeback_stage of writeback_stage.v
-	fault_reason_t	wb_fault_reason;	// From writeback_stage of writeback_stage.v
-	subcycle_t	wb_fault_subcycle;	// From writeback_stage of writeback_stage.v
-	thread_idx_t	wb_fault_thread_idx;	// From writeback_stage of writeback_stage.v
 	logic		wb_rollback_en;		// From writeback_stage of writeback_stage.v
 	scalar_t	wb_rollback_pc;		// From writeback_stage of writeback_stage.v
 	pipeline_sel_t	wb_rollback_pipeline;	// From writeback_stage of writeback_stage.v
 	subcycle_t	wb_rollback_subcycle;	// From writeback_stage of writeback_stage.v
 	thread_idx_t	wb_rollback_thread_idx;	// From writeback_stage of writeback_stage.v
 	thread_bitmap_t	wb_suspend_thread_oh;	// From writeback_stage of writeback_stage.v
+	logic		wb_trap;		// From writeback_stage of writeback_stage.v
+	scalar_t	wb_trap_access_vaddr;	// From writeback_stage of writeback_stage.v
+	scalar_t	wb_trap_pc;		// From writeback_stage of writeback_stage.v
+	trap_reason_t	wb_trap_reason;		// From writeback_stage of writeback_stage.v
+	subcycle_t	wb_trap_subcycle;	// From writeback_stage of writeback_stage.v
+	thread_idx_t	wb_trap_thread_idx;	// From writeback_stage of writeback_stage.v
 	logic		wb_writeback_en;	// From writeback_stage of writeback_stage.v
 	logic		wb_writeback_is_last_subcycle;// From writeback_stage of writeback_stage.v
 	logic		wb_writeback_is_vector;	// From writeback_stage of writeback_stage.v
