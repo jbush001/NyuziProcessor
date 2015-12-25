@@ -56,11 +56,19 @@ module int_execute_stage(
 	output logic                      ix_rollback_en,
 	output scalar_t                   ix_rollback_pc,
 	output subcycle_t                 ix_subcycle,
-	output logic                      ix_privileged_op_fault);
+	output logic                      ix_privileged_op_fault,
+
+	// Performance events
+	output logic                      perf_uncond_branch,
+	output logic                      perf_cond_branch_taken,
+	output logic                      perf_cond_branch_not_taken);
 
 	vector_t vector_result;
 	logic is_eret;
 	logic privileged_op_fault;
+	logic branch_taken;
+	logic is_conditional_branch;
+	logic is_valid_instruction;
 
 	genvar lane;
 	generate
@@ -242,8 +250,63 @@ module int_execute_stage(
 		end
 	endgenerate
 
-	assign is_eret = of_instruction.is_branch && of_instruction.branch_type == BRANCH_ERET;
+	assign is_valid_instruction = of_instruction_valid
+		&& (!wb_rollback_en || wb_rollback_thread_idx != of_thread_idx)
+		&& of_instruction.pipeline_sel == PIPE_SCYCLE_ARITH;
+	assign is_eret = is_valid_instruction
+		&& of_instruction.is_branch
+		&& of_instruction.branch_type == BRANCH_ERET;
 	assign privileged_op_fault = is_eret && !cr_supervisor_en[of_thread_idx];
+
+	always_comb
+	begin
+		branch_taken = 0;
+		is_conditional_branch = 0;
+		perf_uncond_branch = 0;
+
+		if (is_valid_instruction
+			&& of_instruction.is_branch
+			&& !privileged_op_fault)
+		begin
+			unique case (of_instruction.branch_type)
+				BRANCH_ALL:
+				begin
+					branch_taken = of_operand1[0][15:0] == 16'hffff;
+					is_conditional_branch = 1;
+				end
+
+				BRANCH_ZERO:
+				begin
+					branch_taken = of_operand1[0] == 0;
+					is_conditional_branch = 1;
+				end
+
+				BRANCH_NOT_ZERO:
+				begin
+					branch_taken = of_operand1[0] != 0;
+					is_conditional_branch = 1;
+				end
+
+				BRANCH_NOT_ALL:
+				begin
+					branch_taken = of_operand1[0][15:0] != 16'hffff;
+					is_conditional_branch = 1;
+				end
+
+				BRANCH_ALWAYS,
+				BRANCH_CALL_OFFSET,
+				BRANCH_CALL_REGISTER,
+				BRANCH_ERET:
+				begin
+					branch_taken = 1;
+					perf_uncond_branch = 1;
+				end
+			endcase
+		end
+	end
+
+	assign perf_cond_branch_taken = is_conditional_branch && branch_taken;
+	assign perf_cond_branch_not_taken = is_conditional_branch && !branch_taken;
 
 	always_ff @(posedge clk, posedge reset)
 	begin
@@ -272,9 +335,7 @@ module int_execute_stage(
 			ix_thread_idx <= of_thread_idx;
 			ix_subcycle <= of_subcycle;
 
-			if (of_instruction_valid
-				&& (!wb_rollback_en || wb_rollback_thread_idx != of_thread_idx)
-				&& of_instruction.pipeline_sel == PIPE_SCYCLE_ARITH)
+			if (is_valid_instruction)
 			begin
 				ix_instruction_valid <= 1;
 
@@ -290,26 +351,7 @@ module int_execute_stage(
 
 				ix_is_eret <= is_eret && !privileged_op_fault;
 				ix_privileged_op_fault <= privileged_op_fault;
-
-				if (of_instruction.is_branch
-					&& !of_instruction.illegal
-					&& !of_instruction.ifetch_alignment_fault
-					&& !of_instruction.ifetch_supervisor_fault
-					&& !privileged_op_fault)
-				begin
-					unique case (of_instruction.branch_type)
-						BRANCH_ALL:            ix_rollback_en <= of_operand1[0][15:0] == 16'hffff;
-						BRANCH_ZERO:           ix_rollback_en <= of_operand1[0] == 0;
-						BRANCH_NOT_ZERO:       ix_rollback_en <= of_operand1[0] != 0;
-						BRANCH_NOT_ALL:        ix_rollback_en <= of_operand1[0][15:0] != 16'hffff;
-						BRANCH_ALWAYS,
-						BRANCH_CALL_OFFSET,
-						BRANCH_CALL_REGISTER,
-						BRANCH_ERET:           ix_rollback_en <= 1'b1;
-					endcase
-				end
-				else
-					ix_rollback_en <= 0;
+				ix_rollback_en <= branch_taken;
 			end
 			else
 			begin

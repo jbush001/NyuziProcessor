@@ -75,7 +75,7 @@ module ifetch_data_stage(
 	input                            wb_rollback_en,
 	input thread_idx_t               wb_rollback_thread_idx,
 
-	// Performance counters
+	// Performance events
 	output logic                     perf_icache_hit,
 	output logic                     perf_icache_miss,
 	output logic                     perf_itlb_miss);

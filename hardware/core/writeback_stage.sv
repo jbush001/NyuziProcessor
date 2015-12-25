@@ -124,7 +124,7 @@ module writeback_stage(
 	// To thread_select_stage
 	output thread_bitmap_t                wb_suspend_thread_oh,
 
-	// Performance counters
+	// Performance events
 	output logic                          perf_instruction_retire,
 	output logic                          perf_store_rollback);
 

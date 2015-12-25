@@ -155,5 +155,8 @@ by UART unit tests.
     | 10    | L1 data cache miss |
     | 11    | L1 data cache hit |
     | 12    | Data TLB miss |
+    | 13    | Unconditional branch |
+    | 14    | Conditional branch, taken |
+    | 15    | Conditional branch, not taken |
 
-    Events 3-12 are duplicated for each core, starting at index 13
+    Events 3-15 are duplicated for each core, starting at index 16

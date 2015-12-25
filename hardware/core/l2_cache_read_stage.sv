@@ -79,7 +79,7 @@ module l2_cache_read_stage(
 	output l2_tag_t                           l2r_writeback_tag,
 	output logic                              l2r_needs_writeback,
 
-	// Performance counters
+	// Performance events
 	output logic                              perf_l2_miss,
 	output logic                              perf_l2_hit);
 

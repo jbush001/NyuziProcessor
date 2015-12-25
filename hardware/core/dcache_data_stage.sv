@@ -115,7 +115,7 @@ module dcache_data_stage(
 	input thread_idx_t                        wb_rollback_thread_idx,
 	input pipeline_sel_t                      wb_rollback_pipeline,
 
-	// Performance counters
+	// Performance events
 	output logic                              perf_dcache_hit,
 	output logic                              perf_dcache_miss,
 	output logic                              perf_store,
@@ -255,9 +255,9 @@ module dcache_data_stage(
 	assign dd_creg_write_val = dt_store_value[0];
 	assign dd_creg_index = dt_instruction.creg_index;
 
-	// Performance counters
+	// Performance events
 	assign perf_dcache_hit = cache_hit && dcache_load_en;
-	assign perf_dcache_miss = !cache_hit && dt_tlb_hit && dcache_load_en;
+	assign perf_dcache_miss = !cache_hit && dcache_load_en;
 	assign perf_store = dcache_store_en;
 	assign perf_dtlb_miss = is_tlb_access && !dt_tlb_hit;
 

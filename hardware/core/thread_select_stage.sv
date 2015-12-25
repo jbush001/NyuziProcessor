@@ -65,7 +65,7 @@ module thread_select_stage(
 	input thread_bitmap_t              l2i_dcache_wake_bitmap,
 	input thread_bitmap_t              ior_wake_bitmap,
 
-	// Performace counters
+	// Performace events
 	output logic                       perf_instruction_issue);
 
 	localparam THREAD_FIFO_SIZE = 8;

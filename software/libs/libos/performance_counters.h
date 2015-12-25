@@ -36,7 +36,10 @@ enum performance_event
 	PERF_ITLB_MISS,
 	PERF_DCACHE_MISS,
 	PERF_DCACHE_HIT,
-	PERF_DTLB_MISS
+	PERF_DTLB_MISS,
+	PERF_UNCOND_BRANCH,
+	PERF_COND_BRANCH_TAKEN,
+	PERF_COND_BRANCH_NOT_TAKEN
 };
 
 void set_perf_counter_event(int counter, enum performance_event event);

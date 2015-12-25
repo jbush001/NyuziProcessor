@@ -206,7 +206,7 @@ module instruction_decode_stage(
 	assign is_syscall = is_fmt_r && ifd_instruction[25:20] == OP_SYSCALL;
 	assign is_nop = ifd_instruction == `INSTRUCTION_NOP;
 	assign is_legal_instruction = !dlut_out.illegal && !ifd_alignment_fault && !ifd_tlb_miss
-		&& !ifd_supervisor_fault;
+		&& !ifd_supervisor_fault && !raise_interrupt;
 
 	assign raise_interrupt = ic_interrupt_pending[ifd_thread_idx]
 		& cr_interrupt_en[ifd_thread_idx];

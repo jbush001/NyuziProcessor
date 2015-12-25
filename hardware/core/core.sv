@@ -267,6 +267,8 @@ module core
 	vector_t	of_store_value;		// From operand_fetch_stage of operand_fetch_stage.v
 	subcycle_t	of_subcycle;		// From operand_fetch_stage of operand_fetch_stage.v
 	thread_idx_t	of_thread_idx;		// From operand_fetch_stage of operand_fetch_stage.v
+	logic		perf_cond_branch_not_taken;// From int_execute_stage of int_execute_stage.v
+	logic		perf_cond_branch_taken;	// From int_execute_stage of int_execute_stage.v
 	logic		perf_dcache_hit;	// From dcache_data_stage of dcache_data_stage.v
 	logic		perf_dcache_miss;	// From dcache_data_stage of dcache_data_stage.v
 	logic		perf_dtlb_miss;		// From dcache_data_stage of dcache_data_stage.v
@@ -277,6 +279,7 @@ module core
 	logic		perf_itlb_miss;		// From ifetch_data_stage of ifetch_data_stage.v
 	logic		perf_store;		// From dcache_data_stage of dcache_data_stage.v
 	logic		perf_store_rollback;	// From writeback_stage of writeback_stage.v
+	logic		perf_uncond_branch;	// From int_execute_stage of int_execute_stage.v
 	logic		sq_rollback_en;		// From l1_l2_interface of l1_l2_interface.v
 	cache_line_data_t sq_store_bypass_data;	// From l1_l2_interface of l1_l2_interface.v
 	logic [`CACHE_LINE_BYTES-1:0] sq_store_bypass_mask;// From l1_l2_interface of l1_l2_interface.v
@@ -330,6 +333,9 @@ module core
 	io_request_queue #(.CORE_ID(CORE_ID)) io_request_queue(.*);
 
 	assign core_perf_events = {
+		perf_cond_branch_not_taken,
+		perf_cond_branch_taken,
+		perf_uncond_branch,
 		perf_dtlb_miss,
 		perf_dcache_hit,
 		perf_dcache_miss,
