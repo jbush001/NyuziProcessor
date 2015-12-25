@@ -81,8 +81,8 @@ module de2_115_top(
 	logic		io_read_en;		// From nyuzi of nyuzi.v
 	scalar_t	io_write_data;		// From nyuzi of nyuzi.v
 	logic		io_write_en;		// From nyuzi of nyuzi.v
-	logic		pc_event_dram_page_hit;	// From sdram_controller of sdram_controller.v
-	logic		pc_event_dram_page_miss;// From sdram_controller of sdram_controller.v
+	logic		perf_dram_page_hit;	// From sdram_controller of sdram_controller.v
+	logic		perf_dram_page_miss;	// From sdram_controller of sdram_controller.v
 	logic		processor_halt;		// From nyuzi of nyuzi.v
 	// End of automatics
 
@@ -182,8 +182,8 @@ module de2_115_top(
 				   .dram_we_n		(dram_we_n),
 				   .dram_ba		(dram_ba[1:0]),
 				   .dram_addr		(dram_addr[12:0]),
-				   .pc_event_dram_page_miss(pc_event_dram_page_miss),
-				   .pc_event_dram_page_hit(pc_event_dram_page_hit),
+				   .perf_dram_page_miss	(perf_dram_page_miss),
+				   .perf_dram_page_hit	(perf_dram_page_hit),
 				   // Inouts
 				   .dram_dq		(dram_dq[31:0]),
 				   // Inputs
@@ -216,7 +216,7 @@ module de2_115_top(
 			event_count <= event_count + 1;
 	end
 `else
-	uart #(.BASE_ADDRESS(24), .BAUD_DIVIDE(CLOCK_RATE / UART_BAUD)) uart(
+	uart #(.BASE_ADDRESS(24), .CLOCKS_PER_BIT(CLOCK_RATE / UART_BAUD)) uart(
 		.io_read_data(uart_read_data),
 		.*);
 `endif

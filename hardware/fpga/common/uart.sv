@@ -16,12 +16,11 @@
 
 //
 // Serial port interface.
-// BAUD_DIVIDE should be clk rate / (target baud rate * 8)
 //
 
 module uart
-	#(parameter			BASE_ADDRESS = 0,
-	parameter			BAUD_DIVIDE = 1)
+	#(parameter BASE_ADDRESS = 0,
+	parameter CLOCKS_PER_BIT = 1)
 
 	(input              clk,
 	input               reset,
@@ -77,26 +76,11 @@ module uart
 
 	assign tx_enable = io_write_en && io_address == TX_REG;
 
-	uart_transmit #(.BAUD_DIVIDE(BAUD_DIVIDE)) uart_transmit(
+	uart_transmit #(.CLOCKS_PER_BIT(CLOCKS_PER_BIT)) uart_transmit(
 		.tx_char(io_write_data[7:0]),
-		/*AUTOINST*/
-								 // Outputs
-								 .tx_ready		(tx_ready),
-								 .uart_tx		(uart_tx),
-								 // Inputs
-								 .clk			(clk),
-								 .reset			(reset),
-								 .tx_enable		(tx_enable));
+		.*);
 
-	uart_receive #(.BAUD_DIVIDE(BAUD_DIVIDE)) uart_receive(/*AUTOINST*/
-							       // Outputs
-							       .rx_char		(rx_char[7:0]),
-							       .rx_char_valid	(rx_char_valid),
-							       .rx_frame_error	(rx_frame_error),
-							       // Inputs
-							       .clk		(clk),
-							       .reset		(reset),
-							       .uart_rx		(uart_rx));
+	uart_receive #(.CLOCKS_PER_BIT(CLOCKS_PER_BIT)) uart_receive(.*);
 
 	assign rx_fifo_read = io_address == RX_REG && io_read_en;
 

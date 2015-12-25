@@ -15,7 +15,8 @@
 //
 
 //
-// Serial Peripheral Interface bus controller
+// Serial Peripheral Interface (SPI) bus controller
+// This currenly can only act as a master
 //
 
 module spi_controller

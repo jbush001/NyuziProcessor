@@ -14,7 +14,6 @@
 // limitations under the License.
 //
 
-
 `include "defines.sv"
 
 //
@@ -31,8 +30,8 @@ module sdram_controller
 	parameter					          COL_ADDR_WIDTH = 8, // 256 columns
 
 	// These are expressed in numbers of clocks. Each one is the number
-	// of clocks of delay minus one. Need to compute this by dividing
-	// part specification by clock interval.
+	// of clocks of delay minus one. Compute this by dividing timing
+	// specification for the part by the clock interval.
 	parameter					          T_POWERUP = 10000,
 	parameter					          T_ROW_PRECHARGE = 1,
 	parameter					          T_AUTO_REFRESH_CYCLE = 3,
@@ -58,8 +57,8 @@ module sdram_controller
 	axi4_interface.slave                  axi_bus,
 
 	// Performance counter events
-	output logic				          pc_event_dram_page_miss,
-	output logic				          pc_event_dram_page_hit);
+	output logic				          perf_dram_page_miss,
+	output logic				          perf_dram_page_hit);
 
 	localparam SDRAM_BURST_LENGTH = 8;
 	localparam SDRAM_BURST_IDX_WIDTH = $clog2(SDRAM_BURST_LENGTH);
@@ -95,7 +94,7 @@ module sdram_controller
 		CMD_NOP               = 4'b1000
 	} sdram_cmd_t;
 
-	// latched addresses and lengths are in terms of DATA_WIDTH beats, not bytes.
+	// latched addresses and lengths are in terms of DATA_WIDTH transfers, not bytes.
 	logic[11:0] refresh_timer_ff;
 	logic[11:0] refresh_timer_nxt;
 	logic[14:0] timer_ff;
@@ -184,8 +183,8 @@ module sdram_controller
 		state_nxt = state_ff;
 		dram_ba = 0;
 		dram_addr = 0;
-		pc_event_dram_page_miss = 0;
-		pc_event_dram_page_hit = 0;
+		perf_dram_page_miss = 0;
+		perf_dram_page_hit = 0;
 		access_is_read_nxt = access_is_read_ff;
 
 		lfifo_enqueue = 0;
@@ -265,18 +264,18 @@ module sdram_controller
 						if (!bank_active[read_bank])
 						begin
 							// Row is not open in this bank, need to pen it.
-							pc_event_dram_page_miss = 1;
+							perf_dram_page_miss = 1;
 							state_nxt = STATE_OPEN_ROW;
 						end
 						else if (read_row != active_row[read_bank])
 						begin
 							// Different row is already open in this bank, close it first.
-							pc_event_dram_page_miss = 1;
+							perf_dram_page_miss = 1;
 							state_nxt = STATE_CLOSE_ROW;
 						end
 						else
 						begin
-							pc_event_dram_page_hit = 1;
+							perf_dram_page_hit = 1;
 							state_nxt = STATE_CAS_WAIT;
 						end
 					end
@@ -293,18 +292,18 @@ module sdram_controller
 						if (!bank_active[write_bank])
 						begin
 							// Row is not open, do that
-							pc_event_dram_page_miss = 1;
+							perf_dram_page_miss = 1;
 							state_nxt = STATE_OPEN_ROW;
 						end
 						else if (write_row != active_row[write_bank])
 						begin
 							// Different row open in this bank, close
-							pc_event_dram_page_miss = 1;
+							perf_dram_page_miss = 1;
 							state_nxt = STATE_CLOSE_ROW;
 						end
 						else
 						begin
-							pc_event_dram_page_hit = 1;
+							perf_dram_page_hit = 1;
 							state_nxt = STATE_WRITE_BURST;
 						end
 					end
@@ -327,7 +326,6 @@ module sdram_controller
 
 				STATE_OPEN_ROW:
 				begin
-					// Open a row
 					if (access_is_read_ff)
 					begin
 						dram_ba = read_bank;
@@ -393,6 +391,9 @@ module sdram_controller
 					refresh_timer_nxt = T_REFRESH;
 					state_nxt = STATE_IDLE;
 				end
+
+				default:
+					state_nxt = STATE_IDLE;
 			endcase
 		end
 	end
@@ -422,7 +423,9 @@ module sdram_controller
 		end
 		else
 		begin
+			//
 			// SDRAM control
+			//
 			state_ff <= state_nxt;
 			timer_ff <= timer_nxt;
 			burst_offset_ff <= burst_offset_nxt;
@@ -448,7 +451,9 @@ module sdram_controller
 					bank_active[i] <= 0;
 			end
 
-			// Bus Interface
+			//
+			// AXI Bus Interface
+			//
 			if (write_pending && state_ff == STATE_WRITE_BURST &&
 				state_nxt != STATE_WRITE_BURST)
 			begin
@@ -461,18 +466,22 @@ module sdram_controller
 			end
 			else if (axi_bus.m_awvalid && !write_pending)
 			begin
+				// Start a write burst
+
 				// Ensure the the burst is aligned on an SDRAM burst boundary.
 				assert(((axi_bus.m_awlen + 1) & (SDRAM_BURST_LENGTH - 1)) == 0);
 				assert((axi_bus.m_awaddr & (SDRAM_BURST_LENGTH - 1)) == 0);
 
+`ifdef SIMULATION
 				// Make sure memory address is in memory range
 				if (axi_bus.m_awaddr >= MEMORY_SIZE)
 				begin
 					$display("sdram: write address out of range %x", axi_bus.m_awaddr);
 					$finish;
 				end
+`endif
 
-				// axi_bus.m_awaddr is in terms of bytes.  Convert to beats.
+				// axi_bus.m_awaddr is in terms of bytes.  Convert to # of transfers.
 				write_address <= INTERNAL_ADDR_WIDTH'(axi_bus.m_awaddr[31:$clog2(DATA_WIDTH / 8)]);
 				write_length <= axi_bus.m_awlen;
 				write_pending <= 1'b1;
@@ -488,6 +497,8 @@ module sdram_controller
 			end
 			else if (axi_bus.m_arvalid && !read_pending)
 			begin
+				// Start a read burst
+
 				// Ensure the the burst is aligned on an SDRAM burst boundary.
 				assert(((axi_bus.m_arlen + 1) & (SDRAM_BURST_LENGTH - 1)) == 0);
 				assert((axi_bus.m_araddr & (SDRAM_BURST_LENGTH - 1)) == 0);
@@ -501,7 +512,7 @@ module sdram_controller
 				end
 `endif
 
-				// axi_bus.m_araddr is in terms of bytes.  Convert to beats.
+				// axi_bus.m_araddr is in terms of bytes.  Convert to # of transfers.
 				read_address <= INTERNAL_ADDR_WIDTH'(axi_bus.m_araddr[31:$clog2(DATA_WIDTH / 8)]);
 				read_length <= axi_bus.m_arlen;
 				read_pending <= 1'b1;

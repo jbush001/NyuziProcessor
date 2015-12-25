@@ -18,11 +18,11 @@
 // Quick and dirty embedded logic analyzer
 // BAUD_DIVIDE should be: clk rate / target baud rate
 // Each cycle that capture_enable is asserted, capture_data is
-// stored into a circular buffer.  When trigger is asserted (it only
+// stored into a circular buffer. When trigger is asserted (it only
 // needs to be asserted for one cycle), this will transmit the contents
-// of the circular buffer. Each entry will be padded to a multiple of
-// bytes and sent a byte at a time, starting at the least significand bit
-// of capture_data.
+// of the circular buffer over the UART. Each entry will be padded to a
+// multiple of bytes and sent a byte at a time, starting at the least
+// significant bit of capture_data.
 //
 
 module logic_analyzer
@@ -70,16 +70,7 @@ module logic_analyzer
 		.write_addr(capture_entry),
 		.write_data(capture_data));
 
-	uart_transmit #(.BAUD_DIVIDE(BAUD_DIVIDE)) uart_transmit(/*AUTOINST*/
-								 // Outputs
-								 .tx_ready		(tx_ready),
-								 .uart_tx		(uart_tx),
-								 // Inputs
-								 .clk			(clk),
-								 .reset			(reset),
-								 .tx_enable		(tx_enable),
-								 .tx_char		(tx_char[7:0]));
-
+	uart_transmit #(.BAUD_DIVIDE(BAUD_DIVIDE)) uart_transmit(.*);
 
 	assign tx_char = dump_value[(dump_byte * 8)+:8];
 

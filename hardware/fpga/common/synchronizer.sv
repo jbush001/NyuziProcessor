@@ -15,7 +15,7 @@
 //
 
 //
-// Transfer a signal between two clock domains, avoiding metastability.
+// Transfer a signal into a clock domain, avoiding metastability.
 //
 
 module synchronizer

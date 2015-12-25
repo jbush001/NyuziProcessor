@@ -16,11 +16,10 @@
 
 //
 // Serial transmit logic
-// BAUD_DIVIDE should be: clk rate / target baud rate
 //
 
 module uart_transmit
-	#(parameter			BAUD_DIVIDE = 1)
+	#(parameter CLOCKS_PER_BIT = 1)
 	(input              clk,
 	input               reset,
 	input               tx_enable,
@@ -28,12 +27,13 @@ module uart_transmit
 	input[7:0]          tx_char,
 	output              uart_tx);
 
+	localparam SAMPLE_COUNT_WIDTH = 12;
 	localparam START_BIT = 1'b0;
 	localparam STOP_BIT = 1'b1;
 
 	logic[9:0] tx_shift;
 	logic[3:0] shift_count;
-	logic[31:0] baud_divider;
+	logic[SAMPLE_COUNT_WIDTH - 1:0] next_edge_clocks;
 	logic transmit_active;
 
 	assign transmit_active = shift_count != 0;
@@ -46,7 +46,7 @@ module uart_transmit
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			baud_divider <= '0;
+			next_edge_clocks <= '0;
 			shift_count <= '0;
 			tx_shift <= '0;
 			// End of automatics
@@ -55,20 +55,20 @@ module uart_transmit
 		begin
 			if (transmit_active)
 			begin
-				if (baud_divider == 0)
+				if (next_edge_clocks == 0)
 				begin
 					shift_count <= shift_count - 4'd1;
 					tx_shift <= {1'b0, tx_shift[9:1]};
-					baud_divider <= BAUD_DIVIDE - 1;
+					next_edge_clocks <= SAMPLE_COUNT_WIDTH'(CLOCKS_PER_BIT - 1);
 				end
 				else
-					baud_divider <= baud_divider - 1;
+					next_edge_clocks <= next_edge_clocks - 1;
 			end
 			else if (tx_enable)
 			begin
 				shift_count <= 4'd10;
 				tx_shift <= {STOP_BIT, tx_char, START_BIT};
-				baud_divider <= BAUD_DIVIDE - 1;
+				next_edge_clocks <= SAMPLE_COUNT_WIDTH'(CLOCKS_PER_BIT - 1);
 			end
 		end
 	end

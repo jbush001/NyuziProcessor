@@ -14,9 +14,8 @@
 // limitations under the License.
 //
 
-
 //
-// PS/2 peripheral.  Only supports receiving
+// PS/2 keyboard or mouse controller. Only supports receiving.
 //
 
 module ps2_controller
@@ -147,4 +146,3 @@ endmodule
 // verilog-typedef-regexp:"_t$"
 // verilog-auto-reset-widths:unbased
 // End:
-

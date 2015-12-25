@@ -16,11 +16,10 @@
 
 //
 // Serial receive logic
-// BAUD_DIVIDE should be: clk rate / (target baud rate * 8)
 //
 
 module uart_receive
-	#(parameter BAUD_DIVIDE = 1)
+	#(parameter CLOCKS_PER_BIT = 1)
 	(input              clk,
 	input               reset,
 	input               uart_rx,
@@ -75,7 +74,7 @@ module uart_receive
 					// We are at the beginning of the start bit. Next
 					// sample point is in middle of first data bit.
 					// Set divider to 1.5 times bit duration.
-					sample_count_nxt = SAMPLE_COUNT_WIDTH'((BAUD_DIVIDE * 3 / 2) - 1);
+					sample_count_nxt = SAMPLE_COUNT_WIDTH'((CLOCKS_PER_BIT * 3 / 2) - 1);
 				end
 			end
 
@@ -83,12 +82,12 @@ module uart_receive
 			begin
 				if (sample_count_ff == 0)
 				begin
-					sample_count_nxt = SAMPLE_COUNT_WIDTH'(BAUD_DIVIDE - 1);
+					sample_count_nxt = SAMPLE_COUNT_WIDTH'(CLOCKS_PER_BIT - 1);
 					if (bit_count_ff == 8)
 					begin
 						state_nxt = STATE_STOP_BITS;
 						bit_count_nxt = 0;
-						sample_count_nxt = SAMPLE_COUNT_WIDTH'(BAUD_DIVIDE - 1); // 0.5 stop bit
+						sample_count_nxt = SAMPLE_COUNT_WIDTH'(CLOCKS_PER_BIT - 1); // 0.5 stop bit
 					end
 					else
 					begin

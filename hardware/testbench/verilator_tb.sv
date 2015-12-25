@@ -64,8 +64,8 @@ module verilator_tb(
 	logic		io_read_en;		// From nyuzi of nyuzi.v
 	scalar_t	io_write_data;		// From nyuzi of nyuzi.v
 	logic		io_write_en;		// From nyuzi of nyuzi.v
-	logic		pc_event_dram_page_hit;	// From sdram_controller of sdram_controller.v
-	logic		pc_event_dram_page_miss;// From sdram_controller of sdram_controller.v
+	logic		perf_dram_page_hit;	// From sdram_controller of sdram_controller.v
+	logic		perf_dram_page_miss;	// From sdram_controller of sdram_controller.v
 	logic		processor_halt;		// From nyuzi of nyuzi.v
 	logic		ps2_clk;		// From sim_ps2 of sim_ps2.v
 	logic		ps2_data;		// From sim_ps2 of sim_ps2.v
@@ -136,7 +136,7 @@ module verilator_tb(
 		.MAX_REFRESH_INTERVAL(800)) memory(.*);
 
 	assign loopback_uart_rx = loopback_uart_tx & loopback_uart_mask;
-	uart #(.BASE_ADDRESS('h100), .BAUD_DIVIDE(8)) loopback_uart(
+	uart #(.BASE_ADDRESS('h100), .CLOCKS_PER_BIT(8)) loopback_uart(
 		.io_read_data(loopback_uart_read_data),
 		.uart_tx(loopback_uart_tx),
 		.uart_rx(loopback_uart_rx),

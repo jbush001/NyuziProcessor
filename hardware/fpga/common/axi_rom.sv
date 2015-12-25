@@ -14,8 +14,6 @@
 // limitations under the License.
 //
 
-
-
 `include "defines.sv"
 
 //
@@ -91,4 +89,3 @@ endmodule
 // verilog-typedef-regexp:"_t$"
 // verilog-auto-reset-widths:unbased
 // End:
-
