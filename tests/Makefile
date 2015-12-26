@@ -29,4 +29,5 @@ test:
 	cd misc/mmu && ./runtest.py
 	cd misc/supervisor && ./runtest.py
 	cd misc/perf_counters && ./runtest.py
+	cd misc/interrupt && ./runtest.py
 	cd render && make test

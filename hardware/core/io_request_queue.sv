@@ -38,6 +38,9 @@ module io_request_queue
 	output scalar_t                        ior_read_value,
 	output logic                           ior_rollback_en,
 
+	// To instruction_decode_stage
+	output thread_bitmap_t                 ior_pending,
+
 	// To thread_select_stage
 	output thread_bitmap_t                 ior_wake_bitmap,
 
@@ -66,6 +69,8 @@ module io_request_queue
 		begin : io_request_gen
 			assign send_request[thread_idx] = pending_request[thread_idx].valid
 				&& !pending_request[thread_idx].request_sent;
+			assign ior_pending[thread_idx] = (pending_request[thread_idx].valid
+				&& pending_request[thread_idx].request_sent) || send_grant_oh[thread_idx];
 
 			always_ff @(posedge clk, posedge reset)
 			begin

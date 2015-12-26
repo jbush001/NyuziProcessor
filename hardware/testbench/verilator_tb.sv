@@ -346,7 +346,7 @@ module verilator_tb(
 			interrupt_counter <= 0;
 			interrupt_req <= 0;
 		end
-		else if (interrupt_counter == 200)
+		else if (interrupt_counter == 1000)
 		begin
 			interrupt_counter <= 0;
 			interrupt_req <= 1;

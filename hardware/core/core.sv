@@ -222,6 +222,7 @@ module core
 	logic		ift_tlb_hit;		// From ifetch_tag_stage of ifetch_tag_stage.v
 	logic		ift_tlb_supervisor;	// From ifetch_tag_stage of ifetch_tag_stage.v
 	logic		ift_valid [`L1I_WAYS];	// From ifetch_tag_stage of ifetch_tag_stage.v
+	thread_bitmap_t	ior_pending;		// From io_request_queue of io_request_queue.v
 	scalar_t	ior_read_value;		// From io_request_queue of io_request_queue.v
 	logic		ior_rollback_en;	// From io_request_queue of io_request_queue.v
 	thread_bitmap_t	ior_wake_bitmap;	// From io_request_queue of io_request_queue.v

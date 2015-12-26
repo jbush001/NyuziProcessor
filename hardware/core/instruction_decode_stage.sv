@@ -60,6 +60,9 @@ module instruction_decode_stage(
 	// From interrupt_controller
 	input thread_bitmap_t         ic_interrupt_pending,
 
+	// From io_request_queue
+	input thread_bitmap_t         ior_pending,
+
 	// From control_registers
 	input thread_bitmap_t         cr_interrupt_en,
 
@@ -123,6 +126,7 @@ module instruction_decode_stage(
 	logic is_legal_instruction;
 	logic is_syscall;
 	logic raise_interrupt;
+	thread_bitmap_t masked_interrupt_flags;
 
 	// I originally tried to structure the instruction set so that this could
 	// determine the format of the instruction from the first 7 bits. Those
@@ -208,8 +212,20 @@ module instruction_decode_stage(
 	assign is_legal_instruction = !dlut_out.illegal && !ifd_alignment_fault && !ifd_tlb_miss
 		&& !ifd_supervisor_fault && !raise_interrupt;
 
-	assign raise_interrupt = ic_interrupt_pending[ifd_thread_idx]
-		& cr_interrupt_en[ifd_thread_idx];
+	// Subtle: Don't raise an interrupt if there is a I/O request pending.
+	// I/O load instructions are issued twice. The first issue queues the
+	// request in io_request_queue and triggers a rollback. When the I/O
+	// subsystem returns the result, the io_request_queue latches the result
+	// and wakesthe thread, which reissues the load. The io_request_queue
+	// then returns the result.
+	// If an interrupt occurs after the first issue, and the ISR subsequently
+	// does another I/O request, it will get the stale value from the first
+	// read. Lots of other weird things can happen (writes also works similarily.
+	// They don't strictly have to, but I implemented it this way for simplicity).
+	// The solution is to not interrupt between the two instructions.
+	assign masked_interrupt_flags = ic_interrupt_pending & cr_interrupt_en
+		& ~ior_pending;
+	assign raise_interrupt = masked_interrupt_flags[ifd_thread_idx];
 	assign decoded_instr_nxt.interrupt_request = raise_interrupt;
 	assign decoded_instr_nxt.is_syscall = is_syscall;
 	assign decoded_instr_nxt.ifetch_supervisor_fault = ifd_supervisor_fault;
@@ -222,7 +238,7 @@ module instruction_decode_stage(
 	begin
 		case (dlut_out.scalar1_loc)
 			SCLR1_14_10:  decoded_instr_nxt.scalar_sel1 = ifd_instruction[14:10];
-			default:   decoded_instr_nxt.scalar_sel1 = ifd_instruction[4:0]; //  src1
+			default:      decoded_instr_nxt.scalar_sel1 = ifd_instruction[4:0]; //  src1
 		endcase
 	end
 

@@ -209,14 +209,13 @@ module dcache_data_stage(
 		&& dt_instruction.is_memory_access
 		&& dt_instruction.memory_access_type != MEM_CONTROL_REG
 		&& dt_tlb_hit
+		&& !supervisor_fault
 		&& is_io_address;
 	assign dd_io_write_en = io_access_en
 		&& !dt_instruction.is_load
-		&& !supervisor_fault
 		&& dt_tlb_writable;
 	assign dd_io_read_en = io_access_en
-		&& dt_instruction.is_load
-		&& !supervisor_fault;
+		&& dt_instruction.is_load;
 	assign dd_io_write_value = dt_store_value[0];
 	assign dd_io_thread_idx = dt_thread_idx;
 	assign dd_io_addr = {16'd0, dt_request_paddr[15:0]};
