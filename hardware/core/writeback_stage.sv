@@ -211,6 +211,7 @@ module writeback_stage(
 			wb_trap_pc = ix_instruction.pc;
 			wb_trap_access_vaddr = ix_instruction.pc;
 			wb_trap_thread_idx = ix_thread_idx;
+			wb_trap_subcycle = ix_subcycle;
 		end
 		else if (dd_instruction_valid && (dd_alignment_fault || dd_tlb_miss || dd_write_fault
 			|| dd_supervisor_fault || dd_privilege_op_fault))

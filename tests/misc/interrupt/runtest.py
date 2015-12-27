@@ -45,5 +45,12 @@ def run_timer_test(name):
 	if output.replace('*', '') != 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789':
 		raise test_harness.TestException('Base string does not match:\n' + result)
 
-test_harness.register_tests(run_timer_test, ['timer_test.c'])
+def run_multicycle(name):
+	test_harness.assemble_test('multicycle.s')
+	result = test_harness.run_verilator()
+	if result.find('PASS') == -1 or result.find('FAIL') != -1:
+		raise test_harness.TestException('Test failed:\n' + result)
+
+test_harness.register_tests(run_timer_test, ['timer_test'])
+test_harness.register_tests(run_multicycle, ['multicycle'])
 test_harness.execute_tests()
