@@ -1332,6 +1332,13 @@ static void executeScatterGatherInst(Thread *thread, uint32_t instruction)
 	}
 	else if (mask & (1 << lane))
 	{
+		if (thread->core->enableTracing)
+		{
+			printf("%08x [th %d] storeScatter (%d) %08x %08x\n", thread->currentPc - 4,
+				thread->id, thread->currentSubcycle, virtualAddress,
+				thread->vectorReg[destsrcreg][lane]);
+		}
+
 		*UINT32_PTR(thread->core->memory, physicalAddress)
 			= thread->vectorReg[destsrcreg][lane];
 		invalidateSyncAddress(thread->core, physicalAddress);

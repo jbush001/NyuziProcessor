@@ -170,6 +170,9 @@ module writeback_stage(
 		wb_trap = 0;
 		wb_trap_reason = TR_RESET;
 		wb_trap_pc = 0;
+
+		// XXX wb_trap_thread_idx seems to be the same as wb_rollback_thread_idx.
+		// Should these be combined?
 		wb_trap_thread_idx = 0;
 		wb_interrupt_ack = '0;
 		wb_trap_access_vaddr = 0;
@@ -179,8 +182,7 @@ module writeback_stage(
 			|| ix_instruction.tlb_miss || ix_privileged_op_fault || ix_instruction.is_syscall
 			|| ix_instruction.interrupt_request))
 		begin
-			// Fault from integer stage, which would be an instruction fetch fault
-			// that bubbled through this stage or eret in non-privileged mode.
+			// Fault piggybacked on instruction, which goes through the integer pipeline.
 			wb_rollback_en = 1'b1;
 			if (ix_instruction.tlb_miss)
 				wb_rollback_pc = cr_tlb_miss_handler;

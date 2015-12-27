@@ -24,7 +24,7 @@
 // This captures instructions as the pipeline retires them. This is necessary
 // to get the results of arithmetic operations. The problem is that the
 // pipeline doesn't always retire instructions in program order like the
-// emulator. To be able to compare the results , this uses a queue to reorder
+// emulator. To be able to compare the results, this uses a queue to reorder
 // instructions and logs them in issue order.
 //
 
@@ -74,11 +74,12 @@ module trace_logger(
 
 	localparam TRACE_REORDER_QUEUE_LEN = 7;
 
-	typedef enum logic [1:0] {
+	typedef enum logic [2:0] {
 		EVENT_INVALID = 0,
 		EVENT_SWRITEBACK,
 		EVENT_VWRITEBACK,
-		EVENT_STORE
+		EVENT_STORE,
+		EVENT_INTERRUPT
 	} trace_event_type_t;
 
 	typedef struct packed {
@@ -89,11 +90,6 @@ module trace_logger(
 		scalar_t addr;
 		logic[`CACHE_LINE_BYTES - 1:0] mask;
 		vector_t data;
-
-		// Interrupts are piggybacked on other events
-		logic interrupt_active;
-		thread_idx_t interrupt_thread_idx;
-		scalar_t interrupt_pc;
 	} trace_event_t;
 
 	trace_event_t trace_reorder_queue[TRACE_REORDER_QUEUE_LEN];
@@ -143,15 +139,15 @@ module trace_logger(
 						trace_reorder_queue[0].data);
 				end
 
+				EVENT_INTERRUPT:
+				begin
+					$display("interrupt %d %x", trace_reorder_queue[0].thread_idx,
+						trace_reorder_queue[0].pc);
+				end
+
 				default:
 					; // Do nothing
 			endcase
-
-			if (trace_reorder_queue[0].interrupt_active)
-			begin
-				$display("interrupt %d %x", trace_reorder_queue[0].interrupt_thread_idx,
-					trace_reorder_queue[0].interrupt_pc);
-			end
 
 			for (int i = 0; i < TRACE_REORDER_QUEUE_LEN - 1; i++)
 				trace_reorder_queue[i] <= trace_reorder_queue[i + 1];
@@ -241,9 +237,10 @@ module trace_logger(
 			// and flow down the integer pipeline.
 			if (wb_interrupt_ack != 0)
 			begin
-				trace_reorder_queue[5].interrupt_active <= 1;
-				trace_reorder_queue[5].interrupt_thread_idx <= wb_rollback_thread_idx;
-				trace_reorder_queue[5].interrupt_pc <= wb_trap_pc;
+				assert(trace_reorder_queue[6].event_type == EVENT_INVALID);
+				trace_reorder_queue[5].event_type <= EVENT_INTERRUPT;
+				trace_reorder_queue[5].thread_idx <= wb_rollback_thread_idx;
+				trace_reorder_queue[5].pc <= wb_trap_pc;
 			end
 		end
 	end
