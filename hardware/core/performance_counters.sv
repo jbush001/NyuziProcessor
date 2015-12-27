@@ -65,8 +65,8 @@ module performance_counters
 		begin
 			for (int i = 0; i < NUM_COUNTERS; i++)
 			begin
-				if (perf_events[event_select[COUNTER_IDX_WIDTH'(i)]])
-					event_counter[COUNTER_IDX_WIDTH'(i)] <= event_counter[COUNTER_IDX_WIDTH'(i)] + 1;
+				if (perf_events[event_select[i]])
+					event_counter[i] <= event_counter[i] + 1;
 
 				if (io_write_en && io_address == BASE_ADDRESS + (i * 4))
 					event_select[i] <= io_write_data[EVENT_IDX_WIDTH - 1:0];
