@@ -14,16 +14,25 @@
 # limitations under the License.
 #
 
-.include "macros.inc"
+#
+# Test various conditions that should (and should not) cause rollbacks
+# and thread suspends. Ensure processor does not hang.
+#
 
-		.globl _start
-_start: lea s0, foo
-		dflush s0		; Address is not dirty, should do nothing
-		membar
-		store_32 s0, (s0)
-		dflush s0		; Address is dirty.
-		membar
+			.globl _start
+_start: 	lea s0, foo
+			membar			; No outstanding writes, shouldn't wait
+			dflush s0		; Address is not dirty, should do nothing
+			membar
+			store_32 s0, (s0)
+			dflush s0		; Address is dirty.
+			membar
 
-		HALT_CURRENT_THREAD
+			# Halt
+			move s1, -1
+			load_32 s0, thread_halt_mask
+			store_32 s1, (s0)
+1:			goto 1b
+thread_halt_mask: .long 0xffff0064
 
 foo: .long 0

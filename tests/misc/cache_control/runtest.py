@@ -61,6 +61,11 @@ def dinvalidate_test(name):
 			print(hex(numVal))
 			raise test_harness.TestException('memory contents were incorrect')
 
+def dflush_wait_test(name):
+	test_harness.assemble_test('dflush_wait.s')
+	test_harness.run_verilator()
+
 test_harness.register_tests(dflush_test, ['dflush'])
 test_harness.register_tests(dinvalidate_test, ['dinvalidate'])
+test_harness.register_tests(dflush_wait_test, ['dflush_wait'])
 test_harness.execute_tests()
