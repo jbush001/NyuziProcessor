@@ -19,8 +19,7 @@ test:
 	cd compiler && USE_VERILATOR=1 ./runtest.py
 	cd libc && ./runtest.py
 	cd misc/atomic/ && ./runtest.py
-	cd misc/dflush/ && ./runtest.py
-	cd misc/dinvalidate/ && ./runtest.py
+	cd misc/cache_control/ && ./runtest.py
 	cd misc/sdmmc/ && ./runtest.py
 	cd misc/fs/ && ./runtest.py
 	cd misc/ps2/ && ./runtest.py

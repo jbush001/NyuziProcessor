@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #
 # Copyright 2011-2015 Jeff Bush
 #
@@ -14,25 +15,20 @@
 # limitations under the License.
 #
 
-TOPDIR=../../../
+import sys
+import struct
 
-include $(TOPDIR)/build/target.mk
+# Test load_sync/store_sync instructions by having four threads update
+# variables round-robin.
 
-LIBS=-lc -los
-SRCS=multicore.c
+sys.path.insert(0, '../..')
+import test_harness
 
-OBJS := $(TOPDIR)/software/libs/libc/crt0.o $(SRCS_TO_OBJS)
-DEPS := $(SRCS_TO_DEPS)
+def multicore_test(name):
+	test_harness.compile_test('multicore.c')
+	result = test_harness.run_verilator()
+	if result.replace('\n', '').find('012345678910111213141516171819202122232425262728293031') == -1:
+		raise test_harness.TestException('Output mismatch:\n' + result)
 
-$(OBJ_DIR)/multicore.hex: $(OBJS)
-	$(LD) -o $(OBJ_DIR)/multicore.elf $(LDFLAGS) $(OBJS) $(LDFLAGS) $(LIBS)
-	$(ELF2HEX) -o $(OBJ_DIR)/multicore.hex $(OBJ_DIR)/multicore.elf
-
-verirun: $(OBJ_DIR)/multicore.hex
-	$(VERILATOR) +bin=$(OBJ_DIR)/multicore.hex
-
-clean:
-	rm -rf $(OBJ_DIR)
-
--include $(DEPS)
-
+test_harness.register_tests(multicore_test, ['multicore'])
+test_harness.execute_tests()

@@ -15,11 +15,35 @@
 # limitations under the License.
 #
 
+#
+# This test writes a pattern to memory and manually flushes it from code. It then
+# checks the contents of system memory to ensure the data was flushed correctly.
+#
+
 import sys
 import struct
 
 sys.path.insert(0, '../..')
 import test_harness
+
+BASE_ADDRESS=0x400000
+
+def dflush_test(name):
+	test_harness.compile_test('dflush.c')
+	test_harness.run_verilator(dump_file='obj/vmem.bin', dump_base=BASE_ADDRESS, dump_length=0x40000)
+	with open('obj/vmem.bin', 'rb') as f:
+		index = 0
+		while True:
+			val = f.read(4)
+			if len(val):
+				break
+
+			numVal = ord(val[0]) | (ord(val[1]) << 8) | (ord(val[2]) << 16) | (ord(val[3]) << 24)
+			expected = 0x1f0e6231 + (index // 16)
+			if numVal != expected:
+				raise test_harness.TestException('FAIL: mismatch at' + hex(BASE_ADDRESS + (index * 4)) + 'want' + str(expected) + 'got' + str(numVal))
+
+			index += 1
 
 def dinvalidate_test(name):
 	test_harness.assemble_test('dinvalidate.s')
@@ -37,7 +61,6 @@ def dinvalidate_test(name):
 			print(hex(numVal))
 			raise test_harness.TestException('memory contents were incorrect')
 
+test_harness.register_tests(dflush_test, ['dflush'])
 test_harness.register_tests(dinvalidate_test, ['dinvalidate'])
 test_harness.execute_tests()
-
-

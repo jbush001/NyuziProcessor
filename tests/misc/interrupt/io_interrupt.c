@@ -17,6 +17,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// This does a lot of I/O writes while the timer interrupt is going off.
+// There was a design issue where an interrupt coming during an I/O write
+// could duplicate the write. This test ensures that doesn't happen.
+
 #define CR_TRAP_HANDLER 1
 #define CR_FLAGS 4
 #define FLAG_INTERRUPT_EN (1 << 0)
@@ -36,9 +40,6 @@ int main(void)
 	__builtin_nyuzi_write_control_reg(CR_TRAP_HANDLER, interrupt_handler);
 	__builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_INTERRUPT_EN | FLAG_SUPERVISOR_EN);
 
-	// This does a lot of I/O writes. There was a design issue where an interrupt
-	// coming during an I/O write could end up duplicating the write. This test
-	// ensures that doesn't happen.
 	printf(">>ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\n");
 
 	return 0;

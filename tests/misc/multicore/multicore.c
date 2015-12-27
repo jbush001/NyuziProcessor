@@ -38,6 +38,8 @@ int main(int argc, const char *argv[])
 			;
 
 		printf("%d\n", myThreadId);
-		gCurrentThread = (gCurrentThread + 1) % kNumThreads;
+		gCurrentThread = (gCurrentThread + 1);
+		if (gCurrentThread >= 32)
+			break;
 	}
 }

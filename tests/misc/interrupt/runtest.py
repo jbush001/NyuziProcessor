@@ -21,8 +21,8 @@ import subprocess
 sys.path.insert(0, '../..')
 import test_harness
 
-def run_timer_test(name):
-	test_harness.compile_test(['timer_interrupt.c', 'interrupt_handler.s'])
+def run_io_interrupt(name):
+	test_harness.compile_test(['io_interrupt.c', 'interrupt_handler.s'])
 	result = test_harness.run_verilator()
 	lines = result.split('\n')
 	output = None
@@ -51,6 +51,6 @@ def run_multicycle(name):
 	if result.find('PASS') == -1 or result.find('FAIL') != -1:
 		raise test_harness.TestException('Test failed:\n' + result)
 
-test_harness.register_tests(run_timer_test, ['timer_test'])
+test_harness.register_tests(run_io_interrupt, ['io_interrupt'])
 test_harness.register_tests(run_multicycle, ['multicycle'])
 test_harness.execute_tests()
