@@ -150,7 +150,7 @@ int runCosimulation(Core *core, bool verbose)
 	return 0;
 }
 
-void cosimSetScalarReg(Core *core, uint32_t pc, uint32_t reg, uint32_t value)
+void cosimCheckSetScalarReg(Core *core, uint32_t pc, uint32_t reg, uint32_t value)
 {
 	gEventTriggered = true;
 	if (gExpectedEvent != EVENT_SCALAR_WRITEBACK
@@ -168,7 +168,7 @@ void cosimSetScalarReg(Core *core, uint32_t pc, uint32_t reg, uint32_t value)
 	}
 }
 
-void cosimSetVectorReg(Core *core, uint32_t pc, uint32_t reg, uint32_t mask,
+void cosimCheckSetVectorReg(Core *core, uint32_t pc, uint32_t reg, uint32_t mask,
 	const uint32_t *values)
 {
 	int lane;
@@ -194,7 +194,7 @@ void cosimSetVectorReg(Core *core, uint32_t pc, uint32_t reg, uint32_t mask,
 	}
 }
 
-void cosimWriteBlock(Core *core, uint32_t pc, uint32_t address, uint32_t mask,
+void cosimCheckVectorStore(Core *core, uint32_t pc, uint32_t address, uint32_t mask,
 	const uint32_t *values)
 {
 	uint64_t byteMask;
@@ -227,7 +227,7 @@ void cosimWriteBlock(Core *core, uint32_t pc, uint32_t address, uint32_t mask,
 	}
 }
 
-void cosimWriteMemory(Core *core, uint32_t pc, uint32_t address, uint32_t size,
+void cosimCheckScalarStore(Core *core, uint32_t pc, uint32_t address, uint32_t size,
 	uint32_t value)
 {
 	uint32_t hardwareValue;

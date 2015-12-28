@@ -102,7 +102,7 @@ struct Core
 	bool singleStepping;
 	bool stopOnFault;
 	bool enableTracing;
-	bool cosimEnable;
+	bool enableCosim;
 	int64_t totalInstructions;
 	uint32_t startCycleCount;
 #ifdef DUMP_INSTRUCTION_STATS
@@ -281,7 +281,7 @@ void printRegisters(const Core *core, uint32_t threadId)
 
 void enableCosimulation(Core *core)
 {
-	core->cosimEnable = true;
+	core->enableCosim = true;
 }
 
 // Called when the verilog model in cosimulation indicates an interrupt.
@@ -509,8 +509,8 @@ static void setScalarReg(Thread *thread, uint32_t reg, uint32_t value)
 	if (thread->core->enableTracing)
 		printf("%08x [th %d] s%d <= %08x\n", thread->currentPc - 4, thread->id, reg, value);
 
-	if (thread->core->cosimEnable)
-		cosimSetScalarReg(thread->core, thread->currentPc - 4, reg, value);
+	if (thread->core->enableCosim)
+		cosimCheckSetScalarReg(thread->core, thread->currentPc - 4, reg, value);
 
 	if (reg == PC_REG)
 		thread->currentPc = value;
@@ -532,8 +532,8 @@ static void setVectorReg(Thread *thread, uint32_t reg, uint32_t mask, uint32_t *
 		printf("\n");
 	}
 
-	if (thread->core->cosimEnable)
-		cosimSetVectorReg(thread->core, thread->currentPc - 4, reg, mask, values);
+	if (thread->core->enableCosim)
+		cosimCheckSetVectorReg(thread->core, thread->currentPc - 4, reg, mask, values);
 
 	for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 	{
@@ -1197,9 +1197,9 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instruction)
 					thread->id, accessSize, virtualAddress, valueToStore);
 			}
 
-			if (thread->core->cosimEnable)
+			if (thread->core->enableCosim)
 			{
-				cosimWriteMemory(thread->core, thread->currentPc - 4, virtualAddress, accessSize,
+				cosimCheckScalarStore(thread->core, thread->currentPc - 4, virtualAddress, accessSize,
 					valueToStore);
 			}
 		}
@@ -1275,8 +1275,8 @@ static void executeBlockLoadStoreInst(Thread *thread, uint32_t instruction)
 				virtualAddress);
 		}
 
-		if (thread->core->cosimEnable)
-			cosimWriteBlock(thread->core, thread->currentPc - 4, virtualAddress, mask, storeValue);
+		if (thread->core->enableCosim)
+			cosimCheckVectorStore(thread->core, thread->currentPc - 4, virtualAddress, mask, storeValue);
 
 		for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 		{
@@ -1353,9 +1353,9 @@ static void executeScatterGatherInst(Thread *thread, uint32_t instruction)
 		*UINT32_PTR(thread->core->memory, physicalAddress)
 			= thread->vectorReg[destsrcreg][lane];
 		invalidateSyncAddress(thread->core, physicalAddress);
-		if (thread->core->cosimEnable)
+		if (thread->core->enableCosim)
 		{
-			cosimWriteMemory(thread->core, thread->currentPc - 4, virtualAddress, 4,
+			cosimCheckScalarStore(thread->core, thread->currentPc - 4, virtualAddress, 4,
 				thread->vectorReg[destsrcreg][lane]);
 		}
 	}
