@@ -445,6 +445,7 @@ if args['m']:
 		print('generating ' + filename)
 		generate_test(filename, numInstructions, numThreads, enableInterrupts)
 else:
+	print('generating ' + args['o'])
 	generate_test(args['o'], numInstructions, numThreads, enableInterrupts)
 
 
