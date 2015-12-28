@@ -288,6 +288,17 @@ void enableCosimulation(Core *core)
 void cosimInterrupt(Core *core, uint32_t threadId, uint32_t pc)
 {
 	Thread *thread = &core->threads[threadId];
+
+	// This handles an edge case where cosimulation mismatches would occur
+	// if an interrupt happened during a scatter store. Hardware does not
+	// create store cycles for scatter store lanes that do not have the mask
+	// bit set (and thus doesn't emit cosimulation events). It's possible for
+	// the instruction to finish in hardware, but the emulator not to have
+	// finished it. When it starts executing the ISR, the subcycle counter
+	// will be non-zero, which messes up things later.
+	if (pc != thread->currentPc)
+		thread->currentSubcycle = 0;
+
 	thread->currentPc = pc + 4;
 	raiseTrap(thread, 0, TR_INTERRUPT);
 }
