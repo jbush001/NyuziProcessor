@@ -22,8 +22,22 @@
 #include "inttypes.h"
 #include "util.h"
 
+//
+// Cosimulation runs as follows:
+// 1. The main loop (runCosimulation) reads and parses the next instruction
+//    side effect from the Verilator model (piped to this process via stdin).
+//    It stores the value in the gExpectedXXX global variables.
+// 2. It then calls runUntilNextEvent, which calls into the emulator core to
+//    single step until...
+// 3. When the emulator core updates a register or performs a memory write,
+//    it calls back into this module, one of the cosimCheckXXX functions.
+//    The check functions compare the local side effect to the values saved
+//    by step 1. If there is a mismatch, they flag an error, otherwise...
+// 4. Loop back to step 1
+//
+
 static void printCosimExpected(void);
-static int cosimStep(Core*, uint32_t threadId);
+static int runUntilNextEvent(Core*, uint32_t threadId);
 static int compareMasked(uint32_t mask, const uint32_t *values1, const uint32_t *values2);
 
 static enum
@@ -86,7 +100,7 @@ int runCosimulation(Core *core, bool verbose)
 			gExpectedAddress = address;
 			gExpectedMask = writeMask;
 			memcpy(gExpectedValues, vectorValues, sizeof(uint32_t) * NUM_VECTOR_LANES);
-			if (!cosimStep(core, threadId))
+			if (!runUntilNextEvent(core, threadId))
 				return -1;
 		}
 		else if (sscanf(line, "vwriteback %x %x %x %" PRIx64 " %s", &pc, &threadId, &reg, &writeMask, valueStr) == 5)
@@ -104,7 +118,7 @@ int runCosimulation(Core *core, bool verbose)
 			gExpectedRegister = reg;
 			gExpectedMask = writeMask;
 			memcpy(gExpectedValues, vectorValues, sizeof(uint32_t) * NUM_VECTOR_LANES);
-			if (!cosimStep(core, threadId))
+			if (!runUntilNextEvent(core, threadId))
 				return -1;
 		}
 		else if (sscanf(line, "swriteback %x %x %x %x", &pc, &threadId, &reg, &scalarValue) == 4)
@@ -115,7 +129,7 @@ int runCosimulation(Core *core, bool verbose)
 			gExpectedThread = threadId;
 			gExpectedRegister = reg;
 			gExpectedValues[0] = scalarValue;
-			if (!cosimStep(core, threadId))
+			if (!runUntilNextEvent(core, threadId))
 				return -1;
 		}
 		else if (strcmp(line, "***HALTED***") == 0)
@@ -296,7 +310,7 @@ static void printCosimExpected(void)
 }
 
 // Returns 1 if the event matched, 0 if it did not.
-static int cosimStep(Core *core, uint32_t threadId)
+static int runUntilNextEvent(Core *core, uint32_t threadId)
 {
 	int count = 0;
 
