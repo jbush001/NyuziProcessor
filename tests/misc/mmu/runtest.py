@@ -25,7 +25,7 @@ DUMP_FILE='obj/memdump.bin'
 EXPECT_STRING=bytearray('Test String', encoding='ascii')
 
 def test_alias_verilator(name):
-	test_harness.compile_test(['alias.c', 'identity_tlb_miss_handler.s'])
+	test_harness.compile_test(['alias.c', 'wrap_tlb_miss_handler.s'])
 	result = test_harness.run_verilator(dump_file=DUMP_FILE, dump_base=0x100000,
 		dump_length=32)
 	if result.find('read 00900000 "Test String"') == -1:
@@ -36,7 +36,7 @@ def test_alias_verilator(name):
 			raise test_harness.TestException('memory contents did not match')
 
 def test_alias_emulator(name):
-	test_harness.compile_test(['alias.c', 'identity_tlb_miss_handler.s'])
+	test_harness.compile_test(['alias.c', 'wrap_tlb_miss_handler.s'])
 	result = test_harness.run_emulator(dump_file=DUMP_FILE, dump_base=0x100000,
 		dump_length=32)
 	if result.find('read 00900000 "Test String"') == -1:
@@ -47,7 +47,7 @@ def test_alias_emulator(name):
 			raise test_harness.TestException('memory contents did not match')
 
 def test_fill_verilator(name):
-	test_harness.compile_test(['fill_test.c', 'wrap_tlb_miss_handler.s'])
+	test_harness.compile_test(['fill_test.c', 'identity_tlb_miss_handler.s'])
 	result = test_harness.run_verilator()
 	if result.find('FAIL') != -1 or result.find('PASS') == -1:
 		raise test_harness.TestException(result + '\ntest did not signal pass\n' + result)
@@ -55,7 +55,7 @@ def test_fill_verilator(name):
 	# XXX check number of DTLB misses to ensure it is above/below thresholds
 
 def test_fill_emulator(name):
-	test_harness.compile_test(['fill_test.c', 'wrap_tlb_miss_handler.s'])
+	test_harness.compile_test(['fill_test.c', 'identity_tlb_miss_handler.s'])
 	result = test_harness.run_emulator()
 	if result.find('FAIL') != -1 or result.find('PASS') == -1:
 		raise test_harness.TestException(result + '\ntest did not signal pass\n' + result)
