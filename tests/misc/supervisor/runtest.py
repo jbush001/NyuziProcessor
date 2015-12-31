@@ -21,30 +21,8 @@ import subprocess
 sys.path.insert(0, '../..')
 import test_harness
 
-def run_test(name):
-	if name.endswith('_emulator'):
-		basename = name[0:-len('_emulator')]
-		isverilator = False
-	elif name.endswith('_verilator'):
-		basename = name[0:-len('_verilator')]
-		isverilator = True
-
-	test_harness.compile_test([basename + '.c'])
-	if isverilator:
-		result = test_harness.run_verilator()
-	else:
-		result = test_harness.run_emulator()
-
-	test_harness.check_result(basename + '.c', result)
-
-tests = [
-	'creg_non_supervisor',
-	'eret_non_supervisor',
-	'syscall'
-]
-
-for name in tests:
-	test_harness.register_tests(run_test, [name + '_verilator'])
-	test_harness.register_tests(run_test, [name + '_emulator'])
+test_harness.register_generic_test('creg_non_supervisor')
+test_harness.register_generic_test('eret_non_supervisor')
+test_harness.register_generic_test('syscall')
 
 test_harness.execute_tests()

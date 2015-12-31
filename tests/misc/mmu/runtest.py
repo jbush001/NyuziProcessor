@@ -97,26 +97,6 @@ def test_nested_fault(name):
 
 	test_harness.check_result('nested_fault.c', result)
 
-def run_generic_test(name):
-	if name.endswith('_emulator'):
-		basename = name[0:-len('_emulator')]
-		isverilator = False
-	elif name.endswith('_verilator'):
-		basename = name[0:-len('_verilator')]
-		isverilator = True
-
-	test_harness.compile_test([basename + '.c'])
-	if isverilator:
-		result = test_harness.run_verilator()
-	else:
-		result = test_harness.run_emulator()
-
-	test_harness.check_result(basename + '.c', result)
-
-def register_generic_test(name):
-	test_harness.register_tests(run_generic_test, [name + '_verilator'])
-	test_harness.register_tests(run_generic_test, [name + '_emulator'])
-
 test_harness.register_tests(test_alias_verilator, ['alias_verilator'])
 test_harness.register_tests(test_alias_emulator, ['alias_emulator'])
 test_harness.register_tests(test_fill_verilator, ['fill_verilator'])
@@ -124,19 +104,19 @@ test_harness.register_tests(test_fill_emulator, ['fill_emulator'])
 test_harness.register_tests(test_io_map_verilator, ['io_map_verilator'])
 test_harness.register_tests(test_io_map_emulator, ['io_map_emulator'])
 test_harness.register_tests(test_nested_fault, ['nested_fault_verilator', 'nested_fault_emulator'])
-register_generic_test('dflush_tlb_miss')
-register_generic_test('dinvalidate_tlb_miss')
-register_generic_test('duplicate_tlb_insert')
-register_generic_test('write_fault')
-register_generic_test('data_supervisor_fault_read')
-register_generic_test('data_supervisor_fault_write')
-register_generic_test('instruction_supervisor_fault')
-register_generic_test('tlb_invalidate')
-register_generic_test('tlb_invalidate_all')
-register_generic_test('asid')
-register_generic_test('io_supervisor_fault_read')
-register_generic_test('io_supervisor_fault_write')
-register_generic_test('io_write_fault')
-register_generic_test('dtlbinsert_user')
-register_generic_test('itlbinsert_user')
+test_harness.register_generic_test('dflush_tlb_miss')
+test_harness.register_generic_test('dinvalidate_tlb_miss')
+test_harness.register_generic_test('duplicate_tlb_insert')
+test_harness.register_generic_test('write_fault')
+test_harness.register_generic_test('data_supervisor_fault_read')
+test_harness.register_generic_test('data_supervisor_fault_write')
+test_harness.register_generic_test('instruction_supervisor_fault')
+test_harness.register_generic_test('tlb_invalidate')
+test_harness.register_generic_test('tlb_invalidate_all')
+test_harness.register_generic_test('asid')
+test_harness.register_generic_test('io_supervisor_fault_read')
+test_harness.register_generic_test('io_supervisor_fault_write')
+test_harness.register_generic_test('io_write_fault')
+test_harness.register_generic_test('dtlbinsert_user')
+test_harness.register_generic_test('itlbinsert_user')
 test_harness.execute_tests()

@@ -394,3 +394,24 @@ def check_result(source_file, program_output):
 		raise TestException('FAIL: no lines with CHECK: were found')
 
 	return True
+
+
+def run_generic_test(name):
+	if name.endswith('_emulator'):
+		basename = name[0:-len('_emulator')]
+		isverilator = False
+	elif name.endswith('_verilator'):
+		basename = name[0:-len('_verilator')]
+		isverilator = True
+
+	compile_test([basename + '.c'])
+	if isverilator:
+		result = run_verilator()
+	else:
+		result = run_emulator()
+
+	check_result(basename + '.c', result)
+
+def register_generic_test(name):
+	register_tests(run_generic_test, [name + '_verilator'])
+	register_tests(run_generic_test, [name + '_emulator'])
