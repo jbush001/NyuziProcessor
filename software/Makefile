@@ -21,6 +21,7 @@ all:
 	cd libs/libc && make
 	cd libs/librender && make
 	cd libs/libos && make
+	cd libs/compiler-rt && make
 	cd bootrom && make
 	cd apps/mandelbrot && make
 	cd apps/plasma && make
@@ -34,6 +35,7 @@ clean:
 	cd libs/libc && make clean
 	cd libs/librender && make clean
 	cd libs/libos && make clean
+	cd libs/compiler-rt && make clean
 	cd bootrom && make clean
 	cd apps/mandelbrot && make clean
 	cd apps/plasma && make clean
