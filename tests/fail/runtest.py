@@ -21,30 +21,21 @@
 import sys
 import os
 
-sys.path.insert(0, '../..')
+sys.path.insert(0, '..')
 import test_harness
 
-def emulator_crash(name):
-	test_harness.compile_test('crash.c')
-	try:
-		result = test_harness.run_emulator()
 
-		# The test program deliberately crashes. If the harness doesn't throw
-		# an exception, that is a failure.
-		raise test_harness.TestException('Did not catch crash')
-	except:
-		# ...and vice versa
-		pass
+def emulator_timeout(name):
+	test_harness.compile_test('timeout.c')
+	result = test_harness.run_emulator(timeout=3)
 
-def verilator_crash(name):
-	test_harness.compile_test('crash.c')
-	try:
-		result = test_harness.run_verilator()
-		raise test_harness.TestException('Did not catch crash')
-	except:
-		pass
+def verilator_timeout(name):
+	test_harness.compile_test('timeout.c')
+	result = test_harness.run_verilator(timeout=3)
 
-test_harness.register_tests(emulator_crash, ['crash_emulator'])
-test_harness.register_tests(verilator_crash, ['crash_verilator'])
+test_harness.register_generic_test('crash')
+test_harness.register_generic_test('check')
+test_harness.register_tests(emulator_timeout, ['timeout_emulator'])
+test_harness.register_tests(verilator_timeout, ['timeout_verilator'])
 test_harness.execute_tests()
 

@@ -24,7 +24,6 @@ test:
 	cd misc/fs/ && ./runtest.py
 	cd misc/ps2/ && ./runtest.py
 	cd misc/uart && ./runtest.py
-	cd misc/crash && ./runtest.py
 	cd misc/mmu && ./runtest.py
 	cd misc/trap && ./runtest.py
 	cd misc/perf_counters && ./runtest.py
