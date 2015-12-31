@@ -88,6 +88,15 @@ def test_io_map_emulator(name):
 		if f.read(len('galumphing')) != bytearray('galumphing', 'ascii'):
 			raise test_harness.TestException('memory contents did not match')
 
+def test_nested_fault(name):
+	test_harness.compile_test(['nested_fault.c', 'identity_tlb_miss_handler.s'])
+	if name.find('_verilator') != -1:
+		result = test_harness.run_verilator()
+	else:
+		result = test_harness.run_emulator()
+
+	test_harness.check_result('nested_fault.c', result)
+
 def run_generic_test(name):
 	if name.endswith('_emulator'):
 		basename = name[0:-len('_emulator')]
@@ -114,6 +123,7 @@ test_harness.register_tests(test_fill_verilator, ['fill_verilator'])
 test_harness.register_tests(test_fill_emulator, ['fill_emulator'])
 test_harness.register_tests(test_io_map_verilator, ['io_map_verilator'])
 test_harness.register_tests(test_io_map_emulator, ['io_map_emulator'])
+test_harness.register_tests(test_nested_fault, ['nested_fault_verilator', 'nested_fault_emulator'])
 register_generic_test('dflush_tlb_miss')
 register_generic_test('dinvalidate_tlb_miss')
 register_generic_test('duplicate_tlb_insert')

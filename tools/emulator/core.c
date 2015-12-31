@@ -58,22 +58,25 @@ struct Thread
 	uint32_t id;
 	uint32_t linkedAddress; // For synchronized store/load. Cache line (addr / 64)
 	uint32_t currentPc;
-	TrapReason lastTrapReason;
-	uint32_t lastFaultPc;
-	uint32_t lastFaultAddress;
-	uint32_t scratchpad0;
-	uint32_t scratchpad1;
 	uint32_t currentAsid;
 	bool enableInterrupt;
 	bool enableMmu;
 	bool enableSupervisor;
-	bool prevEnableInterrupt;
-	bool prevEnableMmu;
-	bool prevEnableSupervisor;
-	uint32_t prevSubcycle;
 	uint32_t currentSubcycle;
 	uint32_t scalarReg[NUM_REGISTERS - 1];	// 31 is PC, which is special
 	uint32_t vectorReg[NUM_REGISTERS][NUM_VECTOR_LANES];
+
+	// Trap information. There are two levels of trap information, to
+	// handle a nested TLB miss occurring in the middle of another trap.
+	TrapReason trapReason[2];
+	uint32_t trapScratchpad0[2];
+	uint32_t trapScratchpad1[2];
+	uint32_t trapPc[2];
+	uint32_t trapAccessAddress[2];
+	uint32_t trapSubcycle[2];
+	bool trapEnableInterrupt[2];
+	bool trapEnableMmu[2];
+	bool trapEnableSupervisor[2];
 };
 
 struct TlbEntry
@@ -192,10 +195,9 @@ Core *initCore(uint32_t memorySize, uint32_t totalThreads, bool randomizeMemory)
 	{
 		core->threads[threadid].core = core;
 		core->threads[threadid].id = threadid;
-		core->threads[threadid].lastTrapReason = TR_RESET;
 		core->threads[threadid].linkedAddress = INVALID_LINK_ADDR;
 		core->threads[threadid].enableSupervisor = true;
-		core->threads[threadid].prevEnableSupervisor = true;
+		core->threads[threadid].trapEnableSupervisor[0] = true;
 	}
 
 	core->threadEnableMask = 1;
@@ -553,14 +555,26 @@ static void invalidateSyncAddress(Core *core, uint32_t address)
 	}
 }
 
+
 static void raiseTrap(Thread *thread, uint32_t trapAddress, TrapReason reason)
 {
-	// Save old state
-	thread->lastFaultPc = thread->currentPc - 4;
-	thread->prevEnableInterrupt = thread->enableInterrupt;
-	thread->prevEnableMmu = thread->enableMmu;
-	thread->prevEnableSupervisor = thread->enableSupervisor;
-	thread->prevSubcycle = thread->currentSubcycle;
+	// Save old state. For nested interrupts, push the old saved state into
+	// the second save slot.
+	thread->trapReason[1] = thread->trapReason[0];
+	thread->trapReason[0] = reason;
+	thread->trapScratchpad0[1] = thread->trapScratchpad0[0];
+	thread->trapScratchpad1[1] = thread->trapScratchpad1[0];
+	thread->trapPc[1] = thread->trapPc[0];
+	thread->trapPc[0] = thread->currentPc - 4;
+	thread->trapEnableInterrupt[1] = thread->trapEnableInterrupt[0];
+	thread->trapEnableInterrupt[0] = thread->enableInterrupt;
+	thread->trapEnableMmu[1] = thread->trapEnableMmu[0];
+	thread->trapEnableMmu[0] = thread->enableMmu;
+	thread->trapEnableSupervisor[1] = thread->trapEnableSupervisor[0];
+	thread->trapEnableSupervisor[0] = thread->enableSupervisor;
+	thread->trapSubcycle[1] = thread->trapSubcycle[0];
+	thread->trapSubcycle[0] = thread->currentSubcycle;
+	thread->trapAccessAddress[1] = thread->trapAccessAddress[0];
 
 	// Update state
 	thread->enableInterrupt = false;
@@ -576,8 +590,8 @@ static void raiseTrap(Thread *thread, uint32_t trapAddress, TrapReason reason)
 	thread->enableSupervisor = true;
 
 	// Save trap information
-	thread->lastTrapReason = reason;
-	thread->lastFaultAddress = trapAddress;
+	thread->trapReason[0] = reason;
+	thread->trapAccessAddress[0] = trapAddress;
 }
 
 static void raiseAccessFault(Thread *thread, uint32_t address, TrapReason reason, bool isLoad)
@@ -1385,11 +1399,11 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 				break;
 
 			case CR_FAULT_PC:
-				value = thread->lastFaultPc;
+				value = thread->trapPc[0];
 				break;
 
 			case CR_FAULT_REASON:
-				value = thread->lastTrapReason;
+				value = thread->trapReason[0];
 				break;
 
 			case CR_FLAGS:
@@ -1399,9 +1413,9 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 				break;
 
 			case CR_SAVED_FLAGS:
-				value = (thread->prevEnableInterrupt ? 1 : 0)
-					| (thread->prevEnableMmu ? 2 : 0)
-					| (thread->prevEnableSupervisor ? 4 : 0);
+				value = (thread->trapEnableInterrupt[0] ? 1 : 0)
+					| (thread->trapEnableMmu[0] ? 2 : 0)
+					| (thread->trapEnableSupervisor[0] ? 4 : 0);
 				break;
 
 			case CR_CURRENT_ASID:
@@ -1409,7 +1423,7 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 				break;
 
 			case CR_FAULT_ADDRESS:
-				value = thread->lastFaultAddress;
+				value = thread->trapAccessAddress[0];
 				break;
 
 			case CR_CYCLE_COUNT:
@@ -1428,15 +1442,15 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 				break;
 
 			case CR_SCRATCHPAD0:
-				value = thread->scratchpad0;
+				value = thread->trapScratchpad0[0];
 				break;
 
 			case CR_SCRATCHPAD1:
-				value = thread->scratchpad1;
+				value = thread->trapScratchpad1[0];
 				break;
 
 			case CR_SUBCYCLE:
-				value = thread->prevSubcycle;
+				value = thread->trapSubcycle[0];
 				break;
 		}
 
@@ -1461,7 +1475,7 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 				break;
 
 			case CR_FAULT_PC:
-				thread->lastFaultPc = value;
+				thread->trapPc[0] = value;
 				break;
 
 			case CR_FLAGS:
@@ -1471,9 +1485,9 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 				break;
 
 			case CR_SAVED_FLAGS:
-				thread->prevEnableInterrupt = (value & 1) != 0;
-				thread->prevEnableMmu = (value & 2) != 0;
-				thread->prevEnableSupervisor = (value & 4) != 0;
+				thread->trapEnableInterrupt[0] = (value & 1) != 0;
+				thread->trapEnableMmu[0] = (value & 2) != 0;
+				thread->trapEnableSupervisor[0] = (value & 4) != 0;
 				break;
 
 			case CR_CURRENT_ASID:
@@ -1485,15 +1499,15 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 				break;
 
 			case CR_SCRATCHPAD0:
-				thread->scratchpad0 = value;
+				thread->trapScratchpad0[0] = value;
 				break;
 
 			case CR_SCRATCHPAD1:
-				thread->scratchpad1 = value;
+				thread->trapScratchpad1[0] = value;
 				break;
 
 			case CR_SUBCYCLE:
-				thread->prevSubcycle = value;
+				thread->trapSubcycle[0] = value;
 				break;
 		}
 	}
@@ -1585,11 +1599,22 @@ static void executeBranchInst(Thread *thread, uint32_t instruction)
 				return;
 			}
 
-			thread->enableInterrupt = thread->prevEnableInterrupt;
-			thread->enableMmu = thread->prevEnableMmu;
-			thread->currentPc = thread->lastFaultPc;
-	 		thread->currentSubcycle = thread->prevSubcycle;
-			thread->enableSupervisor = thread->prevEnableSupervisor;
+			thread->enableInterrupt = thread->trapEnableInterrupt[0];
+			thread->enableMmu = thread->trapEnableMmu[0];
+			thread->currentPc = thread->trapPc[0];
+	 		thread->currentSubcycle = thread->trapSubcycle[0];
+			thread->enableSupervisor = thread->trapEnableSupervisor[0];
+
+			// Restore nested interrupt stage
+			thread->trapReason[0] = thread->trapReason[1];
+			thread->trapScratchpad0[0] = thread->trapScratchpad0[1];
+			thread->trapScratchpad1[0] = thread->trapScratchpad1[1];
+			thread->trapPc[0] = thread->trapPc[1];
+			thread->trapEnableInterrupt[0] = thread->trapEnableInterrupt[1];
+			thread->trapEnableMmu[0] = thread->trapEnableMmu[1];
+			thread->trapEnableSupervisor[0] = thread->trapEnableSupervisor[1];
+			thread->trapSubcycle[0] = thread->trapSubcycle[1];
+			thread->trapAccessAddress[0] = thread->trapAccessAddress[1];
 			return; // Short circuit out
 	}
 

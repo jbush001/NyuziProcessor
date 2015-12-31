@@ -60,13 +60,18 @@ module control_registers
 	output scalar_t                         cr_trap_handler,
 	output scalar_t                         cr_tlb_miss_handler);
 
-	scalar_t trap_access_addr[`THREADS_PER_CORE];
-	trap_reason_t trap_reason[`THREADS_PER_CORE];
-	logic interrupt_en_saved[`THREADS_PER_CORE];
-	logic mmu_en_saved[`THREADS_PER_CORE];
-	logic supervisor_en_saved[`THREADS_PER_CORE];
-	scalar_t scratchpad[`THREADS_PER_CORE * 2];
+	scalar_t trap_access_addr[2][`THREADS_PER_CORE];
+	trap_reason_t trap_reason[2][`THREADS_PER_CORE];
+	scalar_t eret_address[2][`THREADS_PER_CORE];
+	logic interrupt_en_saved[2][`THREADS_PER_CORE];
+	logic mmu_en_saved[2][`THREADS_PER_CORE];
+	logic supervisor_en_saved[2][`THREADS_PER_CORE];
+	subcycle_t subcycle_saved[2][`THREADS_PER_CORE];
+	scalar_t scratchpad[2][`THREADS_PER_CORE * 2];
 	scalar_t cycle_count;
+
+	assign cr_eret_subcycle = subcycle_saved[0];
+	assign cr_eret_address = eret_address[0];
 
 	always_ff @(posedge clk, posedge reset)
 	begin
@@ -74,20 +79,26 @@ module control_registers
 		begin
 			for (int i = 0; i < `THREADS_PER_CORE; i++)
 			begin
-				trap_reason[i] <= TR_RESET;
-				cr_eret_address[i] <= 0;
-				interrupt_en_saved[i] <= 0;
-				trap_access_addr[i] <= '0;
+				trap_reason[0][i] <= TR_RESET;
+				eret_address[0][i] <= 0;
+				interrupt_en_saved[0][i] <= 0;
+				trap_access_addr[0][i] <= '0;
 				cr_mmu_en[i] <= 0;
-				mmu_en_saved[i] <= 0;
-				cr_eret_subcycle[i] <= 0;
+				mmu_en_saved[0][i] <= 0;
+				mmu_en_saved[1][i] <= 0;
+				subcycle_saved[0][i] <= 0;
+				subcycle_saved[1][i] <= 0;
 				cr_supervisor_en[i] <= 1;	// Threads start in supervisor mode
-				supervisor_en_saved[i] <= 1;
+				supervisor_en_saved[0][i] <= 1;
+				supervisor_en_saved[1][i] <= 1;
 				cr_current_asid[i] <= 0;
 			end
 
 			for (int i = 0; i < `THREADS_PER_CORE * 2; i++)
-				scratchpad[i] <= '0;
+			begin
+				scratchpad[0][i] <= '0;
+				scratchpad[1][i] <= '0;
+			end
 
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
@@ -113,16 +124,27 @@ module control_registers
 
 			if (wb_trap)
 			begin
-				// Copy current flags to prev flags
-				interrupt_en_saved[wb_trap_thread_idx] <= cr_interrupt_en[wb_trap_thread_idx];
-				mmu_en_saved[wb_trap_thread_idx] <= cr_mmu_en[wb_trap_thread_idx];
-				supervisor_en_saved[wb_trap_thread_idx] <= cr_supervisor_en[ix_thread_idx];
-				cr_eret_subcycle[wb_trap_thread_idx] <= wb_trap_subcycle;
+				// For nested traps, copy saved flags into second slot
+				trap_access_addr[1] <= trap_access_addr[0];
+				trap_reason[1] <= trap_reason[0];
+				eret_address[1] <= eret_address[0];
+				interrupt_en_saved[1] <= interrupt_en_saved[0];
+				mmu_en_saved[1] <= mmu_en_saved[0];
+				supervisor_en_saved[1] <= supervisor_en_saved[0];
+				subcycle_saved[1] <= subcycle_saved[0];
+				scratchpad[1][{1'b0, wb_trap_thread_idx}] <= scratchpad[0][{1'b0, wb_trap_thread_idx}];
+				scratchpad[1][{1'b1, wb_trap_thread_idx}] <= scratchpad[0][{1'b1, wb_trap_thread_idx}];
+
+				// Save current flags
+				interrupt_en_saved[0][wb_trap_thread_idx] <= cr_interrupt_en[wb_trap_thread_idx];
+				mmu_en_saved[0][wb_trap_thread_idx] <= cr_mmu_en[wb_trap_thread_idx];
+				supervisor_en_saved[0][wb_trap_thread_idx] <= cr_supervisor_en[ix_thread_idx];
+				subcycle_saved[0][wb_trap_thread_idx] <= wb_trap_subcycle;
 
 				// Dispatch fault
-				trap_reason[wb_trap_thread_idx] <= wb_trap_reason;
-				cr_eret_address[wb_trap_thread_idx] <= wb_trap_pc;
-				trap_access_addr[wb_trap_thread_idx] <= wb_trap_access_vaddr;
+				trap_reason[0][wb_trap_thread_idx] <= wb_trap_reason;
+				eret_address[0][wb_trap_thread_idx] <= wb_trap_pc;
+				trap_access_addr[0][wb_trap_thread_idx] <= wb_trap_access_vaddr;
 				cr_interrupt_en[wb_trap_thread_idx] <= 0;	// Disable interrupts for this thread
 				cr_supervisor_en[ix_thread_idx] <= 1; // Enter supervisor mode on fault
 				if (wb_trap_reason == TR_ITLB_MISS || wb_trap_reason == TR_DTLB_MISS)
@@ -131,9 +153,20 @@ module control_registers
 			else if (ix_is_eret)
 			begin
 				// Copy from prev flags to current flags
-				cr_interrupt_en[ix_thread_idx] <= interrupt_en_saved[ix_thread_idx];
-				cr_mmu_en[ix_thread_idx] <= mmu_en_saved[ix_thread_idx];
-				cr_supervisor_en[ix_thread_idx] <= supervisor_en_saved[ix_thread_idx];
+				cr_interrupt_en[ix_thread_idx] <= interrupt_en_saved[0][ix_thread_idx];
+				cr_mmu_en[ix_thread_idx] <= mmu_en_saved[0][ix_thread_idx];
+				cr_supervisor_en[ix_thread_idx] <= supervisor_en_saved[0][ix_thread_idx];
+
+				// Restore nested interrupt stage
+				trap_access_addr[0] <= trap_access_addr[1];
+				trap_reason[0] <= trap_reason[1];
+				eret_address[0] <= eret_address[1];
+				interrupt_en_saved[0] <= interrupt_en_saved[1];
+				mmu_en_saved[0] <= mmu_en_saved[1];
+				supervisor_en_saved[0] <= supervisor_en_saved[1];
+				subcycle_saved[0] <= subcycle_saved[1];
+				scratchpad[0][{1'b0, ix_thread_idx}] <= scratchpad[1][{1'b0, ix_thread_idx}];
+				scratchpad[0][{1'b1, ix_thread_idx}] <= scratchpad[1][{1'b1, ix_thread_idx}];
 			end
 
 			//
@@ -151,17 +184,17 @@ module control_registers
 
 					CR_SAVED_FLAGS:
 					begin
-						supervisor_en_saved[dt_thread_idx] <= dd_creg_write_val[2];
-						mmu_en_saved[dt_thread_idx] <= dd_creg_write_val[1];
-						interrupt_en_saved[dt_thread_idx] <= dd_creg_write_val[0];
+						supervisor_en_saved[0][dt_thread_idx] <= dd_creg_write_val[2];
+						mmu_en_saved[0][dt_thread_idx] <= dd_creg_write_val[1];
+						interrupt_en_saved[0][dt_thread_idx] <= dd_creg_write_val[0];
 					end
 
-					CR_TRAP_PC:          cr_eret_address[dt_thread_idx] <= dd_creg_write_val;
+					CR_TRAP_PC:          eret_address[0][dt_thread_idx] <= dd_creg_write_val;
 					CR_TRAP_HANDLER:     cr_trap_handler <= dd_creg_write_val;
 					CR_TLB_MISS_HANDLER: cr_tlb_miss_handler <= dd_creg_write_val;
-					CR_SCRATCHPAD0:      scratchpad[{1'b0, dt_thread_idx}] <= dd_creg_write_val;
-					CR_SCRATCHPAD1:      scratchpad[{1'b1, dt_thread_idx}] <= dd_creg_write_val;
-					CR_SUBCYCLE:         cr_eret_subcycle[dt_thread_idx] <= subcycle_t'(dd_creg_write_val);
+					CR_SCRATCHPAD0:      scratchpad[0][{1'b0, dt_thread_idx}] <= dd_creg_write_val;
+					CR_SCRATCHPAD1:      scratchpad[0][{1'b1, dt_thread_idx}] <= dd_creg_write_val;
+					CR_SUBCYCLE:         subcycle_saved[0][dt_thread_idx] <= subcycle_t'(dd_creg_write_val);
 					CR_CURRENT_ASID:     cr_current_asid[dt_thread_idx] <= dd_creg_write_val[`ASID_WIDTH - 1:0];
 					default:
 						;
@@ -186,22 +219,22 @@ module control_registers
 					CR_SAVED_FLAGS:
 					begin
 						cr_creg_read_val <= scalar_t'({
-							supervisor_en_saved[dt_thread_idx],
-							mmu_en_saved[dt_thread_idx],
-							interrupt_en_saved[dt_thread_idx]
+							supervisor_en_saved[0][dt_thread_idx],
+							mmu_en_saved[0][dt_thread_idx],
+							interrupt_en_saved[0][dt_thread_idx]
 						});
 					end
 
 					CR_THREAD_ID:        cr_creg_read_val <= scalar_t'({CORE_ID, dt_thread_idx});
-					CR_TRAP_PC:          cr_creg_read_val <= cr_eret_address[dt_thread_idx];
-					CR_TRAP_REASON:      cr_creg_read_val <= scalar_t'(trap_reason[dt_thread_idx]);
+					CR_TRAP_PC:          cr_creg_read_val <= eret_address[0][dt_thread_idx];
+					CR_TRAP_REASON:      cr_creg_read_val <= scalar_t'(trap_reason[0][dt_thread_idx]);
 					CR_TRAP_HANDLER:     cr_creg_read_val <= cr_trap_handler;
-					CR_TRAP_ADDRESS:     cr_creg_read_val <= trap_access_addr[dt_thread_idx];
+					CR_TRAP_ADDRESS:     cr_creg_read_val <= trap_access_addr[0][dt_thread_idx];
 					CR_TLB_MISS_HANDLER: cr_creg_read_val <= cr_tlb_miss_handler;
 					CR_CYCLE_COUNT:      cr_creg_read_val <= cycle_count;
-					CR_SCRATCHPAD0:      cr_creg_read_val <= scratchpad[{1'b0, dt_thread_idx}];
-					CR_SCRATCHPAD1:      cr_creg_read_val <= scratchpad[{1'b1, dt_thread_idx}];
-					CR_SUBCYCLE:         cr_creg_read_val <= scalar_t'(cr_eret_subcycle[dt_thread_idx]);
+					CR_SCRATCHPAD0:      cr_creg_read_val <= scratchpad[0][{1'b0, dt_thread_idx}];
+					CR_SCRATCHPAD1:      cr_creg_read_val <= scratchpad[0][{1'b1, dt_thread_idx}];
+					CR_SUBCYCLE:         cr_creg_read_val <= scalar_t'(subcycle_saved[0][dt_thread_idx]);
 					CR_CURRENT_ASID:     cr_creg_read_val <= scalar_t'(cr_current_asid[dt_thread_idx]);
 					default:             cr_creg_read_val <= 32'hffffffff;
 				endcase

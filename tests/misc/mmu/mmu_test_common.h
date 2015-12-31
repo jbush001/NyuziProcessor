@@ -32,6 +32,8 @@
 #define CR_SAVED_FLAGS 8
 #define CR_CURRENT_ASID 9
 #define CR_SCRATCHPAD0 11
+#define CR_SCRATCHPAD1 12
+#define CR_SUBCYCLE 13
 
 #define FLAG_MMU_EN (1 << 1)
 #define FLAG_SUPERVISOR_EN (1 << 2)
