@@ -16,9 +16,9 @@
 
 .set IFRAME_SIZE, 192
 
-						.globl interrupt_handler
-						.type interrupt_handler,@function
-interrupt_handler:		sub_i sp, sp, IFRAME_SIZE
+						.globl trap_handler
+						.type trap_handler,@function
+trap_handler:			sub_i sp, sp, IFRAME_SIZE
 						store_32 s0, 0(sp)
 						store_32 s1, 4(sp)
 						store_32 s2, 8(sp)

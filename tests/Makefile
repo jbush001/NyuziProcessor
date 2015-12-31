@@ -26,7 +26,6 @@ test:
 	cd misc/uart && ./runtest.py
 	cd misc/crash && ./runtest.py
 	cd misc/mmu && ./runtest.py
-	cd misc/supervisor && ./runtest.py
+	cd misc/trap && ./runtest.py
 	cd misc/perf_counters && ./runtest.py
-	cd misc/interrupt && ./runtest.py
 	cd render && make test

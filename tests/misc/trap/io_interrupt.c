@@ -26,7 +26,7 @@
 #define FLAG_INTERRUPT_EN (1 << 0)
 #define FLAG_SUPERVISOR_EN (1 << 2)
 
-extern void interrupt_handler();
+extern void trap_handler();
 
 void do_interrupt(unsigned int *registers)
 {
@@ -37,7 +37,7 @@ int main(void)
 {
 	int i;
 
-	__builtin_nyuzi_write_control_reg(CR_TRAP_HANDLER, interrupt_handler);
+	__builtin_nyuzi_write_control_reg(CR_TRAP_HANDLER, trap_handler);
 	__builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_INTERRUPT_EN | FLAG_SUPERVISOR_EN);
 
 	printf(">>ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\n");

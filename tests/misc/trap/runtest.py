@@ -22,7 +22,7 @@ sys.path.insert(0, '../..')
 import test_harness
 
 def run_io_interrupt(name):
-	test_harness.compile_test(['io_interrupt.c', 'interrupt_handler.s'])
+	test_harness.compile_test(['io_interrupt.c', 'trap_handler.s'])
 	result = test_harness.run_verilator()
 	lines = result.split('\n')
 	output = None
@@ -53,4 +53,8 @@ def run_multicycle(name):
 
 test_harness.register_tests(run_io_interrupt, ['io_interrupt'])
 test_harness.register_tests(run_multicycle, ['multicycle'])
+test_harness.register_generic_test('creg_non_supervisor')
+test_harness.register_generic_test('eret_non_supervisor')
+test_harness.register_generic_test('syscall')
+
 test_harness.execute_tests()
