@@ -24,6 +24,7 @@ import os
 import sys
 import re
 import traceback
+import threading
 
 COMPILER_DIR = '/usr/local/llvm-nyuzi/bin/'
 PROJECT_TOP = os.path.normpath(os.path.dirname(os.path.abspath(__file__)) + '/../')
@@ -113,7 +114,39 @@ def assemble_test(source_file):
 
 	return HEX_FILE
 
-def run_emulator(block_device=None, dump_file=None, dump_base=None, dump_length=None):
+
+class _TestRunner(threading.Thread):
+	def __init__(self):
+		threading.Thread.__init__(self)
+		self.finished = threading.Event()
+		self.daemon = True	# Kill watchdog if we exit
+
+	def execute(self, args, timeout):
+		self.timeout = timeout
+		self.process = subprocess.Popen(args, stdout=subprocess.PIPE,
+			stderr=subprocess.STDOUT)
+		self.start()	# Start watchdog
+		output, unused_err = self.process.communicate()
+		if self.finished.is_set():
+			raise TestException('Test timed out')
+		else:
+			self.finished.set()	# Stop watchdog
+
+		if self.process.poll():
+			# Non-zero return code. Probably target program crash.
+			raise TestException('Process returned error: ' + output)
+
+		return output
+
+	# Watchdog thread kills process if it runs too long
+	def run(self):
+		if not self.finished.wait(self.timeout):
+			# Timed out
+			self.finished.set()
+			self.process.kill()
+
+
+def run_emulator(block_device=None, dump_file=None, dump_base=None, dump_length=None, timeout=60):
 	"""Run test program in emulator.
 
 	This uses the hex file produced by assemble_test or compile_test.
@@ -143,16 +176,10 @@ def run_emulator(block_device=None, dump_file=None, dump_base=None, dump_length=
 		args += ['-d', dump_file + ',' + hex(dump_base) + ',' + hex(dump_length)]
 
 	args += [HEX_FILE]
-
-	try:
-		output = str(subprocess.check_output(args))
-	except subprocess.CalledProcessError as exc:
-		raise TestException('Emulator returned error: ' + exc.output)
-
-	return output
+	return _TestRunner().execute(args, timeout)
 
 def run_verilator(block_device=None, dump_file=None, dump_base=None,
-	dump_length=None, extra_args=None):
+	dump_length=None, extra_args=None, timeout=60):
 	"""Run test program in Verilog simulator
 
 	This uses the hex file produced by assemble_test or compile_test.
@@ -186,11 +213,7 @@ def run_verilator(block_device=None, dump_file=None, dump_base=None,
 		args += extra_args
 
 	args += ['+bin=' + HEX_FILE]
-	try:
-		output = str(subprocess.check_output(args))
-	except subprocess.CalledProcessError as exc:
-		raise TestException('Verilator returned error: ' + exc.output)
-
+	output = _TestRunner().execute(args, timeout)
 	if output.find('***HALTED***') == -1:
 		raise TestException(output + '\nProgram did not halt normally')
 
@@ -293,7 +316,6 @@ def find_files(extensions):
 	"""
 
 	return [fname for fname in os.listdir('.') if fname.endswith(extensions)]
-
 
 def execute_tests():
 	"""Run all tests that have been registered with the register_tests functions
