@@ -14,48 +14,34 @@
 # limitations under the License.
 #
 
-.include "macros.inc"
-
 #define REG_ARITH_INST(__type__) (0xc0000000 | ((__type__) << 26))
 #define IMM_ARITH_INST(__type__) ((__type__) << 28)
 #define MEM_INST(__type__) (0x80000000 | ((__type__) << 25))
 
         	    .text
-			    .globl	_start
 			    .align	4
-			    .type	main,@function
-_start:			lea s0, fault_handler
-			    setcr s0, 1			# Set fault handler address
-				move s10, 1
-				.long REG_ARITH_INST(3)
+			    .globl	illegal_inst
+			    .type	illegal_inst,@function
+illegal_inst:	move s10, 1
+				.long REG_ARITH_INST(3) ; CHECK: FAULT 1 index 1
 				move s10, 2
-				.long REG_ARITH_INST(6)
+				.long REG_ARITH_INST(6) ; CHECK: FAULT 1 index 2
 				move s10, 3
-				.long REG_ARITH_INST(7)
+				.long REG_ARITH_INST(7) ; CHECK: FAULT 1 index 3
 				move s10, 4
-				.long IMM_ARITH_INST(3)
+				.long IMM_ARITH_INST(3) ; CHECK: FAULT 1 index 4
 				move s10, 5
-				.long IMM_ARITH_INST(6)
+				.long IMM_ARITH_INST(6) ; CHECK: FAULT 1 index 5
 				move s10, 6
-				.long IMM_ARITH_INST(7)
+				.long IMM_ARITH_INST(7) ; CHECK: FAULT 1 index 6
 				move s10, 7
-				.long MEM_INST(9)
+				.long MEM_INST(9) ; CHECK: FAULT 1 index 7
 				move s10, 8
-				.long MEM_INST(10)
+				.long MEM_INST(10) ; CHECK: FAULT 1 index 8
 				move s10, 9
-				.long MEM_INST(11)
+				.long MEM_INST(11) ; CHECK: FAULT 1 index 9
 				move s10, 10
-				.long MEM_INST(12)
+				.long MEM_INST(12) ; CHECK: FAULT 1 index 10
 				move s10, 11
-				.long MEM_INST(15)
-				move s10, 12
-
-				HALT_CURRENT_THREAD
-
-
-fault_handler: 	getcr s11, 2		; Fault PC
-				getcr s12, 3		; Reason
-				getcr s13, 4		; flags
-				getcr s14, 8		; saved flags
-				add_i pc, s11, 4	; Jump back to next instruction
-
+				.long MEM_INST(15) ; CHECK: FAULT 1 index 11
+				ret

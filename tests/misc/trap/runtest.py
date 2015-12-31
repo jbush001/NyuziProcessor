@@ -60,12 +60,22 @@ def run_unaligned_data_fault(name):
 
 	test_harness.check_result('unaligned_data_fault.c', result)
 
+def run_illegal_instruction(name):
+	test_harness.compile_test(['illegal_instruction.c', 'trap_handler.s', 'gen_illegal_inst_trap.S'])
+	if name.endswith('_emulator'):
+		result = test_harness.run_emulator()
+	else:
+		result = test_harness.run_verilator()
+
+	test_harness.check_result('gen_illegal_inst_trap.S', result)
+
 test_harness.register_tests(run_io_interrupt, ['io_interrupt'])
 test_harness.register_tests(run_multicycle, ['multicycle'])
 test_harness.register_generic_test('creg_non_supervisor')
 test_harness.register_generic_test('eret_non_supervisor')
 test_harness.register_generic_test('inst_align_fault')
 test_harness.register_tests(run_unaligned_data_fault, ['unaligned_data_fault_emulator', 'unaligned_data_fault_verilator'])
+test_harness.register_tests(run_illegal_instruction, ['illegal_instruction_emulator', 'illegal_instruction_verilator'])
 test_harness.register_generic_test('syscall')
 
 test_harness.execute_tests()
