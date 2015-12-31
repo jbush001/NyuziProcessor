@@ -28,7 +28,7 @@
 
 extern void trap_handler();
 
-void do_interrupt(unsigned int *registers)
+void do_trap(unsigned int *registers)
 {
 	printf("*");
 }

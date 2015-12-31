@@ -58,7 +58,9 @@ trap_handler:			sub_i sp, sp, IFRAME_SIZE
 						getcr s0, 13
 						store_32 s0, 132(sp)   # Subcycle
 
-						call do_interrupt
+						move s0, sp
+
+						call do_trap
 
 						load_32 s1, 4(sp)
 						load_32 s2, 8(sp)

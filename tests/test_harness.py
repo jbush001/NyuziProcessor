@@ -412,6 +412,7 @@ def run_generic_test(name):
 
 	check_result(basename + '.c', result)
 
+
 def register_generic_test(name):
 	register_tests(run_generic_test, [name + '_verilator'])
 	register_tests(run_generic_test, [name + '_emulator'])
