@@ -15,7 +15,7 @@
 //
 
 //
-// Test that unaligned data accesses properly raise faults
+// Test that illegal instructions generate traps
 //
 
 #include <stdint.h>

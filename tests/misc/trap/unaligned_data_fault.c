@@ -29,21 +29,31 @@ volatile veci16_t dummy2;
 
 void do_trap(unsigned int *registers)
 {
-	printf("FAULT %d address %08x\n", __builtin_nyuzi_read_control_reg(3),
-		__builtin_nyuzi_read_control_reg(5));
+	printf("FAULT %d address %08x subcycle %d\n", __builtin_nyuzi_read_control_reg(3),
+		__builtin_nyuzi_read_control_reg(5), registers[33]);
+	registers[33] = 0;	// Set subcycle back to 0
 	registers[31] += 4;	// Skip instruction
 }
 
 int main(int argc, const char *argv[])
 {
+	veci16_t pointers = {&dummy1, &dummy1, &dummy1, 0x29,
+		&dummy1, &dummy1, &dummy1, &dummy1, &dummy1, &dummy1, &dummy1, &dummy1,
+		&dummy1, &dummy1, &dummy1, &dummy1};
+
 	__builtin_nyuzi_write_control_reg(1, trap_handler);
 
-	PTR_AS(0x17, unsigned int) = 1;    			// CHECK: FAULT 2 address 00000017
-	PTR_AS(0x19, unsigned short) = 1;  			// CHECK: FAULT 2 address 00000019
-	PTR_AS(0x21, veci16_t) = dummy2;   			// CHECK: FAULT 2 address 00000021
-	dummy1 += PTR_AS(0x23, unsigned int) = 1;	// CHECK: FAULT 2 address 00000023
-	dummy1 += PTR_AS(0x25, unsigned short) = 1;	// CHECK: FAULT 2 address 00000025
-	dummy2 = PTR_AS(0x27, veci16_t);			// CHECK: FAULT 2 address 00000027
+	// Test all memory access sizes, both load and store
+
+	PTR_AS(0x17, unsigned int) = 1;    			// CHECK: FAULT 2 address 00000017 subcycle 0
+	PTR_AS(0x19, unsigned short) = 1;  			// CHECK: FAULT 2 address 00000019 subcycle 0
+	PTR_AS(0x21, veci16_t) = dummy2;   			// CHECK: FAULT 2 address 00000021 subcycle 0
+	__builtin_nyuzi_scatter_storei(pointers, dummy2); // CHECK: FAULT 2 address 00000029 subcycle 3
+
+	dummy1 += PTR_AS(0x23, unsigned int) = 1;	// CHECK: FAULT 2 address 00000023 subcycle 0
+	dummy1 += PTR_AS(0x25, unsigned short) = 1;	// CHECK: FAULT 2 address 00000025 subcycle 0
+	dummy2 = PTR_AS(0x27, veci16_t);			// CHECK: FAULT 2 address 00000027 subcycle 0
+	dummy2 = __builtin_nyuzi_gather_loadi(pointers); // CHECK: FAULT 2 address 00000029 subcycle 3
 
 	printf("DONE\n"); // CHECK: DONE
 

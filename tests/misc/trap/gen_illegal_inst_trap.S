@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+# The CHECK strings in this file are outputted by illegal_instruction.c
+
 #define REG_ARITH_INST(__type__) (0xc0000000 | ((__type__) << 26))
 #define IMM_ARITH_INST(__type__) ((__type__) << 28)
 #define MEM_INST(__type__) (0x80000000 | ((__type__) << 25))

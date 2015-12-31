@@ -96,8 +96,8 @@ trap_handler:			sub_i sp, sp, IFRAME_SIZE
 						setcr s0, 2
 						load_32 s0, 128(sp)   # Saved flags
 						setcr s0, 8
-						store_32 s0, 132(sp)   # Subcycle
-						getcr s0, 13
+						load_32 s0, 132(sp)   # Subcycle
+						setcr s0, 13
 						load_32 s0, 0(sp)
 						add_i sp, sp, IFRAME_SIZE
 						eret
