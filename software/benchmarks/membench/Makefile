@@ -25,7 +25,7 @@ OBJS=$(TOPDIR)/software/libs/libc/crt0.o $(SRCS_TO_OBJS)
 DEPS=$(SRCS_TO_DEPS)
 
 $(OBJ_DIR)/membench.hex: $(OBJS)
-	$(LD) -o $(OBJ_DIR)/membench.elf $(LDFLAGS) $(OBJS) $(LDFLAGS) $(LIBS)
+	$(LD) -o $(OBJ_DIR)/membench.elf $(LDFLAGS) $(OBJS) $(LIBS) $(LDFLAGS)
 	$(ELF2HEX) -o $(OBJ_DIR)/membench.hex $(OBJ_DIR)/membench.elf
 
 run: $(OBJ_DIR)/membench.hex

@@ -25,7 +25,7 @@ OBJS=$(TOPDIR)/software/libs/libc/crt0.o $(SRCS_TO_OBJS)
 DEPS=$(SRCS_TO_DEPS)
 
 $(OBJ_DIR)/hash.hex: $(OBJS)
-	$(LD) -o $(OBJ_DIR)/hash.elf $(LDFLAGS) $(OBJS) $(LDFLAGS) $(LIBS)
+	$(LD) -o $(OBJ_DIR)/hash.elf $(LDFLAGS) $(OBJS) $(LIBS) $(LDFLAGS)
 	$(ELF2HEX) -o $(OBJ_DIR)/hash.hex $(OBJ_DIR)/hash.elf
 
 run: $(OBJ_DIR)/hash.hex
