@@ -25,7 +25,7 @@ OBJS := $(TOPDIR)/software/libs/libc/crt0.o $(SRCS_TO_OBJS)
 DEPS := $(SRCS_TO_DEPS)
 
 $(OBJ_DIR)/mandelbrot.hex: $(OBJS)
-	$(LD) -o $(OBJ_DIR)/mandelbrot.elf $(LDFLAGS) $(OBJS) $(LDFLAGS) $(LIBS)
+	$(LD) -o $(OBJ_DIR)/mandelbrot.elf $(LDFLAGS) $(OBJS) $(LIBS) $(LDFLAGS)
 	$(ELF2HEX) -o $(OBJ_DIR)/mandelbrot.hex $(OBJ_DIR)/mandelbrot.elf
 
 run: $(OBJ_DIR)/mandelbrot.hex

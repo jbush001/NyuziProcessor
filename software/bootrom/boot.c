@@ -23,6 +23,8 @@
 // use global variables.
 //
 
+extern void *memset(void *_dest, int value, unsigned int length);
+
 static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
 
 enum register_index
@@ -64,33 +66,6 @@ void write_serial_long(unsigned int value)
 	write_serial_byte((value >> 8) & 0xff);
 	write_serial_byte((value >> 16) & 0xff);
 	write_serial_byte((value >> 24) & 0xff);
-}
-
-void *memset(void *_dest, int value, unsigned int length)
-{
-	char *dest = (char*) _dest;
-	value &= 0xff;
-
-	if ((((unsigned int) dest) & 3) == 0)
-	{
-		// Write 4 bytes at a time.
-		unsigned wideVal = value | (value << 8) | (value << 16) | (value << 24);
-		while (length > 4)
-		{
-			*((unsigned int*) dest) = wideVal;
-			dest += 4;
-			length -= 4;
-		}
-	}
-
-	// Write one byte at a time
-	while (length > 0)
-	{
-		*dest++ = value;
-		length--;
-	}
-
-	return _dest;
 }
 
 int main()

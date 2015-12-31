@@ -19,48 +19,6 @@
 #include <stdint.h>
 #include <string.h>
 
-void* memset(void *_dest, int value, size_t length)
-{
-	char *dest = (char*) _dest;
-	value &= 0xff;
-
-	// XXX Possibly fill bytes/words until alignment is hit
-
-	if ((((unsigned int) dest) & 63) == 0)
-	{
-		// Write 64 bytes at a time.
-		veci16_t reallyWideValue = __builtin_nyuzi_makevectori(value | (value << 8) | (value << 16)
-			| (value << 24));
-		while (length > 64)
-		{
-			*((veci16_t*) dest) = reallyWideValue;
-			length -= 64;
-			dest += 64;
-		}
-	}
-
-	if ((((unsigned int) dest) & 3) == 0)
-	{
-		// Write 4 bytes at a time.
-		unsigned wideVal = value | (value << 8) | (value << 16) | (value << 24);
-		while (length > 4)
-		{
-			*((unsigned int*) dest) = wideVal;
-			dest += 4;
-			length -= 4;
-		}
-	}
-
-	// Write one byte at a time
-	while (length > 0)
-	{
-		*dest++ = value;
-		length--;
-	}
-
-	return _dest;
-}
-
 int strcmp(const char *str1, const char *str2)
 {
 	while (*str1 && *str1 == *str2)
@@ -85,21 +43,6 @@ int strncmp(const char *str1, const char *str2, size_t length)
 	}
 
 	return *str1 - *str2;
-}
-
-int memcmp(const void *_str1, const void *_str2, size_t len)
-{
-	const char *str1 = _str1;
-	const char *str2 = _str2;
-
-	while (len--)
-	{
-		int diff = *str1++ - *str2++;
-		if (diff)
-			return diff;
-	}
-
-	return 0;
 }
 
 int strcasecmp(const char *str1, const char *str2)

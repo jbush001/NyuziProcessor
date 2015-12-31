@@ -36,7 +36,7 @@ $(OBJ_DIR)/program.hex: $(OBJ_DIR)/program.elf
 	$(ELF2HEX) -o $@ $<
 
 $(OBJ_DIR)/program.elf: $(DEPS) $(OBJS)
-	$(LD) -o $@ $(OBJS) $(LDFLAGS) $(LIBS)
+	$(LD) -o $@ $(OBJS) $(LIBS) $(LDFLAGS)
 
 program.lst: $(OBJ_DIR)/program.elf FORCE
 	$(OBJDUMP) --disassemble WORK/program.elf > program.lst 2> /dev/null	# Make disassembly file

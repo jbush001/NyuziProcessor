@@ -32,7 +32,7 @@ SERIAL_BOOT=$(BINDIR)/serial_boot
 MKFS=$(BINDIR)/mkfs
 
 CFLAGS=-O3 -I$(TOPDIR)/software/libs/libc/include -I$(TOPDIR)/software/libs/libos
-LDFLAGS=-L$(TOPDIR)/software/libs/libc/ -L$(TOPDIR)/software/libs/libos -L$(TOPDIR)/software/libs/librender
+LDFLAGS=-L$(TOPDIR)/software/libs/libc/ -L$(TOPDIR)/software/libs/libos -L$(TOPDIR)/software/libs/librender $(TOPDIR)/software/libs/compiler-rt/compiler-rt.a
 
 define SRCS_TO_OBJS
 	$(addprefix $(OBJ_DIR)/, $(addsuffix .o, $(foreach file, $(SRCS), $(basename $(notdir $(file))))))

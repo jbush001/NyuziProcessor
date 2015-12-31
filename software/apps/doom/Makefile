@@ -84,7 +84,7 @@ clean:
 	rm -f $(OBJ_DIR)/*
 
 $(OBJ_DIR)/doom.hex: $(OBJS) $(DEPS)
-	$(LD) $(LDFLAGS) $(OBJS) -o $(OBJ_DIR)/doom.elf $(LIBS)
+	$(LD) $(OBJS) -o $(OBJ_DIR)/doom.elf $(LIBS) $(LDFLAGS)
 	$(ELF2HEX) -o $(OBJ_DIR)/doom.hex -b 0 $(OBJ_DIR)/doom.elf
 	$(OBJDUMP) --disassemble $(OBJ_DIR)/doom.elf > doom.lst 2> /dev/null
 

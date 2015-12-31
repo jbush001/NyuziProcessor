@@ -74,7 +74,8 @@ def compile_test(source_file, optlevel='3'):
 
 	compiler_args += [LIB_DIR + 'libc/crt0.o',
 		LIB_DIR + 'libc/libc.a',
-		LIB_DIR + 'libos/libos.a']
+		LIB_DIR + 'libos/libos.a',
+		LIB_DIR + 'compiler-rt/compiler-rt.a']
 
 	try:
 		subprocess.check_output(compiler_args, stderr=subprocess.STDOUT)

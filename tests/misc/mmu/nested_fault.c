@@ -69,6 +69,8 @@ int main(void)
 	printf("Starting test %d\n", 12);
 
 	// This will cause an alignment fault on the 6th lane and jump to 'fault_handler'.
+	// Use scatter store rather than a normal scalar store to ensure the
+	// subcycle counter is saved correctly.
 	__builtin_nyuzi_scatter_storei(pointers, __builtin_nyuzi_makevectori(0));
 
 	return 0;

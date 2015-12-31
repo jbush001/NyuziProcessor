@@ -27,12 +27,8 @@ SRCS=math.c \
 	dlmalloc.c \
 	cxx_runtime.cpp \
 	stdlib.c \
-	ashldi3.s \
-	lshrdi3.s \
 	qsort.c \
-	builtins.c \
 	setjmp.s \
-	memcpy.s \
 	time.c
 
 OBJS := $(SRCS_TO_OBJS)
