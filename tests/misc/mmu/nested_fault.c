@@ -73,6 +73,8 @@ int main(void)
 	// subcycle counter is saved correctly.
 	__builtin_nyuzi_scatter_storei(pointers, __builtin_nyuzi_makevectori(0));
 
+	printf("should_not_be_here\n"); // CHECKN: should_not_be_here
+
 	return 0;
 }
 

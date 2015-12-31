@@ -60,7 +60,7 @@ int main(void)
 	// This dflush should cause a TLB miss
 	asm("dflush %0" : : "s" (DATA_BASE + PAGE_SIZE)); // CHECK: FAULT 6 00101000
 
-	printf("didn't fault\n");
+	printf("should_not_be_here\n"); // CHECKN: should_not_be_here
 
 	return 0;
 }

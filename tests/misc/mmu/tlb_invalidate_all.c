@@ -53,7 +53,8 @@ int main(void)
 
 	asm("tlbinvalall");
 
-	printf("FAIL: should have faulted\n");	// CHECK: TLB miss
+	printf("should_not_be_here\n");	// CHECK: TLB miss
+		// CHECKN: should_not_be_here
 
 	return 0;
 }

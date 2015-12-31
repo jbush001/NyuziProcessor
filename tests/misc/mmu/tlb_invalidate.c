@@ -62,5 +62,7 @@ int main(void)
 	asm("tlbinval %0" : : "s" (data_addr));
 
 	printf("FAIL: read value %08x\n", *data_addr);	// CHECK: DTLB miss 00100000
+		// CHECKN: FAIL: read value
+
 	return 0;
 }

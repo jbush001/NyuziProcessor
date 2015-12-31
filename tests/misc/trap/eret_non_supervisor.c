@@ -42,5 +42,7 @@ int main(int argc, const char *argv[])
 
 	// This will fault
 	asm("eret"); // CHECK: FAULT 10 current flags 04 prev flags 00
+
+	printf("should_not_be_here\n"); // CHECKN: should_not_be_here
 }
 

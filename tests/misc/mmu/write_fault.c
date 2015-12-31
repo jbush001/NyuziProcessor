@@ -70,6 +70,7 @@ int main(void)
 	// CHECK: FAULT 7 00101000
 	// CHECK: data value = 12345678
 
-	printf("Did not fault\n", data_addr[PAGE_SIZE / sizeof(int)]);
+	printf("should_not_be_here\n"); // CHECKN: should_not_be_here
+
 	return 0;
 }

@@ -37,6 +37,6 @@ int main(void)
 
 	asm("itlbinsert %0, %1" : : "r" (0), "r" (0)); // CHECK: FAULT 10 current flags 04 prev flags 00
 
-	printf("executed instruction\n");
+	printf("should_not_be_here\n"); // CHECKN: should_not_be_here
 }
 

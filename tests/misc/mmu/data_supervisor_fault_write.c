@@ -65,5 +65,7 @@ int main(void)
 	*data_addr = 0xdeadbeef;
 	// CHECK: FAULT 8 00100000 current flags 06 prev flags 02
 	// CHECK: data_addr = 12345678
+
+	printf("should_not_be_here\n"); // CHECKN: should_not_be_here
 }
 

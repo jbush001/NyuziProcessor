@@ -57,8 +57,9 @@ int main(void)
 	switch_to_user_mode();
 
 	// This will fault on instruction fetch.  Interrupts should be enabled, but
-	// the processor should be back in supervisor mode.
+	// the processor should be back in supervisor mode. The string should not be
+	// printed
 	printf("THIS IS USER MODE\n");	// CHECK: FAULT 9 current flags 06 prev flags 02
-
+		// CHECKN: THIS IS USER MODE
 }
 

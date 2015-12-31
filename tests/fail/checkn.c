@@ -1,5 +1,5 @@
 //
-// Copyright 2015 Jeff Bush
+// Copyright 2011-2015 Jeff Bush
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,35 +14,12 @@
 // limitations under the License.
 //
 
-//
-// Test that unaligned instruction properly raises a fault
-//
+#include <stdio.h>
 
-typedef void (*func_ptr_t)();
+// Ensure the CHECKN directive works correctly.
 
-void fault_handler()
+int main()
 {
-	printf("FAULT %d\n", __builtin_nyuzi_read_control_reg(3));
-	exit(0);
+	printf("foo\n"); // CHECKN: bar
+	printf("bar\n");
 }
-
-void dummy_func()
-{
-	printf("FAIL: called dummy_func\n");
-}
-
-int main(int argc, const char *argv[])
-{
-	func_ptr_t func_ptr;
-
-	__builtin_nyuzi_write_control_reg(1, fault_handler);
-
-	func_ptr = (func_ptr_t) (((unsigned int) &dummy_func) + 1);
-	(*func_ptr)();
-	// CHECK: FAULT 4
-
-	printf("should_not_be_here\n"); // CHECKN: should_not_be_here
-
-	return 1;
-}
-

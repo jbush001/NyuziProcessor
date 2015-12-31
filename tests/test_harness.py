@@ -390,17 +390,18 @@ def check_result(source_file, program_output):
 		TestException if a string is not found.
 	"""
 
-	PREFIX = 'CHECK: '
+	CHECK_PREFIX = 'CHECK: '
+	CHECKN_PREFIX = 'CHECKN: '
 
 	output_offset = 0
 	lineNo = 1
 	foundCheckLines = False
 	with open(source_file, 'r') as f:
 		for line in f:
-			chkoffs = line.find(PREFIX)
+			chkoffs = line.find(CHECK_PREFIX)
 			if chkoffs != -1:
 				foundCheckLines = True
-				expected = line[chkoffs + len(PREFIX):].strip()
+				expected = line[chkoffs + len(CHECK_PREFIX):].strip()
 				regexp = re.compile(expected)
 				got = regexp.search(program_output, output_offset)
 				if got:
@@ -409,6 +410,17 @@ def check_result(source_file, program_output):
 					error = 'FAIL: line ' + str(lineNo) + ' expected string ' + expected + ' was not found\n'
 					error += 'searching here:' + program_output[output_offset:]
 					raise TestException(error)
+			else:
+				chkoffs = line.find(CHECKN_PREFIX)
+				if chkoffs != -1:
+					foundCheckLines = True
+					nexpected = line[chkoffs + len(CHECKN_PREFIX):].strip()
+					regexp = re.compile(nexpected)
+					got = regexp.search(program_output, output_offset)
+					if got:
+						error = 'FAIL: line ' + str(lineNo) + ' string ' + nexpected + ' should not be here:\n'
+						error += program_output
+						raise TestException(error)
 
 			lineNo += 1
 

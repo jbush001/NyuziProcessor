@@ -67,5 +67,6 @@ int main(void)
 
 	// XXX no way to verify that the read wasn't sent to external bus
 
+	printf("should_not_be_here\n"); // CHECKN: should_not_be_here
 }
 

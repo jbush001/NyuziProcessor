@@ -53,5 +53,7 @@ int main(int argc, const char *argv[])
 	__builtin_nyuzi_write_control_reg(11, 0xdeadbeef);
 	// CHECK: FAULT 10 current flags 04 prev flags 00
 	// CHECK: scratchpad = 12345678
+
+	printf("should_not_be_here\n"); // CHECKN: should_not_be_here
 }
 

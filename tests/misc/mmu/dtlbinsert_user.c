@@ -63,6 +63,6 @@ int main(void)
 	// CHECK: general fault 10
 	// CHECK: TLB fault
 
-	printf("FAIL: executed instruction\n");
+	printf("should_not_be_here\n"); // CHECKN: should_not_be_here
 }
 

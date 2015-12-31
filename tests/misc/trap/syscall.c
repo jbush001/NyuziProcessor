@@ -54,7 +54,6 @@ int main(void)
 	// CHECK: ENTER start_user_code current flags 00
 	// CHECK: FAULT 11 current flags 04 prev flags 00
 
-	printf("FAIL: should not get here");
-	exit(1);
+	printf("should_not_be_here\n"); // CHECKN: should_not_be_here
 }
 
