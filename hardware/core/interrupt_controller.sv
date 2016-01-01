@@ -28,26 +28,27 @@
 //
 module interrupt_controller
 	#(parameter BASE_ADDRESS = 0)
-	(input                                clk,
-	input                                 reset,
+	(input                                      clk,
+	input                                       reset,
 
 	// IO bus interface
-	input [31:0]                          io_address,
-	input                                 io_read_en,
-	input [31:0]                          io_write_data,
-	input                                 io_write_en,
-	output logic[31:0]                    io_read_data,
+	input [31:0]                                io_address,
+	input                                       io_read_en,
+	input [31:0]                                io_write_data,
+	input                                       io_write_en,
+	output logic[31:0]                          io_read_data,
 
 	// From external interface
-	input                                 interrupt_req,
+	input                                       interrupt_req,
 
 	// To cores
-	output logic[`TOTAL_THREADS - 1:0]    ic_thread_en,
-	output logic[`TOTAL_THREADS - 1:0]    ic_interrupt_pending,
-	output                                processor_halt,
+	output logic[`TOTAL_THREADS - 1:0]          ic_thread_en,
+	output logic[`TOTAL_THREADS - 1:0]          ic_interrupt_pending,
+	output interrupt_id_t                       ic_interrupt_id[`TOTAL_THREADS - 1:0],
+	output                                      processor_halt,
 
 	// From cores
-	input [`TOTAL_THREADS - 1:0]          wb_interrupt_ack);
+	input [`TOTAL_THREADS - 1:0]                wb_interrupt_ack);
 
 	always_ff @(posedge clk, posedge reset)
 	begin
@@ -73,6 +74,7 @@ module interrupt_controller
 	generate
 		for (thread_idx = 0; thread_idx < `TOTAL_THREADS; thread_idx++)
 		begin : core_int_gen
+			assign ic_interrupt_id[thread_idx] = 0;
 			always_ff @(posedge clk, posedge reset)
 			begin
 				if (reset)

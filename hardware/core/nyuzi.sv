@@ -54,7 +54,8 @@ module nyuzi
 	// XXX AUTOLOGIC not generating these
 	l2rsp_packet_t l2_response;
 	iorsp_packet_t ia_response;
-	thread_idx_t ic_interrupt_thread_idx;
+	interrupt_id_t ic_interrupt_id[`TOTAL_THREADS - 1:0];
+	interrupt_id_t _interrupt_id_repacked[`NUM_CORES][`THREADS_PER_CORE];
 
 	/*AUTOLOGIC*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -80,11 +81,10 @@ module nyuzi
 	begin
 		if (io_address >= 'h130 && io_address <= 'h13c)
 			io_read_source <= IO_PERF_COUNTERS;
+		else if (io_address >= 'h60 && io_address < 'h100)
+			io_read_source <= IO_INT_CONTROLLER;
 		else
 			io_read_source <= IO_ARBITER;
-
-		// XXX currently interrupt controller has no read sources,
-		// but it will.
 	end
 
 	always_comb
@@ -107,6 +107,16 @@ module nyuzi
 		.io_read_data(perf_io_read_data),
 		.*);
 
+	genvar thread_idx;
+	generate
+		for (thread_idx = 0; thread_idx < `TOTAL_THREADS; thread_idx++)
+		begin : repack_gen
+			assign _interrupt_id_repacked[thread_idx / `THREADS_PER_CORE][thread_idx % `THREADS_PER_CORE] =
+				ic_interrupt_id[thread_idx];
+		end
+	endgenerate
+
+
 	genvar core_idx;
 	generate
 		for (core_idx = 0; core_idx < `NUM_CORES; core_idx++)
@@ -116,6 +126,7 @@ module nyuzi
 				.l2_ready(l2_ready[core_idx]),
 				.ic_thread_en(ic_thread_en[core_idx * `THREADS_PER_CORE+:`THREADS_PER_CORE]),
 				.ic_interrupt_pending(ic_interrupt_pending[core_idx * `THREADS_PER_CORE+:`THREADS_PER_CORE]),
+				.ic_interrupt_id(_interrupt_id_repacked[core_idx]),
 				.wb_interrupt_ack(wb_interrupt_ack[core_idx * `THREADS_PER_CORE+:`THREADS_PER_CORE]),
 				.ior_request(io_request[core_idx]),
 				.ia_ready(ia_ready[core_idx]),

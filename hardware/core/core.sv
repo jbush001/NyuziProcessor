@@ -29,6 +29,7 @@ module core
 	input                                  reset,
 	input thread_bitmap_t                  ic_thread_en,
 	input thread_bitmap_t                  ic_interrupt_pending,
+	input interrupt_id_t                   ic_interrupt_id[`THREADS_PER_CORE],
 	output thread_bitmap_t                 wb_interrupt_ack,
 
 	// L2 interface

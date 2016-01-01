@@ -203,11 +203,11 @@ typedef struct packed {
 	cache_op_t cache_control_op;
 } decoded_instruction_t;
 
-typedef enum logic[3:0] {
+typedef enum logic[4:0] {
 	TR_RESET,
 	TR_ILLEGAL_INSTRUCTION,
 	TR_DATA_ALIGNMENT,
-	TR_INTERRUPT,
+	_TR_UNUSED,
 	TR_IFETCH_ALIGNNMENT,
 	TR_ITLB_MISS,
 	TR_DTLB_MISS,
@@ -217,6 +217,8 @@ typedef enum logic[3:0] {
 	TR_PRIVILEGED_OP,
 	TR_SYSCALL
 } trap_reason_t;
+
+typedef logic[3:0] interrupt_id_t;
 
 `define IEEE754_B32_EXP_WIDTH 8
 `define IEEE754_B32_SIG_WIDTH 23

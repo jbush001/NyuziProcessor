@@ -302,7 +302,7 @@ void cosimInterrupt(Core *core, uint32_t threadId, uint32_t pc)
 		thread->currentSubcycle = 0;
 
 	thread->currentPc = pc + 4;
-	raiseTrap(thread, 0, TR_INTERRUPT);
+	raiseTrap(thread, 0, TR_INTERRUPT_BASE);
 }
 
 uint32_t getTotalThreads(const Core *core)

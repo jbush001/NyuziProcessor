@@ -65,7 +65,7 @@ loop0:
 				goto halt
 
 interrupt_handler: getcr s12, CR_FAULT_REASON
-				cmpeq_i s13, s12, 3
+				cmpeq_i s13, s12, 16
 				bfalse s13, bad_int
 				eret
 

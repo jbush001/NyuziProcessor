@@ -102,8 +102,9 @@ module writeback_stage(
 	output scalar_t                       wb_trap_access_vaddr,
 	output subcycle_t                     wb_trap_subcycle,
 
-	// Interrupt input
+	// To/From interrupt_controller
 	output thread_bitmap_t                wb_interrupt_ack,
+	input interrupt_id_t                  ic_interrupt_id[`THREADS_PER_CORE],
 
 	// Rollback signals to all stages
 	output logic                          wb_rollback_en,
@@ -194,7 +195,7 @@ module writeback_stage(
 			wb_trap = 1;
 			if (ix_instruction.interrupt_request)
 			begin
-				wb_trap_reason = TR_INTERRUPT;
+				wb_trap_reason = {1'b1, ic_interrupt_id[ix_thread_idx]};
 				wb_interrupt_ack[ix_thread_idx] = 1'b1;
 			end
 			else if (ix_instruction.tlb_miss)
