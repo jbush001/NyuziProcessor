@@ -92,12 +92,10 @@ module control_registers
 				supervisor_en_saved[0][i] <= 1;
 				supervisor_en_saved[1][i] <= 1;
 				cr_current_asid[i] <= 0;
-			end
-
-			for (int i = 0; i < `THREADS_PER_CORE * 2; i++)
-			begin
 				scratchpad[0][i] <= '0;
 				scratchpad[1][i] <= '0;
+				scratchpad[0][i + `THREADS_PER_CORE] <= '0;
+				scratchpad[1][i + `THREADS_PER_CORE] <= '0;
 			end
 
 			/*AUTORESET*/
