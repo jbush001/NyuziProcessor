@@ -195,7 +195,7 @@ module writeback_stage(
 			wb_trap = 1;
 			if (ix_instruction.interrupt_request)
 			begin
-				wb_trap_reason = {1'b1, ic_interrupt_id[ix_thread_idx]};
+				wb_trap_reason = trap_reason_t'({1'b1, ic_interrupt_id[ix_thread_idx]});
 				wb_interrupt_ack[ix_thread_idx] = 1'b1;
 			end
 			else if (ix_instruction.tlb_miss)

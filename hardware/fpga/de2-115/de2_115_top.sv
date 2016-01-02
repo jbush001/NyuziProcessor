@@ -88,11 +88,11 @@ module de2_115_top(
 	axi4_interface axi_bus_s1();
 	logic reset;
 	logic clk;
-	io_bus_interface uart_io_bus;
-	io_bus_interface sdcard_io_bus;
-	io_bus_interface ps2_io_bus;
-	io_bus_interface vga_io_bus;
-	io_bus_interface nyuzi_io_bus;
+	io_bus_interface uart_io_bus();
+	io_bus_interface sdcard_io_bus();
+	io_bus_interface ps2_io_bus();
+	io_bus_interface vga_io_bus();
+	io_bus_interface nyuzi_io_bus();
 	enum logic[1:0] {
 		IO_UART,
 		IO_SDCARD,
