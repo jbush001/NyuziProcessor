@@ -19,6 +19,7 @@ synthesize:
 	quartus_fit fpga_target
 	quartus_asm fpga_target
 	quartus_sta fpga_target
+	./print_summary.py 
 
 program:
 	quartus_pgm -c USB-Blaster -m jtag -o "P;output_files/fpga_target.sof"
