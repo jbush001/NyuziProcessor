@@ -31,7 +31,7 @@ memcpy:             	move s6, s0                # Save source pointer, which we 
                     	cmpeq_i s5, s3, s4
                     	bfalse s5, copy_word_check    # Not aligned, see if we can copy words
 
-                   	 	# ...Falls through, we can do vector copies
+                        # ...Falls through, we can do vector copies
 
                     	# There may be leading bytes before alignment.  Copy up to that.
 copy_vector_lead_in: 	and s4, s0, 63            # Aligned yet?

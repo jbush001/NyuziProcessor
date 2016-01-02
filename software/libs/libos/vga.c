@@ -55,53 +55,53 @@ void loadMicrocode(int hfp, int hs, int hbp, int hpol, int hres,
     unsigned int UPGM[] =
     {
         // Vertical front porch
-        /*0*/	INITCNT(1, vfp) | nosync,
+        INITCNT(1, vfp) | nosync,
         INITCNT(0, hfp - 1) | nosync,  // Horizontal Front porch
         LOOP(0, 2) | nosync,
         INITCNT(0, hs - 1) | hsync,    // Horizontal Sync pulse
-        /*4*/	LOOP(0, 4) | hsync,
+        LOOP(0, 4) | hsync,
         INITCNT(0, hbp - 1) | nosync,  // Horizontal Back porch
         LOOP(0, 6) | nosync,
         INITCNT(0, hres - 1) | nosync, // Scanline
-        /*8*/	LOOP(0, 8) | nosync,
+        LOOP(0, 8) | nosync,
         LOOP(1, 1) | nosync,
 
         // Vertical sync (negative)
         INITCNT(1, vs) | vsync,
         INITCNT(0, hfp - 2) | vsync,      // Horizontal Front porch
-        /*12*/	LOOP(0, 12) | vsync,
+        LOOP(0, 12) | vsync,
         INITCNT(0, hs - 1) | hsync_vsync, // Horizontal Sync pulse
         LOOP(0, 14) | hsync_vsync,
         INITCNT(0, hbp - 1) | vsync,      // Horizontal Back porch
-        /*16*/	LOOP(0, 16) | vsync,
+        LOOP(0, 16) | vsync,
         INITCNT(0, hres - 1) | vsync,     // Scanline
         LOOP(0, 18) | vsync,
         LOOP(1, 11) | vsync,
 
         // Vertical back porch
-        /*20*/	INITCNT(1, vbp) | nosync,
+        INITCNT(1, vbp) | nosync,
         INITCNT(0, hfp - 1) | nosync,  // Horizontal Front porch
         LOOP(0, 22) | nosync,
         INITCNT(0, hs - 1) | hsync,    // Horizontal Sync pulse
-        /*24*/	LOOP(0, 24) | hsync,
+        LOOP(0, 24) | hsync,
         INITCNT(0, hbp - 1) | nosync,  // Horizontal Back porch
         LOOP(0, 26) | nosync,
         INITCNT(0, hres - 1) | nosync, // Scanline
-        /*28*/	LOOP(0, 28) | nosync,
+        LOOP(0, 28) | nosync,
         LOOP(1, 21) | nosync,
 
         // Visible area
         INITCNT(1, vres) | nosync,
         INITCNT(0, hfp - 1) | nosync,   // Horizontal Front porch
-        /*32*/	LOOP(0, 32) | nosync,
+        LOOP(0, 32) | nosync,
         INITCNT(0, hs - 1) | hsync,     // Horizontal Sync pulse
         LOOP(0, 34) | hsync,
         INITCNT(0, hbp - 1) | nosync,   // Horizontal Back porch
-        /*36*/	LOOP(0, 36) | nosync,
+        LOOP(0, 36) | nosync,
         INITCNT(0, hres - 1) | nosync | IN_VIS,  // Visible area
         LOOP(0, 38) | nosync | IN_VIS,
         LOOP(1, 31) | nosync,
-        /*40*/	NEW_FRAME | nosync
+        NEW_FRAME | nosync
     };
     int length = nelems(UPGM);
 
@@ -115,7 +115,7 @@ void loadMicrocode(int hfp, int hs, int hbp, int hpol, int hres,
     REGISTERS[REG_VGA_ENABLE] = 1;
 }
 
-int initVGA(int mode)
+int initVGA(VGAMode mode)
 {
     switch (mode)
     {

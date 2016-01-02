@@ -14,8 +14,7 @@
 // limitations under the License.
 //
 
-#ifndef __NYUZI_H
-#define __NYUZI_H
+#pragma once
 
 inline int getCurrentThreadId()
 {
@@ -26,5 +25,3 @@ inline unsigned int getCycleCount()
 {
     return __builtin_nyuzi_read_control_reg(6);
 }
-
-#endif

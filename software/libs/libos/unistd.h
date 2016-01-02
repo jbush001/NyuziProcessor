@@ -14,8 +14,7 @@
 // limitations under the License.
 //
 
-#ifndef __UNISTD_H
-#define __UNISTD_H
+#pragma once
 
 #define SEEK_SET 0
 #define SEEK_CUR 1
@@ -52,7 +51,4 @@ int usleep(useconds_t);
 #ifdef __cplusplus
 }
 #endif
-
-#endif
-
 

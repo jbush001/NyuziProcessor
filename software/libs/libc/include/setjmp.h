@@ -14,10 +14,17 @@
 // limitations under the License.
 //
 
-
 #pragma once
 
 typedef unsigned int jmp_buf[120];
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int setjmp(jmp_buf env);
 void longjmp(jmp_buf env, int value);
+
+#ifdef __cplusplus
+}
+#endif

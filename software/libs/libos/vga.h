@@ -16,14 +16,19 @@
 
 #pragma once
 
-#define VGA_MODE_640x480 1
-#define VGA_MODE_640x400 2
+enum VGAMode
+{
+	VGA_MODE_640x480,
+	VGA_MODE_640x400
+};
+
+typedef enum VGAMode VGAMode;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int initVGA(int mode);
+int initVGA(VGAMode);
 
 #ifdef __cplusplus
 }
