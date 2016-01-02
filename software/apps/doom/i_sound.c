@@ -61,7 +61,7 @@ void I_SetMusicVolume(int volume)
 //
 int I_GetSfxLumpNum(sfxinfo_t* sfx)
 {
-  return 0;
+    return 0;
 }
 
 //
@@ -84,7 +84,7 @@ I_StartSound
   int			pitch,
   int			priority )
 {
-	return 0;
+    return 0;
 }
 
 
@@ -96,7 +96,7 @@ void I_StopSound (int handle)
 
 int I_SoundIsPlaying(int handle)
 {
-  return 0;
+    return 0;
 }
 
 
@@ -189,13 +189,13 @@ void I_UnRegisterSong(int handle)
 
 int I_RegisterSong(void* data)
 {
-	return 0;
+    return 0;
 }
 
 // Is the song playing?
 int I_QrySongPlaying(int handle)
 {
-	return 1;
+    return 1;
 }
 
 
@@ -207,7 +207,7 @@ void I_HandleSoundTimer( int ignore )
 // Get the interrupt. Set duration in millisecs.
 int I_SoundSetTimer( int duration_of_tick )
 {
-	return 0;
+    return 0;
 }
 
 

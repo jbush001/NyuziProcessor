@@ -30,51 +30,51 @@ unsigned int foo;
 
 void fault_handler()
 {
-	__builtin_nyuzi_write_control_reg(CR_SCRATCHPAD0, 0x88cf70b4);
-	__builtin_nyuzi_write_control_reg(CR_SCRATCHPAD1, 0x78662516);
+    __builtin_nyuzi_write_control_reg(CR_SCRATCHPAD0, 0x88cf70b4);
+    __builtin_nyuzi_write_control_reg(CR_SCRATCHPAD1, 0x78662516);
 
-	// This will cause a nested TLB miss fault
-	*EXTPTR = 0;
+    // This will cause a nested TLB miss fault
+    *EXTPTR = 0;
 
-	// We've returned from the TLB miss handler. Ensure all of the control registers
-	// have been restored to the values for the original fault.
-	printf("reason %d\n", __builtin_nyuzi_read_control_reg(CR_FAULT_REASON)); // CHECK: reason 2
-	printf("fault address %08x\n", __builtin_nyuzi_read_control_reg(CR_FAULT_ADDRESS)); // CHECK: 00000017
-	printf("flags %02x\n", __builtin_nyuzi_read_control_reg(CR_SAVED_FLAGS)); // CHECK: flags 06
-	printf("subcycle %d\n", __builtin_nyuzi_read_control_reg(CR_SUBCYCLE)); // CHECK: subcycle 6
-	if (__builtin_nyuzi_read_control_reg(CR_FAULT_PC) < (unsigned int) &tlb_miss_handler)
-		printf("fault pc ok\n"); // CHECK: fault pc ok
-	else
-		printf("fault pc bad (%08x)\n", __builtin_nyuzi_read_control_reg(CR_FAULT_PC));
+    // We've returned from the TLB miss handler. Ensure all of the control registers
+    // have been restored to the values for the original fault.
+    printf("reason %d\n", __builtin_nyuzi_read_control_reg(CR_FAULT_REASON)); // CHECK: reason 2
+    printf("fault address %08x\n", __builtin_nyuzi_read_control_reg(CR_FAULT_ADDRESS)); // CHECK: 00000017
+    printf("flags %02x\n", __builtin_nyuzi_read_control_reg(CR_SAVED_FLAGS)); // CHECK: flags 06
+    printf("subcycle %d\n", __builtin_nyuzi_read_control_reg(CR_SUBCYCLE)); // CHECK: subcycle 6
+    if (__builtin_nyuzi_read_control_reg(CR_FAULT_PC) < (unsigned int) &tlb_miss_handler)
+        printf("fault pc ok\n"); // CHECK: fault pc ok
+    else
+        printf("fault pc bad (%08x)\n", __builtin_nyuzi_read_control_reg(CR_FAULT_PC));
 
-	printf("CR_SCRATCHPAD0 %08x\n", __builtin_nyuzi_read_control_reg(CR_SCRATCHPAD0));
-		// CHECK: CR_SCRATCHPAD0 88cf70b4
-	printf("CR_SCRATCHPAD1 %08x\n", __builtin_nyuzi_read_control_reg(CR_SCRATCHPAD1));
-		// CHECK: CR_SCRATCHPAD1 78662516
+    printf("CR_SCRATCHPAD0 %08x\n", __builtin_nyuzi_read_control_reg(CR_SCRATCHPAD0));
+    // CHECK: CR_SCRATCHPAD0 88cf70b4
+    printf("CR_SCRATCHPAD1 %08x\n", __builtin_nyuzi_read_control_reg(CR_SCRATCHPAD1));
+    // CHECK: CR_SCRATCHPAD1 78662516
 
-	exit(0);
+    exit(0);
 }
 
 int main(void)
 {
-	veci16_t pointers = { &foo, &foo, &foo, &foo, &foo, &foo, 0x17,  &foo, &foo, &foo, &foo, &foo, &foo, &foo, &foo, &foo };
+    veci16_t pointers = { &foo, &foo, &foo, &foo, &foo, &foo, 0x17,  &foo, &foo, &foo, &foo, &foo, &foo, &foo, &foo, &foo };
 
-	__builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);
-	__builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, tlb_miss_handler);
-	__builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
+    __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);
+    __builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, tlb_miss_handler);
+    __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
-	// This ensures the libc functions are mapped into the TLB so we don't generate
-	// multiple TLB misses in the fault handler (doesn't break the test, just makes
-	// debugging cleaner)
-	printf("Starting test %d\n", 12);
+    // This ensures the libc functions are mapped into the TLB so we don't generate
+    // multiple TLB misses in the fault handler (doesn't break the test, just makes
+    // debugging cleaner)
+    printf("Starting test %d\n", 12);
 
-	// This will cause an alignment fault on the 6th lane and jump to 'fault_handler'.
-	// Use scatter store rather than a normal scalar store to ensure the
-	// subcycle counter is saved correctly.
-	__builtin_nyuzi_scatter_storei(pointers, __builtin_nyuzi_makevectori(0));
+    // This will cause an alignment fault on the 6th lane and jump to 'fault_handler'.
+    // Use scatter store rather than a normal scalar store to ensure the
+    // subcycle counter is saved correctly.
+    __builtin_nyuzi_scatter_storei(pointers, __builtin_nyuzi_makevectori(0));
 
-	printf("should_not_be_here\n"); // CHECKN: should_not_be_here
+    printf("should_not_be_here\n"); // CHECKN: should_not_be_here
 
-	return 0;
+    return 0;
 }
 

@@ -22,44 +22,44 @@
 
 void fault_handler()
 {
-	printf("FAULT %d current flags %02x prev flags %02x\n",
-		__builtin_nyuzi_read_control_reg(CR_FAULT_REASON),
-		__builtin_nyuzi_read_control_reg(CR_FLAGS),
-		__builtin_nyuzi_read_control_reg(CR_SAVED_FLAGS));
-	exit(0);
+    printf("FAULT %d current flags %02x prev flags %02x\n",
+           __builtin_nyuzi_read_control_reg(CR_FAULT_REASON),
+           __builtin_nyuzi_read_control_reg(CR_FLAGS),
+           __builtin_nyuzi_read_control_reg(CR_SAVED_FLAGS));
+    exit(0);
 }
 
 int main(void)
 {
-	unsigned int va;
-	unsigned int stack_addr = (unsigned int) &va & ~(PAGE_SIZE - 1);
+    unsigned int va;
+    unsigned int stack_addr = (unsigned int) &va & ~(PAGE_SIZE - 1);
 
-	// Map code & data
-	for (va = 0; va < 0x10000; va += PAGE_SIZE)
-	{
-		add_itlb_mapping(va, va | TLB_SUPERVISOR);
-		add_dtlb_mapping(va, va | TLB_WRITABLE | TLB_SUPERVISOR);
-	}
+    // Map code & data
+    for (va = 0; va < 0x10000; va += PAGE_SIZE)
+    {
+        add_itlb_mapping(va, va | TLB_SUPERVISOR);
+        add_dtlb_mapping(va, va | TLB_WRITABLE | TLB_SUPERVISOR);
+    }
 
-	add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE);
-	add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE);
+    add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE);
+    add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE);
 
-	__builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);
+    __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);
 
-	// Enable MMU
-	__builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
+    // Enable MMU
+    __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
-	printf("one flags %02x prev flags %02x\n",
-		__builtin_nyuzi_read_control_reg(CR_FLAGS),
-		__builtin_nyuzi_read_control_reg(CR_SAVED_FLAGS)); // CHECK: one flags 06 prev flags 04
+    printf("one flags %02x prev flags %02x\n",
+           __builtin_nyuzi_read_control_reg(CR_FLAGS),
+           __builtin_nyuzi_read_control_reg(CR_SAVED_FLAGS)); // CHECK: one flags 06 prev flags 04
 
-	// Switch to user mode, but leave MMU active
-	switch_to_user_mode();
+    // Switch to user mode, but leave MMU active
+    switch_to_user_mode();
 
-	// This will fault on instruction fetch.  Interrupts should be enabled, but
-	// the processor should be back in supervisor mode. The string should not be
-	// printed
-	printf("THIS IS USER MODE\n");	// CHECK: FAULT 9 current flags 06 prev flags 02
-		// CHECKN: THIS IS USER MODE
+    // This will fault on instruction fetch.  Interrupts should be enabled, but
+    // the processor should be back in supervisor mode. The string should not be
+    // printed
+    printf("THIS IS USER MODE\n");	// CHECK: FAULT 9 current flags 06 prev flags 02
+    // CHECKN: THIS IS USER MODE
 }
 

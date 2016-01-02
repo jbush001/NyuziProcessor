@@ -37,51 +37,51 @@ const int kFbHeight = 480;
 // All threads start execution here.
 int main()
 {
-	if (__builtin_nyuzi_read_control_reg(0) == 0)
-		init_vga(VGA_MODE_640x480);
-	else
-		workerThread();
+    if (__builtin_nyuzi_read_control_reg(0) == 0)
+        init_vga(VGA_MODE_640x480);
+    else
+        workerThread();
 
-	startAllThreads();
+    startAllThreads();
 
-	RenderContext *context = new RenderContext();
-	RenderTarget *renderTarget = new RenderTarget();
-	Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
-	Surface *depthBuffer = new Surface(kFbWidth, kFbHeight);
-	renderTarget->setColorBuffer(colorBuffer);
-	renderTarget->setDepthBuffer(depthBuffer);
-	context->bindTarget(renderTarget);
-	context->enableDepthBuffer(true);
-	context->bindShader(new PhongShader());
+    RenderContext *context = new RenderContext();
+    RenderTarget *renderTarget = new RenderTarget();
+    Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
+    Surface *depthBuffer = new Surface(kFbWidth, kFbHeight);
+    renderTarget->setColorBuffer(colorBuffer);
+    renderTarget->setDepthBuffer(depthBuffer);
+    context->bindTarget(renderTarget);
+    context->enableDepthBuffer(true);
+    context->bindShader(new PhongShader());
 
-	PhongUniforms uniforms;
-	uniforms.fLightVector[0] = 0.7071067811f;
-	uniforms.fLightVector[1] = -0.7071067811f;
-	uniforms.fLightVector[2] = 0.0f;
-	uniforms.fDirectional = 0.6f;
-	uniforms.fAmbient = 0.2f;
+    PhongUniforms uniforms;
+    uniforms.fLightVector[0] = 0.7071067811f;
+    uniforms.fLightVector[1] = -0.7071067811f;
+    uniforms.fLightVector[2] = 0.0f;
+    uniforms.fDirectional = 0.6f;
+    uniforms.fAmbient = 0.2f;
 
-	const RenderBuffer kVertices(kTeapotVertices, kNumTeapotVertices, 6 * sizeof(float));
-	const RenderBuffer kIndices(kTeapotIndices, kNumTeapotIndices, sizeof(int));
-	context->bindVertexAttrs(&kVertices);
+    const RenderBuffer kVertices(kTeapotVertices, kNumTeapotVertices, 6 * sizeof(float));
+    const RenderBuffer kIndices(kTeapotIndices, kNumTeapotIndices, sizeof(int));
+    context->bindVertexAttrs(&kVertices);
 
-	Matrix projectionMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
-	Matrix modelViewMatrix;
-	Matrix rotationMatrix;
-	modelViewMatrix = Matrix::getTranslationMatrix(Vec3(0.0f, -2.0f, -5.0f));
-	modelViewMatrix *= Matrix::getScaleMatrix(20.0);
-	rotationMatrix = Matrix::getRotationMatrix(M_PI / 16, Vec3(1, 1, 0));
+    Matrix projectionMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
+    Matrix modelViewMatrix;
+    Matrix rotationMatrix;
+    modelViewMatrix = Matrix::getTranslationMatrix(Vec3(0.0f, -2.0f, -5.0f));
+    modelViewMatrix *= Matrix::getScaleMatrix(20.0);
+    rotationMatrix = Matrix::getRotationMatrix(M_PI / 16, Vec3(1, 1, 0));
 
-	for (int frame = 0; frame < 1; frame++)
-	{
-		uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
-		uniforms.fNormalMatrix = modelViewMatrix.upper3x3();
-		context->bindUniforms(&uniforms, sizeof(uniforms));
-		context->clearColorBuffer();
-		context->drawElements(&kIndices);
-		context->finish();
-		modelViewMatrix *= rotationMatrix;
-	}
+    for (int frame = 0; frame < 1; frame++)
+    {
+        uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
+        uniforms.fNormalMatrix = modelViewMatrix.upper3x3();
+        context->bindUniforms(&uniforms, sizeof(uniforms));
+        context->clearColorBuffer();
+        context->drawElements(&kIndices);
+        context->finish();
+        modelViewMatrix *= rotationMatrix;
+    }
 
-	return 0;
+    return 0;
 }

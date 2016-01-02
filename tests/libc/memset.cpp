@@ -25,53 +25,53 @@ unsigned char dest[512] __attribute__ ((aligned (64)));
 
 int __attribute__ ((noinline)) memset_trial(int offset, int length)
 {
-	memset(dest, UNINIT_FILL, sizeof(dest));
-	memset(dest + offset, DEST_FILL, length);
+    memset(dest, UNINIT_FILL, sizeof(dest));
+    memset(dest + offset, DEST_FILL, length);
 
-	for (int i = 0; i < sizeof(dest); i++)
-	{
-		if (i >= offset && i < offset + length)
-		{
-			if (dest[i] != DEST_FILL)
-			{
-				printf("mismatch @%d (%d,%d) %02x\n", i, offset, length,
-					dest[i]);
-				return 0;
-			}
-		}
-		else if (dest[i] != UNINIT_FILL)
-		{
-			printf("clobber @%d (%d,%d) %02x\n", i, offset, length, dest[i]);
-			return 0;
-		}
-	}
+    for (int i = 0; i < sizeof(dest); i++)
+    {
+        if (i >= offset && i < offset + length)
+        {
+            if (dest[i] != DEST_FILL)
+            {
+                printf("mismatch @%d (%d,%d) %02x\n", i, offset, length,
+                       dest[i]);
+                return 0;
+            }
+        }
+        else if (dest[i] != UNINIT_FILL)
+        {
+            printf("clobber @%d (%d,%d) %02x\n", i, offset, length, dest[i]);
+            return 0;
+        }
+    }
 
-	return 1;
+    return 1;
 }
 
 const int kOffsets[] = {
-	0, 1, 2, 3, 4, 5, 6, 7, 8,
-	62, 63, 64, 65, 66
+    0, 1, 2, 3, 4, 5, 6, 7, 8,
+    62, 63, 64, 65, 66
 };
 
 const int kLengths[] = {
-	1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,
-	31, 32, 33, 63, 64, 65, 127, 128, 129, 192
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,
+    31, 32, 33, 63, 64, 65, 127, 128, 129, 192
 };
 
 int main()
 {
-	for (auto offset : kOffsets)
-	{
-		for (auto length : kLengths)
-		{
-			if (!memset_trial(offset, length))
-				goto done;
-		}
-	}
+    for (auto offset : kOffsets)
+    {
+        for (auto length : kLengths)
+        {
+            if (!memset_trial(offset, length))
+                goto done;
+        }
+    }
 
-	printf("PASS\n");	// CHECK: PASS
+    printf("PASS\n");	// CHECK: PASS
 
 done:
-	return 0;
+    return 0;
 }

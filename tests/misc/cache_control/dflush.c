@@ -23,22 +23,22 @@ volatile int gEndSync = kNumThreads;
 
 int main()
 {
-	int myThreadId = __builtin_nyuzi_read_control_reg(0);
-	if (myThreadId == 0)
-	{
-		// Start worker threads
-		*((unsigned int*) 0xffff0060) = (1 << kNumThreads) - 1;
-	}
+    int myThreadId = __builtin_nyuzi_read_control_reg(0);
+    if (myThreadId == 0)
+    {
+        // Start worker threads
+        *((unsigned int*) 0xffff0060) = (1 << kNumThreads) - 1;
+    }
 
-	for (int i = myThreadId; i < kFillCount; i += kNumThreads)
-	{
-		regionBase[i] = __builtin_nyuzi_makevectori(0x1f0e6231 + i);
-		asm("dflush %0" : : "s" (regionBase + i));
-	}
+    for (int i = myThreadId; i < kFillCount; i += kNumThreads)
+    {
+        regionBase[i] = __builtin_nyuzi_makevectori(0x1f0e6231 + i);
+        asm("dflush %0" : : "s" (regionBase + i));
+    }
 
-	__sync_fetch_and_add(&gEndSync, -1);
-	while (gEndSync)
-		;
+    __sync_fetch_and_add(&gEndSync, -1);
+    while (gEndSync)
+        ;
 
-	return 0;
+    return 0;
 }

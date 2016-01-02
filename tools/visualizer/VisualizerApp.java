@@ -29,30 +29,32 @@ import java.io.*;
 
 class VisualizerApp extends JPanel
 {
-	public VisualizerApp(String filename)
-	{
-		super(new BorderLayout());
-		TraceModel model = new TraceModel(filename);
-		JScrollPane scrollPane = new JScrollPane(new TraceView(model));
-		add(scrollPane, BorderLayout.CENTER);
-		setPreferredSize(new Dimension(900,300));
-	}
+    public VisualizerApp(String filename)
+    {
+        super(new BorderLayout());
+        TraceModel model = new TraceModel(filename);
+        JScrollPane scrollPane = new JScrollPane(new TraceView(model));
+        add(scrollPane, BorderLayout.CENTER);
+        setPreferredSize(new Dimension(900,300));
+    }
 
-	private static void createAndShowGUI(String[] args)
-	{
-		final VisualizerApp contentPane = new VisualizerApp(args[0]);
-		JFrame frame = new JFrame("Visualizer");
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setContentPane(contentPane);
-		frame.pack();
-		frame.setVisible(true);
-	}
+    private static void createAndShowGUI(String[] args)
+    {
+        final VisualizerApp contentPane = new VisualizerApp(args[0]);
+        JFrame frame = new JFrame("Visualizer");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setContentPane(contentPane);
+        frame.pack();
+        frame.setVisible(true);
+    }
 
-	public static void main(String[] args)
-	{
-		final String[] _args = args;
-		javax.swing.SwingUtilities.invokeLater(new Runnable() {
-			public void run() { createAndShowGUI(_args); }
-		});
-	}
+    public static void main(String[] args)
+    {
+        final String[] _args = args;
+        javax.swing.SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                createAndShowGUI(_args);
+            }
+        });
+    }
 }

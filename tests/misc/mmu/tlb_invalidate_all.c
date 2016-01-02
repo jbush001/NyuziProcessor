@@ -26,35 +26,35 @@
 
 void tlb_miss_handler()
 {
-	printf("TLB miss\n");
-	exit(0);
+    printf("TLB miss\n");
+    exit(0);
 }
 
 int main(void)
 {
-	unsigned int va;
-	unsigned int stack_addr = (unsigned int) &va & ~(PAGE_SIZE - 1);
+    unsigned int va;
+    unsigned int stack_addr = (unsigned int) &va & ~(PAGE_SIZE - 1);
 
-	// Map code & data
-	for (va = 0; va < 0x10000; va += PAGE_SIZE)
-	{
-		add_itlb_mapping(va, va);
-		add_dtlb_mapping(va, va | TLB_WRITABLE);
-	}
+    // Map code & data
+    for (va = 0; va < 0x10000; va += PAGE_SIZE)
+    {
+        add_itlb_mapping(va, va);
+        add_dtlb_mapping(va, va | TLB_WRITABLE);
+    }
 
-	add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE);
-	add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE);
+    add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE);
+    add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE);
 
-	// Enable MMU in flags register
-	__builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, tlb_miss_handler);
-	__builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
+    // Enable MMU in flags register
+    __builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, tlb_miss_handler);
+    __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
-	printf("Working correctly so far\n"); // CHECK: Working correctly so far
+    printf("Working correctly so far\n"); // CHECK: Working correctly so far
 
-	asm("tlbinvalall");
+    asm("tlbinvalall");
 
-	printf("should_not_be_here\n");	// CHECK: TLB miss
-		// CHECKN: should_not_be_here
+    printf("should_not_be_here\n");	// CHECK: TLB miss
+    // CHECKN: should_not_be_here
 
-	return 0;
+    return 0;
 }

@@ -34,19 +34,19 @@
 //
 typedef struct
 {
-	// Should be "IWAD" or "PWAD".
-	char				identification[4];
-	int					numlumps;
-	int					infotableofs;
+    // Should be "IWAD" or "PWAD".
+    char				identification[4];
+    int					numlumps;
+    int					infotableofs;
 
 } wadinfo_t;
 
 
 typedef struct
 {
-	int					filepos;
-	int					size;
-	char				name[8];
+    int					filepos;
+    int					size;
+    char				name[8];
 
 } filelump_t;
 
@@ -55,10 +55,10 @@ typedef struct
 //
 typedef struct
 {
-	char		name[8];
-	int			handle;
-	int			position;
-	int			size;
+    char		name[8];
+    int			handle;
+    int			position;
+    int			size;
 } lumpinfo_t;
 
 

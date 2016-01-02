@@ -21,39 +21,39 @@
 
 int parseHexVector(const char *str, uint32_t *vectorValues, bool endianSwap)
 {
-	const char *c = str;
-	int lane;
-	int digit;
-	uint32_t laneValue;
+    const char *c = str;
+    int lane;
+    int digit;
+    uint32_t laneValue;
 
-	for (lane = NUM_VECTOR_LANES - 1; lane >= 0 && *c; lane--)
-	{
-		laneValue = 0;
-		for (digit = 0; digit < 8; digit++)
-		{
-			if (*c >= '0' && *c <= '9')
-				laneValue = (laneValue << 4) | (uint32_t) (*c - '0');
-			else if (*c >= 'a' && *c <= 'f')
-				laneValue = (laneValue << 4) | (uint32_t) (*c - 'a' + 10);
-			else if (*c >= 'A' && *c <= 'F')
-				laneValue = (laneValue << 4) | (uint32_t) (*c - 'A' + 10);
-			else
-			{
-				printf("bad character %c in hex vector\n", *c);
-				return -1;
-			}
+    for (lane = NUM_VECTOR_LANES - 1; lane >= 0 && *c; lane--)
+    {
+        laneValue = 0;
+        for (digit = 0; digit < 8; digit++)
+        {
+            if (*c >= '0' && *c <= '9')
+                laneValue = (laneValue << 4) | (uint32_t) (*c - '0');
+            else if (*c >= 'a' && *c <= 'f')
+                laneValue = (laneValue << 4) | (uint32_t) (*c - 'a' + 10);
+            else if (*c >= 'A' && *c <= 'F')
+                laneValue = (laneValue << 4) | (uint32_t) (*c - 'A' + 10);
+            else
+            {
+                printf("bad character %c in hex vector\n", *c);
+                return -1;
+            }
 
-			if (*c == '\0')
-			{
-				printf("Error parsing hex vector\n");
-				break;
-			}
-			else
-				c++;
-		}
+            if (*c == '\0')
+            {
+                printf("Error parsing hex vector\n");
+                break;
+            }
+            else
+                c++;
+        }
 
-		vectorValues[lane] = endianSwap ? endianSwap32(laneValue) : laneValue;
-	}
+        vectorValues[lane] = endianSwap ? endianSwap32(laneValue) : laneValue;
+    }
 
-	return 0;
+    return 0;
 }

@@ -27,9 +27,9 @@ namespace librender
 // TriangleFiller::fillMasked.
 // Triangles are wound counter-clockwise
 void fillTriangle(TriangleFiller &filler,
-	int left, int top,
-	int x1, int y1, int x2, int y2, int x3, int y3,
-	int clipRight, int clipBottom);
+                  int left, int top,
+                  int x1, int y1, int x2, int y2, int x3, int y3,
+                  int clipRight, int clipBottom);
 
 }
 

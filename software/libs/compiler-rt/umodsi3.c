@@ -19,5 +19,5 @@ extern unsigned int __udivsi3(unsigned int dividend, unsigned int divisor);
 // Unsigned 32-bit integer modulus
 unsigned int __umodsi3(unsigned int value1, unsigned int value2)
 {
-	return value1 - __udivsi3(value1, value2) * value2;
+    return value1 - __udivsi3(value1, value2) * value2;
 }

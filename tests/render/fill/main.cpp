@@ -37,10 +37,10 @@ const int kFbWidth = 640;
 const int kFbHeight = 480;
 
 static float kSquareVertices[] = {
-	-1.1,  1.1, -1.0,
-	-1.1, -1.1, -1.0,
-	 1.1, -1.1, -1.0,
-	 1.1,  1.1, -1.0,
+    -1.1,  1.1, -1.0,
+    -1.1, -1.1, -1.0,
+    1.1, -1.1, -1.0,
+    1.1,  1.1, -1.0,
 };
 
 static int kSquareIndices[] = { 0, 1, 2, 2, 3, 0 };
@@ -48,24 +48,24 @@ static int kSquareIndices[] = { 0, 1, 2, 2, 3, 0 };
 // All threads start execution here.
 int main()
 {
-	if (__builtin_nyuzi_read_control_reg(0) == 0)
-		init_vga(VGA_MODE_640x480);
-	else
-		workerThread();
+    if (__builtin_nyuzi_read_control_reg(0) == 0)
+        init_vga(VGA_MODE_640x480);
+    else
+        workerThread();
 
-	startAllThreads();
+    startAllThreads();
 
-	RenderContext *context = new RenderContext();
-	RenderTarget *renderTarget = new RenderTarget();
-	Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
-	renderTarget->setColorBuffer(colorBuffer);
-	context->bindTarget(renderTarget);
-	context->bindShader(new ColorShader());
+    RenderContext *context = new RenderContext();
+    RenderTarget *renderTarget = new RenderTarget();
+    Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
+    renderTarget->setColorBuffer(colorBuffer);
+    context->bindTarget(renderTarget);
+    context->bindShader(new ColorShader());
 
-	const RenderBuffer kVertices(kSquareVertices, 4, 3 * sizeof(float));
-	const RenderBuffer kIndices(kSquareIndices, 6, sizeof(int));
-	context->bindVertexAttrs(&kVertices);
-	context->drawElements(&kIndices);
-	context->finish();
-	return 0;
+    const RenderBuffer kVertices(kSquareVertices, 4, 3 * sizeof(float));
+    const RenderBuffer kIndices(kSquareIndices, 6, sizeof(int));
+    context->bindVertexAttrs(&kVertices);
+    context->drawElements(&kIndices);
+    context->finish();
+    return 0;
 }

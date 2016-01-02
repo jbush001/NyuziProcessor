@@ -19,5 +19,5 @@
 //      make sure to have time gap between call to get a different number
 int main(int argc, char *argv[])
 {
-	return time(0);
+    return time(0);
 }

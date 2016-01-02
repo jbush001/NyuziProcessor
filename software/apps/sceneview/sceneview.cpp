@@ -33,62 +33,62 @@ namespace
 
 struct FileHeader
 {
-	uint32_t fileSize;
-	uint32_t numTextures;
-	uint32_t numMeshes;
+    uint32_t fileSize;
+    uint32_t numTextures;
+    uint32_t numMeshes;
 };
 
 struct TextureEntry
 {
-	uint32_t offset;
-	uint32_t mipLevels;
-	uint16_t width;
-	uint16_t height;
+    uint32_t offset;
+    uint32_t mipLevels;
+    uint16_t width;
+    uint16_t height;
 };
 
 struct MeshEntry
 {
-	uint32_t offset;
-	uint32_t textureId;
-	uint32_t numVertices;
-	uint32_t numIndices;
+    uint32_t offset;
+    uint32_t textureId;
+    uint32_t numVertices;
+    uint32_t numIndices;
 };
 
 const int kAttrsPerVertex = 8;
 
 char *readResourceFile()
 {
-	FileHeader header;
-	char *resourceData;
-	FILE *fp;
+    FileHeader header;
+    char *resourceData;
+    FILE *fp;
 
-	fp = fopen("resource.bin", "rb");
-	if (fp == nullptr)
-	{
-		printf("can't find resource.bin\n");
-		return nullptr;
-	}
+    fp = fopen("resource.bin", "rb");
+    if (fp == nullptr)
+    {
+        printf("can't find resource.bin\n");
+        return nullptr;
+    }
 
-	// Read the first block to determine how large the rest of the file is.
-	if (fread(&header, sizeof(header), 1, fp) != 1)
-	{
-		printf("error reading resource file header\n");
-		return nullptr;
-	}
+    // Read the first block to determine how large the rest of the file is.
+    if (fread(&header, sizeof(header), 1, fp) != 1)
+    {
+        printf("error reading resource file header\n");
+        return nullptr;
+    }
 
-	printf("reading resource file, %d bytes\n", header.fileSize);
+    printf("reading resource file, %d bytes\n", header.fileSize);
 
-	resourceData = (char*) malloc(header.fileSize);
-	fseek(fp, 0, SEEK_SET);
-	if (fread(resourceData, header.fileSize, 1, fp) != 1)
-	{
-		printf("error reading resource file\n");
-		return nullptr;
-	}
+    resourceData = (char*) malloc(header.fileSize);
+    fseek(fp, 0, SEEK_SET);
+    if (fread(resourceData, header.fileSize, 1, fp) != 1)
+    {
+        printf("error reading resource file\n");
+        return nullptr;
+    }
 
-	fclose(fp);
+    fclose(fp);
 
-	return resourceData;
+    return resourceData;
 }
 
 #if TEST_TEXTURE
@@ -99,36 +99,36 @@ const int kCheckerSize = 32;
 
 Texture *createCheckerboardTexture()
 {
-	const uint32_t kColors[] = {
-		0x00ff0000,
-		0x0000ff00,
-		0x000000ff,
-		0x00ff00ff,
-	};
+    const uint32_t kColors[] = {
+        0x00ff0000,
+        0x0000ff00,
+        0x000000ff,
+        0x00ff00ff,
+    };
 
-	Texture *texture = new Texture;
-	for (int mipLevel = 0; mipLevel < 4; mipLevel++)
-	{
-		int mipSize = kTestTextureSize >> mipLevel;
-		int subCheckerSize = kCheckerSize >> mipLevel;
-		uint32_t checkerColor = kColors[mipLevel];
-		Surface *surface = new Surface(mipSize, mipSize);
-		uint32_t *bits = (uint32_t*) surface->bits();
-		for (int x = 0; x < mipSize; x++)
-		{
-			for (int y = 0; y < mipSize; y++)
-			{
-				if (((x / subCheckerSize) & 1) ^ ((y / subCheckerSize) & 1))
-					bits[y * mipSize + x] = checkerColor;
-				else
-					bits[y * mipSize + x] = 0xffffffff;
-			}
-		}
+    Texture *texture = new Texture;
+    for (int mipLevel = 0; mipLevel < 4; mipLevel++)
+    {
+        int mipSize = kTestTextureSize >> mipLevel;
+        int subCheckerSize = kCheckerSize >> mipLevel;
+        uint32_t checkerColor = kColors[mipLevel];
+        Surface *surface = new Surface(mipSize, mipSize);
+        uint32_t *bits = (uint32_t*) surface->bits();
+        for (int x = 0; x < mipSize; x++)
+        {
+            for (int y = 0; y < mipSize; y++)
+            {
+                if (((x / subCheckerSize) & 1) ^ ((y / subCheckerSize) & 1))
+                    bits[y * mipSize + x] = checkerColor;
+                else
+                    bits[y * mipSize + x] = 0xffffffff;
+            }
+        }
 
-		texture->setMipSurface(mipLevel, surface);
-	}
+        texture->setMipSurface(mipLevel, surface);
+    }
 
-	return texture;
+    return texture;
 }
 
 #endif
@@ -138,114 +138,114 @@ Texture *createCheckerboardTexture()
 // All threads start execution here.
 int main()
 {
-	if (getCurrentThreadId() == 0)
-		init_vga(VGA_MODE_640x480);
-	else
-		workerThread();
+    if (getCurrentThreadId() == 0)
+        init_vga(VGA_MODE_640x480);
+    else
+        workerThread();
 
-	// Set up resource data
-	char *resourceData = readResourceFile();
-	const FileHeader *resourceHeader = (FileHeader*) resourceData;
-	const TextureEntry *texHeader = (TextureEntry*)(resourceData + sizeof(FileHeader));
-	const MeshEntry *meshHeader = (MeshEntry*)(resourceData + sizeof(FileHeader) + resourceHeader->numTextures
-		* sizeof(TextureEntry));
-	Texture **textures = new Texture*[resourceHeader->numTextures];
+    // Set up resource data
+    char *resourceData = readResourceFile();
+    const FileHeader *resourceHeader = (FileHeader*) resourceData;
+    const TextureEntry *texHeader = (TextureEntry*)(resourceData + sizeof(FileHeader));
+    const MeshEntry *meshHeader = (MeshEntry*)(resourceData + sizeof(FileHeader) + resourceHeader->numTextures
+                                  * sizeof(TextureEntry));
+    Texture **textures = new Texture*[resourceHeader->numTextures];
 
-	printf("%d textures %d meshes\n", resourceHeader->numTextures, resourceHeader->numMeshes);
+    printf("%d textures %d meshes\n", resourceHeader->numTextures, resourceHeader->numMeshes);
 
-	// Create texture objects
-	for (unsigned int textureIndex = 0; textureIndex < resourceHeader->numTextures; textureIndex++)
-	{
+    // Create texture objects
+    for (unsigned int textureIndex = 0; textureIndex < resourceHeader->numTextures; textureIndex++)
+    {
 #if TEST_TEXTURE
-		textures[textureIndex] = createCheckerboardTexture();
+        textures[textureIndex] = createCheckerboardTexture();
 #else
-		textures[textureIndex] = new Texture();
-		textures[textureIndex]->enableBilinearFiltering(true);
-		int offset = texHeader[textureIndex].offset;
-		for (unsigned int mipLevel = 0; mipLevel < texHeader[textureIndex].mipLevels; mipLevel++)
-		{
-			int width = texHeader[textureIndex].width >> mipLevel;
-			int height = texHeader[textureIndex].height >> mipLevel;
-			Surface *surface = new Surface(width, height, resourceData + offset);
-			textures[textureIndex]->setMipSurface(mipLevel, surface);
-			offset += width * height * 4;
-		}
+        textures[textureIndex] = new Texture();
+        textures[textureIndex]->enableBilinearFiltering(true);
+        int offset = texHeader[textureIndex].offset;
+        for (unsigned int mipLevel = 0; mipLevel < texHeader[textureIndex].mipLevels; mipLevel++)
+        {
+            int width = texHeader[textureIndex].width >> mipLevel;
+            int height = texHeader[textureIndex].height >> mipLevel;
+            Surface *surface = new Surface(width, height, resourceData + offset);
+            textures[textureIndex]->setMipSurface(mipLevel, surface);
+            offset += width * height * 4;
+        }
 #endif
-	}
+    }
 
-	// Create Render Buffers
-	RenderBuffer *vertexBuffers = new RenderBuffer[resourceHeader->numMeshes];
-	RenderBuffer *indexBuffers = new RenderBuffer[resourceHeader->numMeshes];
-	for (unsigned int meshIndex = 0; meshIndex < resourceHeader->numMeshes; meshIndex++)
-	{
-		const MeshEntry &entry = meshHeader[meshIndex];
-		vertexBuffers[meshIndex].setData(resourceData + entry.offset,
-			entry.numVertices, sizeof(float) * kAttrsPerVertex);
-		indexBuffers[meshIndex].setData(resourceData + entry.offset + entry.numVertices
-			* kAttrsPerVertex * sizeof(float), entry.numIndices, sizeof(int));
-	}
+    // Create Render Buffers
+    RenderBuffer *vertexBuffers = new RenderBuffer[resourceHeader->numMeshes];
+    RenderBuffer *indexBuffers = new RenderBuffer[resourceHeader->numMeshes];
+    for (unsigned int meshIndex = 0; meshIndex < resourceHeader->numMeshes; meshIndex++)
+    {
+        const MeshEntry &entry = meshHeader[meshIndex];
+        vertexBuffers[meshIndex].setData(resourceData + entry.offset,
+                                         entry.numVertices, sizeof(float) * kAttrsPerVertex);
+        indexBuffers[meshIndex].setData(resourceData + entry.offset + entry.numVertices
+                                        * kAttrsPerVertex * sizeof(float), entry.numIndices, sizeof(int));
+    }
 
-	// Set up render state
-	RenderContext *context = new RenderContext(0x1000000);
-	RenderTarget *renderTarget = new RenderTarget();
-	Surface *colorBuffer = new Surface(FB_WIDTH, FB_HEIGHT, (void*) 0x200000);
-	Surface *depthBuffer = new Surface(FB_WIDTH, FB_HEIGHT);
-	renderTarget->setColorBuffer(colorBuffer);
-	renderTarget->setDepthBuffer(depthBuffer);
-	context->bindTarget(renderTarget);
-	context->enableDepthBuffer(true);
+    // Set up render state
+    RenderContext *context = new RenderContext(0x1000000);
+    RenderTarget *renderTarget = new RenderTarget();
+    Surface *colorBuffer = new Surface(FB_WIDTH, FB_HEIGHT, (void*) 0x200000);
+    Surface *depthBuffer = new Surface(FB_WIDTH, FB_HEIGHT);
+    renderTarget->setColorBuffer(colorBuffer);
+    renderTarget->setDepthBuffer(depthBuffer);
+    context->bindTarget(renderTarget);
+    context->enableDepthBuffer(true);
 #if SHOW_DEPTH
-	context->bindShader(new DepthShader());
+    context->bindShader(new DepthShader());
 #else
-	context->bindShader(new TextureShader());
+    context->bindShader(new TextureShader());
 #endif
-	context->setClearColor(0.52, 0.80, 0.98);
+    context->setClearColor(0.52, 0.80, 0.98);
 
-	Matrix projectionMatrix = Matrix::getProjectionMatrix(FB_WIDTH, FB_HEIGHT);
+    Matrix projectionMatrix = Matrix::getProjectionMatrix(FB_WIDTH, FB_HEIGHT);
 
-	TextureUniforms uniforms;
-	uniforms.fLightDirection = Vec3(-1, -0.5, 1).normalized();
-	uniforms.fDirectional = 0.5f;
-	uniforms.fAmbient = 0.4f;
-	float theta = 0.0;
+    TextureUniforms uniforms;
+    uniforms.fLightDirection = Vec3(-1, -0.5, 1).normalized();
+    uniforms.fDirectional = 0.5f;
+    uniforms.fAmbient = 0.4f;
+    float theta = 0.0;
 
-	startAllThreads();
+    startAllThreads();
 
-	for (int frame = 0; ; frame++)
-	{
-		Matrix modelViewMatrix = Matrix::lookAt(Vec3(cos(theta) * 6, 3, sin(theta) * 6), Vec3(0, 3.1, 0),
-			Vec3(0, 1, 0));
-		theta = theta + M_PI / 8;
-		if (theta > M_PI * 2)
-			theta -= M_PI * 2;
+    for (int frame = 0; ; frame++)
+    {
+        Matrix modelViewMatrix = Matrix::lookAt(Vec3(cos(theta) * 6, 3, sin(theta) * 6), Vec3(0, 3.1, 0),
+                                                Vec3(0, 1, 0));
+        theta = theta + M_PI / 8;
+        if (theta > M_PI * 2)
+            theta -= M_PI * 2;
 
-		uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
-		uniforms.fNormalMatrix = modelViewMatrix.upper3x3();
+        uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
+        uniforms.fNormalMatrix = modelViewMatrix.upper3x3();
 
-		context->clearColorBuffer();
-		for (unsigned int meshIndex = 0; meshIndex < resourceHeader->numMeshes; meshIndex++)
-		{
-			const MeshEntry &entry = meshHeader[meshIndex];
-			if (entry.textureId != 0xffffffff)
-			{
-				assert(entry.textureId < resourceHeader->numTextures);
-				context->bindTexture(0, textures[entry.textureId]);
-				uniforms.fHasTexture = true;
-			}
-			else
-				uniforms.fHasTexture = false;
+        context->clearColorBuffer();
+        for (unsigned int meshIndex = 0; meshIndex < resourceHeader->numMeshes; meshIndex++)
+        {
+            const MeshEntry &entry = meshHeader[meshIndex];
+            if (entry.textureId != 0xffffffff)
+            {
+                assert(entry.textureId < resourceHeader->numTextures);
+                context->bindTexture(0, textures[entry.textureId]);
+                uniforms.fHasTexture = true;
+            }
+            else
+                uniforms.fHasTexture = false;
 
-			context->bindUniforms(&uniforms, sizeof(uniforms));
-			context->bindVertexAttrs(&vertexBuffers[meshIndex]);
-			context->drawElements(&indexBuffers[meshIndex]);
-		}
+            context->bindUniforms(&uniforms, sizeof(uniforms));
+            context->bindVertexAttrs(&vertexBuffers[meshIndex]);
+            context->drawElements(&indexBuffers[meshIndex]);
+        }
 
-		clock_t startTime = clock();
-		context->finish();
-		printf("rendered frame in %d uS\n", clock() - startTime);
-	}
+        clock_t startTime = clock();
+        context->finish();
+        printf("rendered frame in %d uS\n", clock() - startTime);
+    }
 
-	return 0;
+    return 0;
 }
 
 

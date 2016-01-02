@@ -41,13 +41,13 @@ rcsid[] = "$Id: m_bbox.c,v 1.1 1997/02/03 22:45:10 b1 Exp $";
 //
 void I_InitNetwork (void)
 {
-	doomcom = malloc (sizeof (*doomcom) );
-	memset (doomcom, 0, sizeof(*doomcom) );
-	netgame = false;
-	doomcom->id = DOOMCOM_ID;
-	doomcom->numplayers = doomcom->numnodes = 1;
-	doomcom->deathmatch = false;
-	doomcom->consoleplayer = 0;
+    doomcom = malloc (sizeof (*doomcom) );
+    memset (doomcom, 0, sizeof(*doomcom) );
+    netgame = false;
+    doomcom->id = DOOMCOM_ID;
+    doomcom->numplayers = doomcom->numnodes = 1;
+    doomcom->deathmatch = false;
+    doomcom->consoleplayer = 0;
 }
 
 

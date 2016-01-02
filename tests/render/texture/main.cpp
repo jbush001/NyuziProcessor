@@ -39,50 +39,50 @@ const int kFbHeight = 480;
 // All threads start execution here.
 int main()
 {
-	if (__builtin_nyuzi_read_control_reg(0) == 0)
-		init_vga(VGA_MODE_640x480);
-	else
-		workerThread();
+    if (__builtin_nyuzi_read_control_reg(0) == 0)
+        init_vga(VGA_MODE_640x480);
+    else
+        workerThread();
 
-	startAllThreads();
+    startAllThreads();
 
-	RenderContext *context = new RenderContext();
-	RenderTarget *renderTarget = new RenderTarget();
-	Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
-	Surface *depthBuffer = new Surface(kFbWidth, kFbHeight);
-	renderTarget->setColorBuffer(colorBuffer);
-	renderTarget->setDepthBuffer(depthBuffer);
-	context->bindTarget(renderTarget);
-	context->enableDepthBuffer(true);
-	context->bindShader(new TextureShader());
+    RenderContext *context = new RenderContext();
+    RenderTarget *renderTarget = new RenderTarget();
+    Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
+    Surface *depthBuffer = new Surface(kFbWidth, kFbHeight);
+    renderTarget->setColorBuffer(colorBuffer);
+    renderTarget->setDepthBuffer(depthBuffer);
+    context->bindTarget(renderTarget);
+    context->enableDepthBuffer(true);
+    context->bindShader(new TextureShader());
 
-	const RenderBuffer kVertices(kCubeVertices, kNumCubeVertices, 5 * sizeof(float));
-	const RenderBuffer kIndices(kCubeIndices, kNumCubeIndices, sizeof(int));
-	context->bindVertexAttrs(&kVertices);
+    const RenderBuffer kVertices(kCubeVertices, kNumCubeVertices, 5 * sizeof(float));
+    const RenderBuffer kIndices(kCubeIndices, kNumCubeIndices, sizeof(int));
+    context->bindVertexAttrs(&kVertices);
 
-	Texture *texture = new Texture();
-	texture->setMipSurface(0, new Surface(128, 128, (void*) kTestTexture));
-	texture->enableBilinearFiltering(true);
-	context->bindTexture(0, texture);
+    Texture *texture = new Texture();
+    texture->setMipSurface(0, new Surface(128, 128, (void*) kTestTexture));
+    texture->enableBilinearFiltering(true);
+    context->bindTexture(0, texture);
 
-	Matrix projectionMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
-	Matrix modelViewMatrix;
-	Matrix rotationMatrix;
-	modelViewMatrix = Matrix::getTranslationMatrix(Vec3(0.0f, 0.0f, -3.0f));
-	modelViewMatrix *= Matrix::getScaleMatrix(2.0f);
-	modelViewMatrix *= Matrix::getRotationMatrix(M_PI / 3.5, Vec3(1, -1, 0));
-	rotationMatrix = Matrix::getRotationMatrix(M_PI / 8, Vec3(1, 1, 0.0f));
+    Matrix projectionMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
+    Matrix modelViewMatrix;
+    Matrix rotationMatrix;
+    modelViewMatrix = Matrix::getTranslationMatrix(Vec3(0.0f, 0.0f, -3.0f));
+    modelViewMatrix *= Matrix::getScaleMatrix(2.0f);
+    modelViewMatrix *= Matrix::getRotationMatrix(M_PI / 3.5, Vec3(1, -1, 0));
+    rotationMatrix = Matrix::getRotationMatrix(M_PI / 8, Vec3(1, 1, 0.0f));
 
-	for (int frame = 0; frame < 1; frame++)
-	{
-		TextureUniforms uniforms;
-		uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
-		context->bindUniforms(&uniforms, sizeof(uniforms));
-		context->clearColorBuffer();
-		context->drawElements(&kIndices);
-		context->finish();
-		modelViewMatrix *= rotationMatrix;
-	}
+    for (int frame = 0; frame < 1; frame++)
+    {
+        TextureUniforms uniforms;
+        uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
+        context->bindUniforms(&uniforms, sizeof(uniforms));
+        context->clearColorBuffer();
+        context->drawElements(&kIndices);
+        context->finish();
+        modelViewMatrix *= rotationMatrix;
+    }
 
-	return 0;
+    return 0;
 }

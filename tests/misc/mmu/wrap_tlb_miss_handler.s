@@ -25,32 +25,32 @@
 # which are identity mapped.
 #
 
-					.globl tlb_miss_handler
-tlb_miss_handler:	setcr s0, CR_SCRATCHPAD0		# Save s0 in scratchpad
-					setcr s1, CR_SCRATCHPAD1        # Save s1
-					getcr s0, CR_FAULT_ADDR			# Get fault virtual address
+                    .globl tlb_miss_handler
+tlb_miss_handler:   setcr s0, CR_SCRATCHPAD0        # Save s0 in scratchpad
+                    setcr s1, CR_SCRATCHPAD1        # Save s1
+                    getcr s0, CR_FAULT_ADDR         # Get fault virtual address
 
-					# Is this in the device region (0xffff0000-0xffffffff)
-					move s1, -1
-					shl s1, s1, 16
-					cmpgt_u s1, s0, s1
-					btrue s1, map_device
+                    # Is this in the device region (0xffff0000-0xffffffff)
+                    move s1, -1
+                    shl s1, s1, 16
+                    cmpgt_u s1, s0, s1
+                    btrue s1, map_device
 
-					# Make lowaddress space repeat every 4 MB
-					shl s0, s0, 10
-					shr s0, s0, 10
+                    # Make lowaddress space repeat every 4 MB
+                    shl s0, s0, 10
+                    shr s0, s0, 10
 
-map_device:			getcr s1, CR_FAULT_REASON		# Get fault reason
-					cmpeq_i s1, s1, 5				# Is ITLB miss?
-					btrue s1, fill_itlb 			# If so, branch to update ITLB
-fill_dltb:			or s0, s0, 2					# Set write enable bit
-					getcr s1, CR_FAULT_ADDR			# Get virtual address
-					dtlbinsert s1, s0
-					goto done
-fill_itlb:			getcr s1, CR_FAULT_ADDR			# Get virtual address
-					itlbinsert s1, s0
-done:				getcr s0, CR_SCRATCHPAD0        # Get saved s0 from scratchpad
-					getcr s1, CR_SCRATCHPAD1        # Get saved s1
-					eret
+map_device:         getcr s1, CR_FAULT_REASON        # Get fault reason
+                    cmpeq_i s1, s1, 5                # Is ITLB miss?
+                    btrue s1, fill_itlb              # If so, branch to update ITLB
+fill_dltb:          or s0, s0, 2                     # Set write enable bit
+                    getcr s1, CR_FAULT_ADDR          # Get virtual address
+                    dtlbinsert s1, s0
+                    goto done
+fill_itlb:          getcr s1, CR_FAULT_ADDR          # Get virtual address
+                    itlbinsert s1, s0
+done:               getcr s0, CR_SCRATCHPAD0         # Get saved s0 from scratchpad
+                    getcr s1, CR_SCRATCHPAD1         # Get saved s1
+                    eret
 
 

@@ -27,69 +27,69 @@ const char *kExpectString = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxy
 
 int main(int argc, const char *argv[])
 {
-	int fd;
-	int result;
-	char tmp[32];
+    int fd;
+    int result;
+    char tmp[32];
 
-	fd = open("test.txt", 0);
-	CHECK(fd >= 0);
+    fd = open("test.txt", 0);
+    CHECK(fd >= 0);
 
-	// Full read
-	result = read(fd, tmp, 32);
-	CHECK(result == 32);
-	CHECK(memcmp(tmp, kExpectString, 32) == 0);
+    // Full read
+    result = read(fd, tmp, 32);
+    CHECK(result == 32);
+    CHECK(memcmp(tmp, kExpectString, 32) == 0);
 
-	// Short read
-	result = read(fd, tmp, 32);
-	CHECK(result == 30);
-	CHECK(memcmp(tmp, kExpectString + 32, 30) == 0);
+    // Short read
+    result = read(fd, tmp, 32);
+    CHECK(result == 30);
+    CHECK(memcmp(tmp, kExpectString + 32, 30) == 0);
 
-	// Seek and read
-	CHECK(lseek(fd, 7, SEEK_SET) == 7);
-	result = read(fd, tmp, 8);
-	CHECK(result == 8);
-	CHECK(memcmp(tmp, kExpectString + 7, 8) == 0);
+    // Seek and read
+    CHECK(lseek(fd, 7, SEEK_SET) == 7);
+    result = read(fd, tmp, 8);
+    CHECK(result == 8);
+    CHECK(memcmp(tmp, kExpectString + 7, 8) == 0);
 
-	// Close
-	result = close(fd);
-	CHECK(result == 0);
+    // Close
+    result = close(fd);
+    CHECK(result == 0);
 
-	// Make sure FD is closed
-	result = read(fd, tmp, 32);
-	CHECK(result == -1);
-	CHECK(errno == EBADF);
+    // Make sure FD is closed
+    result = read(fd, tmp, 32);
+    CHECK(result == -1);
+    CHECK(errno == EBADF);
 
-	// Missing file
-	fd = open("foo.txt", 0);
-	CHECK(fd == -1);
-	CHECK(errno == ENOENT);
+    // Missing file
+    fd = open("foo.txt", 0);
+    CHECK(fd == -1);
+    CHECK(errno == ENOENT);
 
-	// Bad file descriptor
-	result = read(7, tmp, 32);
-	CHECK(result == -1);
-	CHECK(errno == EBADF);
+    // Bad file descriptor
+    result = read(7, tmp, 32);
+    CHECK(result == -1);
+    CHECK(errno == EBADF);
 
-	// Invalid file descriptor
-	result = read(-2, tmp, 32);
-	CHECK(result == -1);
-	CHECK(errno == EBADF);
+    // Invalid file descriptor
+    result = read(-2, tmp, 32);
+    CHECK(result == -1);
+    CHECK(errno == EBADF);
 
-	// Bad file descriptor on close
-	result = close(-1);
-	CHECK(result == -1);
-	CHECK(errno == EBADF);
+    // Bad file descriptor on close
+    result = close(-1);
+    CHECK(result == -1);
+    CHECK(errno == EBADF);
 
-	// Valid access
-	CHECK(access("test.txt", R_OK) == 0);
+    // Valid access
+    CHECK(access("test.txt", R_OK) == 0);
 
-	// Invalid permissions
-	CHECK(access("test.txt", W_OK) == -1);
-	CHECK(errno == EPERM);
+    // Invalid permissions
+    CHECK(access("test.txt", W_OK) == -1);
+    CHECK(errno == EPERM);
 
-	// Missing file
-	CHECK(access("baz.txt", R_OK) == -1);
-	CHECK(errno == ENOENT);
+    // Missing file
+    CHECK(access("baz.txt", R_OK) == -1);
+    CHECK(errno == ENOENT);
 
-	printf("PASS\n");
-	return 0;
+    printf("PASS\n");
+    return 0;
 }

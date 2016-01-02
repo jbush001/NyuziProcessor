@@ -29,98 +29,98 @@ static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff
 
 enum register_index
 {
-	REG_RED_LED             = 0x0000 / 4,
-	REG_UART_STATUS         = 0x0018 / 4,
-	REG_UART_RX             = 0x001c / 4,
-	REG_UART_TX             = 0x0020 / 4,
+    REG_RED_LED             = 0x0000 / 4,
+    REG_UART_STATUS         = 0x0018 / 4,
+    REG_UART_RX             = 0x001c / 4,
+    REG_UART_TX             = 0x0020 / 4,
 };
 
 unsigned int read_serial_byte(void)
 {
-	while ((REGISTERS[REG_UART_STATUS] & 2) == 0)
-		;
+    while ((REGISTERS[REG_UART_STATUS] & 2) == 0)
+        ;
 
-	return REGISTERS[REG_UART_RX];
+    return REGISTERS[REG_UART_RX];
 }
 
 void write_serial_byte(unsigned int ch)
 {
-	while ((REGISTERS[REG_UART_STATUS] & 1) == 0)	// Wait for ready
-		;
+    while ((REGISTERS[REG_UART_STATUS] & 1) == 0)	// Wait for ready
+        ;
 
-	REGISTERS[REG_UART_TX] = ch;
+    REGISTERS[REG_UART_TX] = ch;
 }
 
 unsigned int read_serial_long(void)
 {
-	unsigned int result = 0;
-	for (int i = 0; i < 4; i++)
-		result = (result >> 8) | (read_serial_byte() << 24);
+    unsigned int result = 0;
+    for (int i = 0; i < 4; i++)
+        result = (result >> 8) | (read_serial_byte() << 24);
 
-	return result;
+    return result;
 }
 
 void write_serial_long(unsigned int value)
 {
-	write_serial_byte(value & 0xff);
-	write_serial_byte((value >> 8) & 0xff);
-	write_serial_byte((value >> 16) & 0xff);
-	write_serial_byte((value >> 24) & 0xff);
+    write_serial_byte(value & 0xff);
+    write_serial_byte((value >> 8) & 0xff);
+    write_serial_byte((value >> 16) & 0xff);
+    write_serial_byte((value >> 24) & 0xff);
 }
 
 int main()
 {
-	// Turn on red LED to indicate bootloader is waiting
-	REGISTERS[REG_RED_LED] = 0x1;
+    // Turn on red LED to indicate bootloader is waiting
+    REGISTERS[REG_RED_LED] = 0x1;
 
-	for (;;)
-	{
-		switch (read_serial_byte())
-		{
-			case LOAD_MEMORY_REQ:
-			{
-				unsigned int base_address = read_serial_long();
-				unsigned int length = read_serial_long();
+    for (;;)
+    {
+        switch (read_serial_byte())
+        {
+            case LOAD_MEMORY_REQ:
+            {
+                unsigned int base_address = read_serial_long();
+                unsigned int length = read_serial_long();
 
-				// Compute fletcher checksum of data
-				unsigned int checksuma = 0;
-				unsigned int checksumb = 0;
+                // Compute fletcher checksum of data
+                unsigned int checksuma = 0;
+                unsigned int checksumb = 0;
 
-				for (int i = 0; i < length; i++)
-				{
-					unsigned int ch = read_serial_byte();
-					checksuma += ch;
-					checksumb += checksuma;
-					((unsigned char*) base_address)[i] = ch;
-				}
+                for (int i = 0; i < length; i++)
+                {
+                    unsigned int ch = read_serial_byte();
+                    checksuma += ch;
+                    checksumb += checksuma;
+                    ((unsigned char*) base_address)[i] = ch;
+                }
 
-				write_serial_byte(LOAD_MEMORY_ACK);
-				write_serial_long((checksuma & 0xffff) | ((checksumb & 0xffff) << 16));
-				break;
-			}
+                write_serial_byte(LOAD_MEMORY_ACK);
+                write_serial_long((checksuma & 0xffff) | ((checksumb & 0xffff) << 16));
+                break;
+            }
 
-			case CLEAR_MEMORY_REQ:
-			{
-				unsigned int base_address = read_serial_long();
-				unsigned int length = read_serial_long();
-				memset((char*) 0 + base_address, 0, length);
-				write_serial_byte(CLEAR_MEMORY_ACK);
-				break;
-			}
+            case CLEAR_MEMORY_REQ:
+            {
+                unsigned int base_address = read_serial_long();
+                unsigned int length = read_serial_long();
+                memset((char*) 0 + base_address, 0, length);
+                write_serial_byte(CLEAR_MEMORY_ACK);
+                break;
+            }
 
-			case EXECUTE_REQ:
-			{
-				REGISTERS[REG_RED_LED] = 0;	// Turn off LED
-				write_serial_byte(EXECUTE_ACK);
-				return 0;	// Break out of main
-			}
+            case EXECUTE_REQ:
+            {
+                REGISTERS[REG_RED_LED] = 0;	// Turn off LED
+                write_serial_byte(EXECUTE_ACK);
+                return 0;	// Break out of main
+            }
 
-			case PING_REQ:
-				write_serial_byte(PING_ACK);
-				break;
+            case PING_REQ:
+                write_serial_byte(PING_ACK);
+                break;
 
-			default:
-				write_serial_byte(BAD_COMMAND);
-		}
-	}
+            default:
+                write_serial_byte(BAD_COMMAND);
+        }
+    }
 }

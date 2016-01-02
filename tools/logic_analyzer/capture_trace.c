@@ -28,40 +28,40 @@
 
 int main(int argc, const char *argv[])
 {
-	int serialFD;
-	struct termios serialopts;
+    int serialFD;
+    struct termios serialopts;
 
-	serialFD = open("/dev/cu.usbserial", O_RDWR | O_NOCTTY);
-	if (serialFD < 0)
-	{
-		perror("couldn't open serial port");
-		return 1;
-	}
+    serialFD = open("/dev/cu.usbserial", O_RDWR | O_NOCTTY);
+    if (serialFD < 0)
+    {
+        perror("couldn't open serial port");
+        return 1;
+    }
 
-	if (tcgetattr(serialFD, &serialopts) != 0)
-	{
-		perror("Unable to get serial port options");
-		return 1;
-	}
+    if (tcgetattr(serialFD, &serialopts) != 0)
+    {
+        perror("Unable to get serial port options");
+        return 1;
+    }
 
-	serialopts.c_cflag = CSTOPB | CS8 | CLOCAL | CREAD;
-	cfmakeraw(&serialopts);
-	cfsetspeed(&serialopts, B115200);
+    serialopts.c_cflag = CSTOPB | CS8 | CLOCAL | CREAD;
+    cfmakeraw(&serialopts);
+    cfsetspeed(&serialopts, B115200);
 
-	if (tcsetattr(serialFD, TCSANOW, &serialopts) != 0)
-	{
-		perror("Unable to initialize serial port");
-		return 1;
-	}
+    if (tcsetattr(serialFD, TCSANOW, &serialopts) != 0)
+    {
+        perror("Unable to initialize serial port");
+        return 1;
+    }
 
-	while (1)
-	{
-		unsigned char ch;
-		read(serialFD, &ch, 1);
-		printf("%02x\n", ch);
-		fflush(stdout);
-	}
+    while (1)
+    {
+        unsigned char ch;
+        read(serialFD, &ch, 1);
+        printf("%02x\n", ch);
+        fflush(stdout);
+    }
 
-	close(serialFD);
-	return 0;
+    close(serialFD);
+    return 0;
 }

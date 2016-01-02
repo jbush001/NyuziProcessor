@@ -27,21 +27,21 @@ const int kMaxActiveTextures = 4;
 
 struct RenderState
 {
-	bool fEnableDepthBuffer = false;
-	bool fEnableBlend = false;
-	const RenderBuffer *fVertexAttrBuffer = nullptr;
-	const RenderBuffer *fIndexBuffer = nullptr;
-	const void *fUniforms = nullptr;
-	int fParamsPerVertex = 0;
-	float *fVertexParams = nullptr;
-	const class Shader *fShader = nullptr;
-	const Texture *fTextures[kMaxActiveTextures];
-	enum CullingMode
-	{
-		kCullCW,
-		kCullCCW,
-		kCullNone
-	} cullingMode = kCullCW;
+    bool fEnableDepthBuffer = false;
+    bool fEnableBlend = false;
+    const RenderBuffer *fVertexAttrBuffer = nullptr;
+    const RenderBuffer *fIndexBuffer = nullptr;
+    const void *fUniforms = nullptr;
+    int fParamsPerVertex = 0;
+    float *fVertexParams = nullptr;
+    const class Shader *fShader = nullptr;
+    const Texture *fTextures[kMaxActiveTextures];
+    enum CullingMode
+    {
+        kCullCW,
+        kCullCCW,
+        kCullNone
+    } cullingMode = kCullCW;
 };
 
 }

@@ -20,19 +20,21 @@
 # Print internal fields of a floating point number.
 #
 
-import sys, struct
+import sys
+import struct
+
 
 def dump(value):
-	print(hex(value))
-	print('exponent' + str((value >> 23) & 0xff))
-	sig = value & ((1 << 23) - 1)
-	print('significand' + hex(sig) + bin(sig)[2:].zfill(23))
-	print(struct.unpack('f', struct.pack('I', value))[0])
+    print(hex(value))
+    print('exponent' + str((value >> 23) & 0xff))
+    sig = value & ((1 << 23) - 1)
+    print('significand' + hex(sig) + bin(sig)[2:].zfill(23))
+    print(struct.unpack('f', struct.pack('I', value))[0])
 
 strval = sys.argv[1]
 if strval[:2] == '0x':
-	dump(int(strval[2:], 16))
+    dump(int(strval[2:], 16))
 elif strval.find('.') != -1:
-	dump(struct.unpack('I', struct.pack('f', float(strval)))[0])
+    dump(struct.unpack('I', struct.pack('f', float(strval)))[0])
 else:
-	dump(int(strval))
+    dump(int(strval))

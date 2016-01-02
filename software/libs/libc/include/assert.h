@@ -21,8 +21,8 @@
 #include <stdlib.h>
 
 #ifdef NDEBUG
-	#define assert(ignore) ((void) 0)
+#define assert(ignore) ((void) 0)
 #else
-	#define assert(cond) if (!(cond)) { printf("ASSERT FAILED: %s:%d: %s\n", __FILE__, __LINE__, \
+#define assert(cond) if (!(cond)) { printf("ASSERT FAILED: %s:%d: %s\n", __FILE__, __LINE__, \
 		#cond); abort(); }
 #endif

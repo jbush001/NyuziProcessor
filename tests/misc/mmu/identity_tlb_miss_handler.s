@@ -25,25 +25,25 @@
 # Identity map memory
 #
 
-						.globl tlb_miss_handler
-tlb_miss_handler:		setcr s0, CR_SCRATCHPAD0		# Save s0 in scratchpad
-						setcr s1, CR_SCRATCHPAD1        # Save s1
-						getcr s0, CR_FAULT_ADDR			# Get fault virtual address
-						getcr s1, CR_FAULT_REASON		# Get fault reason
-						cmpeq_i s1, s1, 5				# Is ITLB miss?
-						btrue s1, fill_itlb 			# If so, branch to update ITLB
-fill_dltb:				or s0, s0, 2					# Set write enable bit
-						getcr s1, CR_FAULT_ADDR			# Get virtual address
-						dtlbinsert s1, s0
-						goto done
-fill_itlb:				getcr s1, CR_FAULT_ADDR			# Get virtual address
-						itlbinsert s1, s0
-done:					getcr s0, CR_SCRATCHPAD0        # Get saved s0 from scratchpad
-						getcr s1, CR_SCRATCHPAD1        # Get saved s1
-						eret
+                        .globl tlb_miss_handler
+tlb_miss_handler:       setcr s0, CR_SCRATCHPAD0        # Save s0 in scratchpad
+                        setcr s1, CR_SCRATCHPAD1        # Save s1
+                        getcr s0, CR_FAULT_ADDR         # Get fault virtual address
+                        getcr s1, CR_FAULT_REASON       # Get fault reason
+                        cmpeq_i s1, s1, 5               # Is ITLB miss?
+                        btrue s1, fill_itlb             # If so, branch to update ITLB
+fill_dltb:              or s0, s0, 2                    # Set write enable bit
+                        getcr s1, CR_FAULT_ADDR         # Get virtual address
+                        dtlbinsert s1, s0
+                        goto done
+fill_itlb:              getcr s1, CR_FAULT_ADDR         # Get virtual address
+                        itlbinsert s1, s0
+done:                   getcr s0, CR_SCRATCHPAD0        # Get saved s0 from scratchpad
+                        getcr s1, CR_SCRATCHPAD1        # Get saved s1
+                        eret
 
-						.globl enable_mmu
-enable_mmu:				setcr ra, CR_FAULT_PC			# Set exception PC to return address
-						move s0, 6
-						setcr s0, CR_SAVED_FLAGS		# Set prev MMU enable
-						eret							# Enable everything and return
+                        .globl enable_mmu
+enable_mmu:             setcr ra, CR_FAULT_PC           # Set exception PC to return address
+                        move s0, 6
+                        setcr s0, CR_SAVED_FLAGS        # Set prev MMU enable
+                        eret                            # Enable everything and return

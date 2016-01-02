@@ -34,10 +34,10 @@ const int kFbWidth = 640;
 const int kFbHeight = 480;
 
 static float kTriangleVertices[] = {
-	// Position            Color (RGBA)
-	 0.0,  -0.9, -1.0,     1.0, 0.0, 0.0, 1.0,
-	 0.9, 0.9, -1.0,       0.0, 1.0, 0.0, 1.0,
-	 -0.9, 0.9, -1.0,      0.0, 0.0, 1.0, 1.0,
+    // Position            Color (RGBA)
+    0.0,  -0.9, -1.0,     1.0, 0.0, 0.0, 1.0,
+    0.9, 0.9, -1.0,       0.0, 1.0, 0.0, 1.0,
+    -0.9, 0.9, -1.0,      0.0, 0.0, 1.0, 1.0,
 };
 
 static int kTriangleIndices[] = { 0, 1, 2 };
@@ -45,25 +45,25 @@ static int kTriangleIndices[] = { 0, 1, 2 };
 // All threads start execution here.
 int main()
 {
-	if (__builtin_nyuzi_read_control_reg(0) == 0)
-		init_vga(VGA_MODE_640x480);
-	else
-		workerThread();
+    if (__builtin_nyuzi_read_control_reg(0) == 0)
+        init_vga(VGA_MODE_640x480);
+    else
+        workerThread();
 
-	startAllThreads();
+    startAllThreads();
 
-	const RenderBuffer vertexBuffer(kTriangleVertices, 3, 7 * sizeof(float));
-	const RenderBuffer indexBuffer(kTriangleIndices, 3, 4);
-	RenderContext *context = new RenderContext();
-	RenderTarget *renderTarget = new RenderTarget();
-	Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
-	renderTarget->setColorBuffer(colorBuffer);
-	context->clearColorBuffer();
-	context->bindTarget(renderTarget);
-	context->bindShader(new ColorShader());
-	context->bindVertexAttrs(&vertexBuffer);
-	context->drawElements(&indexBuffer);
-	context->finish();
+    const RenderBuffer vertexBuffer(kTriangleVertices, 3, 7 * sizeof(float));
+    const RenderBuffer indexBuffer(kTriangleIndices, 3, 4);
+    RenderContext *context = new RenderContext();
+    RenderTarget *renderTarget = new RenderTarget();
+    Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
+    renderTarget->setColorBuffer(colorBuffer);
+    context->clearColorBuffer();
+    context->bindTarget(renderTarget);
+    context->bindShader(new ColorShader());
+    context->bindVertexAttrs(&vertexBuffer);
+    context->drawElements(&indexBuffer);
+    context->finish();
 
-	return 0;
+    return 0;
 }

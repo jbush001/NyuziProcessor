@@ -22,23 +22,23 @@ volatile int gEndSync = kNumThreads;
 
 int main()
 {
-	// Start worker threads
-	*((unsigned int*) 0xffff0060) = (1 << kNumThreads) - 1;
+    // Start worker threads
+    *((unsigned int*) 0xffff0060) = (1 << kNumThreads) - 1;
 
-	const int kTotalIncrements = kNumSlots * 10;
-	while (1)
-	{
-		int mySlot = __sync_fetch_and_add(&gIndex, 1);
-		if (mySlot >= kTotalIncrements)
-			break;
+    const int kTotalIncrements = kNumSlots * 10;
+    while (1)
+    {
+        int mySlot = __sync_fetch_and_add(&gIndex, 1);
+        if (mySlot >= kTotalIncrements)
+            break;
 
-		__sync_fetch_and_add(&gSlots[mySlot % kNumSlots], 1);
-	}
+        __sync_fetch_and_add(&gSlots[mySlot % kNumSlots], 1);
+    }
 
-	__sync_synchronize();
-	__sync_fetch_and_add(&gEndSync, -1);
-	while (gEndSync)
-		;
+    __sync_synchronize();
+    __sync_fetch_and_add(&gEndSync, -1);
+    while (gEndSync)
+        ;
 
-	return 0;
+    return 0;
 }

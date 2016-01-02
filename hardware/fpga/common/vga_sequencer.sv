@@ -28,111 +28,111 @@
 // using pixel_en to clock gate for each pixel).
 //
 module vga_sequencer(
-	input                       clk,
-	input                       reset,
-	output                      vga_vs,
-	output                      vga_hs,
-	output                      start_dma,
-	output                      in_visible_region,
-	output logic                pixel_en,
-	input                       sequencer_en,
-	input                       prog_write_en,
-	input[31:0]                 prog_data);
+    input                       clk,
+    input                       reset,
+    output                      vga_vs,
+    output                      vga_hs,
+    output                      start_dma,
+    output                      in_visible_region,
+    output logic                pixel_en,
+    input                       sequencer_en,
+    input                       prog_write_en,
+    input[31:0]                 prog_data);
 
-	localparam MAX_INSTRUCTIONS = 48;
+    localparam MAX_INSTRUCTIONS = 48;
 
-	typedef logic[$clog2(MAX_INSTRUCTIONS) - 1:0] progaddr_t;
-	typedef logic[12:0] counter_t;
+    typedef logic[$clog2(MAX_INSTRUCTIONS) - 1:0] progaddr_t;
+    typedef logic[12:0] counter_t;
 
-	typedef enum logic {
-		INITCNT,
-		LOOP
-	} instruction_type_t;
+    typedef enum logic {
+        INITCNT,
+        LOOP
+    } instruction_type_t;
 
-	typedef struct packed {
-		instruction_type_t instruction_type;
-		logic counter_select;
-		counter_t immediate_value;
+    typedef struct packed {
+        instruction_type_t instruction_type;
+        logic counter_select;
+        counter_t immediate_value;
 
-		// VGA synchronization signals
-		logic vsync;
-		logic hsync;
-		logic frame_done;
-		logic in_visible_region;
-	} uop_t;
+        // VGA synchronization signals
+        logic vsync;
+        logic hsync;
+        logic frame_done;
+        logic in_visible_region;
+    } uop_t;
 
-	uop_t current_uop;
-	counter_t counter[2];
-	counter_t counter_nxt;
-	progaddr_t pc;
-	progaddr_t pc_nxt;
-	progaddr_t prog_load_addr;
-	logic branch_en;
+    uop_t current_uop;
+    counter_t counter[2];
+    counter_t counter_nxt;
+    progaddr_t pc;
+    progaddr_t pc_nxt;
+    progaddr_t prog_load_addr;
+    logic branch_en;
 
-	sram_1r1w #(
-		.DATA_WIDTH($bits(uop_t)),
-		.SIZE(MAX_INSTRUCTIONS)
-	) instruction_memory(
-		.read_en(1'b1),
-		.read_addr(pc_nxt),
-		.read_data(current_uop),
-		.write_en(prog_write_en),
-		.write_addr(prog_load_addr),
-		.write_data(prog_data[$bits(uop_t) - 1:0]),
-		.*);
+    sram_1r1w #(
+        .DATA_WIDTH($bits(uop_t)),
+        .SIZE(MAX_INSTRUCTIONS)
+    ) instruction_memory(
+        .read_en(1'b1),
+        .read_addr(pc_nxt),
+        .read_data(current_uop),
+        .write_en(prog_write_en),
+        .write_addr(prog_load_addr),
+        .write_data(prog_data[$bits(uop_t) - 1:0]),
+        .*);
 
-	assign counter_nxt = current_uop.instruction_type == INITCNT
-		? current_uop.immediate_value
-		: counter[current_uop.counter_select] - 1;
-	assign vga_vs = current_uop.vsync && sequencer_en;
-	assign vga_hs = current_uop.hsync && sequencer_en;
-	assign start_dma = pc == 0 && sequencer_en;
-	assign in_visible_region = current_uop.in_visible_region && sequencer_en;
-	assign branch_en = current_uop.frame_done || (current_uop.instruction_type == LOOP
-		&& counter_nxt != 0);
+    assign counter_nxt = current_uop.instruction_type == INITCNT
+        ? current_uop.immediate_value
+        : counter[current_uop.counter_select] - 1;
+    assign vga_vs = current_uop.vsync && sequencer_en;
+    assign vga_hs = current_uop.hsync && sequencer_en;
+    assign start_dma = pc == 0 && sequencer_en;
+    assign in_visible_region = current_uop.in_visible_region && sequencer_en;
+    assign branch_en = current_uop.frame_done || (current_uop.instruction_type == LOOP
+        && counter_nxt != 0);
 
-	always_comb
-	begin
-		if (pixel_en)
-		begin
-			if (branch_en)
-				pc_nxt = progaddr_t'(current_uop.immediate_value);
-			else
-				pc_nxt = pc + progaddr_t'(1);
-		end
-		else
-			pc_nxt = pc;
-	end
+    always_comb
+    begin
+        if (pixel_en)
+        begin
+            if (branch_en)
+                pc_nxt = progaddr_t'(current_uop.immediate_value);
+            else
+                pc_nxt = pc + progaddr_t'(1);
+        end
+        else
+            pc_nxt = pc;
+    end
 
-	always_ff @(posedge clk, posedge reset)
-	begin
-		if (reset)
-		begin
-			counter[0] <= '0;
-			counter[1] <= '0;
-			pc <= '0;
-			prog_load_addr <= '0;
-		end
-		else
-		begin
-			// Divide 50 Mhz clock by two to derive 25 Mhz pixel rate
-			pixel_en <= !pixel_en;
+    always_ff @(posedge clk, posedge reset)
+    begin
+        if (reset)
+        begin
+            counter[0] <= '0;
+            counter[1] <= '0;
+            pc <= '0;
+            prog_load_addr <= '0;
+        end
+        else
+        begin
+            // Divide 50 Mhz clock by two to derive 25 Mhz pixel rate
+            pixel_en <= !pixel_en;
 
-			if (sequencer_en)
-			begin
-				if (pixel_en)
-					counter[current_uop.counter_select] <= counter_nxt;
+            if (sequencer_en)
+            begin
+                if (pixel_en)
+                    counter[current_uop.counter_select] <= counter_nxt;
 
-				pc <= pc_nxt;
-				prog_load_addr <= '0;
-			end
-			else if (prog_write_en)
-			begin
-				pc <= '0;
-				prog_load_addr <= prog_load_addr + 1;
-			end
-		end
-	end
+                pc <= pc_nxt;
+                prog_load_addr <= '0;
+            end
+            else if (prog_write_en)
+            begin
+                pc <= '0;
+                prog_load_addr <= prog_load_addr + 1;
+            end
+        end
+    end
 endmodule
 
 // Local Variables:

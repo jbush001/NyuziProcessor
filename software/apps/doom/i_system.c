@@ -56,26 +56,26 @@ I_Tactile
   int	off,
   int	total )
 {
-  // UNUSED.
-  on = off = total = 0;
+    // UNUSED.
+    on = off = total = 0;
 }
 
 ticcmd_t		emptycmd;
 ticcmd_t*		I_BaseTiccmd(void)
 {
-	return &emptycmd;
+    return &emptycmd;
 }
 
 
 int	 I_GetHeapSize (void)
 {
-	return mb_used*1024*1024;
+    return mb_used*1024*1024;
 }
 
 byte* I_ZoneBase (int*	size)
 {
-	*size = mb_used*1024*1024;
-	return (byte *) malloc (*size);
+    *size = mb_used*1024*1024;
+    return (byte *) malloc (*size);
 }
 
 
@@ -88,7 +88,7 @@ byte* I_ZoneBase (int*	size)
 
 int	 I_GetTime (void)
 {
-	return clock() / (CLOCKS_PER_SEC / 70);
+    return clock() / (CLOCKS_PER_SEC / 70);
 }
 
 //
@@ -96,8 +96,8 @@ int	 I_GetTime (void)
 //
 void I_Init (void)
 {
-	I_InitSound();
-	//	I_InitGraphics();
+    I_InitSound();
+    //	I_InitGraphics();
 }
 
 //
@@ -105,12 +105,12 @@ void I_Init (void)
 //
 void I_Quit (void)
 {
-	D_QuitNetGame ();
-	I_ShutdownSound();
-	I_ShutdownMusic();
-	M_SaveDefaults ();
-	I_ShutdownGraphics();
-	exit(0);
+    D_QuitNetGame ();
+    I_ShutdownSound();
+    I_ShutdownMusic();
+    M_SaveDefaults ();
+    I_ShutdownGraphics();
+    exit(0);
 }
 
 void I_WaitVBL(int count)
@@ -127,11 +127,11 @@ void I_EndRead(void)
 
 byte*	I_AllocLow(int length)
 {
-	byte*		mem;
+    byte*		mem;
 
-	mem = (byte *)malloc (length);
-	memset (mem,0,length);
-	return mem;
+    mem = (byte *)malloc (length);
+    memset (mem,0,length);
+    return mem;
 }
 
 
@@ -142,22 +142,22 @@ extern boolean demorecording;
 
 void I_Error (char *error, ...)
 {
-	va_list		argptr;
+    va_list		argptr;
 
-	// Message first.
-	va_start (argptr,error);
-	fprintf (stderr, "Error: ");
-	vfprintf (stderr,error,argptr);
-	fprintf (stderr, "\n");
-	va_end (argptr);
+    // Message first.
+    va_start (argptr,error);
+    fprintf (stderr, "Error: ");
+    vfprintf (stderr,error,argptr);
+    fprintf (stderr, "\n");
+    va_end (argptr);
 
 
-	// Shutdown. Here might be other errors.
-	if (demorecording)
-		G_CheckDemoStatus();
+    // Shutdown. Here might be other errors.
+    if (demorecording)
+        G_CheckDemoStatus();
 
-	D_QuitNetGame ();
-	I_ShutdownGraphics();
+    D_QuitNetGame ();
+    I_ShutdownGraphics();
 
-	exit(-1);
+    exit(-1);
 }

@@ -46,55 +46,55 @@ volatile int stopCount = 0;
 // All threads start execution here.
 int main()
 {
-	int myThreadId = getCurrentThreadId();
-	if (myThreadId == 0)
-		init_vga(VGA_MODE_640x480);
+    int myThreadId = getCurrentThreadId();
+    if (myThreadId == 0)
+        init_vga(VGA_MODE_640x480);
 
-	// Start other threads
-	startAllThreads();
+    // Start other threads
+    startAllThreads();
 
-	vecf16_t kInitialX0 = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
-	kInitialX0 = kInitialX0 * makevectorf(kXStep) - makevectorf(2.0);
+    vecf16_t kInitialX0 = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+    kInitialX0 = kInitialX0 * makevectorf(kXStep) - makevectorf(2.0);
 
-	// Stagger row access by thread ID
-	for (int row = myThreadId; row < kScreenHeight; row += kNumThreads)
-	{
-		veci16_t *ptr = (veci16_t*)(kFbBase + row * kScreenWidth * 4);
-		vecf16_t x0 = kInitialX0;
-		float y0 = kYStep * row - 1.0;
-		for (int col = 0; col < kScreenWidth; col += kVectorLanes)
-		{
-			// Compute colors for 16 pixels
-			vecf16_t x = makevectorf(0.0);
-			vecf16_t y = makevectorf(0.0);
-			veci16_t iteration = makevectori(0);
-			int activeLanes = 0xffff;
+    // Stagger row access by thread ID
+    for (int row = myThreadId; row < kScreenHeight; row += kNumThreads)
+    {
+        veci16_t *ptr = (veci16_t*)(kFbBase + row * kScreenWidth * 4);
+        vecf16_t x0 = kInitialX0;
+        float y0 = kYStep * row - 1.0;
+        for (int col = 0; col < kScreenWidth; col += kVectorLanes)
+        {
+            // Compute colors for 16 pixels
+            vecf16_t x = makevectorf(0.0);
+            vecf16_t y = makevectorf(0.0);
+            veci16_t iteration = makevectori(0);
+            int activeLanes = 0xffff;
 
-			// Escape loop
-			while (1)
-			{
-				vecf16_t xSquared = x * x;
-				vecf16_t ySquared = y * y;
-				activeLanes &= mask_cmpf_lt(xSquared + ySquared, makevectorf(4.0));
-				activeLanes &= mask_cmpi_ult(iteration, makevectori(kMaxIterations));
-				if (!activeLanes)
-					break;
+            // Escape loop
+            while (1)
+            {
+                vecf16_t xSquared = x * x;
+                vecf16_t ySquared = y * y;
+                activeLanes &= mask_cmpf_lt(xSquared + ySquared, makevectorf(4.0));
+                activeLanes &= mask_cmpi_ult(iteration, makevectori(kMaxIterations));
+                if (!activeLanes)
+                    break;
 
-				y = x * y * makevectorf(2.0) + makevectorf(y0);
-				x = xSquared - ySquared + x0;
-				iteration = vector_mixi(activeLanes, iteration + makevectori(1), iteration);
-			}
+                y = x * y * makevectorf(2.0) + makevectorf(y0);
+                x = xSquared - ySquared + x0;
+                iteration = vector_mixi(activeLanes, iteration + makevectori(1), iteration);
+            }
 
-			// Set pixels inside set black and increase contrast
-			*ptr = makevectori(0xff000000) | vector_mixi(mask_cmpi_uge(iteration, makevectori(255)),
-				makevectori(0), (iteration << makevectori(2)) + makevectori(80));
-			asm("dflush %0" : : "s" (ptr++));
-			x0 += makevectorf(kXStep * kVectorLanes);
-		}
-	}
+            // Set pixels inside set black and increase contrast
+            *ptr = makevectori(0xff000000) | vector_mixi(mask_cmpi_uge(iteration, makevectori(255)),
+                    makevectori(0), (iteration << makevectori(2)) + makevectori(80));
+            asm("dflush %0" : : "s" (ptr++));
+            x0 += makevectorf(kXStep * kVectorLanes);
+        }
+    }
 
-	// Wait for other threads, because returning from main will kill all of them.
-	__sync_fetch_and_add(&stopCount, 1);
-	while (stopCount != 4)
-		;
+    // Wait for other threads, because returning from main will kill all of them.
+    __sync_fetch_and_add(&stopCount, 1);
+    while (stopCount != 4)
+        ;
 }

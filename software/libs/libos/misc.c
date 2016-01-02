@@ -22,18 +22,18 @@
 
 int usleep(useconds_t delay)
 {
-	int expire = __builtin_nyuzi_read_control_reg(6) + delay * CLOCKS_PER_US;
-	while (__builtin_nyuzi_read_control_reg(6) < expire)
-		;
+    int expire = __builtin_nyuzi_read_control_reg(6) + delay * CLOCKS_PER_US;
+    while (__builtin_nyuzi_read_control_reg(6) < expire)
+        ;
 
-	return 0;
+    return 0;
 }
 
 void exit(int status)
 {
-	(void) status;
+    (void) status;
 
-	REGISTERS[REG_THREAD_HALT] = 0xffffffff;
-	while (1)
-		;
+    REGISTERS[REG_THREAD_HALT] = 0xffffffff;
+    while (1)
+        ;
 }

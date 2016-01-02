@@ -18,24 +18,24 @@
 # before it is flushed back to main memory.  It then reads back the location
 # to ensure the original memory value is present.
 
-			.globl _start
+            .globl _start
 
-_start:		lea s0, dataloc
-			load_32 s1, storedat
-			store_32 s1, (s0)
-			dinvalidate s0		# This should blow away the word we just stored
-			membar
-			load_32 s2, (s0)	# Reload it to ensure the old value is still present
+_start:     lea s0, dataloc
+            load_32 s1, storedat
+            store_32 s1, (s0)
+            dinvalidate s0        # This should blow away the word we just stored
+            membar
+            load_32 s2, (s0)    # Reload it to ensure the old value is still present
 
-			# Halt
-			move s1, -1
-			load_32 s0, thread_halt_mask
-			store_32 s1, (s0)
-1:			goto 1b
+            # Halt
+            move s1, -1
+            load_32 s0, thread_halt_mask
+            store_32 s1, (s0)
+1:          goto 1b
 thread_halt_mask: .long 0xffff0064
 
 
-storedat:	.long	0x12345678
+storedat:   .long    0x12345678
 
-			.align 128
-dataloc:	.long	0xdeadbeef			; will be at address 256
+            .align 128
+dataloc:    .long    0xdeadbeef            ; will be at address 256

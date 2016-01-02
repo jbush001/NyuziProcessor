@@ -25,65 +25,65 @@ import java.io.*;
 
 class TraceModel
 {
-	public TraceModel(String filename)
-	{
-		readFile(filename);
-	}
+    public TraceModel(String filename)
+    {
+        readFile(filename);
+    }
 
-	public int getNumEvents()
-	{
-		return fNumEvents;
-	}
+    public int getNumEvents()
+    {
+        return fNumEvents;
+    }
 
-	public int getNumRows()
-	{
-		return fNumRows;
-	}
+    public int getNumRows()
+    {
+        return fNumRows;
+    }
 
-	public int getEvent(int row, int eventIndex)
-	{
-		return fRawData[eventIndex * fNumRows + row];
-	}
+    public int getEvent(int row, int eventIndex)
+    {
+        return fRawData[eventIndex * fNumRows + row];
+    }
 
-	private static final int kMaxLines = 0x100000;
+    private static final int kMaxLines = 0x100000;
 
-	private void readFile(String filename)
-	{
-		fNumEvents = 0;
-		fNumRows = 4;	// Number of threads XXX should determine dynamically
-		fRawData = new byte[kMaxLines * fNumRows];
-		int offset = 0;
-		try
-		{
-			FileInputStream fstream = new FileInputStream(filename);
-			DataInputStream in = new DataInputStream(fstream);
-			BufferedReader br = new BufferedReader(new InputStreamReader(in));
-			String line;
-			for (fNumEvents = 0; fNumEvents < kMaxLines; fNumEvents++)
-			{
-				String eventLine = br.readLine();
-				if (eventLine == null)
-					break;
+    private void readFile(String filename)
+    {
+        fNumEvents = 0;
+        fNumRows = 4;	// Number of threads XXX should determine dynamically
+        fRawData = new byte[kMaxLines * fNumRows];
+        int offset = 0;
+        try
+        {
+            FileInputStream fstream = new FileInputStream(filename);
+            DataInputStream in = new DataInputStream(fstream);
+            BufferedReader br = new BufferedReader(new InputStreamReader(in));
+            String line;
+            for (fNumEvents = 0; fNumEvents < kMaxLines; fNumEvents++)
+            {
+                String eventLine = br.readLine();
+                if (eventLine == null)
+                    break;
 
-				String[] tokens = eventLine.split(",");
-				for (int rowIndex = 0; rowIndex < fNumRows; rowIndex++)
-				{
-					// The constant values we are assigning here correspond
-					// to colors in the array in TraceView.java.
-					fRawData[offset++] = (byte) Integer.parseInt(tokens[rowIndex]);
-				}
-			}
+                String[] tokens = eventLine.split(",");
+                for (int rowIndex = 0; rowIndex < fNumRows; rowIndex++)
+                {
+                    // The constant values we are assigning here correspond
+                    // to colors in the array in TraceView.java.
+                    fRawData[offset++] = (byte) Integer.parseInt(tokens[rowIndex]);
+                }
+            }
 
-			System.out.println("read " + fNumEvents + " events");
-		}
-		catch (Exception exc)
-		{
-			System.out.println("Caught exception " + exc);
-			exc.printStackTrace();
-		}
-	}
+            System.out.println("read " + fNumEvents + " events");
+        }
+        catch (Exception exc)
+        {
+            System.out.println("Caught exception " + exc);
+            exc.printStackTrace();
+        }
+    }
 
-	private byte[] fRawData;
-	private int fNumEvents;
-	private int fNumRows;
+    private byte[] fRawData;
+    private int fNumEvents;
+    private int fNumRows;
 }

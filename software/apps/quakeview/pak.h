@@ -25,114 +25,114 @@ const int kNumMipLevels = 4;
 
 struct pakheader_t
 {
-	char id[4];
-	uint32_t dirOffset;
-	uint32_t dirSize;
+    char id[4];
+    uint32_t dirOffset;
+    uint32_t dirSize;
 };
 
 struct pakfile_t
 {
-	char name[56];
-	uint32_t offset;
-	uint32_t size;
+    char name[56];
+    uint32_t offset;
+    uint32_t size;
 };
 
 struct lump_t
 {
-	uint32_t offset;
-	uint32_t length;
+    uint32_t offset;
+    uint32_t length;
 };
 
 struct bspheader_t
 {
-	uint32_t version;
-	lump_t entities;
-	lump_t planes;
-	lump_t textures;
-	lump_t vertices;
-	lump_t visibility;
-	lump_t nodes;
-	lump_t texinfo;
-	lump_t faces;
-	lump_t lighting;
-	lump_t clipnodes;
-	lump_t leaves;
-	lump_t marksurfaces;
-	lump_t edges;
-	lump_t surfedges;
-	lump_t models;
+    uint32_t version;
+    lump_t entities;
+    lump_t planes;
+    lump_t textures;
+    lump_t vertices;
+    lump_t visibility;
+    lump_t nodes;
+    lump_t texinfo;
+    lump_t faces;
+    lump_t lighting;
+    lump_t clipnodes;
+    lump_t leaves;
+    lump_t marksurfaces;
+    lump_t edges;
+    lump_t surfedges;
+    lump_t models;
 };
 
 struct miptex_t
 {
-	char name[16];
-	uint32_t width;
-	uint32_t height;
-	uint32_t offsets[kNumMipLevels];
+    char name[16];
+    uint32_t width;
+    uint32_t height;
+    uint32_t offsets[kNumMipLevels];
 };
 
 struct miptex_lump_t
 {
-	int32_t numTextures;
-	int32_t offset[1];
+    int32_t numTextures;
+    int32_t offset[1];
 };
 
 struct vertex_t
 {
-	float coord[3];
+    float coord[3];
 };
 
 struct plane_t
 {
-	float normal[3];
-	float distance;
-	int32_t type;
+    float normal[3];
+    float distance;
+    int32_t type;
 };
 
 struct bspnode_t
 {
-	int32_t plane;
-	int16_t children[2];
-	int16_t min[3];
-	int16_t max[3];
-	uint16_t first_face;
-	uint16_t num_faces;
+    int32_t plane;
+    int16_t children[2];
+    int16_t min[3];
+    int16_t max[3];
+    uint16_t first_face;
+    uint16_t num_faces;
 };
 
 struct texture_info_t
 {
-	float uVector[4];
-	float vVector[4];
-	int32_t miptex;
-	int32_t flags;
+    float uVector[4];
+    float vVector[4];
+    int32_t miptex;
+    int32_t flags;
 };
 
 struct edge_t
 {
-	uint16_t startVertex;
-	uint16_t endVertex;
+    uint16_t startVertex;
+    uint16_t endVertex;
 };
 
 struct face_t
 {
-	uint16_t plane;
-	uint16_t side;
-	int32_t firstEdge;
-	int16_t numEdges;
-	int16_t texture;
-	int8_t lightStyles[4];
-	int32_t lightOffset;
+    uint16_t plane;
+    uint16_t side;
+    int32_t firstEdge;
+    int16_t numEdges;
+    int16_t texture;
+    int8_t lightStyles[4];
+    int32_t lightOffset;
 };
 
 struct leaf_t
 {
-	int32_t contents;
-	int32_t pvsOffset;
-	int16_t mins[3];
-	int16_t maxs[3];
-	uint16_t firstMarkSurface;
-	uint16_t numMarkSurfaces;
-	uint8_t ambientSound[4];
+    int32_t contents;
+    int32_t pvsOffset;
+    int16_t mins[3];
+    int16_t maxs[3];
+    uint16_t firstMarkSurface;
+    uint16_t numMarkSurfaces;
+    uint8_t ambientSound[4];
 };
 
 

@@ -28,18 +28,18 @@ const int kNumThreads = 32;
 
 int main(int argc, const char *argv[])
 {
-	int myThreadId = __builtin_nyuzi_read_control_reg(0);
+    int myThreadId = __builtin_nyuzi_read_control_reg(0);
 
-	startAllThreads();
+    startAllThreads();
 
-	for (;;)
-	{
-		while (gCurrentThread != myThreadId)
-			;
+    for (;;)
+    {
+        while (gCurrentThread != myThreadId)
+            ;
 
-		printf("%d\n", myThreadId);
-		gCurrentThread = (gCurrentThread + 1);
-		if (gCurrentThread >= 32)
-			break;
-	}
+        printf("%d\n", myThreadId);
+        gCurrentThread = (gCurrentThread + 1);
+        if (gCurrentThread >= 32)
+            break;
+    }
 }

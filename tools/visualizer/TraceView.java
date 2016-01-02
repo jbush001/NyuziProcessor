@@ -22,53 +22,53 @@ import java.awt.event.*;
 
 class TraceView extends JPanel
 {
-	TraceView(TraceModel model)
-	{
-		fModel = model;
-		setPreferredSize(new Dimension(kEventWidth * fModel.getNumEvents(),
-			kRowHeight * fModel.getNumRows()));
-	}
+    TraceView(TraceModel model)
+    {
+        fModel = model;
+        setPreferredSize(new Dimension(kEventWidth * fModel.getNumEvents(),
+                                       kRowHeight * fModel.getNumRows()));
+    }
 
-	private int kEventWidth = 3;
-	private int kRowHeight = 40;
+    private int kEventWidth = 3;
+    private int kRowHeight = 40;
 
-	protected void paintComponent(Graphics g)
-	{
-		super.paintComponent(g);
+    protected void paintComponent(Graphics g)
+    {
+        super.paintComponent(g);
 
-		Rectangle visibleRect = getVisibleRect();
-		int firstEvent = visibleRect.x / kEventWidth;
-		int lastEvent = visibleRect.x + visibleRect.width / kEventWidth + 1;
+        Rectangle visibleRect = getVisibleRect();
+        int firstEvent = visibleRect.x / kEventWidth;
+        int lastEvent = visibleRect.x + visibleRect.width / kEventWidth + 1;
 
-		for (int event = firstEvent; event < lastEvent; event++)
-		{
-			boolean idle = true;
-			for (int row = 0; row < fModel.getNumRows(); row++)
-			{
-				int value = fModel.getEvent(row, event);
-				if (value == 4)
-					idle = false;
+        for (int event = firstEvent; event < lastEvent; event++)
+        {
+            boolean idle = true;
+            for (int row = 0; row < fModel.getNumRows(); row++)
+            {
+                int value = fModel.getEvent(row, event);
+                if (value == 4)
+                    idle = false;
 
-				g.setColor(fEventColors[value]);
-				g.fillRect(event * kEventWidth, row * kRowHeight, kEventWidth - 1, kRowHeight - 2);
-			}
+                g.setColor(fEventColors[value]);
+                g.fillRect(event * kEventWidth, row * kRowHeight, kEventWidth - 1, kRowHeight - 2);
+            }
 
-			if (!idle)
-			{
-				int y = kRowHeight * fModel.getNumRows() + 1;
-				g.setColor(Color.blue);
-				g.fillRect(event * kEventWidth, y, kEventWidth, 5);
-			}
-		}
-	}
+            if (!idle)
+            {
+                int y = kRowHeight * fModel.getNumRows() + 1;
+                g.setColor(Color.blue);
+                g.fillRect(event * kEventWidth, y, kEventWidth, 5);
+            }
+        }
+    }
 
-	private TraceModel fModel;
-	private Color[] fEventColors = {
-		Color.black,
-		Color.red,
-		Color.yellow,
-		Color.orange,
-		Color.green
-	};
+    private TraceModel fModel;
+    private Color[] fEventColors = {
+        Color.black,
+        Color.red,
+        Color.yellow,
+        Color.orange,
+        Color.green
+    };
 }
 

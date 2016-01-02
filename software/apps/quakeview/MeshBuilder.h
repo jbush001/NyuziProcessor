@@ -29,22 +29,22 @@ const int kMinAlloc = 32;
 class MeshBuilder
 {
 public:
-	MeshBuilder(int numAttributes);
-	void addPolyPoint(const float attributes[]);
-	void finishPoly();
-	void finish(librender::RenderBuffer &vertexBuffer, librender::RenderBuffer &indexBuffer);
+    MeshBuilder(int numAttributes);
+    void addPolyPoint(const float attributes[]);
+    void finishPoly();
+    void finish(librender::RenderBuffer &vertexBuffer, librender::RenderBuffer &indexBuffer);
 
 private:
-	void appendIndex(int value);
-	void appendVertex(float value);
+    void appendIndex(int value);
+    void appendVertex(float value);
 
-	int fNumAttributes;
-	int *fIndexVector;
-	int fNumIndices = 0;
-	float *fVertexVector;
-	int fNumVertexAttrs = 0;
-	int fPolyPointCount = 0;
-	int fFirstPolyIndex;
-	int fPolyIndex1;
-	int fPolyIndex2;
+    int fNumAttributes;
+    int *fIndexVector;
+    int fNumIndices = 0;
+    float *fVertexVector;
+    int fNumVertexAttrs = 0;
+    int fPolyPointCount = 0;
+    int fFirstPolyIndex;
+    int fPolyIndex1;
+    int fPolyIndex2;
 };

@@ -25,102 +25,102 @@ namespace librender
 class Vec3
 {
 public:
-	Vec3()
-	{
-		fValues[0] = 0.0f;
-		fValues[1] = 0.0f;
-		fValues[2] = 0.0f;
-	}
+    Vec3()
+    {
+        fValues[0] = 0.0f;
+        fValues[1] = 0.0f;
+        fValues[2] = 0.0f;
+    }
 
-	Vec3(float a, float b, float c)
-	{
-		fValues[0] = a;
-		fValues[1] = b;
-		fValues[2] = c;
-	}
+    Vec3(float a, float b, float c)
+    {
+        fValues[0] = a;
+        fValues[1] = b;
+        fValues[2] = c;
+    }
 
-	Vec3 operator+(const Vec3 &other) const
-	{
-		Vec3 newVal;
-		for (int i = 0; i < 3; i++)
-			newVal.fValues[i] = fValues[i] + other.fValues[i];
+    Vec3 operator+(const Vec3 &other) const
+    {
+        Vec3 newVal;
+        for (int i = 0; i < 3; i++)
+            newVal.fValues[i] = fValues[i] + other.fValues[i];
 
-		return newVal;
-	}
+        return newVal;
+    }
 
-	Vec3 operator-(const Vec3 &other) const
-	{
-		Vec3 newVal;
-		for (int i = 0; i < 3; i++)
-			newVal.fValues[i] = fValues[i] - other.fValues[i];
+    Vec3 operator-(const Vec3 &other) const
+    {
+        Vec3 newVal;
+        for (int i = 0; i < 3; i++)
+            newVal.fValues[i] = fValues[i] - other.fValues[i];
 
-		return newVal;
-	}
+        return newVal;
+    }
 
-	Vec3 operator*(float other) const
-	{
-		Vec3 newVal;
-		for (int i = 0; i < 3; i++)
-			newVal.fValues[i] = fValues[i] * other;
+    Vec3 operator*(float other) const
+    {
+        Vec3 newVal;
+        for (int i = 0; i < 3; i++)
+            newVal.fValues[i] = fValues[i] * other;
 
-		return newVal;
-	}
+        return newVal;
+    }
 
-	Vec3 operator/(float other) const
-	{
-		Vec3 newVal;
-		float denom = 1.0 / other;
-		for (int i = 0; i < 3; i++)
-			newVal.fValues[i] = fValues[i] * denom;
+    Vec3 operator/(float other) const
+    {
+        Vec3 newVal;
+        float denom = 1.0 / other;
+        for (int i = 0; i < 3; i++)
+            newVal.fValues[i] = fValues[i] * denom;
 
-		return newVal;
-	}
+        return newVal;
+    }
 
-	float magnitude() const
-	{
-		float magSquared = 0.0;
-		for (int i = 0; i < 3; i++)
-			magSquared += fValues[i] * fValues[i];
+    float magnitude() const
+    {
+        float magSquared = 0.0;
+        for (int i = 0; i < 3; i++)
+            magSquared += fValues[i] * fValues[i];
 
-		return sqrt(magSquared);
-	}
+        return sqrt(magSquared);
+    }
 
-	Vec3 normalized() const
-	{
-		return *this / magnitude();
-	}
+    Vec3 normalized() const
+    {
+        return *this / magnitude();
+    }
 
-	float &operator[](int index)
-	{
-		return fValues[index];
-	}
+    float &operator[](int index)
+    {
+        return fValues[index];
+    }
 
-	float operator[](int index) const
-	{
-		return fValues[index];
-	}
+    float operator[](int index) const
+    {
+        return fValues[index];
+    }
 
-	Vec3 crossProduct(const Vec3 &other) const
-	{
-		Vec3 result;
-		result.fValues[0] = fValues[1] * other.fValues[2] - fValues[2] * other.fValues[1];
-		result.fValues[1] = fValues[2] * other.fValues[0] - fValues[0] * other.fValues[2];
-		result.fValues[2] = fValues[0] * other.fValues[1] - fValues[1] * other.fValues[0];
-		return result;
-	}
+    Vec3 crossProduct(const Vec3 &other) const
+    {
+        Vec3 result;
+        result.fValues[0] = fValues[1] * other.fValues[2] - fValues[2] * other.fValues[1];
+        result.fValues[1] = fValues[2] * other.fValues[0] - fValues[0] * other.fValues[2];
+        result.fValues[2] = fValues[0] * other.fValues[1] - fValues[1] * other.fValues[0];
+        return result;
+    }
 
-	Vec3 operator-() const
-	{
-		return Vec3(-fValues[0], -fValues[1], -fValues[2]);
-	}
+    Vec3 operator-() const
+    {
+        return Vec3(-fValues[0], -fValues[1], -fValues[2]);
+    }
 
-	void print() const
-	{
-		printf("%f %f %f\n", fValues[0], fValues[1], fValues[2]);
-	}
+    void print() const
+    {
+        printf("%f %f %f\n", fValues[0], fValues[1], fValues[2]);
+    }
 
 private:
-	float fValues[3];
+    float fValues[3];
 };
 
 }

@@ -18,6 +18,6 @@
 
 int main()
 {
-	*((unsigned int*) 1) = 0;
-	return 0;
+    *((unsigned int*) 1) = 0;
+    return 0;
 }

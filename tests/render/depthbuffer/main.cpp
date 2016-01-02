@@ -34,15 +34,15 @@ const int kFbWidth = 640;
 const int kFbHeight = 480;
 
 static float kTriangleVertices[] = {
-	// 1st triangle
-	 0.0,  0.9, -5.0,     1.0, 0.0, 0.0, 1.0,
-	-0.9, -0.7, -1.0,     1.0, 0.0, 0.0, 1.0,
-	 0.9, -0.7, -10.0,    1.0, 0.0, 0.0, 1.0,
+    // 1st triangle
+    0.0,  0.9, -5.0,     1.0, 0.0, 0.0, 1.0,
+    -0.9, -0.7, -1.0,     1.0, 0.0, 0.0, 1.0,
+    0.9, -0.7, -10.0,    1.0, 0.0, 0.0, 1.0,
 
-	// 2nd triangle
- 	 0.0, -0.9, -5.0,     0.0, 1.0, 0.0, 1.0,
- 	 0.9,  0.7, -1.0,     0.0, 1.0, 0.0, 1.0,
- 	-0.9,  0.7, -10.0,    0.0, 1.0, 0.0, 1.0,
+    // 2nd triangle
+    0.0, -0.9, -5.0,     0.0, 1.0, 0.0, 1.0,
+    0.9,  0.7, -1.0,     0.0, 1.0, 0.0, 1.0,
+    -0.9,  0.7, -10.0,    0.0, 1.0, 0.0, 1.0,
 };
 
 static int kTriangleIndices[] = { 0, 1, 2, 3, 4, 5 };
@@ -50,28 +50,28 @@ static int kTriangleIndices[] = { 0, 1, 2, 3, 4, 5 };
 // All threads start execution here.
 int main()
 {
-	if (__builtin_nyuzi_read_control_reg(0) == 0)
-		init_vga(VGA_MODE_640x480);
-	else
-		workerThread();
+    if (__builtin_nyuzi_read_control_reg(0) == 0)
+        init_vga(VGA_MODE_640x480);
+    else
+        workerThread();
 
-	startAllThreads();
+    startAllThreads();
 
-	RenderContext *context = new RenderContext();
-	RenderTarget *renderTarget = new RenderTarget();
-	Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
-	Surface *depthBuffer = new Surface(kFbWidth, kFbHeight);
-	renderTarget->setColorBuffer(colorBuffer);
-	renderTarget->setDepthBuffer(depthBuffer);
-	context->bindTarget(renderTarget);
-	context->enableDepthBuffer(true);
-	context->bindShader(new ColorShader());
+    RenderContext *context = new RenderContext();
+    RenderTarget *renderTarget = new RenderTarget();
+    Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
+    Surface *depthBuffer = new Surface(kFbWidth, kFbHeight);
+    renderTarget->setColorBuffer(colorBuffer);
+    renderTarget->setDepthBuffer(depthBuffer);
+    context->bindTarget(renderTarget);
+    context->enableDepthBuffer(true);
+    context->bindShader(new ColorShader());
 
-	const RenderBuffer kVertices(kTriangleVertices, 6, 7 * sizeof(float));
-	const RenderBuffer kIndices(kTriangleIndices, 6, sizeof(int));
-	context->clearColorBuffer();
-	context->bindVertexAttrs(&kVertices);
-	context->drawElements(&kIndices);
-	context->finish();
-	return 0;
+    const RenderBuffer kVertices(kTriangleVertices, 6, 7 * sizeof(float));
+    const RenderBuffer kIndices(kTriangleIndices, 6, sizeof(int));
+    context->clearColorBuffer();
+    context->bindVertexAttrs(&kVertices);
+    context->drawElements(&kIndices);
+    context->finish();
+    return 0;
 }

@@ -39,7 +39,7 @@ char**			myargv;
 // or 0 if not present
 int M_CheckParm (char *check)
 {
-	return 0;
+    return 0;
 }
 
 

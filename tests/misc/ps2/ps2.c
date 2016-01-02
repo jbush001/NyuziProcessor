@@ -22,54 +22,54 @@ static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff
 
 unsigned int wait_keypress()
 {
-	int timeout = 5000;
-	while (REGISTERS[0x38 / 4] == 0 && timeout-- > 0)
-		;
+    int timeout = 5000;
+    while (REGISTERS[0x38 / 4] == 0 && timeout-- > 0)
+        ;
 
-	if (timeout == 0)
-	{
-		printf("FAIL: Timeout waiting for keyboard character\n");
-		exit(1);
-	}
+    if (timeout == 0)
+    {
+        printf("FAIL: Timeout waiting for keyboard character\n");
+        exit(1);
+    }
 
-	return REGISTERS[0x3c / 4];
+    return REGISTERS[0x3c / 4];
 }
 
 int main()
 {
-	unsigned int start_value;
-	unsigned int scancode;
+    unsigned int start_value;
+    unsigned int scancode;
 
-	for (unsigned int i = 0; i < 20; i++)
-	{
-		scancode = wait_keypress();
-		printf("%02x\n", scancode);
-		if (scancode != i)
-		{
-			printf("FAIL: mismatch: want %02x got %02x", i, scancode);
-			exit(1);
-		}
-	}
+    for (unsigned int i = 0; i < 20; i++)
+    {
+        scancode = wait_keypress();
+        printf("%02x\n", scancode);
+        if (scancode != i)
+        {
+            printf("FAIL: mismatch: want %02x got %02x", i, scancode);
+            exit(1);
+        }
+    }
 
-	printf("overrun...\n");
-	// Test overrun
-	usleep(5000);
+    printf("overrun...\n");
+    // Test overrun
+    usleep(5000);
 
-	// Ensure the oldest characters are dropped
-	start_value = wait_keypress();
-	printf("%02x\n", start_value);
-	for (unsigned int i = 1; i < 20; i++)
-	{
-		scancode = wait_keypress();
-		printf("%02x\n", scancode);
-		if (scancode != i + start_value)
-		{
-			printf("FAIL: mismatch: want %02x got %02x", i + start_value, scancode);
-			exit(1);
-		}
-	}
+    // Ensure the oldest characters are dropped
+    start_value = wait_keypress();
+    printf("%02x\n", start_value);
+    for (unsigned int i = 1; i < 20; i++)
+    {
+        scancode = wait_keypress();
+        printf("%02x\n", scancode);
+        if (scancode != i + start_value)
+        {
+            printf("FAIL: mismatch: want %02x got %02x", i + start_value, scancode);
+            exit(1);
+        }
+    }
 
-	printf("PASS\n");
+    printf("PASS\n");
 
-	return 0;
+    return 0;
 }

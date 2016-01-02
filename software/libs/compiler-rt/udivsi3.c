@@ -17,27 +17,27 @@
 // Unsigned 32-bit integer division
 unsigned int __udivsi3(unsigned int dividend, unsigned int divisor)
 {
-	if (dividend < divisor)
-		return 0;
+    if (dividend < divisor)
+        return 0;
 
-	// Align high bits of divisor and dividend
-	int quotientBits = __builtin_clz(divisor) - __builtin_clz(dividend);
-	divisor <<= quotientBits;
-	unsigned int quotient = 0;
-	do
-	{
-		quotient <<= 1;
-		if (dividend >= divisor)
-		{
-			dividend -= divisor;
-			quotient |= 1;
-		}
+    // Align high bits of divisor and dividend
+    int quotientBits = __builtin_clz(divisor) - __builtin_clz(dividend);
+    divisor <<= quotientBits;
+    unsigned int quotient = 0;
+    do
+    {
+        quotient <<= 1;
+        if (dividend >= divisor)
+        {
+            dividend -= divisor;
+            quotient |= 1;
+        }
 
-		divisor >>= 1;
-	}
-	while (--quotientBits >= 0);
+        divisor >>= 1;
+    }
+    while (--quotientBits >= 0);
 
-	return quotient;
+    return quotient;
 }
 
 

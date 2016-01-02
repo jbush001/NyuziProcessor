@@ -30,52 +30,52 @@ extern void enable_mmu();
 
 int main(void)
 {
-	unsigned int rand_seed;
-	int offset;
-	int *mem_region = (int*) 0x400000;
+    unsigned int rand_seed;
+    int offset;
+    int *mem_region = (int*) 0x400000;
 
-	// Enable MMU in flags register
-	__builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, tlb_miss_handler);
+    // Enable MMU in flags register
+    __builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, tlb_miss_handler);
 
-	// Validate enabling MMU by setting saved flags and calling eret
-	enable_mmu();
+    // Validate enabling MMU by setting saved flags and calling eret
+    enable_mmu();
 
-	// Make sure MMU is actually enabled
-	if (__builtin_nyuzi_read_control_reg(CR_FLAGS) != (FLAG_MMU_EN | FLAG_SUPERVISOR_EN))
-	{
-		printf("FAIL 1: MMU not enabled\n");
-		return 1;
-	}
+    // Make sure MMU is actually enabled
+    if (__builtin_nyuzi_read_control_reg(CR_FLAGS) != (FLAG_MMU_EN | FLAG_SUPERVISOR_EN))
+    {
+        printf("FAIL 1: MMU not enabled\n");
+        return 1;
+    }
 
-	// Fill memory region
-	rand_seed = 0x2e48fa04;
-	for (offset = 0; offset < FILL_SIZE / sizeof(int); offset += PAGE_SIZE
-		/ sizeof(int))
-	{
-		mem_region[offset] = rand_seed;
-		rand_seed = rand_seed * 1664525 + 1013904223;
-	}
+    // Fill memory region
+    rand_seed = 0x2e48fa04;
+    for (offset = 0; offset < FILL_SIZE / sizeof(int); offset += PAGE_SIZE
+            / sizeof(int))
+    {
+        mem_region[offset] = rand_seed;
+        rand_seed = rand_seed * 1664525 + 1013904223;
+    }
 
-	// Check memory region
-	rand_seed = 0x2e48fa04;
-	for (offset = 0; offset < FILL_SIZE / sizeof(int); offset += PAGE_SIZE
-		/ sizeof(int))
-	{
-		if (mem_region[offset] != rand_seed)
-		{
-			printf("FAIL: Mismatch at offset %d\n", offset);
-			exit(1);
-		}
+    // Check memory region
+    rand_seed = 0x2e48fa04;
+    for (offset = 0; offset < FILL_SIZE / sizeof(int); offset += PAGE_SIZE
+            / sizeof(int))
+    {
+        if (mem_region[offset] != rand_seed)
+        {
+            printf("FAIL: Mismatch at offset %d\n", offset);
+            exit(1);
+        }
 
-		rand_seed = rand_seed * 1664525 + 1013904223;
-	}
+        rand_seed = rand_seed * 1664525 + 1013904223;
+    }
 
-	// Make sure MMU is still enabled
-	if (__builtin_nyuzi_read_control_reg(CR_FLAGS) != (FLAG_MMU_EN | FLAG_SUPERVISOR_EN))
-	{
-		printf("FAIL 2: MMU not enabled\n");
-		return 1;
-	}
+    // Make sure MMU is still enabled
+    if (__builtin_nyuzi_read_control_reg(CR_FLAGS) != (FLAG_MMU_EN | FLAG_SUPERVISOR_EN))
+    {
+        printf("FAIL 2: MMU not enabled\n");
+        return 1;
+    }
 
-	printf("PASS\n");
+    printf("PASS\n");
 }

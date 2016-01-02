@@ -26,74 +26,74 @@ using namespace librender;
 
 struct TextureUniforms
 {
-	Matrix fMVPMatrix;
-	Matrix fNormalMatrix;
-	bool fHasTexture;
-	Vec3 fLightDirection;
-	float fAmbient;
-	float fDirectional;
+    Matrix fMVPMatrix;
+    Matrix fNormalMatrix;
+    bool fHasTexture;
+    Vec3 fLightDirection;
+    float fAmbient;
+    float fDirectional;
 };
 
 class TextureShader : public Shader
 {
 public:
-	TextureShader()
-		:	Shader(8, 9)
-	{
-	}
+    TextureShader()
+        :	Shader(8, 9)
+    {
+    }
 
-	void shadeVertices(vecf16_t *outParams, const vecf16_t *inAttribs, const void *_uniforms,
-        int) const override
-	{
+    void shadeVertices(vecf16_t *outParams, const vecf16_t *inAttribs, const void *_uniforms,
+                       int) const override
+    {
         const TextureUniforms *uniforms = static_cast<const TextureUniforms*>(_uniforms);
 
-		// Multiply vertex position by mvp matrix
-		vecf16_t coord[4];
-		for (int i = 0; i < 3; i++)
-			coord[i] = inAttribs[i];
+        // Multiply vertex position by mvp matrix
+        vecf16_t coord[4];
+        for (int i = 0; i < 3; i++)
+            coord[i] = inAttribs[i];
 
-		coord[3] = splatf(1.0f);
-		uniforms->fMVPMatrix.mulVec(outParams, coord);
+        coord[3] = splatf(1.0f);
+        uniforms->fMVPMatrix.mulVec(outParams, coord);
 
-		// Copy texture coordinate
-		outParams[4] = inAttribs[3];
-		outParams[5] = inAttribs[4];
+        // Copy texture coordinate
+        outParams[4] = inAttribs[3];
+        outParams[5] = inAttribs[4];
 
-		// Multiply normal
-		for (int i = 0; i < 3; i++)
-			coord[i] = inAttribs[i + 5];
+        // Multiply normal
+        for (int i = 0; i < 3; i++)
+            coord[i] = inAttribs[i + 5];
 
-		coord[3] = splatf(1.0f);
-		uniforms->fNormalMatrix.mulVec(outParams + 6, coord);
-	}
+        coord[3] = splatf(1.0f);
+        uniforms->fNormalMatrix.mulVec(outParams + 6, coord);
+    }
 
-	void shadePixels(vecf16_t *outColor, const vecf16_t *inParams,
-		const void *_castToUniforms, const Texture * const * sampler,
-		unsigned short mask) const override
-	{
-		const TextureUniforms *uniforms = static_cast<const TextureUniforms*>(_castToUniforms);
+    void shadePixels(vecf16_t *outColor, const vecf16_t *inParams,
+                     const void *_castToUniforms, const Texture * const * sampler,
+                     unsigned short mask) const override
+    {
+        const TextureUniforms *uniforms = static_cast<const TextureUniforms*>(_castToUniforms);
 
-		// Determine lambertian illumination
-		vecf16_t dot = -inParams[2] * splatf(uniforms->fLightDirection[0])
-			+ -inParams[3] * splatf(uniforms->fLightDirection[1])
-			+ -inParams[4] * splatf(uniforms->fLightDirection[2]);
-		dot *= splatf(uniforms->fDirectional);
-		vecf16_t illumination = librender::clampfv(dot) + splatf(uniforms->fAmbient);
+        // Determine lambertian illumination
+        vecf16_t dot = -inParams[2] * splatf(uniforms->fLightDirection[0])
+                       + -inParams[3] * splatf(uniforms->fLightDirection[1])
+                       + -inParams[4] * splatf(uniforms->fLightDirection[2]);
+        dot *= splatf(uniforms->fDirectional);
+        vecf16_t illumination = librender::clampfv(dot) + splatf(uniforms->fAmbient);
 
-		if (uniforms->fHasTexture)
-		{
-			sampler[0]->readPixels(inParams[0], inParams[1], mask, outColor);
-			outColor[kColorR] *= illumination;
-			outColor[kColorG] *= illumination;
-			outColor[kColorB] *= illumination;
-		}
-		else
-		{
-			outColor[kColorR] = illumination;
-			outColor[kColorB] = illumination;
-			outColor[kColorG] = illumination;
-			outColor[kColorA] = splatf(1.0);
-		}
-	}
+        if (uniforms->fHasTexture)
+        {
+            sampler[0]->readPixels(inParams[0], inParams[1], mask, outColor);
+            outColor[kColorR] *= illumination;
+            outColor[kColorG] *= illumination;
+            outColor[kColorB] *= illumination;
+        }
+        else
+        {
+            outColor[kColorR] = illumination;
+            outColor[kColorB] = illumination;
+            outColor[kColorG] = illumination;
+            outColor[kColorA] = splatf(1.0);
+        }
+    }
 };
 

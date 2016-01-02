@@ -26,44 +26,57 @@ import struct
 sys.path.insert(0, '../..')
 import test_harness
 
-BASE_ADDRESS=0x400000
+BASE_ADDRESS = 0x400000
+
 
 def dflush_test(name):
-	test_harness.compile_test('dflush.c')
-	test_harness.run_verilator(dump_file='obj/vmem.bin', dump_base=BASE_ADDRESS, dump_length=0x40000)
-	with open('obj/vmem.bin', 'rb') as f:
-		index = 0
-		while True:
-			val = f.read(4)
-			if len(val):
-				break
+    test_harness.compile_test('dflush.c')
+    test_harness.run_verilator(
+        dump_file='obj/vmem.bin', dump_base=BASE_ADDRESS, dump_length=0x40000)
+    with open('obj/vmem.bin', 'rb') as f:
+        index = 0
+        while True:
+            val = f.read(4)
+            if len(val):
+                break
 
-			numVal = ord(val[0]) | (ord(val[1]) << 8) | (ord(val[2]) << 16) | (ord(val[3]) << 24)
-			expected = 0x1f0e6231 + (index // 16)
-			if numVal != expected:
-				raise test_harness.TestException('FAIL: mismatch at' + hex(BASE_ADDRESS + (index * 4)) + 'want' + str(expected) + 'got' + str(numVal))
+            numVal = ord(val[0]) | (ord(val[1]) << 8) | (
+                ord(val[2]) << 16) | (ord(val[3]) << 24)
+            expected = 0x1f0e6231 + (index // 16)
+            if numVal != expected:
+                raise test_harness.TestException('FAIL: mismatch at' + hex(
+                    BASE_ADDRESS + (index * 4)) + 'want' + str(expected) + 'got' + str(numVal))
 
-			index += 1
+            index += 1
+
 
 def dinvalidate_test(name):
-	test_harness.assemble_test('dinvalidate.s')
-	result = test_harness.run_verilator(dump_file='obj/vmem.bin', dump_base=0x100, dump_length=4,
-		extra_args=['+trace=1', '+autoflushl2=1'])
+    test_harness.assemble_test('dinvalidate.s')
+    result = test_harness.run_verilator(
+        dump_file='obj/vmem.bin',
+        dump_base=0x100,
+        dump_length=4,
+        extra_args=[
+            '+trace=1',
+            '+autoflushl2=1'])
 
-	# 1. Check that the proper value was read into s2
-	if result.find('02 deadbeef') == -1:
-		raise test_harness.TestException('incorrect value was written back ' + result)
+    # 1. Check that the proper value was read into s2
+    if result.find('02 deadbeef') == -1:
+        raise test_harness.TestException(
+            'incorrect value was written back ' + result)
 
-	# 2. Read the memory dump to ensure the proper value is flushed from the L2 cache
-	with open('obj/vmem.bin', 'rb') as f:
-		numVal = struct.unpack('<L', f.read(4))[0]
-		if numVal != 0xdeadbeef:
-			print(hex(numVal))
-			raise test_harness.TestException('memory contents were incorrect')
+    # 2. Read the memory dump to ensure the proper value is flushed from the
+    # L2 cache
+    with open('obj/vmem.bin', 'rb') as f:
+        numVal = struct.unpack('<L', f.read(4))[0]
+        if numVal != 0xdeadbeef:
+            print(hex(numVal))
+            raise test_harness.TestException('memory contents were incorrect')
+
 
 def dflush_wait_test(name):
-	test_harness.assemble_test('dflush_wait.s')
-	test_harness.run_verilator()
+    test_harness.assemble_test('dflush_wait.s')
+    test_harness.run_verilator()
 
 test_harness.register_tests(dflush_test, ['dflush'])
 test_harness.register_tests(dinvalidate_test, ['dinvalidate'])

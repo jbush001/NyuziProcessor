@@ -24,77 +24,77 @@ using namespace std;
 
 namespace
 {
-	vluint64_t currentTime = 0;
+vluint64_t currentTime = 0;
 }
 
 // Called whenever the $time variable is accessed.
 double sc_time_stamp()
 {
-	return currentTime;
+    return currentTime;
 }
 
 int main(int argc, char **argv, char **env)
 {
-	unsigned int randomSeed;
-	unsigned int randomizeRegs;
+    unsigned int randomSeed;
+    unsigned int randomizeRegs;
 
-	Verilated::commandArgs(argc, argv);
-	Verilated::debug(0);
+    Verilated::commandArgs(argc, argv);
+    Verilated::debug(0);
 
-	// Initialize random seed.
-	if (VL_VALUEPLUSARGS_II(32, "randseed=", 'd', randomSeed))
-		srand48(randomSeed);
-	else
-	{
-		time_t t1;
-		time(&t1);
-		srand48((long) t1);
-		VL_PRINTF("Random seed is %li\n", t1);
-	}
+    // Initialize random seed.
+    if (VL_VALUEPLUSARGS_II(32, "randseed=", 'd', randomSeed))
+        srand48(randomSeed);
+    else
+    {
+        time_t t1;
+        time(&t1);
+        srand48((long) t1);
+        VL_PRINTF("Random seed is %li\n", t1);
+    }
 
-	if (!VL_VALUEPLUSARGS_II(32, "randomize=", 'd', randomizeRegs))
-		randomizeRegs = 1;
+    if (!VL_VALUEPLUSARGS_II(32, "randomize=", 'd', randomizeRegs))
+        randomizeRegs = 1;
 
-	// If this is set, randomize the initial values of registers and
-	// SRAMs.
-	if (randomizeRegs)
-		Verilated::randReset(2);
-	else
-		Verilated::randReset(0);
+    // If this is set, randomize the initial values of registers and
+    // SRAMs.
+    if (randomizeRegs)
+        Verilated::randReset(2);
+    else
+        Verilated::randReset(0);
 
-	Vverilator_tb* testbench = new Vverilator_tb;
-	testbench->reset = 1;
-	testbench->clk = 0;
+    Vverilator_tb* testbench = new Vverilator_tb;
+    testbench->reset = 1;
+    testbench->clk = 0;
 
 #if VM_TRACE			// If verilator was invoked with --trace
-	Verilated::traceEverOn(true);
-	VL_PRINTF("Writing waveform to trace.vcd\n");
-	VerilatedVcdC* tfp = new VerilatedVcdC;
-	testbench->trace(tfp, 99);
-	tfp->open("trace.vcd");
+    Verilated::traceEverOn(true);
+    VL_PRINTF("Writing waveform to trace.vcd\n");
+    VerilatedVcdC* tfp = new VerilatedVcdC;
+    testbench->trace(tfp, 99);
+    tfp->open("trace.vcd");
 #endif
 
-	while (!Verilated::gotFinish())
-	{
-		if (currentTime > 10)
-			testbench->reset = 0;   // Deassert reset
+    while (!Verilated::gotFinish())
+    {
+        if (currentTime > 10)
+            testbench->reset = 0;   // Deassert reset
 
-		// Toggle clock
-		testbench->clk = !testbench->clk;
-		testbench->eval();
+        // Toggle clock
+        testbench->clk = !testbench->clk;
+        testbench->eval();
 #if VM_TRACE
-		tfp->dump(currentTime);	// Create waveform trace for this timestamp
+        tfp->dump(currentTime);	// Create waveform trace for this timestamp
 #endif
 
-		currentTime++;
-	}
+        currentTime++;
+    }
 
 #if VM_TRACE
-	tfp->close();
+    tfp->close();
 #endif
 
-	testbench->final();
-	delete testbench;
+    testbench->final();
+    delete testbench;
 
-	return 0;
+    return 0;
 }

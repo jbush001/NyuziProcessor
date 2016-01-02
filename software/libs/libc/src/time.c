@@ -20,5 +20,5 @@
 
 clock_t clock(void)
 {
-	return __builtin_nyuzi_read_control_reg(6) / (CLOCK_HZ / CLOCKS_PER_SEC);
+    return __builtin_nyuzi_read_control_reg(6) / (CLOCK_HZ / CLOCKS_PER_SEC);
 }

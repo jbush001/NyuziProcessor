@@ -25,14 +25,14 @@ import math
 import sys
 
 if len(sys.argv) != 2:
-	print('enter number of entries')
-	sys.exit(1)
+    print('enter number of entries')
+    sys.exit(1)
 
 NUM_ENTRIES = int(sys.argv[1])
 if (NUM_ENTRIES & (NUM_ENTRIES - 1)) != 0:
-	# Must be power of two
-	print('number of entries must be power of two')
-	sys.exit(1)
+    # Must be power of two
+    print('number of entries must be power of two')
+    sys.exit(1)
 
 WIDTH = int(math.log(NUM_ENTRIES, 2))
 
@@ -50,9 +50,10 @@ module reciprocal_rom(
 		case (significand)''')
 
 for x in range(0, NUM_ENTRIES):
-	significand = NUM_ENTRIES | x
-	reciprocal = int((NUM_ENTRIES * NUM_ENTRIES * 2) / significand)
-	print('\t\t\t%d\'h%x: reciprocal_estimate = %d\'h%x;' % (WIDTH, x, WIDTH, reciprocal & (NUM_ENTRIES - 1)))
+    significand = NUM_ENTRIES | x
+    reciprocal = int((NUM_ENTRIES * NUM_ENTRIES * 2) / significand)
+    print('\t\t\t%d\'h%x: reciprocal_estimate = %d\'h%x;' %
+          (WIDTH, x, WIDTH, reciprocal & (NUM_ENTRIES - 1)))
 
 print('''\t\t\tdefault: reciprocal_estimate = 6'h0;
 \t\tendcase

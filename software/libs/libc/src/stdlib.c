@@ -25,58 +25,58 @@ int __errno_array[__MAX_THREADS];
 
 void abort(void)
 {
-	puts("abort");
-	exit(0);
+    puts("abort");
+    exit(0);
 }
 
 int abs(int value)
 {
-	if (value < 0)
-		return -value;
+    if (value < 0)
+        return -value;
 
-	return value;
+    return value;
 }
 
 // XXX bug: doesn't handle negative numbers
 int atoi(const char *num)
 {
-	int value = 0;
-	while (*num && isdigit(*num))
-		value = value * 10 + *num++  - '0';
+    int value = 0;
+    while (*num && isdigit(*num))
+        value = value * 10 + *num++  - '0';
 
-	return value;
+    return value;
 }
 
 int rand(void)
 {
-	randseed = randseed * 1103515245 + 12345;
-	return randseed & 0x7fffffff;
+    randseed = randseed * 1103515245 + 12345;
+    return randseed & 0x7fffffff;
 }
 
 void srand(unsigned int seed)
 {
-	randseed = seed;
+    randseed = seed;
 }
 
 void* bsearch (const void *searchKey, const void *base, size_t num,
-	size_t size, int (*compare)(const void*,const void*))
+               size_t size, int (*compare)(const void*,const void*))
 {
-	int low = 0;
-	int high = num;
-	while (high - low > 1)
-	{
-		int mid = (low + high) / 2;
-		void *midKey = (char*) base + mid * size;
-		int compVal = (*compare)(searchKey, midKey);
-		if (compVal == 0)
-			return midKey;
-		else if (compVal < 0)
-			high = mid;
-		else
-			low = mid;
-	}
+    int low = 0;
+    int high = num;
+    while (high - low > 1)
+    {
+        int mid = (low + high) / 2;
+        void *midKey = (char*) base + mid * size;
+        int compVal = (*compare)(searchKey, midKey);
+        if (compVal == 0)
+            return midKey;
+        else if (compVal < 0)
+            high = mid;
+        else
+            low = mid;
+    }
 
-	return NULL;
+    return NULL;
 }
 
 

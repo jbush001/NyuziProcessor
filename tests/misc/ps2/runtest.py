@@ -22,11 +22,13 @@ import sys
 sys.path.insert(0, '../..')
 import test_harness
 
+
 def ps2_test(name):
-	test_harness.compile_test('ps2.c')
-	result = test_harness.run_verilator()
-	if result.find('PASS') == -1:
-		raise test_harness.TestException('program did not indicate pass\n' + result)
+    test_harness.compile_test('ps2.c')
+    result = test_harness.run_verilator()
+    if result.find('PASS') == -1:
+        raise test_harness.TestException(
+            'program did not indicate pass\n' + result)
 
 test_harness.register_tests(ps2_test, ['ps2'])
 test_harness.execute_tests()

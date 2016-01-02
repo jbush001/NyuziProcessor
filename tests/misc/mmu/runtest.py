@@ -21,81 +21,99 @@ import subprocess
 sys.path.insert(0, '../..')
 import test_harness
 
-DUMP_FILE='obj/memdump.bin'
-EXPECT_STRING=bytearray('Test String', encoding='ascii')
+DUMP_FILE = 'obj/memdump.bin'
+EXPECT_STRING = bytearray('Test String', encoding='ascii')
+
 
 def test_alias_verilator(name):
-	test_harness.compile_test(['alias.c', 'wrap_tlb_miss_handler.s'])
-	result = test_harness.run_verilator(dump_file=DUMP_FILE, dump_base=0x100000,
-		dump_length=32)
-	if result.find('read 00900000 "Test String"') == -1:
-		raise test_harness.TestException('did not get correct read string:\n' + result)
+    test_harness.compile_test(['alias.c', 'wrap_tlb_miss_handler.s'])
+    result = test_harness.run_verilator(
+        dump_file=DUMP_FILE,
+        dump_base=0x100000,
+        dump_length=32)
+    if result.find('read 00900000 "Test String"') == -1:
+        raise test_harness.TestException(
+            'did not get correct read string:\n' + result)
 
-	with open(DUMP_FILE, 'rb') as f:
-		if f.read(len(EXPECT_STRING)) != EXPECT_STRING:
-			raise test_harness.TestException('memory contents did not match')
+    with open(DUMP_FILE, 'rb') as f:
+        if f.read(len(EXPECT_STRING)) != EXPECT_STRING:
+            raise test_harness.TestException('memory contents did not match')
+
 
 def test_alias_emulator(name):
-	test_harness.compile_test(['alias.c', 'wrap_tlb_miss_handler.s'])
-	result = test_harness.run_emulator(dump_file=DUMP_FILE, dump_base=0x100000,
-		dump_length=32)
-	if result.find('read 00900000 "Test String"') == -1:
-		raise test_harness.TestException('did not get correct read string:\n' + result)
+    test_harness.compile_test(['alias.c', 'wrap_tlb_miss_handler.s'])
+    result = test_harness.run_emulator(dump_file=DUMP_FILE, dump_base=0x100000,
+                                       dump_length=32)
+    if result.find('read 00900000 "Test String"') == -1:
+        raise test_harness.TestException(
+            'did not get correct read string:\n' + result)
 
-	with open(DUMP_FILE, 'rb') as f:
-		if f.read(len(EXPECT_STRING)) != EXPECT_STRING:
-			raise test_harness.TestException('memory contents did not match')
+    with open(DUMP_FILE, 'rb') as f:
+        if f.read(len(EXPECT_STRING)) != EXPECT_STRING:
+            raise test_harness.TestException('memory contents did not match')
+
 
 def test_fill_verilator(name):
-	test_harness.compile_test(['fill_test.c', 'identity_tlb_miss_handler.s'])
-	result = test_harness.run_verilator()
-	if result.find('FAIL') != -1 or result.find('PASS') == -1:
-		raise test_harness.TestException(result + '\ntest did not signal pass\n' + result)
+    test_harness.compile_test(['fill_test.c', 'identity_tlb_miss_handler.s'])
+    result = test_harness.run_verilator()
+    if result.find('FAIL') != -1 or result.find('PASS') == -1:
+        raise test_harness.TestException(
+            result + '\ntest did not signal pass\n' + result)
 
-	# XXX check number of DTLB misses to ensure it is above/below thresholds
+    # XXX check number of DTLB misses to ensure it is above/below thresholds
+
 
 def test_fill_emulator(name):
-	test_harness.compile_test(['fill_test.c', 'identity_tlb_miss_handler.s'])
-	result = test_harness.run_emulator()
-	if result.find('FAIL') != -1 or result.find('PASS') == -1:
-		raise test_harness.TestException(result + '\ntest did not signal pass\n' + result)
+    test_harness.compile_test(['fill_test.c', 'identity_tlb_miss_handler.s'])
+    result = test_harness.run_emulator()
+    if result.find('FAIL') != -1 or result.find('PASS') == -1:
+        raise test_harness.TestException(
+            result + '\ntest did not signal pass\n' + result)
+
 
 def test_io_map_verilator(name):
-	test_harness.compile_test(['io_map.c'])
-	result = test_harness.run_verilator(dump_file=DUMP_FILE, dump_base=0x100000,
-		dump_length=32)
+    test_harness.compile_test(['io_map.c'])
+    result = test_harness.run_verilator(
+        dump_file=DUMP_FILE,
+        dump_base=0x100000,
+        dump_length=32)
 
-	# Check value printed via virtual serial port
-	if result.find('jabberwocky') == -1:
-		raise test_harness.TestException('did not get correct read string:\n' + result)
+    # Check value printed via virtual serial port
+    if result.find('jabberwocky') == -1:
+        raise test_harness.TestException(
+            'did not get correct read string:\n' + result)
 
-	# Check value written to memory
-	with open(DUMP_FILE, 'rb') as f:
-		if f.read(len('galumphing')) != bytearray('galumphing', 'ascii'):
-			raise test_harness.TestException('memory contents did not match')
+    # Check value written to memory
+    with open(DUMP_FILE, 'rb') as f:
+        if f.read(len('galumphing')) != bytearray('galumphing', 'ascii'):
+            raise test_harness.TestException('memory contents did not match')
+
 
 def test_io_map_emulator(name):
-	test_harness.compile_test(['io_map.c'])
-	result = test_harness.run_emulator(dump_file=DUMP_FILE, dump_base=0x100000,
-		dump_length=32)
+    test_harness.compile_test(['io_map.c'])
+    result = test_harness.run_emulator(dump_file=DUMP_FILE, dump_base=0x100000,
+                                       dump_length=32)
 
-	# Check value printed via virtual serial port
-	if result.find('jabberwocky') == -1:
-		raise test_harness.TestException('did not get correct read string:\n' + result)
+    # Check value printed via virtual serial port
+    if result.find('jabberwocky') == -1:
+        raise test_harness.TestException(
+            'did not get correct read string:\n' + result)
 
-	# Check value written to memory
-	with open(DUMP_FILE, 'rb') as f:
-		if f.read(len('galumphing')) != bytearray('galumphing', 'ascii'):
-			raise test_harness.TestException('memory contents did not match')
+    # Check value written to memory
+    with open(DUMP_FILE, 'rb') as f:
+        if f.read(len('galumphing')) != bytearray('galumphing', 'ascii'):
+            raise test_harness.TestException('memory contents did not match')
+
 
 def test_nested_fault(name):
-	test_harness.compile_test(['nested_fault.c', 'identity_tlb_miss_handler.s'])
-	if name.find('_verilator') != -1:
-		result = test_harness.run_verilator()
-	else:
-		result = test_harness.run_emulator()
+    test_harness.compile_test(
+        ['nested_fault.c', 'identity_tlb_miss_handler.s'])
+    if name.find('_verilator') != -1:
+        result = test_harness.run_verilator()
+    else:
+        result = test_harness.run_emulator()
 
-	test_harness.check_result('nested_fault.c', result)
+    test_harness.check_result('nested_fault.c', result)
 
 test_harness.register_tests(test_alias_verilator, ['alias_verilator'])
 test_harness.register_tests(test_alias_emulator, ['alias_emulator'])
@@ -103,7 +121,8 @@ test_harness.register_tests(test_fill_verilator, ['fill_verilator'])
 test_harness.register_tests(test_fill_emulator, ['fill_emulator'])
 test_harness.register_tests(test_io_map_verilator, ['io_map_verilator'])
 test_harness.register_tests(test_io_map_emulator, ['io_map_emulator'])
-test_harness.register_tests(test_nested_fault, ['nested_fault_verilator', 'nested_fault_emulator'])
+test_harness.register_tests(
+    test_nested_fault, ['nested_fault_verilator', 'nested_fault_emulator'])
 test_harness.register_generic_test('dflush_tlb_miss')
 test_harness.register_generic_test('dinvalidate_tlb_miss')
 test_harness.register_generic_test('duplicate_tlb_insert')

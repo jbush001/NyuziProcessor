@@ -24,23 +24,21 @@ import re
 
 speed_re = re.compile('(?P<speed>[0-9\.]+) MHz')
 with open('output_files/fpga_target.sta.rpt') as f:
-	foundSection = False
-	for line in f:
-		if foundSection:
-			got = speed_re.search(line)
-			if got:
-				print('Fmax ' + got.group('speed') + 'MHz')
-				break
-		elif line.find('; Slow 1200mV 85C Model Fmax Summary') != -1:
-			foundSection = True
+    foundSection = False
+    for line in f:
+        if foundSection:
+            got = speed_re.search(line)
+            if got:
+                print('Fmax ' + got.group('speed') + 'MHz')
+                break
+        elif line.find('; Slow 1200mV 85C Model Fmax Summary') != -1:
+            foundSection = True
 
 count_re = re.compile('(?P<num>[0-9,]+)')
 with open('output_files/fpga_target.fit.rpt') as f:
-	for line in f:
-		if line.find('Total logic elements') != -1:
-			got = count_re.search(line)
-			if got:
-				print(got.group('num') + ' Logic elements')
-				break
-			
-		
+    for line in f:
+        if line.find('Total logic elements') != -1:
+            got = count_re.search(line)
+            if got:
+                print(got.group('num') + ' Logic elements')
+                break

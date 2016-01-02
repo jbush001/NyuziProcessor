@@ -24,29 +24,29 @@ using namespace librender;
 class ColorShader : public Shader
 {
 public:
-	ColorShader()
-		:	Shader(3, 4)
-	{
-	}
+    ColorShader()
+        :	Shader(3, 4)
+    {
+    }
 
-	void shadeVertices(vecf16_t *outParams, const vecf16_t *inAttribs, const void *,
-        int ) const override
-	{
-		// Position
-		outParams[kParamX] = inAttribs[0];
-		outParams[kParamY] = inAttribs[1];
-		outParams[kParamZ] = inAttribs[2];
-		outParams[kParamW] = splatf(1.0);
-	}
+    void shadeVertices(vecf16_t *outParams, const vecf16_t *inAttribs, const void *,
+                       int ) const override
+    {
+        // Position
+        outParams[kParamX] = inAttribs[0];
+        outParams[kParamY] = inAttribs[1];
+        outParams[kParamZ] = inAttribs[2];
+        outParams[kParamW] = splatf(1.0);
+    }
 
-	void shadePixels(vecf16_t *outColor, const vecf16_t *,
-		const void *, const Texture * const *,
-		unsigned short ) const override
-	{
-		outColor[0] = splatf(1.0);
-		outColor[1] = splatf(1.0);
-		outColor[2] = splatf(1.0);
-		outColor[3] = splatf(1.0);
-	}
+    void shadePixels(vecf16_t *outColor, const vecf16_t *,
+                     const void *, const Texture * const *,
+                     unsigned short ) const override
+    {
+        outColor[0] = splatf(1.0);
+        outColor[1] = splatf(1.0);
+        outColor[2] = splatf(1.0);
+        outColor[3] = splatf(1.0);
+    }
 };
 

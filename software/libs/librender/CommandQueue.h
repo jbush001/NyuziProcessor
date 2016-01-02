@@ -31,215 +31,215 @@ template <typename T, int BUCKET_SIZE = 32>
 class CommandQueue
 {
 private:
-	struct Bucket;
+    struct Bucket;
 
 public:
-	CommandQueue() {}
-	CommandQueue(const CommandQueue&) = delete;
-	CommandQueue& operator=(const CommandQueue&) = delete;
+    CommandQueue() {}
+    CommandQueue(const CommandQueue&) = delete;
+    CommandQueue& operator=(const CommandQueue&) = delete;
 
-	void setAllocator(RegionAllocator *allocator)
-	{
-		fAllocator = allocator;
-	}
+    void setAllocator(RegionAllocator *allocator)
+    {
+        fAllocator = allocator;
+    }
 
-	void sort()
-	{
-		if (!fFirstBucket)
-			return;		// Empty
+    void sort()
+    {
+        if (!fFirstBucket)
+            return;		// Empty
 
-		// Insertion sort.  This is fairly efficient when the array
-		// is already mostly sorted, which is usually the case.
-		for (iterator i = begin().next(), e = end(); i != e; ++i)
-		{
-			iterator j = i;
-			while (j != begin() && *j.prev() > *j)
-			{
-				// swap
-				T temp = *j;
-				*j = *j.prev();
-				*j.prev() = temp;
-				--j;
-			}
-		}
-	}
+        // Insertion sort.  This is fairly efficient when the array
+        // is already mostly sorted, which is usually the case.
+        for (iterator i = begin().next(), e = end(); i != e; ++i)
+        {
+            iterator j = i;
+            while (j != begin() && *j.prev() > *j)
+            {
+                // swap
+                T temp = *j;
+                *j = *j.prev();
+                *j.prev() = temp;
+                --j;
+            }
+        }
+    }
 
-	void append(const T &copyFrom)
-	{
-		int index;
-		Bucket *bucket;
+    void append(const T &copyFrom)
+    {
+        int index;
+        Bucket *bucket;
 
-		while (true)
-		{
-			// When a new bucket is appended because the previous one is
-			// full, the last thing it does is sets fNextBucketIndex back to
-			// 0.  Read that *first* so we don't get a stale value for
-			// fLastBucket.  These are both volatile, so the compiler will not
-			// reorder them.
-			index = fNextBucketIndex;
-			bucket = fLastBucket;
-			if (index == BUCKET_SIZE || bucket == nullptr)
-			{
-				allocateBucket();
-				continue;
-			}
+        while (true)
+        {
+            // When a new bucket is appended because the previous one is
+            // full, the last thing it does is sets fNextBucketIndex back to
+            // 0.  Read that *first* so we don't get a stale value for
+            // fLastBucket.  These are both volatile, so the compiler will not
+            // reorder them.
+            index = fNextBucketIndex;
+            bucket = fLastBucket;
+            if (index == BUCKET_SIZE || bucket == nullptr)
+            {
+                allocateBucket();
+                continue;
+            }
 
-			if (__sync_bool_compare_and_swap(&fNextBucketIndex, index, index + 1))
-				break;
-		}
+            if (__sync_bool_compare_and_swap(&fNextBucketIndex, index, index + 1))
+                break;
+        }
 
-		bucket->items[index] = copyFrom;
-	}
+        bucket->items[index] = copyFrom;
+    }
 
-	// reset() must be called on this object before calling reset() on the
-	// RegionAllocator this object is using to properly clean up objects and
-	// to avoid stale pointers.
-	void reset()
-	{
-		// Invoke destructor on items.
-		for (Bucket *bucket = fFirstBucket; bucket; bucket = bucket->next)
-			bucket->~Bucket();
+    // reset() must be called on this object before calling reset() on the
+    // RegionAllocator this object is using to properly clean up objects and
+    // to avoid stale pointers.
+    void reset()
+    {
+        // Invoke destructor on items.
+        for (Bucket *bucket = fFirstBucket; bucket; bucket = bucket->next)
+            bucket->~Bucket();
 
-		fFirstBucket = nullptr;
-		fLastBucket = nullptr;
-		fNextBucketIndex = 0;
-	}
+        fFirstBucket = nullptr;
+        fLastBucket = nullptr;
+        fNextBucketIndex = 0;
+    }
 
-	class iterator
-	{
-	public:
-		bool operator!=(const iterator &iter) const
-		{
-			return fBucket != iter.fBucket || fIndex != iter.fIndex;
-		}
+    class iterator
+    {
+    public:
+        bool operator!=(const iterator &iter) const
+        {
+            return fBucket != iter.fBucket || fIndex != iter.fIndex;
+        }
 
-		bool operator==(const iterator &iter) const
-		{
-			return fBucket == iter.fBucket && fIndex == iter.fIndex;
-		}
+        bool operator==(const iterator &iter) const
+        {
+            return fBucket == iter.fBucket && fIndex == iter.fIndex;
+        }
 
-		const iterator &operator++()
-		{
-			// subtle: don't advance to next bucket if it is
-			// null, otherwise the iterator will not be equal to
-			// end() when it advances past the last item.
-			if (++fIndex == BUCKET_SIZE && fBucket->next)
-			{
-				fBucket = fBucket->next;
-				fIndex = 0;
-			}
+        const iterator &operator++()
+        {
+            // subtle: don't advance to next bucket if it is
+            // null, otherwise the iterator will not be equal to
+            // end() when it advances past the last item.
+            if (++fIndex == BUCKET_SIZE && fBucket->next)
+            {
+                fBucket = fBucket->next;
+                fIndex = 0;
+            }
 
-			return *this;
-		}
+            return *this;
+        }
 
-		const iterator &operator--()
-		{
-			if (--fIndex < 0)
-			{
-				fBucket = fBucket->prev;
-				fIndex = BUCKET_SIZE - 1;
-			}
+        const iterator &operator--()
+        {
+            if (--fIndex < 0)
+            {
+                fBucket = fBucket->prev;
+                fIndex = BUCKET_SIZE - 1;
+            }
 
-			return *this;
-		}
+            return *this;
+        }
 
-		T& operator*() const
-		{
-			return fBucket->items[fIndex];
-		}
+        T& operator*() const
+        {
+            return fBucket->items[fIndex];
+        }
 
-		iterator next() const
-		{
-			iterator tmp = *this;
-			++tmp;
-			return tmp;
-		}
+        iterator next() const
+        {
+            iterator tmp = *this;
+            ++tmp;
+            return tmp;
+        }
 
-		iterator prev() const
-		{
-			iterator tmp = *this;
-			--tmp;
-			return tmp;
-		}
+        iterator prev() const
+        {
+            iterator tmp = *this;
+            --tmp;
+            return tmp;
+        }
 
-	private:
-		friend class CommandQueue;
+    private:
+        friend class CommandQueue;
 
-		iterator(Bucket *bucket, int index)
-			: 	fBucket(bucket),
-				fIndex(index)
-		{}
+        iterator(Bucket *bucket, int index)
+            : 	fBucket(bucket),
+                fIndex(index)
+        {}
 
-		Bucket *fBucket;
-		int fIndex;	// Index in current bucket
-	};
+        Bucket *fBucket;
+        int fIndex;	// Index in current bucket
+    };
 
-	iterator begin() const
-	{
-		return iterator(fFirstBucket, 0);
-	}
+    iterator begin() const
+    {
+        return iterator(fFirstBucket, 0);
+    }
 
-	iterator end() const
-	{
-		return iterator(fLastBucket, fNextBucketIndex);
-	}
+    iterator end() const
+    {
+        return iterator(fLastBucket, fNextBucketIndex);
+    }
 
 private:
-	struct Bucket
-	{
-		Bucket *next = nullptr;
-		Bucket *prev = nullptr;
-		T items[BUCKET_SIZE];
-	};
+    struct Bucket
+    {
+        Bucket *next = nullptr;
+        Bucket *prev = nullptr;
+        T items[BUCKET_SIZE];
+    };
 
-	void allocateBucket()
-	{
-		// Lock
-		do
-		{
-			// Busy wait without calling the sync version of compare and swap.
-			// This avoids creating traffic on the L2 interface, because it
-			// only reads the L1 cached copy of the variable. When another thread
-			// writes to the lock, the coherence broadcast will update the L1
-			// cache and knock this out of the loop.
-			while (fSpinLock)
-				;
-		}
-		while (!__sync_bool_compare_and_swap(&fSpinLock, 0, 1));
+    void allocateBucket()
+    {
+        // Lock
+        do
+        {
+            // Busy wait without calling the sync version of compare and swap.
+            // This avoids creating traffic on the L2 interface, because it
+            // only reads the L1 cached copy of the variable. When another thread
+            // writes to the lock, the coherence broadcast will update the L1
+            // cache and knock this out of the loop.
+            while (fSpinLock)
+                ;
+        }
+        while (!__sync_bool_compare_and_swap(&fSpinLock, 0, 1));
 
-		// Check that someone didn't beat us to allocating the bucket.
-		if (fNextBucketIndex == BUCKET_SIZE || fLastBucket == nullptr)
-		{
-			if (fLastBucket)
-			{
-				// Append to end of chain
-				Bucket *newBucket = new (*fAllocator) Bucket;
-				newBucket->prev = fLastBucket;
-				fLastBucket->next = newBucket;
-				fLastBucket = newBucket;
-			}
-			else
-			{
-				// Allocate initial bucket
-				fFirstBucket = new (*fAllocator) Bucket;
-				fLastBucket = fFirstBucket;
-			}
+        // Check that someone didn't beat us to allocating the bucket.
+        if (fNextBucketIndex == BUCKET_SIZE || fLastBucket == nullptr)
+        {
+            if (fLastBucket)
+            {
+                // Append to end of chain
+                Bucket *newBucket = new (*fAllocator) Bucket;
+                newBucket->prev = fLastBucket;
+                fLastBucket->next = newBucket;
+                fLastBucket = newBucket;
+            }
+            else
+            {
+                // Allocate initial bucket
+                fFirstBucket = new (*fAllocator) Bucket;
+                fLastBucket = fFirstBucket;
+            }
 
-			// We must update fNextBucketIndex after fLastBucket to avoid a race
-			// condition with append.  Because they are volatile, the compiler won't
-			// reorder them.
-			fNextBucketIndex = 0;
-		}
+            // We must update fNextBucketIndex after fLastBucket to avoid a race
+            // condition with append.  Because they are volatile, the compiler won't
+            // reorder them.
+            fNextBucketIndex = 0;
+        }
 
-		fSpinLock = 0;
-		__sync_synchronize();
-	}
+        fSpinLock = 0;
+        __sync_synchronize();
+    }
 
-	Bucket *fFirstBucket = nullptr;
-	Bucket * volatile fLastBucket = nullptr;
-	volatile int fNextBucketIndex = 0; // When the bucket is full, this equals BUCKET_SIZE
-	RegionAllocator *fAllocator = nullptr;
-	volatile int fSpinLock = 0;
+    Bucket *fFirstBucket = nullptr;
+    Bucket * volatile fLastBucket = nullptr;
+    volatile int fNextBucketIndex = 0; // When the bucket is full, this equals BUCKET_SIZE
+    RegionAllocator *fAllocator = nullptr;
+    volatile int fSpinLock = 0;
 };
 
 }

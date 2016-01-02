@@ -29,25 +29,25 @@ namespace librender
 class RenderTarget
 {
 public:
-	void setColorBuffer(Surface *buffer)
-	{
-	    fColorBuffer = buffer;
-	}
+    void setColorBuffer(Surface *buffer)
+    {
+        fColorBuffer = buffer;
+    }
 
-	void setDepthBuffer(Surface *buffer)
-	{
-	    fDepthBuffer = buffer;
-	}
+    void setDepthBuffer(Surface *buffer)
+    {
+        fDepthBuffer = buffer;
+    }
 
-	Surface *getColorBuffer() const
-	{
-		return fColorBuffer;
-	}
+    Surface *getColorBuffer() const
+    {
+        return fColorBuffer;
+    }
 
-	Surface *getDepthBuffer() const
-	{
-		return fDepthBuffer;
-	}
+    Surface *getDepthBuffer() const
+    {
+        return fDepthBuffer;
+    }
 
 private:
     Surface *fColorBuffer = nullptr;

@@ -33,8 +33,8 @@
 
 typedef struct
 {
-	unsigned char*		sequence;
-	unsigned char*		p;
+    unsigned char*		sequence;
+    unsigned char*		p;
 
 } cheatseq_t;
 

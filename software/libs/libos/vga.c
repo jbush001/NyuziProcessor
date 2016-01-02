@@ -45,90 +45,90 @@
 // - vres: vertical resolution (pixels)
 //
 void load_microcode(int hfp, int hs, int hbp, int hpol, int hres,
-	int vfp, int vs, int vbp, int vpol, int vres)
+                    int vfp, int vs, int vbp, int vpol, int vres)
 {
-	int hsync = (vpol ? 0 : VSYNC) | (hpol ? HSYNC : 0);
-	int vsync = (vpol ? VSYNC : 0) | (hpol ? 0 : HSYNC);
-	int hsync_vsync = (vpol ? VSYNC : 0) | (hpol ? HSYNC : 0);
-	int nosync = (vpol ? 0 : VSYNC) | (hpol ? 0 : HSYNC);
-	int i;
-	unsigned int UPGM[] = {
-			// Vertical front porch
-	/*0*/	INITCNT(1, vfp) | nosync,
-			INITCNT(0, hfp - 1) | nosync,  // Horizontal Front porch
-			LOOP(0, 2) | nosync,
-			INITCNT(0, hs - 1) | hsync,    // Horizontal Sync pulse
-	/*4*/	LOOP(0, 4) | hsync,
-			INITCNT(0, hbp - 1) | nosync,  // Horizontal Back porch
-			LOOP(0, 6) | nosync,
-			INITCNT(0, hres - 1) | nosync, // Scanline
-	/*8*/	LOOP(0, 8) | nosync,
-			LOOP(1, 1) | nosync,
+    int hsync = (vpol ? 0 : VSYNC) | (hpol ? HSYNC : 0);
+    int vsync = (vpol ? VSYNC : 0) | (hpol ? 0 : HSYNC);
+    int hsync_vsync = (vpol ? VSYNC : 0) | (hpol ? HSYNC : 0);
+    int nosync = (vpol ? 0 : VSYNC) | (hpol ? 0 : HSYNC);
+    int i;
+    unsigned int UPGM[] = {
+        // Vertical front porch
+        /*0*/	INITCNT(1, vfp) | nosync,
+        INITCNT(0, hfp - 1) | nosync,  // Horizontal Front porch
+        LOOP(0, 2) | nosync,
+        INITCNT(0, hs - 1) | hsync,    // Horizontal Sync pulse
+        /*4*/	LOOP(0, 4) | hsync,
+        INITCNT(0, hbp - 1) | nosync,  // Horizontal Back porch
+        LOOP(0, 6) | nosync,
+        INITCNT(0, hres - 1) | nosync, // Scanline
+        /*8*/	LOOP(0, 8) | nosync,
+        LOOP(1, 1) | nosync,
 
-			// Vertical sync (negative)
-			INITCNT(1, vs) | vsync,
-			INITCNT(0, hfp - 2) | vsync,      // Horizontal Front porch
-	/*12*/	LOOP(0, 12) | vsync,
-			INITCNT(0, hs - 1) | hsync_vsync, // Horizontal Sync pulse
-			LOOP(0, 14) | hsync_vsync,
-			INITCNT(0, hbp - 1) | vsync,      // Horizontal Back porch
-	/*16*/	LOOP(0, 16) | vsync,
-			INITCNT(0, hres - 1) | vsync,     // Scanline
-			LOOP(0, 18) | vsync,
-			LOOP(1, 11) | vsync,
+        // Vertical sync (negative)
+        INITCNT(1, vs) | vsync,
+        INITCNT(0, hfp - 2) | vsync,      // Horizontal Front porch
+        /*12*/	LOOP(0, 12) | vsync,
+        INITCNT(0, hs - 1) | hsync_vsync, // Horizontal Sync pulse
+        LOOP(0, 14) | hsync_vsync,
+        INITCNT(0, hbp - 1) | vsync,      // Horizontal Back porch
+        /*16*/	LOOP(0, 16) | vsync,
+        INITCNT(0, hres - 1) | vsync,     // Scanline
+        LOOP(0, 18) | vsync,
+        LOOP(1, 11) | vsync,
 
-			// Vertical back porch
-	/*20*/	INITCNT(1, vbp) | nosync,
-			INITCNT(0, hfp - 1) | nosync,  // Horizontal Front porch
-			LOOP(0, 22) | nosync,
-			INITCNT(0, hs - 1) | hsync,    // Horizontal Sync pulse
-	/*24*/	LOOP(0, 24) | hsync,
-			INITCNT(0, hbp - 1) | nosync,  // Horizontal Back porch
-			LOOP(0, 26) | nosync,
-			INITCNT(0, hres - 1) | nosync, // Scanline
-	/*28*/	LOOP(0, 28) | nosync,
-			LOOP(1, 21) | nosync,
+        // Vertical back porch
+        /*20*/	INITCNT(1, vbp) | nosync,
+        INITCNT(0, hfp - 1) | nosync,  // Horizontal Front porch
+        LOOP(0, 22) | nosync,
+        INITCNT(0, hs - 1) | hsync,    // Horizontal Sync pulse
+        /*24*/	LOOP(0, 24) | hsync,
+        INITCNT(0, hbp - 1) | nosync,  // Horizontal Back porch
+        LOOP(0, 26) | nosync,
+        INITCNT(0, hres - 1) | nosync, // Scanline
+        /*28*/	LOOP(0, 28) | nosync,
+        LOOP(1, 21) | nosync,
 
-			// Visible area
-			INITCNT(1, vres) | nosync,
-			INITCNT(0, hfp - 1) | nosync,   // Horizontal Front porch
-	/*32*/	LOOP(0, 32) | nosync,
-			INITCNT(0, hs - 1) | hsync,     // Horizontal Sync pulse
-			LOOP(0, 34) | hsync,
-			INITCNT(0, hbp - 1) | nosync,   // Horizontal Back porch
-	/*36*/	LOOP(0, 36) | nosync,
-			INITCNT(0, hres - 1) | nosync | IN_VIS,  // Visible area
-			LOOP(0, 38) | nosync | IN_VIS,
-			LOOP(1, 31) | nosync,
-	/*40*/	NEW_FRAME | nosync
-	};
-	int length = nelems(UPGM);
+        // Visible area
+        INITCNT(1, vres) | nosync,
+        INITCNT(0, hfp - 1) | nosync,   // Horizontal Front porch
+        /*32*/	LOOP(0, 32) | nosync,
+        INITCNT(0, hs - 1) | hsync,     // Horizontal Sync pulse
+        LOOP(0, 34) | hsync,
+        INITCNT(0, hbp - 1) | nosync,   // Horizontal Back porch
+        /*36*/	LOOP(0, 36) | nosync,
+        INITCNT(0, hres - 1) | nosync | IN_VIS,  // Visible area
+        LOOP(0, 38) | nosync | IN_VIS,
+        LOOP(1, 31) | nosync,
+        /*40*/	NEW_FRAME | nosync
+    };
+    int length = nelems(UPGM);
 
-	// Must disable sequencer to load new program into it
-	REGISTERS[REG_VGA_ENABLE] = 0;
-	for (i = 0; i < length; i++)
-		REGISTERS[REG_VGA_MICROCODE] = UPGM[i];
+    // Must disable sequencer to load new program into it
+    REGISTERS[REG_VGA_ENABLE] = 0;
+    for (i = 0; i < length; i++)
+        REGISTERS[REG_VGA_MICROCODE] = UPGM[i];
 
-	REGISTERS[REG_VGA_BASE] = 0x200000;
-	REGISTERS[REG_VGA_LENGTH] = hres * vres;
-	REGISTERS[REG_VGA_ENABLE] = 1;
+    REGISTERS[REG_VGA_BASE] = 0x200000;
+    REGISTERS[REG_VGA_LENGTH] = hres * vres;
+    REGISTERS[REG_VGA_ENABLE] = 1;
 }
 
 int init_vga(int mode)
 {
-	switch (mode)
-	{
-		case VGA_MODE_640x480:
-			load_microcode(16, 96, 48, 0, 640, 10, 2, 33, 0, 480);
-			break;
+    switch (mode)
+    {
+        case VGA_MODE_640x480:
+            load_microcode(16, 96, 48, 0, 640, 10, 2, 33, 0, 480);
+            break;
 
-		case VGA_MODE_640x400:
-			load_microcode(16, 96, 48, 0, 640, 12, 2, 35, 1, 400);
-			break;
+        case VGA_MODE_640x400:
+            load_microcode(16, 96, 48, 0, 640, 12, 2, 35, 1, 400);
+            break;
 
-		default:
-			return -1;
-	}
+        default:
+            return -1;
+    }
 
-	return 0;
+    return 0;
 }

@@ -33,7 +33,7 @@ Core *initCore(uint32_t memsize, uint32_t totalThreads, bool randomizeMemory);
 void enableTracing(Core*);
 int loadHexFile(Core*, const char *filename);
 void writeMemoryToFile(const Core*, const char *filename, uint32_t baseAddress,
-	uint32_t length);
+                       uint32_t length);
 const void *getMemoryRegionPtr(const Core*, uint32_t address, uint32_t length);
 void printRegisters(const Core*, uint32_t threadId);
 void enableCosimulation(Core*);

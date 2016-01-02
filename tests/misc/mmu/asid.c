@@ -32,51 +32,51 @@
 
 void fault_handler(void)
 {
-	printf("FAULT %d addr %08x pc %08x\n",
-		__builtin_nyuzi_read_control_reg(CR_FAULT_REASON),
-		__builtin_nyuzi_read_control_reg(CR_FAULT_ADDRESS),
-		__builtin_nyuzi_read_control_reg(CR_FAULT_PC));
-	exit(0);
+    printf("FAULT %d addr %08x pc %08x\n",
+           __builtin_nyuzi_read_control_reg(CR_FAULT_REASON),
+           __builtin_nyuzi_read_control_reg(CR_FAULT_ADDRESS),
+           __builtin_nyuzi_read_control_reg(CR_FAULT_PC));
+    exit(0);
 }
 
 int main(void)
 {
-	unsigned int va;
-	int asid;
-	unsigned int stack_addr = (unsigned int) &va & ~(PAGE_SIZE - 1);
+    unsigned int va;
+    int asid;
+    unsigned int stack_addr = (unsigned int) &va & ~(PAGE_SIZE - 1);
 
-	// Map code & data
-	for (va = 0; va < 0x10000; va += PAGE_SIZE)
-	{
-		add_itlb_mapping(va, va | TLB_GLOBAL);
-		add_dtlb_mapping(va, va | TLB_WRITABLE | TLB_GLOBAL);
-	}
+    // Map code & data
+    for (va = 0; va < 0x10000; va += PAGE_SIZE)
+    {
+        add_itlb_mapping(va, va | TLB_GLOBAL);
+        add_dtlb_mapping(va, va | TLB_WRITABLE | TLB_GLOBAL);
+    }
 
-	add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE | TLB_GLOBAL);
-	add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE | TLB_GLOBAL);
+    add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE | TLB_GLOBAL);
+    add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE | TLB_GLOBAL);
 
-	// Map a private page into address space 1
-	set_asid(1);
-	add_dtlb_mapping(VADDR1, PADDR1);
-	*((unsigned int*) PADDR1) = 0xdeadbeef;
+    // Map a private page into address space 1
+    set_asid(1);
+    add_dtlb_mapping(VADDR1, PADDR1);
+    *((unsigned int*) PADDR1) = 0xdeadbeef;
 
-	// Map a private page into address space 2
-	set_asid(2);
-	add_dtlb_mapping(VADDR1, PADDR2);
-	*((unsigned int*) PADDR2) = 0xabcdefed;
+    // Map a private page into address space 2
+    set_asid(2);
+    add_dtlb_mapping(VADDR1, PADDR2);
+    *((unsigned int*) PADDR2) = 0xabcdefed;
 
-	// Enable MMU in flags register
-	__builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);
-	__builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, fault_handler);
-	__builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
+    // Enable MMU in flags register
+    __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);
+    __builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, fault_handler);
+    __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
-	// Read value from first address space
-	set_asid(1);
-	printf("A1 %08x\n", *((volatile unsigned int*) VADDR1)); // CHECK: A1 deadbeef
+    // Read value from first address space
+    set_asid(1);
+    printf("A1 %08x\n", *((volatile unsigned int*) VADDR1)); // CHECK: A1 deadbeef
 
-	// Read value from the second address space
-	set_asid(2);
-	printf("A2 %08x\n", *((volatile unsigned int*) VADDR1)); // CHECK: A2 abcdefed
+    // Read value from the second address space
+    set_asid(2);
+    printf("A2 %08x\n", *((volatile unsigned int*) VADDR1)); // CHECK: A2 abcdefed
 
-	return 0;
+    return 0;
 }

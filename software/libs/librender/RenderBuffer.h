@@ -31,85 +31,85 @@ namespace librender
 class RenderBuffer
 {
 public:
-	RenderBuffer()
-		:	fData(0),
-			fNumElements(0),
-			fStride(0),
-			fBaseStepPointers(static_cast<vecu16_t*>(memalign(sizeof(vecu16_t), sizeof(vecu16_t))))
-	{
-	}
+    RenderBuffer()
+        :	fData(0),
+            fNumElements(0),
+            fStride(0),
+            fBaseStepPointers(static_cast<vecu16_t*>(memalign(sizeof(vecu16_t), sizeof(vecu16_t))))
+    {
+    }
 
-	RenderBuffer(const RenderBuffer &) = delete;
+    RenderBuffer(const RenderBuffer &) = delete;
 
-	RenderBuffer(const void *data, int numElements, int stride)
-		:	fBaseStepPointers(static_cast<vecu16_t*>(memalign(sizeof(vecu16_t), sizeof(vecu16_t))))
-	{
-		setData(data, numElements, stride);
-	}
+    RenderBuffer(const void *data, int numElements, int stride)
+        :	fBaseStepPointers(static_cast<vecu16_t*>(memalign(sizeof(vecu16_t), sizeof(vecu16_t))))
+    {
+        setData(data, numElements, stride);
+    }
 
-	~RenderBuffer()
-	{
-		free(fBaseStepPointers);
-	}
+    ~RenderBuffer()
+    {
+        free(fBaseStepPointers);
+    }
 
-	RenderBuffer& operator=(const RenderBuffer&) = delete;
+    RenderBuffer& operator=(const RenderBuffer&) = delete;
 
-	// The RenderBuffer does not take ownership of the data or copy it into
-	// a separate buffer.  The caller must ensure the memory remains around
-	// as long as the RenderBuffer is active.
-	// XXX should there be a concept of owned and not-owned data like Surface?
-	void setData(const void *data, int numElements, int stride)
-	{
-		fData = data;
-		fNumElements = numElements;
-		fStride = stride;
+    // The RenderBuffer does not take ownership of the data or copy it into
+    // a separate buffer.  The caller must ensure the memory remains around
+    // as long as the RenderBuffer is active.
+    // XXX should there be a concept of owned and not-owned data like Surface?
+    void setData(const void *data, int numElements, int stride)
+    {
+        fData = data;
+        fNumElements = numElements;
+        fStride = stride;
 
-		const veci16_t kStepVector = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
-		*fBaseStepPointers = kStepVector * splati(fStride)
-			+ splati(reinterpret_cast<unsigned int>(fData));
-	}
+        const veci16_t kStepVector = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+        *fBaseStepPointers = kStepVector * splati(fStride)
+                             + splati(reinterpret_cast<unsigned int>(fData));
+    }
 
-	int getNumElements() const
-	{
-		return fNumElements;
-	}
+    int getNumElements() const
+    {
+        return fNumElements;
+    }
 
-	int getStride() const
-	{
-		return fStride;
-	}
+    int getStride() const
+    {
+        return fStride;
+    }
 
-	int getSize() const
-	{
-		return fNumElements * fStride;
-	}
+    int getSize() const
+    {
+        return fNumElements * fStride;
+    }
 
-	const void *getData() const
-	{
-		return fData;
-	}
+    const void *getData() const
+    {
+        return fData;
+    }
 
-	// Given a packed array of the form a0b0 a0b1... a_1b_0 a_1b_1...
-	// Return up to 16 elements packed in a vector: a_mb_n, a_mb_(n+1)...
-	veci16_t gatherElements(int index1, int index2, int count) const
-	{
-		int mask;
-		if (count < 16)
-			mask = (0xffff0000 >> count) & 0xffff;
-		else
-			mask = 0xffff;
+    // Given a packed array of the form a0b0 a0b1... a_1b_0 a_1b_1...
+    // Return up to 16 elements packed in a vector: a_mb_n, a_mb_(n+1)...
+    veci16_t gatherElements(int index1, int index2, int count) const
+    {
+        int mask;
+        if (count < 16)
+            mask = (0xffff0000 >> count) & 0xffff;
+        else
+            mask = 0xffff;
 
-		const vecu16_t ptrVec = *fBaseStepPointers + splati(index1 * fStride + index2
-			* sizeof(unsigned int));
-		return __builtin_nyuzi_gather_loadf_masked(ptrVec, mask);
-	}
+        const vecu16_t ptrVec = *fBaseStepPointers + splati(index1 * fStride + index2
+                                * sizeof(unsigned int));
+        return __builtin_nyuzi_gather_loadf_masked(ptrVec, mask);
+    }
 
 private:
-	const void *fData;
-	int fNumElements;
-	int fStride;
+    const void *fData;
+    int fNumElements;
+    int fStride;
 
-	vecu16_t *fBaseStepPointers;
+    vecu16_t *fBaseStepPointers;
 };
 
 }

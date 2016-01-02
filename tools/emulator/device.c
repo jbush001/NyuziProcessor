@@ -33,68 +33,68 @@ static int keyBufferTail;
 
 void writeDeviceRegister(uint32_t address, uint32_t value)
 {
-	switch (address)
-	{
-		case REG_SERIAL_OUTPUT:
-			putc(value & 0xff, stdout);
-			break;
+    switch (address)
+    {
+        case REG_SERIAL_OUTPUT:
+            putc(value & 0xff, stdout);
+            break;
 
-		case REG_SD_WRITE_DATA:
-		case REG_SD_CONTROL:
-			writeSdCardRegister(address, value);
-			break;
+        case REG_SD_WRITE_DATA:
+        case REG_SD_CONTROL:
+            writeSdCardRegister(address, value);
+            break;
 
-		case REG_VGA_ENABLE:
-			enableFramebuffer(value & 1);
-			break;
+        case REG_VGA_ENABLE:
+            enableFramebuffer(value & 1);
+            break;
 
-		case REG_VGA_BASE:
-			setFramebufferAddress(value);
-			break;
-	}
+        case REG_VGA_BASE:
+            setFramebufferAddress(value);
+            break;
+    }
 }
 
 uint32_t readDeviceRegister(uint32_t address)
 {
-	uint32_t value;
+    uint32_t value;
 
-	switch (address)
-	{
-		case REG_SERIAL_STATUS:
-			return 1;
+    switch (address)
+    {
+        case REG_SERIAL_STATUS:
+            return 1;
 
-		case REG_KEYBOARD_STATUS:
-			if (keyBufferHead != keyBufferTail)
-				return 1;
-			else
-				return 0;
+        case REG_KEYBOARD_STATUS:
+            if (keyBufferHead != keyBufferTail)
+                return 1;
+            else
+                return 0;
 
-		case REG_KEYBOARD_READ:
-			if (keyBufferHead != keyBufferTail)
-			{
-				value = keyBuffer[keyBufferTail];
-				keyBufferTail = (keyBufferTail + 1) % KEY_BUFFER_SIZE;
-			}
-			else
-				value = 0;
+        case REG_KEYBOARD_READ:
+            if (keyBufferHead != keyBufferTail)
+            {
+                value = keyBuffer[keyBufferTail];
+                keyBufferTail = (keyBufferTail + 1) % KEY_BUFFER_SIZE;
+            }
+            else
+                value = 0;
 
-			return value;
+            return value;
 
-		case REG_SD_READ_DATA:
-		case REG_SD_STATUS:
-			return readSdCardRegister(address);
+        case REG_SD_READ_DATA:
+        case REG_SD_STATUS:
+            return readSdCardRegister(address);
 
-		default:
-			return 0xffffffff;
-	}
+        default:
+            return 0xffffffff;
+    }
 }
 
 void enqueueKey(uint32_t scanCode)
 {
-	keyBuffer[keyBufferHead] = scanCode;
-	keyBufferHead = (keyBufferHead + 1) % KEY_BUFFER_SIZE;
+    keyBuffer[keyBufferHead] = scanCode;
+    keyBufferHead = (keyBufferHead + 1) % KEY_BUFFER_SIZE;
 
-	// If the buffer is full, discard the oldest character
-	if (keyBufferHead == keyBufferTail)
-		keyBufferTail = (keyBufferTail + 1) % KEY_BUFFER_SIZE;
+    // If the buffer is full, discard the oldest character
+    if (keyBufferHead == keyBufferTail)
+        keyBufferTail = (keyBufferTail + 1) % KEY_BUFFER_SIZE;
 }

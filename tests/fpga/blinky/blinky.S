@@ -21,26 +21,26 @@
 
                 .global     _start
 
-_start:	        load_32     s0, device_addr # LED Device address
-		        move        s1, 1           # Current display value
+_start:         load_32     s0, device_addr # LED Device address
+                move        s1, 1           # Current display value
                 load_32     s3, delay       # Delay
 
-loop0:	        store_32    s1, (s0)	    # Update LEDs
+loop0:          store_32    s1, (s0)        # Update LEDs
 
-		        # Wait 500 ms
+                # Wait 500 ms
                 move        s4, s3
-delay0:	        sub_i       s4, s4, 1
+delay0:         sub_i       s4, s4, 1
                 btrue       s4, delay0
 
-		        # Rotate left
+                # Rotate left
                 shl         s1, s1, 1
 
-		        # Check if we've wrapped
+                # Check if we've wrapped
                 shr         s2, s1, 18
                 bfalse      s2, loop0
 
                 move        s1, 1
-				goto        loop0
+                goto        loop0
 
 device_addr:    .long 0xFFFF0000
 delay:          .long 3000000

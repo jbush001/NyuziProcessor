@@ -33,107 +33,107 @@
 //
 
 module sync_fifo
-	#(parameter WIDTH = 64,
-	parameter SIZE = 4,
-	parameter ALMOST_FULL_THRESHOLD = SIZE,
-	parameter ALMOST_EMPTY_THRESHOLD = 1)
+    #(parameter WIDTH = 64,
+    parameter SIZE = 4,
+    parameter ALMOST_FULL_THRESHOLD = SIZE,
+    parameter ALMOST_EMPTY_THRESHOLD = 1)
 
-	(input                       clk,
-	input                        reset,
-	input                        flush_en,	// flush is synchronous, unlike reset
-	output logic                 full,
-	output logic                 almost_full,
-	input                        enqueue_en,
-	input [WIDTH - 1:0]          value_i,
-	output logic                 empty,
-	output logic                 almost_empty,
-	input                        dequeue_en,
-	output [WIDTH - 1:0]         value_o);
+    (input                       clk,
+    input                        reset,
+    input                        flush_en,    // flush is synchronous, unlike reset
+    output logic                 full,
+    output logic                 almost_full,
+    input                        enqueue_en,
+    input [WIDTH - 1:0]          value_i,
+    output logic                 empty,
+    output logic                 almost_empty,
+    input                        dequeue_en,
+    output [WIDTH - 1:0]         value_o);
 
 `ifdef VENDOR_ALTERA
-	SCFIFO #(
-		.almost_empty_value(ALMOST_EMPTY_THRESHOLD + 1),
-		.almost_full_value(ALMOST_FULL_THRESHOLD),
-		.lpm_numwords(SIZE),
-		.lpm_width(WIDTH),
-		.lpm_showahead("ON")
-	) scfifo(
-		.aclr(reset),
-		.almost_empty(almost_empty),
-		.almost_full(almost_full),
-		.clock(clk),
-		.data(value_i),
-		.empty(empty),
-		.full(full),
-		.q(value_o),
-		.rdreq(dequeue_en),
-		.sclr(flush_en),
-		.wrreq(enqueue_en));
+    SCFIFO #(
+        .almost_empty_value(ALMOST_EMPTY_THRESHOLD + 1),
+        .almost_full_value(ALMOST_FULL_THRESHOLD),
+        .lpm_numwords(SIZE),
+        .lpm_width(WIDTH),
+        .lpm_showahead("ON")
+    ) scfifo(
+        .aclr(reset),
+        .almost_empty(almost_empty),
+        .almost_full(almost_full),
+        .clock(clk),
+        .data(value_i),
+        .empty(empty),
+        .full(full),
+        .q(value_o),
+        .rdreq(dequeue_en),
+        .sclr(flush_en),
+        .wrreq(enqueue_en));
 `elsif MEMORY_COMPILER
-	generate
-		`define _GENERATE_FIFO
-		`include "srams.inc"
-		`undef 	_GENERATE_FIFO
-	endgenerate
+    generate
+        `define _GENERATE_FIFO
+        `include "srams.inc"
+        `undef     _GENERATE_FIFO
+    endgenerate
 `else
-	// Simulation
-	localparam ADDR_WIDTH = $clog2(SIZE);
+    // Simulation
+    localparam ADDR_WIDTH = $clog2(SIZE);
 
-	logic[ADDR_WIDTH - 1:0] head;
-	logic[ADDR_WIDTH - 1:0] tail;
-	logic[ADDR_WIDTH:0] count;
-	logic[WIDTH - 1:0] data[SIZE];
+    logic[ADDR_WIDTH - 1:0] head;
+    logic[ADDR_WIDTH - 1:0] tail;
+    logic[ADDR_WIDTH:0] count;
+    logic[WIDTH - 1:0] data[SIZE];
 
-	assign almost_full = count >= (ADDR_WIDTH + 1)'(ALMOST_FULL_THRESHOLD);
-	assign almost_empty = count <= (ADDR_WIDTH + 1)'(ALMOST_EMPTY_THRESHOLD);
-	assign full = count == SIZE;
-	assign empty = count == 0;
-	assign value_o = data[head];
+    assign almost_full = count >= (ADDR_WIDTH + 1)'(ALMOST_FULL_THRESHOLD);
+    assign almost_empty = count <= (ADDR_WIDTH + 1)'(ALMOST_EMPTY_THRESHOLD);
+    assign full = count == SIZE;
+    assign empty = count == 0;
+    assign value_o = data[head];
 
-	always_ff @(posedge clk, posedge reset)
-	begin
-		if (reset)
-		begin
-			head <= 0;
-			tail <= 0;
-			count <= 0;
-		end
-		else
-		begin
-			if (flush_en)
-			begin
-				head <= 0;
-				tail <= 0;
-				count <= 0;
-			end
-			else
-			begin
-				if (enqueue_en)
-				begin
-					assert(!full);
-					tail <= tail + 1;
-					data[tail] <= value_i;
-				end
+    always_ff @(posedge clk, posedge reset)
+    begin
+        if (reset)
+        begin
+            head <= 0;
+            tail <= 0;
+            count <= 0;
+        end
+        else
+        begin
+            if (flush_en)
+            begin
+                head <= 0;
+                tail <= 0;
+                count <= 0;
+            end
+            else
+            begin
+                if (enqueue_en)
+                begin
+                    assert(!full);
+                    tail <= tail + 1;
+                    data[tail] <= value_i;
+                end
 
-				if (dequeue_en)
-				begin
-					assert(!empty);
-					head <= head + 1;
-				end
+                if (dequeue_en)
+                begin
+                    assert(!empty);
+                    head <= head + 1;
+                end
 
-				if (enqueue_en && !dequeue_en)
-					count <= count + 1;
-				else if (dequeue_en && !enqueue_en)
-					count <= count - 1;
-			end
-		end
-	end
+                if (enqueue_en && !dequeue_en)
+                    count <= count + 1;
+                else if (dequeue_en && !enqueue_en)
+                    count <= count - 1;
+            end
+        end
+    end
 
-	initial
-	begin
-		if ($test$plusargs("dumpmems") != 0)
-			$display("sync_fifo %d %d", WIDTH, SIZE);
-	end
+    initial
+    begin
+        if ($test$plusargs("dumpmems") != 0)
+            $display("sync_fifo %d %d", WIDTH, SIZE);
+    end
 `endif
 endmodule
 

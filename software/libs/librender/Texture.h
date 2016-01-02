@@ -28,22 +28,22 @@ const int kMaxMipLevels = 8;
 class Texture
 {
 public:
-	Texture();
-	Texture(const Texture&) = delete;
-	Texture& operator=(const Texture&) = delete;
+    Texture();
+    Texture(const Texture&) = delete;
+    Texture& operator=(const Texture&) = delete;
 
-	void setMipSurface(int mipLevel, const Surface *surface);
-	void readPixels(vecf16_t u, vecf16_t v, unsigned short mask, vecf16_t *outChannels) const;
-	void enableBilinearFiltering(bool enable)
-	{
-		fEnableBilinearFiltering = enable;
-	}
+    void setMipSurface(int mipLevel, const Surface *surface);
+    void readPixels(vecf16_t u, vecf16_t v, unsigned short mask, vecf16_t *outChannels) const;
+    void enableBilinearFiltering(bool enable)
+    {
+        fEnableBilinearFiltering = enable;
+    }
 
 private:
-	const Surface *fMipSurfaces[kMaxMipLevels];
-	bool fEnableBilinearFiltering = false;
-	int fBaseMipBits;
-	int fMaxMipLevel = 0;
+    const Surface *fMipSurfaces[kMaxMipLevels];
+    bool fEnableBilinearFiltering = false;
+    int fBaseMipBits;
+    int fMaxMipLevel = 0;
 };
 
 }

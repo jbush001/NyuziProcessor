@@ -19,120 +19,120 @@
 //
 
 module uart_receive
-	#(parameter CLOCKS_PER_BIT = 1)
-	(input              clk,
-	input               reset,
-	input               uart_rx,
-	output[7:0]         rx_char,
-	output logic        rx_char_valid,
-	output logic        rx_frame_error);
+    #(parameter CLOCKS_PER_BIT = 1)
+    (input              clk,
+    input               reset,
+    input               uart_rx,
+    output[7:0]         rx_char,
+    output logic        rx_char_valid,
+    output logic        rx_frame_error);
 
-	localparam SAMPLE_COUNT_WIDTH = 12;
+    localparam SAMPLE_COUNT_WIDTH = 12;
 
-	typedef enum {
-		STATE_WAIT_START,
-		STATE_READ_CHARACTER,
-		STATE_STOP_BITS
-	} receive_state_t;
+    typedef enum {
+        STATE_WAIT_START,
+        STATE_READ_CHARACTER,
+        STATE_STOP_BITS
+    } receive_state_t;
 
-	receive_state_t state_ff;
-	receive_state_t state_nxt;
-	logic[SAMPLE_COUNT_WIDTH - 1:0] sample_count_ff;
-	logic[SAMPLE_COUNT_WIDTH - 1:0] sample_count_nxt;
-	logic[7:0] shift_register;
-	logic[3:0] bit_count_ff;
-	logic[3:0] bit_count_nxt;
-	logic do_shift;
-	logic rx_sync;
+    receive_state_t state_ff;
+    receive_state_t state_nxt;
+    logic[SAMPLE_COUNT_WIDTH - 1:0] sample_count_ff;
+    logic[SAMPLE_COUNT_WIDTH - 1:0] sample_count_nxt;
+    logic[7:0] shift_register;
+    logic[3:0] bit_count_ff;
+    logic[3:0] bit_count_nxt;
+    logic do_shift;
+    logic rx_sync;
 
-	assign rx_char = shift_register;
+    assign rx_char = shift_register;
 
-	// If it's out of sync, rx_sync is 0 from a new start bit.
-	// Sampling it at the end may be sufficient to indicate frame error.
-	assign rx_frame_error = !rx_sync;
+    // If it's out of sync, rx_sync is 0 from a new start bit.
+    // Sampling it at the end may be sufficient to indicate frame error.
+    assign rx_frame_error = !rx_sync;
 
-	synchronizer #(.RESET_STATE(1)) rx_synchronizer(
-		.clk(clk),
-		.reset(reset),
-		.data_i(uart_rx),
-		.data_o(rx_sync));
+    synchronizer #(.RESET_STATE(1)) rx_synchronizer(
+        .clk(clk),
+        .reset(reset),
+        .data_i(uart_rx),
+        .data_o(rx_sync));
 
-	always_comb
-	begin
-		bit_count_nxt = bit_count_ff;
-		state_nxt = state_ff;
-		sample_count_nxt = sample_count_ff;
-		rx_char_valid = 0;
-		do_shift = 0;
+    always_comb
+    begin
+        bit_count_nxt = bit_count_ff;
+        state_nxt = state_ff;
+        sample_count_nxt = sample_count_ff;
+        rx_char_valid = 0;
+        do_shift = 0;
 
-		unique case (state_ff)
-			STATE_WAIT_START:
-			begin
-				if (!rx_sync)
-				begin
-					state_nxt = STATE_READ_CHARACTER;
-					// We are at the beginning of the start bit. Next
-					// sample point is in middle of first data bit.
-					// Set divider to 1.5 times bit duration.
-					sample_count_nxt = SAMPLE_COUNT_WIDTH'((CLOCKS_PER_BIT * 3 / 2) - 1);
-				end
-			end
+        unique case (state_ff)
+            STATE_WAIT_START:
+            begin
+                if (!rx_sync)
+                begin
+                    state_nxt = STATE_READ_CHARACTER;
+                    // We are at the beginning of the start bit. Next
+                    // sample point is in middle of first data bit.
+                    // Set divider to 1.5 times bit duration.
+                    sample_count_nxt = SAMPLE_COUNT_WIDTH'((CLOCKS_PER_BIT * 3 / 2) - 1);
+                end
+            end
 
-			STATE_READ_CHARACTER:
-			begin
-				if (sample_count_ff == 0)
-				begin
-					sample_count_nxt = SAMPLE_COUNT_WIDTH'(CLOCKS_PER_BIT - 1);
-					if (bit_count_ff == 8)
-					begin
-						state_nxt = STATE_STOP_BITS;
-						bit_count_nxt = 0;
-						sample_count_nxt = SAMPLE_COUNT_WIDTH'(CLOCKS_PER_BIT - 1); // 0.5 stop bit
-					end
-					else
-					begin
-						do_shift = 1;
-						bit_count_nxt = bit_count_ff + 4'd1;
-					end
-				end
-				else
-					sample_count_nxt = sample_count_ff - SAMPLE_COUNT_WIDTH'(1);
-			end
+            STATE_READ_CHARACTER:
+            begin
+                if (sample_count_ff == 0)
+                begin
+                    sample_count_nxt = SAMPLE_COUNT_WIDTH'(CLOCKS_PER_BIT - 1);
+                    if (bit_count_ff == 8)
+                    begin
+                        state_nxt = STATE_STOP_BITS;
+                        bit_count_nxt = 0;
+                        sample_count_nxt = SAMPLE_COUNT_WIDTH'(CLOCKS_PER_BIT - 1); // 0.5 stop bit
+                    end
+                    else
+                    begin
+                        do_shift = 1;
+                        bit_count_nxt = bit_count_ff + 4'd1;
+                    end
+                end
+                else
+                    sample_count_nxt = sample_count_ff - SAMPLE_COUNT_WIDTH'(1);
+            end
 
-			STATE_STOP_BITS:
-			begin
-				if (sample_count_ff == 0)
-				begin
-					state_nxt = STATE_WAIT_START;
-					rx_char_valid = 1;
-				end
-				else
-					sample_count_nxt = sample_count_ff - SAMPLE_COUNT_WIDTH'(1);
-			end
-		endcase
-	end
+            STATE_STOP_BITS:
+            begin
+                if (sample_count_ff == 0)
+                begin
+                    state_nxt = STATE_WAIT_START;
+                    rx_char_valid = 1;
+                end
+                else
+                    sample_count_nxt = sample_count_ff - SAMPLE_COUNT_WIDTH'(1);
+            end
+        endcase
+    end
 
-	always_ff @(posedge clk, posedge reset)
-	begin
-		if (reset)
-		begin
-			state_ff <= STATE_WAIT_START;
-			/*AUTORESET*/
-			// Beginning of autoreset for uninitialized flops
-			bit_count_ff <= '0;
-			sample_count_ff <= '0;
-			shift_register <= '0;
-			// End of automatics
-		end
-		else
-		begin
-			state_ff <= state_nxt;
-			sample_count_ff <= sample_count_nxt;
-			bit_count_ff <= bit_count_nxt;
-			if (do_shift)
-				shift_register <= {rx_sync, shift_register[7:1]};
-		end
-	end
+    always_ff @(posedge clk, posedge reset)
+    begin
+        if (reset)
+        begin
+            state_ff <= STATE_WAIT_START;
+            /*AUTORESET*/
+            // Beginning of autoreset for uninitialized flops
+            bit_count_ff <= '0;
+            sample_count_ff <= '0;
+            shift_register <= '0;
+            // End of automatics
+        end
+        else
+        begin
+            state_ff <= state_nxt;
+            sample_count_ff <= sample_count_nxt;
+            bit_count_ff <= bit_count_nxt;
+            if (do_shift)
+                shift_register <= {rx_sync, shift_register[7:1]};
+        end
+    end
 endmodule
 
 // Local Variables:

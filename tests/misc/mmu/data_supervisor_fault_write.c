@@ -22,50 +22,50 @@ volatile unsigned int *data_addr = (unsigned int*) 0x100000;
 
 void fault_handler()
 {
-	printf("FAULT %d %08x current flags %02x prev flags %02x\n",
-		__builtin_nyuzi_read_control_reg(CR_FAULT_REASON),
-		__builtin_nyuzi_read_control_reg(CR_FAULT_ADDRESS),
-		__builtin_nyuzi_read_control_reg(CR_FLAGS),
-		__builtin_nyuzi_read_control_reg(CR_SAVED_FLAGS));
-	printf("data_addr = %08x", *data_addr);
-	exit(0);
+    printf("FAULT %d %08x current flags %02x prev flags %02x\n",
+           __builtin_nyuzi_read_control_reg(CR_FAULT_REASON),
+           __builtin_nyuzi_read_control_reg(CR_FAULT_ADDRESS),
+           __builtin_nyuzi_read_control_reg(CR_FLAGS),
+           __builtin_nyuzi_read_control_reg(CR_SAVED_FLAGS));
+    printf("data_addr = %08x", *data_addr);
+    exit(0);
 }
 
 int main(void)
 {
-	unsigned int va;
-	int asid;
-	unsigned int stack_addr = (unsigned int) &va & ~(PAGE_SIZE - 1);
+    unsigned int va;
+    int asid;
+    unsigned int stack_addr = (unsigned int) &va & ~(PAGE_SIZE - 1);
 
-	// Map code & data
-	for (va = 0; va < 0x10000; va += PAGE_SIZE)
-	{
-		add_itlb_mapping(va, va);
-		add_dtlb_mapping(va, va | TLB_WRITABLE | TLB_GLOBAL);
-	}
+    // Map code & data
+    for (va = 0; va < 0x10000; va += PAGE_SIZE)
+    {
+        add_itlb_mapping(va, va);
+        add_dtlb_mapping(va, va | TLB_WRITABLE | TLB_GLOBAL);
+    }
 
-	add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE);
-	add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE);
+    add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE);
+    add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE);
 
-	// Data region marked supervisor
-	add_dtlb_mapping(data_addr, ((unsigned int) data_addr) | TLB_SUPERVISOR | TLB_WRITABLE);
+    // Data region marked supervisor
+    add_dtlb_mapping(data_addr, ((unsigned int) data_addr) | TLB_SUPERVISOR | TLB_WRITABLE);
 
-	__builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);
-	__builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
+    __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);
+    __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
-	// We are currently in supervisor mode. write then read to the page
-	*data_addr = 0x12345678;
-	printf("read1 data_addr %08x\n", *data_addr);	// CHECK: read1 data_addr 12345678
+    // We are currently in supervisor mode. write then read to the page
+    *data_addr = 0x12345678;
+    printf("read1 data_addr %08x\n", *data_addr);	// CHECK: read1 data_addr 12345678
 
-	// Switch to user mode, but leave MMU active
-	switch_to_user_mode();
+    // Switch to user mode, but leave MMU active
+    switch_to_user_mode();
 
-	// This write will fail. Ensure this raises a fault and that the memory
-	// write failed.
-	*data_addr = 0xdeadbeef;
-	// CHECK: FAULT 8 00100000 current flags 06 prev flags 02
-	// CHECK: data_addr = 12345678
+    // This write will fail. Ensure this raises a fault and that the memory
+    // write failed.
+    *data_addr = 0xdeadbeef;
+    // CHECK: FAULT 8 00100000 current flags 06 prev flags 02
+    // CHECK: data_addr = 12345678
 
-	printf("should_not_be_here\n"); // CHECKN: should_not_be_here
+    printf("should_not_be_here\n"); // CHECKN: should_not_be_here
 }
 

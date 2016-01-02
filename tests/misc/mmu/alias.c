@@ -33,18 +33,18 @@ char *tmp2 = (char*) 0x900000;
 
 int main(void)
 {
-	__builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, tlb_miss_handler);
-	__builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
+    __builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, tlb_miss_handler);
+    __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
-	// Test that stores are properly translated. Test harness will read
-	// physical memory. This should be written to 1MB.
-	strcpy(tmp1, "Test String");
+    // Test that stores are properly translated. Test harness will read
+    // physical memory. This should be written to 1MB.
+    strcpy(tmp1, "Test String");
 
-	// Test that loads are properly mapped. This should alias to tmp1
-	printf("read %p \"%s\"\n", tmp2, tmp2);
+    // Test that loads are properly mapped. This should alias to tmp1
+    printf("read %p \"%s\"\n", tmp2, tmp2);
 
-	// Flush first address so it will be in memory dump.
-	asm("dflush %0" : : "s" (tmp1));
+    // Flush first address so it will be in memory dump.
+    asm("dflush %0" : : "s" (tmp1));
 
-	return 0;
+    return 0;
 }

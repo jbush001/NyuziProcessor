@@ -26,44 +26,44 @@
 
 void printmsg(const char *value)
 {
-	const char *c;
+    const char *c;
 
-	for (c = value; *c; c++)
-		*((volatile unsigned int*) 0x100020) = *c;
+    for (c = value; *c; c++)
+        *((volatile unsigned int*) 0x100020) = *c;
 }
 
 int main(void)
 {
-	unsigned int va;
-	unsigned int stack_addr = (unsigned int) &va & ~(PAGE_SIZE - 1);
+    unsigned int va;
+    unsigned int stack_addr = (unsigned int) &va & ~(PAGE_SIZE - 1);
 
-	// Map code & data
-	for (va = 0; va < 0x10000; va += PAGE_SIZE)
-	{
-		add_itlb_mapping(va, va);
-		add_dtlb_mapping(va, va | TLB_WRITABLE);
-	}
+    // Map code & data
+    for (va = 0; va < 0x10000; va += PAGE_SIZE)
+    {
+        add_itlb_mapping(va, va);
+        add_dtlb_mapping(va, va | TLB_WRITABLE);
+    }
 
-	add_dtlb_mapping(stack_addr, stack_addr);
+    add_dtlb_mapping(stack_addr, stack_addr);
 
-	// Map data where the I/O region normally goes
-	add_dtlb_mapping(IO_REGION_BASE, 0x100000 | TLB_WRITABLE);
+    // Map data where the I/O region normally goes
+    add_dtlb_mapping(IO_REGION_BASE, 0x100000 | TLB_WRITABLE);
 
-	// Map I/O region in different part of address space.
-	add_dtlb_mapping(0x100000, IO_REGION_BASE | TLB_WRITABLE);
+    // Map I/O region in different part of address space.
+    add_dtlb_mapping(0x100000, IO_REGION_BASE | TLB_WRITABLE);
 
-	// Enable MMU in flags register
-	__builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
+    // Enable MMU in flags register
+    __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
-	// Print a message
-	printmsg("jabberwocky");
+    // Print a message
+    printmsg("jabberwocky");
 
-	// Copy into memory
-	memcpy(IO_REGION_BASE, "galumphing", 10);
-	asm("dflush %0" : : "s" (IO_REGION_BASE));
+    // Copy into memory
+    memcpy(IO_REGION_BASE, "galumphing", 10);
+    asm("dflush %0" : : "s" (IO_REGION_BASE));
 
-	// Since I/O is remapped, need to halt using new address
-	*((volatile unsigned int*) 0x100064) = 1;
+    // Since I/O is remapped, need to halt using new address
+    *((volatile unsigned int*) 0x100064) = 1;
 
-	return 0;
+    return 0;
 }

@@ -24,10 +24,10 @@
 int runCosimulation(Core*, bool verbose);
 void cosimCheckSetScalarReg(Core*, uint32_t pc, uint32_t reg, uint32_t value);
 void cosimCheckSetVectorReg(Core*, uint32_t pc, uint32_t reg, uint32_t mask,
-	const uint32_t *value);
+                            const uint32_t *value);
 void cosimCheckVectorStore(Core*, uint32_t pc, uint32_t address, uint32_t mask,
-	const uint32_t *values);
+                           const uint32_t *values);
 void cosimCheckScalarStore(Core*, uint32_t pc, uint32_t address, uint32_t size,
-	uint32_t value);
+                           uint32_t value);
 
 #endif

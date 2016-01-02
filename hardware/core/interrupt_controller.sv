@@ -27,59 +27,59 @@
 //   load balancing somehow...
 //
 module interrupt_controller
-	#(parameter BASE_ADDRESS = 0)
-	(input                                      clk,
-	input                                       reset,
+    #(parameter BASE_ADDRESS = 0)
+    (input                                      clk,
+    input                                       reset,
 
-	// IO bus interface
-	io_bus_interface.slave                      io_bus,
+    // IO bus interface
+    io_bus_interface.slave                      io_bus,
 
-	// From external interface
-	input                                       interrupt_req,
+    // From external interface
+    input                                       interrupt_req,
 
-	// To cores
-	output logic[`TOTAL_THREADS - 1:0]          ic_thread_en,
-	output logic[`TOTAL_THREADS - 1:0]          ic_interrupt_pending,
-	output interrupt_id_t                       ic_interrupt_id[`TOTAL_THREADS - 1:0],
-	output                                      processor_halt,
+    // To cores
+    output logic[`TOTAL_THREADS - 1:0]          ic_thread_en,
+    output logic[`TOTAL_THREADS - 1:0]          ic_interrupt_pending,
+    output interrupt_id_t                       ic_interrupt_id[`TOTAL_THREADS - 1:0],
+    output                                      processor_halt,
 
-	// From cores
-	input [`TOTAL_THREADS - 1:0]                wb_interrupt_ack);
+    // From cores
+    input [`TOTAL_THREADS - 1:0]                wb_interrupt_ack);
 
-	always_ff @(posedge clk, posedge reset)
-	begin
-		if (reset)
-			ic_thread_en <= 1;
-		else if (io_bus.write_en)
-		begin
-			case (io_bus.address)
-				// Thread enable flag handling. This is limited to 32 threads.
-				// To add more, put the next 32 bits in subsequent io addresses.
-				BASE_ADDRESS: // resume thread
-					ic_thread_en <= ic_thread_en | io_bus.write_data[`TOTAL_THREADS - 1:0];
+    always_ff @(posedge clk, posedge reset)
+    begin
+        if (reset)
+            ic_thread_en <= 1;
+        else if (io_bus.write_en)
+        begin
+            case (io_bus.address)
+                // Thread enable flag handling. This is limited to 32 threads.
+                // To add more, put the next 32 bits in subsequent io addresses.
+                BASE_ADDRESS: // resume thread
+                    ic_thread_en <= ic_thread_en | io_bus.write_data[`TOTAL_THREADS - 1:0];
 
-				BASE_ADDRESS + 4: // halt thread
-					ic_thread_en <= ic_thread_en & ~io_bus.write_data[`TOTAL_THREADS - 1:0];
-			endcase
-		end
-	end
+                BASE_ADDRESS + 4: // halt thread
+                    ic_thread_en <= ic_thread_en & ~io_bus.write_data[`TOTAL_THREADS - 1:0];
+            endcase
+        end
+    end
 
-	assign processor_halt = ic_thread_en == 0;
+    assign processor_halt = ic_thread_en == 0;
 
-	genvar thread_idx;
-	generate
-		for (thread_idx = 0; thread_idx < `TOTAL_THREADS; thread_idx++)
-		begin : core_int_gen
-			assign ic_interrupt_id[thread_idx] = 0;
-			always_ff @(posedge clk, posedge reset)
-			begin
-				if (reset)
-					ic_interrupt_pending[thread_idx] <= 0;
-				else if (!ic_interrupt_pending[thread_idx] && interrupt_req && thread_idx == 0) // XXX hardcoded
-					ic_interrupt_pending[thread_idx] <= 1;
-				else if (wb_interrupt_ack[thread_idx])
-					ic_interrupt_pending[thread_idx] <= 0;
-			end
-		end
-	endgenerate
+    genvar thread_idx;
+    generate
+        for (thread_idx = 0; thread_idx < `TOTAL_THREADS; thread_idx++)
+        begin : core_int_gen
+            assign ic_interrupt_id[thread_idx] = 0;
+            always_ff @(posedge clk, posedge reset)
+            begin
+                if (reset)
+                    ic_interrupt_pending[thread_idx] <= 0;
+                else if (!ic_interrupt_pending[thread_idx] && interrupt_req && thread_idx == 0) // XXX hardcoded
+                    ic_interrupt_pending[thread_idx] <= 1;
+                else if (wb_interrupt_ack[thread_idx])
+                    ic_interrupt_pending[thread_idx] <= 0;
+            end
+        end
+    endgenerate
 endmodule

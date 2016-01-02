@@ -21,23 +21,23 @@
 
 struct RenderBspNode
 {
-	bool pointInFront(float x, float y, float z) const
-	{
-		return (x * normal[0] + y * normal[1] + z * normal[2] - distance) > 0;
-	}
+    bool pointInFront(float x, float y, float z) const
+    {
+        return (x * normal[0] + y * normal[1] + z * normal[2] - distance) > 0;
+    }
 
-	float normal[3];
-	float distance;
-	RenderBspNode *frontChild = nullptr;
-	RenderBspNode *backChild = nullptr;
-	RenderBspNode *parent = nullptr;
-	int pvsIndex;
-	librender::RenderBuffer vertexBuffer;
-	librender::RenderBuffer indexBuffer;
-	int markNumber;
+    float normal[3];
+    float distance;
+    RenderBspNode *frontChild = nullptr;
+    RenderBspNode *backChild = nullptr;
+    RenderBspNode *parent = nullptr;
+    int pvsIndex;
+    librender::RenderBuffer vertexBuffer;
+    librender::RenderBuffer indexBuffer;
+    int markNumber;
 };
 
 void setBspData(RenderBspNode *root, const uint8_t *pvsList, RenderBspNode *leaves,
-	int numLeaves, librender::Texture *atlasTexture, librender::Texture *lightmapAtlas);
+                int numLeaves, librender::Texture *atlasTexture, librender::Texture *lightmapAtlas);
 void renderScene(librender::RenderContext *context, librender::Vec3 cameraPos);
 void renderTextureAtlas(librender::RenderContext *context);

@@ -24,34 +24,34 @@ using namespace librender;
 class ColorShader : public Shader
 {
 public:
-	ColorShader()
-		:	Shader(7, 8)
-	{
-	}
+    ColorShader()
+        :	Shader(7, 8)
+    {
+    }
 
-	void shadeVertices(vecf16_t *outParams, const vecf16_t *inAttribs, const void *,
-        int) const override
-	{
-		// Position
-		outParams[kParamX] = inAttribs[0];
-		outParams[kParamY] = inAttribs[1];
-		outParams[kParamZ] = inAttribs[2];
-		outParams[kParamW] = splatf(1.0);
+    void shadeVertices(vecf16_t *outParams, const vecf16_t *inAttribs, const void *,
+                       int) const override
+    {
+        // Position
+        outParams[kParamX] = inAttribs[0];
+        outParams[kParamY] = inAttribs[1];
+        outParams[kParamZ] = inAttribs[2];
+        outParams[kParamW] = splatf(1.0);
 
-		// Color
-		outParams[4] = inAttribs[3];
-		outParams[5] = inAttribs[4];
-		outParams[6] = inAttribs[5];
-		outParams[7] = inAttribs[6];
-	}
+        // Color
+        outParams[4] = inAttribs[3];
+        outParams[5] = inAttribs[4];
+        outParams[6] = inAttribs[5];
+        outParams[7] = inAttribs[6];
+    }
 
-	void shadePixels(vecf16_t *outColor, const vecf16_t *inParams,
-		const void *, const Texture * const *,
-		unsigned short) const override
-	{
-		outColor[0] = inParams[0] * inParams[3];
-		outColor[1] = inParams[1] * inParams[3];
-		outColor[2] = inParams[2] * inParams[3];
-		outColor[3] = inParams[3];
-	}
+    void shadePixels(vecf16_t *outColor, const vecf16_t *inParams,
+                     const void *, const Texture * const *,
+                     unsigned short) const override
+    {
+        outColor[0] = inParams[0] * inParams[3];
+        outColor[1] = inParams[1] * inParams[3];
+        outColor[2] = inParams[2] * inParams[3];
+        outColor[3] = inParams[3];
+    }
 };

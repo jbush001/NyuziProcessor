@@ -41,120 +41,120 @@ static_assert(__builtin_clz(kTileSize) & 1, "Tile size must be power of four");
 class Surface
 {
 public:
-	// This allocates surface memory and frees it automatically.
-	Surface(int width, int height);
+    // This allocates surface memory and frees it automatically.
+    Surface(int width, int height);
 
-	// This will use the passed pointer as surface memory and will
-	// not attempt to free it.
-	Surface(int width, int height, void *base);
+    // This will use the passed pointer as surface memory and will
+    // not attempt to free it.
+    Surface(int width, int height, void *base);
 
-	~Surface();
+    ~Surface();
 
-	Surface(const Surface&) = delete;
-	Surface& operator=(const Surface&) = delete;
+    Surface(const Surface&) = delete;
+    Surface& operator=(const Surface&) = delete;
 
-	// Write values to a 4x4 block, with lanes arranged as follows:
-	//   0  1  2  3
-	//   4  5  6  7
-	//   8  9 10 11
-	//  12 13 14 15
-	void writeBlockMasked(int left, int top, int mask, veci16_t values)
-	{
-		veci16_t ptrs = f4x4AtOrigin + splati(left * 4 + top * fStride);
-		__builtin_nyuzi_scatter_storei_masked(ptrs, values, mask);
-	}
+    // Write values to a 4x4 block, with lanes arranged as follows:
+    //   0  1  2  3
+    //   4  5  6  7
+    //   8  9 10 11
+    //  12 13 14 15
+    void writeBlockMasked(int left, int top, int mask, veci16_t values)
+    {
+        veci16_t ptrs = f4x4AtOrigin + splati(left * 4 + top * fStride);
+        __builtin_nyuzi_scatter_storei_masked(ptrs, values, mask);
+    }
 
-	// Read values from a 4x4 block, in same order as writeBlockMasked
-	veci16_t readBlock(int left, int top) const
-	{
-		veci16_t ptrs = f4x4AtOrigin + splati(left * 4 + top * fStride);
-		return __builtin_nyuzi_gather_loadi(ptrs);
-	}
+    // Read values from a 4x4 block, in same order as writeBlockMasked
+    veci16_t readBlock(int left, int top) const
+    {
+        veci16_t ptrs = f4x4AtOrigin + splati(left * 4 + top * fStride);
+        return __builtin_nyuzi_gather_loadi(ptrs);
+    }
 
-	// Set all 32-bit values in a tile to a predefined value.
-	void clearTile(int left, int top, unsigned int value)
-	{
-		if (kTileSize == 64 && fWidth - left >= 64 && fHeight - top >= 64)
-		{
-			// Fast clear using block stores
-			veci16_t vval = splati(value);
-			veci16_t *ptr = reinterpret_cast<veci16_t*>(fBaseAddress + (left + top * fWidth) * kBytesPerPixel);
-			const int kStride = fStride / kCacheLineSize;
-			for (int y = 0; y < 64; y++)
-			{
-				ptr[0] = vval;
-				ptr[1] = vval;
-				ptr[2] = vval;
-				ptr[3] = vval;
-				ptr += kStride;
-			}
-		}
-		else
-			clearTileSlow(left, top, value);
-	}
+    // Set all 32-bit values in a tile to a predefined value.
+    void clearTile(int left, int top, unsigned int value)
+    {
+        if (kTileSize == 64 && fWidth - left >= 64 && fHeight - top >= 64)
+        {
+            // Fast clear using block stores
+            veci16_t vval = splati(value);
+            veci16_t *ptr = reinterpret_cast<veci16_t*>(fBaseAddress + (left + top * fWidth) * kBytesPerPixel);
+            const int kStride = fStride / kCacheLineSize;
+            for (int y = 0; y < 64; y++)
+            {
+                ptr[0] = vval;
+                ptr[1] = vval;
+                ptr[2] = vval;
+                ptr[3] = vval;
+                ptr += kStride;
+            }
+        }
+        else
+            clearTileSlow(left, top, value);
+    }
 
-	// Push a tile from the L2 cache back to system memory
-	void flushTile(int left, int top);
+    // Push a tile from the L2 cache back to system memory
+    void flushTile(int left, int top);
 
-	veci16_t readPixels(veci16_t tx, veci16_t ty, unsigned short mask) const
-	{
-		veci16_t pointers = (ty * splati(fStride) + tx * splati(kBytesPerPixel))
-			+ splati(fBaseAddress);
-		return __builtin_nyuzi_gather_loadi_masked(pointers, mask);
-	}
+    veci16_t readPixels(veci16_t tx, veci16_t ty, unsigned short mask) const
+    {
+        veci16_t pointers = (ty * splati(fStride) + tx * splati(kBytesPerPixel))
+                            + splati(fBaseAddress);
+        return __builtin_nyuzi_gather_loadi_masked(pointers, mask);
+    }
 
-	inline int getWidth() const
-	{
-		return fWidth;
-	}
+    inline int getWidth() const
+    {
+        return fWidth;
+    }
 
-	inline int getHeight() const
-	{
-		return fHeight;
-	}
+    inline int getHeight() const
+    {
+        return fHeight;
+    }
 
-	inline int getStride() const
-	{
-		return fStride;
-	}
+    inline int getStride() const
+    {
+        return fStride;
+    }
 
-	void *bits() const
-	{
-		return reinterpret_cast<void*>(fBaseAddress);
-	}
+    void *bits() const
+    {
+        return reinterpret_cast<void*>(fBaseAddress);
+    }
 
-	void *operator new(size_t size)
-	{
-		// Because this structure has vector members, it must be vector width aligned
-		return memalign(sizeof(vecu16_t), size);
-	}
+    void *operator new(size_t size)
+    {
+        // Because this structure has vector members, it must be vector width aligned
+        return memalign(sizeof(vecu16_t), size);
+    }
 
-	vecf16_t getXStep() const
-	{
-		return fXStep;
-	}
+    vecf16_t getXStep() const
+    {
+        return fXStep;
+    }
 
-	vecf16_t getYStep() const
-	{
-		return fYStep;
-	}
+    vecf16_t getYStep() const
+    {
+        return fYStep;
+    }
 
 private:
-	void initializeOffsetVectors();
-	void clearTileSlow(int left, int top, unsigned int value);
+    void initializeOffsetVectors();
+    void clearTileSlow(int left, int top, unsigned int value);
 
-	vecu16_t f4x4AtOrigin;
+    vecu16_t f4x4AtOrigin;
 
-	// For each pixel in a 4x4 grid, these represent the distance in
-	// screen coordinates (-1.0 to 1.0) from the upper left pixel.
-	vecf16_t fXStep;
-	vecf16_t fYStep;
+    // For each pixel in a 4x4 grid, these represent the distance in
+    // screen coordinates (-1.0 to 1.0) from the upper left pixel.
+    vecf16_t fXStep;
+    vecf16_t fYStep;
 
-	int fWidth;
-	int fHeight;
-	int fStride;
-	unsigned int fBaseAddress;
-	bool fOwnedPointer;
+    int fWidth;
+    int fHeight;
+    int fStride;
+    unsigned int fBaseAddress;
+    bool fOwnedPointer;
 
 };
 

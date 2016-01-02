@@ -20,6 +20,6 @@
 
 int main()
 {
-	printf("foo\n"); // CHECKN: bar
-	printf("bar\n");
+    printf("foo\n"); // CHECKN: bar
+    printf("bar\n");
 }

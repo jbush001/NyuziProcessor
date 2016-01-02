@@ -20,52 +20,52 @@
 //
 
 module sim_ps2(
-	input               clk,
-	input               reset,
-	output              ps2_clk,
-	output              ps2_data);
+    input               clk,
+    input               reset,
+    output              ps2_clk,
+    output              ps2_data);
 
-	// This is much faster than the PS/2 controller would run normally,
-	// but it makes the test take less time.
-	localparam DIVIDER_COUNT = 500;
+    // This is much faster than the PS/2 controller would run normally,
+    // but it makes the test take less time.
+    localparam DIVIDER_COUNT = 500;
 
-	int output_counter;
-	int divider_countdown;
-	logic[7:0] tx_byte;
+    int output_counter;
+    int divider_countdown;
+    logic[7:0] tx_byte;
 
-	always_ff @(posedge clk, posedge reset)
-	begin
-		if (reset)
-		begin
-			output_counter <= 0;
-			ps2_clk <= 1;
-			ps2_data <= 1;
-			tx_byte <= 0;
-			divider_countdown <= DIVIDER_COUNT;
-		end
-		else if (divider_countdown == 0)
-		begin
-			divider_countdown <= DIVIDER_COUNT;
-			ps2_clk <= !ps2_clk;
-			if (!ps2_clk)
-			begin
-				// Transmit byte on rising edge
-				output_counter <= output_counter + 1;
-				if (output_counter == 0)
-					ps2_data <= 1'b0;	// start bit
-				else if (output_counter <= 8)
-					ps2_data <= tx_byte[output_counter - 1];
-				else if (output_counter == 9)
-					ps2_data <= !(^tx_byte);	// parity (odd)
-				else if (output_counter == 10)
-				begin
-					ps2_data <= 1'b1;		// stop bit
-					output_counter <= 0;
-					tx_byte <= tx_byte + 1;
-				end
-			end
-		end
-		else
-			divider_countdown <= divider_countdown - 1;
-	end
+    always_ff @(posedge clk, posedge reset)
+    begin
+        if (reset)
+        begin
+            output_counter <= 0;
+            ps2_clk <= 1;
+            ps2_data <= 1;
+            tx_byte <= 0;
+            divider_countdown <= DIVIDER_COUNT;
+        end
+        else if (divider_countdown == 0)
+        begin
+            divider_countdown <= DIVIDER_COUNT;
+            ps2_clk <= !ps2_clk;
+            if (!ps2_clk)
+            begin
+                // Transmit byte on rising edge
+                output_counter <= output_counter + 1;
+                if (output_counter == 0)
+                    ps2_data <= 1'b0;    // start bit
+                else if (output_counter <= 8)
+                    ps2_data <= tx_byte[output_counter - 1];
+                else if (output_counter == 9)
+                    ps2_data <= !(^tx_byte);    // parity (odd)
+                else if (output_counter == 10)
+                begin
+                    ps2_data <= 1'b1;        // stop bit
+                    output_counter <= 0;
+                    tx_byte <= tx_byte + 1;
+                end
+            end
+        end
+        else
+            divider_countdown <= divider_countdown - 1;
+    end
 endmodule

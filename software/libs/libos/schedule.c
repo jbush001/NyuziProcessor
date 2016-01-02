@@ -25,49 +25,49 @@ static void * volatile gContext;
 
 static int dispatchJob()
 {
-	int thisIndex;
+    int thisIndex;
 
-	do
-	{
-		thisIndex = gCurrentIndex;
-		if (thisIndex == gMaxIndex)
-			return 0;	// No more jobs in this batch
-	}
-	while (!__sync_bool_compare_and_swap(&gCurrentIndex, thisIndex, thisIndex + 1));
+    do
+    {
+        thisIndex = gCurrentIndex;
+        if (thisIndex == gMaxIndex)
+            return 0;	// No more jobs in this batch
+    }
+    while (!__sync_bool_compare_and_swap(&gCurrentIndex, thisIndex, thisIndex + 1));
 
-	gCurrentFunc(gContext, thisIndex);
+    gCurrentFunc(gContext, thisIndex);
 
-	return 1;
+    return 1;
 }
 
 void parallelExecute(ParallelFunc func, void *context, int numElements)
 {
-	gCurrentFunc = func;
-	gContext = context;
-	gCurrentIndex = 0;
-	gMaxIndex = numElements;
+    gCurrentFunc = func;
+    gContext = context;
+    gCurrentIndex = 0;
+    gMaxIndex = numElements;
 
-	while (gCurrentIndex != gMaxIndex)
-		dispatchJob();
+    while (gCurrentIndex != gMaxIndex)
+        dispatchJob();
 
-	while (gActiveJobs)
-		; // Wait for threads to finish
+    while (gActiveJobs)
+        ; // Wait for threads to finish
 }
 
 void workerThread()
 {
-	while (1)
-	{
-		while (gCurrentIndex == gMaxIndex)
-			;
+    while (1)
+    {
+        while (gCurrentIndex == gMaxIndex)
+            ;
 
-		__sync_fetch_and_add(&gActiveJobs, 1);
-		dispatchJob();
-		__sync_fetch_and_add(&gActiveJobs, -1);
-	}
+        __sync_fetch_and_add(&gActiveJobs, 1);
+        dispatchJob();
+        __sync_fetch_and_add(&gActiveJobs, -1);
+    }
 }
 
 void startAllThreads()
 {
-	*((unsigned int*) 0xffff0060) = 0xffffffff;
+    *((unsigned int*) 0xffff0060) = 0xffffffff;
 }

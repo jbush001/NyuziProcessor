@@ -23,7 +23,7 @@ namespace librender
 {
 
 void drawLineClipped(Surface *dest, int x1, int y1, int x2, int y2, unsigned int color,
-	int left, int top, int right, int bottom);
+                     int left, int top, int right, int bottom);
 void drawLine(Surface *dest, int x1, int y1, int x2, int y2, unsigned int color);
 
 }

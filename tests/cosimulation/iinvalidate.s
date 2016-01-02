@@ -21,23 +21,23 @@
 # to a jump out of the loop
 # This test should fail if the iinvalidate is commented out.
 
-			.globl _start
+            .globl _start
 
-_start:		lea s0, jumploc
-			load_32 s1, newinst
+_start:     lea s0, jumploc
+            load_32 s1, newinst
 
-looptop:	move s10, 1
-jumploc:	nop				# This location will be patched
-1:			move s10, 2
+looptop:    move s10, 1
+jumploc:    nop                # This location will be patched
+1:          move s10, 2
 
-			# patch instruction to jump out of loop
-			store_32 s1, (s0)
-			iinvalidate s0
-			membar
-			goto looptop
+            # patch instruction to jump out of loop
+            store_32 s1, (s0)
+            iinvalidate s0
+            membar
+            goto looptop
 
-			# Control will flow here after patch
-breakout:	move s10, 3
+            # Control will flow here after patch
+breakout:   move s10, 3
 
-			HALT_CURRENT_THREAD
-newinst:	.long	0xf6000280	; goto +20
+            HALT_CURRENT_THREAD
+newinst:    .long    0xf6000280    ; goto +20

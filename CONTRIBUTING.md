@@ -100,46 +100,37 @@ tree, but it's easy to create a bunch and run them. From tests/cosimulation:
    ```
 
 2. Synthesize for FPGA - The Quartus synthesis tools catch different types of
-errors than Verilator. Also verify:
+errors than Verilator. It will also print some basic information about the
+synthesized design after synthesis:
 
- * Open hardware/fpga/de2-115/output_files/fpga_target.map.summary and check the
-   total number of logic elements to ensure the design still fits on the part
-   and the number of logic elements hasn't gone up excessively (it should be
-   around 80k)
+    Fmax 54.3 MHz
+    73,034 Logic elmements
 
-
-   ```
-   Analysis & Synthesis Status : Successful - Wed Sep 10 18:51:56 2014
-   Quartus II 32-bit Version : 13.1.0 Build 162 10/23/2013 SJ Web Edition
-   Revision Name : fpga_target
-   Top-level Entity Name : fpga_top
-   Family : Cyclone IV E
-   Total logic elements : 81,327
-   ```
-
- * Open hardware/fpga/de2-115/output_files/fpga_target.sta.rpt and find the maximum
-  frequency for clk50 to ensure the timing hasn't regressed (it should be
-  around 60Mhz at 85C):
-
-   ```
-   +-----------------------------------------------------------+
-   ; Slow 1200mV 85C Model Fmax Summary                        ;
-   +------------+-----------------+---------------------+------+
-   ; Fmax       ; Restricted Fmax ; Clock Name          ; Note ;
-   +------------+-----------------+---------------------+------+
-   ; 61.22 MHz  ; 61.22 MHz       ; clk50               ;      ;
-   ...
-   ```
+Ensure the frequence hasn't decreased too much (the design will not work on FPGA
+if it is below 50 MHz), and that the number of logic elements hasn't increased
+substantially.
 
 4. For compiler and emulator changes, compile and execute run apps in software/apps.
 
 # Coding Style
 
-When in doubt, be consistent with existing code.
+When in doubt, be consistent with existing code. Coding style adheres to that
+used by autoformatting utilities, which I would recommend running on code before
+submitting. To install:
 
-Source files use tabs for indentation, spaces for alignment to the right of
-text. Strip trailing whitespace before submitting patches. Many editors can
-do this automatically.
+    sudo apt-get install astyle
+    pip install --upgrade autopep8
+
+To reformat C/C++ code:
+
+    astyle --style=allman --in-place *.cpp *.c *.h
+
+To reformat Python code:
+
+    autopep8 --in-place -r
+
+Python scripts should be written to be compatible with both Python 2
+and Python 3.
 
 The OpenCores guidelines give a good set of rules for SystemVerilog sources,
 which this project generally follows (with some exceptions, which should be

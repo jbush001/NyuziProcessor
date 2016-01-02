@@ -27,18 +27,18 @@ extern void illegal_inst();
 
 void do_trap(unsigned int *registers)
 {
-	printf("FAULT %d index %d\n", __builtin_nyuzi_read_control_reg(3),
-		registers[10]);
-	registers[31] += 4;	// Skip instruction
+    printf("FAULT %d index %d\n", __builtin_nyuzi_read_control_reg(3),
+           registers[10]);
+    registers[31] += 4;	// Skip instruction
 }
 
 int main(int argc, const char *argv[])
 {
-	__builtin_nyuzi_write_control_reg(1, trap_handler);
-	illegal_inst();
+    __builtin_nyuzi_write_control_reg(1, trap_handler);
+    illegal_inst();
 
-	printf("DONE\n"); // CHECK: DONE
+    printf("DONE\n"); // CHECK: DONE
 
-	return 1;
+    return 1;
 }
 

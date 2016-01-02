@@ -30,18 +30,18 @@ extern void trap_handler();
 
 void do_trap(unsigned int *registers)
 {
-	printf("*");
+    printf("*");
 }
 
 int main(void)
 {
-	int i;
+    int i;
 
-	__builtin_nyuzi_write_control_reg(CR_TRAP_HANDLER, trap_handler);
-	__builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_INTERRUPT_EN | FLAG_SUPERVISOR_EN);
+    __builtin_nyuzi_write_control_reg(CR_TRAP_HANDLER, trap_handler);
+    __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_INTERRUPT_EN | FLAG_SUPERVISOR_EN);
 
-	printf(">>ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\n");
+    printf(">>ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\n");
 
-	return 0;
+    return 0;
 }
 

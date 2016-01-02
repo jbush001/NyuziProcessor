@@ -23,50 +23,50 @@ unsigned int globaltmp;
 
 void fault_handler()
 {
-	printf("FAULT %d %08x current flags %02x prev flags %02x\n",
-		__builtin_nyuzi_read_control_reg(CR_FAULT_REASON),
-		__builtin_nyuzi_read_control_reg(CR_FAULT_ADDRESS),
-		__builtin_nyuzi_read_control_reg(CR_FLAGS),
-		__builtin_nyuzi_read_control_reg(CR_SAVED_FLAGS));
-	exit(0);
+    printf("FAULT %d %08x current flags %02x prev flags %02x\n",
+           __builtin_nyuzi_read_control_reg(CR_FAULT_REASON),
+           __builtin_nyuzi_read_control_reg(CR_FAULT_ADDRESS),
+           __builtin_nyuzi_read_control_reg(CR_FLAGS),
+           __builtin_nyuzi_read_control_reg(CR_SAVED_FLAGS));
+    exit(0);
 }
 
 int main(void)
 {
-	unsigned int va;
-	int asid;
-	unsigned int stack_addr = (unsigned int) &va & ~(PAGE_SIZE - 1);
+    unsigned int va;
+    int asid;
+    unsigned int stack_addr = (unsigned int) &va & ~(PAGE_SIZE - 1);
 
-	// Map code & data
-	for (va = 0; va < 0x10000; va += PAGE_SIZE)
-	{
-		add_itlb_mapping(va, va);
-		add_dtlb_mapping(va, va | TLB_WRITABLE | TLB_GLOBAL);
-	}
+    // Map code & data
+    for (va = 0; va < 0x10000; va += PAGE_SIZE)
+    {
+        add_itlb_mapping(va, va);
+        add_dtlb_mapping(va, va | TLB_WRITABLE | TLB_GLOBAL);
+    }
 
-	add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE);
-	add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_SUPERVISOR | TLB_WRITABLE);
+    add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE);
+    add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_SUPERVISOR | TLB_WRITABLE);
 
-	// Alias mapping that we will use for test (the normal mapped region is used
-	// to halt the test). This is supervisor and non-writab
-	add_dtlb_mapping(0x100000, IO_REGION_BASE | TLB_SUPERVISOR | TLB_WRITABLE);
+    // Alias mapping that we will use for test (the normal mapped region is used
+    // to halt the test). This is supervisor and non-writab
+    add_dtlb_mapping(0x100000, IO_REGION_BASE | TLB_SUPERVISOR | TLB_WRITABLE);
 
-	__builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);
-	__builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
+    __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);
+    __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
-	// Can read from page in supervisor mode
-	globaltmp = *((volatile unsigned int*) 0x100000);
-	printf("check1\n");
-	// CHECK: check1
+    // Can read from page in supervisor mode
+    globaltmp = *((volatile unsigned int*) 0x100000);
+    printf("check1\n");
+    // CHECK: check1
 
-	// Switch to user mode, but leave MMU active
-	switch_to_user_mode();
+    // Switch to user mode, but leave MMU active
+    switch_to_user_mode();
 
-	globaltmp = *((volatile unsigned int*) 0x100000);
-	// CHECK: FAULT 8 00100000 current flags 06 prev flags 02
+    globaltmp = *((volatile unsigned int*) 0x100000);
+    // CHECK: FAULT 8 00100000 current flags 06 prev flags 02
 
-	// XXX no way to verify that the read wasn't sent to external bus
+    // XXX no way to verify that the read wasn't sent to external bus
 
-	printf("should_not_be_here\n"); // CHECKN: should_not_be_here
+    printf("should_not_be_here\n"); // CHECKN: should_not_be_here
 }
 

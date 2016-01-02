@@ -52,12 +52,12 @@
 //
 typedef enum
 {
-	// Playing or camping.
-	PST_LIVE,
-	// Dead on the ground, view follows killer.
-	PST_DEAD,
-	// Ready to restart/respawn???
-	PST_REBORN
+    // Playing or camping.
+    PST_LIVE,
+    // Dead on the ground, view follows killer.
+    PST_DEAD,
+    // Ready to restart/respawn???
+    PST_REBORN
 
 } playerstate_t;
 
@@ -67,12 +67,12 @@ typedef enum
 //
 typedef enum
 {
-	// No clipping, walk through barriers.
-	CF_NOCLIP			= 1,
-	// No damage, no health loss.
-	CF_GODMODE			= 2,
-	// Not really a cheat, just a debug aid.
-	CF_NOMOMENTUM		= 4
+    // No clipping, walk through barriers.
+    CF_NOCLIP			= 1,
+    // No damage, no health loss.
+    CF_GODMODE			= 2,
+    // Not really a cheat, just a debug aid.
+    CF_NOMOMENTUM		= 4
 
 } cheat_t;
 
@@ -82,86 +82,86 @@ typedef enum
 //
 typedef struct player_s
 {
-	mobj_t*				mo;
-	playerstate_t		playerstate;
-	ticcmd_t			cmd;
+    mobj_t*				mo;
+    playerstate_t		playerstate;
+    ticcmd_t			cmd;
 
-	// Determine POV,
-	//	including viewpoint bobbing during movement.
-	// Focal origin above r.z
-	fixed_t				viewz;
-	// Base height above floor for viewz.
-	fixed_t				viewheight;
-	// Bob/squat speed.
-	fixed_t				deltaviewheight;
-	// bounded/scaled total momentum.
-	fixed_t				bob;
+    // Determine POV,
+    //	including viewpoint bobbing during movement.
+    // Focal origin above r.z
+    fixed_t				viewz;
+    // Base height above floor for viewz.
+    fixed_t				viewheight;
+    // Bob/squat speed.
+    fixed_t				deltaviewheight;
+    // bounded/scaled total momentum.
+    fixed_t				bob;
 
-	// This is only used between levels,
-	// mo->health is used during levels.
-	int					health;
-	int					armorpoints;
-	// Armor type is 0-2.
-	int					armortype;
+    // This is only used between levels,
+    // mo->health is used during levels.
+    int					health;
+    int					armorpoints;
+    // Armor type is 0-2.
+    int					armortype;
 
-	// Power ups. invinc and invis are tic counters.
-	int					powers[NUMPOWERS];
-	boolean				cards[NUMCARDS];
-	boolean				backpack;
+    // Power ups. invinc and invis are tic counters.
+    int					powers[NUMPOWERS];
+    boolean				cards[NUMCARDS];
+    boolean				backpack;
 
-	// Frags, kills of other players.
-	int					frags[MAXPLAYERS];
-	weapontype_t		readyweapon;
+    // Frags, kills of other players.
+    int					frags[MAXPLAYERS];
+    weapontype_t		readyweapon;
 
-	// Is wp_nochange if not changing.
-	weapontype_t		pendingweapon;
+    // Is wp_nochange if not changing.
+    weapontype_t		pendingweapon;
 
-	boolean				weaponowned[NUMWEAPONS];
-	int					ammo[NUMAMMO];
-	int					maxammo[NUMAMMO];
+    boolean				weaponowned[NUMWEAPONS];
+    int					ammo[NUMAMMO];
+    int					maxammo[NUMAMMO];
 
-	// True if button down last tic.
-	int					attackdown;
-	int					usedown;
+    // True if button down last tic.
+    int					attackdown;
+    int					usedown;
 
-	// Bit flags, for cheats and debug.
-	// See cheat_t, above.
-	int					cheats;
+    // Bit flags, for cheats and debug.
+    // See cheat_t, above.
+    int					cheats;
 
-	// Refired shots are less accurate.
-	int					refire;
+    // Refired shots are less accurate.
+    int					refire;
 
-	 // For intermission stats.
-	int					killcount;
-	int					itemcount;
-	int					secretcount;
+    // For intermission stats.
+    int					killcount;
+    int					itemcount;
+    int					secretcount;
 
-	// Hint messages.
-	char*				message;
+    // Hint messages.
+    char*				message;
 
-	// For screen flashing (red or bright).
-	int					damagecount;
-	int					bonuscount;
+    // For screen flashing (red or bright).
+    int					damagecount;
+    int					bonuscount;
 
-	// Who did damage (NULL for floors/ceilings).
-	mobj_t*				attacker;
+    // Who did damage (NULL for floors/ceilings).
+    mobj_t*				attacker;
 
-	// So gun flashes light up areas.
-	int					extralight;
+    // So gun flashes light up areas.
+    int					extralight;
 
-	// Current PLAYPAL, ???
-	//	can be set to REDCOLORMAP for pain, etc.
-	int					fixedcolormap;
+    // Current PLAYPAL, ???
+    //	can be set to REDCOLORMAP for pain, etc.
+    int					fixedcolormap;
 
-	// Player skin colorshift,
-	//	0-3 for which color to draw player.
-	int					colormap;
+    // Player skin colorshift,
+    //	0-3 for which color to draw player.
+    int					colormap;
 
-	// Overlay view sprites (gun, etc).
-	pspdef_t			psprites[NUMPSPRITES];
+    // Overlay view sprites (gun, etc).
+    pspdef_t			psprites[NUMPSPRITES];
 
-	// True if secret level has been done.
-	boolean				didsecret;
+    // True if secret level has been done.
+    boolean				didsecret;
 
 } player_t;
 
@@ -172,41 +172,41 @@ typedef struct player_s
 //
 typedef struct
 {
-	boolean		in;		// whether the player is in game
+    boolean		in;		// whether the player is in game
 
-	// Player stats, kills, collected items etc.
-	int			skills;
-	int			sitems;
-	int			ssecret;
-	int			stime;
-	int			frags[4];
-	int			score;	// current score on entry, modified on return
+    // Player stats, kills, collected items etc.
+    int			skills;
+    int			sitems;
+    int			ssecret;
+    int			stime;
+    int			frags[4];
+    int			score;	// current score on entry, modified on return
 
 } wbplayerstruct_t;
 
 typedef struct
 {
-	int			epsd;	// episode # (0-2)
+    int			epsd;	// episode # (0-2)
 
-	// if true, splash the secret level
-	boolean		didsecret;
+    // if true, splash the secret level
+    boolean		didsecret;
 
-	// previous and next levels, origin 0
-	int			last;
-	int			next;
+    // previous and next levels, origin 0
+    int			last;
+    int			next;
 
-	int			maxkills;
-	int			maxitems;
-	int			maxsecret;
-	int			maxfrags;
+    int			maxkills;
+    int			maxitems;
+    int			maxsecret;
+    int			maxfrags;
 
-	// the par time
-	int			partime;
+    // the par time
+    int			partime;
 
-	// index of this player in game
-	int			pnum;
+    // index of this player in game
+    int			pnum;
 
-	wbplayerstruct_t	plyr[MAXPLAYERS];
+    wbplayerstruct_t	plyr[MAXPLAYERS];
 
 } wbstartstruct_t;
 

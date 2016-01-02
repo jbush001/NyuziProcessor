@@ -18,30 +18,30 @@
 
 void qsort(void *base, size_t nel, size_t width, cmpfun cmp)
 {
-	unsigned int i, j, k;
-	char tmp;
+    unsigned int i, j, k;
+    char tmp;
 
-	if (nel == 0)
-		return;
+    if (nel == 0)
+        return;
 
-	for (i = 0; i < nel - 1; i++)
-	{
-		for (j = i + 1; j < nel; j++)
-		{
-			char *elem1 = (char*) base + i * width;
-			char *elem2 = (char*) base + j * width;
-			if (cmp(elem1, elem2) > 0)
-			{
-				// swap
-				for (k = 0; k < width; k++)
-				{
-					tmp = elem1[k];
-					elem1[k] = elem2[k];
-					elem2[k] = tmp;
-				}
-			}
-		}
-	}
+    for (i = 0; i < nel - 1; i++)
+    {
+        for (j = i + 1; j < nel; j++)
+        {
+            char *elem1 = (char*) base + i * width;
+            char *elem2 = (char*) base + j * width;
+            if (cmp(elem1, elem2) > 0)
+            {
+                // swap
+                for (k = 0; k < width; k++)
+                {
+                    tmp = elem1[k];
+                    elem1[k] = elem2[k];
+                    elem2[k] = tmp;
+                }
+            }
+        }
+    }
 }
 
 

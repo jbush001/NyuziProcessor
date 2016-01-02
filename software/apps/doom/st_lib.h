@@ -43,29 +43,29 @@
 
 typedef struct
 {
-	// upper right-hand corner
-	//	of the number (right-justified)
-	int			x;
-	int			y;
+    // upper right-hand corner
+    //	of the number (right-justified)
+    int			x;
+    int			y;
 
-	// max # of digits in number
-	int width;
+    // max # of digits in number
+    int width;
 
-	// last number value
-	int			oldnum;
+    // last number value
+    int			oldnum;
 
-	// pointer to current value
-	int*		num;
+    // pointer to current value
+    int*		num;
 
-	// pointer to boolean stating
-	//	whether to update number
-	boolean*	on;
+    // pointer to boolean stating
+    //	whether to update number
+    boolean*	on;
 
-	// list of patches for 0-9
-	patch_t**	p;
+    // list of patches for 0-9
+    patch_t**	p;
 
-	// user data
-	int data;
+    // user data
+    int data;
 
 } st_number_t;
 
@@ -75,11 +75,11 @@ typedef struct
 //	or, more precisely, contains a number widget.)
 typedef struct
 {
-	// number information
-	st_number_t			n;
+    // number information
+    st_number_t			n;
 
-	// percent sign graphic
-	patch_t*			p;
+    // percent sign graphic
+    patch_t*			p;
 
 } st_percent_t;
 
@@ -88,25 +88,25 @@ typedef struct
 // Multiple Icon widget
 typedef struct
 {
-	 // center-justified location of icons
-	int					x;
-	int					y;
+    // center-justified location of icons
+    int					x;
+    int					y;
 
-	// last icon number
-	int					oldinum;
+    // last icon number
+    int					oldinum;
 
-	// pointer to current icon
-	int*				inum;
+    // pointer to current icon
+    int*				inum;
 
-	// pointer to boolean stating
-	//	whether to update icon
-	boolean*			on;
+    // pointer to boolean stating
+    //	whether to update icon
+    boolean*			on;
 
-	// list of icons
-	patch_t**			p;
+    // list of icons
+    patch_t**			p;
 
-	// user data
-	int					data;
+    // user data
+    int					data;
 
 } st_multicon_t;
 
@@ -117,23 +117,23 @@ typedef struct
 
 typedef struct
 {
-	// center-justified location of icon
-	int					x;
-	int					y;
+    // center-justified location of icon
+    int					x;
+    int					y;
 
-	// last icon value
-	int					oldval;
+    // last icon value
+    int					oldval;
 
-	// pointer to current icon status
-	boolean*			val;
+    // pointer to current icon status
+    boolean*			val;
 
-	// pointer to boolean
-	//	stating whether to update icon
-	boolean*			on;
+    // pointer to boolean
+    //	stating whether to update icon
+    boolean*			on;
 
 
-	patch_t*			p;		// icon
-	int					data;	// user data
+    patch_t*			p;		// icon
+    int					data;	// user data
 
 } st_binicon_t;
 

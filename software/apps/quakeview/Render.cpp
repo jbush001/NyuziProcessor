@@ -29,11 +29,11 @@ Texture *gTextureAtlasTexture;
 Texture *gLightmapAtlasTexture;
 int gFrame;
 const float kAtlasDebugVertices[] = {
-	// Position        Texture Atlas Pos    Tex pos    Lightmap pos
-	-1.0,  1.0, -1.0,  0.0, 0.0, 1.0, 1.0,  0.0, 1.0,  0.0, 1.0,
-	-1.0, -1.0, -1.0,  0.0, 0.0, 1.0, 1.0,  0.0, 0.0,  0.0, 0.0,
-	 1.0, -1.0, -1.0,  0.0, 0.0, 1.0, 1.0,  1.0, 0.0,  1.0, 0.0,
-	 1.0,  1.0, -1.0,  0.0, 0.0, 1.0, 1.0,  1.0, 1.0,  1.0, 1.0
+    // Position        Texture Atlas Pos    Tex pos    Lightmap pos
+    -1.0,  1.0, -1.0,  0.0, 0.0, 1.0, 1.0,  0.0, 1.0,  0.0, 1.0,
+    -1.0, -1.0, -1.0,  0.0, 0.0, 1.0, 1.0,  0.0, 0.0,  0.0, 0.0,
+    1.0, -1.0, -1.0,  0.0, 0.0, 1.0, 1.0,  1.0, 0.0,  1.0, 0.0,
+    1.0,  1.0, -1.0,  0.0, 0.0, 1.0, 1.0,  1.0, 1.0,  1.0, 1.0
 };
 
 const int kAtlasDebugIndices[] = { 0, 1, 2, 2, 3, 0 };
@@ -42,112 +42,112 @@ const RenderBuffer kAtlasDebugIndicesRb(kAtlasDebugIndices, 6, sizeof(int));
 
 RenderBspNode *findNode(RenderBspNode *head, float x, float y, float z)
 {
-	RenderBspNode *node = head;
-	do
-	{
-		if (node->pointInFront(x, y, z))
-			node = node->frontChild;
-		else
-			node = node->backChild;
-	}
-	while (node->frontChild);
+    RenderBspNode *node = head;
+    do
+    {
+        if (node->pointInFront(x, y, z))
+            node = node->frontChild;
+        else
+            node = node->backChild;
+    }
+    while (node->frontChild);
 
-	return node;
+    return node;
 }
 
 void markAllAncestors(RenderBspNode *node, int markNumber)
 {
-	while (node && node->markNumber != markNumber)
-	{
-		node->markNumber = markNumber;
-		node = node->parent;
-	}
+    while (node && node->markNumber != markNumber)
+    {
+        node->markNumber = markNumber;
+        node = node->parent;
+    }
 }
 
 void markLeaves(RenderBspNode *leafNodes, const uint8_t *pvsList, int index, int numLeaves, int markNumber)
 {
-	const uint8_t *pvs = pvsList + index;
-	int currentLeaf = 1;
-	while (currentLeaf < numLeaves)
-	{
-		if (*pvs == 0)
-		{
-			// Skip
-			currentLeaf += pvs[1] * 8;
-			pvs += 2;
-			continue;
-		}
+    const uint8_t *pvs = pvsList + index;
+    int currentLeaf = 1;
+    while (currentLeaf < numLeaves)
+    {
+        if (*pvs == 0)
+        {
+            // Skip
+            currentLeaf += pvs[1] * 8;
+            pvs += 2;
+            continue;
+        }
 
-		// XXX currentLeaf < numLeaves prevents a crash. I think I'm actually
-		// running past the end of the PVS array.
-		for (int mask = 1; mask <= 0x80 && currentLeaf < numLeaves; mask <<= 1)
-		{
-			if (*pvs & mask)
-				markAllAncestors(leafNodes + currentLeaf, markNumber);
+        // XXX currentLeaf < numLeaves prevents a crash. I think I'm actually
+        // running past the end of the PVS array.
+        for (int mask = 1; mask <= 0x80 && currentLeaf < numLeaves; mask <<= 1)
+        {
+            if (*pvs & mask)
+                markAllAncestors(leafNodes + currentLeaf, markNumber);
 
-			currentLeaf++;
-		}
+            currentLeaf++;
+        }
 
-		pvs++;
-	}
+        pvs++;
+    }
 }
 
 // Render from front to back to take advantage of early-Z rejection
 void renderRecursive(RenderContext *context, const RenderBspNode *node, const Vec3 &camera, int markNumber)
 {
-	if (!node->frontChild)
-	{
-		// Leaf node
-		context->bindVertexAttrs(&node->vertexBuffer);
-		context->drawElements(&node->indexBuffer);
-	}
-	else if (node->pointInFront(camera[0], camera[1], camera[2]))
-	{
-		if (node->frontChild->markNumber == markNumber)
-			renderRecursive(context, node->frontChild, camera, markNumber);
+    if (!node->frontChild)
+    {
+        // Leaf node
+        context->bindVertexAttrs(&node->vertexBuffer);
+        context->drawElements(&node->indexBuffer);
+    }
+    else if (node->pointInFront(camera[0], camera[1], camera[2]))
+    {
+        if (node->frontChild->markNumber == markNumber)
+            renderRecursive(context, node->frontChild, camera, markNumber);
 
-		if (node->backChild->markNumber == markNumber)
-			renderRecursive(context, node->backChild, camera, markNumber);
-	}
-	else
-	{
-		if (node->backChild->markNumber == markNumber)
-			renderRecursive(context, node->backChild, camera, markNumber);
+        if (node->backChild->markNumber == markNumber)
+            renderRecursive(context, node->backChild, camera, markNumber);
+    }
+    else
+    {
+        if (node->backChild->markNumber == markNumber)
+            renderRecursive(context, node->backChild, camera, markNumber);
 
-		if (node->frontChild->markNumber == markNumber)
-			renderRecursive(context, node->frontChild, camera, markNumber);
-	}
+        if (node->frontChild->markNumber == markNumber)
+            renderRecursive(context, node->frontChild, camera, markNumber);
+    }
 }
 
 }
 
 void setBspData(RenderBspNode *root, const uint8_t *pvsList, RenderBspNode *leaves, int numLeaves,
-	Texture *atlasTexture, librender::Texture *lightmapAtlas)
+                Texture *atlasTexture, librender::Texture *lightmapAtlas)
 {
-	gBspRoot = root;
-	gPvsList = pvsList;
-	gLeaves = leaves;
-	gNumLeaves = numLeaves;
-	gTextureAtlasTexture = atlasTexture;
-	gLightmapAtlasTexture = lightmapAtlas;
+    gBspRoot = root;
+    gPvsList = pvsList;
+    gLeaves = leaves;
+    gNumLeaves = numLeaves;
+    gTextureAtlasTexture = atlasTexture;
+    gLightmapAtlasTexture = lightmapAtlas;
 }
 
 void renderScene(RenderContext *context, Vec3 cameraPos)
 {
-	context->bindTexture(0, gTextureAtlasTexture);
-	context->bindTexture(1, gLightmapAtlasTexture);
-	RenderBspNode *currentNode = findNode(gBspRoot, cameraPos[0], cameraPos[1], cameraPos[2]);
-	markLeaves(gLeaves, gPvsList, currentNode->pvsIndex, gNumLeaves, gFrame);
-	renderRecursive(context, gBspRoot, cameraPos, gFrame);
-	gFrame++;
+    context->bindTexture(0, gTextureAtlasTexture);
+    context->bindTexture(1, gLightmapAtlasTexture);
+    RenderBspNode *currentNode = findNode(gBspRoot, cameraPos[0], cameraPos[1], cameraPos[2]);
+    markLeaves(gLeaves, gPvsList, currentNode->pvsIndex, gNumLeaves, gFrame);
+    renderRecursive(context, gBspRoot, cameraPos, gFrame);
+    gFrame++;
 }
 
 void renderTextureAtlas(RenderContext *context)
 {
-	context->bindTexture(0, gTextureAtlasTexture);
-	context->bindTexture(1, gLightmapAtlasTexture);
-	context->bindVertexAttrs(&kAtlasDebugVerticesRb);
-	context->drawElements(&kAtlasDebugIndicesRb);
+    context->bindTexture(0, gTextureAtlasTexture);
+    context->bindTexture(1, gLightmapAtlasTexture);
+    context->bindVertexAttrs(&kAtlasDebugVerticesRb);
+    context->drawElements(&kAtlasDebugIndicesRb);
 }
 
 

@@ -26,30 +26,33 @@ import re
 import sys
 
 patterns = [
-	[ re.compile('sram1r1w\s+(?P<width>\d+)\s+(?P<depth>\d+)'), [], 'sram1r1w_', '_GENERATE_SRAM1R1W' ],
-	[ re.compile('sram2r1w\s+(?P<width>\d+)\s+(?P<depth>\d+)'), [], 'sram2r1w_', '_GENERATE_SRAM2R1W' ],
-	[ re.compile('sync_fifo\s+(?P<width>\d+)\s+(?P<depth>\d+)'), [], 'fifo_', '_GENERATE_FIFO' ]
+    [re.compile('sram1r1w\s+(?P<width>\d+)\s+(?P<depth>\d+)'),
+     [], 'sram1r1w_', '_GENERATE_SRAM1R1W'],
+    [re.compile('sram2r1w\s+(?P<width>\d+)\s+(?P<depth>\d+)'),
+     [], 'sram2r1w_', '_GENERATE_SRAM2R1W'],
+    [re.compile('sync_fifo\s+(?P<width>\d+)\s+(?P<depth>\d+)'),
+     [], 'fifo_', '_GENERATE_FIFO']
 ]
 
 for line in sys.stdin.readlines():
-	for regexp, itemlist, name, macro in patterns:
-		match = regexp.search(line)
-		if match:
-			pair = (match.group('width'), match.group('depth'))
-			if pair not in itemlist:
-				itemlist.append(pair)
+    for regexp, itemlist, name, macro in patterns:
+        match = regexp.search(line)
+        if match:
+            pair = (match.group('width'), match.group('depth'))
+            if pair not in itemlist:
+                itemlist.append(pair)
 
 for regexp, itemlist, prefix, macro in patterns:
-	print('`ifdef ' + macro)
-	first = True
-	for width, depth in itemlist:
-		if first:
-			first = False
-		else:
-			print('else', end='')
+    print('`ifdef ' + macro)
+    first = True
+    for width, depth in itemlist:
+        if first:
+            first = False
+        else:
+            print('else', end='')
 
-		print('if (WIDTH == ' + str(width) + ' && SIZE == ' + str(depth) + ')')
-		instancename = prefix + str(width) + 'x' + str(depth)
-		print('\t' + instancename  + ' ' + instancename + '(.*);')
+        print('if (WIDTH == ' + str(width) + ' && SIZE == ' + str(depth) + ')')
+        instancename = prefix + str(width) + 'x' + str(depth)
+        print('\t' + instancename + ' ' + instancename + '(.*);')
 
-	print('\n`endif')
+    print('\n`endif')

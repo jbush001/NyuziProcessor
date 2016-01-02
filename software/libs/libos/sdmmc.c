@@ -27,121 +27,121 @@
 
 typedef enum
 {
-	SD_CMD_RESET = 0,
-	SD_CMD_INIT = 1,
-	SD_CMD_SET_BLOCK_LEN = 0x16,
-	SD_CMD_READ_BLOCK = 0x17
+    SD_CMD_RESET = 0,
+    SD_CMD_INIT = 1,
+    SD_CMD_SET_BLOCK_LEN = 0x16,
+    SD_CMD_READ_BLOCK = 0x17
 } SDCommand;
 
 static void setCs(int level)
 {
-	REGISTERS[REG_SD_SPI_CONTROL] = level;
+    REGISTERS[REG_SD_SPI_CONTROL] = level;
 }
 
 static void setClockDivisor(int divisor)
 {
-	REGISTERS[REG_SD_SPI_CLOCK_DIVIDE] = divisor - 1;
+    REGISTERS[REG_SD_SPI_CLOCK_DIVIDE] = divisor - 1;
 }
 
 // Transfer a single byte bidirectionally.
 static int spiTransfer(int value)
 {
-	REGISTERS[REG_SD_SPI_WRITE] = value & 0xff;
-	while ((REGISTERS[REG_SD_SPI_STATUS] & 1) == 0)
-		;	// Wait for transfer to finish
+    REGISTERS[REG_SD_SPI_WRITE] = value & 0xff;
+    while ((REGISTERS[REG_SD_SPI_STATUS] & 1) == 0)
+        ;	// Wait for transfer to finish
 
-	return REGISTERS[REG_SD_SPI_READ];
+    return REGISTERS[REG_SD_SPI_READ];
 }
 
 static int sendSdCommand(SDCommand command, unsigned int parameter)
 {
-	int result;
-	int retryCount = 0;
+    int result;
+    int retryCount = 0;
 
-	spiTransfer(0x40 | command);
-	spiTransfer((parameter >> 24) & 0xff);
-	spiTransfer((parameter >> 16) & 0xff);
-	spiTransfer((parameter >> 8) & 0xff);
-	spiTransfer(parameter & 0xff);
-	spiTransfer(0x95);	// Checksum (ignored for all but first command)
+    spiTransfer(0x40 | command);
+    spiTransfer((parameter >> 24) & 0xff);
+    spiTransfer((parameter >> 16) & 0xff);
+    spiTransfer((parameter >> 8) & 0xff);
+    spiTransfer(parameter & 0xff);
+    spiTransfer(0x95);	// Checksum (ignored for all but first command)
 
-	// Wait while card is busy
-	do
-	{
-		result = spiTransfer(0xff);
-	}
-	while (result == 0xff && retryCount++ < MAX_RETRIES);
+    // Wait while card is busy
+    do
+    {
+        result = spiTransfer(0xff);
+    }
+    while (result == 0xff && retryCount++ < MAX_RETRIES);
 
-	return result;
+    return result;
 }
 
 int initSdmmcDevice()
 {
-	int result;
+    int result;
 
-	// Set clock to 200kHz (50Mhz system clock)
-	setClockDivisor(125);
+    // Set clock to 200kHz (50Mhz system clock)
+    setClockDivisor(125);
 
-	// After power on, send a bunch of clocks to initialize the chip
-	setCs(1);
-	for (int i = 0; i < 10; i++)
-		spiTransfer(0xff);
+    // After power on, send a bunch of clocks to initialize the chip
+    setCs(1);
+    for (int i = 0; i < 10; i++)
+        spiTransfer(0xff);
 
-	setCs(0);
+    setCs(0);
 
-	// Reset the card
-	result = sendSdCommand(SD_CMD_RESET, 0);
-	if (result != 1)
-	{
-		printf("initSdmmcDevice: error %d SD_CMD_RESET\n", result);
-		return -1;
-	}
+    // Reset the card
+    result = sendSdCommand(SD_CMD_RESET, 0);
+    if (result != 1)
+    {
+        printf("initSdmmcDevice: error %d SD_CMD_RESET\n", result);
+        return -1;
+    }
 
-	// Poll until it is ready
-	while (1)
-	{
-		result = sendSdCommand(SD_CMD_INIT, 0);
-		if (result == 0)
-			break;
+    // Poll until it is ready
+    while (1)
+    {
+        result = sendSdCommand(SD_CMD_INIT, 0);
+        if (result == 0)
+            break;
 
-		if (result != 1)
-		{
-			printf("initSdmmcDevice: error %d SD_CMD_INIT\n", result);
-			return -1;
-		}
-	}
+        if (result != 1)
+        {
+            printf("initSdmmcDevice: error %d SD_CMD_INIT\n", result);
+            return -1;
+        }
+    }
 
-	// Configure the block size
-	result = sendSdCommand(SD_CMD_SET_BLOCK_LEN, BLOCK_SIZE);
-	if (result != 0)
-	{
-		printf("initSdmmcDevice: error %d SD_CMD_SET_BLOCK_LEN\n", result);
-		return -1;
-	}
+    // Configure the block size
+    result = sendSdCommand(SD_CMD_SET_BLOCK_LEN, BLOCK_SIZE);
+    if (result != 0)
+    {
+        printf("initSdmmcDevice: error %d SD_CMD_SET_BLOCK_LEN\n", result);
+        return -1;
+    }
 
-	// Increase clock rate to 5 Mhz
-	setClockDivisor(5);
+    // Increase clock rate to 5 Mhz
+    setClockDivisor(5);
 
-	return 0;
+    return 0;
 }
 
 int readSdmmcDevice(unsigned int blockAddress, void *ptr)
 {
-	int result;
+    int result;
 
-	result = sendSdCommand(SD_CMD_READ_BLOCK, blockAddress);
-	if (result != 0)
-	{
-		printf("readSdmmcDevice: error %d SD_CMD_READ_BLOCK\n", result);
-		return -1;
-	}
+    result = sendSdCommand(SD_CMD_READ_BLOCK, blockAddress);
+    if (result != 0)
+    {
+        printf("readSdmmcDevice: error %d SD_CMD_READ_BLOCK\n", result);
+        return -1;
+    }
 
-	for (int i = 0; i < BLOCK_SIZE; i++)
-		((char*) ptr)[i] = spiTransfer(0xff);
+    for (int i = 0; i < BLOCK_SIZE; i++)
+        ((char*) ptr)[i] = spiTransfer(0xff);
 
-	// checksum (ignored)
-	spiTransfer(0xff);
-	spiTransfer(0xff);
+    // checksum (ignored)
+    spiTransfer(0xff);
+    spiTransfer(0xff);
 
-	return BLOCK_SIZE;
+    return BLOCK_SIZE;
 }

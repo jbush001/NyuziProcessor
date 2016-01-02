@@ -52,7 +52,7 @@ thinker_t		thinkercap;
 //
 void P_InitThinkers (void)
 {
-	thinkercap.prev = thinkercap.next  = &thinkercap;
+    thinkercap.prev = thinkercap.next  = &thinkercap;
 }
 
 
@@ -64,10 +64,10 @@ void P_InitThinkers (void)
 //
 void P_AddThinker (thinker_t* thinker)
 {
-	thinkercap.prev->next = thinker;
-	thinker->next = &thinkercap;
-	thinker->prev = thinkercap.prev;
-	thinkercap.prev = thinker;
+    thinkercap.prev->next = thinker;
+    thinker->next = &thinkercap;
+    thinker->prev = thinkercap.prev;
+    thinkercap.prev = thinker;
 }
 
 
@@ -79,8 +79,8 @@ void P_AddThinker (thinker_t* thinker)
 //
 void P_RemoveThinker (thinker_t* thinker)
 {
-  // FIXME: NOP.
-  thinker->function.acv = (actionf_v)(-1);
+    // FIXME: NOP.
+    thinker->function.acv = (actionf_v)(-1);
 }
 
 
@@ -100,25 +100,25 @@ void P_AllocateThinker (thinker_t*		thinker)
 //
 void P_RunThinkers (void)
 {
-	thinker_t*	currentthinker;
+    thinker_t*	currentthinker;
 
-	currentthinker = thinkercap.next;
-	while (currentthinker != &thinkercap)
-	{
-		if ( currentthinker->function.acv == (actionf_v)(-1) )
-		{
-			// time to remove it
-			currentthinker->next->prev = currentthinker->prev;
-			currentthinker->prev->next = currentthinker->next;
-			Z_Free (currentthinker);
-		}
-		else
-		{
-			if (currentthinker->function.acp1)
-				currentthinker->function.acp1 (currentthinker);
-		}
-		currentthinker = currentthinker->next;
-	}
+    currentthinker = thinkercap.next;
+    while (currentthinker != &thinkercap)
+    {
+        if ( currentthinker->function.acv == (actionf_v)(-1) )
+        {
+            // time to remove it
+            currentthinker->next->prev = currentthinker->prev;
+            currentthinker->prev->next = currentthinker->next;
+            Z_Free (currentthinker);
+        }
+        else
+        {
+            if (currentthinker->function.acp1)
+                currentthinker->function.acp1 (currentthinker);
+        }
+        currentthinker = currentthinker->next;
+    }
 }
 
 
@@ -129,30 +129,30 @@ void P_RunThinkers (void)
 
 void P_Ticker (void)
 {
-	int			i;
+    int			i;
 
-	// run the tic
-	if (paused)
-		return;
+    // run the tic
+    if (paused)
+        return;
 
-	// pause if in menu and at least one tic has been run
-	if ( !netgame
-		 && menuactive
-		 && !demoplayback
-		 && players[consoleplayer].viewz != 1)
-	{
-		return;
-	}
+    // pause if in menu and at least one tic has been run
+    if ( !netgame
+            && menuactive
+            && !demoplayback
+            && players[consoleplayer].viewz != 1)
+    {
+        return;
+    }
 
 
-	for (i=0 ; i<MAXPLAYERS ; i++)
-		if (playeringame[i])
-			P_PlayerThink (&players[i]);
+    for (i=0 ; i<MAXPLAYERS ; i++)
+        if (playeringame[i])
+            P_PlayerThink (&players[i]);
 
-	P_RunThinkers ();
-	P_UpdateSpecials ();
-	P_RespawnSpecials ();
+    P_RunThinkers ();
+    P_UpdateSpecials ();
+    P_RespawnSpecials ();
 
-	// for par times
-	leveltime++;
+    // for par times
+    leveltime++;
 }

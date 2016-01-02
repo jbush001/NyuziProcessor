@@ -22,46 +22,45 @@ from __future__ import print_function
 # (msb first), decode and print in CSV format.
 
 fields = [
-	(None, 12),
-	('retire_sync_store', 1),
-	('retire_sync_success', 1),
-	('retire_thread', 2),
-	(None, 3),
-	('is_sync_store', 1),
-	('is_sync_load', 1),
-	('sync_store_success', 1),
-	('sync_id', 2),
-	(None, 4),
-	('storebuf_l2_response_valid', 1),
-	('storebuf_l2_sync_success', 1),
-	('storebuf_l2_response_idx', 2)
+    (None, 12),
+    ('retire_sync_store', 1),
+    ('retire_sync_success', 1),
+    ('retire_thread', 2),
+    (None, 3),
+    ('is_sync_store', 1),
+    ('is_sync_load', 1),
+    ('sync_store_success', 1),
+    ('sync_id', 2),
+    (None, 4),
+    ('storebuf_l2_response_valid', 1),
+    ('storebuf_l2_sync_success', 1),
+    ('storebuf_l2_response_idx', 2)
 ]
 
 hexstr = ''
 totalBits = (sum([width for name, width in fields]))
-BYTES_PER_TRACE=(totalBits + 7) // 8
+BYTES_PER_TRACE = (totalBits + 7) // 8
 
 for name, size in fields:
-	if name:
-		print(name + ',', end='')
+    if name:
+        print(name + ',', end='')
 
 print('')
 
 for line in sys.stdin.readlines():
-	hexstr = line[:2] + hexstr
-	if len(hexstr) == BYTES_PER_TRACE * 2:
-		if hexstr[0:2] != '55':
-			print('bad trace record')
-			break
+    hexstr = line[:2] + hexstr
+    if len(hexstr) == BYTES_PER_TRACE * 2:
+        if hexstr[0:2] != '55':
+            print('bad trace record')
+            break
 
-		bigval = int(hexstr, 16)
-		lowoffset = BYTES_PER_TRACE * 8
-		for name, width in fields:
-			lowoffset -= width
-			if name:
-				fieldval = (bigval >> lowoffset) & ((1 << width) - 1)
-				print(hex(fieldval)[2:], end='')
+        bigval = int(hexstr, 16)
+        lowoffset = BYTES_PER_TRACE * 8
+        for name, width in fields:
+            lowoffset -= width
+            if name:
+                fieldval = (bigval >> lowoffset) & ((1 << width) - 1)
+                print(hex(fieldval)[2:], end='')
 
-
-		hexstr = ''
-		print('')
+        hexstr = ''
+        print('')

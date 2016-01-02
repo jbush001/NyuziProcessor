@@ -31,65 +31,65 @@ namespace librender
 class RegionAllocator
 {
 public:
-	RegionAllocator(int arenaSize)
-		:	fArenaBase(new char[arenaSize]),
-			fTotalSize(arenaSize),
-			fNextAlloc(fArenaBase)
-	{
-	}
+    RegionAllocator(int arenaSize)
+        :	fArenaBase(new char[arenaSize]),
+            fTotalSize(arenaSize),
+            fNextAlloc(fArenaBase)
+    {
+    }
 
-	RegionAllocator(const RegionAllocator&) = delete;
-	RegionAllocator& operator=(const RegionAllocator&) = delete;
+    RegionAllocator(const RegionAllocator&) = delete;
+    RegionAllocator& operator=(const RegionAllocator&) = delete;
 
-	~RegionAllocator()
-	{
-		delete [] fArenaBase;
-	}
+    ~RegionAllocator()
+    {
+        delete [] fArenaBase;
+    }
 
-	// This is thread safe and lock-free. Alignment must be a power of 2
-	void *alloc(size_t size, size_t alignment = 4)
-	{
-		char *nextAlloc;
-		char *alignedAlloc;
+    // This is thread safe and lock-free. Alignment must be a power of 2
+    void *alloc(size_t size, size_t alignment = 4)
+    {
+        char *nextAlloc;
+        char *alignedAlloc;
 
-		do
-		{
-			nextAlloc = fNextAlloc;
-			alignedAlloc = reinterpret_cast<char*>((reinterpret_cast<unsigned int>(nextAlloc)
-				+ alignment - 1) & ~(alignment - 1));
-			assert(alignedAlloc + size < fArenaBase + fTotalSize);
-		}
-		while (!__sync_bool_compare_and_swap(&fNextAlloc, nextAlloc, alignedAlloc + size));
+        do
+        {
+            nextAlloc = fNextAlloc;
+            alignedAlloc = reinterpret_cast<char*>((reinterpret_cast<unsigned int>(nextAlloc)
+                                                    + alignment - 1) & ~(alignment - 1));
+            assert(alignedAlloc + size < fArenaBase + fTotalSize);
+        }
+        while (!__sync_bool_compare_and_swap(&fNextAlloc, nextAlloc, alignedAlloc + size));
 
-		return alignedAlloc;
-	}
+        return alignedAlloc;
+    }
 
-	// This is not thread safe.  Caller must guarantee no other threads
-	// are calling other methods on the allocator when this is called
-	void reset()
-	{
-		fNextAlloc = fArenaBase;
-	}
+    // This is not thread safe.  Caller must guarantee no other threads
+    // are calling other methods on the allocator when this is called
+    void reset()
+    {
+        fNextAlloc = fArenaBase;
+    }
 
-	size_t bytesUsed() const
-	{
-		return fNextAlloc - fArenaBase;
-	}
+    size_t bytesUsed() const
+    {
+        return fNextAlloc - fArenaBase;
+    }
 
 private:
-	char *fArenaBase;
-	unsigned int fTotalSize;
-	char * volatile fNextAlloc;
+    char *fArenaBase;
+    unsigned int fTotalSize;
+    char * volatile fNextAlloc;
 };
 
 }
 
 inline void *operator new(size_t size, librender::RegionAllocator &allocator)
 {
-	return allocator.alloc(size);
+    return allocator.alloc(size);
 }
 
 inline void *operator new[] (size_t size, librender::RegionAllocator &allocator)
 {
-	return allocator.alloc(size);
+    return allocator.alloc(size);
 }

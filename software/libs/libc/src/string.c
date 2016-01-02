@@ -21,134 +21,134 @@
 
 int strcmp(const char *str1, const char *str2)
 {
-	while (*str1 && *str1 == *str2)
-	{
-		str1++;
-		str2++;
-	}
+    while (*str1 && *str1 == *str2)
+    {
+        str1++;
+        str2++;
+    }
 
-	return *str1 - *str2;
+    return *str1 - *str2;
 }
 
 int strncmp(const char *str1, const char *str2, size_t length)
 {
-	if (length-- == 0)
-		return 0;
+    if (length-- == 0)
+        return 0;
 
-	while (*str1 && length && *str1 == *str2)
-	{
-		str1++;
-		str2++;
-		length--;
-	}
+    while (*str1 && length && *str1 == *str2)
+    {
+        str1++;
+        str2++;
+        length--;
+    }
 
-	return *str1 - *str2;
+    return *str1 - *str2;
 }
 
 int strcasecmp(const char *str1, const char *str2)
 {
-	while (*str1 && toupper(*str1) == toupper(*str2))
-	{
-		str1++;
-		str2++;
-	}
+    while (*str1 && toupper(*str1) == toupper(*str2))
+    {
+        str1++;
+        str2++;
+    }
 
-	return toupper(*str1) - toupper(*str2);
+    return toupper(*str1) - toupper(*str2);
 }
 
 int strncasecmp(const char *str1, const char *str2, size_t length)
 {
-	if (length-- == 0)
-		return 0;
+    if (length-- == 0)
+        return 0;
 
-	while (*str1 && length && toupper(*str1) == toupper(*str2))
-	{
-		str1++;
-		str2++;
-		length--;
-	}
+    while (*str1 && length && toupper(*str1) == toupper(*str2))
+    {
+        str1++;
+        str2++;
+        length--;
+    }
 
-	return toupper(*str1) - toupper(*str2);
+    return toupper(*str1) - toupper(*str2);
 }
 
 size_t strlen(const char *str)
 {
-	long len = 0;
-	while (*str++)
-		len++;
+    long len = 0;
+    while (*str++)
+        len++;
 
-	return len;
+    return len;
 }
 
 char* strcpy(char *dest, const char *src)
 {
-	char *d = dest;
-	while (*src)
-		*d++ = *src++;
+    char *d = dest;
+    while (*src)
+        *d++ = *src++;
 
-	*d = 0;
-	return dest;
+    *d = 0;
+    return dest;
 }
 
 char* strncpy(char *dest, const char *src, size_t length)
 {
-	char *d = dest;
-	while (*src && length-- > 0)
-		*d++ = *src++;
+    char *d = dest;
+    while (*src && length-- > 0)
+        *d++ = *src++;
 
-	*d = 0;
-	return dest;
+    *d = 0;
+    return dest;
 }
 
 char *strchr(const char *string, int c)
 {
-	for (const char *s = string; *s; s++)
-		if (*s == c)
-			return (char*) s;
+    for (const char *s = string; *s; s++)
+        if (*s == c)
+            return (char*) s;
 
-	return 0;
+    return 0;
 }
 
 void *memchr(const void *_s, int c, size_t n)
 {
-	const char *s = (const char*) _s;
+    const char *s = (const char*) _s;
 
-	for (unsigned int i = 0; i < n; i++)
-	{
-		if (s[i] == c)
-			return (void*) &s[i];
-	}
+    for (unsigned int i = 0; i < n; i++)
+    {
+        if (s[i] == c)
+            return (void*) &s[i];
+    }
 
-	return 0;
+    return 0;
 }
 
 
 char *strcat(char *c, const char *s)
 {
-	char *ret = c;
-	while (*c)
-		c++;
+    char *ret = c;
+    while (*c)
+        c++;
 
-	while (*s)
-		*c++ = *s++;
+    while (*s)
+        *c++ = *s++;
 
-	*c = '\0';
-	return ret;
+    *c = '\0';
+    return ret;
 }
 
 int isdigit(int c)
 {
-	if (c >= '0' && c <= '9')
-		return 1;
+    if (c >= '0' && c <= '9')
+        return 1;
 
-	return 0;
+    return 0;
 }
 
 int toupper(int val)
 {
-	if (val >= 'a' && val <= 'z')
-		return val - ('a' - 'A');
+    if (val >= 'a' && val <= 'z')
+        return val - ('a' - 'A');
 
-	return val;
+    return val;
 }
 

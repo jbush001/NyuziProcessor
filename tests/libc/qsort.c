@@ -21,16 +21,16 @@
 
 int cmpint(const void *a, const void *b)
 {
-	return *((int*)a) - *((int*)b);
+    return *((int*)a) - *((int*)b);
 }
 
 int main(void)
 {
-	int i;
-	int sortArray[] = { 11, 6, 10, 9, 13, 12, 2, 15, 0, 14, 3, 1, 8, 4, 5, 7 };
-	qsort(sortArray, NUM_ELEMENTS, sizeof(int), cmpint);
-	for (i = 0; i < NUM_ELEMENTS; i++)
-		printf("%d ", sortArray[i]);
+    int i;
+    int sortArray[] = { 11, 6, 10, 9, 13, 12, 2, 15, 0, 14, 3, 1, 8, 4, 5, 7 };
+    qsort(sortArray, NUM_ELEMENTS, sizeof(int), cmpint);
+    for (i = 0; i < NUM_ELEMENTS; i++)
+        printf("%d ", sortArray[i]);
 
-	// CHECK: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
+    // CHECK: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
 }

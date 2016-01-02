@@ -21,17 +21,17 @@
 
 int main()
 {
-	char *buf = (char*) 0x200000;
+    char *buf = (char*) 0x200000;
 
-	if (initSdmmcDevice() < 0)
-	{
-		printf("error initializing card\n");
-		return -1;
-	}
+    if (initSdmmcDevice() < 0)
+    {
+        printf("error initializing card\n");
+        return -1;
+    }
 
-	// Read blocks in reverse order to verify address is set correctly.
-	for (int i = TRANSFER_LENGTH - 1; i >= 0; i--)
-		readSdmmcDevice(i, buf + i * BLOCK_SIZE);
+    // Read blocks in reverse order to verify address is set correctly.
+    for (int i = TRANSFER_LENGTH - 1; i >= 0; i--)
+        readSdmmcDevice(i, buf + i * BLOCK_SIZE);
 
-	return 0;
+    return 0;
 }

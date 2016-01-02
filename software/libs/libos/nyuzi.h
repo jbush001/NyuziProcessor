@@ -19,12 +19,12 @@
 
 inline int getCurrentThreadId()
 {
-	return __builtin_nyuzi_read_control_reg(0);
+    return __builtin_nyuzi_read_control_reg(0);
 }
 
 inline unsigned int getCycleCount()
 {
-	return __builtin_nyuzi_read_control_reg(6);
+    return __builtin_nyuzi_read_control_reg(6);
 }
 
 #endif

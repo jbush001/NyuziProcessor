@@ -26,7 +26,9 @@
 
 /*** definition ***/
 typedef float vecf16 __attribute__ ((vector_size(16 * sizeof(float))));
-typedef struct matrix { vecf16 rows[16]; } matrix_t;
+typedef struct matrix {
+    vecf16 rows[16];
+} matrix_t;
 vecf16 VEC_ZERO = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 /***  arithmetic  ***/
 float total(const vecf16 &v1);

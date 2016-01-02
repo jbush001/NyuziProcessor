@@ -23,46 +23,46 @@ volatile unsigned int *data = 0x100000;
 
 void tlb_fault_handler()
 {
-	printf("TLB fault\n");
-	exit(1);
+    printf("TLB fault\n");
+    exit(1);
 }
 
 void general_fault_handler()
 {
-	printf("general fault %d\n", __builtin_nyuzi_read_control_reg(3));
+    printf("general fault %d\n", __builtin_nyuzi_read_control_reg(3));
 
-	// Attempt to read from address that dtlbinsert was called on.
-	// This should fault because TLB wasn't updated
-	printf("FAIL: data is %08x\n", *data);
+    // Attempt to read from address that dtlbinsert was called on.
+    // This should fault because TLB wasn't updated
+    printf("FAIL: data is %08x\n", *data);
 }
 
 int main(void)
 {
-	unsigned int va;
-	unsigned int stack_addr = (unsigned int) &va & ~(PAGE_SIZE - 1);
+    unsigned int va;
+    unsigned int stack_addr = (unsigned int) &va & ~(PAGE_SIZE - 1);
 
-	// Map code & data
-	for (va = 0; va < 0x10000; va += PAGE_SIZE)
-	{
-		add_itlb_mapping(va, va);
-		add_dtlb_mapping(va, va | TLB_WRITABLE);
-	}
+    // Map code & data
+    for (va = 0; va < 0x10000; va += PAGE_SIZE)
+    {
+        add_itlb_mapping(va, va);
+        add_dtlb_mapping(va, va | TLB_WRITABLE);
+    }
 
-	add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE);
-	add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE);
+    add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE);
+    add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE);
 
-	// Enable MMU and disable supervisor mode in flags register
-	__builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, general_fault_handler);
-	__builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, tlb_fault_handler);
-	__builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN);
+    // Enable MMU and disable supervisor mode in flags register
+    __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, general_fault_handler);
+    __builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, tlb_fault_handler);
+    __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN);
 
-	// This will fault because the thread is in user mode. Then the general
-	// fault handler will read the address to ensure the mapping wasn't inserted.
-	// That should cause a TLB fault.
-	add_dtlb_mapping(data, ((unsigned int)data) | TLB_WRITABLE);
-	// CHECK: general fault 10
-	// CHECK: TLB fault
+    // This will fault because the thread is in user mode. Then the general
+    // fault handler will read the address to ensure the mapping wasn't inserted.
+    // That should cause a TLB fault.
+    add_dtlb_mapping(data, ((unsigned int)data) | TLB_WRITABLE);
+    // CHECK: general fault 10
+    // CHECK: TLB fault
 
-	printf("should_not_be_here\n"); // CHECKN: should_not_be_here
+    printf("should_not_be_here\n"); // CHECKN: should_not_be_here
 }
 

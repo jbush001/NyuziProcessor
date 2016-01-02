@@ -29,24 +29,24 @@ namespace librender
 class LinearInterpolator
 {
 public:
-	void init(float xGradient, float yGradient, float c00)
-	{
-		fXGradient = xGradient;
-		fYGradient = yGradient;
-		fC00 = c00;
-	}
+    void init(float xGradient, float yGradient, float c00)
+    {
+        fXGradient = xGradient;
+        fYGradient = yGradient;
+        fC00 = c00;
+    }
 
-	// Return values of this parameter at 16 locations given by the vectors
-	// x and y.
-	inline vecf16_t getValuesAt(vecf16_t x, vecf16_t y) const
-	{
-		return x * splatf(fXGradient) + y * splatf(fYGradient) + splatf(fC00);
-	}
+    // Return values of this parameter at 16 locations given by the vectors
+    // x and y.
+    inline vecf16_t getValuesAt(vecf16_t x, vecf16_t y) const
+    {
+        return x * splatf(fXGradient) + y * splatf(fYGradient) + splatf(fC00);
+    }
 
 private:
-	float fXGradient;
-	float fYGradient;
-	float fC00;	// Value of C at 0, 0
+    float fXGradient;
+    float fYGradient;
+    float fC00;	// Value of C at 0, 0
 };
 
 }

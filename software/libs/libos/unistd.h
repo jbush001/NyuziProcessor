@@ -32,7 +32,7 @@ typedef unsigned int useconds_t;
 
 struct stat
 {
-	off_t st_size;
+    off_t st_size;
 };
 
 #ifdef __cplusplus

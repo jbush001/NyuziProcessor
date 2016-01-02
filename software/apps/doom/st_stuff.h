@@ -58,8 +58,8 @@ void ST_Init (void);
 // States for status bar code.
 typedef enum
 {
-	AutomapState,
-	FirstPersonState
+    AutomapState,
+    FirstPersonState
 
 } st_stateenum_t;
 
@@ -67,9 +67,9 @@ typedef enum
 // States for the chat code.
 typedef enum
 {
-	StartChatState,
-	WaitDestState,
-	GetChatState
+    StartChatState,
+    WaitDestState,
+    GetChatState
 
 } st_chatstateenum_t;
 

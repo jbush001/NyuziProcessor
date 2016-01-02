@@ -21,7 +21,7 @@
 
 int main()
 {
-	printf("foo\n"); // CHECK: bar
-	printf("bar\n"); // CHECK: foo
-	printf("baz\n");
+    printf("foo\n"); // CHECK: bar
+    printf("bar\n"); // CHECK: foo
+    printf("baz\n");
 }

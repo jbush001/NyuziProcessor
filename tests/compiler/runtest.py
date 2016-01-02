@@ -26,29 +26,34 @@ import test_harness
 
 use_verilator = 'USE_VERILATOR' in os.environ
 
+
 def run_verilator_test(source_file):
-	test_harness.compile_test(source_file, optlevel='3')
-	result = test_harness.run_verilator()
-	test_harness.check_result(source_file, result)
+    test_harness.compile_test(source_file, optlevel='3')
+    result = test_harness.run_verilator()
+    test_harness.check_result(source_file, result)
+
 
 def run_host_test(source_file):
-	subprocess.check_call(['c++', '-w', source_file, '-o', 'obj/a.out'])
-	result = subprocess.check_output('obj/a.out')
-	test_harness.check_result(source_file, result)
+    subprocess.check_call(['c++', '-w', source_file, '-o', 'obj/a.out'])
+    result = subprocess.check_output('obj/a.out')
+    test_harness.check_result(source_file, result)
+
 
 def run_emulator_test(source_file):
-	test_harness.compile_test(source_file, optlevel='3')
-	result = test_harness.run_emulator()
-	test_harness.check_result(source_file, result)
+    test_harness.compile_test(source_file, optlevel='3')
+    result = test_harness.run_emulator()
+    test_harness.check_result(source_file, result)
 
-test_list = [fname for fname in test_harness.find_files(('.c', '.cpp')) if not fname.startswith('_')]
+test_list = [fname for fname in test_harness.find_files(
+    ('.c', '.cpp')) if not fname.startswith('_')]
 
 if 'USE_VERILATOR' in os.environ:
-	test_list = [fname for fname in test_list if fname.find('noverilator') == -1]
-	test_harness.register_tests(run_verilator_test, test_list)
+    test_list = [fname for fname in test_list if fname.find(
+        'noverilator') == -1]
+    test_harness.register_tests(run_verilator_test, test_list)
 elif 'USE_HOSTCC' in os.environ:
-	test_harness.register_tests(run_host_test, test_list)
+    test_harness.register_tests(run_host_test, test_list)
 else:
-	test_harness.register_tests(run_emulator_test, test_list)
+    test_harness.register_tests(run_emulator_test, test_list)
 
 test_harness.execute_tests()

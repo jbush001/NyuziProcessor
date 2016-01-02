@@ -25,24 +25,24 @@ template <int NUM_THREADS>
 class Barrier
 {
 public:
-	Barrier()
-		:	fWaitCount(0)
-	{
-	}
+    Barrier()
+        :	fWaitCount(0)
+    {
+    }
 
-	// This assumes all threads will be able to exit wait before another calls it
-	// If that wasn't the case, this would livelock.
-	void wait()
-	{
-		if (__sync_add_and_fetch(&fWaitCount, 1) == NUM_THREADS)
-			fWaitCount = 0;
-		else
-		{
-			while (fWaitCount)
-				;	// Wait busily
-		}
-	}
+    // This assumes all threads will be able to exit wait before another calls it
+    // If that wasn't the case, this would livelock.
+    void wait()
+    {
+        if (__sync_add_and_fetch(&fWaitCount, 1) == NUM_THREADS)
+            fWaitCount = 0;
+        else
+        {
+            while (fWaitCount)
+                ;	// Wait busily
+        }
+    }
 
 private:
-	volatile int fWaitCount;
+    volatile int fWaitCount;
 };

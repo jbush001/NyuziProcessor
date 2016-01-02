@@ -22,16 +22,16 @@ static jmp_buf buf;
 
 int main(int argc, const char *argv[])
 {
-	int ret = setjmp(buf);
-	if (ret)
-		printf("returned from setjmp: %d\n", ret);
-	else
-	{
-		printf("Going to call longjmp\n");
-		longjmp(buf, 17);
-	}
+    int ret = setjmp(buf);
+    if (ret)
+        printf("returned from setjmp: %d\n", ret);
+    else
+    {
+        printf("Going to call longjmp\n");
+        longjmp(buf, 17);
+    }
 
-	return 0;
+    return 0;
 }
 
 

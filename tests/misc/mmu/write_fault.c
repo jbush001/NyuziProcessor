@@ -28,49 +28,49 @@ volatile unsigned int *data_addr2 = (unsigned int*) 0x101000;
 
 void fault_handler()
 {
-	printf("FAULT %d %08x\n", __builtin_nyuzi_read_control_reg(CR_FAULT_REASON),
-		__builtin_nyuzi_read_control_reg(CR_FAULT_ADDRESS));
-	printf("data value = %08x\n", data_addr[PAGE_SIZE / sizeof(int)]);
-	exit(0);
+    printf("FAULT %d %08x\n", __builtin_nyuzi_read_control_reg(CR_FAULT_REASON),
+           __builtin_nyuzi_read_control_reg(CR_FAULT_ADDRESS));
+    printf("data value = %08x\n", data_addr[PAGE_SIZE / sizeof(int)]);
+    exit(0);
 }
 
 int main(void)
 {
-	unsigned int va;
-	unsigned int stack_addr = (unsigned int) &va & ~(PAGE_SIZE - 1);
+    unsigned int va;
+    unsigned int stack_addr = (unsigned int) &va & ~(PAGE_SIZE - 1);
 
-	// Map code & data
-	for (va = 0; va < 0x10000; va += PAGE_SIZE)
-	{
-		add_itlb_mapping(va, va | TLB_GLOBAL);
-		add_dtlb_mapping(va, va | TLB_WRITABLE | TLB_GLOBAL);
-	}
+    // Map code & data
+    for (va = 0; va < 0x10000; va += PAGE_SIZE)
+    {
+        add_itlb_mapping(va, va | TLB_GLOBAL);
+        add_dtlb_mapping(va, va | TLB_WRITABLE | TLB_GLOBAL);
+    }
 
-	add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE);
-	add_dtlb_mapping(data_addr, ((unsigned int)data_addr) | TLB_WRITABLE);	// Writable
-	*data_addr2 = 0x12345678;
-	add_dtlb_mapping(data_addr2, data_addr2); // Not writable
-	add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE); // I/O
+    add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE);
+    add_dtlb_mapping(data_addr, ((unsigned int)data_addr) | TLB_WRITABLE);	// Writable
+    *data_addr2 = 0x12345678;
+    add_dtlb_mapping(data_addr2, data_addr2); // Not writable
+    add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE); // I/O
 
-	// Enable MMU in flags register
-	__builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);
-	__builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, fault_handler);
-	__builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
+    // Enable MMU in flags register
+    __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);
+    __builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, fault_handler);
+    __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
-	// This should write successfully
-	*data_addr = 0x1f6818aa;
-	printf("data value %08x\n", *data_addr); // CHECK: data value 1f6818aa
+    // This should write successfully
+    *data_addr = 0x1f6818aa;
+    printf("data value %08x\n", *data_addr); // CHECK: data value 1f6818aa
 
-	// Attempt to write to write protected page will fail.
-	*data_addr2 = 0xdeadbeef;
+    // Attempt to write to write protected page will fail.
+    *data_addr2 = 0xdeadbeef;
 
-	// Ensure two things:
-	// - that a fault is raised
-	// - that the value isn't actually written
-	// CHECK: FAULT 7 00101000
-	// CHECK: data value = 12345678
+    // Ensure two things:
+    // - that a fault is raised
+    // - that the value isn't actually written
+    // CHECK: FAULT 7 00101000
+    // CHECK: data value = 12345678
 
-	printf("should_not_be_here\n"); // CHECKN: should_not_be_here
+    printf("should_not_be_here\n"); // CHECKN: should_not_be_here
 
-	return 0;
+    return 0;
 }

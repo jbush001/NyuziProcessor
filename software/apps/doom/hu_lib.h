@@ -44,17 +44,17 @@
 //	(parent of Scrolling Text and Input Text widgets)
 typedef struct
 {
-	// left-justified position of scrolling text window
-	int			x;
-	int			y;
+    // left-justified position of scrolling text window
+    int			x;
+    int			y;
 
-	patch_t**	f;						// font
-	int			sc;						// start character
-	char		l[HU_MAXLINELENGTH+1];	// line of text
-	int			len;					// current line length
+    patch_t**	f;						// font
+    int			sc;						// start character
+    char		l[HU_MAXLINELENGTH+1];	// line of text
+    int			len;					// current line length
 
-	// whether this line needs to be udpated
-	int			needsupdate;
+    // whether this line needs to be udpated
+    int			needsupdate;
 
 } hu_textline_t;
 
@@ -64,13 +64,13 @@ typedef struct
 //	(child of Text Line widget)
 typedef struct
 {
-	hu_textline_t		l[HU_MAXLINES]; // text lines to draw
-	int					h;				// height in lines
-	int					cl;				// current line number
+    hu_textline_t		l[HU_MAXLINES]; // text lines to draw
+    int					h;				// height in lines
+    int					cl;				// current line number
 
-	// pointer to boolean stating whether to update window
-	boolean*			on;
-	boolean				laston;			// last value of *->on.
+    // pointer to boolean stating whether to update window
+    boolean*			on;
+    boolean				laston;			// last value of *->on.
 
 } hu_stext_t;
 
@@ -80,14 +80,14 @@ typedef struct
 //	(child of Text Line widget)
 typedef struct
 {
-	hu_textline_t		l;				// text line to input on
+    hu_textline_t		l;				// text line to input on
 
-	 // left margin past which I am not to delete characters
-	int					lm;
+    // left margin past which I am not to delete characters
+    int					lm;
 
-	// pointer to boolean stating whether to update window
-	boolean*			on;
-	boolean				laston; // last value of *->on;
+    // pointer to boolean stating whether to update window
+    boolean*			on;
+    boolean				laston; // last value of *->on;
 
 } hu_itext_t;
 

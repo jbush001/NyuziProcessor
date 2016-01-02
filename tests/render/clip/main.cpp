@@ -38,40 +38,40 @@ const int kFbHeight = 480;
 // All threads start execution here.
 int main()
 {
-	if (__builtin_nyuzi_read_control_reg(0) == 0)
-		init_vga(VGA_MODE_640x480);
-	else
-		workerThread();
+    if (__builtin_nyuzi_read_control_reg(0) == 0)
+        init_vga(VGA_MODE_640x480);
+    else
+        workerThread();
 
-	startAllThreads();
+    startAllThreads();
 
-	RenderContext *context = new RenderContext();
-	RenderTarget *renderTarget = new RenderTarget();
-	Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
-	Surface *depthBuffer = new Surface(kFbWidth, kFbHeight);
-	renderTarget->setColorBuffer(colorBuffer);
-	renderTarget->setDepthBuffer(depthBuffer);
-	context->bindTarget(renderTarget);
-	context->enableDepthBuffer(true);
-	context->bindShader(new CheckerboardShader());
+    RenderContext *context = new RenderContext();
+    RenderTarget *renderTarget = new RenderTarget();
+    Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
+    Surface *depthBuffer = new Surface(kFbWidth, kFbHeight);
+    renderTarget->setColorBuffer(colorBuffer);
+    renderTarget->setDepthBuffer(depthBuffer);
+    context->bindTarget(renderTarget);
+    context->enableDepthBuffer(true);
+    context->bindShader(new CheckerboardShader());
 
-	const RenderBuffer kVertices(kRoomVertices, kNumRoomVertices, 5 * sizeof(float));
-	const RenderBuffer kIndices(kRoomIndices, kNumRoomIndices, sizeof(int));
-	context->bindVertexAttrs(&kVertices);
+    const RenderBuffer kVertices(kRoomVertices, kNumRoomVertices, 5 * sizeof(float));
+    const RenderBuffer kIndices(kRoomIndices, kNumRoomIndices, sizeof(int));
+    context->bindVertexAttrs(&kVertices);
 
-	Matrix projectionMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
-	Matrix modelViewMatrix = Matrix::getRotationMatrix(M_PI / 3, Vec3(0.0f, 1.0f, 0.0f));
-	Matrix rotationMatrix = Matrix::getRotationMatrix(M_PI / 16, Vec3(0.0f, 1.0f, 0.0f));
+    Matrix projectionMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
+    Matrix modelViewMatrix = Matrix::getRotationMatrix(M_PI / 3, Vec3(0.0f, 1.0f, 0.0f));
+    Matrix rotationMatrix = Matrix::getRotationMatrix(M_PI / 16, Vec3(0.0f, 1.0f, 0.0f));
 
-	for (int frame = 0; frame < 1; frame++)
-	{
-		CheckerboardUniforms uniforms;
-		uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
-		context->bindUniforms(&uniforms, sizeof(uniforms));
-		context->drawElements(&kIndices);
-		context->finish();
-		modelViewMatrix *= rotationMatrix;
-	}
+    for (int frame = 0; frame < 1; frame++)
+    {
+        CheckerboardUniforms uniforms;
+        uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
+        context->bindUniforms(&uniforms, sizeof(uniforms));
+        context->drawElements(&kIndices);
+        context->finish();
+        modelViewMatrix *= rotationMatrix;
+    }
 
-	return 0;
+    return 0;
 }

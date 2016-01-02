@@ -37,77 +37,77 @@ const int kFbWidth = 640;
 const int kFbHeight = 480;
 
 static float kSquareVertices[] = {
-	-3.0, -3.0, -25.0,  0.0, 0.0,
-	-3.0, -3.0, -1.0,    0.0, 1.0,
-	3.0,  -3.0, -1.0,     1.0, 1.0,
-	3.0,  -3.0, -25.0,   1.0, 0.0,
+    -3.0, -3.0, -25.0,  0.0, 0.0,
+    -3.0, -3.0, -1.0,    0.0, 1.0,
+    3.0,  -3.0, -1.0,     1.0, 1.0,
+    3.0,  -3.0, -25.0,   1.0, 0.0,
 };
 
 static int kSquareIndices[] = { 0, 1, 2, 2, 3, 0 };
 
 Texture *makeMipMaps()
 {
-	const unsigned int kColors[] = {
-		0xff0000ff,	// Red
-		0xff00ff00,	// Blue
-		0xffff0000, // Green
-		0xff00ffff, // Yellow
-	};
+    const unsigned int kColors[] = {
+        0xff0000ff,	// Red
+        0xff00ff00,	// Blue
+        0xffff0000, // Green
+        0xff00ffff, // Yellow
+    };
 
-	Texture *texture = new Texture();
-	for (int i = 0; i < 4; i++)
-	{
-		int mipSize = 512 >> i;
-		Surface *mipSurface = new Surface(mipSize, mipSize);
-		unsigned int *bits = static_cast<unsigned int*>(mipSurface->bits());
-		unsigned int color = kColors[i];
-		for (int y = 0; y < mipSize; y++)
-		{
-			for (int x = 0; x < mipSize; x++)
-			{
-				if (((x ^ y) >> (5 - i)) & 1)
-					bits[y * mipSize + x] = 0;
-				else
-					bits[y * mipSize + x] = color;
-			}
-		}
+    Texture *texture = new Texture();
+    for (int i = 0; i < 4; i++)
+    {
+        int mipSize = 512 >> i;
+        Surface *mipSurface = new Surface(mipSize, mipSize);
+        unsigned int *bits = static_cast<unsigned int*>(mipSurface->bits());
+        unsigned int color = kColors[i];
+        for (int y = 0; y < mipSize; y++)
+        {
+            for (int x = 0; x < mipSize; x++)
+            {
+                if (((x ^ y) >> (5 - i)) & 1)
+                    bits[y * mipSize + x] = 0;
+                else
+                    bits[y * mipSize + x] = color;
+            }
+        }
 
-		texture->setMipSurface(i, mipSurface);
-		mipSize /= 2;
-	}
+        texture->setMipSurface(i, mipSurface);
+        mipSize /= 2;
+    }
 
-	return texture;
+    return texture;
 }
 
 // All threads start execution here.
 int main()
 {
-	if (__builtin_nyuzi_read_control_reg(0) == 0)
-		init_vga(VGA_MODE_640x480);
-	else
-		workerThread();
+    if (__builtin_nyuzi_read_control_reg(0) == 0)
+        init_vga(VGA_MODE_640x480);
+    else
+        workerThread();
 
-	startAllThreads();
+    startAllThreads();
 
-	Texture *texture = makeMipMaps();
-	texture->enableBilinearFiltering(true);
+    Texture *texture = makeMipMaps();
+    texture->enableBilinearFiltering(true);
 
-	RenderContext *context = new RenderContext();
-	RenderTarget *renderTarget = new RenderTarget();
-	Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
-	renderTarget->setColorBuffer(colorBuffer);
-	context->bindTarget(renderTarget);
-	context->clearColorBuffer();
-	context->bindShader(new TextureShader());
-	context->bindTexture(0, texture);
-	TextureUniforms uniforms;
-	uniforms.fMVPMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
-	context->bindUniforms(&uniforms, sizeof(uniforms));
-	const RenderBuffer kVertices(kSquareVertices, 4, 5 * sizeof(float));
-	const RenderBuffer kIndices(kSquareIndices, 6, sizeof(int));
-	context->bindVertexAttrs(&kVertices);
-	context->drawElements(&kIndices);
-	context->finish();
+    RenderContext *context = new RenderContext();
+    RenderTarget *renderTarget = new RenderTarget();
+    Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
+    renderTarget->setColorBuffer(colorBuffer);
+    context->bindTarget(renderTarget);
+    context->clearColorBuffer();
+    context->bindShader(new TextureShader());
+    context->bindTexture(0, texture);
+    TextureUniforms uniforms;
+    uniforms.fMVPMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
+    context->bindUniforms(&uniforms, sizeof(uniforms));
+    const RenderBuffer kVertices(kSquareVertices, 4, 5 * sizeof(float));
+    const RenderBuffer kIndices(kSquareIndices, 6, sizeof(int));
+    context->bindVertexAttrs(&kVertices);
+    context->drawElements(&kIndices);
+    context->finish();
 
-	return 0;
+    return 0;
 }

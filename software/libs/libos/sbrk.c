@@ -20,5 +20,5 @@ volatile unsigned int gNextAlloc = 0x500000;
 
 void *sbrk(ptrdiff_t size)
 {
-	return (void*) __sync_fetch_and_add(&gNextAlloc, size);
+    return (void*) __sync_fetch_and_add(&gNextAlloc, size);
 }
