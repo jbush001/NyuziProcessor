@@ -14,6 +14,10 @@ Controls:
 - b: toggle bilinear filtering
 - l: cycle lightmap mode: Texture only, lightmaps + texture, lightmaps only
 
+You can load other episodes/missions by changing this line in main.cpp:
+
+	pak.readBspFile("maps/e1m1.bsp");
+
 ## Running in Emulator
 
 To run in emulator, type:
@@ -25,16 +29,18 @@ FB_WIDTH and FB_HEIGHT in the Makefile.
 
 ## Running on FPGA
 
-To run on FPGA, type 'make fpgarun'. It will transfer the data files over the 
-serial port into a ramdisk in memory. This will take a while. The repak utility 
-can reduce the size of the PAK file. Instructions to build repak are at the top 
-of repak.cpp in this directory.
+To run on FPGA, type 'make fpgarun'. It will transfer the data files over the
+serial port into a ramdisk in memory. This will take a while. The repak utility
+can reduce the size of the PAK file. Move the original PAK file in a different
+directory, then:
 
-    ./repak -o pak0.pak <original pak location> gfx/palette.lmp maps/e1m1.bsp <additional files>
+    gcc -o repak repak.cpp
+    ./repak -o pak0.pak <original pak location> gfx/palette.lmp maps/e1m1.bsp
 
-You can load other levels by changing this line in main.cpp:
+If you want to load a different mission, it to the end of the repak command line (for example,
+maps/e1m2.bsp). You can list all files in the PAK file like this:
 
-	pak.readBspFile("maps/e1m1.bsp");
+    ./repak -l pak0.pak
 
 ## Running in Verilog Simulation
 
@@ -48,14 +54,14 @@ loop and stops the worker threads:
              printf("rendered frame in %d uS\n", clock() - time);
         +		exit(1);
          	}
- 	
+
      	return 0;
 
 2. Comment out keyboard polling in main. In the verilator configuration, there is a dummy module that
 generates continuous keypresses, but this will cause an infinite loop with this program:
 
             for (int frame = 0; ; frame++)
-            { 
+            {
         -       processKeyboardEvents();
         +//     processKeyboardEvents();
 
