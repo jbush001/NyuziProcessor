@@ -36,7 +36,8 @@ using namespace librender;
 const int kFbWidth = 640;
 const int kFbHeight = 480;
 
-static float kSquareVertices[] = {
+static float kSquareVertices[] =
+{
     -1.1,  1.1, -1.0,
     -1.1, -1.1, -1.0,
     1.1, -1.1, -1.0,
@@ -49,7 +50,7 @@ static int kSquareIndices[] = { 0, 1, 2, 2, 3, 0 };
 int main()
 {
     if (__builtin_nyuzi_read_control_reg(0) == 0)
-        init_vga(VGA_MODE_640x480);
+        initVGA(VGA_MODE_640x480);
     else
         workerThread();
 

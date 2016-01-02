@@ -18,7 +18,8 @@
 #pragma once
 
 const int kNumCubeVertices = 24;
-const float kCubeVertices[] = {
+const float kCubeVertices[] =
+{
     // Front face
     0.5, -0.5, 0.5, 0.0, 0.0,
     -0.5, -0.5, 0.5, 0.0, 1.0,
@@ -57,7 +58,8 @@ const float kCubeVertices[] = {
 };
 
 const int kNumCubeIndices = 36;
-const int kCubeIndices[] = {
+const int kCubeIndices[] =
+{
     2, 1, 0,
     0, 3, 2,
     6, 5, 4,

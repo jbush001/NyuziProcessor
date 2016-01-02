@@ -22,7 +22,7 @@ extern "C" {
 
 #define NUM_COUNTERS 4
 
-enum performance_event
+enum PerformanceEvent
 {
     PERF_L2_WRITEBACK,
     PERF_L2_MISS,
@@ -42,8 +42,10 @@ enum performance_event
     PERF_COND_BRANCH_NOT_TAKEN
 };
 
-void set_perf_counter_event(int counter, enum performance_event event);
-unsigned int read_perf_counter(int counter);
+typedef enum PerformanceEvent PerformanceEvent;
+
+void setPerfCounterEvent(int counter, enum PerformanceEvent event);
+unsigned int readPerfCounter(int counter);
 
 #ifdef __cplusplus
 }

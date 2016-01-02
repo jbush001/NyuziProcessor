@@ -47,7 +47,7 @@ int main()
     int myThreadId = getCurrentThreadId();
     if (myThreadId == 0)
     {
-        init_vga(VGA_MODE_640x480);
+        initVGA(VGA_MODE_640x480);
         displayMatrix = Matrix2x2();
     }
 

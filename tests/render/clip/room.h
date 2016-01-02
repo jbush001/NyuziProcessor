@@ -18,7 +18,8 @@
 #pragma once
 
 const int kNumRoomVertices = 24;
-const float kRoomVertices[] = {
+const float kRoomVertices[] =
+{
     // Front face
     10.0, 2.0, -10.0,   0.0, 0.0,
     -10.0, 2.0, -10.0,  5.0, 0.0,
@@ -60,7 +61,8 @@ const int kNumRoomIndices = 36;
 
 // The order of indices is specifically chosen to hit all
 // clip cases.
-const int kRoomIndices[] = {
+const int kRoomIndices[] =
+{
     0, 1, 2, 		// clip mask 6
     2, 3, 0,		// clip mask 1
     4, 5, 6,		// clip mask 0 (completely visible)

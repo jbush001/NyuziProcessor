@@ -160,7 +160,7 @@ int main()
 
     if (myThreadId == 0)
     {
-        init_vga(VGA_MODE_640x480);
+        initVGA(VGA_MODE_640x480);
         for (int i = 0; i < NUM_PALETTE_ENTRIES; i++)
         {
 #ifdef STRIPES

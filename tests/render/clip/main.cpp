@@ -39,7 +39,7 @@ const int kFbHeight = 480;
 int main()
 {
     if (__builtin_nyuzi_read_control_reg(0) == 0)
-        init_vga(VGA_MODE_640x480);
+        initVGA(VGA_MODE_640x480);
     else
         workerThread();
 

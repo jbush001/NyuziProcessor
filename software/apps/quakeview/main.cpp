@@ -195,7 +195,7 @@ void parseCoordinateString(const char *string, float outCoord[3])
 int main()
 {
     if (getCurrentThreadId() == 0)
-        init_vga(VGA_MODE_640x480);
+        initVGA(VGA_MODE_640x480);
     else
         workerThread();
 

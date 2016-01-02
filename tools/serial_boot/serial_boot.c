@@ -39,13 +39,13 @@
 #define BLOCK_SIZE 1024
 #define PROGRESS_BAR_WIDTH 40
 
-int open_serial_port(const char *path)
+int openSerialPort(const char *path)
 {
     struct termios serialopts;
-    int serial_fd;
+    int serialFd;
 
-    serial_fd = open(path, O_RDWR | O_NOCTTY);
-    if (serial_fd < 0)
+    serialFd = open(path, O_RDWR | O_NOCTTY);
+    if (serialFd < 0)
     {
         perror("couldn't open serial port");
         return -1;
@@ -55,7 +55,7 @@ int open_serial_port(const char *path)
     memset(&serialopts, 0, sizeof(serialopts));
     serialopts.c_cflag = CS8 | CLOCAL | CREAD;
     cfsetspeed(&serialopts, 921600);
-    if (tcsetattr(serial_fd, TCSANOW, &serialopts) != 0)
+    if (tcsetattr(serialFd, TCSANOW, &serialopts) != 0)
     {
         perror("Unable to initialize serial port");
         return -1;
@@ -63,35 +63,35 @@ int open_serial_port(const char *path)
 
     // Clear out any junk that may already be buffered in the
     // serial driver (otherwise the ping sequence may fail)
-    tcflush(serial_fd, TCIOFLUSH);
+    tcflush(serialFd, TCIOFLUSH);
 
-    return serial_fd;
+    return serialFd;
 }
 
 // Returns 1 if the byte was read successfully, 0 if a timeout
 // or other error occurred.
-int read_serial_byte(int serial_fd, unsigned char *ch, int timeout_ms)
+int readSerialByte(int serialFd, unsigned char *ch, int timeoutMs)
 {
     fd_set set;
     struct timeval tv;
-    int ready_fds;
+    int readyFds;
 
     FD_ZERO(&set);
-    FD_SET(serial_fd, &set);
+    FD_SET(serialFd, &set);
 
-    tv.tv_sec = timeout_ms / 1000;
-    tv.tv_usec = (timeout_ms % 1000) * 1000;
+    tv.tv_sec = timeoutMs / 1000;
+    tv.tv_usec = (timeoutMs % 1000) * 1000;
 
     do
     {
-        ready_fds = select(FD_SETSIZE, &set, NULL, NULL, &tv);
+        readyFds = select(FD_SETSIZE, &set, NULL, NULL, &tv);
     }
-    while (ready_fds < 0 && errno == EINTR);
+    while (readyFds < 0 && errno == EINTR);
 
-    if (ready_fds == 0)
+    if (readyFds == 0)
         return 0;
 
-    if (read(serial_fd, ch, 1) != 1)
+    if (read(serialFd, ch, 1) != 1)
     {
         perror("read");
         return 0;
@@ -100,7 +100,7 @@ int read_serial_byte(int serial_fd, unsigned char *ch, int timeout_ms)
     return 1;
 }
 
-int read_serial_long(int serial_fd, unsigned int *out, int timeout)
+int readSerialLong(int serialFd, unsigned int *out, int timeout)
 {
     unsigned int result = 0;
     unsigned char ch;
@@ -108,7 +108,7 @@ int read_serial_long(int serial_fd, unsigned int *out, int timeout)
 
     for (i = 0; i < 4; i++)
     {
-        if (!read_serial_byte(serial_fd, &ch, timeout))
+        if (!readSerialByte(serialFd, &ch, timeout))
             return 0;
 
         result = (result >> 8) | ((unsigned int) ch << 24);
@@ -118,9 +118,9 @@ int read_serial_long(int serial_fd, unsigned int *out, int timeout)
     return 1;
 }
 
-int write_serial_byte(int serial_fd, unsigned int ch)
+int writeSerialByte(int serialFd, unsigned int ch)
 {
-    if (write(serial_fd, &ch, 1) != 1)
+    if (write(serialFd, &ch, 1) != 1)
     {
         perror("write");
         return 0;
@@ -129,7 +129,7 @@ int write_serial_byte(int serial_fd, unsigned int ch)
     return 1;
 }
 
-int write_serial_long(int serial_fd, unsigned int value)
+int writeSerialLong(int serialFd, unsigned int value)
 {
     unsigned char out[4] = {
         value & 0xff,
@@ -138,7 +138,7 @@ int write_serial_long(int serial_fd, unsigned int value)
         (value >> 24) & 0xff
     };
 
-    if (write(serial_fd, out, 4) != 4)
+    if (write(serialFd, out, 4) != 4)
     {
         perror("write");
         return 0;
@@ -147,36 +147,36 @@ int write_serial_long(int serial_fd, unsigned int value)
     return 1;
 }
 
-int fill_memory(int serial_fd, unsigned int address, const unsigned char *buffer, unsigned int length)
+int fillMemory(int serialFd, unsigned int address, const unsigned char *buffer, unsigned int length)
 {
-    unsigned int target_checksum;
-    unsigned int local_checksum;
+    unsigned int targetChecksum;
+    unsigned int localChecksum;
     unsigned int cksuma;
     unsigned int cksumb;
     unsigned char ch;
     unsigned int i;
 
-    if (!write_serial_byte(serial_fd, LOAD_MEMORY_REQ))
+    if (!writeSerialByte(serialFd, LOAD_MEMORY_REQ))
         return 0;
 
-    if (!write_serial_long(serial_fd, address))
+    if (!writeSerialLong(serialFd, address))
         return 0;
 
-    if (!write_serial_long(serial_fd, length))
+    if (!writeSerialLong(serialFd, length))
         return 0;
 
-    local_checksum = 0;
+    localChecksum = 0;
     cksuma = 0;
     cksumb = 0;
 
-    if (write(serial_fd, buffer, length) != length)
+    if (write(serialFd, buffer, length) != length)
     {
         fprintf(stderr, "\nError writing to serial port\n");
         return 0;
     }
 
     // wait for ack
-    if (!read_serial_byte(serial_fd, &ch, 15000) || ch != LOAD_MEMORY_ACK)
+    if (!readSerialByte(serialFd, &ch, 15000) || ch != LOAD_MEMORY_ACK)
     {
         fprintf(stderr, "\n%08x Did not get ack for load memory\n", address);
         return 0;
@@ -188,39 +188,39 @@ int fill_memory(int serial_fd, unsigned int address, const unsigned char *buffer
         cksumb += cksuma;
     }
 
-    local_checksum = (cksuma & 0xffff) | ((cksumb & 0xffff) << 16);
+    localChecksum = (cksuma & 0xffff) | ((cksumb & 0xffff) << 16);
 
-    if (!read_serial_long(serial_fd, &target_checksum, 5000))
+    if (!readSerialLong(serialFd, &targetChecksum, 5000))
     {
         fprintf(stderr, "\n%08x timed out reading checksum\n", address);
         return 0;
     }
 
-    if (target_checksum != local_checksum)
+    if (targetChecksum != localChecksum)
     {
         fprintf(stderr, "\n%08x checksum mismatch want %08x got %08x\n",
-                address, local_checksum, target_checksum);
+                address, localChecksum, targetChecksum);
         return 0;
     }
 
     return 1;
 }
 
-int clear_memory(int serial_fd, unsigned int address, unsigned int length)
+int clearMemory(int serialFd, unsigned int address, unsigned int length)
 {
     unsigned char ch;
 
-    if (!write_serial_byte(serial_fd, CLEAR_MEMORY_REQ))
+    if (!writeSerialByte(serialFd, CLEAR_MEMORY_REQ))
         return 0;
 
-    if (!write_serial_long(serial_fd, address))
+    if (!writeSerialLong(serialFd, address))
         return 0;
 
-    if (!write_serial_long(serial_fd, length))
+    if (!writeSerialLong(serialFd, length))
         return 0;
 
     // wait for ack
-    if (!read_serial_byte(serial_fd, &ch, 15000) || ch != CLEAR_MEMORY_ACK)
+    if (!readSerialByte(serialFd, &ch, 15000) || ch != CLEAR_MEMORY_ACK)
     {
         fprintf(stderr, "\n%08x Did not get ack for clear memory\n", address);
         return 0;
@@ -229,27 +229,27 @@ int clear_memory(int serial_fd, unsigned int address, unsigned int length)
     return 1;
 }
 
-int ping_target(int serial_fd)
+int pingTarget(int serialFd)
 {
     int retry;
     unsigned char ch;
 
     printf("ping target");
 
-    int target_ready = 0;
+    int targetReady = 0;
     for (retry = 0; retry < 20; retry++)
     {
         printf(".");
         fflush(stdout);
-        write_serial_byte(serial_fd, PING_REQ);
-        if (read_serial_byte(serial_fd, &ch, 250) && ch == PING_ACK)
+        writeSerialByte(serialFd, PING_REQ);
+        if (readSerialByte(serialFd, &ch, 250) && ch == PING_ACK)
         {
-            target_ready = 1;
+            targetReady = 1;
             break;
         }
     }
 
-    if (!target_ready)
+    if (!targetReady)
     {
         printf("target is not responding\n");
         return 0;
@@ -260,12 +260,12 @@ int ping_target(int serial_fd)
     return 1;
 }
 
-int send_execute_command(int serial_fd)
+int sendExecuteCommand(int serialFd)
 {
     unsigned char ch;
 
-    write_serial_byte(serial_fd, EXECUTE_REQ);
-    if (!read_serial_byte(serial_fd, &ch, 15000) || ch != EXECUTE_ACK)
+    writeSerialByte(serialFd, EXECUTE_REQ);
+    if (!readSerialByte(serialFd, &ch, 15000) || ch != EXECUTE_ACK)
     {
         fprintf(stderr, "Target returned error starting execution\n");
         return 0;
@@ -274,36 +274,36 @@ int send_execute_command(int serial_fd)
     return 1;
 }
 
-void do_console_mode(int serial_fd)
+void doConsoleMode(int serialFd)
 {
     fd_set set;
-    int ready_fds;
-    char read_buffer[256];
+    int readyFds;
+    char readBuffer[256];
     ssize_t got;
 
     while (1)
     {
         FD_ZERO(&set);
-        FD_SET(serial_fd, &set);
+        FD_SET(serialFd, &set);
         FD_SET(STDIN_FILENO, &set);	// stdin
 
         do
         {
-            ready_fds = select(FD_SETSIZE, &set, NULL, NULL, NULL);
+            readyFds = select(FD_SETSIZE, &set, NULL, NULL, NULL);
         }
-        while (ready_fds < 0 && errno == EINTR);
+        while (readyFds < 0 && errno == EINTR);
 
-        if (FD_ISSET(serial_fd, &set))
+        if (FD_ISSET(serialFd, &set))
         {
             // Serial -> Terminal
-            got = read(serial_fd, read_buffer, sizeof(read_buffer));
+            got = read(serialFd, readBuffer, sizeof(readBuffer));
             if (got <= 0)
             {
                 perror("read");
                 return;
             }
 
-            if (write(STDIN_FILENO, read_buffer, (unsigned int) got) < got)
+            if (write(STDIN_FILENO, readBuffer, (unsigned int) got) < got)
             {
                 perror("write");
                 return;
@@ -313,14 +313,14 @@ void do_console_mode(int serial_fd)
         if (FD_ISSET(STDIN_FILENO, &set))
         {
             // Terminal -> Serial
-            got = read(STDIN_FILENO, read_buffer, sizeof(read_buffer));
+            got = read(STDIN_FILENO, readBuffer, sizeof(readBuffer));
             if (got <= 0)
             {
                 perror("read");
                 return;
             }
 
-            if (write(serial_fd, read_buffer, (unsigned int) got) != got)
+            if (write(serialFd, readBuffer, (unsigned int) got) != got)
             {
                 perror("write");
                 return;
@@ -329,28 +329,28 @@ void do_console_mode(int serial_fd)
     }
 }
 
-int read_hex_file(const char *filename, unsigned char **out_ptr, unsigned int *out_length)
+int readHexFile(const char *filename, unsigned char **outPtr, unsigned int *outLength)
 {
-    FILE *input_file;
+    FILE *inputFile;
     char line[16];
     unsigned int offset = 0;
     unsigned char *data;
-    unsigned int file_length;
+    unsigned int fileLength;
 
-    input_file = fopen(filename, "r");
-    if (!input_file)
+    inputFile = fopen(filename, "r");
+    if (!inputFile)
     {
         perror("Error opening input file\n");
         return 0;
     }
 
-    fseek(input_file, 0, SEEK_END);
-    file_length = (unsigned int) ftell(input_file);
-    fseek(input_file, 0, SEEK_SET);
+    fseek(inputFile, 0, SEEK_END);
+    fileLength = (unsigned int) ftell(inputFile);
+    fseek(inputFile, 0, SEEK_SET);
 
     // This may overestimate the size a bit, which is fine.
-    data = malloc(file_length / 2);
-    while (fgets(line, sizeof(line), input_file))
+    data = malloc(fileLength / 2);
+    while (fgets(line, sizeof(line), inputFile))
     {
         unsigned int value = (unsigned int) strtoul(line, NULL, 16);
         data[offset++] = (value >> 24) & 0xff;
@@ -359,45 +359,45 @@ int read_hex_file(const char *filename, unsigned char **out_ptr, unsigned int *o
         data[offset++] = value & 0xff;
     }
 
-    *out_ptr = data;
-    *out_length = offset;
-    fclose(input_file);
+    *outPtr = data;
+    *outLength = offset;
+    fclose(inputFile);
 
     return 1;
 }
 
-int read_binary_file(const char *filename, unsigned char **out_ptr, unsigned int *out_length)
+int readBinaryFile(const char *filename, unsigned char **outPtr, unsigned int *outLength)
 {
-    FILE *input_file;
+    FILE *inputFile;
     unsigned char *data;
-    unsigned int file_length;
+    unsigned int fileLength;
 
-    input_file = fopen(filename, "r");
-    if (!input_file)
+    inputFile = fopen(filename, "r");
+    if (!inputFile)
     {
         perror("Error opening input file");
         return 0;
     }
 
-    fseek(input_file, 0, SEEK_END);
-    file_length = (unsigned int) ftell(input_file);
-    fseek(input_file, 0, SEEK_SET);
+    fseek(inputFile, 0, SEEK_END);
+    fileLength = (unsigned int) ftell(inputFile);
+    fseek(inputFile, 0, SEEK_SET);
 
-    data = malloc(file_length);
-    if (fread(data, file_length, 1, input_file) != 1)
+    data = malloc(fileLength);
+    if (fread(data, fileLength, 1, inputFile) != 1)
     {
         perror("Error reading file");
         return 0;
     }
 
-    *out_ptr = data;
-    *out_length = file_length;
-    fclose(input_file);
+    *outPtr = data;
+    *outLength = fileLength;
+    fclose(inputFile);
 
     return 1;
 }
 
-void print_progress_bar(unsigned int current, unsigned int total)
+void printProgressBar(unsigned int current, unsigned int total)
 {
     unsigned int numTicks = current * PROGRESS_BAR_WIDTH / total;
     unsigned int i;
@@ -413,7 +413,7 @@ void print_progress_bar(unsigned int current, unsigned int total)
     fflush(stdout);
 }
 
-static int is_empty(unsigned char *data, unsigned int length)
+static int isEmpty(unsigned char *data, unsigned int length)
 {
     int empty;
     unsigned int i;
@@ -431,30 +431,30 @@ static int is_empty(unsigned char *data, unsigned int length)
     return empty;
 }
 
-int send_file(int serial_fd, unsigned int address, unsigned char *data, unsigned int data_length)
+int sendFile(int serialFd, unsigned int address, unsigned char *data, unsigned int dataLength)
 {
     unsigned int offset = 0;
 
-    print_progress_bar(0, data_length);
-    while (offset < data_length)
+    printProgressBar(0, dataLength);
+    while (offset < dataLength)
     {
-        unsigned int this_slice = data_length - offset;
-        if (this_slice > BLOCK_SIZE)
-            this_slice = BLOCK_SIZE;
+        unsigned int thisSlice = dataLength - offset;
+        if (thisSlice > BLOCK_SIZE)
+            thisSlice = BLOCK_SIZE;
 
-        if (is_empty(data + offset, this_slice))
+        if (isEmpty(data + offset, thisSlice))
         {
-            if (!clear_memory(serial_fd, address + offset, this_slice))
+            if (!clearMemory(serialFd, address + offset, thisSlice))
                 return 0;
         }
         else
         {
-            if (!fill_memory(serial_fd, address + offset, data + offset, this_slice))
+            if (!fillMemory(serialFd, address + offset, data + offset, thisSlice))
                 return 0;
         }
 
-        offset += this_slice;
-        print_progress_bar(offset, data_length);
+        offset += thisSlice;
+        printProgressBar(offset, dataLength);
     }
 
     return 1;
@@ -462,52 +462,52 @@ int send_file(int serial_fd, unsigned int address, unsigned char *data, unsigned
 
 int main(int argc, const char *argv[])
 {
-    unsigned char *program_data;
-    unsigned int program_length;
-    unsigned char *ramdisk_data = NULL;
-    unsigned int ramdisk_length = 0;
-    int serial_fd;
+    unsigned char *programData;
+    unsigned int programLength;
+    unsigned char *ramdiskData = NULL;
+    unsigned int ramdiskLength = 0;
+    int serialFd;
 
     if (argc < 3)
     {
-        fprintf(stderr, "USAGE:\n    serial_boot <serial port name> <hex file> [<ramdisk image>]\n");
+        fprintf(stderr, "USAGE:\n    serialBoot <serial port name> <hex file> [<ramdisk image>]\n");
         return 1;
     }
 
-    if (!read_hex_file(argv[2], &program_data, &program_length))
+    if (!readHexFile(argv[2], &programData, &programLength))
         return 1;
 
     if (argc == 4)
     {
         // Load binary ramdisk image
-        if (!read_binary_file(argv[3], &ramdisk_data, &ramdisk_length))
+        if (!readBinaryFile(argv[3], &ramdiskData, &ramdiskLength))
             return 1;
     }
 
-    serial_fd = open_serial_port(argv[1]);
-    if (serial_fd < 0)
+    serialFd = openSerialPort(argv[1]);
+    if (serialFd < 0)
         return 1;
 
-    if (!ping_target(serial_fd))
+    if (!pingTarget(serialFd))
         return 1;
 
-    printf("Program is %d bytes\n", program_length);
-    if (!send_file(serial_fd, 0, program_data, program_length))
+    printf("Program is %d bytes\n", programLength);
+    if (!sendFile(serialFd, 0, programData, programLength))
         return 1;
 
-    if (ramdisk_data)
+    if (ramdiskData)
     {
-        printf("\nRamdisk is %d bytes\n", ramdisk_length);
-        if (!send_file(serial_fd, RAMDISK_BASE, ramdisk_data, ramdisk_length))
+        printf("\nRamdisk is %d bytes\n", ramdiskLength);
+        if (!sendFile(serialFd, RAMDISK_BASE, ramdiskData, ramdiskLength))
             return 1;
     }
 
-    if (!send_execute_command(serial_fd))
+    if (!sendExecuteCommand(serialFd))
         return 1;
 
     printf("\nProgram running, entering console mode\n");
 
-    do_console_mode(serial_fd);
+    doConsoleMode(serialFd);
 
     return 0;
 }

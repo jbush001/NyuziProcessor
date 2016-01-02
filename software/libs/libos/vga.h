@@ -23,7 +23,7 @@
 extern "C" {
 #endif
 
-int init_vga(int mode);
+int initVGA(int mode);
 
 #ifdef __cplusplus
 }

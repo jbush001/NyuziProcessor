@@ -226,7 +226,7 @@ void I_SetPalette (byte* palette)
 
 void I_InitGraphics(void)
 {
-    init_vga(VGA_MODE_640x400);
+    initVGA(VGA_MODE_640x400);
 }
 
 

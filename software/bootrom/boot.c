@@ -18,7 +18,7 @@
 
 //
 // First stage serial bootloader. This is synthesized into ROM in high memory
-// on FPGA. It communicates with a loader program on the host (tools/serial_boot),
+// on FPGA. It communicates with a loader program on the host (tools/serialBoot),
 // which loads a program into memory. Because this is running in ROM, it cannot
 // use global variables.
 //
@@ -27,7 +27,7 @@ extern void *memset(void *_dest, int value, unsigned int length);
 
 static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
 
-enum register_index
+enum RegisterIndex
 {
     REG_RED_LED             = 0x0000 / 4,
     REG_UART_STATUS         = 0x0018 / 4,
@@ -35,7 +35,7 @@ enum register_index
     REG_UART_TX             = 0x0020 / 4,
 };
 
-unsigned int read_serial_byte(void)
+unsigned int readSerialByte(void)
 {
     while ((REGISTERS[REG_UART_STATUS] & 2) == 0)
         ;
@@ -43,7 +43,7 @@ unsigned int read_serial_byte(void)
     return REGISTERS[REG_UART_RX];
 }
 
-void write_serial_byte(unsigned int ch)
+void writeSerialByte(unsigned int ch)
 {
     while ((REGISTERS[REG_UART_STATUS] & 1) == 0)	// Wait for ready
         ;
@@ -51,21 +51,21 @@ void write_serial_byte(unsigned int ch)
     REGISTERS[REG_UART_TX] = ch;
 }
 
-unsigned int read_serial_long(void)
+unsigned int readSerialLong(void)
 {
     unsigned int result = 0;
     for (int i = 0; i < 4; i++)
-        result = (result >> 8) | (read_serial_byte() << 24);
+        result = (result >> 8) | (readSerialByte() << 24);
 
     return result;
 }
 
-void write_serial_long(unsigned int value)
+void writeSerialLong(unsigned int value)
 {
-    write_serial_byte(value & 0xff);
-    write_serial_byte((value >> 8) & 0xff);
-    write_serial_byte((value >> 16) & 0xff);
-    write_serial_byte((value >> 24) & 0xff);
+    writeSerialByte(value & 0xff);
+    writeSerialByte((value >> 8) & 0xff);
+    writeSerialByte((value >> 16) & 0xff);
+    writeSerialByte((value >> 24) & 0xff);
 }
 
 int main()
@@ -75,12 +75,12 @@ int main()
 
     for (;;)
     {
-        switch (read_serial_byte())
+        switch (readSerialByte())
         {
             case LOAD_MEMORY_REQ:
             {
-                unsigned int base_address = read_serial_long();
-                unsigned int length = read_serial_long();
+                unsigned int baseAddress = readSerialLong();
+                unsigned int length = readSerialLong();
 
                 // Compute fletcher checksum of data
                 unsigned int checksuma = 0;
@@ -88,39 +88,39 @@ int main()
 
                 for (int i = 0; i < length; i++)
                 {
-                    unsigned int ch = read_serial_byte();
+                    unsigned int ch = readSerialByte();
                     checksuma += ch;
                     checksumb += checksuma;
-                    ((unsigned char*) base_address)[i] = ch;
+                    ((unsigned char*) baseAddress)[i] = ch;
                 }
 
-                write_serial_byte(LOAD_MEMORY_ACK);
-                write_serial_long((checksuma & 0xffff) | ((checksumb & 0xffff) << 16));
+                writeSerialByte(LOAD_MEMORY_ACK);
+                writeSerialLong((checksuma & 0xffff) | ((checksumb & 0xffff) << 16));
                 break;
             }
 
             case CLEAR_MEMORY_REQ:
             {
-                unsigned int base_address = read_serial_long();
-                unsigned int length = read_serial_long();
-                memset((char*) 0 + base_address, 0, length);
-                write_serial_byte(CLEAR_MEMORY_ACK);
+                unsigned int baseAddress = readSerialLong();
+                unsigned int length = readSerialLong();
+                memset((char*) 0 + baseAddress, 0, length);
+                writeSerialByte(CLEAR_MEMORY_ACK);
                 break;
             }
 
             case EXECUTE_REQ:
             {
                 REGISTERS[REG_RED_LED] = 0;	// Turn off LED
-                write_serial_byte(EXECUTE_ACK);
+                writeSerialByte(EXECUTE_ACK);
                 return 0;	// Break out of main
             }
 
             case PING_REQ:
-                write_serial_byte(PING_ACK);
+                writeSerialByte(PING_ACK);
                 break;
 
             default:
-                write_serial_byte(BAD_COMMAND);
+                writeSerialByte(BAD_COMMAND);
         }
     }
 }

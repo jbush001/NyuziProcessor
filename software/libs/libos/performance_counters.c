@@ -17,13 +17,13 @@
 #include "performance_counters.h"
 #include "registers.h"
 
-void set_perf_counter_event(int counter, enum performance_event event)
+void setPerfCounterEvent(int counter, enum PerformanceEvent event)
 {
     if (counter >= 0 && counter < NUM_COUNTERS)
         REGISTERS[REG_PERF0_SEL + counter] = event;
 }
 
-unsigned int read_perf_counter(int counter)
+unsigned int readPerfCounter(int counter)
 {
     if (counter >= 0 && counter < NUM_COUNTERS)
         return REGISTERS[REG_PERF0_VAL + counter];

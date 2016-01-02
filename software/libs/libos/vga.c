@@ -44,15 +44,16 @@
 // - vpol: vertical polarity
 // - vres: vertical resolution (pixels)
 //
-void load_microcode(int hfp, int hs, int hbp, int hpol, int hres,
-                    int vfp, int vs, int vbp, int vpol, int vres)
+void loadMicrocode(int hfp, int hs, int hbp, int hpol, int hres,
+                   int vfp, int vs, int vbp, int vpol, int vres)
 {
     int hsync = (vpol ? 0 : VSYNC) | (hpol ? HSYNC : 0);
     int vsync = (vpol ? VSYNC : 0) | (hpol ? 0 : HSYNC);
     int hsync_vsync = (vpol ? VSYNC : 0) | (hpol ? HSYNC : 0);
     int nosync = (vpol ? 0 : VSYNC) | (hpol ? 0 : HSYNC);
     int i;
-    unsigned int UPGM[] = {
+    unsigned int UPGM[] =
+    {
         // Vertical front porch
         /*0*/	INITCNT(1, vfp) | nosync,
         INITCNT(0, hfp - 1) | nosync,  // Horizontal Front porch
@@ -114,16 +115,16 @@ void load_microcode(int hfp, int hs, int hbp, int hpol, int hres,
     REGISTERS[REG_VGA_ENABLE] = 1;
 }
 
-int init_vga(int mode)
+int initVGA(int mode)
 {
     switch (mode)
     {
         case VGA_MODE_640x480:
-            load_microcode(16, 96, 48, 0, 640, 10, 2, 33, 0, 480);
+            loadMicrocode(16, 96, 48, 0, 640, 10, 2, 33, 0, 480);
             break;
 
         case VGA_MODE_640x400:
-            load_microcode(16, 96, 48, 0, 640, 12, 2, 35, 1, 400);
+            loadMicrocode(16, 96, 48, 0, 640, 12, 2, 35, 1, 400);
             break;
 
         default:

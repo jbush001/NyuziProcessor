@@ -33,16 +33,17 @@ using namespace librender;
 const int kFbWidth = 640;
 const int kFbHeight = 480;
 
-static float kTriangleVertices[] = {
+static float kTriangleVertices[] =
+{
     // 1st triangle
-    0.0,  0.9, -1.0,     1.0, 0.0, 0.0, 1.0,
-    -0.9, -0.7, -1.0,     1.0, 0.0, 0.0, 1.0,
-    0.9, -0.7, -1.0,     1.0, 0.0, 0.0, 1.0,
+    0.0,  0.9, -1.0,    1.0, 0.0, 0.0, 1.0,
+    -0.9, -0.7, -1.0,   1.0, 0.0, 0.0, 1.0,
+    0.9, -0.7, -1.0,    1.0, 0.0, 0.0, 1.0,
 
     // 2nd triangle
-    0.0, -0.9, -1.0,      0.0, 1.0, 0.0, 1.0,
-    0.9,  0.7, -1.0,      0.0, 1.0, 0.0, 0.7,
-    -0.9,  0.7, -1.0,      0.0, 1.0, 0.0, 0.0,
+    0.0, -0.9, -1.0,    0.0, 1.0, 0.0, 1.0,
+    0.9,  0.7, -1.0,    0.0, 1.0, 0.0, 0.7,
+    -0.9,  0.7, -1.0,   0.0, 1.0, 0.0, 0.0,
 };
 
 static int kTriangleIndices[] = { 0, 1, 2, 3, 4, 5 };
@@ -51,7 +52,7 @@ static int kTriangleIndices[] = { 0, 1, 2, 3, 4, 5 };
 int main()
 {
     if (__builtin_nyuzi_read_control_reg(0) == 0)
-        init_vga(VGA_MODE_640x480);
+        initVGA(VGA_MODE_640x480);
     else
         workerThread();
 

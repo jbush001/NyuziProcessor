@@ -23,18 +23,18 @@
 # to address 0.
 #
 
-					.text
-					.align 4
+                    .text
+                    .align 4
 
-					.globl _start
-					.type _start,@function
-_start:				getcr s0, 0
-					btrue s0, jump_to_zero
+                    .globl _start
+                    .type _start,@function
+_start:             getcr s0, 0
+                    btrue s0, jump_to_zero
 
-					# Set up stack
-					load_32 sp, temp_stack
-					call main
+                    # Set up stack
+                    load_32 sp, temp_stack
+                    call main
 
-jump_to_zero: 		move pc, 0
+jump_to_zero:       move pc, 0
 
-temp_stack:			.long 0x400000
+temp_stack:         .long 0x400000

@@ -123,7 +123,7 @@ submitting. To install:
 
 To reformat C/C++ code:
 
-    astyle --style=allman --in-place *.cpp *.c *.h
+    astyle --style=allman --recursive *.cpp *.c *.h
 
 To reformat Python code:
 
