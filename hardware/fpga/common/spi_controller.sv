@@ -20,23 +20,17 @@
 //
 
 module spi_controller
-	#(parameter			BASE_ADDRESS = 0)
+	#(parameter BASE_ADDRESS = 0)
 
-	(input              clk,
-	input               reset,
-
-	// IO bus interface
-	input [31:0]        io_address,
-	input               io_read_en,
-	input [31:0]        io_write_data,
-	input               io_write_en,
-	output logic[31:0]  io_read_data,
+	(input                      clk,
+	input                       reset,
+	io_bus_interface.slave      io_bus,
 
 	// SPI interface
-	output logic        spi_clk,
-	output logic        spi_cs_n,
-	input               spi_miso,
-	output logic        spi_mosi);
+	output logic                spi_clk,
+	output logic                spi_cs_n,
+	input                       spi_miso,
+	output logic                spi_mosi);
 
 	localparam TX_REG = BASE_ADDRESS;
 	localparam RX_REG = BASE_ADDRESS + 4;
@@ -51,14 +45,6 @@ module spi_controller
 	logic[7:0] divider_countdown;
 	logic[7:0] divider_rate;
 
-	always_comb
-	begin
-		if (io_address == RX_REG)
-			io_read_data = scalar_t'(miso_byte);
-		else // RX_STATUS_REG
-			io_read_data = scalar_t'(!transfer_active);
-	end
-
 	always_ff @(posedge reset, posedge clk)
 	begin
 		if (reset)
@@ -71,13 +57,18 @@ module spi_controller
 		end
 		else
 		begin
+			if (io_bus.address == RX_REG)
+				io_bus.read_data <= scalar_t'(miso_byte);
+			else // RX_STATUS_REG
+				io_bus.read_data <= scalar_t'(!transfer_active);
+
 			// Control register
-			if (io_write_en)
+			if (io_bus.write_en)
 			begin
-				if (io_address == CONTROL_REG)
-					spi_cs_n <= io_write_data[0];
-				else if (io_address == DIVISOR_REG)
-					divider_rate <= io_write_data[7:0];
+				if (io_bus.address == CONTROL_REG)
+					spi_cs_n <= io_bus.write_data[0];
+				else if (io_bus.address == DIVISOR_REG)
+					divider_rate <= io_bus.write_data[7:0];
 			end
 
 			if (transfer_active)
@@ -108,7 +99,7 @@ module spi_controller
 				else
 					divider_countdown <= divider_countdown - 1;
 			end
-			else if (io_write_en && io_address == TX_REG)
+			else if (io_bus.write_en && io_bus.address == TX_REG)
 			begin
 				assert(spi_clk == 0);
 
@@ -118,7 +109,7 @@ module spi_controller
 				divider_countdown <= divider_rate;
 
 				// Set up first bit
-				{spi_mosi, mosi_byte} <= {io_write_data[7:0], 1'd0};
+				{spi_mosi, mosi_byte} <= {io_bus.write_data[7:0], 1'd0};
 			end
 		end
 	end

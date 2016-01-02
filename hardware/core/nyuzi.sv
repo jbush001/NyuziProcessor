@@ -24,27 +24,23 @@
 module nyuzi
 	#(parameter RESET_PC = 0)
 
-	(input                 clk,
-	input                 reset,
-	axi4_interface.master axi_bus,
-	output                processor_halt,
-	input                 interrupt_req,
+	(input                      clk,
+	input                       reset,
+	axi4_interface.master       axi_bus,
+	output                      processor_halt,
+	input                       interrupt_req,
 
 	// Non-cacheable memory signals
-	output                io_write_en,
-	output                io_read_en,
-	output scalar_t       io_address,
-	output scalar_t       io_write_data,
-	input scalar_t        io_read_data);
+	io_bus_interface.master     io_bus);
 
 	l2req_packet_t l2i_request[`NUM_CORES];
 	ioreq_packet_t io_request[`NUM_CORES];
 	logic[`TOTAL_PERF_EVENTS - 1:0] perf_events;
 	logic[`TOTAL_THREADS - 1:0] ic_interrupt_pending;
 	logic[`TOTAL_THREADS - 1:0] wb_interrupt_ack;
-	scalar_t ic_io_read_data;	// Currently not used
-	logic[31:0] perf_io_read_data;
-	logic[31:0] selected_io_read_data;
+	io_bus_interface ic_io_bus();
+	io_bus_interface perf_io_bus();
+	io_bus_interface arbiter_io_bus();
 	enum logic[1:0] {
 		IO_PERF_COUNTERS,
 		IO_INT_CONTROLLER,
@@ -70,7 +66,7 @@ module nyuzi
 	end
 
 	interrupt_controller #(.BASE_ADDRESS('h60)) interrupt_controller(
-		.io_read_data(ic_io_read_data),
+		.io_bus(ic_io_bus),
 		.*);
 
 	l2_cache l2_cache(
@@ -79,32 +75,47 @@ module nyuzi
 
 	always_ff @(posedge clk)
 	begin
-		if (io_address >= 'h130 && io_address <= 'h13c)
+		if (arbiter_io_bus.address >= 'h130 && arbiter_io_bus.address <= 'h13c)
 			io_read_source <= IO_PERF_COUNTERS;
-		else if (io_address >= 'h60 && io_address < 'h100)
+		else if (arbiter_io_bus.address >= 'h60 && arbiter_io_bus.address < 'h100)
 			io_read_source <= IO_INT_CONTROLLER;
 		else
 			io_read_source <= IO_ARBITER;
 	end
 
+	assign io_bus.write_en = arbiter_io_bus.write_en;
+	assign io_bus.read_en = arbiter_io_bus.read_en;
+	assign io_bus.address = arbiter_io_bus.address;
+	assign io_bus.write_data = arbiter_io_bus.write_data;
+
+	assign ic_io_bus.write_en = arbiter_io_bus.write_en;
+	assign ic_io_bus.read_en = arbiter_io_bus.read_en;
+	assign ic_io_bus.address = arbiter_io_bus.address;
+	assign ic_io_bus.write_data = arbiter_io_bus.write_data;
+
+	assign perf_io_bus.write_en = arbiter_io_bus.write_en;
+	assign perf_io_bus.read_en = arbiter_io_bus.read_en;
+	assign perf_io_bus.address = arbiter_io_bus.address;
+	assign perf_io_bus.write_data = arbiter_io_bus.write_data;
+
 	always_comb
 	begin
 		case (io_read_source)
-			IO_PERF_COUNTERS: selected_io_read_data = perf_io_read_data;
-			IO_INT_CONTROLLER: selected_io_read_data = ic_io_read_data;
-			default: selected_io_read_data = io_read_data; // External read
+			IO_PERF_COUNTERS: arbiter_io_bus.read_data = perf_io_bus.read_data;
+			IO_INT_CONTROLLER: arbiter_io_bus.read_data = ic_io_bus.read_data;
+			default: arbiter_io_bus.read_data = io_bus.read_data; // External read
 		endcase
 	end
 
 	io_arbiter io_arbiter(
-		.io_read_data(selected_io_read_data),
+		.io_bus(arbiter_io_bus),
 		.*);
 
 	performance_counters #(
 		.NUM_EVENTS(`TOTAL_PERF_EVENTS),
 		.BASE_ADDRESS('h120)
 	) performance_counters(
-		.io_read_data(perf_io_read_data),
+		.io_bus(perf_io_bus),
 		.*);
 
 	genvar thread_idx;

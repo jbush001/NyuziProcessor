@@ -22,18 +22,12 @@
 //
 
 module io_arbiter(
-	input                     clk,
-	input                     reset,
-	input ioreq_packet_t      io_request[`NUM_CORES],
-	output logic              ia_ready[`NUM_CORES],
-	output iorsp_packet_t     ia_response,
-
-	// Non-cacheable memory signals
-	output logic              io_write_en,
-	output logic              io_read_en,
-	output scalar_t           io_address,
-	output scalar_t           io_write_data,
-	input scalar_t            io_read_data);
+	input                            clk,
+	input                            reset,
+	input ioreq_packet_t             io_request[`NUM_CORES],
+	output logic                     ia_ready[`NUM_CORES],
+	output iorsp_packet_t            ia_response,
+	io_bus_interface.master          io_bus);
 
 	logic[`NUM_CORES - 1:0] arb_request;
 	core_id_t grant_idx;
@@ -75,10 +69,10 @@ module io_arbiter(
 		end
 	endgenerate
 
-	assign io_write_en = |grant_oh && grant_request.is_store;
-	assign io_read_en = |grant_oh && !grant_request.is_store;
-	assign io_write_data = grant_request.value;
-	assign io_address = grant_request.address;
+	assign io_bus.write_en = |grant_oh && grant_request.is_store;
+	assign io_bus.read_en = |grant_oh && !grant_request.is_store;
+	assign io_bus.write_data = grant_request.value;
+	assign io_bus.address = grant_request.address;
 
 	always_ff @(posedge clk, posedge reset)
 	begin
@@ -119,7 +113,7 @@ module io_arbiter(
 				ia_response.valid <= 1;
 				ia_response.core <= request_core;
 				ia_response.thread_idx <= request_thread_idx;
-				ia_response.read_value <= io_read_data;
+				ia_response.read_value <= io_bus.read_data;
 			end
 			else
 				ia_response.valid <= 0;

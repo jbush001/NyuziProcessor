@@ -22,19 +22,15 @@ module uart
 	#(parameter BASE_ADDRESS = 0,
 	parameter CLOCKS_PER_BIT = 1)
 
-	(input              clk,
-	input               reset,
+	(input                    clk,
+	input                     reset,
 
 	// IO bus interface
-	input [31:0]        io_address,
-	input               io_read_en,
-	input [31:0]        io_write_data,
-	input               io_write_en,
-	output logic[31:0]  io_read_data,
+	io_bus_interface.slave    io_bus,
 
 	// UART interface
-	output              uart_tx,
-	input               uart_rx);
+	output                    uart_tx,
+	input                     uart_rx);
 
 	localparam STATUS_REG = BASE_ADDRESS;
 	localparam RX_REG = BASE_ADDRESS + 4;
@@ -58,31 +54,15 @@ module uart
 	logic rx_frame_error;
 	logic tx_enable;
 
-	always_comb
-	begin
-		case (io_address)
-			STATUS_REG:
-			begin
-				io_read_data[31:4] = 0;
-				io_read_data[3:0] = {rx_fifo_frame_error, rx_fifo_overrun, !rx_fifo_empty, tx_ready};
-			end
-			default:
-			begin
-				io_read_data[31:8] = 0;
-				io_read_data[7:0] = rx_fifo_char;
-			end
-		endcase
-	end
-
-	assign tx_enable = io_write_en && io_address == TX_REG;
+	assign tx_enable = io_bus.write_en && io_bus.address == TX_REG;
 
 	uart_transmit #(.CLOCKS_PER_BIT(CLOCKS_PER_BIT)) uart_transmit(
-		.tx_char(io_write_data[7:0]),
+		.tx_char(io_bus.write_data[7:0]),
 		.*);
 
 	uart_receive #(.CLOCKS_PER_BIT(CLOCKS_PER_BIT)) uart_receive(.*);
 
-	assign rx_fifo_read = io_address == RX_REG && io_read_en;
+	assign rx_fifo_read = io_bus.address == RX_REG && io_bus.read_en;
 
 	// Logic for Overrun Error (OE) bit
 	always_ff @(posedge clk, posedge reset)
@@ -93,6 +73,19 @@ module uart
 		end
 		else
 		begin
+			case (io_bus.address)
+				STATUS_REG:
+				begin
+					io_bus.read_data[31:4] <= 0;
+					io_bus.read_data[3:0] <= {rx_fifo_frame_error, rx_fifo_overrun, !rx_fifo_empty, tx_ready};
+				end
+				default:
+				begin
+					io_bus.read_data[31:8] <= 0;
+					io_bus.read_data[7:0] <= rx_fifo_char;
+				end
+			endcase
+
 			if (rx_fifo_read)
 			begin
 				rx_fifo_overrun <= 0;

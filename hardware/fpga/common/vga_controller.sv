@@ -22,26 +22,24 @@
 
 module vga_controller
 	#(parameter BASE_ADDRESS = 0)
-	(input                  clk,
-	input                   reset,
+	(input                      clk,
+	input                       reset,
 
-	// I/O interface
-	input [31:0]            io_address,
-	input [31:0]            io_write_data,
-	input                   io_write_en,
+	// I/O bus control register access
+	io_bus_interface.slave      io_bus,
+
+	// DMA access to memory
+	axi4_interface.master       axi_bus,
 
 	// To DAC
-	output [7:0]            vga_r,
-	output [7:0]            vga_g,
-	output [7:0]            vga_b,
-	output                  vga_clk,
-	output                  vga_blank_n,
-	output                  vga_hs,
-	output                  vga_vs,
-	output                  vga_sync_n,
-
-	// To AXI interconnect
-	axi4_interface.master   axi_bus);
+	output [7:0]                vga_r,
+	output [7:0]                vga_g,
+	output [7:0]                vga_b,
+	output                      vga_clk,
+	output                      vga_blank_n,
+	output                      vga_hs,
+	output                      vga_vs,
+	output                      vga_sync_n);
 
 	// The burst length is twice that of a CPU cache line fill to ensure
 	// sufficient memory bandwidth even when ping-ponging.
@@ -196,19 +194,19 @@ module vga_controller
 			fb_base_address <= '0;
 			fb_length <= '0;
 		end
-		else if (io_write_en)
+		else if (io_bus.write_en)
 		begin
-			case (io_address)
-				BASE_ADDRESS: sequencer_en <= io_write_data[0];
-				BASE_ADDRESS + 8: fb_base_address <= io_write_data;
-				BASE_ADDRESS + 12: fb_length <= io_write_data;
+			case (io_bus.address)
+				BASE_ADDRESS: sequencer_en <= io_bus.write_data[0];
+				BASE_ADDRESS + 8: fb_base_address <= io_bus.write_data;
+				BASE_ADDRESS + 12: fb_length <= io_bus.write_data;
 			endcase
 		end
 	end
 
 	vga_sequencer vga_sequencer(
-		.prog_write_en(io_write_en && io_address == BASE_ADDRESS + 4),
-		.prog_data(io_write_data),
+		.prog_write_en(io_bus.write_en && io_bus.address == BASE_ADDRESS + 4),
+		.prog_data(io_bus.write_data),
 		.*);
 endmodule
 

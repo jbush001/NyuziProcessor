@@ -48,6 +48,19 @@ module verilator_tb(
 	logic sd_cs_n;
 	logic sd_di;
 	logic sd_sclk;
+	io_bus_interface loopback_uart_io_bus();
+	io_bus_interface ps2_io_bus();
+	io_bus_interface sdcard_io_bus();
+	io_bus_interface vga_io_bus();
+	io_bus_interface nyuzi_io_bus();
+	enum logic[2:0] {
+		IO_LOOPBACK_UART,
+		IO_PS2,
+		IO_SDCARD,
+		IO_ONES,
+		IO_NONE
+	} io_bus_source;
+
 
 	/*AUTOLOGIC*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -60,10 +73,6 @@ module verilator_tb(
 	logic [SDRAM_DATA_WIDTH-1:0] dram_dq;	// To/From sdram_controller of sdram_controller.v, ...
 	logic		dram_ras_n;		// From sdram_controller of sdram_controller.v
 	logic		dram_we_n;		// From sdram_controller of sdram_controller.v
-	scalar_t	io_address;		// From nyuzi of nyuzi.v
-	logic		io_read_en;		// From nyuzi of nyuzi.v
-	scalar_t	io_write_data;		// From nyuzi of nyuzi.v
-	logic		io_write_en;		// From nyuzi of nyuzi.v
 	logic		perf_dram_page_hit;	// From sdram_controller of sdram_controller.v
 	logic		perf_dram_page_miss;	// From sdram_controller of sdram_controller.v
 	logic		processor_halt;		// From nyuzi of nyuzi.v
@@ -102,6 +111,7 @@ module verilator_tb(
 
 	nyuzi #(.RESET_PC(RESET_PC)) nyuzi(
 		.axi_bus(axi_bus_s0.master),
+		.io_bus(nyuzi_io_bus),
 		.*);
 
 	axi_interconnect axi_interconnect(
@@ -137,7 +147,7 @@ module verilator_tb(
 
 	assign loopback_uart_rx = loopback_uart_tx & loopback_uart_mask;
 	uart #(.BASE_ADDRESS('h100), .CLOCKS_PER_BIT(8)) loopback_uart(
-		.io_read_data(loopback_uart_read_data),
+		.io_bus(loopback_uart_io_bus),
 		.uart_tx(loopback_uart_tx),
 		.uart_rx(loopback_uart_rx),
 		.*);
@@ -152,7 +162,7 @@ module verilator_tb(
 	sim_sdmmc sim_sdmmc(.*);
 
 	spi_controller #(.BASE_ADDRESS('h44)) spi_controller(
-		.io_read_data(spi_read_data),
+		.io_bus(sdcard_io_bus),
 		.spi_clk(sd_sclk),
 		.spi_cs_n(sd_cs_n),
 		.spi_miso(sd_do),
@@ -162,7 +172,7 @@ module verilator_tb(
 	sim_ps2 sim_ps2(.*);
 
 	ps2_controller #(.BASE_ADDRESS('h38)) ps2_controller(
-		.io_read_data(ps2_read_data),
+		.io_bus(ps2_io_bus),
 		.*);
 
 `ifdef SIMULATE_VGA
@@ -172,6 +182,7 @@ module verilator_tb(
 	// - Run one of the apps (like mandelbrot) for maybe 20 seconds, ctrl-C to stop
 	// - Look the resulting waveform in GtkWave to check that the timings are correct.
 	vga_controller #(.BASE_ADDRESS('h110)) vga_controller(
+		.io_bus(vga_io_bus),
 		.axi_bus(axi_bus_s1.master),
 		.*);
 `endif
@@ -384,40 +395,39 @@ module verilator_tb(
 			// Device registers
 			//
 
-			if (io_write_en)
+			if (nyuzi_io_bus.write_en)
 			begin
-				case (io_address)
+				case (nyuzi_io_bus.address)
 					// Serial output
-					'h20: $write("%c", io_write_data[7:0]);
+					'h20: $write("%c", nyuzi_io_bus.write_data[7:0]);
 
 					// Loopback UART
-					'h10c: loopback_uart_mask <= io_write_data[0];
+					'h10c: loopback_uart_mask <= nyuzi_io_bus.write_data[0];
 				endcase
 			end
 
-			if (io_read_en)
+			if (nyuzi_io_bus.read_en)
 			begin
-				case (io_address)
+				case (nyuzi_io_bus.address)
 					// Hack for cosimulation tests
 					'h4,
-					'h8: io_read_data <= 32'hffffffff;
-
-					// Serial status
-					'h18: io_read_data <= 1;
+					'h8,
+					'h18: // Serial status
+						io_bus_source <= IO_ONES;
 
 					// PS2
 					'h38,
-					'h3c: io_read_data <= ps2_read_data;
+					'h3c: io_bus_source <= IO_PS2;
 
-					// SPI
+					// SPI (SD card)
 					'h48,
-					'h4c: io_read_data <= spi_read_data;
+					'h4c: io_bus_source <= IO_SDCARD;
 
 					// External UART 0
 					'h100,
-					'h104: io_read_data <= loopback_uart_read_data;
+					'h104: io_bus_source <= IO_LOOPBACK_UART;
 
-					default: io_read_data <= $random();
+					default: io_bus_source <= IO_NONE;
 				endcase
 			end
 
@@ -439,6 +449,38 @@ module verilator_tb(
 				$fwrite(profile_fd, "%x\n", `CORE0.ifetch_tag_stage.next_program_counter[$random() % `THREADS_PER_CORE]);
 		end
 	end
+
+	always_comb
+	begin
+		case (io_bus_source)
+			IO_LOOPBACK_UART: nyuzi_io_bus.read_data = loopback_uart_io_bus.read_data;
+			IO_PS2: nyuzi_io_bus.read_data = ps2_io_bus.read_data;
+			IO_SDCARD: nyuzi_io_bus.read_data = sdcard_io_bus.read_data;
+			IO_ONES:  nyuzi_io_bus.read_data = 32'hffffffff;
+			default:  nyuzi_io_bus.read_data = $random();
+		endcase
+	end
+
+	assign loopback_uart_io_bus.write_en = nyuzi_io_bus.write_en;
+	assign loopback_uart_io_bus.read_en = nyuzi_io_bus.read_en;
+	assign loopback_uart_io_bus.address = nyuzi_io_bus.address;
+	assign loopback_uart_io_bus.write_data = nyuzi_io_bus.write_data;
+
+	assign ps2_io_bus.write_en = nyuzi_io_bus.write_en;
+	assign ps2_io_bus.read_en = nyuzi_io_bus.read_en;
+	assign ps2_io_bus.address = nyuzi_io_bus.address;
+	assign ps2_io_bus.write_data = nyuzi_io_bus.write_data;
+
+	assign sdcard_io_bus.write_en = nyuzi_io_bus.write_en;
+	assign sdcard_io_bus.read_en = nyuzi_io_bus.read_en;
+	assign sdcard_io_bus.address = nyuzi_io_bus.address;
+	assign sdcard_io_bus.write_data = nyuzi_io_bus.write_data;
+
+	assign vga_io_bus.write_en = nyuzi_io_bus.write_en;
+	assign vga_io_bus.read_en = nyuzi_io_bus.read_en;
+	assign vga_io_bus.address = nyuzi_io_bus.address;
+	assign vga_io_bus.write_data = nyuzi_io_bus.write_data;
+
 endmodule
 
 // Local Variables:

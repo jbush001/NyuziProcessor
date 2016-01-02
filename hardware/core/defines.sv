@@ -407,6 +407,20 @@ interface axi4_interface;
 		output s_awready, s_wready, s_bvalid, s_arready, s_rvalid, s_rdata);
 endinterface
 
+// Non-cached I/O bus (peripheral register access)
+// write_en and read_en are mutually exclusive. When read_en is asserted, the
+// data will appear on read_data one cycle later.
+interface io_bus_interface;
+	logic write_en;
+	logic read_en;
+	scalar_t address;
+	scalar_t write_data;
+	scalar_t read_data;
+
+	modport master(output write_en, read_en, address, write_data, input read_data);
+	modport slave(input write_en, read_en, address, write_data, output read_data);
+endinterface
+
 `define CORE_PERF_EVENTS 13
 `define L2_PERF_EVENTS 3
 `define TOTAL_PERF_EVENTS (`L2_PERF_EVENTS + `CORE_PERF_EVENTS * `NUM_CORES)

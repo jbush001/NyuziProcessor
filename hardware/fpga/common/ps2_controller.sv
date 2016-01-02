@@ -21,19 +21,13 @@
 module ps2_controller
 	#(parameter BASE_ADDRESS = 0)
 
-	(input              clk,
-	input               reset,
-
-	// IO bus interface
-	input [31:0]        io_address,
-	input               io_read_en,
-	input [31:0]        io_write_data,
-	input               io_write_en,
-	output logic[31:0]  io_read_data,
+	(input                      clk,
+	input                       reset,
+	io_bus_interface.slave      io_bus,
 
 	// PS/2 Interface
-	inout               ps2_clk,
-	inout               ps2_data);
+	inout                       ps2_clk,
+	inout                       ps2_data);
 
 	localparam STATUS_REG = BASE_ADDRESS;
 	localparam DATA_REG = BASE_ADDRESS + 4;
@@ -74,17 +68,9 @@ module ps2_controller
 		.value_i(receive_byte),
 		.empty(read_fifo_empty),
 		.almost_empty(),
-		.dequeue_en((io_read_en && io_address == DATA_REG && !read_fifo_empty) || fifo_almost_full),
+		.dequeue_en((io_bus.read_en && io_bus.address == DATA_REG && !read_fifo_empty) || fifo_almost_full),
 		.value_o(dequeue_data),
 		.*);
-
-	always_comb
-	begin
-		if (io_address == STATUS_REG)
-			io_read_data = scalar_t'(!read_fifo_empty);
-		else
-			io_read_data = scalar_t'(dequeue_data);
-	end
 
 	always @(posedge clk, posedge reset)
 	begin
@@ -97,6 +83,11 @@ module ps2_controller
 		end
 		else
 		begin
+			if (io_bus.address == STATUS_REG)
+				io_bus.read_data <= scalar_t'(!read_fifo_empty);
+			else
+				io_bus.read_data <= scalar_t'(dequeue_data);
+
 			ps2_clk_prev <= ps2_clk_sync;
 			enqueue_en <= 0;
 			if (ps2_clk_sync == 0 && ps2_clk_prev == 1)

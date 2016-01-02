@@ -14,6 +14,8 @@
 // limitations under the License.
 //
 
+`include "defines.sv"
+
 //
 // General Purpose Input/Output
 // Bidirectional pins that can be driven and read
@@ -23,18 +25,12 @@ module gpio_controller
 	parameter NUM_PINS = 8,
 	parameter ENABLE_SYNCHRONIZER = 0)
 
-	(input				  clk,
-	input				  reset,
-
-	// IO bus interface
-	input [31:0]          io_address,
-	input                 io_read_en,
-	input [31:0]          io_write_data,
-	input                 io_write_en,
-	output logic[31:0]    io_read_data,
+	(input				      clk,
+	input				      reset,
+	io_bus_interface.slave    io_bus,
 
 	// To/from SD card
-	inout[NUM_PINS - 1:0] gpio_value);
+	inout[NUM_PINS - 1:0]     gpio_value);
 
 	localparam DIRECTION_REG = BASE_ADDRESS;
 	localparam VALUE_REG = BASE_ADDRESS + 4;
@@ -55,13 +51,14 @@ module gpio_controller
 		if (ENABLE_SYNCHRONIZER)
 		begin
 			synchronizer #(.WIDTH(NUM_PINS)) input_synchronizer(
-				.data_o(io_read_data),
+				.data_o(io_bus.read_data),
 				.data_i(gpio_value),
 				.*);
 		end
 		else
 		begin
-			assign io_read_data = gpio_value;
+			always_ff @(posedge clk)
+				io_bus.read_data <= gpio_value;
 		end
 	endgenerate
 
@@ -72,12 +69,12 @@ module gpio_controller
 			direction <= 0;
 			output_value <= 0;
 		end
-		else if (io_write_en)
+		else if (io_bus.write_en)
 		begin
-			if (io_address == DIRECTION_REG)
-				direction <= io_write_data[NUM_PINS - 1:0];
-			else if (io_address == VALUE_REG)
-				output_value <= io_write_data[NUM_PINS - 1:0];
+			if (io_bus.address == DIRECTION_REG)
+				direction <= io_bus.write_data[NUM_PINS - 1:0];
+			else if (io_bus.address == VALUE_REG)
+				output_value <= io_bus.write_data[NUM_PINS - 1:0];
 		end
 	end
 endmodule

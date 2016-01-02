@@ -32,11 +32,7 @@ module interrupt_controller
 	input                                       reset,
 
 	// IO bus interface
-	input [31:0]                                io_address,
-	input                                       io_read_en,
-	input [31:0]                                io_write_data,
-	input                                       io_write_en,
-	output logic[31:0]                          io_read_data,
+	io_bus_interface.slave                      io_bus,
 
 	// From external interface
 	input                                       interrupt_req,
@@ -54,16 +50,16 @@ module interrupt_controller
 	begin
 		if (reset)
 			ic_thread_en <= 1;
-		else if (io_write_en)
+		else if (io_bus.write_en)
 		begin
-			case (io_address)
+			case (io_bus.address)
 				// Thread enable flag handling. This is limited to 32 threads.
 				// To add more, put the next 32 bits in subsequent io addresses.
 				BASE_ADDRESS: // resume thread
-					ic_thread_en <= ic_thread_en | io_write_data[`TOTAL_THREADS - 1:0];
+					ic_thread_en <= ic_thread_en | io_bus.write_data[`TOTAL_THREADS - 1:0];
 
 				BASE_ADDRESS + 4: // halt thread
-					ic_thread_en <= ic_thread_en & ~io_write_data[`TOTAL_THREADS - 1:0];
+					ic_thread_en <= ic_thread_en & ~io_bus.write_data[`TOTAL_THREADS - 1:0];
 			endcase
 		end
 	end

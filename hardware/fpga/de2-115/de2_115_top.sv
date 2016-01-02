@@ -77,10 +77,6 @@ module de2_115_top(
 
 	/*AUTOLOGIC*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	scalar_t	io_address;		// From nyuzi of nyuzi.v
-	logic		io_read_en;		// From nyuzi of nyuzi.v
-	scalar_t	io_write_data;		// From nyuzi of nyuzi.v
-	logic		io_write_en;		// From nyuzi of nyuzi.v
 	logic		perf_dram_page_hit;	// From sdram_controller of sdram_controller.v
 	logic		perf_dram_page_miss;	// From sdram_controller of sdram_controller.v
 	logic		processor_halt;		// From nyuzi of nyuzi.v
@@ -92,44 +88,31 @@ module de2_115_top(
 	axi4_interface axi_bus_s1();
 	logic reset;
 	logic clk;
-	scalar_t io_read_data;
-	scalar_t uart_read_data;
-	scalar_t sdcard_read_data;
-	scalar_t gpio_read_data;
-	scalar_t ps2_read_data;
+	io_bus_interface uart_io_bus;
+	io_bus_interface sdcard_io_bus;
+	io_bus_interface ps2_io_bus;
+	io_bus_interface vga_io_bus;
+	io_bus_interface nyuzi_io_bus;
+	enum logic[1:0] {
+		IO_UART,
+		IO_SDCARD,
+		IO_PS2
+	} io_read_source;
 
 	assign clk = clk50;
 
-	/* nyuzi AUTO_TEMPLATE(
-		.axi_bus(axi_bus_s0[]),
-		);
-	*/
 	nyuzi #(.RESET_PC(BOOT_ROM_BASE)) nyuzi(
 			.interrupt_req(0),
-		/*AUTOINST*/
-						// Interfaces
-						.axi_bus	(axi_bus_s0),	 // Templated
-						// Outputs
-						.processor_halt	(processor_halt),
-						.io_write_en	(io_write_en),
-						.io_read_en	(io_read_en),
-						.io_address	(io_address),
-						.io_write_data	(io_write_data),
-						// Inputs
-						.clk		(clk),
-						.reset		(reset),
-						.io_read_data	(io_read_data));
+			.axi_bus(axi_bus_s0),
+			.io_bus(nyuzi_io_bus),
+			.*);
 
 	axi_interconnect #(.M1_BASE_ADDRESS(BOOT_ROM_BASE)) axi_interconnect(
-		/*AUTOINST*/
-									     // Interfaces
-									     .axi_bus_m0	(axi_bus_m0.master),
-									     .axi_bus_m1	(axi_bus_m1.master),
-									     .axi_bus_s0	(axi_bus_s0.slave),
-									     .axi_bus_s1	(axi_bus_s1.slave),
-									     // Inputs
-									     .clk		(clk),
-									     .reset		(reset));
+		.axi_bus_m0(axi_bus_m0.master),
+		.axi_bus_m1(axi_bus_m1.master),
+		.axi_bus_s0(axi_bus_s0.slave),
+		.axi_bus_s1(axi_bus_s1.slave),
+		.*);
 
 	synchronizer reset_synchronizer(
 		.clk(clk),
@@ -140,21 +123,10 @@ module de2_115_top(
 	// Boot ROM.  Execution starts here. The boot ROM path is relative
 	// to the directory that the synthesis tool is invoked from (this
 	// directory).
-	/* axi_rom AUTO_TEMPLATE(
-		.axi_bus(axi_bus_m1.slave),);
-	*/
 	axi_rom #(.FILENAME("../../../software/bootrom/boot.hex")) boot_rom(
-		/*AUTOINST*/
-									    // Interfaces
-									    .axi_bus		(axi_bus_m1.slave), // Templated
-									    // Inputs
-									    .clk		(clk),
-									    .reset		(reset));
+		.axi_bus(axi_bus_m1.slave),
+		.*);
 
-	/* sdram_controller AUTO_TEMPLATE(
-		.clk(clk),
-		.axi_bus(axi_bus_m0.slave),);
-	*/
 	sdram_controller #(
 			.DATA_WIDTH(32),
 			.ROW_ADDR_WIDTH(13),
@@ -170,29 +142,13 @@ module de2_115_top(
 			.T_RAS_CAS_DELAY(1),      // 21 ns
 			.T_CAS_LATENCY(1)		  // 21 ns (2 cycles)
 		) sdram_controller(
-			/*AUTOINST*/
-				   // Interfaces
-				   .axi_bus		(axi_bus_m0.slave), // Templated
-				   // Outputs
-				   .dram_clk		(dram_clk),
-				   .dram_cke		(dram_cke),
-				   .dram_cs_n		(dram_cs_n),
-				   .dram_ras_n		(dram_ras_n),
-				   .dram_cas_n		(dram_cas_n),
-				   .dram_we_n		(dram_we_n),
-				   .dram_ba		(dram_ba[1:0]),
-				   .dram_addr		(dram_addr[12:0]),
-				   .perf_dram_page_miss	(perf_dram_page_miss),
-				   .perf_dram_page_hit	(perf_dram_page_hit),
-				   // Inouts
-				   .dram_dq		(dram_dq[31:0]),
-				   // Inputs
-				   .clk			(clk),		 // Templated
-				   .reset		(reset));
+			.axi_bus(axi_bus_m0.slave),
+			.*);
 
 	vga_controller #(.BASE_ADDRESS('h110)) vga_controller(
-	      .axi_bus(axi_bus_s1.master),
-		  .*);
+		.io_bus(vga_io_bus),
+		.axi_bus(axi_bus_s1.master),
+		.*);
 
 `ifdef WITH_LOGIC_ANALYZER
 	logic[87:0] capture_data;
@@ -217,18 +173,18 @@ module de2_115_top(
 	end
 `else
 	uart #(.BASE_ADDRESS(24), .CLOCKS_PER_BIT(CLOCK_RATE / UART_BAUD)) uart(
-		.io_read_data(uart_read_data),
+		.io_bus(uart_io_bus),
 		.*);
 `endif
 
 `ifdef BITBANG_SDMMC
 	gpio_controller #(.BASE_ADDRESS('h58), .NUM_PINS(6)) gpio_controller(
-		.io_read_data(gpio_read_data),
+		.io_bus(sdcard_io_bus),
 		.gpio_value({sd_clk, sd_cmd, sd_dat}),
 		.*);
 `else
 	spi_controller #(.BASE_ADDRESS('h44)) spi_controller(
-		.io_read_data(sdcard_read_data),
+		.io_bus(sdcard_io_bus),
 		.spi_clk(sd_clk),
 		.spi_cs_n(sd_dat[3]),
 		.spi_miso(sd_dat[0]),
@@ -237,7 +193,7 @@ module de2_115_top(
 `endif
 
 	ps2_controller #(.BASE_ADDRESS('h38)) ps2_controller(
-		.io_read_data(ps2_read_data),
+		.io_bus(ps2_io_bus),
 		.*);
 
 	always_ff @(posedge clk, posedge reset)
@@ -253,32 +209,57 @@ module de2_115_top(
 		end
 		else
 		begin
-			if (io_write_en)
+			if (nyuzi_io_bus.write_en)
 			begin
-				case (io_address)
-					'h00: red_led <= io_write_data[17:0];
-					'h04: green_led <= io_write_data[8:0];
-					'h08: hex0 <= io_write_data[6:0];
-					'h0c: hex1 <= io_write_data[6:0];
-					'h10: hex2 <= io_write_data[6:0];
-					'h14: hex3 <= io_write_data[6:0];
+				case (nyuzi_io_bus.address)
+					'h00: red_led <= nyuzi_io_bus.write_data[17:0];
+					'h04: green_led <= nyuzi_io_bus.write_data[8:0];
+					'h08: hex0 <= nyuzi_io_bus.write_data[6:0];
+					'h0c: hex1 <= nyuzi_io_bus.write_data[6:0];
+					'h10: hex2 <= nyuzi_io_bus.write_data[6:0];
+					'h14: hex3 <= nyuzi_io_bus.write_data[6:0];
 				endcase
 			end
 		end
 	end
 
+	assign uart_io_bus.read_en = nyuzi_io_bus.read_en;
+	assign uart_io_bus.write_en = nyuzi_io_bus.write_en;
+	assign uart_io_bus.write_data = nyuzi_io_bus.write_data;
+	assign uart_io_bus.address = nyuzi_io_bus.address;
+	assign ps2_io_bus.read_en = nyuzi_io_bus.read_en;
+	assign ps2_io_bus.write_en = nyuzi_io_bus.write_en;
+	assign ps2_io_bus.write_data = nyuzi_io_bus.write_data;
+	assign ps2_io_bus.address = nyuzi_io_bus.address;
+	assign sdcard_io_bus.read_en = nyuzi_io_bus.read_en;
+	assign sdcard_io_bus.write_en = nyuzi_io_bus.write_en;
+	assign sdcard_io_bus.write_data = nyuzi_io_bus.write_data;
+	assign sdcard_io_bus.address = nyuzi_io_bus.address;
+	assign vga_io_bus.read_en = nyuzi_io_bus.read_en;
+	assign vga_io_bus.write_en = nyuzi_io_bus.write_en;
+	assign vga_io_bus.write_data = nyuzi_io_bus.write_data;
+	assign vga_io_bus.address = nyuzi_io_bus.address;
+
 	always_ff @(posedge clk)
 	begin
-		case (io_address)
-			'h18, 'h1c: io_read_data <= uart_read_data;
+		case (nyuzi_io_bus.address)
+			'h18, 'h1c: io_read_source <= IO_UART;
 `ifdef BITBANG_SDMMC
-			'h5c: io_read_data <= gpio_read_data;
+			'h5c: io_read_source <= IO_SDCARD;
 `else
-			'h48, 'h4c: io_read_data <= sdcard_read_data;
+			'h48, 'h4c: io_read_source <= IO_SDCARD;
 `endif
+			'h38, 'h3c: io_read_source <= IO_PS2;
+		endcase
+	end
 
-			'h38, 'h3c: io_read_data <= ps2_read_data;
-			default: io_read_data <= 0;
+	always_comb
+	begin
+		case (io_read_source)
+			IO_UART: nyuzi_io_bus.read_data = uart_io_bus.read_data;
+			IO_SDCARD: nyuzi_io_bus.read_data = sdcard_io_bus.read_data;
+			IO_PS2: nyuzi_io_bus.read_data = ps2_io_bus.read_data;
+			default: nyuzi_io_bus.read_data = 0;
 		endcase
 	end
 endmodule
