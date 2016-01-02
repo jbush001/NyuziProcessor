@@ -14,50 +14,47 @@
 # limitations under the License.
 #
 
+                .global setjmp
+                .type setjmp,@function
+setjmp:         # Align s0 to a 64 byte boundary to do vector stores
+                add_i s0, s0, 63
+                move s1, 63
+                xor s1, s1, -1
+                and s0, s0, s1
 
+                # Copy callee-saved registers into structure
+                store_v v26, 0(s0)
+                store_v v27, 64(s0)
+                store_v v28, 128(s0)
+                store_v v29, 192(s0)
+                store_v v30, 256(s0)
+                store_v v31, 320(s0)
+                store_32 s27, 384(s0)
+                store_32 fp, 388(s0)
+                store_32 sp, 392(s0)
+                store_32 ra, 396(s0)    # Will return to this address
+                move s0, 0
+                move pc, ra
 
-				.global setjmp
-				.type setjmp,@function
-setjmp:			# Align s0 to a 64 byte boundary to do vector stores
-				add_i s0, s0, 63
-				move s1, 63
-				xor s1, s1, -1
-				and s0, s0, s1
+                .global longjmp
+                .type longjmp,@function
+longjmp:        # Align s0 to a 64 byte boundary to do vector loads
+                add_i s0, s0, 63
+                move s2, 63
+                xor s2, s2, -1
+                and s0, s0, s2
 
-				# Copy callee-saved registers into structure
-				store_v v26, 0(s0)
-				store_v v27, 64(s0)
-				store_v v28, 128(s0)
-				store_v v29, 192(s0)
-				store_v v30, 256(s0)
-				store_v v31, 320(s0)
-				store_32 s27, 384(s0)
-				store_32 fp, 388(s0)
-				store_32 sp, 392(s0)
-				store_32 ra, 396(s0)	# Will return to this address
-				move s0, 0
-				move pc, ra
-
-
-				.global longjmp
-				.type longjmp,@function
-longjmp:		# Align s0 to a 64 byte boundary to do vector loads
-				add_i s0, s0, 63
-				move s2, 63
-				xor s2, s2, -1
-				and s0, s0, s2
-
-				# Copy callee-saved registers out of structure
-				load_v v26, 0(s0)
-				load_v v27, 64(s0)
-				load_v v28, 128(s0)
-				load_v v29, 192(s0)
-				load_v v30, 256(s0)
-				load_v v31, 320(s0)
-				load_32 s27, 384(s0)
-				load_32 fp, 388(s0)
-				load_32 sp, 392(s0)
-				load_32 s2, 396(s0)	# Get return address
-				move s0, s1		    # Set return value
-				move pc, s2			# Jump back
+                # Copy callee-saved registers out of structure
+                load_v v26, 0(s0)
+                load_v v27, 64(s0)
+                load_v v28, 128(s0)
+                load_v v29, 192(s0)
+                load_v v30, 256(s0)
+                load_v v31, 320(s0)
+                load_32 s27, 384(s0)
+                load_32 fp, 388(s0)
+                load_32 sp, 392(s0)
+                load_32 s2, 396(s0)    # Get return address
+                move s0, s1            # Set return value
+                move pc, s2            # Jump back
 

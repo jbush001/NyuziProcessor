@@ -20,12 +20,12 @@
 # Various memory load/store combinations
 #
 
-        .text
-        .align    4
+           .text
+           .align    4
 
-        .globl    _start
-        .align    4
-        .type    main,@function
+           .globl    _start
+           .align    4
+           .type    main,@function
 _start:    lea s1, testvar1
 
             # Scalar loads (signed and unsigned, all widths and valid alignments)

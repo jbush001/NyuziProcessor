@@ -20,20 +20,20 @@
 # and the shift amount is in s2
 #
 
-					.global __lshrdi3
-					.type __lshrdi3,@function
-__lshrdi3:			bfalse s2, do_nothing   # if shift amount is 0, skip
+                    .global __lshrdi3
+                    .type __lshrdi3,@function
+__lshrdi3:          bfalse s2, do_nothing   # if shift amount is 0, skip
 
                     cmpge_i s3, s2, 32  # Is the shift amount >= 32?
                     btrue s3, greater
 
                     move s3, 32
-					sub_i s3, s3, s2
-					shl s3, s1, s3	# Align bits that will be shifted in
-					shr s0, s0, s2	# Shift upper word
-					shr s1, s1, s2	# Shift lower word
-					or s0, s0, s3	# Fill in top bits in lower word
-					move pc, ra
+                    sub_i s3, s3, s2
+                    shl s3, s1, s3    # Align bits that will be shifted in
+                    shr s0, s0, s2    # Shift upper word
+                    shr s1, s1, s2    # Shift lower word
+                    or s0, s0, s3    # Fill in top bits in lower word
+                    move pc, ra
 
 greater:            sub_i s2, s2, 32    # Figure out how much to shift lower word
                     shr s0, s1, s2      # shift upper word and move into lower
