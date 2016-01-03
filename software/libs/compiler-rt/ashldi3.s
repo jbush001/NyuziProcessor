@@ -14,26 +14,25 @@
 # limitations under the License.
 #
 
-
 #
-# Shift left of a 64 bit integer.  The value to be shifted is in [s1, s0]
-# and the shift amount is in s2
+# Shift left a 64 bit integer. The value to be shifted is in [s1, s0]
+# and the shift amount is s2. The result is left in [s1, s0].
 #
 
                     .global __ashldi3
                     .type __ashldi3,@function
 __ashldi3:          bfalse s2, do_nothing   # if shift amount is 0, skip
 
-                    cmpge_i s3, s2, 32  # Is the shift amount >= 32?
+                    cmpge_i s3, s2, 32      # Is the shift amount >= 32?
                     btrue s3, greater
 
                     # Shift is less than 32 bits
                     move s3, 32
                     sub_i s3, s3, s2
-                    shr s3, s0, s3        # Align bits that will be shifted in
-                    shl s0, s0, s2        # Shift lower word
-                    or s1, s1, s3        # Fill in bits in upper word
-                    shl s1, s1, s2        # Shift lower word
+                    shr s3, s0, s3      # Align bits that will be shifted in
+                    shl s0, s0, s2      # Shift lower word
+                    or s1, s1, s3       # Fill in bits in upper word
+                    shl s1, s1, s2      # Shift lower word
                     move pc, ra
 
                     # Shift is greater than 32

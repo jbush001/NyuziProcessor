@@ -14,8 +14,6 @@
 # limitations under the License.
 #
 
-
-
 # s0 - dest
 # s1 - src
 # s2 - count
@@ -34,8 +32,8 @@ memcpy:             	move s6, s0                # Save source pointer, which we 
                         # ...Falls through, we can do vector copies
 
                     	# There may be leading bytes before alignment.  Copy up to that.
-copy_vector_lead_in: 	and s4, s0, 63            # Aligned yet?
-                    	bfalse s4, copy_vector     # Yes, time to do big copies
+copy_vector_lead_in: 	and s4, s0, 63          # Aligned yet?
+                    	bfalse s4, copy_vector  # Yes, time to do big copies
                     	bfalse s2, copy_done    # Bail if we are done.
                     	load_u8 s4, (s1)
                     	store_8 s4, (s0)
@@ -45,8 +43,8 @@ copy_vector_lead_in: 	and s4, s0, 63            # Aligned yet?
                     	goto copy_vector_lead_in
 
                     	# Copy entire vectors at a time
-copy_vector:        	cmplt_u s4, s2, 64            # 64 or more bytes left?
-                    	btrue s4, copy_words        # No, attempt to copy words
+copy_vector:        	cmplt_u s4, s2, 64      # 64 or more bytes left?
+                    	btrue s4, copy_words    # No, attempt to copy words
                     	load_v v0, (s1)
                     	store_v v0, (s0)
                     	add_i s0, s0, 64
@@ -61,8 +59,8 @@ copy_word_check:    	and s3, s0, 3
                     	cmpeq_i s5, s3, s4
                     	bfalse s5, copy_remain_bytes    # Not aligned, need to do it the slow way
 
-copy_word_lead_in:    	and s4, s0, 3            # Aligned yet?
-                    	bfalse s4, copy_words    # If yes, start copying
+copy_word_lead_in:    	and s4, s0, 3           # Aligned yet?
+                    	bfalse s4, copy_words   # If yes, start copying
                     	bfalse s2, copy_done    # Bail if we are done
                     	load_u8 s4, (s1)
                     	store_8 s4, (s0)
@@ -71,8 +69,8 @@ copy_word_lead_in:    	and s4, s0, 3            # Aligned yet?
                     	sub_i s2, s2, 1
                     	goto copy_word_lead_in
 
-copy_words:            	cmplt_u s4, s2, 4            # 4 or more bytes left?
-                    	btrue s4, copy_remain_bytes    # If not, copy tail
+copy_words:            	cmplt_u s4, s2, 4           # 4 or more bytes left?
+                    	btrue s4, copy_remain_bytes # If not, copy tail
                     	load_32 s4, (s1)
                     	store_32 s4, (s0)
                     	add_i s0, s0, 4

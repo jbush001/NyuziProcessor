@@ -58,8 +58,8 @@ void srand(unsigned int seed)
     randseed = seed;
 }
 
-void* bsearch (const void *searchKey, const void *base, size_t num,
-               size_t size, int (*compare)(const void*,const void*))
+void* bsearch(const void *searchKey, const void *base, size_t num,
+              size_t size, int (*compare)(const void*,const void*))
 {
     int low = 0;
     int high = num;

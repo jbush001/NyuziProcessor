@@ -28,4 +28,3 @@ int memcmp(const void *_str1, const void *_str2, unsigned int len)
 
     return 0;
 }
-

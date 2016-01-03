@@ -122,7 +122,6 @@ void *memchr(const void *_s, int c, size_t n)
     return 0;
 }
 
-
 char *strcat(char *c, const char *s)
 {
     char *ret = c;
@@ -151,4 +150,3 @@ int toupper(int val)
 
     return val;
 }
-

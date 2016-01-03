@@ -39,5 +39,3 @@ unsigned int __udivsi3(unsigned int dividend, unsigned int divisor)
 
     return quotient;
 }
-
-
