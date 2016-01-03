@@ -77,9 +77,9 @@ module de2_115_top(
 
     /*AUTOLOGIC*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
-    logic        perf_dram_page_hit;    // From sdram_controller of sdram_controller.v
-    logic        perf_dram_page_miss;    // From sdram_controller of sdram_controller.v
-    logic        processor_halt;        // From nyuzi of nyuzi.v
+    logic               perf_dram_page_hit;     // From sdram_controller of sdram_controller.v
+    logic               perf_dram_page_miss;    // From sdram_controller of sdram_controller.v
+    logic               processor_halt;         // From nyuzi of nyuzi.v
     // End of automatics
 
     axi4_interface axi_bus_m0();

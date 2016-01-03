@@ -55,9 +55,9 @@ module nyuzi
 
     /*AUTOLOGIC*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
-    logic        ia_ready [`NUM_CORES];    // From io_arbiter of io_arbiter.v
-    logic [`TOTAL_THREADS-1:0] ic_thread_en;// From interrupt_controller of interrupt_controller.v
-    logic        l2_ready [`NUM_CORES];    // From l2_cache of l2_cache.v
+    logic               ia_ready [`NUM_CORES];  // From io_arbiter of io_arbiter.v
+    logic [`TOTAL_THREADS-1:0] ic_thread_en;    // From interrupt_controller of interrupt_controller.v
+    logic               l2_ready [`NUM_CORES];  // From l2_cache of l2_cache.v
     // End of automatics
 
     initial

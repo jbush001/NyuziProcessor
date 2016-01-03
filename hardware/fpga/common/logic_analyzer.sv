@@ -58,7 +58,7 @@ module logic_analyzer
 
     /*AUTOLOGIC*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
-    logic        tx_ready;        // From uart_transmit of uart_transmit.v
+    logic               tx_ready;               // From uart_transmit of uart_transmit.v
     // End of automatics
 
     sram_1r1w #(.DATA_WIDTH(CAPTURE_WIDTH_BITS), .SIZE(CAPTURE_SIZE)) capture_mem(

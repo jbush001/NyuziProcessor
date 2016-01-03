@@ -38,12 +38,15 @@ fpgalint:
 core/srams.inc: $(TARGET)
 	$(TARGET) +dumpmems | ../tools/misc/extract_mems.py > core/srams.inc
 
+NO_TABS=--eval "(setq-default indent-tabs-mode nil)"
+VMODE_AUTO=-f verilog-batch-auto -f save-buffer
+
 # Expands AUTOWIRE/AUTOINST/etc. Requires emacs and verilog-mode module installed.
 autos:
-	emacs --batch core/*.sv -f verilog-batch-auto -f save-buffer
-	emacs --batch testbench/*.sv  -f verilog-batch-auto -f save-buffer
-	emacs --batch fpga/common/*.sv  -f verilog-batch-auto -f save-buffer
-	emacs --batch fpga/de2-115/*.sv  -f verilog-batch-auto -f save-buffer
+	emacs $(NO_TABS) --batch core/*.sv $(VMODE_AUTO)
+	emacs $(NO_TABS) --batch testbench/*.sv $(VMODE_AUTO)
+	emacs $(NO_TABS) --batch fpga/common/*.sv $(VMODE_AUTO)
+	emacs $(NO_TABS) --batch fpga/de2-115/*.sv $(VMODE_AUTO)
 
 test_verilator_version:
 	@if [ $$(verilator --version | cut -f2 -d ' ' | cut -f2 -d .) -lt  $(MIN_VERILATOR_VERSION) ]; \
