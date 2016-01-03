@@ -25,9 +25,7 @@ module performance_counters
 
     (input                           clk,
     input                            reset,
-
     input[NUM_EVENTS - 1:0]          perf_events,
-
     io_bus_interface.slave           io_bus);
 
     localparam NUM_COUNTERS = 4;

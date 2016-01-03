@@ -32,33 +32,33 @@ module sdram_controller
     // These are expressed in numbers of clocks. Each one is the number
     // of clocks of delay minus one. Compute this by dividing timing
     // specification for the part by the clock interval.
-    parameter                              T_POWERUP = 10000,
-    parameter                              T_ROW_PRECHARGE = 1,
-    parameter                              T_AUTO_REFRESH_CYCLE = 3,
-    parameter                              T_RAS_CAS_DELAY = 1,
-    parameter                              T_REFRESH = 750,
-    parameter                              T_CAS_LATENCY = 1)
+    parameter T_POWERUP = 10000,
+    parameter T_ROW_PRECHARGE = 1,
+    parameter T_AUTO_REFRESH_CYCLE = 3,
+    parameter T_RAS_CAS_DELAY = 1,
+    parameter T_REFRESH = 750,
+    parameter T_CAS_LATENCY = 1)
 
     (input                                  clk,
-    input                                  reset,
+    input                                   reset,
 
     // Interface to SDRAM
     output                                  dram_clk,
-    output                                   dram_cke,
-    output                                   dram_cs_n,
-    output                                   dram_ras_n,
-    output                                   dram_cas_n,
-    output                                   dram_we_n,
-    output logic[1:0]                      dram_ba,
-    output logic[12:0]                    dram_addr,
-    inout [DATA_WIDTH - 1:0]              dram_dq,
+    output                                  dram_cke,
+    output                                  dram_cs_n,
+    output                                  dram_ras_n,
+    output                                  dram_cas_n,
+    output                                  dram_we_n,
+    output logic[1:0]                       dram_ba,
+    output logic[12:0]                      dram_addr,
+    inout [DATA_WIDTH - 1:0]                dram_dq,
 
     // Interface to bus
-    axi4_interface.slave                  axi_bus,
+    axi4_interface.slave                    axi_bus,
 
     // Performance counter events
-    output logic                          perf_dram_page_miss,
-    output logic                          perf_dram_page_hit);
+    output logic                            perf_dram_page_miss,
+    output logic                            perf_dram_page_hit);
 
     localparam SDRAM_BURST_LENGTH = 8;
     localparam SDRAM_BURST_IDX_WIDTH = $clog2(SDRAM_BURST_LENGTH);

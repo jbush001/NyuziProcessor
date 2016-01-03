@@ -58,7 +58,7 @@ module fp_execute_stage1(
     output logic[`VECTOR_LANES - 1:0][5:0]         fx1_ftoi_lshift,
 
     // Floating point addition/subtraction
-    output scalar_t[`VECTOR_LANES - 1:0]           fx1_significand_le,    // Larger exponent
+    output scalar_t[`VECTOR_LANES - 1:0]           fx1_significand_le,  // Larger exponent
     output scalar_t[`VECTOR_LANES - 1:0]           fx1_significand_se,  // Smaller exponent
     output logic[`VECTOR_LANES - 1:0][5:0]         fx1_se_align_shift,
     output logic[`VECTOR_LANES - 1:0][7:0]         fx1_add_exponent,

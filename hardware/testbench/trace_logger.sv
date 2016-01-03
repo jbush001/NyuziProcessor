@@ -37,7 +37,7 @@ module trace_logger(
     input                            wb_writeback_is_vector,
     input thread_idx_t               wb_writeback_thread_idx,
     input register_idx_t             wb_writeback_reg,
-    input vector_t                     wb_writeback_value,
+    input vector_t                   wb_writeback_value,
     input vector_lane_mask_t         wb_writeback_mask,
     input thread_idx_t               wb_rollback_thread_idx,
     input thread_bitmap_t            wb_interrupt_ack,

@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 
-
 BINDIR=../bin
 TARGET=$(BINDIR)/verilator_model
 MIN_VERILATOR_VERSION=876

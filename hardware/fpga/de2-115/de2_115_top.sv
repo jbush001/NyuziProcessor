@@ -69,12 +69,6 @@ module de2_115_top(
     localparam UART_BAUD = 921600;
     localparam CLOCK_RATE = 50000000;
 
-    // We always access the full word width, so hard code these to active (low)
-    assign dram_dqm = 4'b0000;
-
-    logic fb_base_update_en;
-    logic [31:0] fb_new_base;
-
     /*AUTOLOGIC*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
     logic               perf_dram_page_hit;     // From sdram_controller of sdram_controller.v
@@ -144,6 +138,9 @@ module de2_115_top(
         ) sdram_controller(
             .axi_bus(axi_bus_m0.slave),
             .*);
+
+    // We always access the full word width, so hard code these to active (low)
+    assign dram_dqm = 4'b0000;
 
     vga_controller #(.BASE_ADDRESS('h110)) vga_controller(
         .io_bus(vga_io_bus),

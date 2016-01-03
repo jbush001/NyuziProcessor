@@ -41,60 +41,60 @@ typedef logic[`VECTOR_LANES - 1:0] vector_lane_mask_t;
 
 // Immediate/register arithmetic
 typedef enum logic[5:0] {
-    OP_OR            = 6'b000000,
-    OP_AND            = 6'b000001,
-    OP_XOR            = 6'b000011,
+    OP_OR           = 6'b000000,
+    OP_AND          = 6'b000001,
+    OP_XOR          = 6'b000011,
     OP_ADD_I        = 6'b000101,
     OP_SUB_I        = 6'b000110,
-    OP_MULL_I        = 6'b000111,    // Multiply low
-    OP_MULH_U        = 6'b001000,    // Unsigned multiply high
-    OP_ASHR            = 6'b001001,    // Arithmetic shift right (sign extend)
-    OP_SHR            = 6'b001010,    // Logical shift right (no sign extend)
-    OP_SHL            = 6'b001011,    // Logical shift left
-    OP_CLZ            = 6'b001100,    // Count leading zeroes
-    OP_SHUFFLE        = 6'b001101,
-    OP_CTZ            = 6'b001110,    // Count trailing zeroes
-    OP_MOVE            = 6'b001111,
-    OP_CMPEQ_I        = 6'b010000,
-    OP_CMPNE_I        = 6'b010001,
-    OP_CMPGT_I        = 6'b010010,    // Integer greater (signed)
-    OP_CMPGE_I        = 6'b010011,    // Integer greater or equal (signed)
-    OP_CMPLT_I        = 6'b010100,    // Integer less than (signed)
-    OP_CMPLE_I        = 6'b010101,    // Integer less than or equal (signed)
-    OP_CMPGT_U        = 6'b010110,    // Integer greater than (unsigned)
-    OP_CMPGE_U        = 6'b010111,    // Integer greater or equal (unsigned)
-    OP_CMPLT_U        = 6'b011000,    // Integer less than (unsigned)
-    OP_CMPLE_U        = 6'b011001,    // Integer less than or equal (unsigned)
-    OP_GETLANE        = 6'b011010,    // Getlane
-    OP_FTOI            = 6'b011011,
-    OP_RECIPROCAL    = 6'b011100,    // Reciprocal estimate
+    OP_MULL_I       = 6'b000111,    // Multiply low
+    OP_MULH_U       = 6'b001000,    // Unsigned multiply high
+    OP_ASHR         = 6'b001001,    // Arithmetic shift right (sign extend)
+    OP_SHR          = 6'b001010,    // Logical shift right (no sign extend)
+    OP_SHL          = 6'b001011,    // Logical shift left
+    OP_CLZ          = 6'b001100,    // Count leading zeroes
+    OP_SHUFFLE      = 6'b001101,
+    OP_CTZ          = 6'b001110,    // Count trailing zeroes
+    OP_MOVE         = 6'b001111,
+    OP_CMPEQ_I      = 6'b010000,
+    OP_CMPNE_I      = 6'b010001,
+    OP_CMPGT_I      = 6'b010010,    // Integer greater (signed)
+    OP_CMPGE_I      = 6'b010011,    // Integer greater or equal (signed)
+    OP_CMPLT_I      = 6'b010100,    // Integer less than (signed)
+    OP_CMPLE_I      = 6'b010101,    // Integer less than or equal (signed)
+    OP_CMPGT_U      = 6'b010110,    // Integer greater than (unsigned)
+    OP_CMPGE_U      = 6'b010111,    // Integer greater or equal (unsigned)
+    OP_CMPLT_U      = 6'b011000,    // Integer less than (unsigned)
+    OP_CMPLE_U      = 6'b011001,    // Integer less than or equal (unsigned)
+    OP_GETLANE      = 6'b011010,    // Getlane
+    OP_FTOI         = 6'b011011,
+    OP_RECIPROCAL   = 6'b011100,    // Reciprocal estimate
     OP_SEXT8        = 6'b011101,
-    OP_SEXT16        = 6'b011110,
-    OP_MULH_I        = 6'b011111,    // Signed multiply high
+    OP_SEXT16       = 6'b011110,
+    OP_MULH_I       = 6'b011111,    // Signed multiply high
     OP_ADD_F        = 6'b100000,
     OP_SUB_F        = 6'b100001,
     OP_MUL_F        = 6'b100010,
-    OP_ITOF            = 6'b101010,
-    OP_CMPGT_F        = 6'b101100,    // Floating point greater than
-    OP_CMPLT_F        = 6'b101110,    // Floating point less than
-    OP_CMPGE_F        = 6'b101101,    // Floating point greater or equal
-    OP_CMPLE_F        = 6'b101111,    // Floating point less than or equal
+    OP_ITOF         = 6'b101010,
+    OP_CMPGT_F      = 6'b101100,    // Floating point greater than
+    OP_CMPLT_F      = 6'b101110,    // Floating point less than
+    OP_CMPGE_F      = 6'b101101,    // Floating point greater or equal
+    OP_CMPLE_F      = 6'b101111,    // Floating point less than or equal
     OP_CMPEQ_F      = 6'b110000,    // Floating point equal
     OP_CMPNE_F      = 6'b110001,    // Floating point not-equal
     OP_SYSCALL      = 6'b111111
 } alu_op_t;
 
 typedef enum logic[3:0] {
-    MEM_B             = 4'b0000,        // Byte (8 bit)
-    MEM_BX             = 4'b0001,        // Byte, sign extended
-    MEM_S             = 4'b0010,        // Short (16 bit)
-    MEM_SX            = 4'b0011,        // Short, sign extended
-    MEM_L            = 4'b0100,        // Long (32 bit)
-    MEM_SYNC        = 4'b0101,        // Synchronized
-    MEM_CONTROL_REG    = 4'b0110,        // Control register
-    MEM_BLOCK        = 4'b0111,        // Vector block
-    MEM_BLOCK_M        = 4'b1000,
-    MEM_SCGATH        = 4'b1101,        // Vector scatter/gather
+    MEM_B           = 4'b0000,  // Byte (8 bit)
+    MEM_BX          = 4'b0001,  // Byte, sign extended
+    MEM_S           = 4'b0010,  // Short (16 bit)
+    MEM_SX          = 4'b0011,  // Short, sign extended
+    MEM_L           = 4'b0100,  // Long (32 bit)
+    MEM_SYNC        = 4'b0101,  // Synchronized
+    MEM_CONTROL_REG = 4'b0110,  // Control register
+    MEM_BLOCK       = 4'b0111,  // Vector block
+    MEM_BLOCK_M     = 4'b1000,
+    MEM_SCGATH      = 4'b1101,  // Vector scatter/gather
     MEM_SCGATH_M    = 4'b1110
 } memory_op_t;
 
@@ -110,14 +110,14 @@ typedef enum logic[2:0] {
 } cache_op_t;
 
 typedef enum logic[2:0] {
-    BRANCH_ALL           = 3'b000,
-    BRANCH_ZERO          = 3'b001,
+    BRANCH_ALL              = 3'b000,
+    BRANCH_ZERO             = 3'b001,
     BRANCH_NOT_ZERO         = 3'b010,
-    BRANCH_ALWAYS        = 3'b011,
-    BRANCH_CALL_OFFSET   = 3'b100,
-    BRANCH_NOT_ALL       = 3'b101,
-    BRANCH_CALL_REGISTER = 3'b110,
-    BRANCH_ERET          = 3'b111
+    BRANCH_ALWAYS           = 3'b011,
+    BRANCH_CALL_OFFSET      = 3'b100,
+    BRANCH_NOT_ALL          = 3'b101,
+    BRANCH_CALL_REGISTER    = 3'b110,
+    BRANCH_ERET             = 3'b111
 } branch_type_t;
 
 typedef enum logic [1:0] {
@@ -146,19 +146,19 @@ typedef enum logic [1:0] {
 } pipeline_sel_t;
 
 typedef enum logic [4:0] {
-    CR_THREAD_ID = 5'd0,
-    CR_TRAP_HANDLER = 5'd1,
-    CR_TRAP_PC = 5'd2,
-    CR_TRAP_REASON = 5'd3,
-    CR_FLAGS = 5'd4,
-    CR_TRAP_ADDRESS = 5'd5,
-    CR_CYCLE_COUNT = 5'd6,
+    CR_THREAD_ID        = 5'd0,
+    CR_TRAP_HANDLER     = 5'd1,
+    CR_TRAP_PC          = 5'd2,
+    CR_TRAP_REASON      = 5'd3,
+    CR_FLAGS            = 5'd4,
+    CR_TRAP_ADDRESS     = 5'd5,
+    CR_CYCLE_COUNT      = 5'd6,
     CR_TLB_MISS_HANDLER = 5'd7,
-    CR_SAVED_FLAGS = 5'd8,
-    CR_CURRENT_ASID = 5'd9,
-    CR_SCRATCHPAD0 = 5'd11,
-    CR_SCRATCHPAD1 = 5'd12,
-    CR_SUBCYCLE = 5'd13
+    CR_SAVED_FLAGS      = 5'd8,
+    CR_CURRENT_ASID     = 5'd9,
+    CR_SCRATCHPAD0      = 5'd11,
+    CR_SCRATCHPAD1      = 5'd12,
+    CR_SUBCYCLE         = 5'd13
 } control_register_t;
 
 typedef struct packed {

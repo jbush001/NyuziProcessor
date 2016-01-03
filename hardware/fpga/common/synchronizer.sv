@@ -20,7 +20,7 @@
 
 module synchronizer
     #(parameter WIDTH = 1,
-    parameter      RESET_STATE = 0)
+    parameter RESET_STATE = 0)
 
     (input                      clk,
     input                       reset,
