@@ -18,7 +18,7 @@
 
 //
 // First stage serial bootloader. This is synthesized into ROM in high memory
-// on FPGA. It communicates with a loader program on the host (tools/serialBoot),
+// on FPGA. It communicates with a loader program on the host (tools/serial_boot),
 // which loads a program into memory. Because this is running in ROM, it cannot
 // use global variables.
 //
@@ -82,20 +82,17 @@ int main()
                 unsigned int baseAddress = readSerialLong();
                 unsigned int length = readSerialLong();
 
-                // Compute fletcher checksum of data
-                unsigned int checksuma = 0;
-                unsigned int checksumb = 0;
-
+                // Compute FNV-1a hash
+                unsigned int checksum = 2166136261;
                 for (int i = 0; i < length; i++)
                 {
                     unsigned int ch = readSerialByte();
-                    checksuma += ch;
-                    checksumb += checksuma;
+                    checksum = (checksum ^ ch) * 16777619;
                     ((unsigned char*) baseAddress)[i] = ch;
                 }
 
                 writeSerialByte(LOAD_MEMORY_ACK);
-                writeSerialLong((checksuma & 0xffff) | ((checksumb & 0xffff) << 16));
+                writeSerialLong(checksum);
                 break;
             }
 

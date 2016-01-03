@@ -151,8 +151,6 @@ int fillMemory(int serialFd, unsigned int address, const unsigned char *buffer, 
 {
     unsigned int targetChecksum;
     unsigned int localChecksum;
-    unsigned int cksuma;
-    unsigned int cksumb;
     unsigned char ch;
     unsigned int i;
 
@@ -164,10 +162,6 @@ int fillMemory(int serialFd, unsigned int address, const unsigned char *buffer, 
 
     if (!writeSerialLong(serialFd, length))
         return 0;
-
-    localChecksum = 0;
-    cksuma = 0;
-    cksumb = 0;
 
     if (write(serialFd, buffer, length) != length)
     {
@@ -182,13 +176,10 @@ int fillMemory(int serialFd, unsigned int address, const unsigned char *buffer, 
         return 0;
     }
 
+    // Compute FNV-1a hash
+    localChecksum = 2166136261;
     for (i = 0; i < length; i++)
-    {
-        cksuma += buffer[i];
-        cksumb += cksuma;
-    }
-
-    localChecksum = (cksuma & 0xffff) | ((cksumb & 0xffff) << 16);
+        localChecksum = (localChecksum ^ buffer[i]) * 16777619;
 
     if (!readSerialLong(serialFd, &targetChecksum, 5000))
     {
