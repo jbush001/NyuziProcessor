@@ -37,10 +37,8 @@ module verilator_tb(
     int interrupt_counter;
     scalar_t spi_read_data;
     scalar_t ps2_read_data;
-    axi4_interface axi_bus_m0();
-    axi4_interface axi_bus_m1();
-    axi4_interface axi_bus_s0();
-    axi4_interface axi_bus_s1();
+    axi4_interface axi_bus_m[1:0]();
+    axi4_interface axi_bus_s[1:0]();
     scalar_t loopback_uart_read_data;
     logic loopback_uart_tx;
     logic loopback_uart_rx;
@@ -98,27 +96,25 @@ module verilator_tb(
     localparam RESET_PC = 32'hfffee000;
 
     axi_rom #(.FILENAME("../software/bootrom/boot.hex")) boot_rom(
-        .axi_bus(axi_bus_m1.slave),
+        .axi_bus(axi_bus_m[1]),
         .clk(clk),
         .reset(reset));
 `else
     localparam RESET_PC = 32'h00000000;
 
-    assign axi_bus_m1.s_wready = 0;
-    assign axi_bus_m1.s_arready = 0;
-    assign axi_bus_m1.s_rvalid = 0;
+    assign axi_bus_m[1].s_wready = 0;
+    assign axi_bus_m[1].s_arready = 0;
+    assign axi_bus_m[1].s_rvalid = 0;
 `endif
 
     nyuzi #(.RESET_PC(RESET_PC)) nyuzi(
-        .axi_bus(axi_bus_s0.master),
+        .axi_bus(axi_bus_s[0]),
         .io_bus(nyuzi_io_bus),
         .*);
 
     axi_interconnect axi_interconnect(
-        .axi_bus_m0(axi_bus_m0.master),
-        .axi_bus_m1(axi_bus_m1.master),
-        .axi_bus_s0(axi_bus_s0.slave),
-        .axi_bus_s1(axi_bus_s1.slave),
+        .axi_bus_m(axi_bus_m),
+        .axi_bus_s(axi_bus_s),
         .clk(clk),
         .reset(reset));
 
@@ -136,7 +132,7 @@ module verilator_tb(
         .COL_ADDR_WIDTH(SDRAM_COL_ADDR_WIDTH),
         .T_REFRESH(750),
         .T_POWERUP(5)) sdram_controller(
-            .axi_bus(axi_bus_m0.slave),
+            .axi_bus(axi_bus_m[0]),
             .*);
 
     sim_sdram #(
@@ -153,11 +149,11 @@ module verilator_tb(
         .*);
 
     // The s1 interface is not connected to anything in this configuration.
-    assign axi_bus_s1.m_awvalid = 0;
-    assign axi_bus_s1.m_wvalid = 0;
-    assign axi_bus_s1.m_arvalid = 0;
-    assign axi_bus_s1.m_rready = 0;
-    assign axi_bus_s1.m_bready = 0;
+    assign axi_bus_s[1].m_awvalid = 0;
+    assign axi_bus_s[1].m_wvalid = 0;
+    assign axi_bus_s[1].m_arvalid = 0;
+    assign axi_bus_s[1].m_rready = 0;
+    assign axi_bus_s[1].m_bready = 0;
 
     sim_sdmmc sim_sdmmc(.*);
 
@@ -183,7 +179,7 @@ module verilator_tb(
     // - Look the resulting waveform in GtkWave to check that the timings are correct.
     vga_controller #(.BASE_ADDRESS('h110)) vga_controller(
         .io_bus(vga_io_bus),
-        .axi_bus(axi_bus_s1.master),
+        .axi_bus(axi_bus_s[1]),
         .*);
 `endif
 

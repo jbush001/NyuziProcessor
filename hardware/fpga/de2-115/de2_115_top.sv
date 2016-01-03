@@ -76,10 +76,8 @@ module de2_115_top(
     logic               processor_halt;         // From nyuzi of nyuzi.v
     // End of automatics
 
-    axi4_interface axi_bus_m0();
-    axi4_interface axi_bus_m1();
-    axi4_interface axi_bus_s0();
-    axi4_interface axi_bus_s1();
+    axi4_interface axi_bus_m[1:0]();
+    axi4_interface axi_bus_s[1:0]();
     logic reset;
     logic clk;
     io_bus_interface uart_io_bus();
@@ -97,15 +95,13 @@ module de2_115_top(
 
     nyuzi #(.RESET_PC(BOOT_ROM_BASE)) nyuzi(
             .interrupt_req(0),
-            .axi_bus(axi_bus_s0),
+            .axi_bus(axi_bus_s[0]),
             .io_bus(nyuzi_io_bus),
             .*);
 
     axi_interconnect #(.M1_BASE_ADDRESS(BOOT_ROM_BASE)) axi_interconnect(
-        .axi_bus_m0(axi_bus_m0.master),
-        .axi_bus_m1(axi_bus_m1.master),
-        .axi_bus_s0(axi_bus_s0.slave),
-        .axi_bus_s1(axi_bus_s1.slave),
+        .axi_bus_m(axi_bus_m),
+        .axi_bus_s(axi_bus_s),
         .*);
 
     synchronizer reset_synchronizer(
@@ -118,7 +114,7 @@ module de2_115_top(
     // to the directory that the synthesis tool is invoked from (this
     // directory).
     axi_rom #(.FILENAME("../../../software/bootrom/boot.hex")) boot_rom(
-        .axi_bus(axi_bus_m1.slave),
+        .axi_bus(axi_bus_m[1]),
         .*);
 
     sdram_controller #(
@@ -136,7 +132,7 @@ module de2_115_top(
             .T_RAS_CAS_DELAY(1),      // 21 ns
             .T_CAS_LATENCY(1)          // 21 ns (2 cycles)
         ) sdram_controller(
-            .axi_bus(axi_bus_m0.slave),
+            .axi_bus(axi_bus_m[0]),
             .*);
 
     // We always access the full word width, so hard code these to active (low)
@@ -144,7 +140,7 @@ module de2_115_top(
 
     vga_controller #(.BASE_ADDRESS('h110)) vga_controller(
         .io_bus(vga_io_bus),
-        .axi_bus(axi_bus_s1.master),
+        .axi_bus(axi_bus_s[1]),
         .*);
 
 `ifdef WITH_LOGIC_ANALYZER

@@ -16,7 +16,7 @@
 
 BINDIR=../bin
 TARGET=$(BINDIR)/verilator_model
-MIN_VERILATOR_VERSION=876
+MIN_VERILATOR_VERSION=880
 VERILATOR_OPTIONS=--unroll-count 512 --assert -Werror-IMPLICIT -Wwarn-syncasyncnet -Wwarn-blkseq \
 	-Icore -y testbench -y fpga/common -DSIMULATION=1 -Mdir obj
 
