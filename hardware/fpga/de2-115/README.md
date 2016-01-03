@@ -43,19 +43,16 @@ run as root. You can remedy this by creating a file
 
 The build system is command line based and does not use the Quartus GUI.
 
-1. Make sure you've compiled the bootrom, either by typing make at the top
-   level, or in the software/bootrom directory.
+1. Synthesize the design. From this directory:
 
-2. Synthesize the design. From this directory:
+        make synthesize
 
-        make
-
-3. Load the configuration bitstream onto the FPGA.
+2. Load the configuration bitstream onto the FPGA.
 
         make program
 
-4. Press 'key 0' on the lower right hand of the board to reset the processor
-5. Load program into memory and execute it using the runit script as below.
+3. Press 'key 0' on the lower right hand of the board to reset the processor
+4. Load program into memory and execute it using the runit script as below.
 
         cd ../../../tests/fpga/blinky
 		make run
@@ -65,7 +62,7 @@ Other notes:
   onto the FPGA board using the serial_loader program (tools/serial_loader).
 - Reload programs by pressing the reset button (push button 0) and using
   'make fpgarun' again.
-- You do not need to reload the bitstream (step 3) as long as the board is powered
+- You do not need to reload the bitstream (step 2) as long as the board is powered
   (it will be lost if it is turned off, however).
 - The `program` target does not resynthesize the bitstream if source files have changed.
   This must be done explicitly by typing `make synthesize`.
