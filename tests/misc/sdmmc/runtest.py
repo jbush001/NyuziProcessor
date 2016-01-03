@@ -23,14 +23,14 @@ import os
 #
 
 sys.path.insert(0, '../..')
-import test_harness
+from test_harness import *
 
 FILE_SIZE = 8192
 SOURCE_BLOCK_DEV = 'obj/bdevimage.bin'
 EMULATOR_OUTPUT = 'obj/emumem.bin'
 VERILATOR_OUTPUT = 'obj/verimem.bin'
 
-test_harness.compile_test('sdmmc.c')
+compile_test('sdmmc.c')
 
 # Create random file
 with open(SOURCE_BLOCK_DEV, 'wb') as f:
@@ -38,25 +38,25 @@ with open(SOURCE_BLOCK_DEV, 'wb') as f:
 
 
 def test_emulator(name):
-    test_harness.run_emulator(
+    run_emulator(
         block_device=SOURCE_BLOCK_DEV,
         dump_file=EMULATOR_OUTPUT,
         dump_base=0x200000,
         dump_length=FILE_SIZE)
-    test_harness.assert_files_equal(
+    assert_files_equal(
         SOURCE_BLOCK_DEV, EMULATOR_OUTPUT, 'file mismatch')
 
 
 def test_verilator(name):
-    test_harness.run_verilator(
+    run_verilator(
         block_device=SOURCE_BLOCK_DEV,
         dump_file=VERILATOR_OUTPUT,
         dump_base=0x200000,
         dump_length=FILE_SIZE,
         extra_args=['+autoflushl2=1'])
-    test_harness.assert_files_equal(
+    assert_files_equal(
         SOURCE_BLOCK_DEV, VERILATOR_OUTPUT, 'file mismatch')
 
-test_harness.register_tests(test_emulator, ['sdmmc_emulator'])
-test_harness.register_tests(test_verilator, ['sdmmc_verilator'])
-test_harness.execute_tests()
+register_tests(test_emulator, ['sdmmc_emulator'])
+register_tests(test_verilator, ['sdmmc_verilator'])
+execute_tests()

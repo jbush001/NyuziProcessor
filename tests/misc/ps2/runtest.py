@@ -20,15 +20,15 @@ import sys
 # Test PS/2 keyboard peripheral
 
 sys.path.insert(0, '../..')
-import test_harness
+from test_harness import *
 
 
 def ps2_test(name):
-    test_harness.compile_test('ps2.c')
-    result = test_harness.run_verilator()
+    compile_test('ps2.c')
+    result = run_verilator()
     if result.find('PASS') == -1:
-        raise test_harness.TestException(
+        raise TestException(
             'program did not indicate pass\n' + result)
 
-test_harness.register_tests(ps2_test, ['ps2'])
-test_harness.execute_tests()
+register_tests(ps2_test, ['ps2'])
+execute_tests()

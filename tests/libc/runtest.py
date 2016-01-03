@@ -21,15 +21,15 @@ import os
 from os import path
 
 sys.path.insert(0, '..')
-import test_harness
+from test_harness import *
 
 
 def run_emulator_test(source_file):
-    test_harness.compile_test(source_file, optlevel='3')
-    result = test_harness.run_emulator()
-    test_harness.check_result(source_file, result)
+    compile_test(source_file, optlevel='3')
+    result = run_emulator()
+    check_result(source_file, result)
 
-test_list = [fname for fname in test_harness.find_files(
+test_list = [fname for fname in find_files(
     ('.c', '.cpp')) if not fname.startswith('_')]
-test_harness.register_tests(run_emulator_test, test_list)
-test_harness.execute_tests()
+register_tests(run_emulator_test, test_list)
+execute_tests()

@@ -22,21 +22,21 @@ import sys
 import os
 
 sys.path.insert(0, '..')
-import test_harness
+from test_harness import *
 
 
 def emulator_timeout(name):
-    test_harness.compile_test('timeout.c')
-    result = test_harness.run_emulator(timeout=3)
+    compile_test('timeout.c')
+    result = run_emulator(timeout=3)
 
 
 def verilator_timeout(name):
-    test_harness.compile_test('timeout.c')
-    result = test_harness.run_verilator(timeout=3)
+    compile_test('timeout.c')
+    result = run_verilator(timeout=3)
 
-test_harness.register_generic_test('crash')
-test_harness.register_generic_test('check')
-test_harness.register_generic_test('checkn')
-test_harness.register_tests(emulator_timeout, ['timeout_emulator'])
-test_harness.register_tests(verilator_timeout, ['timeout_verilator'])
-test_harness.execute_tests()
+register_generic_test('crash')
+register_generic_test('check')
+register_generic_test('checkn')
+register_tests(emulator_timeout, ['timeout_emulator'])
+register_tests(verilator_timeout, ['timeout_verilator'])
+execute_tests()

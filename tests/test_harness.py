@@ -403,9 +403,11 @@ def execute_tests():
 def check_result(source_file, program_output):
     """Check output of a program based on embedded comments in source code.
 
-    For each pattern in a source file that begins with 'CHECK:', search
+    For each pattern in a source file that begins with 'CHECK: ', search
     to see if the regular expression that follows it occurs in program_output.
     The strings must occur in order, but this ignores anything between them.
+    If there is a pattern 'CHECKN: ', the test will fail if the string *does*
+    occur in the output.
 
     Args:
             source_file: relative path to a source file that contains patterns
@@ -461,7 +463,7 @@ def check_result(source_file, program_output):
     return True
 
 
-def run_generic_test(name):
+def _run_generic_test(name):
     if name.endswith('_emulator'):
         basename = name[0:-len('_emulator')]
         isverilator = False
@@ -479,5 +481,19 @@ def run_generic_test(name):
 
 
 def register_generic_test(name):
-    register_tests(run_generic_test, [name + '_verilator'])
-    register_tests(run_generic_test, [name + '_emulator'])
+    """Allows registering a test without having to create a test handler
+    function. This will compile the passed program, then use
+    check_result to validate it against comment strings embedded in the file.
+    It runs it both in verilator and emulator configurations.
+
+    Args:
+            name: base name of source file (without extension)
+
+    Returns:
+            Nothing
+
+    Raises:
+            Nothing
+    """
+    register_tests(_run_generic_test, [name + '_verilator'])
+    register_tests(_run_generic_test, [name + '_emulator'])

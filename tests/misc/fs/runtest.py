@@ -19,17 +19,17 @@ import sys
 import subprocess
 
 sys.path.insert(0, '../..')
-import test_harness
+from test_harness import *
 
 
 def fs_test(name):
-    test_harness.compile_test('fs.c')
+    compile_test('fs.c')
     subprocess.check_output(
         ['../../../bin/mkfs', 'obj/fsimage.bin', 'test.txt'], stderr=subprocess.STDOUT)
-    result = test_harness.run_emulator(block_device='obj/fsimage.bin')
+    result = run_emulator(block_device='obj/fsimage.bin')
     if result.find('PASS') == -1:
-        raise test_harness.TestException(
+        raise TestException(
             'test program did not indicate pass\n' + result)
 
-test_harness.register_tests(fs_test, ['fs'])
-test_harness.execute_tests()
+register_tests(fs_test, ['fs'])
+execute_tests()

@@ -22,12 +22,12 @@ import struct
 # variables round-robin.
 
 sys.path.insert(0, '../..')
-import test_harness
+from test_harness import *
 
 
 def atomic_test(name):
-    test_harness.compile_test('atomic.c')
-    test_harness.run_verilator(
+    compile_test('atomic.c')
+    run_verilator(
         dump_file='obj/vmem.bin',
         dump_base=0x100000,
         dump_length=0x800,
@@ -41,8 +41,8 @@ def atomic_test(name):
 
             numVal = struct.unpack('<L', val)[0]
             if numVal != 10:
-                raise test_harness.TestException(
+                raise TestException(
                     'FAIL: mismatch: ' + str(numVal))
 
-test_harness.register_tests(atomic_test, ['atomic'])
-test_harness.execute_tests()
+register_tests(atomic_test, ['atomic'])
+execute_tests()

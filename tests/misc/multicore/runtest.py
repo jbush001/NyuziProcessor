@@ -22,15 +22,15 @@ import struct
 # variables round-robin.
 
 sys.path.insert(0, '../..')
-import test_harness
+from test_harness import *
 
 
 def multicore_test(name):
-    test_harness.compile_test('multicore.c')
-    result = test_harness.run_verilator()
+    compile_test('multicore.c')
+    result = run_verilator()
     if result.replace('\n', '').find(
             '012345678910111213141516171819202122232425262728293031') == -1:
-        raise test_harness.TestException('Output mismatch:\n' + result)
+        raise TestException('Output mismatch:\n' + result)
 
-test_harness.register_tests(multicore_test, ['multicore'])
-test_harness.execute_tests()
+register_tests(multicore_test, ['multicore'])
+execute_tests()
