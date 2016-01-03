@@ -140,9 +140,9 @@ class _TestRunner(threading.Thread):
 
         if self.process.poll():
             # Non-zero return code. Probably target program crash.
-            raise TestException('Process returned error: ' + output)
+            raise TestException('Process returned error: ' + output.decode())
 
-        return output
+        return output.decode()
 
     # Watchdog thread kills process if it runs too long
     def run(self):
@@ -374,6 +374,7 @@ def execute_tests():
     failing_tests = []
     for func, param in registered_tests:
         print(param + (' ' * (ALIGN - len(param))), end='')
+        sys.stdout.flush()
         try:
             func(param)
             print('[\x1b[32mPASS\x1b[0m]')
