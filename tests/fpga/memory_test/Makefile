@@ -1,4 +1,3 @@
-#!/bin/sh
 #
 # Copyright 2011-2015 Jeff Bush
 #
@@ -19,9 +18,11 @@ TOPDIR=../../..
 
 include $(TOPDIR)/build/target.mk
 
-fpgarun:
+memory_test.hex:
 	$(AS) -o memory_test.elf memory_test.S
 	$(ELF2HEX) -o memory_test.hex memory_test.elf
+
+fpgarun: memory_test.hex
 	$(SERIAL_BOOT) $(SERIAL_PORT) memory_test.hex
 
 clean:

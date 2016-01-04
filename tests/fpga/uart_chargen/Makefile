@@ -18,8 +18,6 @@ TOPDIR=../../..
 
 include $(TOPDIR)/build/target.mk
 
-CFLAGS=-O3
-
 chargen.hex: chargen.c
 	$(CC) $(CFLAGS) chargen.c -o chargen.elf ../../../software/libs/libc/crt0.o
 	$(ELF2HEX) -o chargen.hex chargen.elf

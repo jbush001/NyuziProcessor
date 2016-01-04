@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 #include <sdmmc.h>
+#include <unistd.h>
 
 //
 // This utility attempts to dump SD card contents using the native
@@ -115,12 +116,6 @@ static void setValue(int gpio, int value)
 static int getValue(int gpio)
 {
     return (REGISTERS[0x5c / 4] >> gpio) & 1;
-}
-
-void usleep(int wait)
-{
-    while (wait--)
-        asm volatile("nop");
 }
 
 static void sdSendByte(int value)

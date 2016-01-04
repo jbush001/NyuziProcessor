@@ -1,4 +1,3 @@
-#!/bin/sh
 #
 # Copyright 2011-2015 Jeff Bush
 #
@@ -19,9 +18,11 @@ TOPDIR=../../..
 
 include $(TOPDIR)/build/target.mk
 
-fpgarun:
+blinky.hex:
 	$(AS) -o blinky.elf blinky.S
 	$(ELF2HEX) -o blinky.hex blinky.elf
+
+fpgarun: blinky.hex
 	$(SERIAL_BOOT) $(SERIAL_PORT) blinky.hex
 
 clean:

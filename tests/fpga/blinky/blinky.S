@@ -27,7 +27,7 @@ _start:         load_32     s0, device_addr # LED Device address
 
 loop0:          store_32    s1, (s0)        # Update LEDs
 
-                # Wait 500 ms
+                # Wait
                 move        s4, s3
 delay0:         sub_i       s4, s4, 1
                 btrue       s4, delay0
@@ -43,4 +43,4 @@ delay0:         sub_i       s4, s4, 1
                 goto        loop0
 
 device_addr:    .long 0xFFFF0000
-delay:          .long 3000000
+delay:          .long 1000000
