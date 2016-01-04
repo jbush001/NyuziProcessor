@@ -60,6 +60,8 @@ module control_registers
     output scalar_t                         cr_trap_handler,
     output scalar_t                         cr_tlb_miss_handler);
 
+    // We support one level of nested traps, so there are two of
+    // each of these trap state arrays.
     scalar_t trap_access_addr[2][`THREADS_PER_CORE];
     trap_reason_t trap_reason[2][`THREADS_PER_CORE];
     scalar_t eret_address[2][`THREADS_PER_CORE];
@@ -77,25 +79,24 @@ module control_registers
     begin
         if (reset)
         begin
-            for (int i = 0; i < `THREADS_PER_CORE; i++)
+            for (int thread_idx = 0; thread_idx < `THREADS_PER_CORE; thread_idx++)
             begin
-                trap_reason[0][i] <= TR_RESET;
-                eret_address[0][i] <= 0;
-                interrupt_en_saved[0][i] <= 0;
-                trap_access_addr[0][i] <= '0;
-                cr_mmu_en[i] <= 0;
-                mmu_en_saved[0][i] <= 0;
-                mmu_en_saved[1][i] <= 0;
-                subcycle_saved[0][i] <= 0;
-                subcycle_saved[1][i] <= 0;
-                cr_supervisor_en[i] <= 1;    // Threads start in supervisor mode
-                supervisor_en_saved[0][i] <= 1;
-                supervisor_en_saved[1][i] <= 1;
-                cr_current_asid[i] <= 0;
-                scratchpad[0][i] <= '0;
-                scratchpad[1][i] <= '0;
-                scratchpad[0][i + `THREADS_PER_CORE] <= '0;
-                scratchpad[1][i + `THREADS_PER_CORE] <= '0;
+                for (int trap_level = 0; trap_level < 2; trap_level++)
+                begin
+                    trap_reason[trap_level][thread_idx] <= TR_RESET;
+                    trap_access_addr[trap_level][thread_idx] <= '0;
+                    subcycle_saved[trap_level][thread_idx] <= '0;
+                    interrupt_en_saved[trap_level][thread_idx] <= 0;
+                    supervisor_en_saved[trap_level][thread_idx] <= 1;
+                    mmu_en_saved[trap_level][thread_idx] <= 0;
+                    eret_address[trap_level][thread_idx] <= '0;
+                    scratchpad[trap_level][thread_idx] <= '0;
+                    scratchpad[trap_level][thread_idx + `THREADS_PER_CORE] <= '0;
+                end
+
+                cr_mmu_en[thread_idx] <= 0;
+                cr_supervisor_en[thread_idx] <= 1;    // Threads start in supervisor mode
+                cr_current_asid[thread_idx] <= '0;
             end
 
             /*AUTORESET*/
