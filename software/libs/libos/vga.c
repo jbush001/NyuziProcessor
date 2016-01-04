@@ -34,7 +34,6 @@
 #define F_HSYNC 4
 #define F_VSYNC 8
 
-static int gVLoopTop;
 static int gCurrentPc;
 static int gSyncFlags;
 
@@ -89,36 +88,38 @@ static void emitScanline(int hfp, int hs, int hbp, int hres, int visible)
 static void compileMicrocode(int hfp, int hs, int hbp, int hpol, int hres,
                              int vfp, int vs, int vbp, int vpol, int vres)
 {
+    int vLoopTop;
     gSyncFlags = (vpol ? 0 : F_VSYNC) | (hpol ? 0 : F_HSYNC);
+    gCurrentPc = 0;
 
     // Must disable sequencer to load new program into it
     REGISTERS[REG_VGA_ENABLE] = 0;
 
     // Vertical front porch
     emitOp(OP_LOAD, VCOUNT, vfp);
-    gVLoopTop = gCurrentPc;
+    vLoopTop = gCurrentPc;
     emitScanline(hfp, hs, hbp, hres, 0);
-    emitOp(OP_LOOP, VCOUNT, gVLoopTop);
+    emitOp(OP_LOOP, VCOUNT, vLoopTop);
 
     // Vertical sync
     gSyncFlags ^= F_VSYNC;
     emitOp(OP_LOAD, VCOUNT, vs);
-    gVLoopTop = gCurrentPc;
+    vLoopTop = gCurrentPc;
     emitScanline(hfp, hs, hbp, hres, 0);
-    emitOp(OP_LOOP, VCOUNT, gVLoopTop);
+    emitOp(OP_LOOP, VCOUNT, vLoopTop);
     gSyncFlags ^= F_VSYNC;
 
     // Vertical back porch
     emitOp(OP_LOAD, VCOUNT, vbp);
-    gVLoopTop = gCurrentPc;
+    vLoopTop = gCurrentPc;
     emitScanline(hfp, hs, hbp, hres, 0);
-    emitOp(OP_LOOP, VCOUNT, gVLoopTop);
+    emitOp(OP_LOOP, VCOUNT, vLoopTop);
 
     // Visible area
     emitOp(OP_LOAD, VCOUNT, vres);
-    gVLoopTop = gCurrentPc;
+    vLoopTop = gCurrentPc;
     emitScanline(hfp, hs, hbp, hres, 1);
-    emitOp(OP_LOOP, VCOUNT, gVLoopTop);
+    emitOp(OP_LOOP, VCOUNT, vLoopTop);
     REGISTERS[REG_VGA_MICROCODE] = gSyncFlags | F_NEW_FRAME;
 
     REGISTERS[REG_VGA_BASE] = 0x200000;
