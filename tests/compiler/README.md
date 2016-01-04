@@ -25,11 +25,8 @@ To run a specific test:
   is valid. Some tests fail in this configuration because they use intrinsics
   that exist only for Nyuzi. TODO: should make this output CHECK comments with
   appropriate strings.
-* The Csmith random generation tool generated The csmith* tests: 
+* The Csmith random generation tool generated The csmith* tests:
   http://embed.cs.utah.edu/csmith/
-* This uses the compiler installed at /usr/local/llvm-nyuzi/. To test a 
-  development compiler, adjust COMPILER_DIR variable in test_harness.py 
+* This uses the compiler installed at /usr/local/llvm-nyuzi/. To test a
+  development compiler, adjust COMPILER_DIR variable in test_harness.py
   in the parent directory.
- 
-
-

@@ -14,6 +14,11 @@
 # limitations under the License.
 #
 
+#
+# This is included by makefiles that compile tools that run on the host
+# machine.
+#
+
 BINDIR=$(TOPDIR)/bin
 OBJ_DIR=obj
 

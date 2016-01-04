@@ -1,5 +1,5 @@
-These tests verify the 3D rendering library (librender) and other 
-subsystems (compiler, emulator, etc). 
+These tests verify the 3D rendering library (librender) and other subsystems
+(compiler, emulator, etc).
 
 # How to run
 
@@ -29,14 +29,14 @@ Unlike the other tests, this target does not generate an output.png image.
 
 ## On FPGA
 
-Follow instructions in hardware/fpga/de2-115 to load bitstream onto FPGA 
+Follow instructions in hardware/fpga/de2-115 to load bitstream onto FPGA
 board.
 1. Load bitstream into FPGA ('make program' in hardware/fpga/de2-115/)
 2. Press key 0 on the lower right hand side of the board to reset it
 3. From the test directory, run:
 
     make fpgarun
-    
+
 Steps 2 & 3 can be repeated
 
 # Profiling
@@ -49,16 +49,16 @@ This requires the c++filt utility, which is part of the binutils package.
 
 # Debugging
 
-The `make debug` target launches the program in lldb. See notes 
-[here](https://github.com/jbush001/NyuziProcessor/blob/master/tools/emulator/README.md) 
+The `make debug` target launches the program in lldb. See notes
+[here](https://github.com/jbush001/NyuziProcessor/blob/master/tools/emulator/README.md)
 for more details.
 
 To produce an assembly listing file, type `make program.lst`
 
 ## Run in single threaded mode
 
-Is is easier to debug is only one hardware thread is running instead of the 
-default 4. This can also rule out race conditions as a cause. To do this, 
+Is is easier to debug is only one hardware thread is running instead of the
+default 4. This can also rule out race conditions as a cause. To do this,
 comment out the following line in main.cpp:
 
     startAllThreads();

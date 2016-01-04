@@ -15,8 +15,10 @@
 //
 
 //
-// Simulates SPI mode SD card. Currently read-only.
-// XXX this is work in progress and is missing many commands
+// Simulates SPI mode SD card. Currently read-only. When the simulator is
+// initialized, it reads the file specified by the argument +block=<filename>
+// into its virtual block device. Size is limited to the value of the
+// MAX_BLOCK_DEVICE_SIZE localparam below.
 //
 
 module sim_sdmmc(

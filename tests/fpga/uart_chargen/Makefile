@@ -24,7 +24,7 @@ chargen.hex: chargen.c
 	$(CC) $(CFLAGS) chargen.c -o chargen.elf ../../../software/libs/libc/crt0.o
 	$(ELF2HEX) -o chargen.hex chargen.elf
 
-run: chargen.hex
+fpgarun: chargen.hex
 	$(SERIAL_BOOT) $(SERIAL_PORT) chargen.hex
 
 run-verilator: chargen.hex

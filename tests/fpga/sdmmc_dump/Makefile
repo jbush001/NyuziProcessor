@@ -29,7 +29,7 @@ sdmmc_dump.hex: $(OBJS) $(DEPS)
 	$(LD) $(OBJS) -o $(OBJ_DIR)/sdmmc_dump.elf $(LIBS) $(LDFLAGS)
 	$(ELF2HEX) -o sdmmc_dump.hex $(OBJ_DIR)/sdmmc_dump.elf
 
-run: sdmmc_dump.hex
+fpgarun: sdmmc_dump.hex
 	$(SERIAL_BOOT) $(SERIAL_PORT) sdmmc_dump.hex
 
 clean: FORCE

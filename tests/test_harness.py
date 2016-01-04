@@ -15,7 +15,8 @@
 #
 
 #
-# Utility functions for unit tests
+# Utility functions for unit tests. This is imported into test runner scripts
+# in subdirectories under this one.
 #
 
 from __future__ import print_function

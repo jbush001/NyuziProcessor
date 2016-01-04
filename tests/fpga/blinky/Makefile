@@ -19,7 +19,7 @@ TOPDIR=../../..
 
 include $(TOPDIR)/build/target.mk
 
-run:
+fpgarun:
 	$(AS) -o blinky.elf blinky.S
 	$(ELF2HEX) -o blinky.hex blinky.elf
 	$(SERIAL_BOOT) $(SERIAL_PORT) blinky.hex

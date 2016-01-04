@@ -16,7 +16,8 @@
 
 
 //
-// Periodically generate ps2 codes.  Doesn't support receiving commands.
+// This simulates a PS/2 keyboard. It periodically generates scancodes. The
+// ps2_controller connects to this to execute tests in simulation.
 //
 
 module sim_ps2(

@@ -24,7 +24,7 @@ sdmmc_dump.hex: sdmmc_dump.c
 	$(CC) $(CFLAGS) sdmmc_dump.c -o sdmmc_dump.elf ../../../software/libs/libc/crt0.o ../../../software/libs/libc/libc.a ../../../software/libs/libos/libos.a
 	$(ELF2HEX) -o sdmmc_dump.hex sdmmc_dump.elf
 
-run: sdmmc_dump.hex
+fpgarun: sdmmc_dump.hex
 	$(SERIAL_BOOT) $(SERIAL_PORT) sdmmc_dump.hex
 
 clean: FORCE

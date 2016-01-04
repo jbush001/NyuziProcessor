@@ -15,7 +15,8 @@
 //
 
 //
-// Simulates SDR SDRAM
+// Simulates single data rate SDRAM. The size of this memory is
+// the num rows * num columns * 4 banks * 4 bytes (bus width)
 //
 
 //`define SDRAM_DEBUG

@@ -1,16 +1,20 @@
-This is a Nyuzi instruction set emulator. It is not cycle accurate, and does not 
+This is a Nyuzi instruction set emulator. It is not cycle accurate, and does not
 simulate the behavior of the pipeline or caches, but is useful for several
 purposes:
 
-- As a reference for co-verification.  When invoked in cosimulation mode 
-(`-m cosim`), it reads instruction side effects from the hardware model 
-via stdin. It steps its own threads and compare the results, flagging 
-an error if they do not match. More details are in tests/cosimulation/README.md 
+- As a reference for co-verification.  When invoked in cosimulation mode
+(`-m cosim`), it reads instruction side effects from the hardware model
+via stdin. It steps its own threads and compare the results, flagging
+an error if they do not match. More details are in tests/cosimulation/README.md
 directory.
-- For development of software.  This allows attaching a symbolic debugger 
+- For development of software.  This allows attaching a symbolic debugger
 (described below).
 - Performance modeling. This can generate memory reference traces and gather
 statistics about instruction execution.
+
+This also simulates hardware peripherals supported by the FPGA and Verilog
+simulator environments (which are all software compatible), such as video
+output and a mass storage device.
 
 ### Command line options:
 
@@ -39,9 +43,9 @@ Other notes:
   hexadecimal format that the Verilog $readmemh task uses) passed on the
   command line. It starts execution at address 0. The elf2hex utility, included
   with the toolchain, produces the hex file from an ELF file.
-- The simulation exits when all threads halt (by writing to the appropriate 
+- The simulation exits when all threads halt (by writing to the appropriate
   control registers)
-- Uncommenting the line `CFLAGS += -DLOG_INSTRUCTIONS=1` in the Makefile 
+- Uncommenting the line `CFLAGS += -DLOG_INSTRUCTIONS=1` in the Makefile
   causes it to dump instruction statistics.
 - See hardware/README.md for list of device registers supported. The emulator doesn't
   support the following devices:
@@ -49,7 +53,7 @@ Other notes:
   * Serial reads
   * VGA frame buffer address/toggle
   * SPI GPIO mode
- 
+
 ### Debugging with LLDB
 
 LLDB is a symbolic debugger built as part of the toolchain. Documentation
@@ -62,32 +66,32 @@ The steps to run the debugger manually are:
 
         emulator -m gdb <program>.hex
 
-2. Start LLDB and attach to emulator. It should be in the directory that you 
+2. Start LLDB and attach to emulator. It should be in the directory that you
   built the program in, so it can find sources.
 
         /usr/local/llvm-nyuzi/bin/lldb --arch nyuzi <program>.elf -o "gdb-remote 8000"
 
 Other notes:
-- This is new and still has bugs and missing functionality.  
+- This is new and still has bugs and missing functionality.
 - Does not support writing memory (or operations that require it)
 - The emulator does not support the debugger in cosimulation mode.
 - Debugging works better if you compile the program with optimizations disabled.
-  For example, at -O3, lldb cannot read variables if they are not live at the 
-  execution point. 
+  For example, at -O3, lldb cannot read variables if they are not live at the
+  execution point.
 - Debugger only currently works with four threads enabled. There are a few hardcoded assumptions
   of four threads in remote-gdb.c.
 - The debugger does not work with virtual memory enabled.
 
 ### Tracing
 
-Another way of debugging is to enable verbose instruction logging. Change the 
+Another way of debugging is to enable verbose instruction logging. Change the
 commandline to add the -v parameter:
 
     bin/emulator -v program.hex
 
-This dumps every memory and register transfer to the console. 
+This dumps every memory and register transfer to the console.
 
-Many test programs have a target to build the list file, but you can create 
+Many test programs have a target to build the list file, but you can create
 one like this:
 
     /usr/local/llvm-nyuzi/bin/llvm-objdump --disassemble program.elf > program.lst 2> /dev/null
@@ -115,8 +119,8 @@ You can correlate the trace...
 
 ### Look up line numbers
 
-You can convert a program address can to a file/line combination with the 
-llvm-symbolizer program. This is not installed by default, but is in the 
+You can convert a program address can to a file/line combination with the
+llvm-symbolizer program. This is not installed by default, but is in the
 build directory for the toolchain:
 
     echo <address> | <path to toolchain source directory>/build/bin/llvm-symbolizer -demangle -obj=<program>.elf

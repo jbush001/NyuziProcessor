@@ -15,10 +15,8 @@
 //
 
 //
-// This program validates the UART and I/O subsystem by writing a continuous
+// This program tests the UART and I/O subsystem by writing a continuous
 // "chargen" (RFC 864) pattern out the serial port.
-// The hardcoded setup for the UART is 115200 baud, 8 data bits, 1 stop bit,
-// no parity.
 //
 
 const char *kPattern = "!#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz";

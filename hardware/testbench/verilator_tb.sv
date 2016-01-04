@@ -17,8 +17,9 @@
 `include "../core/defines.sv"
 
 //
-// Testbench for CPU
+// Top module for running CPU in Verilog simulation under Verilator.
 //
+
 module verilator_tb(
     input       clk,
     input       reset);

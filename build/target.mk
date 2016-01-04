@@ -14,6 +14,11 @@
 # limitations under the License.
 #
 
+#
+# This is included by makefiles that compile programs that run on the Nyuzi
+# architecture, either in the emulator, FPGA, or Verilog simulation.
+#
+
 COMPILER_DIR=/usr/local/llvm-nyuzi/bin
 BINDIR=$(TOPDIR)/bin
 OBJ_DIR=obj

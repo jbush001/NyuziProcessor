@@ -19,7 +19,7 @@ TOPDIR=../../..
 
 include $(TOPDIR)/build/target.mk
 
-run:
+fpgarun:
 	$(AS) -o memory_test.elf memory_test.S
 	$(ELF2HEX) -o memory_test.hex memory_test.elf
 	$(SERIAL_BOOT) $(SERIAL_PORT) memory_test.hex
