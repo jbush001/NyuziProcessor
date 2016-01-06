@@ -141,7 +141,7 @@ static void runUntilInterrupt(Core *core, uint32_t threadId, bool enableFbWindow
 
     FD_ZERO(&readFds);
 
-    while (1)
+    while (true)
     {
         if (!executeInstructions(core, threadId, gScreenRefreshRate))
             break;

@@ -320,7 +320,7 @@ bool stoppedOnFault(const Core *core)
     return core->crashed;
 }
 
-uint32_t executeInstructions(Core *core, uint32_t threadId, uint32_t totalInstructions)
+bool executeInstructions(Core *core, uint32_t threadId, uint32_t totalInstructions)
 {
     uint32_t instructionCount;
     uint32_t thread;
@@ -331,11 +331,11 @@ uint32_t executeInstructions(Core *core, uint32_t threadId, uint32_t totalInstru
         if (core->threadEnableMask == 0)
         {
             printf("Thread enable mask is now zero\n");
-            return 0;
+            return false;
         }
 
         if (core->crashed)
-            return 0;
+            return false;
 
         if (threadId == ALL_THREADS)
         {
@@ -345,18 +345,18 @@ uint32_t executeInstructions(Core *core, uint32_t threadId, uint32_t totalInstru
                 if (core->threadEnableMask & (1 << thread))
                 {
                     if (!executeInstruction(&core->threads[thread]))
-                        return 0;	// Hit breakpoint
+                        return false;  // Hit breakpoint
                 }
             }
         }
         else
         {
             if (!executeInstruction(&core->threads[threadId]))
-                return 0;	// Hit breakpoint
+                return false;  // Hit breakpoint
         }
     }
 
-    return 1;
+    return true;
 }
 
 void singleStep(Core *core, uint32_t threadId)

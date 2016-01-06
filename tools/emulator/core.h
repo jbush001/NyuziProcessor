@@ -42,15 +42,10 @@ uint32_t getTotalThreads(const Core*);
 bool coreHalted(const Core*);
 bool stoppedOnFault(const Core*);
 
-//
-// Returns:
-//  0 - This stopped when it hit a breakpoint
-//  1 - Ran the full number of instructions passed
-//
+// Return false if this hit a breakpoint or crashed
 // threadId of ALL_THREADS means run all threads in a round robin fashion.
 // Otherwise, run just the indicated thread.
-//
-uint32_t executeInstructions(Core*, uint32_t threadId, uint32_t instructions);
+bool executeInstructions(Core*, uint32_t threadId, uint32_t instructions);
 
 void singleStep(Core*, uint32_t threadId);
 uint32_t getPc(const Core*, uint32_t threadId);
