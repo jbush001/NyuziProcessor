@@ -56,33 +56,15 @@ Linux under a virtual machine like [VirtualBox](https://www.virtualbox.org/wiki/
 
 ## Build (Linux & MacOS)
 
-Download and build Verilator as follows (although some Linux package managers have
-it, it is way out of date). From the top level directory of this project:
+The following script will download and install the Nyuzi toolchain and
+[Verilator](http://www.veripool.org/wiki/verilator) Verilog simulator.
+(Although some Linux package managers have Verilator, they are old).
 
-    git clone http://git.veripool.org/git/verilator tools/verilator
-    cd tools/verilator
-    git checkout verilator_3_880
-    autoconf
-    ./configure
-    make
-    sudo make install
-    cd ../..
+    build/setup_tools.sh
 
-Download and build the Nyuzi toolchain as follows (This clones my repo. If you
-want to use your own fork, change the clone URL):
+Build everything else and run unit tests:
 
-    git clone https://github.com/jbush001/NyuziToolchain.git tools/NyuziToolchain
-    cd tools/NyuziToolchain
-    mkdir build
-    cd build
-    cmake ..
-    make
-    sudo make install
-    cd ../../..
-
-Build remaining tools and hardware model. Run unit tests.
-
-    make
+	make
     make test
 
 ## What next?
@@ -99,3 +81,4 @@ For example, this will render a 3D model:
 # Running on FPGA
 
 See instructions in hardware/fpga/de2-115/README.md
+

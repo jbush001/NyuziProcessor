@@ -52,8 +52,8 @@ The build system is command line based and does not use the Quartus GUI.
         make program
 
 3. Press 'key 0' on the lower right hand of the board to reset the processor. LED 0
-   will light up on the board to indicate the bootloader is waiting to receive an
-   image over the serial port.
+   will light up on the board to indicate the bootloader is waiting to receive a
+   program over the serial port.
 
 4. Load program into memory and execute it using the runit script as below.
 
