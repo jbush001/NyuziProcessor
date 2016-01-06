@@ -55,13 +55,13 @@ The build system is command line based and does not use the Quartus GUI.
    will light up on the board to indicate the bootloader is waiting to receive a
    program over the serial port.
 
-4. Load program into memory and execute it using the runit script as below.
+4. Load program into memory and execute it:
 
         cd ../../../tests/fpga/blinky
-		make run
+        make run
 
 Other notes:
-- Many programs with makefiles have a target 'fpgarun' that will load them
+- Most programs with makefiles have a target 'fpgarun' that will load them
   onto the FPGA board using the serial_loader program (tools/serial_loader).
 - Reload programs by pressing the reset button (push button 0) and using
   'make fpgarun' again.

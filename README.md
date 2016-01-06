@@ -58,7 +58,7 @@ Linux under a virtual machine like [VirtualBox](https://www.virtualbox.org/wiki/
 
 The following script will download and install the Nyuzi toolchain and
 [Verilator](http://www.veripool.org/wiki/verilator) Verilog simulator.
-(Although some Linux package managers have Verilator, they are old).
+(Although some Linux package managers have Verilator, they have old versions).
 
     build/setup_tools.sh
 
