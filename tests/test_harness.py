@@ -235,7 +235,7 @@ def run_verilator(block_device=None, dump_file=None, dump_base=None,
     return output
 
 
-def assert_files_equal(file1, file2, error_msg=''):
+def assert_files_equal(file1, file2, error_msg='file mismatch'):
     """Read two files and throw a TestException if they are not the same
 
     Args:
@@ -268,28 +268,25 @@ def assert_files_equal(file1, file2, error_msg=''):
                         # Show the difference
                         exception_text = error_msg + ':\n'
                         rounded_offset = i & ~15
-                        exception_text += '%08x' % (block_offset +
-                                                    rounded_offset),
+                        exception_text += '%08x ' % (block_offset +
+                                                     rounded_offset)
                         for x in range(16):
                             exception_text += '%02x' % ord(
-                                block1[rounded_offset + x]),
+                                block1[rounded_offset + x])
 
-                        exception_text += '\n%08x' % (
-                            block_offset + rounded_offset),
+                        exception_text += '\n%08x ' % (
+                            block_offset + rounded_offset)
                         for x in range(16):
                             exception_text += '%02x' % ord(
-                                block2[rounded_offset + x]),
+                                block2[rounded_offset + x])
 
-                        exception_text += '\n        ',
+                        exception_text += '\n         '
                         for x in range(16):
-                            if block1[
-                                    rounded_offset +
-                                    x] != block2[
-                                    rounded_offset +
-                                    x]:
-                                exception_text += '^^',
+                            if block1[rounded_offset + x] \
+                                != block2[rounded_offset + x]:
+                                exception_text += '^^'
                             else:
-                                exception_text += '  ',
+                                exception_text += '  '
 
                         raise TestException(exception_text)
 

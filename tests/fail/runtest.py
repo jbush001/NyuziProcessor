@@ -34,9 +34,20 @@ def verilator_timeout(name):
     compile_test('timeout.c')
     result = run_verilator(timeout=3)
 
+
+def assemble_error(name):
+    assemble_test('assemble_error.s')
+
+
+def files_not_equal(name):
+    assert_files_equal('compare_file1', 'compare_file2')
+
 register_generic_test('crash')
 register_generic_test('check')
 register_generic_test('checkn')
+register_generic_test('compile_error')
 register_tests(emulator_timeout, ['timeout_emulator'])
+register_tests(assemble_error, ['assemble_error'])
 register_tests(verilator_timeout, ['timeout_verilator'])
+register_tests(files_not_equal, ['files_not_equal'])
 execute_tests()
