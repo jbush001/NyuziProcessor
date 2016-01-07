@@ -112,9 +112,11 @@ def assemble_test(source_file):
 
     try:
         subprocess.check_output(
-            [COMPILER_DIR + 'clang', '-o', ELF_FILE, source_file])
+            [COMPILER_DIR + 'clang', '-o', ELF_FILE, source_file],
+            stderr=subprocess.STDOUT)
         subprocess.check_output(
-            [COMPILER_DIR + 'elf2hex', '-o', HEX_FILE, ELF_FILE])
+            [COMPILER_DIR + 'elf2hex', '-o', HEX_FILE, ELF_FILE],
+            stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as exc:
         raise TestException('Assembly failed:\n' + exc.output)
 
