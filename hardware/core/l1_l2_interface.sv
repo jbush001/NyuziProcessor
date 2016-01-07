@@ -137,15 +137,8 @@ module l1_l2_interface
     l1_miss_entry_idx_t icache_l2_response_idx;
     logic storebuf_l2_response_valid;
     l1_miss_entry_idx_t storebuf_l2_response_idx;
-    thread_bitmap_t sq_wake_bitmap;
     thread_bitmap_t dcache_miss_wake_bitmap;
-    logic sq_dequeue_ready;
     logic sq_dequeue_ack;
-    scalar_t sq_dequeue_addr;
-    l1_miss_entry_idx_t sq_dequeue_idx;
-    logic [`CACHE_LINE_BYTES - 1:0] sq_dequeue_mask;
-    cache_line_data_t sq_dequeue_data;
-    logic sq_dequeue_synchronized;
     logic icache_dequeue_ready;
     logic icache_dequeue_ack;
     logic dcache_dequeue_ready;
@@ -161,11 +154,22 @@ module l1_l2_interface
     l1d_addr_t dcache_addr_stage2;
     l1i_addr_t icache_addr_stage2;
     logic storebuf_l2_sync_success;
-    logic sq_dequeue_flush;
-    logic sq_dequeue_iinvalidate;
-    logic sq_dequeue_dinvalidate;
     logic response_is_iinvalidate;
     logic response_is_dinvalidate;
+
+    /*AUTOLOGIC*/
+    // Beginning of automatic wires (for undeclared instantiated-module outputs)
+    scalar_t            sq_dequeue_addr;        // From l1_store_queue of l1_store_queue.v
+    cache_line_data_t   sq_dequeue_data;        // From l1_store_queue of l1_store_queue.v
+    logic               sq_dequeue_dinvalidate; // From l1_store_queue of l1_store_queue.v
+    logic               sq_dequeue_flush;       // From l1_store_queue of l1_store_queue.v
+    l1_miss_entry_idx_t sq_dequeue_idx;         // From l1_store_queue of l1_store_queue.v
+    logic               sq_dequeue_iinvalidate; // From l1_store_queue of l1_store_queue.v
+    logic [`CACHE_LINE_BYTES-1:0] sq_dequeue_mask;// From l1_store_queue of l1_store_queue.v
+    logic               sq_dequeue_ready;       // From l1_store_queue of l1_store_queue.v
+    logic               sq_dequeue_synchronized;// From l1_store_queue of l1_store_queue.v
+    thread_bitmap_t     sq_wake_bitmap;         // From l1_store_queue of l1_store_queue.v
+    // End of automatics
 
     l1_store_queue l1_store_queue(.*);
 
