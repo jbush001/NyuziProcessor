@@ -56,7 +56,8 @@ Linux under a virtual machine like [VirtualBox](https://www.virtualbox.org/wiki/
 
 ## Build (Linux & MacOS)
 
-The following script will download and install the Nyuzi toolchain and
+The following script will download and install the
+[Nyuzi toolchain](https://github.com/jbush001/NyuziToolchain) and
 [Verilator](http://www.veripool.org/wiki/verilator) Verilog simulator.
 (Although some Linux package managers have Verilator, they have old versions).
 
@@ -64,7 +65,7 @@ The following script will download and install the Nyuzi toolchain and
 
 Build everything else and run unit tests:
 
-	make
+    make
     make test
 
 ## What next?
