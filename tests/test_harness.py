@@ -285,7 +285,7 @@ def assert_files_equal(file1, file2, error_msg='file mismatch'):
                         exception_text += '\n         '
                         for x in range(16):
                             if block1[rounded_offset + x] \
-                                != block2[rounded_offset + x]:
+                                    != block2[rounded_offset + x]:
                                 exception_text += '^^'
                             else:
                                 exception_text += '  '
@@ -339,6 +339,10 @@ def find_files(extensions):
 
     return [fname for fname in os.listdir('.') if fname.endswith(extensions)]
 
+COLOR_RED = '[\x1b[31m'
+COLOR_GREEN = '[\x1b[32m'
+COLOR_NONE = '\x1b[0m]'
+
 
 def execute_tests():
     """Run all tests that have been registered with the register_tests functions
@@ -377,15 +381,15 @@ def execute_tests():
         sys.stdout.flush()
         try:
             func(param)
-            print('[\x1b[32mPASS\x1b[0m]')
+            print(COLOR_GREEN + 'PASS' + COLOR_NONE)
         except KeyboardInterrupt:
             sys.exit(1)
         except TestException as exc:
-            print('[\x1b[31mFAIL\x1b[0m]')
+            print(COLOR_RED + 'FAIL' + COLOR_NONE)
             failing_tests += [(param, exc.output)]
         except Exception as exc:
-            print('[\x1b[31mFAIL\x1b[0m]')
-            failing_tests += [(param, 'Caught exception ' +
+            print(COLOR_RED + 'FAIL' + COLOR_NONE)
+            failing_tests += [(param, 'Test threw exception:\n' +
                                traceback.format_exc())]
 
     if failing_tests:

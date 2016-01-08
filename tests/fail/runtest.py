@@ -42,6 +42,10 @@ def assemble_error(name):
 def files_not_equal(name):
     assert_files_equal('compare_file1', 'compare_file2')
 
+
+def exception(name):
+    raise Exception('some exception')
+
 register_generic_test('crash')
 register_generic_test('check')
 register_generic_test('checkn')
@@ -50,4 +54,5 @@ register_tests(emulator_timeout, ['timeout_emulator'])
 register_tests(assemble_error, ['assemble_error'])
 register_tests(verilator_timeout, ['timeout_verilator'])
 register_tests(files_not_equal, ['files_not_equal'])
+register_tests(exception, ['exception'])
 execute_tests()
