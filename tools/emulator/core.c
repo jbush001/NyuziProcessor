@@ -21,9 +21,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <time.h>
 #include "core.h"
 #include "cosimulation.h"
 #include "device.h"
@@ -51,6 +51,7 @@
 
 typedef struct Thread Thread;
 typedef struct TlbEntry TlbEntry;
+typedef struct Breakpoint Breakpoint;
 
 struct Thread
 {
@@ -89,7 +90,7 @@ struct TlbEntry
 struct Core
 {
     Thread *threads;
-    struct Breakpoint *breakpoints;
+    Breakpoint *breakpoints;
     uint32_t *memory;
     uint32_t memorySize;
     uint32_t totalThreads;
@@ -120,7 +121,7 @@ struct Core
 
 struct Breakpoint
 {
-    struct Breakpoint *next;
+    Breakpoint *next;
     uint32_t address;
     uint32_t originalInstruction;
     bool restart;
@@ -139,7 +140,7 @@ static bool translateAddress(Thread*, uint32_t virtualAddress, uint32_t
                              *physicalAddress, bool data, bool isWrite);
 static uint32_t scalarArithmeticOp(ArithmeticOp, uint32_t value1, uint32_t value2);
 static bool isCompareOp(uint32_t op);
-static struct Breakpoint *lookupBreakpoint(Core*, uint32_t pc);
+static Breakpoint *lookupBreakpoint(Core*, uint32_t pc);
 static void executeRegisterArithInst(Thread*, uint32_t instruction);
 static void executeImmediateArithInst(Thread*, uint32_t instruction);
 static void executeScalarLoadStoreInst(Thread*, uint32_t instruction);
@@ -392,7 +393,7 @@ void debugWriteMemoryByte(const Core *core, uint32_t address, uint8_t byte)
 
 int setBreakpoint(Core *core, uint32_t pc)
 {
-    struct Breakpoint *breakpoint = lookupBreakpoint(core, pc);
+    Breakpoint *breakpoint = lookupBreakpoint(core, pc);
     if (breakpoint != NULL)
     {
         printf("already has a breakpoint at address %x\n", pc);
@@ -405,7 +406,7 @@ int setBreakpoint(Core *core, uint32_t pc)
         return -1;
     }
 
-    breakpoint = (struct Breakpoint*) calloc(sizeof(struct Breakpoint), 1);
+    breakpoint = (Breakpoint*) calloc(sizeof(Breakpoint), 1);
     breakpoint->next = core->breakpoints;
     core->breakpoints = breakpoint;
     breakpoint->address = pc;
@@ -419,7 +420,7 @@ int setBreakpoint(Core *core, uint32_t pc)
 
 int clearBreakpoint(Core *core, uint32_t pc)
 {
-    struct Breakpoint **link;
+    Breakpoint **link;
 
     for (link = &core->breakpoints; *link; link = &(*link)->next)
     {
@@ -809,9 +810,9 @@ static bool isCompareOp(uint32_t op)
     return (op >= OP_CMPEQ_I && op <= OP_CMPLE_U) || (op >= OP_CMPGT_F && op <= OP_CMPNE_F);
 }
 
-static struct Breakpoint *lookupBreakpoint(Core *core, uint32_t pc)
+static Breakpoint *lookupBreakpoint(Core *core, uint32_t pc)
 {
-    struct Breakpoint *breakpoint;
+    Breakpoint *breakpoint;
 
     for (breakpoint = core->breakpoints; breakpoint; breakpoint =
                 breakpoint->next)
@@ -1794,7 +1795,7 @@ restart:
     {
         if (instruction == BREAKPOINT_OP)
         {
-            struct Breakpoint *breakpoint = lookupBreakpoint(thread->core, thread->currentPc - 4);
+            Breakpoint *breakpoint = lookupBreakpoint(thread->core, thread->currentPc - 4);
             if (breakpoint == NULL)
             {
                 thread->currentPc += 4;

@@ -40,14 +40,14 @@ static int *gLastSignals;
 
 static int readByte(void)
 {
-    unsigned char ch;
+    uint8_t ch;
     if (read(gClientSocket, &ch, 1) < 1)
     {
         perror("error reading from debug socket");
         return -1;
     }
 
-    return ch;
+    return (int) ch;
 }
 
 static int readPacket(char *request, int maxLength)
@@ -96,7 +96,7 @@ static const char *kGenericRegs[] = {
 
 static void sendResponsePacket(const char *request)
 {
-    unsigned char checksum;
+    uint8_t checksum;
     char checksumChars[16];
     int i;
     size_t requestLength = strlen(request);
@@ -161,7 +161,7 @@ static void runUntilInterrupt(Core *core, uint32_t threadId, bool enableFbWindow
     }
 }
 
-static unsigned char decodeHexByte(const char *ptr)
+static uint8_t decodeHexByte(const char *ptr)
 {
     int i;
     int retval = 0;
@@ -178,7 +178,7 @@ static unsigned char decodeHexByte(const char *ptr)
             assert(0);	// Bad character
     }
 
-    return (unsigned char) retval;
+    return (uint8_t) retval;
 }
 
 void remoteGdbMainLoop(Core *core, int enableFbWindow)
@@ -298,9 +298,9 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
                 {
                     char *lenPtr;
                     char *dataPtr;
-                    unsigned int start;
-                    unsigned int length;
-                    unsigned int offset;
+                    uint32_t start;
+                    uint32_t length;
+                    uint32_t offset;
 
                     start = (uint32_t) strtoul(request + 1, &lenPtr, 16);
                     length = (uint32_t) strtoul(lenPtr + 1, &dataPtr, 16);

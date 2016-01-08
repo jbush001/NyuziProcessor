@@ -101,9 +101,9 @@ void closeBlockDevice(void)
     close(gBlockFd);
 }
 
-static unsigned int readLittleEndian(const uint8_t *values)
+static uint32_t readLittleEndian(const uint8_t *values)
 {
-    return (unsigned int)((values[0] << 24) | (values[1] << 16) | (values[2] << 8) | values[3]);
+    return (uint32_t)((values[0] << 24) | (values[1] << 16) | (values[2] << 8) | values[3]);
 }
 
 static void processCommand(const uint8_t *command)
@@ -246,7 +246,7 @@ void writeSdCardRegister(uint32_t address, uint32_t value)
     }
 }
 
-unsigned readSdCardRegister(uint32_t address)
+uint32_t readSdCardRegister(uint32_t address)
 {
     switch (address)
     {

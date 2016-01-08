@@ -70,7 +70,7 @@ int runCosimulation(Core *core, bool verbose)
     uint32_t reg;
     uint32_t scalarValue;
     bool verilogModelHalted = false;
-    unsigned long len;
+    size_t len;
 
     enableCosimulation(core);
     if (verbose)
