@@ -23,7 +23,6 @@ git submodule update
 #
 (
 cd tools/verilator
-git checkout -b verilator_3_880
 autoconf
 ./configure
 make
