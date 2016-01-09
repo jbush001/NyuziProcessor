@@ -27,36 +27,30 @@ from test_harness import *
 
 FILE_SIZE = 8192
 SOURCE_BLOCK_DEV = 'obj/bdevimage.bin'
-EMULATOR_OUTPUT = 'obj/emumem.bin'
-VERILATOR_OUTPUT = 'obj/verimem.bin'
+MEMDUMP = 'obj/memory.bin'
 
-compile_test('sdmmc.c')
+def test_read(name):
+    # Create random file
+    with open(SOURCE_BLOCK_DEV, 'wb') as f:
+        f.write(os.urandom(FILE_SIZE))
 
-# Create random file
-with open(SOURCE_BLOCK_DEV, 'wb') as f:
-    f.write(os.urandom(FILE_SIZE))
+    compile_test('sdmmc_read.c')
+    if name.endswith('_emulator'):
+        run_emulator(
+            block_device=SOURCE_BLOCK_DEV,
+            dump_file=MEMDUMP,
+            dump_base=0x200000,
+            dump_length=FILE_SIZE)
+    else:
+        run_verilator(
+            block_device=SOURCE_BLOCK_DEV,
+            dump_file=MEMDUMP,
+            dump_base=0x200000,
+            dump_length=FILE_SIZE,
+            extra_args=['+autoflushl2=1'])
 
-
-def test_emulator(name):
-    run_emulator(
-        block_device=SOURCE_BLOCK_DEV,
-        dump_file=EMULATOR_OUTPUT,
-        dump_base=0x200000,
-        dump_length=FILE_SIZE)
     assert_files_equal(
-        SOURCE_BLOCK_DEV, EMULATOR_OUTPUT, 'file mismatch')
+        SOURCE_BLOCK_DEV, MEMDUMP, 'file mismatch')
 
-
-def test_verilator(name):
-    run_verilator(
-        block_device=SOURCE_BLOCK_DEV,
-        dump_file=VERILATOR_OUTPUT,
-        dump_base=0x200000,
-        dump_length=FILE_SIZE,
-        extra_args=['+autoflushl2=1'])
-    assert_files_equal(
-        SOURCE_BLOCK_DEV, VERILATOR_OUTPUT, 'file mismatch')
-
-register_tests(test_emulator, ['sdmmc_emulator'])
-register_tests(test_verilator, ['sdmmc_verilator'])
+register_tests(test_read, ['sdmmc_read_emulator', 'sdmmc_read_verilator'])
 execute_tests()
