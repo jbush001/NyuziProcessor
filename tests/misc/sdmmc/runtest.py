@@ -26,8 +26,8 @@ sys.path.insert(0, '../..')
 from test_harness import *
 
 FILE_SIZE = 8192
-SOURCE_BLOCK_DEV = 'obj/bdevimage.bin'
-MEMDUMP = 'obj/memory.bin'
+SOURCE_BLOCK_DEV = 'bdevimage.bin'
+MEMDUMP = 'memory.bin'
 
 def test_read(name):
     # Create random file
