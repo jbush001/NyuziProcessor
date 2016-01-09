@@ -1,7 +1,14 @@
 sudo: required
 
+language: c
+
 services:
 - docker
+
+# Don't download the compiler and Verilator (which aren't built here and
+# are large)
+git:
+  submodules: false
 
 # Dockerfile is here: https://github.com/jbush001/NyuziBuildContainer
 before_install:

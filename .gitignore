@@ -1,5 +1,4 @@
 .DS_Store
-*.traceconfig
 *.vcd
 *.pyc
 *.lst
@@ -10,12 +9,11 @@
 *.d
 *.a
 *.bin
-doom1.wad
-pak0.pak
+*.WAD
+*.pak
 statetrace.txt
 a.out
 output.png
-diff.png
 repak
 
 CLASSDIR
@@ -24,8 +22,4 @@ obj/
 hardware/fpga/de2-115/db/
 hardware/fpga/de2-115/incremental_db/
 hardware/fpga/de2-115/output_files/
-
-tools/NyuziToolchain
-tools/verilator
-
 

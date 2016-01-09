@@ -9,10 +9,10 @@ includes an LLVM-based C++ toolchain, tests, and other tools. It is useful
 for microarchitecture experimentation, performance modeling, and parallel
 software development.
 
-**Documentation:** https://github.com/jbush001/NyuziProcessor/wiki    
-**Mailing list:** https://groups.google.com/forum/#!forum/nyuzi-processor-dev   
-**License:** Apache 2.0   
-**Blog:** http://latchup.blogspot.com/   
+**Documentation:** https://github.com/jbush001/NyuziProcessor/wiki<br/>
+**Mailing list:** https://groups.google.com/forum/#!forum/nyuzi-processor-dev<br/>
+**License:** Apache 2.0<br/>
+**Blog:** http://latchup.blogspot.com/<br/>
 
 # Getting Started
 

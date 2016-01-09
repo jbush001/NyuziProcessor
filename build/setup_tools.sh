@@ -15,11 +15,13 @@
 # limitations under the License.
 #
 
+git submodule init
+git submodule update
+
 #
-# Download and build the latest version of Verilator
+# Build Verilator
 #
 (
-git clone http://git.veripool.org/git/verilator tools/verilator
 cd tools/verilator
 git checkout -b verilator_3_880
 autoconf
@@ -29,9 +31,8 @@ sudo make install
 )
 
 #
-# Download and build the compiler
+# Build the compiler toolchain
 #
-git clone https://github.com/jbush001/NyuziToolchain.git tools/NyuziToolchain
 mkdir tools/NyuziToolchain/build
 cd tools/NyuziToolchain/build
 cmake ..

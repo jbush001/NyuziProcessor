@@ -1,0 +1,6 @@
+[submodule "tools/verilator"]
+	path = tools/verilator
+	url = http://git.veripool.org/git/verilator
+[submodule "tools/NyuziToolchain"]
+	path = tools/NyuziToolchain
+	url = https://github.com/jbush001/NyuziToolchain.git
