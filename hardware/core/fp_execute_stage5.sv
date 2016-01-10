@@ -200,27 +200,20 @@ module fp_execute_stage5(
         end
     endgenerate
 
+    always_ff @(posedge clk)
+    begin
+        fx5_instruction <= fx4_instruction;
+        fx5_mask_value <= fx4_mask_value;
+        fx5_thread_idx <= fx4_thread_idx;
+        fx5_subcycle <= fx4_subcycle;
+    end
+
     always_ff @(posedge clk, posedge reset)
     begin
         if (reset)
-        begin
-            /*AUTORESET*/
-            // Beginning of autoreset for uninitialized flops
-            fx5_instruction <= '0;
             fx5_instruction_valid <= '0;
-            fx5_mask_value <= '0;
-            fx5_subcycle <= '0;
-            fx5_thread_idx <= '0;
-            // End of automatics
-        end
         else
-        begin
-            fx5_instruction <= fx4_instruction;
             fx5_instruction_valid <= fx4_instruction_valid;
-            fx5_mask_value <= fx4_mask_value;
-            fx5_thread_idx <= fx4_thread_idx;
-            fx5_subcycle <= fx4_subcycle;
-        end
     end
 endmodule
 

@@ -471,6 +471,16 @@ module dcache_data_stage(
         end
     endgenerate
 
+    always_ff @(posedge clk)
+    begin
+        dd_instruction <= dt_instruction;
+        dd_lane_mask <= dt_mask_value;
+        dd_thread_idx <= dt_thread_idx;
+        dd_request_vaddr <= dt_request_vaddr;
+        dd_subcycle <= dt_subcycle;
+        dd_rollback_pc <= dt_instruction.pc;
+    end
+
     always_ff @(posedge clk, posedge reset)
     begin
         if (reset)
@@ -478,18 +488,12 @@ module dcache_data_stage(
             /*AUTORESET*/
             // Beginning of autoreset for uninitialized flops
             dd_alignment_fault <= '0;
-            dd_instruction <= '0;
             dd_instruction_valid <= '0;
             dd_is_io_address <= '0;
-            dd_lane_mask <= '0;
             dd_privilege_op_fault <= '0;
-            dd_request_vaddr <= '0;
             dd_rollback_en <= '0;
-            dd_rollback_pc <= '0;
-            dd_subcycle <= '0;
             dd_supervisor_fault <= '0;
             dd_suspend_thread <= '0;
-            dd_thread_idx <= '0;
             dd_tlb_miss <= '0;
             dd_write_fault <= '0;
             // End of automatics
@@ -505,12 +509,6 @@ module dcache_data_stage(
                 dd_creg_write_en, dd_creg_read_en}));
 
             dd_instruction_valid <= dt_instruction_valid && !rollback_this_stage;
-            dd_instruction <= dt_instruction;
-            dd_lane_mask <= dt_mask_value;
-            dd_thread_idx <= dt_thread_idx;
-            dd_request_vaddr <= dt_request_vaddr;
-            dd_subcycle <= dt_subcycle;
-            dd_rollback_pc <= dt_instruction.pc;
             dd_is_io_address <= is_io_address;
 
             // Rollback on cache miss

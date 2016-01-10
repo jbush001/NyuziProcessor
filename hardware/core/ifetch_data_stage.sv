@@ -156,6 +156,12 @@ module ifetch_data_stage(
     assign rollback_this_stage = wb_rollback_en && wb_rollback_thread_idx
         == ift_thread_idx;
 
+    always_ff @(posedge clk)
+    begin
+        ifd_pc <= ift_pc_vaddr;
+        ifd_thread_idx <= ift_thread_idx;
+    end
+
     always_ff @(posedge clk, posedge reset)
     begin
         if (reset)
@@ -164,9 +170,7 @@ module ifetch_data_stage(
             // Beginning of autoreset for uninitialized flops
             ifd_alignment_fault <= '0;
             ifd_instruction_valid <= '0;
-            ifd_pc <= '0;
             ifd_supervisor_fault <= '0;
-            ifd_thread_idx <= '0;
             ifd_tlb_miss <= '0;
             // End of automatics
         end
@@ -184,8 +188,6 @@ module ifetch_data_stage(
                 && !cr_supervisor_en[ift_thread_idx];
             ifd_tlb_miss <= ift_instruction_requested && !rollback_this_stage
                 && !ift_tlb_hit;
-            ifd_pc <= ift_pc_vaddr;
-            ifd_thread_idx <= ift_thread_idx;
         end
     end
 endmodule

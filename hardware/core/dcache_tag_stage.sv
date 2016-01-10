@@ -271,31 +271,29 @@ module dcache_tag_stage
         .access_update_way(dd_update_lru_way),
         .*);
 
+    always_ff @(posedge clk)
+    begin
+        dt_instruction <= of_instruction;
+        dt_mask_value <= of_mask_value;
+        dt_thread_idx <= of_thread_idx;
+        dt_store_value <= of_store_value;
+        dt_subcycle <= of_subcycle;
+        fetched_addr <= request_addr_nxt;
+    end
+
     always_ff @(posedge clk, posedge reset)
     begin
         if (reset)
         begin
             /*AUTORESET*/
             // Beginning of autoreset for uninitialized flops
-            dt_instruction <= '0;
             dt_instruction_valid <= '0;
-            dt_mask_value <= '0;
-            dt_store_value <= '0;
-            dt_subcycle <= '0;
-            dt_thread_idx <= '0;
-            fetched_addr <= '0;
             // End of automatics
         end
         else
         begin
             assert($onehot0(l2i_dtag_update_en_oh));
             dt_instruction_valid <= instruction_valid;
-            dt_instruction <= of_instruction;
-            dt_mask_value <= of_mask_value;
-            dt_thread_idx <= of_thread_idx;
-            dt_store_value <= of_store_value;
-            dt_subcycle <= of_subcycle;
-            fetched_addr <= request_addr_nxt;
         end
     end
 

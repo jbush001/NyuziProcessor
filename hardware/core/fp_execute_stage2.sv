@@ -133,27 +133,23 @@ module fp_execute_stage2(
         end
     endgenerate
 
+    always_ff @(posedge clk)
+    begin
+        fx2_instruction <= fx1_instruction;
+        fx2_mask_value <= fx1_mask_value;
+        fx2_thread_idx <= fx1_thread_idx;
+        fx2_subcycle <= fx1_subcycle;
+    end
+
     always_ff @(posedge clk, posedge reset)
     begin
         if (reset)
-        begin
-            /*AUTORESET*/
-            // Beginning of autoreset for uninitialized flops
-            fx2_instruction <= '0;
             fx2_instruction_valid <= '0;
-            fx2_mask_value <= '0;
-            fx2_subcycle <= '0;
-            fx2_thread_idx <= '0;
-            // End of automatics
-        end
         else
         begin
-            fx2_instruction <= fx1_instruction;
-            fx2_instruction_valid <= fx1_instruction_valid && (!wb_rollback_en || wb_rollback_thread_idx != fx1_thread_idx
+            fx2_instruction_valid <= fx1_instruction_valid
+                && (!wb_rollback_en || wb_rollback_thread_idx != fx1_thread_idx
                 || wb_rollback_pipeline != PIPE_MEM);
-            fx2_mask_value <= fx1_mask_value;
-            fx2_thread_idx <= fx1_thread_idx;
-            fx2_subcycle <= fx1_subcycle;
         end
     end
 endmodule

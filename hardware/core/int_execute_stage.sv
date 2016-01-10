@@ -308,33 +308,30 @@ module int_execute_stage(
     assign perf_cond_branch_taken = is_conditional_branch && branch_taken;
     assign perf_cond_branch_not_taken = is_conditional_branch && !branch_taken;
 
+    always_ff @(posedge clk)
+    begin
+        ix_instruction <= of_instruction;
+        ix_result <= vector_result;
+        ix_mask_value <= of_mask_value;
+        ix_thread_idx <= of_thread_idx;
+        ix_subcycle <= of_subcycle;
+    end
+
     always_ff @(posedge clk, posedge reset)
     begin
         if (reset)
         begin
-            ix_instruction <= 0;
-
             /*AUTORESET*/
             // Beginning of autoreset for uninitialized flops
             ix_instruction_valid <= '0;
             ix_is_eret <= '0;
-            ix_mask_value <= '0;
             ix_privileged_op_fault <= '0;
-            ix_result <= '0;
             ix_rollback_en <= '0;
             ix_rollback_pc <= '0;
-            ix_subcycle <= '0;
-            ix_thread_idx <= '0;
             // End of automatics
         end
         else
         begin
-            ix_instruction <= of_instruction;
-            ix_result <= vector_result;
-            ix_mask_value <= of_mask_value;
-            ix_thread_idx <= of_thread_idx;
-            ix_subcycle <= of_subcycle;
-
             if (is_valid_instruction)
             begin
                 ix_instruction_valid <= 1;

@@ -388,25 +388,22 @@ module instruction_decode_stage(
         || alu_op == OP_CMPNE_F);
     assign decoded_instr_nxt.is_compare = is_compare;
 
+    always_ff @(posedge clk)
+    begin
+        id_instruction <= decoded_instr_nxt;
+        id_thread_idx <= ifd_thread_idx;
+    end
+
     always_ff @(posedge clk, posedge reset)
     begin
         if (reset)
-        begin
-            id_instruction <= 0;
-            /*AUTORESET*/
-            // Beginning of autoreset for uninitialized flops
             id_instruction_valid <= '0;
-            id_thread_idx <= '0;
-            // End of automatics
-        end
         else
         begin
             // Piggyback ifetch faults and TLB misses inside instructions, marking
             // the instruction valid if these conditions occur
             id_instruction_valid <= (ifd_instruction_valid || ifd_tlb_miss || ifd_alignment_fault)
                 && (!wb_rollback_en || wb_rollback_thread_idx != ifd_thread_idx);
-            id_instruction <= decoded_instr_nxt;
-            id_thread_idx <= ifd_thread_idx;
         end
     end
 endmodule

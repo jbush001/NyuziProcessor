@@ -127,6 +127,11 @@ module l2_cache_tag_stage(
         end
     endgenerate
 
+    always_ff @(posedge clk)
+    begin
+        l2t_data_from_memory <= l2a_data_from_memory;
+    end
+
     always_ff @(posedge clk, posedge reset)
     begin
         if (reset)
@@ -134,7 +139,6 @@ module l2_cache_tag_stage(
             l2t_request <= 0;
             /*AUTORESET*/
             // Beginning of autoreset for uninitialized flops
-            l2t_data_from_memory <= '0;
             l2t_is_l2_fill <= '0;
             l2t_is_restarted_flush <= '0;
             // End of automatics
@@ -142,7 +146,6 @@ module l2_cache_tag_stage(
         else
         begin
             l2t_request <= l2a_request;
-            l2t_data_from_memory <= l2a_data_from_memory;
             l2t_is_l2_fill <= l2a_is_l2_fill;
             l2t_is_restarted_flush <= l2a_is_restarted_flush;
         end

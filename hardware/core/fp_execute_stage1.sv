@@ -257,27 +257,23 @@ module fp_execute_stage1(
         end
     endgenerate
 
+    always_ff @(posedge clk)
+    begin
+        fx1_instruction <= of_instruction;
+        fx1_mask_value <= of_mask_value;
+        fx1_thread_idx <= of_thread_idx;
+        fx1_subcycle <= of_subcycle;
+    end
+
     always_ff @(posedge clk, posedge reset)
     begin
         if (reset)
-        begin
-            /*AUTORESET*/
-            // Beginning of autoreset for uninitialized flops
-            fx1_instruction <= '0;
             fx1_instruction_valid <= '0;
-            fx1_mask_value <= '0;
-            fx1_subcycle <= '0;
-            fx1_thread_idx <= '0;
-            // End of automatics
-        end
         else
         begin
-            fx1_instruction_valid <= of_instruction_valid && (!wb_rollback_en || wb_rollback_thread_idx != of_thread_idx)
+            fx1_instruction_valid <= of_instruction_valid
+                && (!wb_rollback_en || wb_rollback_thread_idx != of_thread_idx)
                 && of_instruction.pipeline_sel == PIPE_MCYCLE_ARITH;
-            fx1_instruction <= of_instruction;
-            fx1_mask_value <= of_mask_value;
-            fx1_thread_idx <= of_thread_idx;
-            fx1_subcycle <= of_subcycle;
         end
     end
 endmodule

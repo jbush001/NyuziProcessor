@@ -146,6 +146,15 @@ module tlb
         end
     endgenerate
 
+    always_ff @(posedge clk)
+    begin
+        update_ppage_idx_latched <= update_ppage_idx;
+        update_writable_latched <= update_writable;
+        update_supervisor_latched <= update_supervisor;
+        update_global_latched <= update_global;
+        request_asid_latched <= request_asid;
+    end
+
     always_ff @(posedge clk, posedge reset)
     begin
         if (reset)
@@ -153,13 +162,8 @@ module tlb
             /*AUTORESET*/
             // Beginning of autoreset for uninitialized flops
             invalidate_en_latched <= '0;
-            request_asid_latched <= '0;
             request_vpage_idx_latched <= '0;
             update_en_latched <= '0;
-            update_global_latched <= '0;
-            update_ppage_idx_latched <= '0;
-            update_supervisor_latched <= '0;
-            update_writable_latched <= '0;
             // End of automatics
         end
         else
@@ -170,11 +174,6 @@ module tlb
 
             update_en_latched <= update_en;
             invalidate_en_latched <= invalidate_en;
-            update_ppage_idx_latched <= update_ppage_idx;
-            update_writable_latched <= update_writable;
-            update_supervisor_latched <= update_supervisor;
-            update_global_latched <= update_global;
-            request_asid_latched <= request_asid;
         end
     end
 

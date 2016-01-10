@@ -369,11 +369,17 @@ module thread_select_stage(
     assign issue_instr = thread_instr[issue_thread_idx];
     assign perf_instruction_issue = |thread_issue_oh;
 
+    always_ff @(posedge clk)
+    begin
+        ts_instruction <= issue_instr;
+        ts_thread_idx <= issue_thread_idx;
+        ts_subcycle <= current_subcycle[issue_thread_idx];
+    end
+
     always_ff @(posedge clk, posedge reset)
     begin
         if (reset)
         begin
-            ts_instruction <= 0;
             for (int i = 0; i < ROLLBACK_STAGES; i++)
                 rollback_dest[i].valid <= 0;
 
@@ -388,8 +394,6 @@ module thread_select_stage(
             // Beginning of autoreset for uninitialized flops
             thread_blocked <= '0;
             ts_instruction_valid <= '0;
-            ts_subcycle <= '0;
-            ts_thread_idx <= '0;
             writeback_allocate <= '0;
             // End of automatics
         end
@@ -410,10 +414,7 @@ module thread_select_stage(
             // Only one thread should be blocked per cycle
             assert($onehot0(wb_suspend_thread_oh));
 
-            ts_instruction <= issue_instr;
             ts_instruction_valid <= |thread_issue_oh;
-            ts_thread_idx <= issue_thread_idx;
-            ts_subcycle <= current_subcycle[issue_thread_idx];
 
             // The writeback stage asserts the suspend signal a cycle after a dcache
             // miss occurs. It is possible a cache miss is already pending for that
