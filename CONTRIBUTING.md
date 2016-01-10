@@ -5,8 +5,8 @@ software and hardware. Here are some examples of areas to help out, which are
 by no means exhaustive:
 
 1. Hardware - Improve performance, increase clock speed, reduce area, add new
-   instructions or memory mapped fixed function blocks. Synthesize for other
-   FPGAs or ASICs (fix errors, add build scripts and config files)
+   instructions or fixed function blocks. Synthesize for other FPGAs or ASICs
+   (fix errors with other tools, add build scripts and config files)
 2. Verification - Create new tests and test frameworks, improve existing ones.
 3. Compiler - Improve code generation, port other language frontends
    (especially parallel languages).
@@ -51,6 +51,7 @@ To submit a change:
    ```
    git checkout master
    git pull upstream master
+   git submodule update
    ```
 
 2. Make a new topic branch for each submission:
@@ -76,12 +77,17 @@ to create a pull request:
 When a pull request has been accepted, you can sync it to your master branch
 as described in step 1 above.
 
+The compiler is a submodule under the tools directory, but nothing in the project
+directly references anything in that directory, only stuff that has been installed
+in /usr/local/... (using `make install`) To make changes to the compiler, the
+easiest thing to do is probably to fork https://github.com/jbush001/NyuziToolchain
+and clone it into another directory.
+
 # Testing Changes
 
-When adding new features, add tests as necessary to the tests/cosimulation
-directory. A README in that directory describes how. The 'make test' target
-will run most tests and automatically report the results, but here are a few
-other tests to run.
+When adding new features, add tests as necessary to the tests/ directory. The
+'make test' target will run most tests and automatically report the results,
+but here are a few other tests to run manually:
 
 1. Create random cosimulation tests - Randomized tests aren't checked into the
 tree, but it's easy to create a bunch and run them. From tests/cosimulation:
@@ -108,7 +114,7 @@ synthesized design after synthesis:
 
 Ensure the frequence hasn't decreased too much (the design will not work on FPGA
 if it is below 50 MHz), and that the number of logic elements hasn't increased
-substantially.
+disproportionately.
 
 4. For compiler and emulator changes, compile and execute run apps in software/apps.
 

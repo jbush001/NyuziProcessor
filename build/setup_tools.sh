@@ -34,7 +34,7 @@ sudo make install
 #
 mkdir tools/NyuziToolchain/build
 cd tools/NyuziToolchain/build
-cmake ..
+cmake -DCMAKE_BUILD_TYPE=Release ..
 make
 sudo make install
 
