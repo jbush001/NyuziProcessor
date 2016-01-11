@@ -16,11 +16,11 @@
 
 synthesize:
 	make -C ../../../software/bootrom
-	quartus_map fpga_target
-	quartus_fit fpga_target
-	quartus_asm fpga_target
-	quartus_sta fpga_target
+	quartus_map de2_115
+	quartus_fit de2_115
+	quartus_asm de2_115
+	quartus_sta de2_115
 	./print_summary.py
 
 program:
-	quartus_pgm -c USB-Blaster -m jtag -o "P;output_files/fpga_target.sof"
+	quartus_pgm -c USB-Blaster -m jtag -o "P;output_files/de2_115.sof"

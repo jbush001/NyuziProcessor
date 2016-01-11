@@ -27,4 +27,4 @@ DATE = "08:02:29  April 17, 2014"
 
 # Revisions
 
-PROJECT_REVISION = "fpga_target"
+PROJECT_REVISION = "de2_115"

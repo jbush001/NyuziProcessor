@@ -34,7 +34,7 @@ set_global_assignment -name VERILOG_MACRO "VENDOR_ALTERA=1"
 set_global_assignment -name SEARCH_PATH ../../core
 set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
-set_global_assignment -name SDC_FILE fpga_target.sdc
+set_global_assignment -name SDC_FILE de2_115.sdc
 
 # Workaround for synthesis tool crash, solution ID rd11072013_978
 set_global_assignment -name AUTO_RAM_BLOCK_BALANCING OFF

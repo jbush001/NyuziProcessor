@@ -23,7 +23,7 @@ import re
 #
 
 speed_re = re.compile('(?P<speed>[0-9\.]+) MHz')
-with open('output_files/fpga_target.sta.rpt') as f:
+with open('output_files/de2_115.sta.rpt') as f:
     foundSection = False
     for line in f:
         if foundSection:
@@ -35,7 +35,7 @@ with open('output_files/fpga_target.sta.rpt') as f:
             foundSection = True
 
 count_re = re.compile('(?P<num>[0-9,]+)')
-with open('output_files/fpga_target.fit.rpt') as f:
+with open('output_files/de2_115.fit.rpt') as f:
     for line in f:
         if line.find('Total logic elements') != -1:
             got = count_re.search(line)
