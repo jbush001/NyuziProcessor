@@ -146,9 +146,16 @@ module writeback_stage(
     vector_lane_mask_t dd_vector_lane_oh;
     cache_line_data_t bypassed_read_data;
     thread_bitmap_t thread_dd_oh;
-     logic is_last_subcycle_dd;
+    logic is_last_subcycle_dd;
     logic is_last_subcycle_sx;
     logic is_last_subcycle_mx;
+    logic writeback_en_nxt;
+    thread_idx_t writeback_thread_idx_nxt;
+    logic writeback_is_vector_nxt;
+    vector_t writeback_value_nxt;
+    vector_lane_mask_t writeback_mask_nxt;
+    register_idx_t writeback_reg_nxt;
+    logic writeback_is_last_subcycle_nxt;
 
     assign perf_instruction_retire = fx5_instruction_valid || ix_instruction_valid || dd_instruction_valid;
     assign perf_store_rollback = sq_rollback_en;
@@ -369,32 +376,157 @@ module writeback_stage(
         .one_hot(dd_vector_lane_oh),
         .index(dd_subcycle));
 
-     assign is_last_subcycle_dd = dd_subcycle == dd_instruction.last_subcycle;
+    assign is_last_subcycle_dd = dd_subcycle == dd_instruction.last_subcycle;
     assign is_last_subcycle_sx = ix_subcycle == ix_instruction.last_subcycle;
     assign is_last_subcycle_mx = fx5_subcycle == fx5_instruction.last_subcycle;
+
+    always_comb
+    begin
+        writeback_en_nxt = 0;
+        writeback_thread_idx_nxt = 0;
+        writeback_mask_nxt = 0;
+        writeback_is_vector_nxt = 0;
+        writeback_value_nxt = 0;
+        writeback_reg_nxt = 0;
+        writeback_is_last_subcycle_nxt = 0;
+
+        // wb_rollback_en is derived combinatorially from the instruction
+        // that is about to retire, so this doesn't need to check
+        // wb_rollback_thread_idx like other places.
+        case ({fx5_instruction_valid, ix_instruction_valid, dd_instruction_valid})
+            //
+            // floating point pipeline result
+            //
+            3'b100:
+            begin
+                if (fx5_instruction.has_dest && !wb_rollback_en)
+                    writeback_en_nxt = 1;
+
+                writeback_thread_idx_nxt = fx5_thread_idx;
+                writeback_is_vector_nxt = fx5_instruction.dest_is_vector;
+                if (fx5_instruction.is_compare)
+                    writeback_value_nxt = vector_t'(mcycle_vcompare_result);
+                else
+                    writeback_value_nxt = fx5_result;
+
+                writeback_mask_nxt = fx5_mask_value;
+                writeback_reg_nxt = fx5_instruction.dest_reg;
+                writeback_is_last_subcycle_nxt = is_last_subcycle_mx;
+            end
+
+            //
+            // Single cycle pipeline result
+            //
+            3'b010:
+            begin
+                if (ix_instruction.is_branch && (ix_instruction.branch_type == BRANCH_CALL_OFFSET
+                    || ix_instruction.branch_type == BRANCH_CALL_REGISTER))
+                begin
+                    // Call is a special case: it both rolls back and writes back a register (ra)
+                    writeback_en_nxt = 1;
+                end
+                else if (ix_instruction.has_dest && !wb_rollback_en)
+                    writeback_en_nxt = 1;    // This is a normal, non-rolled-back instruction
+
+                writeback_thread_idx_nxt = ix_thread_idx;
+                writeback_is_vector_nxt = ix_instruction.dest_is_vector;
+                if (ix_instruction.is_compare)
+                    writeback_value_nxt = vector_t'(scycle_vcompare_result);
+                else
+                    writeback_value_nxt = ix_result;
+
+                writeback_mask_nxt = ix_mask_value;
+                writeback_reg_nxt = ix_instruction.dest_reg;
+                writeback_is_last_subcycle_nxt = is_last_subcycle_sx;
+            end
+
+            //
+            // Memory pipeline result
+            //
+            3'b001:
+            begin
+                writeback_en_nxt = dd_instruction.has_dest && !wb_rollback_en;
+                writeback_thread_idx_nxt = dd_thread_idx;
+                writeback_is_vector_nxt = dd_instruction.dest_is_vector;
+                writeback_reg_nxt = dd_instruction.dest_reg;
+                writeback_is_last_subcycle_nxt = is_last_subcycle_dd;
+
+                if (!dd_instruction.is_cache_control)
+                begin
+                    if (dd_instruction.is_load)
+                    begin
+                        unique case (memory_op)
+                            MEM_B:  writeback_value_nxt[0] = {24'b0, byte_aligned};
+                            MEM_BX: writeback_value_nxt[0] = {{24{byte_aligned[7]}}, byte_aligned};
+                            MEM_S:  writeback_value_nxt[0] = {16'b0, half_aligned};
+                            MEM_SX: writeback_value_nxt[0] = {{16{half_aligned[15]}}, half_aligned};
+                            MEM_SYNC: writeback_value_nxt[0] = swapped_word_value;
+                            MEM_L:
+                            begin
+                                // Scalar Load
+                                if (dd_is_io_address)
+                                begin
+                                    writeback_value_nxt[0] = ior_read_value;
+                                    writeback_mask_nxt = {`VECTOR_LANES{1'b1}};
+                                end
+                                else
+                                begin
+                                    writeback_value_nxt[0] = swapped_word_value;
+                                    writeback_mask_nxt = {`VECTOR_LANES{1'b1}};
+                                end
+                            end
+
+                            MEM_CONTROL_REG:
+                            begin
+                                writeback_value_nxt[0] = cr_creg_read_val;
+                                writeback_mask_nxt = {`VECTOR_LANES{1'b1}};
+                                assert(!dd_instruction.dest_is_vector);
+                            end
+
+                            MEM_BLOCK,
+                            MEM_BLOCK_M:
+                            begin
+                                writeback_mask_nxt = dd_lane_mask;
+                                writeback_value_nxt = endian_twiddled_data;
+                            end
+
+                            default:
+                            begin
+                                // gather load
+                                // Grab the appropriate lane.
+                                writeback_value_nxt = {`VECTOR_LANES{swapped_word_value}};
+                                writeback_mask_nxt = dd_vector_lane_oh & dd_lane_mask;
+                            end
+                        endcase
+                    end
+                    else if (memory_op == MEM_SYNC)
+                    begin
+                        // Synchronized stores are special because they write back (whether they
+                        // were successful).
+                        writeback_value_nxt[0] = scalar_t'(sq_store_sync_success);
+                    end
+                end
+            end
+
+            default:
+                ;
+        endcase
+    end
+
+    always_ff @(posedge clk)
+    begin
+        wb_writeback_thread_idx <= writeback_thread_idx_nxt;
+        wb_writeback_mask <= writeback_mask_nxt;
+        wb_writeback_is_vector <= writeback_is_vector_nxt;
+        wb_writeback_value <= writeback_value_nxt;
+        wb_writeback_reg <= writeback_reg_nxt;
+        wb_writeback_is_last_subcycle <= writeback_is_last_subcycle_nxt;
+    end
 
     always_ff @(posedge clk, posedge reset)
     begin
         if (reset)
-        begin
-
-`ifdef SIMULATION
-            __debug_wb_pipeline <= PIPE_MEM;
-            __debug_is_sync_store <= '0;
-            __debug_wb_pc <= '0;
-`endif
-
-            /*AUTORESET*/
-            // Beginning of autoreset for uninitialized flops
-            wb_writeback_en <= '0;
-            wb_writeback_is_last_subcycle <= '0;
-            wb_writeback_is_vector <= '0;
-            wb_writeback_mask <= '0;
-            wb_writeback_reg <= '0;
-            wb_writeback_thread_idx <= '0;
-            wb_writeback_value <= '0;
-            // End of automatics
-        end
+            wb_writeback_en <= 0;
         else
         begin
             // Don't cause rollback if there isn't an instruction
@@ -404,161 +536,30 @@ module writeback_stage(
             assert($onehot0({ix_instruction_valid, dd_instruction_valid, fx5_instruction_valid}));
 
 `ifdef SIMULATION
-            // Used by testbench for cosimulation output
-            __debug_is_sync_store <= dd_instruction_valid && !dd_instruction.is_load
-                && memory_op == MEM_SYNC;
-`endif
-            // wb_rollback_en is derived combinatorially from the instruction
-            // that is about to retire, so this doesn't need to check
-            // wb_rollback_thread_idx like other places.
-            case ({fx5_instruction_valid, ix_instruction_valid, dd_instruction_valid})
-                //
-                // floating point pipeline result
-                //
-                3'b100:
+            if (dd_instruction_valid && !dd_instruction.is_cache_control && dd_instruction.is_load)
+            begin
+                // Loads should always have a destination register.
+                assert(dd_instruction.has_dest);
+
+                if (memory_op == MEM_B || memory_op == MEM_BX || memory_op == MEM_S
+                    || memory_op == MEM_SX || memory_op == MEM_SYNC || memory_op == MEM_L
+                    || memory_op == MEM_CONTROL_REG)
                 begin
-                    if (fx5_instruction.has_dest && !wb_rollback_en)
-                        wb_writeback_en <= 1;
-                    else
-                        wb_writeback_en <= 0;
-
-                    wb_writeback_thread_idx <= fx5_thread_idx;
-                    wb_writeback_is_vector <= fx5_instruction.dest_is_vector;
-                    if (fx5_instruction.is_compare)
-                        wb_writeback_value <= vector_t'(mcycle_vcompare_result);
-                    else
-                        wb_writeback_value <= fx5_result;
-
-                    wb_writeback_mask <= fx5_mask_value;
-                    wb_writeback_reg <= fx5_instruction.dest_reg;
-                    wb_writeback_is_last_subcycle <= is_last_subcycle_mx;
-
-`ifdef SIMULATION
-                    // Used by testbench for cosimulation output
-                    __debug_wb_pc <= fx5_instruction.pc;
-                    __debug_wb_pipeline <= PIPE_MCYCLE_ARITH;
-`endif
+                    // Must be scalar destination
+                    assert(!dd_instruction.dest_is_vector);
                 end
-
-                //
-                // Single cycle pipeline result
-                //
-                3'b010:
-                begin
-                    if (ix_instruction.is_branch && (ix_instruction.branch_type == BRANCH_CALL_OFFSET
-                        || ix_instruction.branch_type == BRANCH_CALL_REGISTER))
-                    begin
-                        // Call is a special case: it both rolls back and writes back a register (ra)
-                        wb_writeback_en <= 1;
-                    end
-                    else if (ix_instruction.has_dest && !wb_rollback_en)
-                        wb_writeback_en <= 1;    // This is a normal, non-rolled-back instruction
-                    else
-                        wb_writeback_en <= 0;
-
-                    wb_writeback_thread_idx <= ix_thread_idx;
-                    wb_writeback_is_vector <= ix_instruction.dest_is_vector;
-                    if (ix_instruction.is_compare)
-                        wb_writeback_value <= vector_t'(scycle_vcompare_result);
-                    else
-                        wb_writeback_value <= ix_result;
-
-                    wb_writeback_mask <= ix_mask_value;
-                    wb_writeback_reg <= ix_instruction.dest_reg;
-                    wb_writeback_is_last_subcycle <= is_last_subcycle_sx;
-
-`ifdef SIMULATION
-                    // Used by testbench for cosimulation output
-                    __debug_wb_pc <= ix_instruction.pc;
-                    __debug_wb_pipeline <= PIPE_SCYCLE_ARITH;
+                else
+                    assert(dd_instruction.dest_is_vector);
+            end
+            else if (dd_instruction_valid && memory_op == MEM_SYNC)
+            begin
+                // Synchronized stores are special because they write back (whether they
+                // were successful).
+                assert(dd_instruction.has_dest && !dd_instruction.dest_is_vector);
+            end
 `endif
-                end
 
-                //
-                // Memory pipeline result
-                //
-                3'b001:
-                begin
-                    wb_writeback_en <= dd_instruction.has_dest && !wb_rollback_en;
-                    wb_writeback_thread_idx <= dd_thread_idx;
-                    wb_writeback_is_vector <= dd_instruction.dest_is_vector;
-                    wb_writeback_reg <= dd_instruction.dest_reg;
-                    wb_writeback_is_last_subcycle <= is_last_subcycle_dd;
-
-                    if (!dd_instruction.is_cache_control)
-                    begin
-                        if (dd_instruction.is_load)
-                        begin
-                            // Loads should always have a destination register.
-                            assert(dd_instruction.has_dest);
-
-                            unique case (memory_op)
-                                MEM_B:  wb_writeback_value[0] <= {24'b0, byte_aligned};
-                                MEM_BX: wb_writeback_value[0] <= {{24{byte_aligned[7]}}, byte_aligned};
-                                MEM_S:  wb_writeback_value[0] <= {16'b0, half_aligned};
-                                MEM_SX: wb_writeback_value[0] <= {{16{half_aligned[15]}}, half_aligned};
-                                MEM_SYNC: wb_writeback_value[0] <= swapped_word_value;
-                                MEM_L:
-                                begin
-                                    // Scalar Load
-                                    assert(!dd_instruction.dest_is_vector);
-
-                                    if (dd_is_io_address)
-                                    begin
-                                        wb_writeback_value[0] <= ior_read_value;
-                                        wb_writeback_mask <= {`VECTOR_LANES{1'b1}};
-                                    end
-                                    else
-                                    begin
-                                        wb_writeback_value[0] <= swapped_word_value;
-                                        wb_writeback_mask <= {`VECTOR_LANES{1'b1}};
-                                    end
-                                end
-
-                                MEM_CONTROL_REG:
-                                begin
-                                    wb_writeback_value[0] <= cr_creg_read_val;
-                                    wb_writeback_mask <= {`VECTOR_LANES{1'b1}};
-                                    assert(!dd_instruction.dest_is_vector);
-                                end
-
-                                MEM_BLOCK,
-                                MEM_BLOCK_M:
-                                begin
-                                    // Block load
-                                    wb_writeback_mask <= dd_lane_mask;
-                                    wb_writeback_value <= endian_twiddled_data;
-                                    assert(dd_instruction.dest_is_vector);
-                                end
-
-                                default:
-                                begin
-                                    // gather load
-                                    // Grab the appropriate lane.
-                                    wb_writeback_value <= {`VECTOR_LANES{swapped_word_value}};
-                                    wb_writeback_mask <= dd_vector_lane_oh & dd_lane_mask;
-                                end
-                            endcase
-                        end
-                        else if (dd_instruction.memory_access_type == MEM_SYNC)
-                        begin
-                            // Synchronized stores are special because they write back (whether they
-                            // were successful).
-                            assert(dd_instruction.has_dest && !dd_instruction.dest_is_vector);
-                            wb_writeback_value[0] <= scalar_t'(sq_store_sync_success);
-                        end
-                    end
-
-`ifdef SIMULATION
-                    // Used by testbench for cosimulation output
-                    __debug_wb_pc <= dd_instruction.pc;
-                    __debug_wb_pipeline <= PIPE_MEM;
-`endif
-                end
-
-                3'b000: wb_writeback_en <= 0;
-                default: wb_writeback_en <= 0;
-            endcase
+            wb_writeback_en <= writeback_en_nxt;
         end
     end
 
@@ -571,6 +572,32 @@ module writeback_stage(
                 wb_trap_reason, wb_trap_pc);
             $finish;
         end
+
+        // Used by testbench for cosimulation output
+        __debug_is_sync_store <= dd_instruction_valid && !dd_instruction.is_load
+            && memory_op == MEM_SYNC;
+        case ({fx5_instruction_valid, ix_instruction_valid, dd_instruction_valid})
+            3'b100:
+            begin
+                __debug_wb_pc <= fx5_instruction.pc;
+                __debug_wb_pipeline <= PIPE_MCYCLE_ARITH;
+            end
+
+            3'b010:
+            begin
+                __debug_wb_pc <= ix_instruction.pc;
+                __debug_wb_pipeline <= PIPE_SCYCLE_ARITH;
+            end
+
+            3'b001:
+            begin
+                __debug_wb_pc <= dd_instruction.pc;
+                __debug_wb_pipeline <= PIPE_MEM;
+            end
+
+            default:
+                ;
+        endcase
     end
 `endif
 endmodule
