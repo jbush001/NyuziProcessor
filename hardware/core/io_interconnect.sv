@@ -49,7 +49,7 @@ module io_interconnect(
     generate
         if (`NUM_CORES > 1)
         begin
-            arbiter #(.NUM_REQUESTERS(`NUM_CORES)) arbiter_request(
+            rr_arbiter #(.NUM_REQUESTERS(`NUM_CORES)) request_arbiter(
                 .request(arb_request),
                 .update_lru(1'b1),
                 .grant_oh(grant_oh),
