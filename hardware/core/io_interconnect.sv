@@ -21,12 +21,12 @@
 // IO interface. Sends responses back to cores.
 //
 
-module io_arbiter(
+module io_interconnect(
     input                            clk,
     input                            reset,
     input ioreq_packet_t             io_request[`NUM_CORES],
-    output logic                     ia_ready[`NUM_CORES],
-    output iorsp_packet_t            ia_response,
+    output logic                     ii_ready[`NUM_CORES],
+    output iorsp_packet_t            ii_response,
     io_bus_interface.master          io_bus);
 
     logic[`NUM_CORES - 1:0] arb_request;
@@ -42,7 +42,7 @@ module io_arbiter(
         for (request_idx = 0; request_idx < `NUM_CORES; request_idx++)
         begin : handshake_gen
             assign arb_request[request_idx] = io_request[request_idx].valid;
-            assign ia_ready[request_idx] = grant_oh[request_idx];
+            assign ii_ready[request_idx] = grant_oh[request_idx];
         end
     endgenerate
 
@@ -78,14 +78,14 @@ module io_arbiter(
     begin
         if (reset)
         begin
-            ia_response <= '0;
+            ii_response <= '0;
 
             `ifdef NEVER
             // Suppress AUTORESET
-            ia_response.core <= '0;
-            ia_response.read_value <= '0;
-            ia_response.thread_idx <= '0;
-            ia_response.valid <= '0;
+            ii_response.core <= '0;
+            ii_response.read_value <= '0;
+            ii_response.thread_idx <= '0;
+            ii_response.valid <= '0;
             `endif
 
             /*AUTORESET*/
@@ -110,13 +110,13 @@ module io_arbiter(
             if (request_sent)
             begin
                 // Next cycle after request, record response
-                ia_response.valid <= 1;
-                ia_response.core <= request_core;
-                ia_response.thread_idx <= request_thread_idx;
-                ia_response.read_value <= io_bus.read_data;
+                ii_response.valid <= 1;
+                ii_response.core <= request_core;
+                ii_response.thread_idx <= request_thread_idx;
+                ii_response.read_value <= io_bus.read_data;
             end
             else
-                ia_response.valid <= 0;
+                ii_response.valid <= 0;
         end
     end
 endmodule

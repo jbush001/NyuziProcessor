@@ -24,7 +24,7 @@
 // have had a turn.
 //
 
-module arbiter
+module rr_arbiter
     #(parameter NUM_REQUESTERS = 4)
 
     (input                              clk,

@@ -68,7 +68,7 @@ module l2_cache_arb_stage(
         begin
             core_id_t grant_idx;
 
-            arbiter #(.NUM_REQUESTERS(`NUM_CORES)) arbiter_request(
+            rr_arbiter #(.NUM_REQUESTERS(`NUM_CORES)) request_arbiter(
                 .request(l2i_request_valid),
                 .update_lru(can_accept_request),
                 .grant_oh(grant_oh),

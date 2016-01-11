@@ -41,8 +41,8 @@ module core
 
     // Non-cacheable IO interface
     output ioreq_packet_t                  ior_request,
-    input                                  ia_ready,
-    input iorsp_packet_t                   ia_response,
+    input                                  ii_ready,
+    input iorsp_packet_t                   ii_response,
 
     // Performance events
     output logic [`CORE_PERF_EVENTS - 1:0] core_perf_events);

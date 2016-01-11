@@ -44,12 +44,12 @@ module io_request_queue
     // To thread_select_stage
     output thread_bitmap_t                 ior_wake_bitmap,
 
-    // To io_arbiter
+    // To io_interconnect
     output ioreq_packet_t                  ior_request,
 
-    // From io_arbiter
-    input                                  ia_ready,
-    input iorsp_packet_t                   ia_response);
+    // From io_interconnect
+    input                                  ii_ready,
+    input iorsp_packet_t                   ii_response);
 
     struct packed {
         logic valid;
@@ -97,23 +97,23 @@ module io_request_queue
                         end
                     end
 
-                    if (ia_response.valid && ia_response.core == CORE_ID && ia_response.thread_idx
+                    if (ii_response.valid && ii_response.core == CORE_ID && ii_response.thread_idx
                         == thread_idx_t'(thread_idx))
                     begin
                         // Ensure there isn't a response for an entry that isn't pending
                         assert(pending_request[thread_idx].valid);
 
-                        pending_request[thread_idx].value <= ia_response.read_value;
+                        pending_request[thread_idx].value <= ii_response.read_value;
                     end
 
-                    if (ia_ready && |send_grant_oh && send_grant_idx == thread_idx_t'(thread_idx))
+                    if (ii_ready && |send_grant_oh && send_grant_idx == thread_idx_t'(thread_idx))
                         pending_request[thread_idx].request_sent <= 1;
                 end
             end
         end
     endgenerate
 
-    arbiter #(.NUM_REQUESTERS(`THREADS_PER_CORE)) arbiter_send(
+    rr_arbiter #(.NUM_REQUESTERS(`THREADS_PER_CORE)) request_arbiter(
         .request(send_request),
         .update_lru(1'b1),
         .grant_oh(send_grant_oh),
@@ -124,10 +124,10 @@ module io_request_queue
         .index(send_grant_idx));
 
     idx_to_oh #(.NUM_SIGNALS(`THREADS_PER_CORE)) idx_to_oh_wake_thread(
-        .index(ia_response.thread_idx),
+        .index(ii_response.thread_idx),
         .one_hot(wake_thread_oh));
 
-    assign ior_wake_bitmap = (ia_response.valid && ia_response.core == CORE_ID)
+    assign ior_wake_bitmap = (ii_response.valid && ii_response.core == CORE_ID)
         ? wake_thread_oh : thread_bitmap_t'(0);
 
     // Send request

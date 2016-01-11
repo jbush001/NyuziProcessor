@@ -114,7 +114,7 @@ module ifetch_tag_stage
     assign cache_fetch_en = |can_fetch_thread_bitmap && !dt_update_itlb_en
         && !dt_invalidate_tlb_en && !dt_invalidate_tlb_all_en;
 
-    arbiter #(.NUM_REQUESTERS(`THREADS_PER_CORE)) arbiter_thread_select(
+    rr_arbiter #(.NUM_REQUESTERS(`THREADS_PER_CORE)) thread_select_arbiter(
         .request(can_fetch_thread_bitmap),
         .update_lru(cache_fetch_en),
         .grant_oh(selected_thread_oh),

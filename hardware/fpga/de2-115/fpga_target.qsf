@@ -370,8 +370,8 @@ set_global_assignment -name VERILOG_FILE ../../core/core.sv
 set_global_assignment -name VERILOG_FILE ../../core/control_registers.sv
 set_global_assignment -name VERILOG_FILE ../../core/cam.sv
 set_global_assignment -name VERILOG_FILE ../../core/cache_lru.sv
-set_global_assignment -name VERILOG_FILE ../../core/arbiter.sv
-set_global_assignment -name VERILOG_FILE ../../core/io_arbiter.sv
+set_global_assignment -name VERILOG_FILE ../../core/rr_arbiter.sv
+set_global_assignment -name VERILOG_FILE ../../core/io_interconnect.sv
 set_global_assignment -name VERILOG_FILE ../../core/tlb.sv
 set_global_assignment -name VERILOG_FILE ../../core/interrupt_controller.sv
 

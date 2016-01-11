@@ -62,7 +62,7 @@ module l1_load_miss_queue(
         .index(cache_miss_thread_idx),
         .one_hot(miss_thread_oh));
 
-    arbiter #(.NUM_REQUESTERS(`THREADS_PER_CORE)) arbiter_send(
+    rr_arbiter #(.NUM_REQUESTERS(`THREADS_PER_CORE)) request_arbiter(
         .request(arbiter_request),
         .update_lru(1'b1),
         .grant_oh(send_grant_oh),
