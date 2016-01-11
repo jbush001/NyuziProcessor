@@ -115,21 +115,9 @@ module tlb
                 begin
                     for (int set_idx = 0; set_idx < NUM_SETS; set_idx++)
                         entry_valid[set_idx] <= 0;
-
-                    /*AUTORESET*/
-                    // Beginning of autoreset for uninitialized flops
-                    way_valid <= '0;
-                    // End of automatics
                 end
                 else
                 begin
-                    if (way_update_oh[way_idx] && tlb_read_en && update_set_idx == request_set_idx)
-                        way_valid <= update_valid;  // Bypass
-                    else if (tlb_read_en)
-                        way_valid <= entry_valid[request_set_idx];
-                    else
-                        way_valid <= 0;
-
                     if (invalidate_all_en)
                     begin
                         for (int set_idx = 0; set_idx < NUM_SETS; set_idx++)
@@ -138,6 +126,16 @@ module tlb
                     else if (way_update_oh[way_idx])
                         entry_valid[update_set_idx] <= update_valid;
                 end
+            end
+
+            always_ff @(posedge clk)
+            begin
+                if (way_update_oh[way_idx] && tlb_read_en && update_set_idx == request_set_idx)
+                    way_valid <= update_valid;  // Bypass
+                else if (tlb_read_en)
+                    way_valid <= entry_valid[request_set_idx];
+                else
+                    way_valid <= 0;
             end
 
             assign way_hit_oh[way_idx] = way_valid

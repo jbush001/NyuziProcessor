@@ -44,6 +44,9 @@ module performance_counters
     assign read_addr = io_bus.address - (BASE_ADDRESS + NUM_COUNTERS * 4);
     assign read_idx = read_addr[2+:COUNTER_IDX_WIDTH];
 
+    always_ff @(posedge clk)
+        io_bus.read_data <= event_counter[read_idx];
+
     always_ff @(posedge clk, posedge reset)
     begin : update
         if (reset)
@@ -64,8 +67,6 @@ module performance_counters
                 if (io_bus.write_en && io_bus.address == BASE_ADDRESS + (i * 4))
                     event_select[i] <= io_bus.write_data[EVENT_IDX_WIDTH - 1:0];
             end
-
-            io_bus.read_data <= event_counter[read_idx];
         end
     end
 endmodule

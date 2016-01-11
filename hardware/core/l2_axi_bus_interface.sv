@@ -332,18 +332,12 @@ module l2_axi_bus_interface(
     begin : update
         if (reset)
         begin
-            for (int i = 0; i < BURST_BEATS; i++)
-                bif_load_buffer[i] <= 0;
-
             state_ff <= STATE_IDLE;
             /*AUTORESET*/
             // Beginning of autoreset for uninitialized flops
-            axi_bus.m_araddr <= '0;
             axi_bus.m_arvalid <= '0;
-            axi_bus.m_awaddr <= '0;
             axi_bus.m_awvalid <= '0;
             axi_bus.m_rready <= '0;
-            axi_bus.m_wdata <= '0;
             axi_bus.m_wlast <= '0;
             axi_bus.m_wvalid <= '0;
             burst_offset_ff <= '0;
@@ -354,8 +348,6 @@ module l2_axi_bus_interface(
         begin
             state_ff <= state_nxt;
             burst_offset_ff <= burst_offset_nxt;
-            if (state_ff == STATE_READ_TRANSFER && axi_bus.s_rvalid)
-                bif_load_buffer[burst_offset_ff] <= axi_bus.s_rdata;
 
             // Write response state machine
             if (state_ff == STATE_WRITE_ISSUE_ADDRESS)
@@ -365,17 +357,24 @@ module l2_axi_bus_interface(
 
             // Register AXI output signals
             axi_bus.m_arvalid <= state_nxt == STATE_READ_ISSUE_ADDRESS;
-            axi_bus.m_araddr <= {l2bi_request.address[31:`CACHE_LINE_OFFSET_WIDTH],
-                {`CACHE_LINE_OFFSET_WIDTH{1'b0}}};
             axi_bus.m_rready <= state_nxt == STATE_READ_TRANSFER;
             axi_bus.m_awvalid <= state_nxt == STATE_WRITE_ISSUE_ADDRESS;
-            axi_bus.m_awaddr <= {bif_writeback_address, {`CACHE_LINE_OFFSET_WIDTH{1'b0}}};
             axi_bus.m_wvalid <= state_nxt == STATE_WRITE_TRANSFER;
-            axi_bus.m_wdata <= bif_writeback_lanes[~burst_offset_nxt];
             axi_bus.m_wlast <= state_nxt == STATE_WRITE_TRANSFER
                 && axi_bus.s_wready
                 && burst_offset_ff == BURST_OFFSET_WIDTH'(BURST_BEATS) - 2;
         end
+    end
+
+    always_ff @(posedge clk)
+    begin
+        if (state_ff == STATE_READ_TRANSFER && axi_bus.s_rvalid)
+            bif_load_buffer[burst_offset_ff] <= axi_bus.s_rdata;
+
+        axi_bus.m_araddr <= {l2bi_request.address[31:`CACHE_LINE_OFFSET_WIDTH],
+            {`CACHE_LINE_OFFSET_WIDTH{1'b0}}};
+        axi_bus.m_awaddr <= {bif_writeback_address, {`CACHE_LINE_OFFSET_WIDTH{1'b0}}};
+        axi_bus.m_wdata <= bif_writeback_lanes[~burst_offset_nxt];
     end
 endmodule
 

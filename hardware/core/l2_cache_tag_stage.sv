@@ -111,19 +111,19 @@ module l2_cache_tag_stage(
                     for (int set_idx = 0; set_idx < `L2_SETS; set_idx++)
                         line_valid[set_idx] <= 0;
                 end
-                else
-                begin
-                    if (l2a_request_valid)
-                    begin
-                        if (l2r_update_tag_en[way_idx] && l2r_update_tag_set
-                            == l2_addr.set_idx)
-                            l2t_valid[way_idx] <= l2r_update_tag_valid;    // Bypass
-                        else
-                            l2t_valid[way_idx] <= line_valid[l2_addr.set_idx];
-                    end
+                else if (l2r_update_tag_en[way_idx])
+                    line_valid[l2r_update_tag_set] <= l2r_update_tag_valid;
+            end
 
-                    if (l2r_update_tag_en[way_idx])
-                        line_valid[l2r_update_tag_set] <= l2r_update_tag_valid;
+            always_ff @(posedge clk)
+            begin
+                if (l2a_request_valid)
+                begin
+                    if (l2r_update_tag_en[way_idx] && l2r_update_tag_set
+                        == l2_addr.set_idx)
+                        l2t_valid[way_idx] <= l2r_update_tag_valid;    // Bypass
+                    else
+                        l2t_valid[way_idx] <= line_valid[l2_addr.set_idx];
                 end
             end
         end

@@ -143,20 +143,20 @@ module io_request_queue
         begin
             /*AUTORESET*/
             // Beginning of autoreset for uninitialized flops
-            ior_read_value <= '0;
             ior_rollback_en <= '0;
             // End of automatics
         end
         else
         begin
-            if ((dd_io_write_en | dd_io_read_en) && !pending_request[dd_io_thread_idx].valid)
+            if ((dd_io_write_en || dd_io_read_en) && !pending_request[dd_io_thread_idx].valid)
                 ior_rollback_en <= 1;    // Start request
             else
                 ior_rollback_en <= 0;    // Complete request
-
-            ior_read_value <= pending_request[dd_io_thread_idx].value;
         end
     end
+
+    always_ff @(posedge clk)
+        ior_read_value <= pending_request[dd_io_thread_idx].value;
 endmodule
 
 // Local Variables:

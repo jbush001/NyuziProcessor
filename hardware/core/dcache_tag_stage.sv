@@ -190,24 +190,27 @@ module dcache_tag_stage
                 begin
                     if (l2i_dtag_update_en_oh[way_idx])
                         line_valid[l2i_dtag_update_set] <= l2i_dtag_update_valid;
+                end
+            end
 
-                    // Fetch cache line state for pipeline
-                    if (cache_load_en)
-                    begin
-                        if (l2i_dtag_update_en_oh[way_idx] && l2i_dtag_update_set == request_addr_nxt.set_idx)
-                            dt_valid[way_idx] <= l2i_dtag_update_valid;    // Bypass
-                        else
-                            dt_valid[way_idx] <= line_valid[request_addr_nxt.set_idx];
-                    end
+            always_ff @(posedge clk)
+            begin
+                // Fetch cache line state for pipeline
+                if (cache_load_en)
+                begin
+                    if (l2i_dtag_update_en_oh[way_idx] && l2i_dtag_update_set == request_addr_nxt.set_idx)
+                        dt_valid[way_idx] <= l2i_dtag_update_valid;    // Bypass
+                    else
+                        dt_valid[way_idx] <= line_valid[request_addr_nxt.set_idx];
+                end
 
-                    // Fetch cache line state for snoop
-                    if (l2i_snoop_en)
-                    begin
-                        if (l2i_dtag_update_en_oh[way_idx] && l2i_dtag_update_set == l2i_snoop_set)
-                            dt_snoop_valid[way_idx] <= l2i_dtag_update_valid;    // Bypass
-                        else
-                            dt_snoop_valid[way_idx] <= line_valid[l2i_snoop_set];
-                    end
+                // Fetch cache line state for snoop
+                if (l2i_snoop_en)
+                begin
+                    if (l2i_dtag_update_en_oh[way_idx] && l2i_dtag_update_set == l2i_snoop_set)
+                        dt_snoop_valid[way_idx] <= l2i_dtag_update_valid;    // Bypass
+                    else
+                        dt_snoop_valid[way_idx] <= line_valid[l2i_snoop_set];
                 end
             end
         end

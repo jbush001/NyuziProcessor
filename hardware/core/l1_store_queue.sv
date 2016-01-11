@@ -176,9 +176,7 @@ module l1_store_queue(
             always_ff @(posedge clk, posedge reset)
             begin
                 if (reset)
-                begin
                     pending_stores[thread_idx] <= 0;
-                end
                 else
                 begin
                     if (send_this_cycle)
@@ -295,6 +293,24 @@ module l1_store_queue(
     assign sq_dequeue_iinvalidate = pending_stores[send_grant_idx].iinvalidate;
     assign sq_dequeue_dinvalidate = pending_stores[send_grant_idx].dinvalidate;
 
+    always_ff @(posedge clk)
+    begin
+        sq_store_bypass_data <= pending_stores[dd_store_bypass_thread_idx].data;
+        if (cache_aligned_bypass_addr == pending_stores[dd_store_bypass_thread_idx].address
+            && pending_stores[dd_store_bypass_thread_idx].valid
+            && !pending_stores[dd_store_bypass_thread_idx].flush
+            && !pending_stores[dd_store_bypass_thread_idx].iinvalidate
+            && !pending_stores[dd_store_bypass_thread_idx].dinvalidate)
+        begin
+            // There is a store for this address, set mask
+            sq_store_bypass_mask <= pending_stores[dd_store_bypass_thread_idx].mask;
+        end
+        else
+            sq_store_bypass_mask <= 0;
+
+        sq_store_sync_success <= pending_stores[dd_store_thread_idx].sync_success;
+    end
+
     always_ff @(posedge clk, posedge reset)
     begin
         if (reset)
@@ -302,9 +318,6 @@ module l1_store_queue(
             /*AUTORESET*/
             // Beginning of autoreset for uninitialized flops
             sq_rollback_en <= '0;
-            sq_store_bypass_data <= '0;
-            sq_store_bypass_mask <= '0;
-            sq_store_sync_success <= '0;
             // End of automatics
         end
         else
@@ -321,20 +334,6 @@ module l1_store_queue(
             // Can't assert wake and sleep signals in same cycle
             assert((sq_wake_bitmap & rollback) == 0);
 
-            if (cache_aligned_bypass_addr == pending_stores[dd_store_bypass_thread_idx].address
-                && pending_stores[dd_store_bypass_thread_idx].valid
-                && !pending_stores[dd_store_bypass_thread_idx].flush
-                && !pending_stores[dd_store_bypass_thread_idx].iinvalidate
-                && !pending_stores[dd_store_bypass_thread_idx].dinvalidate)
-            begin
-                // There is a store for this address, set mask
-                sq_store_bypass_mask <= pending_stores[dd_store_bypass_thread_idx].mask;
-                sq_store_bypass_data <= pending_stores[dd_store_bypass_thread_idx].data;
-            end
-            else
-                sq_store_bypass_mask <= 0;
-
-            sq_store_sync_success <= pending_stores[dd_store_thread_idx].sync_success;
             sq_rollback_en <= |rollback;
         end
     end

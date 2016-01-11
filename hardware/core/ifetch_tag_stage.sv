@@ -179,13 +179,16 @@ module ifetch_tag_stage
                 begin
                     if (l2i_itag_update_en[way_idx])
                         line_valid[l2i_itag_update_set] <= l2i_itag_update_valid;
-
-                    // Fetch cache line state for pipeline
-                    if (l2i_itag_update_en[way_idx] && l2i_itag_update_set == pc_to_fetch.set_idx)
-                        ift_valid[way_idx] <= l2i_itag_update_valid;    // Bypass
-                    else
-                        ift_valid[way_idx] <= line_valid[pc_to_fetch.set_idx];
                 end
+            end
+
+            always_ff @(posedge clk)
+            begin
+                // Fetch cache line state for pipeline
+                if (l2i_itag_update_en[way_idx] && l2i_itag_update_set == pc_to_fetch.set_idx)
+                    ift_valid[way_idx] <= l2i_itag_update_valid;    // Bypass
+                else
+                    ift_valid[way_idx] <= line_valid[pc_to_fetch.set_idx];
             end
         end
     endgenerate
