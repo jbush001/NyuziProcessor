@@ -284,12 +284,7 @@ module dcache_tag_stage
     always_ff @(posedge clk, posedge reset)
     begin
         if (reset)
-        begin
-            /*AUTORESET*/
-            // Beginning of autoreset for uninitialized flops
             dt_instruction_valid <= '0;
-            // End of automatics
-        end
         else
         begin
             assert($onehot0(l2i_dtag_update_en_oh));

@@ -196,31 +196,25 @@ module cache_lru
         endcase
     endgenerate
 
+    always_ff @(posedge clk)
+    begin
+        update_set <= read_set;
+        was_fill <= fill_en;
+    end
+
+`ifdef SIMULATION
     always_ff @(posedge clk, posedge reset)
     begin
         if (reset)
-        begin
-`ifdef SIMULATION
             was_access <= 0;
-`endif
-            /*AUTORESET*/
-            // Beginning of autoreset for uninitialized flops
-            update_set <= '0;
-            was_fill <= '0;
-            // End of automatics
-        end
         else
         begin
-`ifdef SIMULATION
             // Can't update when the last cycle didn't perform an access.
             assert(!(access_update_en && !was_access));
             was_access <= access_en;    // Debug only
-`endif
-
-            update_set <= read_set;
-            was_fill <= fill_en;
         end
     end
+`endif
 endmodule
 
 // Local Variables:

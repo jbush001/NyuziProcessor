@@ -241,15 +241,12 @@ module l1_l2_interface
         begin
             // Should not get a wake from miss queue and store queue in the same cycle.
             assert((dcache_miss_wake_bitmap & sq_wake_bitmap) == 0);
-
             response_stage2_valid <= l2_response_valid;
         end
     end
 
     always_ff @(posedge clk)
-    begin
         response_stage2 <= l2_response;
-    end
 
     /////////////////////////////////////////////////
     // Response pipeline stage 2

@@ -62,27 +62,24 @@ module cam
         .index(lookup_idx));
 
     always_ff @(posedge clk, posedge reset)
-    begin : update
+    begin
         if (reset)
         begin
             for (int i = 0; i < NUM_ENTRIES; i++)
-            begin
-                lookup_table[i] <= {KEY_WIDTH{1'b0}};
                 entry_valid[i] <= 1'b0;
-            end
-
-            /*AUTORESET*/
         end
         else
         begin
             assert($onehot0(hit_oh));
-
             if (update_en)
-            begin
                 entry_valid[update_idx] <= update_valid;
-                lookup_table[update_idx] <= update_key;
-            end
         end
+    end
+
+    always_ff @(posedge clk)
+    begin
+        if (update_en)
+            lookup_table[update_idx] <= update_key;
     end
 
 `ifdef SIMULATION
