@@ -536,26 +536,29 @@ module writeback_stage(
             assert($onehot0({ix_instruction_valid, dd_instruction_valid, fx5_instruction_valid}));
 
 `ifdef SIMULATION
-            if (dd_instruction_valid && !dd_instruction.is_cache_control && dd_instruction.is_load)
+            if (dd_instruction_valid && !dd_instruction.is_cache_control)
             begin
-                // Loads should always have a destination register.
-                assert(dd_instruction.has_dest);
-
-                if (memory_op == MEM_B || memory_op == MEM_BX || memory_op == MEM_S
-                    || memory_op == MEM_SX || memory_op == MEM_SYNC || memory_op == MEM_L
-                    || memory_op == MEM_CONTROL_REG)
+                if (dd_instruction.is_load)
                 begin
-                    // Must be scalar destination
-                    assert(!dd_instruction.dest_is_vector);
+                    // Loads should always have a destination register.
+                    assert(dd_instruction.has_dest);
+
+                    if (memory_op == MEM_B || memory_op == MEM_BX || memory_op == MEM_S
+                        || memory_op == MEM_SX || memory_op == MEM_SYNC || memory_op == MEM_L
+                        || memory_op == MEM_CONTROL_REG)
+                    begin
+                        // Must be scalar destination
+                        assert(!dd_instruction.dest_is_vector);
+                    end
+                    else
+                        assert(dd_instruction.dest_is_vector);
                 end
-                else
-                    assert(dd_instruction.dest_is_vector);
-            end
-            else if (dd_instruction_valid && memory_op == MEM_SYNC)
-            begin
-                // Synchronized stores are special because they write back (whether they
-                // were successful).
-                assert(dd_instruction.has_dest && !dd_instruction.dest_is_vector);
+                else if (memory_op == MEM_SYNC)
+                begin
+                    // Synchronized stores are special because they write back (whether they
+                    // were successful).
+                    assert(dd_instruction.has_dest && !dd_instruction.dest_is_vector);
+                end
             end
 `endif
 
