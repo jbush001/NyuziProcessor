@@ -27,6 +27,7 @@ module l2_cache_tag_stage(
     input                                 reset,
 
     // From l2_cache_arb_stage
+    input                                 l2a_request_valid,
     input l2req_packet_t                  l2a_request,
     input cache_line_data_t               l2a_data_from_memory,
     input                                 l2a_is_l2_fill,
@@ -44,6 +45,7 @@ module l2_cache_tag_stage(
     input l2_way_idx_t                    l2r_update_lru_hit_way,
 
     // To l2_cache_read_stage
+    output logic                          l2t_request_valid,
     output l2req_packet_t                 l2t_request,
     output logic                          l2t_valid[`L2_WAYS],
     output l2_tag_t                       l2t_tag[`L2_WAYS],
@@ -61,7 +63,7 @@ module l2_cache_tag_stage(
         .fill_en(l2a_is_l2_fill),
         .fill_set(l2_addr.set_idx),
         .fill_way(l2t_fill_way),    // Output to next stage
-        .access_en(l2a_request.valid),
+        .access_en(l2a_request_valid),
         .access_set(l2_addr.set_idx),
         .access_update_en(l2r_update_lru_en),
         .access_update_way(l2r_update_lru_hit_way),
@@ -81,7 +83,7 @@ module l2_cache_tag_stage(
                 .SIZE(`L2_SETS),
                 .READ_DURING_WRITE("NEW_DATA")
             ) sram_tags(
-                .read_en(l2a_request.valid),
+                .read_en(l2a_request_valid),
                 .read_addr(l2_addr.set_idx),
                 .read_data(l2t_tag[way_idx]),
                 .write_en(l2r_update_tag_en[way_idx]),
@@ -94,7 +96,7 @@ module l2_cache_tag_stage(
                 .SIZE(`L2_SETS),
                 .READ_DURING_WRITE("NEW_DATA")
             ) sram_dirty_flags(
-                .read_en(l2a_request.valid),
+                .read_en(l2a_request_valid),
                 .read_addr(l2_addr.set_idx),
                 .read_data(l2t_dirty[way_idx]),
                 .write_en(l2r_update_dirty_en[way_idx]),
@@ -111,7 +113,7 @@ module l2_cache_tag_stage(
                 end
                 else
                 begin
-                    if (l2a_request.valid)
+                    if (l2a_request_valid)
                     begin
                         if (l2r_update_tag_en[way_idx] && l2r_update_tag_set
                             == l2_addr.set_idx)
@@ -130,25 +132,17 @@ module l2_cache_tag_stage(
     always_ff @(posedge clk)
     begin
         l2t_data_from_memory <= l2a_data_from_memory;
+        l2t_request <= l2a_request;
+        l2t_is_l2_fill <= l2a_is_l2_fill;
+        l2t_is_restarted_flush <= l2a_is_restarted_flush;
     end
 
     always_ff @(posedge clk, posedge reset)
     begin
         if (reset)
-        begin
-            l2t_request <= 0;
-            /*AUTORESET*/
-            // Beginning of autoreset for uninitialized flops
-            l2t_is_l2_fill <= '0;
-            l2t_is_restarted_flush <= '0;
-            // End of automatics
-        end
+            l2t_request_valid <= 0;
         else
-        begin
-            l2t_request <= l2a_request;
-            l2t_is_l2_fill <= l2a_is_l2_fill;
-            l2t_is_restarted_flush <= l2a_is_restarted_flush;
-        end
+            l2t_request_valid <= l2a_request_valid;
     end
 endmodule
 

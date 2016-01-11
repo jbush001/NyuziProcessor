@@ -34,7 +34,9 @@ module core
 
     // L2 interface
     input                                  l2_ready,
+    output                                 l2i_request_valid,
     output l2req_packet_t                  l2i_request,
+    input                                  l2_response_valid,
     input l2rsp_packet_t                   l2_response,
 
     // Non-cacheable IO interface

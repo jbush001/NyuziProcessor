@@ -40,6 +40,7 @@ module l2_axi_bus_interface(
     axi4_interface.master                  axi_bus,
 
     // to l2_cache_arb_stage
+    output logic                           l2bi_request_valid,
     output l2req_packet_t                  l2bi_request,
     output cache_line_data_t               l2bi_data_from_memory,
     output logic                           l2bi_stall,
@@ -52,6 +53,7 @@ module l2_axi_bus_interface(
     input                                  l2r_is_l2_fill,
     input                                  l2r_is_restarted_flush,
     input                                  l2r_cache_hit,
+    input                                  l2r_request_valid,
     input l2req_packet_t                   l2r_request,
 
     // Performance event
@@ -109,10 +111,10 @@ module l2_axi_bus_interface(
     writeback_queue_entry_t writeback_queue_out;
 
     assign miss_addr = l2r_request.address;
-    assign enqueue_writeback_request = l2r_request.valid && l2r_needs_writeback
+    assign enqueue_writeback_request = l2r_request_valid && l2r_needs_writeback
         && ((l2r_request.packet_type == L2REQ_FLUSH && l2r_cache_hit && !l2r_is_restarted_flush)
         || l2r_is_l2_fill);
-    assign enqueue_load_request = l2r_request.valid && !l2r_cache_hit && !l2r_is_l2_fill
+    assign enqueue_load_request = l2r_request_valid && !l2r_cache_hit && !l2r_is_l2_fill
         && (l2r_request.packet_type == L2REQ_LOAD
         || l2r_request.packet_type == L2REQ_STORE
         || l2r_request.packet_type == L2REQ_LOAD_SYNC
@@ -121,7 +123,7 @@ module l2_axi_bus_interface(
     assign load_request_pending = !load_queue_empty;
 
     l2_cache_pending_miss_cam l2_cache_pending_miss_cam(
-                            .request_valid(l2r_request.valid),
+                            .request_valid(l2r_request_valid),
                             .request_addr({miss_addr.tag, miss_addr.set_idx}),
                             .*);
 
@@ -316,14 +318,14 @@ module l2_axi_bus_interface(
             // For this request, the other fields in the request packet are ignored.
             // To avoid creating a mux for them, we just leave them assigned to
             // the load_reuqest fields.
-            l2bi_request.valid = 1'b1;
+            l2bi_request_valid = 1'b1;
             l2bi_request.packet_type = L2REQ_FLUSH;
             l2bi_request.core = writeback_queue_out.core;
             l2bi_request.id = writeback_queue_out.id;
             l2bi_request.cache_type = CT_DCACHE;
         end
         else
-            l2bi_request.valid = load_dequeue_en;
+            l2bi_request_valid = load_dequeue_en;
     end
 
     always_ff @(posedge clk, posedge reset)

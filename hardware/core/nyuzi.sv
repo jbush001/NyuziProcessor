@@ -32,6 +32,7 @@ module nyuzi
     input                       interrupt_req);
 
     l2req_packet_t l2i_request[`NUM_CORES];
+    logic[`NUM_CORES - 1:0] l2i_request_valid;
     ioreq_packet_t io_request[`NUM_CORES];
     logic[`TOTAL_PERF_EVENTS - 1:0] perf_events;
     logic[`TOTAL_THREADS - 1:0] ic_interrupt_pending;
@@ -56,6 +57,7 @@ module nyuzi
     logic               ia_ready [`NUM_CORES];  // From io_arbiter of io_arbiter.v
     logic [`TOTAL_THREADS-1:0] ic_thread_en;    // From interrupt_controller of interrupt_controller.v
     logic               l2_ready [`NUM_CORES];  // From l2_cache of l2_cache.v
+    logic               l2_response_valid;      // From l2_cache of l2_cache.v
     // End of automatics
 
     initial
@@ -131,6 +133,7 @@ module nyuzi
         for (core_idx = 0; core_idx < `NUM_CORES; core_idx++)
         begin : core_gen
             core #(.CORE_ID(core_id_t'(core_idx)), .RESET_PC(RESET_PC)) core(
+                .l2i_request_valid(l2i_request_valid[core_idx]),
                 .l2i_request(l2i_request[core_idx]),
                 .l2_ready(l2_ready[core_idx]),
                 .ic_thread_en(ic_thread_en[core_idx * `THREADS_PER_CORE+:`THREADS_PER_CORE]),

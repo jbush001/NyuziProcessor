@@ -311,7 +311,6 @@ typedef enum logic[2:0] {
 } l2req_packet_type_t;
 
 typedef struct packed {
-    logic valid;
     core_id_t core;
     l1_miss_entry_idx_t id;
     l2req_packet_type_t packet_type;
@@ -330,7 +329,6 @@ typedef enum logic[2:0] {
 } l2rsp_packet_type_t;
 
 typedef struct packed {
-    logic valid;
     logic status;
     core_id_t core;
     l1_miss_entry_idx_t id;

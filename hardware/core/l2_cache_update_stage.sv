@@ -28,6 +28,7 @@ module l2_cache_update_stage(
     input                                          reset,
 
     // From l2_cache_read_stage
+    input                                          l2r_request_valid,
     input l2req_packet_t                           l2r_request,
     input cache_line_data_t                        l2r_data,
     input                                          l2r_cache_hit,
@@ -44,6 +45,7 @@ module l2_cache_update_stage(
     output cache_line_data_t                       l2u_write_data,
 
     // To cores
+    output logic                                   l2_response_valid,
     output l2rsp_packet_t                          l2_response);
 
     cache_line_data_t original_data;
@@ -65,7 +67,7 @@ module l2_cache_update_stage(
         end
     endgenerate
 
-    assign l2u_write_en = l2r_request.valid
+    assign l2u_write_en = l2r_request_valid
         && (l2r_is_l2_fill || (l2r_cache_hit && (l2r_request.packet_type == L2REQ_STORE
         || l2r_request.packet_type == L2REQ_STORE_SYNC)));
     assign l2u_write_addr = l2r_hit_cache_idx;
@@ -105,10 +107,10 @@ module l2_cache_update_stage(
     always_ff @(posedge clk, posedge reset)
     begin
         if (reset)
-            l2_response <= 0;
+            l2_response_valid <= 0;
         else
         begin
-            if (l2r_request.valid
+            if (l2r_request_valid
                 && ((l2r_cache_hit && l2r_request.packet_type != L2REQ_FLUSH)
                 || l2r_is_l2_fill
                 || is_completed_flush
@@ -121,18 +123,22 @@ module l2_cache_update_stage(
                 // Cannot be both a fill and restarted flush
                 assert(!l2r_is_restarted_flush || !l2r_is_l2_fill);
 
-                l2_response.valid <= 1'b1;
-                l2_response.status <= l2r_request.packet_type == L2REQ_STORE_SYNC ? l2r_store_sync_success : 1'b1;
-                l2_response.core <= l2r_request.core;
-                l2_response.id <= l2r_request.id;
-                l2_response.packet_type <= response_type;
-                l2_response.cache_type <= l2r_request.cache_type;
-                l2_response.data <= l2u_write_data;
-                l2_response.address <= l2r_request.address;
+                l2_response_valid <= 1;
             end
             else
-                l2_response <= 0;
+                l2_response_valid <= 0;
         end
+    end
+
+    always_ff @(posedge clk)
+    begin
+        l2_response.status <= l2r_request.packet_type == L2REQ_STORE_SYNC ? l2r_store_sync_success : 1'b1;
+        l2_response.core <= l2r_request.core;
+        l2_response.id <= l2r_request.id;
+        l2_response.packet_type <= response_type;
+        l2_response.cache_type <= l2r_request.cache_type;
+        l2_response.data <= l2u_write_data;
+        l2_response.address <= l2r_request.address;
     end
 endmodule
 

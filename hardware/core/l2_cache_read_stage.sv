@@ -39,6 +39,7 @@ module l2_cache_read_stage(
     input                                     reset,
 
     // From l2_cache_tag_stage
+    input                                     l2t_request_valid,
     input l2req_packet_t                      l2t_request,
     input                                     l2t_valid[`L2_WAYS],
     input l2_tag_t                            l2t_tag[`L2_WAYS],
@@ -66,6 +67,7 @@ module l2_cache_read_stage(
     input cache_line_data_t                   l2u_write_data,
 
     // To l2_cache_update_stage
+    output logic                              l2r_request_valid,
     output l2req_packet_t                     l2r_request,
     output cache_line_data_t                  l2r_data,    // Also to bus interface unit
     output logic                              l2r_cache_hit,
@@ -125,7 +127,7 @@ module l2_cache_read_stage(
         end
     endgenerate
 
-    assign cache_hit = |hit_way_oh && l2t_request.valid;
+    assign cache_hit = |hit_way_oh && l2t_request_valid;
 
     oh_to_idx #(.NUM_SIGNALS(`L2_WAYS)) oh_to_idx_hit_way(
         .one_hot(hit_way_oh),
@@ -143,7 +145,7 @@ module l2_cache_read_stage(
         .SIZE(`L2_WAYS * `L2_SETS),
         .READ_DURING_WRITE("NEW_DATA")
     ) sram_l2_data(
-        .read_en(l2t_request.valid && (cache_hit || l2t_is_l2_fill)),
+        .read_en(l2t_request_valid && (cache_hit || l2t_is_l2_fill)),
         .read_addr(read_address),
         .read_data(l2r_data),
         .write_en(l2u_write_en),
@@ -158,7 +160,7 @@ module l2_cache_read_stage(
     //
     assign is_flush_first_pass = l2t_request.packet_type == L2REQ_FLUSH
         && !l2t_is_restarted_flush;
-    assign update_dirty = l2t_request.valid && (l2t_is_l2_fill
+    assign update_dirty = l2t_request_valid && (l2t_is_l2_fill
         || (cache_hit && (is_store || is_flush_first_pass)));
     assign l2r_update_dirty_set = l2_addr.set_idx;
     assign l2r_update_dirty_value = is_store;    // This is zero if this is a flush
@@ -207,10 +209,22 @@ module l2_cache_read_stage(
         && l2t_request.packet_type == L2REQ_STORE_SYNC;
 
     // Performance events
-    assign is_hit_or_miss = l2t_request.valid && (l2t_request.packet_type == L2REQ_STORE || can_store_sync
+    assign is_hit_or_miss = l2t_request_valid && (l2t_request.packet_type == L2REQ_STORE || can_store_sync
         || l2t_request.packet_type == L2REQ_LOAD ) && !l2t_is_l2_fill;
     assign perf_l2_miss = is_hit_or_miss && !(|hit_way_oh);
     assign perf_l2_hit = is_hit_or_miss && |hit_way_oh;
+
+    always_ff @(posedge clk)
+    begin
+        l2r_request <= l2t_request;
+        l2r_cache_hit <= cache_hit;
+        l2r_is_l2_fill <= l2t_is_l2_fill;
+        l2r_writeback_tag <= l2t_tag[writeback_way];
+        l2r_needs_writeback <= l2t_dirty[writeback_way] && l2t_valid[writeback_way];
+        l2r_data_from_memory <= l2t_data_from_memory;
+        l2r_hit_cache_idx <= read_address;
+        l2r_is_restarted_flush <= l2t_is_restarted_flush;
+    end
 
     always_ff @(posedge clk, posedge reset)
     begin
@@ -224,15 +238,8 @@ module l2_cache_read_stage(
 
             /*AUTORESET*/
             // Beginning of autoreset for uninitialized flops
-            l2r_cache_hit <= '0;
-            l2r_data_from_memory <= '0;
-            l2r_hit_cache_idx <= '0;
-            l2r_is_l2_fill <= '0;
-            l2r_is_restarted_flush <= '0;
-            l2r_needs_writeback <= '0;
-            l2r_request <= '0;
+            l2r_request_valid <= '0;
             l2r_store_sync_success <= '0;
-            l2r_writeback_tag <= '0;
             // End of automatics
         end
         else
@@ -241,18 +248,11 @@ module l2_cache_read_stage(
             assert(!l2t_is_l2_fill || !cache_hit);
 
             // Make sure there isn't a hit on more than one way
-            assert(!l2t_request.valid || $onehot0(hit_way_oh));
+            assert(!l2t_request_valid || $onehot0(hit_way_oh));
 
-            l2r_request <= l2t_request;
-            l2r_cache_hit <= cache_hit;
-            l2r_is_l2_fill <= l2t_is_l2_fill;
-            l2r_writeback_tag <= l2t_tag[writeback_way];
-            l2r_needs_writeback <= l2t_dirty[writeback_way] && l2t_valid[writeback_way];
-            l2r_data_from_memory <= l2t_data_from_memory;
-            l2r_hit_cache_idx <= read_address;
-            l2r_is_restarted_flush <= l2t_is_restarted_flush;
+            l2r_request_valid <= l2t_request_valid;
 
-            if (l2t_request.valid && (cache_hit || l2t_is_l2_fill))
+            if (l2t_request_valid && (cache_hit || l2t_is_l2_fill))
             begin
                 // Track synchronized load/stores
                 case (l2t_request.packet_type)
