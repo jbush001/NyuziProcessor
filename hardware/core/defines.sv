@@ -339,7 +339,6 @@ typedef struct packed {
 } l2rsp_packet_t;
 
 typedef struct packed {
-    logic valid;
     logic is_store;
     thread_idx_t thread_idx;
     scalar_t address;
@@ -347,7 +346,6 @@ typedef struct packed {
 } ioreq_packet_t;
 
 typedef struct packed {
-    logic valid;
     core_id_t core;
     thread_idx_t thread_idx;
     scalar_t read_value;

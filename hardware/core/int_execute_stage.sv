@@ -339,7 +339,7 @@ module int_execute_stage(
                 //
                 // Branch handling
                 //
-                unique case (of_instruction.branch_type)
+                case (of_instruction.branch_type)
                     BRANCH_CALL_REGISTER: ix_rollback_pc <= of_operand1[0];
                     BRANCH_ERET: ix_rollback_pc <= cr_eret_address[of_thread_idx];
                     default:

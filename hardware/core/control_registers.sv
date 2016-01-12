@@ -101,7 +101,6 @@ module control_registers
 
             /*AUTORESET*/
             // Beginning of autoreset for uninitialized flops
-            cr_creg_read_val <= '0;
             cr_interrupt_en <= '0;
             cr_tlb_miss_handler <= '0;
             cr_trap_handler <= '0;
@@ -199,47 +198,51 @@ module control_registers
                         ;
                 endcase
             end
-
-            //
-            // Read logic
-            //
-            if (dd_creg_read_en)
-            begin
-                case (dd_creg_index)
-                    CR_FLAGS:
-                    begin
-                        cr_creg_read_val <= scalar_t'({
-                            cr_supervisor_en[dt_thread_idx],
-                            cr_mmu_en[dt_thread_idx],
-                            cr_interrupt_en[dt_thread_idx]
-                        });
-                    end
-
-                    CR_SAVED_FLAGS:
-                    begin
-                        cr_creg_read_val <= scalar_t'({
-                            supervisor_en_saved[0][dt_thread_idx],
-                            mmu_en_saved[0][dt_thread_idx],
-                            interrupt_en_saved[0][dt_thread_idx]
-                        });
-                    end
-
-                    CR_THREAD_ID:        cr_creg_read_val <= scalar_t'({CORE_ID, dt_thread_idx});
-                    CR_TRAP_PC:          cr_creg_read_val <= eret_address[0][dt_thread_idx];
-                    CR_TRAP_REASON:      cr_creg_read_val <= scalar_t'(trap_reason[0][dt_thread_idx]);
-                    CR_TRAP_HANDLER:     cr_creg_read_val <= cr_trap_handler;
-                    CR_TRAP_ADDRESS:     cr_creg_read_val <= trap_access_addr[0][dt_thread_idx];
-                    CR_TLB_MISS_HANDLER: cr_creg_read_val <= cr_tlb_miss_handler;
-                    CR_CYCLE_COUNT:      cr_creg_read_val <= cycle_count;
-                    CR_SCRATCHPAD0:      cr_creg_read_val <= scratchpad[0][{1'b0, dt_thread_idx}];
-                    CR_SCRATCHPAD1:      cr_creg_read_val <= scratchpad[0][{1'b1, dt_thread_idx}];
-                    CR_SUBCYCLE:         cr_creg_read_val <= scalar_t'(subcycle_saved[0][dt_thread_idx]);
-                    CR_CURRENT_ASID:     cr_creg_read_val <= scalar_t'(cr_current_asid[dt_thread_idx]);
-                    default:             cr_creg_read_val <= 32'hffffffff;
-                endcase
-            end
         end
     end
+
+    always_ff @(posedge clk)
+    begin
+        //
+        // Read logic
+        //
+        if (dd_creg_read_en)
+        begin
+            case (dd_creg_index)
+                CR_FLAGS:
+                begin
+                    cr_creg_read_val <= scalar_t'({
+                        cr_supervisor_en[dt_thread_idx],
+                        cr_mmu_en[dt_thread_idx],
+                        cr_interrupt_en[dt_thread_idx]
+                    });
+                end
+
+                CR_SAVED_FLAGS:
+                begin
+                    cr_creg_read_val <= scalar_t'({
+                        supervisor_en_saved[0][dt_thread_idx],
+                        mmu_en_saved[0][dt_thread_idx],
+                        interrupt_en_saved[0][dt_thread_idx]
+                    });
+                end
+
+                CR_THREAD_ID:        cr_creg_read_val <= scalar_t'({CORE_ID, dt_thread_idx});
+                CR_TRAP_PC:          cr_creg_read_val <= eret_address[0][dt_thread_idx];
+                CR_TRAP_REASON:      cr_creg_read_val <= scalar_t'(trap_reason[0][dt_thread_idx]);
+                CR_TRAP_HANDLER:     cr_creg_read_val <= cr_trap_handler;
+                CR_TRAP_ADDRESS:     cr_creg_read_val <= trap_access_addr[0][dt_thread_idx];
+                CR_TLB_MISS_HANDLER: cr_creg_read_val <= cr_tlb_miss_handler;
+                CR_CYCLE_COUNT:      cr_creg_read_val <= cycle_count;
+                CR_SCRATCHPAD0:      cr_creg_read_val <= scratchpad[0][{1'b0, dt_thread_idx}];
+                CR_SCRATCHPAD1:      cr_creg_read_val <= scratchpad[0][{1'b1, dt_thread_idx}];
+                CR_SUBCYCLE:         cr_creg_read_val <= scalar_t'(subcycle_saved[0][dt_thread_idx]);
+                CR_CURRENT_ASID:     cr_creg_read_val <= scalar_t'(cr_current_asid[dt_thread_idx]);
+                default:             cr_creg_read_val <= 32'hffffffff;
+            endcase
+        end
+    end
+
 endmodule
 
 // Local Variables:

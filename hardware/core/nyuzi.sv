@@ -33,7 +33,7 @@ module nyuzi
 
     l2req_packet_t l2i_request[`NUM_CORES];
     logic[`NUM_CORES - 1:0] l2i_request_valid;
-    ioreq_packet_t io_request[`NUM_CORES];
+    ioreq_packet_t ior_request[`NUM_CORES];
     logic[`TOTAL_PERF_EVENTS - 1:0] perf_events;
     logic[`TOTAL_THREADS - 1:0] ic_interrupt_pending;
     logic[`TOTAL_THREADS - 1:0] wb_interrupt_ack;
@@ -45,6 +45,7 @@ module nyuzi
         IO_INT_CONTROLLER,
         IO_ARBITER
     } io_read_source;
+    logic[`NUM_CORES - 1:0] ior_request_valid;
 
     // XXX AUTOLOGIC not generating these
     l2rsp_packet_t l2_response;
@@ -56,6 +57,7 @@ module nyuzi
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
     logic [`TOTAL_THREADS-1:0] ic_thread_en;    // From interrupt_controller of interrupt_controller.v
     logic               ii_ready [`NUM_CORES];  // From io_interconnect of io_interconnect.v
+    logic               ii_response_valid;      // From io_interconnect of io_interconnect.v
     logic               l2_ready [`NUM_CORES];  // From l2_cache of l2_cache.v
     logic               l2_response_valid;      // From l2_cache of l2_cache.v
     // End of automatics
@@ -140,7 +142,8 @@ module nyuzi
                 .ic_interrupt_pending(ic_interrupt_pending[core_idx * `THREADS_PER_CORE+:`THREADS_PER_CORE]),
                 .ic_interrupt_id(_interrupt_id_repacked[core_idx]),
                 .wb_interrupt_ack(wb_interrupt_ack[core_idx * `THREADS_PER_CORE+:`THREADS_PER_CORE]),
-                .ior_request(io_request[core_idx]),
+                .ior_request_valid(ior_request_valid[core_idx]),
+                .ior_request(ior_request[core_idx]),
                 .ii_ready(ii_ready[core_idx]),
                 .ii_response(ii_response),
                 .core_perf_events(perf_events[`L2_PERF_EVENTS + `CORE_PERF_EVENTS * core_idx+:`CORE_PERF_EVENTS]),

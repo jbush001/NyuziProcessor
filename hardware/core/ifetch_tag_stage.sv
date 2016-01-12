@@ -271,21 +271,22 @@ module ifetch_tag_stage
             // Beginning of autoreset for uninitialized flops
             icache_wait_threads <= '0;
             ift_instruction_requested <= '0;
-            ift_thread_idx <= '0;
-            last_selected_pc <= '0;
-            last_selected_thread_oh <= '0;
             // End of automatics
         end
         else
         begin
             icache_wait_threads <= icache_wait_threads_nxt;
-            last_selected_pc <= pc_to_fetch;
-            ift_thread_idx <= selected_thread_idx;
             ift_instruction_requested <= cache_fetch_en
                 && !((ifd_cache_miss || ifd_near_miss) && ifd_cache_miss_thread_idx == selected_thread_idx)
                 && !(wb_rollback_en && wb_rollback_thread_idx == selected_thread_idx);
-            last_selected_thread_oh <= selected_thread_oh;
         end
+    end
+
+    always_ff @(posedge clk)
+    begin
+        last_selected_pc <= pc_to_fetch;
+        ift_thread_idx <= selected_thread_idx;
+        last_selected_thread_oh <= selected_thread_oh;
     end
 
     assign ift_pc_paddr = {ppage_idx, last_selected_pc[31 - `PAGE_NUM_BITS:0]};

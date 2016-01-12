@@ -24,12 +24,13 @@
 module io_interconnect(
     input                            clk,
     input                            reset,
-    input ioreq_packet_t             io_request[`NUM_CORES],
+    input [`NUM_CORES - 1:0]         ior_request_valid,
+    input ioreq_packet_t             ior_request[`NUM_CORES],
     output logic                     ii_ready[`NUM_CORES],
+    output logic                     ii_response_valid,
     output iorsp_packet_t            ii_response,
     io_bus_interface.master          io_bus);
 
-    logic[`NUM_CORES - 1:0] arb_request;
     core_id_t grant_idx;
     logic[`NUM_CORES - 1:0] grant_oh;
     logic request_sent;
@@ -41,7 +42,6 @@ module io_interconnect(
     generate
         for (request_idx = 0; request_idx < `NUM_CORES; request_idx++)
         begin : handshake_gen
-            assign arb_request[request_idx] = io_request[request_idx].valid;
             assign ii_ready[request_idx] = grant_oh[request_idx];
         end
     endgenerate
@@ -50,7 +50,7 @@ module io_interconnect(
         if (`NUM_CORES > 1)
         begin
             rr_arbiter #(.NUM_REQUESTERS(`NUM_CORES)) request_arbiter(
-                .request(arb_request),
+                .request(ior_request_valid),
                 .update_lru(1'b1),
                 .grant_oh(grant_oh),
                 .*);
@@ -59,13 +59,13 @@ module io_interconnect(
                 .one_hot(grant_oh),
                 .index(grant_idx[`CORE_ID_WIDTH - 1:0]));
 
-            assign grant_request = io_request[grant_idx[`CORE_ID_WIDTH - 1:0]];
+            assign grant_request = ior_request[grant_idx[`CORE_ID_WIDTH - 1:0]];
         end
         else
         begin
-            assign grant_oh[0] = arb_request[0];
+            assign grant_oh[0] = ior_request_valid[0];
             assign grant_idx = 0;
-            assign grant_request = io_request[0];
+            assign grant_request = ior_request[0];
         end
     endgenerate
 
@@ -74,49 +74,32 @@ module io_interconnect(
     assign io_bus.write_data = grant_request.value;
     assign io_bus.address = grant_request.address;
 
+    always_ff @(posedge clk)
+    begin
+        ii_response.core <= request_core;
+        ii_response.thread_idx <= request_thread_idx;
+        ii_response.read_value <= io_bus.read_data;
+        if (|ior_request_valid)
+        begin
+            request_core <= grant_idx;
+            request_thread_idx <= grant_request.thread_idx;
+        end
+    end
+
     always_ff @(posedge clk, posedge reset)
     begin
         if (reset)
         begin
-            ii_response <= '0;
-
-            `ifdef NEVER
-            // Suppress AUTORESET
-            ii_response.core <= '0;
-            ii_response.read_value <= '0;
-            ii_response.thread_idx <= '0;
-            ii_response.valid <= '0;
-            `endif
-
             /*AUTORESET*/
             // Beginning of autoreset for uninitialized flops
-            request_core <= '0;
+            ii_response_valid <= '0;
             request_sent <= '0;
-            request_thread_idx <= '0;
             // End of automatics
         end
         else
         begin
-            if (|grant_oh)
-            begin
-                // Send a new request
-                request_sent <= 1;
-                request_core <= grant_idx;
-                request_thread_idx <= grant_request.thread_idx;
-            end
-            else
-                request_sent <= 0;
-
-            if (request_sent)
-            begin
-                // Next cycle after request, record response
-                ii_response.valid <= 1;
-                ii_response.core <= request_core;
-                ii_response.thread_idx <= request_thread_idx;
-                ii_response.read_value <= io_bus.read_data;
-            end
-            else
-                ii_response.valid <= 0;
+            request_sent <= |ior_request_valid;
+            ii_response_valid <= request_sent;
         end
     end
 endmodule

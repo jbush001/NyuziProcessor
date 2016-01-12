@@ -45,10 +45,12 @@ module io_request_queue
     output thread_bitmap_t                 ior_wake_bitmap,
 
     // To io_interconnect
+    output logic                           ior_request_valid,
     output ioreq_packet_t                  ior_request,
 
     // From io_interconnect
     input                                  ii_ready,
+    input                                  ii_response_valid,
     input iorsp_packet_t                   ii_response);
 
     struct packed {
@@ -97,7 +99,7 @@ module io_request_queue
                         end
                     end
 
-                    if (ii_response.valid && ii_response.core == CORE_ID && ii_response.thread_idx
+                    if (ii_response_valid && ii_response.core == CORE_ID && ii_response.thread_idx
                         == thread_idx_t'(thread_idx))
                     begin
                         // Ensure there isn't a response for an entry that isn't pending
@@ -127,11 +129,11 @@ module io_request_queue
         .index(ii_response.thread_idx),
         .one_hot(wake_thread_oh));
 
-    assign ior_wake_bitmap = (ii_response.valid && ii_response.core == CORE_ID)
+    assign ior_wake_bitmap = (ii_response_valid && ii_response.core == CORE_ID)
         ? wake_thread_oh : thread_bitmap_t'(0);
 
     // Send request
-    assign ior_request.valid = |send_grant_oh;
+    assign ior_request_valid = |send_request;
     assign ior_request.is_store = pending_request[send_grant_idx].is_store;
     assign ior_request.address = pending_request[send_grant_idx].address;
     assign ior_request.value = pending_request[send_grant_idx].value;

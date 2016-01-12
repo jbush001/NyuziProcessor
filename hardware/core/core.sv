@@ -40,8 +40,10 @@ module core
     input l2rsp_packet_t                   l2_response,
 
     // Non-cacheable IO interface
+    output                                 ior_request_valid,
     output ioreq_packet_t                  ior_request,
     input                                  ii_ready,
+    input                                  ii_response_valid,
     input iorsp_packet_t                   ii_response,
 
     // Performance events
