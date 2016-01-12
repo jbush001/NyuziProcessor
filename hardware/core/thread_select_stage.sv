@@ -204,12 +204,17 @@ module thread_select_stage(
             assign instruction_latch_en = !ififo_empty && (!instruction_latched
                 || issue_last_subcycle[thread_idx]);
 
+            always_ff @(posedge clk)
+            begin
+                if (instruction_latch_en)
+                    thread_instr[thread_idx] <= thread_instr_nxt;
+            end
+
             always_ff @(posedge clk, posedge reset)
             begin
                 if (reset)
                 begin
                     instruction_latched <= 0;
-                    thread_instr[thread_idx] <= 0;
                     scoreboard_dep_bitmap <= 0;
                     scoreboard_dest_bitmap[thread_idx] <= 0;
                 end
@@ -221,7 +226,6 @@ module thread_select_stage(
                     begin
                         // Latch a new instruction
                         instruction_latched <= 1;
-                        thread_instr[thread_idx] <= thread_instr_nxt;
                         scoreboard_dep_bitmap <= scoreboard_dep_bitmap_nxt;
                         scoreboard_dest_bitmap[thread_idx] <= scoreboard_dest_bitmap_nxt;
                     end
