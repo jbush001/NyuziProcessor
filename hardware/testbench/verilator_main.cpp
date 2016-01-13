@@ -47,24 +47,26 @@ int main(int argc, char **argv, char **env)
     Verilated::commandArgs(argc, argv);
     Verilated::debug(0);
 
-    // Initialize random seed.
-    if (VL_VALUEPLUSARGS_II(32, "randseed=", 'd', randomSeed))
-        srand48(randomSeed);
-    else
-    {
-        time_t t1;
-        time(&t1);
-        srand48((long) t1);
-        VL_PRINTF("Random seed is %li\n", t1);
-    }
-
     if (!VL_VALUEPLUSARGS_II(32, "randomize=", 'd', randomizeRegs))
         randomizeRegs = 1;
 
     // If this is set, randomize the initial values of registers and
     // SRAMs.
     if (randomizeRegs)
+    {
+        // Initialize random seed.
+        if (VL_VALUEPLUSARGS_II(32, "randseed=", 'd', randomSeed))
+            srand48(randomSeed);
+        else
+        {
+            time_t t1;
+            time(&t1);
+            srand48((long) t1);
+            VL_PRINTF("Random seed is %li\n", t1);
+        }
+
         Verilated::randReset(2);
+    }
     else
         Verilated::randReset(0);
 
