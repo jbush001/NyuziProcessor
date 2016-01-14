@@ -490,15 +490,18 @@ module dcache_data_stage(
         dd_request_vaddr <= dt_request_vaddr;
         dd_subcycle <= dt_subcycle;
         dd_rollback_pc <= dt_instruction.pc;
-        if (alignment_fault)
+
+        // Check for TLB miss first, since permission bits are not valid if
+        // there is a TLB miss.
+        if (tlb_miss)
+            dd_fault_reason <= TR_DTLB_MISS;
+        else if (alignment_fault)
             dd_fault_reason <= TR_DATA_ALIGNMENT;
         else if (supervisor_fault)
             dd_fault_reason <= TR_DATA_SUPERVISOR;
         else if (privilege_op_fault)
             dd_fault_reason <= TR_PRIVILEGED_OP;
-        else if (tlb_miss)
-            dd_fault_reason <= TR_DTLB_MISS;
-        else // write_fault
+        else // write fault
             dd_fault_reason <= TR_ILLEGAL_WRITE;
     end
 

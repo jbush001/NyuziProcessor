@@ -212,20 +212,23 @@ module instruction_decode_stage(
     assign is_nop = ifd_instruction == `INSTRUCTION_NOP;
     assign has_trap = dlut_out.illegal || ifd_alignment_fault || ifd_tlb_miss
         || ifd_supervisor_fault || raise_interrupt || is_syscall;
+
+    // Check for TLB miss first, since permission bits are not valid if there
+    // is a TLB miss.
     always_comb
     begin
-        if (dlut_out.illegal)
-            decoded_instr_nxt.trap_reason = TR_ILLEGAL_INSTRUCTION;
-        else if (ifd_alignment_fault)
-            decoded_instr_nxt.trap_reason = TR_IFETCH_ALIGNNMENT;
+        if (raise_interrupt)
+            decoded_instr_nxt.trap_reason = trap_reason_t'({1'b1, ic_interrupt_id[ifd_thread_idx]});
         else if (ifd_tlb_miss)
             decoded_instr_nxt.trap_reason = TR_ITLB_MISS;
+        else if (ifd_alignment_fault)
+            decoded_instr_nxt.trap_reason = TR_IFETCH_ALIGNNMENT;
         else if (ifd_supervisor_fault)
             decoded_instr_nxt.trap_reason = TR_IFETCH_SUPERVISOR;
+        else if (dlut_out.illegal)
+            decoded_instr_nxt.trap_reason = TR_ILLEGAL_INSTRUCTION;
         else if (is_syscall)
             decoded_instr_nxt.trap_reason = TR_SYSCALL;
-        else if (raise_interrupt)
-            decoded_instr_nxt.trap_reason = trap_reason_t'({1'b1, ic_interrupt_id[ifd_thread_idx]});
         else
             decoded_instr_nxt.trap_reason = TR_RESET;
     end
