@@ -59,6 +59,7 @@ module instruction_decode_stage(
 
     // From interrupt_controller
     input thread_bitmap_t         ic_interrupt_pending,
+    input interrupt_id_t          ic_interrupt_id[`THREADS_PER_CORE],
 
     // From io_request_queue
     input thread_bitmap_t         ior_pending,
@@ -123,7 +124,7 @@ module instruction_decode_stage(
     alu_op_t alu_op;
     memory_op_t memory_access_type;
     register_idx_t scalar_sel2;
-    logic is_legal_instruction;
+    logic has_trap;
     logic is_syscall;
     logic raise_interrupt;
     thread_bitmap_t masked_interrupt_flags;
@@ -209,8 +210,25 @@ module instruction_decode_stage(
 
     assign is_syscall = is_fmt_r && ifd_instruction[25:20] == OP_SYSCALL;
     assign is_nop = ifd_instruction == `INSTRUCTION_NOP;
-    assign is_legal_instruction = !dlut_out.illegal && !ifd_alignment_fault && !ifd_tlb_miss
-        && !ifd_supervisor_fault && !raise_interrupt;
+    assign has_trap = dlut_out.illegal || ifd_alignment_fault || ifd_tlb_miss
+        || ifd_supervisor_fault || raise_interrupt || is_syscall;
+    always_comb
+    begin
+        if (dlut_out.illegal)
+            decoded_instr_nxt.trap_reason = TR_ILLEGAL_INSTRUCTION;
+        else if (ifd_alignment_fault)
+            decoded_instr_nxt.trap_reason = TR_IFETCH_ALIGNNMENT;
+        else if (ifd_tlb_miss)
+            decoded_instr_nxt.trap_reason = TR_ITLB_MISS;
+        else if (ifd_supervisor_fault)
+            decoded_instr_nxt.trap_reason = TR_IFETCH_SUPERVISOR;
+        else if (is_syscall)
+            decoded_instr_nxt.trap_reason = TR_SYSCALL;
+        else if (raise_interrupt)
+            decoded_instr_nxt.trap_reason = trap_reason_t'({1'b1, ic_interrupt_id[ifd_thread_idx]});
+        else
+            decoded_instr_nxt.trap_reason = TR_RESET;
+    end
 
     // Subtle: Don't raise an interrupt if there is a I/O request pending.
     // I/O load instructions are issued twice. The first issue queues the
@@ -226,14 +244,10 @@ module instruction_decode_stage(
     assign masked_interrupt_flags = ic_interrupt_pending & cr_interrupt_en
         & ~ior_pending;
     assign raise_interrupt = masked_interrupt_flags[ifd_thread_idx];
-    assign decoded_instr_nxt.interrupt_request = raise_interrupt;
-    assign decoded_instr_nxt.is_syscall = is_syscall;
-    assign decoded_instr_nxt.ifetch_supervisor_fault = ifd_supervisor_fault;
-    assign decoded_instr_nxt.illegal = dlut_out.illegal;
-    assign decoded_instr_nxt.ifetch_alignment_fault = ifd_alignment_fault;
-    assign decoded_instr_nxt.tlb_miss = ifd_tlb_miss;
+    assign decoded_instr_nxt.has_trap = has_trap;
+
     assign decoded_instr_nxt.has_scalar1 = dlut_out.scalar1_loc != SCLR1_NONE && !is_nop
-        && is_legal_instruction && !is_syscall;
+        && !has_trap;
     always_comb
     begin
         case (dlut_out.scalar1_loc)
@@ -243,7 +257,7 @@ module instruction_decode_stage(
     end
 
     assign decoded_instr_nxt.has_scalar2 = dlut_out.scalar2_loc != SCLR2_NONE && !is_nop
-        && is_legal_instruction && !is_syscall;
+        && !has_trap;
 
     // XXX: assigning this directly to decoded_instr_nxt.scalar_sel2 causes Verilator issues when
     // other blocks read it. Added another signal to work around this.
@@ -259,11 +273,9 @@ module instruction_decode_stage(
     end
 
     assign decoded_instr_nxt.scalar_sel2 = scalar_sel2;
-    assign decoded_instr_nxt.has_vector1 = dlut_out.has_vector1 && !is_nop && is_legal_instruction
-        && !is_syscall;
+    assign decoded_instr_nxt.has_vector1 = dlut_out.has_vector1 && !is_nop && !has_trap;
     assign decoded_instr_nxt.vector_sel1 = ifd_instruction[4:0];
-    assign decoded_instr_nxt.has_vector2 = dlut_out.has_vector2 && !is_nop && is_legal_instruction
-        && !is_syscall;
+    assign decoded_instr_nxt.has_vector2 = dlut_out.has_vector2 && !is_nop && !has_trap;
     always_comb
     begin
         if (dlut_out.vector_sel2_is_9_5)
@@ -272,8 +284,7 @@ module instruction_decode_stage(
             decoded_instr_nxt.vector_sel2 = ifd_instruction[19:15];
     end
 
-    assign decoded_instr_nxt.has_dest = dlut_out.has_dest && !is_nop && is_legal_instruction
-        && !is_syscall;
+    assign decoded_instr_nxt.has_dest = dlut_out.has_dest && !is_nop && !has_trap;
 
     assign decoded_instr_nxt.dest_is_vector = dlut_out.dest_is_vector && !is_compare
         && !is_getlane;
@@ -322,7 +333,7 @@ module instruction_decode_stage(
 
     assign decoded_instr_nxt.branch_type = branch_type_t'(ifd_instruction[27:25]);
     assign decoded_instr_nxt.is_branch = ifd_instruction[31:28] == 4'b1111
-        && is_legal_instruction;
+        && !has_trap;
     assign decoded_instr_nxt.pc = ifd_pc;
 
     always_comb
@@ -347,11 +358,11 @@ module instruction_decode_stage(
     assign memory_access_type = memory_op_t'(ifd_instruction[28:25]);
     assign decoded_instr_nxt.memory_access_type = memory_access_type;
     assign decoded_instr_nxt.is_memory_access = ifd_instruction[31:30] == 2'b10
-        && is_legal_instruction;
+        && !has_trap;
     assign decoded_instr_nxt.is_load = ifd_instruction[29]
         && is_fmt_m;
     assign decoded_instr_nxt.is_cache_control = ifd_instruction[31:28] == 4'b1110
-         && is_legal_instruction;
+         && !has_trap;
     assign decoded_instr_nxt.cache_control_op = cache_op_t'(ifd_instruction[27:25]);
 
     always_comb

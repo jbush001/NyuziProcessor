@@ -66,6 +66,8 @@ module dcache_data_stage(
     output cache_line_data_t                  dd_load_data,
     output logic                              dd_suspend_thread,
     output logic                              dd_is_io_address,
+    output logic                              dd_fault,
+    output trap_reason_t                      dd_fault_reason,
     output logic                              dd_alignment_fault,
     output logic                              dd_write_fault,
     output logic                              dd_tlb_miss,
@@ -148,6 +150,10 @@ module dcache_data_stage(
     logic is_tlb_access;
     logic is_tlb_update;
     logic supervisor_fault;
+    logic alignment_fault;
+    logic privilege_op_fault;
+    logic write_fault;
+    logic tlb_miss;
 
     // Unlike earlier stages, this commits instruction side effects like stores,
     // so it needs to check if there is a rollback (which would be for the
@@ -180,7 +186,6 @@ module dcache_data_stage(
     end
 
     // L1 data cache or store buffer access
-    assign supervisor_fault = dt_tlb_supervisor && !cr_supervisor_en[dt_thread_idx];
     assign dcache_access_en = dt_instruction_valid
         && !rollback_this_stage
         && dt_instruction.is_memory_access
@@ -471,6 +476,17 @@ module dcache_data_stage(
         end
     endgenerate
 
+    // Faults
+    assign alignment_fault = (dcache_load_en || dcache_store_en) && is_unaligned;
+    assign privilege_op_fault = !cr_supervisor_en[dt_thread_idx]
+        && ((creg_access_en && !dt_instruction.is_load)
+        || is_tlb_update);
+    assign write_fault = !dt_tlb_writable
+        && (dcache_store_en || (io_access_en && !dt_instruction.is_load))
+        && !supervisor_fault;
+    assign tlb_miss = is_tlb_access && !dt_tlb_hit;
+    assign supervisor_fault = dt_tlb_supervisor && !cr_supervisor_en[dt_thread_idx];
+
     always_ff @(posedge clk)
     begin
         dd_instruction <= dt_instruction;
@@ -479,6 +495,16 @@ module dcache_data_stage(
         dd_request_vaddr <= dt_request_vaddr;
         dd_subcycle <= dt_subcycle;
         dd_rollback_pc <= dt_instruction.pc;
+        if (alignment_fault)
+            dd_fault_reason <= TR_DATA_ALIGNMENT;
+        else if (supervisor_fault)
+            dd_fault_reason <= TR_DATA_SUPERVISOR;
+        else if (privilege_op_fault)
+            dd_fault_reason <= TR_PRIVILEGED_OP;
+        else if (tlb_miss)
+            dd_fault_reason <= TR_DTLB_MISS;
+        else // write_fault
+            dd_fault_reason <= TR_ILLEGAL_WRITE;
     end
 
     always_ff @(posedge clk, posedge reset)
@@ -487,15 +513,11 @@ module dcache_data_stage(
         begin
             /*AUTORESET*/
             // Beginning of autoreset for uninitialized flops
-            dd_alignment_fault <= '0;
+            dd_fault <= '0;
             dd_instruction_valid <= '0;
             dd_is_io_address <= '0;
-            dd_privilege_op_fault <= '0;
             dd_rollback_en <= '0;
-            dd_supervisor_fault <= '0;
             dd_suspend_thread <= '0;
-            dd_tlb_miss <= '0;
-            dd_write_fault <= '0;
             // End of automatics
         end
         else
@@ -521,15 +543,10 @@ module dcache_data_stage(
                 && !cache_hit
                 && !cache_near_miss
                 && !is_unaligned;
-            dd_alignment_fault <= (dcache_load_en || dcache_store_en) && is_unaligned;
-            dd_supervisor_fault <= supervisor_fault;
-            dd_privilege_op_fault <= !cr_supervisor_en[dt_thread_idx]
-                && ((creg_access_en && !dt_instruction.is_load)
-                || is_tlb_update);
-            dd_write_fault <= !dt_tlb_writable
-                && (dcache_store_en || (io_access_en && !dt_instruction.is_load))
-                && !supervisor_fault;
-            dd_tlb_miss <= is_tlb_access && !dt_tlb_hit;
+
+            // Fault handling
+            dd_fault <= alignment_fault || supervisor_fault || privilege_op_fault
+                || write_fault || tlb_miss;
         end
     end
 endmodule

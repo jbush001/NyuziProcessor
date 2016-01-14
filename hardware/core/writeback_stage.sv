@@ -72,11 +72,8 @@ module writeback_stage(
     input cache_line_data_t               dd_load_data,
     input                                 dd_suspend_thread,
     input                                 dd_is_io_address,
-    input                                 dd_alignment_fault,
-    input                                 dd_write_fault,
-    input                                 dd_tlb_miss,
-    input                                 dd_supervisor_fault,
-    input                                 dd_privilege_op_fault,
+    input logic                           dd_fault,
+    input trap_reason_t                   dd_fault_reason,
 
     // From l1_store_queue
     input [`CACHE_LINE_BYTES - 1:0]       sq_store_bypass_mask,
@@ -102,9 +99,8 @@ module writeback_stage(
     output scalar_t                       wb_trap_access_vaddr,
     output subcycle_t                     wb_trap_subcycle,
 
-    // To/From interrupt_controller
+    // To interrupt_controller
     output thread_bitmap_t                wb_interrupt_ack,
-    input interrupt_id_t                  ic_interrupt_id[`THREADS_PER_CORE],
 
     // Rollback signals to all stages
     output logic                          wb_rollback_en,
@@ -186,13 +182,12 @@ module writeback_stage(
         wb_trap_access_vaddr = 0;
         wb_trap_subcycle = dd_subcycle;
 
-        if (ix_instruction_valid && (ix_instruction.illegal || ix_instruction.ifetch_alignment_fault
-            || ix_instruction.tlb_miss || ix_privileged_op_fault || ix_instruction.is_syscall
-            || ix_instruction.interrupt_request))
+        if (ix_instruction_valid && (ix_instruction.has_trap || ix_privileged_op_fault))
         begin
             // Fault piggybacked on instruction, which goes through the integer pipeline.
             wb_rollback_en = 1'b1;
-            if (ix_instruction.tlb_miss)
+            if (ix_instruction.trap_reason == TR_ITLB_MISS
+                || ix_instruction.trap_reason == TR_DTLB_MISS)
                 wb_rollback_pc = cr_tlb_miss_handler;
             else
                 wb_rollback_pc = cr_trap_handler;
@@ -200,55 +195,32 @@ module writeback_stage(
             wb_rollback_thread_idx = ix_thread_idx;
             wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
             wb_trap = 1;
-            if (ix_instruction.interrupt_request)
-            begin
-                wb_trap_reason = trap_reason_t'({1'b1, ic_interrupt_id[ix_thread_idx]});
-                wb_interrupt_ack[ix_thread_idx] = 1'b1;
-            end
-            else if (ix_instruction.tlb_miss)
-                wb_trap_reason = TR_ITLB_MISS;
-            else if (ix_instruction.ifetch_alignment_fault)
-                wb_trap_reason = TR_IFETCH_ALIGNNMENT;
-            else if (ix_instruction.ifetch_supervisor_fault)
-                wb_trap_reason = TR_IFETCH_SUPERVISOR;
-            else if (ix_privileged_op_fault)
+            if (ix_privileged_op_fault)
                 wb_trap_reason = TR_PRIVILEGED_OP;
-            else if (ix_instruction.is_syscall)
-                wb_trap_reason = TR_SYSCALL;
             else
-                wb_trap_reason = TR_ILLEGAL_INSTRUCTION;
+                wb_trap_reason = ix_instruction.trap_reason;
+
+            if (ix_instruction.trap_reason[4])  // Is interrrupt
+                wb_interrupt_ack[ix_thread_idx] = 1'b1;
 
             wb_trap_pc = ix_instruction.pc;
             wb_trap_access_vaddr = ix_instruction.pc;
             wb_trap_thread_idx = ix_thread_idx;
             wb_trap_subcycle = ix_subcycle;
         end
-        else if (dd_instruction_valid && (dd_alignment_fault || dd_tlb_miss || dd_write_fault
-            || dd_supervisor_fault || dd_privilege_op_fault))
+        else if (dd_instruction_valid && dd_fault)
         begin
             // Memory access fault
             wb_rollback_en = 1'b1;
             wb_rollback_thread_idx = dd_thread_idx;
             wb_rollback_pipeline = PIPE_MEM;
             wb_trap = 1;
-            if (dd_tlb_miss)
-            begin
+            if (dd_fault_reason == TR_DTLB_MISS)
                 wb_rollback_pc = cr_tlb_miss_handler;
-                wb_trap_reason = TR_DTLB_MISS;
-            end
             else
-            begin
                 wb_rollback_pc = cr_trap_handler;
-                if (dd_supervisor_fault)
-                    wb_trap_reason = TR_DATA_SUPERVISOR;
-                else if (dd_write_fault)
-                    wb_trap_reason = TR_ILLEGAL_WRITE;
-                else if (dd_privilege_op_fault)
-                    wb_trap_reason = TR_PRIVILEGED_OP;
-                else
-                    wb_trap_reason = TR_DATA_ALIGNMENT;
-            end
 
+            wb_trap_reason = dd_fault_reason;
             wb_trap_pc = dd_instruction.pc;
             wb_trap_thread_idx = dd_thread_idx;
             wb_trap_access_vaddr = dd_request_vaddr;

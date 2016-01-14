@@ -161,16 +161,29 @@ typedef enum logic [4:0] {
     CR_SUBCYCLE         = 5'd13
 } control_register_t;
 
+typedef enum logic[4:0] {
+    TR_RESET,
+    TR_ILLEGAL_INSTRUCTION,
+    TR_DATA_ALIGNMENT,
+    _TR_UNUSED,
+    TR_IFETCH_ALIGNNMENT,
+    TR_ITLB_MISS,
+    TR_DTLB_MISS,
+    TR_ILLEGAL_WRITE,
+    TR_DATA_SUPERVISOR,
+    TR_IFETCH_SUPERVISOR,
+    TR_PRIVILEGED_OP,
+    TR_SYSCALL
+} trap_reason_t;
+
+typedef logic[3:0] interrupt_id_t;
+
 typedef struct packed {
     scalar_t pc;
-    logic illegal;
 
     // Piggybacked exceptions
-    logic ifetch_alignment_fault;
-    logic ifetch_supervisor_fault;
-    logic tlb_miss;
-    logic is_syscall;
-    logic interrupt_request;
+    logic has_trap;
+    trap_reason_t trap_reason;
 
     // Decoded instruction fields
     logic has_scalar1;
@@ -202,23 +215,6 @@ typedef struct packed {
     logic is_cache_control;
     cache_op_t cache_control_op;
 } decoded_instruction_t;
-
-typedef enum logic[4:0] {
-    TR_RESET,
-    TR_ILLEGAL_INSTRUCTION,
-    TR_DATA_ALIGNMENT,
-    _TR_UNUSED,
-    TR_IFETCH_ALIGNNMENT,
-    TR_ITLB_MISS,
-    TR_DTLB_MISS,
-    TR_ILLEGAL_WRITE,
-    TR_DATA_SUPERVISOR,
-    TR_IFETCH_SUPERVISOR,
-    TR_PRIVILEGED_OP,
-    TR_SYSCALL
-} trap_reason_t;
-
-typedef logic[3:0] interrupt_id_t;
 
 `define IEEE754_B32_EXP_WIDTH 8
 `define IEEE754_B32_SIG_WIDTH 23
