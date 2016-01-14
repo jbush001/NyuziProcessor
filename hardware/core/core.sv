@@ -63,7 +63,6 @@ module core
     logic [`ASID_WIDTH-1:0] cr_current_asid [`THREADS_PER_CORE];// From control_registers of control_registers.v
     logic               cr_mmu_en [`THREADS_PER_CORE];// From control_registers of control_registers.v
     logic               cr_supervisor_en [`THREADS_PER_CORE];// From control_registers of control_registers.v
-    logic               dd_alignment_fault;     // From dcache_data_stage of dcache_data_stage.v
     logic               dd_cache_miss;          // From dcache_data_stage of dcache_data_stage.v
     scalar_t            dd_cache_miss_addr;     // From dcache_data_stage of dcache_data_stage.v
     logic               dd_cache_miss_synchronized;// From dcache_data_stage of dcache_data_stage.v
@@ -88,7 +87,6 @@ module core
     vector_lane_mask_t  dd_lane_mask;           // From dcache_data_stage of dcache_data_stage.v
     cache_line_data_t   dd_load_data;           // From dcache_data_stage of dcache_data_stage.v
     logic               dd_membar_en;           // From dcache_data_stage of dcache_data_stage.v
-    logic               dd_privilege_op_fault;  // From dcache_data_stage of dcache_data_stage.v
     l1d_addr_t          dd_request_vaddr;       // From dcache_data_stage of dcache_data_stage.v
     logic               dd_rollback_en;         // From dcache_data_stage of dcache_data_stage.v
     scalar_t            dd_rollback_pc;         // From dcache_data_stage of dcache_data_stage.v
@@ -101,13 +99,10 @@ module core
     logic               dd_store_synchronized;  // From dcache_data_stage of dcache_data_stage.v
     thread_idx_t        dd_store_thread_idx;    // From dcache_data_stage of dcache_data_stage.v
     subcycle_t          dd_subcycle;            // From dcache_data_stage of dcache_data_stage.v
-    logic               dd_supervisor_fault;    // From dcache_data_stage of dcache_data_stage.v
     logic               dd_suspend_thread;      // From dcache_data_stage of dcache_data_stage.v
     thread_idx_t        dd_thread_idx;          // From dcache_data_stage of dcache_data_stage.v
-    logic               dd_tlb_miss;            // From dcache_data_stage of dcache_data_stage.v
     logic               dd_update_lru_en;       // From dcache_data_stage of dcache_data_stage.v
     l1d_way_idx_t       dd_update_lru_way;      // From dcache_data_stage of dcache_data_stage.v
-    logic               dd_write_fault;         // From dcache_data_stage of dcache_data_stage.v
     l1d_way_idx_t       dt_fill_lru;            // From dcache_tag_stage of dcache_tag_stage.v
     decoded_instruction_t dt_instruction;       // From dcache_tag_stage of dcache_tag_stage.v
     logic               dt_instruction_valid;   // From dcache_tag_stage of dcache_tag_stage.v

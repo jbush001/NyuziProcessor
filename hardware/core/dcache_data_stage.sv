@@ -68,11 +68,6 @@ module dcache_data_stage(
     output logic                              dd_is_io_address,
     output logic                              dd_fault,
     output trap_reason_t                      dd_fault_reason,
-    output logic                              dd_alignment_fault,
-    output logic                              dd_write_fault,
-    output logic                              dd_tlb_miss,
-    output logic                              dd_supervisor_fault,
-    output logic                              dd_privilege_op_fault,
 
     // From control registers
     input logic                               cr_supervisor_en[`THREADS_PER_CORE],
