@@ -28,7 +28,9 @@ This requires Ubuntu 14 or later to get the proper package versions. It should
 work for other distributions, but you will probably need to change some package
 names.
 
-	sudo apt-get -y install autoconf cmake make gcc g++ bison flex python perl emacs openjdk-7-jdk swig zlib1g-dev python-dev libxml2-dev libedit-dev ncurses-dev libsdl2-dev gtkwave imagemagick
+	sudo apt-get -y install autoconf cmake make gcc g++ bison flex python \
+	    perl emacs openjdk-7-jdk swig zlib1g-dev python-dev libxml2-dev \
+	    libedit-dev ncurses-dev libsdl2-dev gtkwave imagemagick
 
 *Emacs is used for [verilog-mode](http://www.veripool.org/wiki/verilog-mode) AUTO macros.
 The makefile executes this operation in batch mode*
@@ -63,9 +65,12 @@ The following script will download and install the
 
     build/setup_tools.sh
 
-Build everything else and run unit tests:
+Build everything else:
 
     make
+    
+Run tests:
+    
     make test
 
 ## What next?
