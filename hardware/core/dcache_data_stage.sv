@@ -234,7 +234,8 @@ module dcache_data_stage(
     assign dd_dinvalidate_en = cache_control_en
         && dt_instruction.cache_control_op == CACHE_DINVALIDATE
         && dt_tlb_hit
-        && !is_io_address;
+        && !is_io_address
+        && cr_supervisor_en[dt_thread_idx];
     assign dd_membar_en = cache_control_en
         && dt_instruction.cache_control_op == CACHE_MEMBAR;
     assign is_tlb_update = cache_control_en
@@ -475,7 +476,8 @@ module dcache_data_stage(
     assign alignment_fault = (dcache_load_en || dcache_store_en) && is_unaligned;
     assign privilege_op_fault = !cr_supervisor_en[dt_thread_idx]
         && ((creg_access_en && !dt_instruction.is_load)
-        || is_tlb_update);
+            || is_tlb_update
+            || (cache_control_en && dt_instruction.cache_control_op == CACHE_DINVALIDATE));
     assign write_fault = !dt_tlb_writable
         && (dcache_store_en || (io_access_en && !dt_instruction.is_load))
         && !supervisor_fault;

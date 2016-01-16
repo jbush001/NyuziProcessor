@@ -85,6 +85,7 @@ register_tests(run_io_interrupt, ['io_interrupt'])
 register_tests(run_multicycle, ['multicycle'])
 register_generic_test('creg_non_supervisor')
 register_generic_test('eret_non_supervisor')
+register_generic_test('dinvalidate_non_supervisor')
 register_generic_test('inst_align_fault')
 register_tests(
     run_unaligned_data_fault, [

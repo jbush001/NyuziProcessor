@@ -1669,6 +1669,14 @@ static void executeCacheControlInst(Thread *thread, uint32_t instruction)
     switch (op)
     {
         case CC_DINVALIDATE:
+            if (!thread->enableSupervisor)
+            {
+                raiseTrap(thread, 0, TR_PRIVILEGED_OP);
+                return;
+            }
+
+            // Falls through...
+
         case CC_DFLUSH:
         {
             // This needs to fault if the TLB entry isn't present. translateAddress
