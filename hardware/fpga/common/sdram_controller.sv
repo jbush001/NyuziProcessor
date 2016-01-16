@@ -25,9 +25,9 @@
 //
 
 module sdram_controller
-    #(parameter                              DATA_WIDTH = 32,
-    parameter                              ROW_ADDR_WIDTH = 12, // 4096 rows
-    parameter                              COL_ADDR_WIDTH = 8, // 256 columns
+    #(parameter DATA_WIDTH = 32,
+    parameter ROW_ADDR_WIDTH = 12, // 4096 rows
+    parameter COL_ADDR_WIDTH = 8, // 256 columns
 
     // These are expressed in numbers of clocks. Each one is the number
     // of clocks of delay minus one. Compute this by dividing timing

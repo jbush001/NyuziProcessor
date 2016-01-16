@@ -45,7 +45,6 @@ module vga_controller
     // sufficient memory bandwidth even when ping-ponging.
     localparam BURST_LENGTH = 64;
     localparam PIXEL_FIFO_LENGTH = 128;
-    localparam DEFAULT_FB_ADDR = 32'h200000;
 
     typedef enum {
         STATE_WAIT_FRAME_START,
@@ -95,11 +94,12 @@ module vga_controller
         .full(),
         .dequeue_en(pixel_en && in_visible_region && !pixel_fifo_empty));
 
+    // DMA state machine
     always_ff @(posedge clk, posedge reset)
     begin
         if (reset)
         begin
-            vram_addr <= DEFAULT_FB_ADDR;
+            vram_addr <= '0;
             axi_state <= STATE_WAIT_FRAME_START;
 
             /*AUTORESET*/
