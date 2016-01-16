@@ -120,7 +120,8 @@ enum _BranchType
 };
 typedef enum _BranchType BranchType;
 
-enum _ControlRegister {
+enum _ControlRegister
+{
     CR_THREAD_ID = 0,
     CR_FAULT_HANDLER = 1,
     CR_FAULT_PC = 2,

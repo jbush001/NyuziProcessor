@@ -27,7 +27,6 @@ SRCS=main.c \
 	cosimulation.c \
 	remote-gdb.c \
 	device.c \
-	util.c \
 	fbwindow.c \
 	sdmmc.c
 

@@ -42,7 +42,7 @@
 #define TALLY_INSTRUCTION(type) do { } while (0)
 #endif
 
-#define INVALID_LINK_ADDR 0xffffffff
+#define INVALID_ADDR 0xfffffffful
 
 // This is used to signal an instruction that may be a breakpoint. We use
 // a special instruction to avoid a breakpoint lookup on every instruction cycle.
@@ -186,8 +186,8 @@ Core *initCore(uint32_t memorySize, uint32_t totalThreads, bool randomizeMemory)
     for (i = 0; i < TLB_SETS * TLB_WAYS; i++)
     {
         // Set to invalid (unaligned) addresses so these don't match
-        core->itlb[i].virtualAddress = 0xffffffffu;
-        core->dtlb[i].virtualAddress = 0xffffffffu;
+        core->itlb[i].virtualAddress = INVALID_ADDR;
+        core->dtlb[i].virtualAddress = INVALID_ADDR;
     }
 
     core->totalThreads = totalThreads;
@@ -196,7 +196,7 @@ Core *initCore(uint32_t memorySize, uint32_t totalThreads, bool randomizeMemory)
     {
         core->threads[threadid].core = core;
         core->threads[threadid].id = threadid;
-        core->threads[threadid].linkedAddress = INVALID_LINK_ADDR;
+        core->threads[threadid].linkedAddress = INVALID_ADDR;
         core->threads[threadid].enableSupervisor = true;
         core->threads[threadid].trapEnableSupervisor[0] = true;
     }
@@ -552,7 +552,7 @@ static void invalidateSyncAddress(Core *core, uint32_t address)
     for (threadId = 0; threadId < core->totalThreads; threadId++)
     {
         if (core->threads[threadId].linkedAddress == address / CACHE_LINE_LENGTH)
-            core->threads[threadId].linkedAddress = INVALID_LINK_ADDR;
+            core->threads[threadId].linkedAddress = INVALID_ADDR;
     }
 }
 
@@ -1309,9 +1309,7 @@ static void executeBlockLoadStoreInst(Thread *thread, uint32_t instruction)
     {
         uint32_t loadValue[NUM_VECTOR_LANES];
         for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-        {
             loadValue[lane] = blockPtr[NUM_VECTOR_LANES - lane - 1];
-        }
 
         setVectorReg(thread, destsrcreg, mask, loadValue);
     }
@@ -1744,10 +1742,10 @@ static void executeCacheControlInst(Thread *thread, uint32_t instruction)
             for (way = 0; way < TLB_WAYS; way++)
             {
                 if (thread->core->itlb[tlbIndex + way].virtualAddress == virtualAddress)
-                    thread->core->itlb[tlbIndex + way].virtualAddress = 0xffffffffu;
+                    thread->core->itlb[tlbIndex + way].virtualAddress = INVALID_ADDR;
 
                 if (thread->core->dtlb[tlbIndex + way].virtualAddress == virtualAddress)
-                    thread->core->dtlb[tlbIndex + way].virtualAddress = 0xffffffffu;
+                    thread->core->dtlb[tlbIndex + way].virtualAddress = INVALID_ADDR;
             }
 
             break;
@@ -1760,8 +1758,8 @@ static void executeCacheControlInst(Thread *thread, uint32_t instruction)
             for (i = 0; i < TLB_SETS * TLB_WAYS; i++)
             {
                 // Set to invalid (unaligned) addresses so these don't match
-                thread->core->itlb[i].virtualAddress = 0xffffffffu;
-                thread->core->dtlb[i].virtualAddress = 0xffffffffu;
+                thread->core->itlb[i].virtualAddress = INVALID_ADDR;
+                thread->core->dtlb[i].virtualAddress = INVALID_ADDR;
             }
 
             break;

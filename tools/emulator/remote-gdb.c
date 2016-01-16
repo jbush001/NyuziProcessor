@@ -87,7 +87,8 @@ static int readPacket(char *request, int maxLength)
     return packetLen;
 }
 
-static const char *kGenericRegs[] = {
+static const char *kGenericRegs[] =
+{
     "fp",
     "sp",
     "ra",

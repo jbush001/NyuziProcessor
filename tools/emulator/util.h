@@ -28,8 +28,6 @@
 #define UINT16_PTR(memory, address) ((uint16_t*)(memory) + (address) / 2)
 #define UINT32_PTR(memory, address) ((uint32_t*)(memory) + (address) / 4)
 
-int parseHexVector(const char *str, uint32_t *vectorValues, bool endianSwap);
-
 static inline uint32_t endianSwap32(uint32_t value)
 {
     return ((value & 0x000000ff) << 24)

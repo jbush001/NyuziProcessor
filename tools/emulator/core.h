@@ -14,7 +14,6 @@
 // limitations under the License.
 //
 
-
 #ifndef __CORE_H
 #define __CORE_H
 

@@ -14,7 +14,6 @@
 // limitations under the License.
 //
 
-
 #ifndef __COSIMULATION_H
 #define __COSIMULATION_H
 
