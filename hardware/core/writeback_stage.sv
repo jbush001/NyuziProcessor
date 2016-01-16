@@ -452,7 +452,6 @@ module writeback_stage(
                             begin
                                 writeback_value_nxt[0] = cr_creg_read_val;
                                 writeback_mask_nxt = {`VECTOR_LANES{1'b1}};
-                                assert(!dd_instruction.dest_is_vector);
                             end
 
                             MEM_BLOCK,
