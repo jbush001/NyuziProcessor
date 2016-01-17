@@ -22,13 +22,18 @@ CFLAGS+=-g -Wall -W
 
 SRCS=ashldi3.s \
 	divsi3.c \
+	divdi3.c \
 	lshrdi3.s \
 	memcpy.s \
 	memset.c \
 	modsi3.c \
+	moddi3.c \
 	udivsi3.c \
+	udivdi3.c \
 	umodsi3.c \
-	memcmp.c
+	umoddi3.c \
+	memcmp.c \
+	floatundisf.c
 
 OBJS := $(SRCS_TO_OBJS)
 DEPS := $(SRCS_TO_DEPS)
