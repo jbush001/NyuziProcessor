@@ -49,9 +49,8 @@ int main(void)
                      | TLB_WRITABLE | TLB_PRESENT);
 
     // Alias mapping that we will use for test (the normal mapped region is used
-    // to halt the test). This is also not writable, but the supervisor fault should
-    // take priority.
-    add_dtlb_mapping(0x100000, IO_REGION_BASE | TLB_SUPERVISOR
+    // to halt the test).
+    add_dtlb_mapping(0x100000, IO_REGION_BASE | TLB_SUPERVISOR | TLB_WRITABLE
                      | TLB_PRESENT);
 
     __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);

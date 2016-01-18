@@ -48,10 +48,9 @@ int main(void)
     add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE
                      | TLB_PRESENT);
 
-    // Data region marked supervisor. Note that this also isn't writable,
-    // but the supervisor fault should take priority.
+    // Data region marked supervisor.
     add_dtlb_mapping(data_addr, ((unsigned int) data_addr) | TLB_SUPERVISOR
-                     | TLB_PRESENT);
+                     | TLB_WRITABLE | TLB_PRESENT);
 
     *data_addr = 0x12345678;
 

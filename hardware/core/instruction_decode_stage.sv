@@ -217,7 +217,8 @@ module instruction_decode_stage(
         || ifd_page_fault || ifd_executable_fault;
 
     // Check for TLB miss first, since permission bits are not valid if there
-    // is a TLB miss.
+    // is a TLB miss. The order of the remaining faults should match that in
+    // dcache_data_stage for consistency.
     always_comb
     begin
         if (raise_interrupt)
@@ -228,10 +229,10 @@ module instruction_decode_stage(
             decoded_instr_nxt.trap_reason = TR_PAGE_FAULT;
         else if (ifd_supervisor_fault)
             decoded_instr_nxt.trap_reason = TR_IFETCH_SUPERVISOR;
-        else if (ifd_executable_fault)
-            decoded_instr_nxt.trap_reason = TR_NOT_EXECUTABLE;
         else if (ifd_alignment_fault)
             decoded_instr_nxt.trap_reason = TR_IFETCH_ALIGNNMENT;
+        else if (ifd_executable_fault)
+            decoded_instr_nxt.trap_reason = TR_NOT_EXECUTABLE;
         else if (dlut_out.illegal)
             decoded_instr_nxt.trap_reason = TR_ILLEGAL_INSTRUCTION;
         else if (is_syscall)

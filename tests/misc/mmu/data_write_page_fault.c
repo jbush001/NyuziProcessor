@@ -45,10 +45,8 @@ int main(void)
     add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE | TLB_PRESENT);
     add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE | TLB_PRESENT);
 
-    // Data region that doesn't have the present bit set. Note that this also
-    // isn't writable and is supervisor, but the not present exception should
-    // take priority.
-    add_dtlb_mapping(data_addr, ((unsigned int)data_addr) | TLB_SUPERVISOR);
+    // Data region that doesn't have the present bit set.
+    add_dtlb_mapping(data_addr, ((unsigned int)data_addr) | TLB_WRITABLE);
 
     __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);
 

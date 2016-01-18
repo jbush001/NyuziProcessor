@@ -51,9 +51,8 @@ int main(void)
     add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE
                      | TLB_PRESENT);
 
-    // Add TLB mapping, but without present bit. This is also not executable,
-    // and supervisor, but the page fault should take priority.
-    add_itlb_mapping(TEST_CODE_SEG_BASE, TEST_CODE_SEG_BASE | TLB_SUPERVISOR);
+    // Add TLB mapping, but without present bit.
+    add_itlb_mapping(TEST_CODE_SEG_BASE, TEST_CODE_SEG_BASE | TLB_EXECUTABLE);
     *code_addr = INSTRUCTION_RET;
     asm volatile("membar");
 

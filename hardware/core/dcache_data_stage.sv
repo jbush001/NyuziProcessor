@@ -503,15 +503,16 @@ module dcache_data_stage(
         dd_rollback_pc <= dt_instruction.pc;
 
         // Check for TLB miss first, since permission bits are not valid if
-        // there is a TLB miss.
+        // there is a TLB miss. The order of the remaining items should match
+        // that in instruction_decode_stage for consistency.
         if (tlb_miss)
             dd_fault_reason <= TR_DTLB_MISS;
         else if (page_fault)
             dd_fault_reason <= TR_PAGE_FAULT;
-        else if (alignment_fault)
-            dd_fault_reason <= TR_DATA_ALIGNMENT;
         else if (supervisor_fault)
             dd_fault_reason <= TR_DATA_SUPERVISOR;
+        else if (alignment_fault)
+            dd_fault_reason <= TR_DATA_ALIGNMENT;
         else if (privilege_op_fault)
             dd_fault_reason <= TR_PRIVILEGED_OP;
         else // write fault
