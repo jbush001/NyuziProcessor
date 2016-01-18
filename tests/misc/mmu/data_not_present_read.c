@@ -16,10 +16,9 @@
 
 #include "mmu_test_common.h"
 
-unsigned int globaltmp;
+// Test that reading from a non-present data page faults
 
-// Test that writing memory mapped I/O from a supervisor page from
-// user mode faults.
+volatile unsigned int *data_addr = (volatile unsigned int*) 0x100000;
 
 void fault_handler()
 {
@@ -34,7 +33,6 @@ void fault_handler()
 int main(void)
 {
     unsigned int va;
-    int asid;
     unsigned int stack_addr = (unsigned int) &va & ~(PAGE_SIZE - 1);
 
     // Map code & data
@@ -45,22 +43,15 @@ int main(void)
     }
 
     add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE | TLB_PRESENT);
-    add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_SUPERVISOR
-                     | TLB_WRITABLE | TLB_PRESENT);
+    add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE | TLB_PRESENT);
 
-    // Alias mapping that we will use for test (the normal mapped region is used
-    // to halt the test). This is supervisor and non-writab
-    add_dtlb_mapping(0x100000, IO_REGION_BASE | TLB_PRESENT);
+    // Data region that doesn't have the present bit set.
+    add_dtlb_mapping(data_addr, ((unsigned int)data_addr) | TLB_WRITABLE);
 
     __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);
     __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
-
-    *((volatile unsigned int*) 0x100000) = 0x12;
-    // CHECK: FAULT 7 00100000 current flags 06 prev flags 06
-
-    // XXX no way to verify that the write wasn't sent to external bus
-
-    printf("should_not_be_here\n"); // CHECKN: should_not_be_here
+    printf("read2 data_addr %08x\n", *data_addr);	// CHECK: FAULT 3 00100000 current flags 06 prev flags 06
+    // CHECKN: read2 data_addr
 }
 

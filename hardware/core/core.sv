@@ -119,11 +119,13 @@ module core
     l1d_tag_t           dt_tag [`L1D_WAYS];     // From dcache_tag_stage of dcache_tag_stage.v
     thread_idx_t        dt_thread_idx;          // From dcache_tag_stage of dcache_tag_stage.v
     logic               dt_tlb_hit;             // From dcache_tag_stage of dcache_tag_stage.v
+    logic               dt_tlb_present;         // From dcache_tag_stage of dcache_tag_stage.v
     logic               dt_tlb_supervisor;      // From dcache_tag_stage of dcache_tag_stage.v
     logic               dt_tlb_writable;        // From dcache_tag_stage of dcache_tag_stage.v
     logic               dt_update_itlb_en;      // From dcache_tag_stage of dcache_tag_stage.v
     logic               dt_update_itlb_global;  // From dcache_tag_stage of dcache_tag_stage.v
     page_index_t        dt_update_itlb_ppage_idx;// From dcache_tag_stage of dcache_tag_stage.v
+    logic               dt_update_itlb_present; // From dcache_tag_stage of dcache_tag_stage.v
     logic               dt_update_itlb_supervisor;// From dcache_tag_stage of dcache_tag_stage.v
     logic               dt_valid [`L1D_WAYS];   // From dcache_tag_stage of dcache_tag_stage.v
     logic [`VECTOR_LANES-1:0] [7:0] fx1_add_exponent;// From fp_execute_stage1 of fp_execute_stage1.v
@@ -209,6 +211,7 @@ module core
     scalar_t            ifd_instruction;        // From ifetch_data_stage of ifetch_data_stage.v
     logic               ifd_instruction_valid;  // From ifetch_data_stage of ifetch_data_stage.v
     logic               ifd_near_miss;          // From ifetch_data_stage of ifetch_data_stage.v
+    logic               ifd_page_fault;         // From ifetch_data_stage of ifetch_data_stage.v
     scalar_t            ifd_pc;                 // From ifetch_data_stage of ifetch_data_stage.v
     logic               ifd_supervisor_fault;   // From ifetch_data_stage of ifetch_data_stage.v
     thread_idx_t        ifd_thread_idx;         // From ifetch_data_stage of ifetch_data_stage.v
@@ -222,6 +225,7 @@ module core
     l1i_tag_t           ift_tag [`L1I_WAYS];    // From ifetch_tag_stage of ifetch_tag_stage.v
     thread_idx_t        ift_thread_idx;         // From ifetch_tag_stage of ifetch_tag_stage.v
     logic               ift_tlb_hit;            // From ifetch_tag_stage of ifetch_tag_stage.v
+    logic               ift_tlb_present;        // From ifetch_tag_stage of ifetch_tag_stage.v
     logic               ift_tlb_supervisor;     // From ifetch_tag_stage of ifetch_tag_stage.v
     logic               ift_valid [`L1I_WAYS];  // From ifetch_tag_stage of ifetch_tag_stage.v
     thread_bitmap_t     ior_pending;            // From io_request_queue of io_request_queue.v

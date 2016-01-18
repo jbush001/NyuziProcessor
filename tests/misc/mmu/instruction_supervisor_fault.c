@@ -37,12 +37,13 @@ int main(void)
     // Map code & data
     for (va = 0; va < 0x10000; va += PAGE_SIZE)
     {
-        add_itlb_mapping(va, va | TLB_SUPERVISOR);
-        add_dtlb_mapping(va, va | TLB_WRITABLE | TLB_SUPERVISOR);
+        add_itlb_mapping(va, va | TLB_SUPERVISOR | TLB_PRESENT);
+        add_dtlb_mapping(va, va | TLB_WRITABLE | TLB_SUPERVISOR | TLB_PRESENT);
     }
 
-    add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE);
-    add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE);
+    add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE | TLB_PRESENT);
+    add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE
+                     | TLB_PRESENT);
 
     __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);
 

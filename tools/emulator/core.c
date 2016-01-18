@@ -666,6 +666,12 @@ static bool translateAddress(Thread *thread, uint32_t virtualAddress, uint32_t *
                 && ((setEntries[way].physAddrAndFlags & TLB_GLOBAL) != 0
                     || setEntries[way].asid == thread->currentAsid))
         {
+            if ((setEntries[way].physAddrAndFlags & TLB_PRESENT) == 0)
+            {
+                raiseTrap(thread, virtualAddress, TR_PAGE_FAULT);
+                return false;
+            }
+
             if ((setEntries[way].physAddrAndFlags & TLB_SUPERVISOR) != 0
                     && !thread->enableSupervisor)
             {
@@ -1675,7 +1681,7 @@ static void executeCacheControlInst(Thread *thread, uint32_t instruction)
                 return;
             }
 
-            // Falls through...
+        // Falls through...
 
         case CC_DFLUSH:
         {

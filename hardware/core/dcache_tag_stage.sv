@@ -56,6 +56,7 @@ module dcache_tag_stage
     output logic                                dt_valid[`L1D_WAYS],
     output l1d_tag_t                            dt_tag[`L1D_WAYS],
     output logic                                dt_tlb_supervisor,
+    output logic                                dt_tlb_present,
 
     // from dcache_data_stage
     input                                       dd_update_lru_en,
@@ -67,6 +68,7 @@ module dcache_tag_stage
     output page_index_t                         dt_itlb_vpage_idx,
     output                                      dt_update_itlb_en,
     output page_index_t                         dt_update_itlb_ppage_idx,
+    output                                      dt_update_itlb_present,
     output                                      dt_update_itlb_supervisor,
     output                                      dt_update_itlb_global,
 
@@ -106,6 +108,7 @@ module dcache_tag_stage
     logic is_valid_cache_control;
     logic update_dtlb_en;
     logic tlb_writable;
+    logic tlb_present;
     logic tlb_supervisor;
     tlb_entry_t new_tlb_value;
 
@@ -135,6 +138,7 @@ module dcache_tag_stage
         && cr_supervisor_en[of_thread_idx];
     assign dt_update_itlb_supervisor = new_tlb_value.supervisor;
     assign dt_update_itlb_global = new_tlb_value.global;
+    assign dt_update_itlb_present = new_tlb_value.present;
     assign tlb_lookup_en = instruction_valid
         && of_instruction.memory_access_type != MEM_CONTROL_REG
         && !update_dtlb_en
@@ -228,11 +232,13 @@ module dcache_tag_stage
         .request_vpage_idx(request_addr_nxt[31-:`PAGE_NUM_BITS]),
         .request_asid(cr_current_asid[of_thread_idx]),
         .update_ppage_idx(new_tlb_value.ppage_idx),
+        .update_present(new_tlb_value.present),
         .update_writable(new_tlb_value.writable),
         .update_supervisor(new_tlb_value.supervisor),
         .update_global(new_tlb_value.global),
         .lookup_ppage_idx(tlb_ppage_idx),
         .lookup_hit(tlb_hit),
+        .lookup_present(tlb_present),
         .lookup_writable(tlb_writable),
         .lookup_supervisor(tlb_supervisor),
         .*);
@@ -246,6 +252,7 @@ module dcache_tag_stage
         begin
             dt_tlb_hit = tlb_hit;
             dt_tlb_writable = tlb_writable;
+            dt_tlb_present = tlb_present;
             dt_tlb_supervisor = tlb_supervisor;
             ppage_idx = tlb_ppage_idx;
         end
@@ -253,6 +260,7 @@ module dcache_tag_stage
         begin
             dt_tlb_hit = 1;
             dt_tlb_writable = 1;
+            dt_tlb_present = 1;
             dt_tlb_supervisor = 0;
             ppage_idx = fetched_addr[31-:`PAGE_NUM_BITS];
         end
@@ -261,6 +269,7 @@ module dcache_tag_stage
     // If MMU is disabled, identity map addresses
     assign dt_tlb_hit = 1;
     assign dt_tlb_writable = 1;
+    assign dt_tlb_present = 1;
     assign ppage_idx = fetched_addr[31-:`PAGE_NUM_BITS];
 `endif
 

@@ -42,6 +42,7 @@ module ifetch_tag_stage
     output l1i_tag_t                    ift_tag[`L1I_WAYS],
     output logic                        ift_valid[`L1I_WAYS],
     output                              ift_tlb_supervisor,
+    output                              ift_tlb_present,
 
     // From ifetch_data_stage
     input                               ifd_update_lru_en,
@@ -71,6 +72,7 @@ module ifetch_tag_stage
     input                               dt_update_itlb_en,
     input                               dt_update_itlb_supervisor,
     input                               dt_update_itlb_global,
+    input                               dt_update_itlb_present,
     input page_index_t                  dt_update_itlb_ppage_idx,
 
     // From writeback_stage
@@ -97,6 +99,7 @@ module ifetch_tag_stage
     page_index_t ppage_idx;
     logic tlb_hit;
     logic tlb_supervisor;
+    logic tlb_present;
 
     //
     // Pick which thread to fetch next.
@@ -200,6 +203,7 @@ module ifetch_tag_stage
     ) itlb(
         .lookup_en(cache_fetch_en),
         .update_en(dt_update_itlb_en),
+        .update_present(dt_update_itlb_present),
         .update_writable(1'b0),
         .update_supervisor(dt_update_itlb_supervisor),
         .update_global(dt_update_itlb_global),
@@ -211,6 +215,7 @@ module ifetch_tag_stage
         .lookup_ppage_idx(tlb_ppage_idx),
         .lookup_hit(tlb_hit),
         .lookup_writable(),
+        .lookup_present(tlb_present),
         .lookup_supervisor(tlb_supervisor),
         .*);
 
@@ -221,6 +226,7 @@ module ifetch_tag_stage
         if (cr_mmu_en[ift_thread_idx])
         begin
             ift_tlb_hit = tlb_hit;
+            ift_tlb_present = tlb_present;
             ift_tlb_supervisor = tlb_supervisor;
             ppage_idx = tlb_ppage_idx;
         end
@@ -228,6 +234,7 @@ module ifetch_tag_stage
         begin
             // MMU disabled, identity map.
             ift_tlb_hit = 1;
+            ift_tlb_present = 1;
             ift_tlb_supervisor = 0;
             ppage_idx = last_selected_pc[31-:`PAGE_NUM_BITS];
         end
@@ -235,6 +242,7 @@ module ifetch_tag_stage
 `else
     // If MMU is disabled, identity map addresses
     assign ift_tlb_hit = 1;
+    assign ift_tlb_present = 1;
     assign ift_tlb_supervisor = 0;
     assign ppage_idx = last_selected_pc[31-:`PAGE_NUM_BITS];;
 `endif

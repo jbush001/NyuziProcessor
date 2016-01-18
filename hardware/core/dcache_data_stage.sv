@@ -36,12 +36,13 @@ module dcache_data_stage(
     input l1d_addr_t                          dt_request_vaddr,
     input l1d_addr_t                          dt_request_paddr,
     input                                     dt_tlb_hit,
+    input                                     dt_tlb_present,
+    input                                     dt_tlb_supervisor,
     input                                     dt_tlb_writable,
     input vector_t                            dt_store_value,
     input subcycle_t                          dt_subcycle,
     input                                     dt_valid[`L1D_WAYS],
     input l1d_tag_t                           dt_tag[`L1D_WAYS],
-    input                                     dt_tlb_supervisor,
 
     // To dcache_tag_stage
     output logic                              dd_update_lru_en,
@@ -149,6 +150,7 @@ module dcache_data_stage(
     logic privilege_op_fault;
     logic write_fault;
     logic tlb_miss;
+    logic page_fault;
 
     // Unlike earlier stages, this commits instruction side effects like stores,
     // so it needs to check if there is a rollback (which would be for the
@@ -200,6 +202,7 @@ module dcache_data_stage(
     assign dd_store_en = dcache_store_en
         && !is_unaligned
         && dt_tlb_writable
+        && dt_tlb_present
         && !supervisor_fault;
     assign dd_store_thread_idx = dt_thread_idx;
 
@@ -209,6 +212,7 @@ module dcache_data_stage(
         && dt_instruction.is_memory_access
         && dt_instruction.memory_access_type != MEM_CONTROL_REG
         && dt_tlb_hit
+        && dt_tlb_present
         && !supervisor_fault
         && is_io_address;
     assign dd_io_write_en = io_access_en
@@ -226,7 +230,8 @@ module dcache_data_stage(
         && dt_instruction.is_cache_control;
     assign dd_flush_en = cache_control_en
         && dt_instruction.cache_control_op == CACHE_DFLUSH
-        && dt_tlb_hit
+        && !supervisor_fault
+        && dt_tlb_present
         && !is_io_address; // XXX should a cache control of IO address raise exception?
     assign dd_iinvalidate_en = cache_control_en
         && dt_instruction.cache_control_op == CACHE_IINVALIDATE
@@ -234,6 +239,7 @@ module dcache_data_stage(
     assign dd_dinvalidate_en = cache_control_en
         && dt_instruction.cache_control_op == CACHE_DINVALIDATE
         && dt_tlb_hit
+        && dt_tlb_present
         && !is_io_address
         && cr_supervisor_en[dt_thread_idx];
     assign dd_membar_en = cache_control_en
@@ -480,9 +486,12 @@ module dcache_data_stage(
             || (cache_control_en && dt_instruction.cache_control_op == CACHE_DINVALIDATE));
     assign write_fault = !dt_tlb_writable
         && (dcache_store_en || (io_access_en && !dt_instruction.is_load))
-        && !supervisor_fault;
+        && !supervisor_fault
+        && dt_tlb_present;
     assign tlb_miss = is_tlb_access && !dt_tlb_hit;
-    assign supervisor_fault = dt_tlb_supervisor && !cr_supervisor_en[dt_thread_idx];
+    assign supervisor_fault = dt_tlb_supervisor && !cr_supervisor_en[dt_thread_idx]
+        && dt_tlb_present;
+    assign page_fault = (dcache_load_en || dcache_store_en) && !dt_tlb_present;
 
     always_ff @(posedge clk)
     begin
@@ -497,6 +506,8 @@ module dcache_data_stage(
         // there is a TLB miss.
         if (tlb_miss)
             dd_fault_reason <= TR_DTLB_MISS;
+        else if (page_fault)
+            dd_fault_reason <= TR_PAGE_FAULT;
         else if (alignment_fault)
             dd_fault_reason <= TR_DATA_ALIGNMENT;
         else if (supervisor_fault)
@@ -546,7 +557,7 @@ module dcache_data_stage(
 
             // Fault handling
             dd_fault <= alignment_fault || supervisor_fault || privilege_op_fault
-                || write_fault || tlb_miss;
+                || write_fault || tlb_miss || page_fault;
         end
     end
 endmodule

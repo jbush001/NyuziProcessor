@@ -36,6 +36,7 @@ module tlb
     input page_index_t        request_vpage_idx,
     input [`ASID_WIDTH - 1:0] request_asid,
     input page_index_t        update_ppage_idx,
+    input                     update_present,
     input                     update_writable,
     input                     update_supervisor,
     input                     update_global,
@@ -43,6 +44,7 @@ module tlb
     // Response
     output page_index_t       lookup_ppage_idx,
     output logic              lookup_hit,
+    output logic              lookup_present,
     output logic              lookup_writable,
     output logic              lookup_supervisor);
 
@@ -52,6 +54,7 @@ module tlb
 
     logic[NUM_WAYS - 1:0] way_hit_oh;
     page_index_t way_ppage_idx[NUM_WAYS];
+    logic way_present[NUM_WAYS];
     logic way_writable[NUM_WAYS];
     logic way_supervisor[NUM_WAYS];
     page_index_t request_vpage_idx_latched;
@@ -64,6 +67,7 @@ module tlb
     logic tlb_read_en;
     logic[NUM_WAYS - 1:0] way_update_oh;
     logic[NUM_WAYS - 1:0] next_way_oh;
+    logic update_present_latched;
     logic update_writable_latched;
     logic update_supervisor_latched;
     logic update_global_latched;
@@ -88,7 +92,7 @@ module tlb
 
             sram_1r1w #(
                 .SIZE(NUM_SETS),
-                .DATA_WIDTH(`PAGE_NUM_BITS * 2 + 3 + `ASID_WIDTH),
+                .DATA_WIDTH(`PAGE_NUM_BITS * 2 + 4 + `ASID_WIDTH),
                 .READ_DURING_WRITE("NEW_DATA")
             ) tlb_paddr_sram(
                 .read_en(tlb_read_en),
@@ -96,6 +100,7 @@ module tlb
                 .read_data({way_vpage_idx,
                     way_asid,
                     way_ppage_idx[way_idx],
+                    way_present[way_idx],
                     way_writable[way_idx],
                     way_supervisor[way_idx],
                     way_global}),
@@ -104,6 +109,7 @@ module tlb
                 .write_data({request_vpage_idx_latched,
                     request_asid_latched,
                     update_ppage_idx_latched,
+                    update_present_latched,
                     update_writable_latched,
                     update_supervisor_latched,
                     update_global_latched}),
@@ -147,6 +153,7 @@ module tlb
     always_ff @(posedge clk)
     begin
         update_ppage_idx_latched <= update_ppage_idx;
+        update_present_latched <= update_present;
         update_writable_latched <= update_writable;
         update_supervisor_latched <= update_supervisor;
         update_global_latched <= update_global;
@@ -185,6 +192,7 @@ module tlb
         lookup_ppage_idx = 0;
         lookup_writable = 0;
         lookup_supervisor = 0;
+        lookup_present = 0;
         for (int i = 0; i < NUM_WAYS; i++)
         begin
             if (way_hit_oh[i])
@@ -192,6 +200,7 @@ module tlb
                 lookup_ppage_idx |= way_ppage_idx[i];
                 lookup_writable |= way_writable[i];
                 lookup_supervisor |= way_supervisor[i];
+                lookup_present |= way_present[i];
             end
         end
     end

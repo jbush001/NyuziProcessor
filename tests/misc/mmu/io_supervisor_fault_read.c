@@ -40,16 +40,18 @@ int main(void)
     // Map code & data
     for (va = 0; va < 0x10000; va += PAGE_SIZE)
     {
-        add_itlb_mapping(va, va);
-        add_dtlb_mapping(va, va | TLB_WRITABLE | TLB_GLOBAL);
+        add_itlb_mapping(va, va | TLB_PRESENT);
+        add_dtlb_mapping(va, va | TLB_WRITABLE | TLB_GLOBAL | TLB_PRESENT);
     }
 
-    add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE);
-    add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_SUPERVISOR | TLB_WRITABLE);
+    add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE | TLB_PRESENT);
+    add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_SUPERVISOR
+                     | TLB_WRITABLE | TLB_PRESENT);
 
     // Alias mapping that we will use for test (the normal mapped region is used
     // to halt the test). This is supervisor and non-writab
-    add_dtlb_mapping(0x100000, IO_REGION_BASE | TLB_SUPERVISOR | TLB_WRITABLE);
+    add_dtlb_mapping(0x100000, IO_REGION_BASE | TLB_SUPERVISOR | TLB_WRITABLE
+                     | TLB_PRESENT);
 
     __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);
     __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);

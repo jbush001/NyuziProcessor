@@ -33,21 +33,22 @@ void fault_handler()
 int main(void)
 {
     unsigned int va;
-    int asid;
     unsigned int stack_addr = (unsigned int) &va & ~(PAGE_SIZE - 1);
 
     // Map code & data
     for (va = 0; va < 0x10000; va += PAGE_SIZE)
     {
-        add_itlb_mapping(va, va);
-        add_dtlb_mapping(va, va | TLB_WRITABLE | TLB_GLOBAL);
+        add_itlb_mapping(va, va | TLB_PRESENT);
+        add_dtlb_mapping(va, va | TLB_WRITABLE | TLB_GLOBAL | TLB_PRESENT);
     }
 
-    add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE);
-    add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE);
+    add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE | TLB_PRESENT);
+    add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE
+                     | TLB_PRESENT);
 
     // Data region marked supervisor
-    add_dtlb_mapping(data_addr, ((unsigned int) data_addr) | TLB_SUPERVISOR | TLB_WRITABLE);
+    add_dtlb_mapping(data_addr, ((unsigned int) data_addr) | TLB_SUPERVISOR
+                     | TLB_WRITABLE | TLB_PRESENT);
 
     __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);
     __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
@@ -60,5 +61,6 @@ int main(void)
     switch_to_user_mode();
 
     printf("read2 data_addr %08x\n", *data_addr);	// CHECK: FAULT 8 00100000 current flags 06 prev flags 02
+    // CHECKN: read2 data_addr
 }
 

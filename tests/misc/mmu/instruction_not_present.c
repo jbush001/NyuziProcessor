@@ -16,10 +16,13 @@
 
 #include "mmu_test_common.h"
 
-unsigned int globaltmp;
+// Pick an address that will not alias to the existing code segment
+#define TEST_CODE_SEG_BASE 0x109000
 
-// Test that writing memory mapped I/O from a supervisor page from
-// user mode faults.
+typedef void (*test_function_t)();
+
+volatile unsigned int *code_addr = (volatile unsigned int*) TEST_CODE_SEG_BASE;
+test_function_t test_function = (test_function_t) TEST_CODE_SEG_BASE;
 
 void fault_handler()
 {
@@ -34,33 +37,31 @@ void fault_handler()
 int main(void)
 {
     unsigned int va;
-    int asid;
     unsigned int stack_addr = (unsigned int) &va & ~(PAGE_SIZE - 1);
 
     // Map code & data
     for (va = 0; va < 0x10000; va += PAGE_SIZE)
     {
-        add_itlb_mapping(va, va | TLB_PRESENT);
+        // Add not-present ITLB entry
+        add_itlb_mapping(va, va | TLB_WRITABLE | TLB_GLOBAL | TLB_PRESENT);
         add_dtlb_mapping(va, va | TLB_WRITABLE | TLB_GLOBAL | TLB_PRESENT);
     }
 
     add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE | TLB_PRESENT);
-    add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_SUPERVISOR
-                     | TLB_WRITABLE | TLB_PRESENT);
+    add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE
+                     | TLB_PRESENT);
 
-    // Alias mapping that we will use for test (the normal mapped region is used
-    // to halt the test). This is supervisor and non-writab
-    add_dtlb_mapping(0x100000, IO_REGION_BASE | TLB_PRESENT);
+    // Add TLB mapping, but without present bit
+    add_itlb_mapping(TEST_CODE_SEG_BASE, TEST_CODE_SEG_BASE);
+    *code_addr = INSTRUCTION_RET;
+    asm volatile("membar");
 
     __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);
     __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
+    test_function();  // CHECK: FAULT 3 00109000 current flags 06 prev flags 06
 
-    *((volatile unsigned int*) 0x100000) = 0x12;
-    // CHECK: FAULT 7 00100000 current flags 06 prev flags 06
-
-    // XXX no way to verify that the write wasn't sent to external bus
-
-    printf("should_not_be_here\n"); // CHECKN: should_not_be_here
+    printf("should_not_be_here\n");
+    // CHECKN: should_not_be_here
 }
 

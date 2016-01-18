@@ -19,6 +19,7 @@
 #define PAGE_SIZE 0x1000
 #define IO_REGION_BASE 0xffff0000
 
+#define TLB_PRESENT 1
 #define TLB_WRITABLE (1 << 1)
 #define TLB_SUPERVISOR (1 << 3)
 #define TLB_GLOBAL (1 << 4)
@@ -38,6 +39,8 @@
 #define FLAG_MMU_EN (1 << 1)
 #define FLAG_SUPERVISOR_EN (1 << 2)
 
+#define INSTRUCTION_RET 0xc0ff03e0
+
 void add_itlb_mapping(unsigned int va, unsigned int pa)
 {
     asm volatile("itlbinsert %0, %1" : : "r" (va), "r" (pa));
@@ -49,14 +52,14 @@ void add_dtlb_mapping(unsigned int va, unsigned int pa)
 }
 
 // Make this a call to flush the pipeline
-void switch_to_user_mode() __attribute__((noinline))
+void __attribute__((noinline)) switch_to_user_mode()
 {
     __builtin_nyuzi_write_control_reg(CR_FLAGS, __builtin_nyuzi_read_control_reg(CR_FLAGS)
                                       & ~FLAG_SUPERVISOR_EN);
 }
 
 // Make this an explicit call to flush the pipeline
-static void set_asid(int asid) __attribute__((noinline))
+static void __attribute__((noinline)) set_asid(int asid)
 {
     __builtin_nyuzi_write_control_reg(CR_CURRENT_ASID, asid);
 }

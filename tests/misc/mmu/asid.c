@@ -48,21 +48,23 @@ int main(void)
     // Map code & data
     for (va = 0; va < 0x10000; va += PAGE_SIZE)
     {
-        add_itlb_mapping(va, va | TLB_GLOBAL);
-        add_dtlb_mapping(va, va | TLB_WRITABLE | TLB_GLOBAL);
+        add_itlb_mapping(va, va | TLB_GLOBAL | TLB_PRESENT);
+        add_dtlb_mapping(va, va | TLB_WRITABLE | TLB_GLOBAL | TLB_PRESENT);
     }
 
-    add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE | TLB_GLOBAL);
-    add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE | TLB_GLOBAL);
+    add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE | TLB_GLOBAL
+                     | TLB_PRESENT);
+    add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE
+                     | TLB_GLOBAL | TLB_PRESENT);
 
     // Map a private page into address space 1
     set_asid(1);
-    add_dtlb_mapping(VADDR1, PADDR1);
+    add_dtlb_mapping(VADDR1, PADDR1 | TLB_PRESENT);
     *((unsigned int*) PADDR1) = 0xdeadbeef;
 
     // Map a private page into address space 2
     set_asid(2);
-    add_dtlb_mapping(VADDR1, PADDR2);
+    add_dtlb_mapping(VADDR1, PADDR2 | TLB_PRESENT);
     *((unsigned int*) PADDR2) = 0xabcdefed;
 
     // Enable MMU in flags register
