@@ -35,6 +35,8 @@ void do_trap(unsigned int *registers)
 int main(int argc, const char *argv[])
 {
     __builtin_nyuzi_write_control_reg(1, trap_handler);
+
+    // This functions is in gen_illegal_inst_trap.S
     illegal_inst();
 
     printf("DONE\n"); // CHECK: DONE
