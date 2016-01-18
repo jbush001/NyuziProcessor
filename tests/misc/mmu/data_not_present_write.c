@@ -45,13 +45,20 @@ int main(void)
     add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE | TLB_PRESENT);
     add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE | TLB_PRESENT);
 
-    // Data region that doesn't have the present bit set.
-    add_dtlb_mapping(data_addr, ((unsigned int)data_addr) | TLB_WRITABLE);
+    // Data region that doesn't have the present bit set. Note that this also
+    // isn't writable and is supervisor, but the not present exception should
+    // take priority.
+    add_dtlb_mapping(data_addr, ((unsigned int)data_addr) | TLB_SUPERVISOR);
 
     __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);
-    __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
-    *data_addr = 0x123456789; // CHECK: FAULT 3 00100000 current flags 06 prev flags 06
+    // Turn on MMU and switch to user mode
+    __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN);
+
+    // Flush pipeline
+    usleep(0);
+
+    *data_addr = 0x123456789; // CHECK: FAULT 3 00100000 current flags 06 prev flags 02
     printf("should_not_be_here\n");
     // CHECKN: should_not_be_here
 }

@@ -48,19 +48,20 @@ int main(void)
     add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE
                      | TLB_PRESENT);
 
-    // Data region marked supervisor
+    // Data region marked supervisor. Note that this also isn't writable,
+    // but the supervisor fault should take priority.
     add_dtlb_mapping(data_addr, ((unsigned int) data_addr) | TLB_SUPERVISOR
-                     | TLB_WRITABLE | TLB_PRESENT);
+                     | TLB_PRESENT);
+
+    *data_addr = 0x12345678;
 
     __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);
-    __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
-    // We are currently in supervisor mode. write then read to the page
-    *data_addr = 0x12345678;
-    printf("read1 data_addr %08x\n", *data_addr);	// CHECK: read1 data_addr 12345678
+    // Enable MMU and switch to user mode
+    __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN);
 
-    // Switch to user mode, but leave MMU active
-    switch_to_user_mode();
+    // Flush pipeline
+    usleep(0);
 
     // This write will fail. Ensure this raises a fault and that the memory
     // write failed.

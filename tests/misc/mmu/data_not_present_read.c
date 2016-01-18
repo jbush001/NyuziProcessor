@@ -45,13 +45,17 @@ int main(void)
     add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE | TLB_PRESENT);
     add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE | TLB_PRESENT);
 
-    // Data region that doesn't have the present bit set.
-    add_dtlb_mapping(data_addr, ((unsigned int)data_addr) | TLB_WRITABLE);
+    // Data region that doesn't have the present bit set. This also has
+    // a supervisor bit set, but the page fault should take priority.
+    add_dtlb_mapping(data_addr, ((unsigned int)data_addr) | TLB_SUPERVISOR);
 
     __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);
-    __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
+    __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN);
 
-    printf("read2 data_addr %08x\n", *data_addr);	// CHECK: FAULT 3 00100000 current flags 06 prev flags 06
+    // Flush pipeline
+    usleep(0);
+
+    printf("read2 data_addr %08x\n", *data_addr);	// CHECK: FAULT 3 00100000 current flags 06 prev flags 02
     // CHECKN: read2 data_addr
 }
 

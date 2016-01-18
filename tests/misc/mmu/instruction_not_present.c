@@ -51,15 +51,21 @@ int main(void)
     add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE
                      | TLB_PRESENT);
 
-    // Add TLB mapping, but without present bit
-    add_itlb_mapping(TEST_CODE_SEG_BASE, TEST_CODE_SEG_BASE | TLB_EXECUTABLE);
+    // Add TLB mapping, but without present bit. This is also not executable,
+    // and supervisor, but the page fault should take priority.
+    add_itlb_mapping(TEST_CODE_SEG_BASE, TEST_CODE_SEG_BASE | TLB_SUPERVISOR);
     *code_addr = INSTRUCTION_RET;
     asm volatile("membar");
 
     __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);
-    __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
-    test_function();  // CHECK: FAULT 3 00109000 current flags 06 prev flags 06
+    // Enable MMU and disable supervisor mode
+    __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN);
+
+    // Flush pipeline
+    usleep(0);
+
+    test_function();  // CHECK: FAULT 3 00109000 current flags 06 prev flags 02
 
     printf("should_not_be_here\n");
     // CHECKN: should_not_be_here
