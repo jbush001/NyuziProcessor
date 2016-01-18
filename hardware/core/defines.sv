@@ -156,6 +156,7 @@ typedef enum logic [4:0] {
     CR_TLB_MISS_HANDLER = 5'd7,
     CR_SAVED_FLAGS      = 5'd8,
     CR_CURRENT_ASID     = 5'd9,
+    CR_PAGE_DIR         = 5'd10,
     CR_SCRATCHPAD0      = 5'd11,
     CR_SCRATCHPAD1      = 5'd12,
     CR_SUBCYCLE         = 5'd13

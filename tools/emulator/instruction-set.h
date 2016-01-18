@@ -134,6 +134,7 @@ enum _ControlRegister
     CR_TLB_MISS_HANDLER = 7,
     CR_SAVED_FLAGS = 8,
     CR_CURRENT_ASID = 9,
+    CR_PAGE_DIR = 10,
     CR_SCRATCHPAD0 = 11,
     CR_SCRATCHPAD1 = 12,
     CR_SUBCYCLE = 13

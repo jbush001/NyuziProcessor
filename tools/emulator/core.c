@@ -60,6 +60,7 @@ struct Thread
     uint32_t linkedAddress; // For synchronized store/load. Cache line (addr / 64)
     uint32_t currentPc;
     uint32_t currentAsid;
+    uint32_t currentPageDir;
     bool enableInterrupt;
     bool enableMmu;
     bool enableSupervisor;
@@ -1472,6 +1473,10 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
                 value = thread->currentAsid;
                 break;
 
+            case CR_PAGE_DIR:
+                value = thread->currentPageDir;
+                break;
+
             case CR_FAULT_ADDRESS:
                 value = thread->trapAccessAddress[0];
                 break;
@@ -1542,6 +1547,10 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
 
             case CR_CURRENT_ASID:
                 thread->currentAsid = value;
+                break;
+
+            case CR_PAGE_DIR:
+                thread->currentPageDir = value;
                 break;
 
             case CR_TLB_MISS_HANDLER:

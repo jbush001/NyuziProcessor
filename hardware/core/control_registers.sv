@@ -70,6 +70,7 @@ module control_registers
     logic supervisor_en_saved[2][`THREADS_PER_CORE];
     subcycle_t subcycle_saved[2][`THREADS_PER_CORE];
     scalar_t scratchpad[2][`THREADS_PER_CORE * 2];
+    scalar_t page_dir_base[`THREADS_PER_CORE];
     scalar_t cycle_count;
 
     assign cr_eret_subcycle = subcycle_saved[0];
@@ -194,6 +195,7 @@ module control_registers
                     CR_SCRATCHPAD1:      scratchpad[0][{1'b1, dt_thread_idx}] <= dd_creg_write_val;
                     CR_SUBCYCLE:         subcycle_saved[0][dt_thread_idx] <= subcycle_t'(dd_creg_write_val);
                     CR_CURRENT_ASID:     cr_current_asid[dt_thread_idx] <= dd_creg_write_val[`ASID_WIDTH - 1:0];
+                    CR_PAGE_DIR:         page_dir_base[dt_thread_idx] <= dd_creg_write_val;
                     default:
                         ;
                 endcase
@@ -238,6 +240,7 @@ module control_registers
                 CR_SCRATCHPAD1:      cr_creg_read_val <= scratchpad[0][{1'b1, dt_thread_idx}];
                 CR_SUBCYCLE:         cr_creg_read_val <= scalar_t'(subcycle_saved[0][dt_thread_idx]);
                 CR_CURRENT_ASID:     cr_creg_read_val <= scalar_t'(cr_current_asid[dt_thread_idx]);
+                CR_PAGE_DIR:         cr_creg_read_val <= page_dir_base[dt_thread_idx];
                 default:             cr_creg_read_val <= 32'hffffffff;
             endcase
         end
