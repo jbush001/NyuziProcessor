@@ -48,7 +48,7 @@ fill_dltb:          or s0, s0, 3                     # Set write enable & presen
                     dtlbinsert s1, s0
                     goto done
 fill_itlb:          getcr s1, CR_FAULT_ADDR          # Get virtual address
-                    or s0, s0, 1                     # Set present bit
+                    or s0, s0, 5                     # Set present/executable bit
                     itlbinsert s1, s0
 done:               getcr s0, CR_SCRATCHPAD0         # Get saved s0 from scratchpad
                     getcr s1, CR_SCRATCHPAD1         # Get saved s1

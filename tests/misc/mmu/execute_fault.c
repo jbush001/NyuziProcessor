@@ -16,9 +16,13 @@
 
 #include "mmu_test_common.h"
 
-// Test that reading from a non-present data page faults
+// Pick an address that will not alias to the existing code segment
+#define TEST_CODE_SEG_BASE 0x109000
 
-volatile unsigned int *data_addr = (volatile unsigned int*) 0x100000;
+typedef void (*test_function_t)();
+
+volatile unsigned int *code_addr = (volatile unsigned int*) TEST_CODE_SEG_BASE;
+test_function_t test_function = (test_function_t) TEST_CODE_SEG_BASE;
 
 void fault_handler()
 {
@@ -38,20 +42,26 @@ int main(void)
     // Map code & data
     for (va = 0; va < 0x10000; va += PAGE_SIZE)
     {
-        add_itlb_mapping(va, va | TLB_EXECUTABLE | TLB_PRESENT);
+        // Add not-present ITLB entry
+        add_itlb_mapping(va, va | TLB_EXECUTABLE | TLB_GLOBAL | TLB_PRESENT);
         add_dtlb_mapping(va, va | TLB_WRITABLE | TLB_GLOBAL | TLB_PRESENT);
     }
 
     add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE | TLB_PRESENT);
-    add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE | TLB_PRESENT);
+    add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE
+                     | TLB_PRESENT);
 
-    // Data region that doesn't have the present bit set.
-    add_dtlb_mapping(data_addr, ((unsigned int)data_addr) | TLB_WRITABLE);
+    // Add TLB mapping, but without executable bit
+    add_itlb_mapping(TEST_CODE_SEG_BASE, TEST_CODE_SEG_BASE | TLB_PRESENT);
+    *code_addr = INSTRUCTION_RET;
+    asm volatile("membar");
 
     __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);
     __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
-    printf("read2 data_addr %08x\n", *data_addr);	// CHECK: FAULT 3 00100000 current flags 06 prev flags 06
-    // CHECKN: read2 data_addr
+    test_function();  // CHECK: FAULT 12 00109000 current flags 06 prev flags 06
+
+    printf("should_not_be_here\n");
+    // CHECKN: should_not_be_here
 }
 

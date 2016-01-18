@@ -21,6 +21,7 @@
 
 #define TLB_PRESENT 1
 #define TLB_WRITABLE (1 << 1)
+#define TLB_EXECUTABLE (1 << 2)
 #define TLB_SUPERVISOR (1 << 3)
 #define TLB_GLOBAL (1 << 4)
 

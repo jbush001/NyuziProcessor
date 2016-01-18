@@ -43,7 +43,7 @@ int main(void)
     for (va = 0; va < 0x10000; va += PAGE_SIZE)
     {
         // Add not-present ITLB entry
-        add_itlb_mapping(va, va | TLB_WRITABLE | TLB_GLOBAL | TLB_PRESENT);
+        add_itlb_mapping(va, va | TLB_EXECUTABLE | TLB_GLOBAL | TLB_PRESENT);
         add_dtlb_mapping(va, va | TLB_WRITABLE | TLB_GLOBAL | TLB_PRESENT);
     }
 
@@ -52,7 +52,7 @@ int main(void)
                      | TLB_PRESENT);
 
     // Add TLB mapping, but without present bit
-    add_itlb_mapping(TEST_CODE_SEG_BASE, TEST_CODE_SEG_BASE);
+    add_itlb_mapping(TEST_CODE_SEG_BASE, TEST_CODE_SEG_BASE | TLB_EXECUTABLE);
     *code_addr = INSTRUCTION_RET;
     asm volatile("membar");
 

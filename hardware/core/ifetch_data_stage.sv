@@ -36,10 +36,11 @@ module ifetch_data_stage(
     input scalar_t                   ift_pc_vaddr,
     input thread_idx_t               ift_thread_idx,
     input                            ift_tlb_hit,
+    input                            ift_tlb_present,
+    input                            ift_tlb_executable,
+    input                            ift_tlb_supervisor,
     input l1i_tag_t                  ift_tag[`L1D_WAYS],
     input                            ift_valid[`L1D_WAYS],
-    input                            ift_tlb_supervisor,
-    input                            ift_tlb_present,
 
     // To ifetch_tag_stage
     output logic                     ifd_update_lru_en,
@@ -72,6 +73,7 @@ module ifetch_data_stage(
     output logic                     ifd_tlb_miss,
     output logic                     ifd_supervisor_fault,
     output logic                     ifd_page_fault,
+    output logic                     ifd_executable_fault,
 
     // From writeback_stage
     input                            wb_rollback_en,
@@ -171,6 +173,7 @@ module ifetch_data_stage(
             /*AUTORESET*/
             // Beginning of autoreset for uninitialized flops
             ifd_alignment_fault <= '0;
+            ifd_executable_fault <= '0;
             ifd_instruction_valid <= '0;
             ifd_page_fault <= '0;
             ifd_supervisor_fault <= '0;
@@ -193,6 +196,8 @@ module ifetch_data_stage(
                 && !ift_tlb_hit;
             ifd_page_fault <= ift_instruction_requested && !rollback_this_stage
                 && !ift_tlb_present;
+            ifd_executable_fault <= ift_instruction_requested && !rollback_this_stage
+                && !ift_tlb_executable;
         end
     end
 endmodule

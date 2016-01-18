@@ -123,6 +123,7 @@ module core
     logic               dt_tlb_supervisor;      // From dcache_tag_stage of dcache_tag_stage.v
     logic               dt_tlb_writable;        // From dcache_tag_stage of dcache_tag_stage.v
     logic               dt_update_itlb_en;      // From dcache_tag_stage of dcache_tag_stage.v
+    logic               dt_update_itlb_executable;// From dcache_tag_stage of dcache_tag_stage.v
     logic               dt_update_itlb_global;  // From dcache_tag_stage of dcache_tag_stage.v
     page_index_t        dt_update_itlb_ppage_idx;// From dcache_tag_stage of dcache_tag_stage.v
     logic               dt_update_itlb_present; // From dcache_tag_stage of dcache_tag_stage.v
@@ -208,6 +209,7 @@ module core
     logic               ifd_cache_miss;         // From ifetch_data_stage of ifetch_data_stage.v
     scalar_t            ifd_cache_miss_paddr;   // From ifetch_data_stage of ifetch_data_stage.v
     thread_idx_t        ifd_cache_miss_thread_idx;// From ifetch_data_stage of ifetch_data_stage.v
+    logic               ifd_executable_fault;   // From ifetch_data_stage of ifetch_data_stage.v
     scalar_t            ifd_instruction;        // From ifetch_data_stage of ifetch_data_stage.v
     logic               ifd_instruction_valid;  // From ifetch_data_stage of ifetch_data_stage.v
     logic               ifd_near_miss;          // From ifetch_data_stage of ifetch_data_stage.v
@@ -224,6 +226,7 @@ module core
     scalar_t            ift_pc_vaddr;           // From ifetch_tag_stage of ifetch_tag_stage.v
     l1i_tag_t           ift_tag [`L1I_WAYS];    // From ifetch_tag_stage of ifetch_tag_stage.v
     thread_idx_t        ift_thread_idx;         // From ifetch_tag_stage of ifetch_tag_stage.v
+    logic               ift_tlb_executable;     // From ifetch_tag_stage of ifetch_tag_stage.v
     logic               ift_tlb_hit;            // From ifetch_tag_stage of ifetch_tag_stage.v
     logic               ift_tlb_present;        // From ifetch_tag_stage of ifetch_tag_stage.v
     logic               ift_tlb_supervisor;     // From ifetch_tag_stage of ifetch_tag_stage.v

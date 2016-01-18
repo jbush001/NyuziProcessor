@@ -23,6 +23,7 @@
 
 #define TLB_PRESENT 1
 #define TLB_WRITE_ENABLE 2
+#define TLB_EXECUTABLE 4
 #define TLB_SUPERVISOR 8
 #define TLB_GLOBAL 16
 
@@ -153,6 +154,7 @@ enum _TrapReason
     TR_IFETCH_SUPERVISOR,
     TR_PRIVILEGED_OP,
     TR_SYSCALL,
+    TR_NOT_EXECUTABLE,
     TR_INTERRUPT_BASE = 16
 };
 typedef enum _TrapReason TrapReason;

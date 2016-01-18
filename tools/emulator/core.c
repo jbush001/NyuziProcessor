@@ -680,6 +680,13 @@ static bool translateAddress(Thread *thread, uint32_t virtualAddress, uint32_t *
                 return false;
             }
 
+            if ((setEntries[way].physAddrAndFlags & TLB_EXECUTABLE) == 0
+                    && !dataFetch)
+            {
+                raiseTrap(thread, virtualAddress, TR_NOT_EXECUTABLE);
+                return false;
+            }
+
             if (isWrite && (setEntries[way].physAddrAndFlags & TLB_WRITE_ENABLE) == 0)
             {
                 // Write protected page, raise a fault

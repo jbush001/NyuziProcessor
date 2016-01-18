@@ -71,6 +71,7 @@ module dcache_tag_stage
     output                                      dt_update_itlb_present,
     output                                      dt_update_itlb_supervisor,
     output                                      dt_update_itlb_global,
+    output                                      dt_update_itlb_executable,
 
     // From l1_l2_interface
     input                                       l2i_dcache_lru_fill_en,
@@ -146,6 +147,7 @@ module dcache_tag_stage
         && !dt_invalidate_tlb_all_en;
     assign dt_itlb_vpage_idx = of_operand1[0][31-:`PAGE_NUM_BITS];
     assign dt_update_itlb_ppage_idx = new_tlb_value.ppage_idx;
+    assign dt_update_itlb_executable = new_tlb_value.executable;
 
     initial
     begin
@@ -233,12 +235,14 @@ module dcache_tag_stage
         .request_asid(cr_current_asid[of_thread_idx]),
         .update_ppage_idx(new_tlb_value.ppage_idx),
         .update_present(new_tlb_value.present),
+        .update_executable(1'b0),
         .update_writable(new_tlb_value.writable),
         .update_supervisor(new_tlb_value.supervisor),
         .update_global(new_tlb_value.global),
         .lookup_ppage_idx(tlb_ppage_idx),
         .lookup_hit(tlb_hit),
         .lookup_present(tlb_present),
+        .lookup_executable(),
         .lookup_writable(tlb_writable),
         .lookup_supervisor(tlb_supervisor),
         .*);

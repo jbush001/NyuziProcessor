@@ -44,7 +44,7 @@ int main(void)
     // Map code & data
     for (va = 0; va < 0x10000; va += PAGE_SIZE)
     {
-        add_itlb_mapping(va, va | TLB_PRESENT);
+        add_itlb_mapping(va, va | TLB_EXECUTABLE | TLB_PRESENT);
         add_dtlb_mapping(va, va | TLB_WRITABLE | TLB_PRESENT);
     }
 

@@ -39,10 +39,11 @@ module ifetch_tag_stage
     output scalar_t                     ift_pc_vaddr,
     output thread_idx_t                 ift_thread_idx,
     output logic                        ift_tlb_hit,
+    output                              ift_tlb_present,
+    output                              ift_tlb_executable,
+    output                              ift_tlb_supervisor,
     output l1i_tag_t                    ift_tag[`L1I_WAYS],
     output logic                        ift_valid[`L1I_WAYS],
-    output                              ift_tlb_supervisor,
-    output                              ift_tlb_present,
 
     // From ifetch_data_stage
     input                               ifd_update_lru_en,
@@ -73,6 +74,7 @@ module ifetch_tag_stage
     input                               dt_update_itlb_supervisor,
     input                               dt_update_itlb_global,
     input                               dt_update_itlb_present,
+    input                               dt_update_itlb_executable,
     input page_index_t                  dt_update_itlb_ppage_idx,
 
     // From writeback_stage
@@ -100,6 +102,7 @@ module ifetch_tag_stage
     logic tlb_hit;
     logic tlb_supervisor;
     logic tlb_present;
+    logic tlb_executable;
 
     //
     // Pick which thread to fetch next.
@@ -205,6 +208,7 @@ module ifetch_tag_stage
         .update_en(dt_update_itlb_en),
         .update_present(dt_update_itlb_present),
         .update_writable(1'b0),
+        .update_executable(dt_update_itlb_executable),
         .update_supervisor(dt_update_itlb_supervisor),
         .update_global(dt_update_itlb_global),
         .invalidate_en(dt_invalidate_tlb_en),
@@ -214,6 +218,7 @@ module ifetch_tag_stage
         .update_ppage_idx(dt_update_itlb_ppage_idx),
         .lookup_ppage_idx(tlb_ppage_idx),
         .lookup_hit(tlb_hit),
+        .lookup_executable(tlb_executable),
         .lookup_writable(),
         .lookup_present(tlb_present),
         .lookup_supervisor(tlb_supervisor),
@@ -227,6 +232,7 @@ module ifetch_tag_stage
         begin
             ift_tlb_hit = tlb_hit;
             ift_tlb_present = tlb_present;
+            ift_tlb_executable = tlb_executable;
             ift_tlb_supervisor = tlb_supervisor;
             ppage_idx = tlb_ppage_idx;
         end
@@ -235,6 +241,7 @@ module ifetch_tag_stage
             // MMU disabled, identity map.
             ift_tlb_hit = 1;
             ift_tlb_present = 1;
+            ift_tlb_executable = 1;
             ift_tlb_supervisor = 0;
             ppage_idx = last_selected_pc[31-:`PAGE_NUM_BITS];
         end
@@ -243,8 +250,9 @@ module ifetch_tag_stage
     // If MMU is disabled, identity map addresses
     assign ift_tlb_hit = 1;
     assign ift_tlb_present = 1;
+    assign ift_executable = 1;
     assign ift_tlb_supervisor = 0;
-    assign ppage_idx = last_selected_pc[31-:`PAGE_NUM_BITS];;
+    assign ppage_idx = last_selected_pc[31-:`PAGE_NUM_BITS];
 `endif
 
     cache_lru #(.NUM_WAYS(`L1D_WAYS), .NUM_SETS(`L1I_SETS)) cache_lru(

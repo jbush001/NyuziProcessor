@@ -51,6 +51,7 @@ module instruction_decode_stage(
     input                         ifd_alignment_fault,
     input                         ifd_supervisor_fault,
     input                         ifd_page_fault,
+    input                         ifd_executable_fault,
     input                         ifd_tlb_miss,
 
     // To thread_select_stage
@@ -213,7 +214,7 @@ module instruction_decode_stage(
     assign is_nop = ifd_instruction == `INSTRUCTION_NOP;
     assign has_trap = dlut_out.illegal || ifd_alignment_fault || ifd_tlb_miss
         || ifd_supervisor_fault || raise_interrupt || is_syscall
-        || ifd_page_fault;
+        || ifd_page_fault || ifd_executable_fault;
 
     // Check for TLB miss first, since permission bits are not valid if there
     // is a TLB miss.
@@ -225,10 +226,12 @@ module instruction_decode_stage(
             decoded_instr_nxt.trap_reason = TR_ITLB_MISS;
         else if (ifd_page_fault)
             decoded_instr_nxt.trap_reason = TR_PAGE_FAULT;
-        else if (ifd_alignment_fault)
-            decoded_instr_nxt.trap_reason = TR_IFETCH_ALIGNNMENT;
         else if (ifd_supervisor_fault)
             decoded_instr_nxt.trap_reason = TR_IFETCH_SUPERVISOR;
+        else if (ifd_executable_fault)
+            decoded_instr_nxt.trap_reason = TR_NOT_EXECUTABLE;
+        else if (ifd_alignment_fault)
+            decoded_instr_nxt.trap_reason = TR_IFETCH_ALIGNNMENT;
         else if (dlut_out.illegal)
             decoded_instr_nxt.trap_reason = TR_ILLEGAL_INSTRUCTION;
         else if (is_syscall)

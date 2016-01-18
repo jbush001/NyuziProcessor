@@ -173,7 +173,8 @@ typedef enum logic[4:0] {
     TR_DATA_SUPERVISOR,
     TR_IFETCH_SUPERVISOR,
     TR_PRIVILEGED_OP,
-    TR_SYSCALL
+    TR_SYSCALL,
+    TR_NOT_EXECUTABLE
 } trap_reason_t;
 
 typedef logic[3:0] interrupt_id_t;
