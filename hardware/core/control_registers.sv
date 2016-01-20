@@ -98,6 +98,7 @@ module control_registers
                 cr_mmu_en[thread_idx] <= 0;
                 cr_supervisor_en[thread_idx] <= 1;    // Threads start in supervisor mode
                 cr_current_asid[thread_idx] <= '0;
+                page_dir_base[thread_idx] <= '0;
             end
 
             /*AUTORESET*/

@@ -385,7 +385,7 @@ module thread_select_stage(
         if (reset)
         begin
             for (int i = 0; i < ROLLBACK_STAGES; i++)
-                rollback_dest[i].valid <= 0;
+                rollback_dest[i] <= 0;
 
             `ifdef NEVER
             // Suppress autoreset
