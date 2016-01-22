@@ -46,7 +46,7 @@ module l1_l2_interface
     input                                         reset,
 
     // To l2_cache
-    output                                        l2i_request_valid,
+    output logic                                  l2i_request_valid,
     output l2req_packet_t                         l2i_request,
 
     // From l2_cache
