@@ -85,6 +85,8 @@ module l2_cache_read_stage(
     output logic                              perf_l2_miss,
     output logic                              perf_l2_hit);
 
+    localparam GLOBAL_THREAD_IDX_WIDTH = $clog2(`TOTAL_THREADS);
+
     // Track synchronized load/stores, and determine if a synchronized store
     // was successful.
     cache_line_index_t sync_load_address[`TOTAL_THREADS];
@@ -105,7 +107,7 @@ module l2_cache_read_stage(
     logic is_hit_or_miss;
     logic is_dinvalidate;
     l2_way_idx_t tag_update_way;
-    logic[$clog2(`TOTAL_THREADS) - 1:0] request_sync_slot;
+    logic[GLOBAL_THREAD_IDX_WIDTH - 1:0] request_sync_slot;
 
     assign l2_addr = l2t_request.address;
     assign is_load = l2t_request.packet_type == L2REQ_LOAD
@@ -202,7 +204,7 @@ module l2_cache_read_stage(
     //
     // Synchronized requests
     //
-    assign request_sync_slot = $size(request_sync_slot)'({l2t_request.core, l2t_request.id});
+    assign request_sync_slot = GLOBAL_THREAD_IDX_WIDTH'({l2t_request.core, l2t_request.id});
     assign can_store_sync = sync_load_address[request_sync_slot]
         == {l2_addr.tag, l2_addr.set_idx}
         && sync_load_address_valid[request_sync_slot]
