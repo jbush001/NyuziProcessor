@@ -79,16 +79,14 @@ int main()
         {
             case LOAD_MEMORY_REQ:
             {
-                unsigned int baseAddress = readSerialLong();
+                unsigned char *loadAddr = (unsigned char*) readSerialLong();
                 unsigned int length = readSerialLong();
-
-                // Compute FNV-1a hash
-                unsigned int checksum = 2166136261;
+                unsigned int checksum = 2166136261; // FNV-1a hash
                 for (int i = 0; i < length; i++)
                 {
                     unsigned int ch = readSerialByte();
                     checksum = (checksum ^ ch) * 16777619;
-                    ((unsigned char*) baseAddress)[i] = ch;
+                    *loadAddr++ = ch;
                 }
 
                 writeSerialByte(LOAD_MEMORY_ACK);
@@ -98,9 +96,9 @@ int main()
 
             case CLEAR_MEMORY_REQ:
             {
-                unsigned int baseAddress = readSerialLong();
+                void *baseAddress = (void*) readSerialLong();
                 unsigned int length = readSerialLong();
-                memset((char*) 0 + baseAddress, 0, length);
+                memset(baseAddress, 0, length);
                 writeSerialByte(CLEAR_MEMORY_ACK);
                 break;
             }
