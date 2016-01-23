@@ -68,10 +68,16 @@ The following script will download and install the
 Build everything else:
 
     make
-    
+
 Run tests:
-    
+
     make test
+
+_If you are on a Linux distribution that defaults to python3, you may run into build
+problems with the compiler. In tools/NyuziToolchain/tools/CMakeLists.txt, comment
+out the following line:_
+
+    add_llvm_external_project(lldb)
 
 ## What next?
 
