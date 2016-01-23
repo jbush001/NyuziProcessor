@@ -138,7 +138,7 @@ module dcache_tag_stage
         && of_instruction.cache_control_op == CACHE_ITLB_INSERT
         && cr_supervisor_en[of_thread_idx];
     assign dt_update_itlb_supervisor = new_tlb_value.supervisor;
-    assign dt_update_itlb_global = new_tlb_value.global;
+    assign dt_update_itlb_global = new_tlb_value.global_map;
     assign dt_update_itlb_present = new_tlb_value.present;
     assign tlb_lookup_en = instruction_valid
         && of_instruction.memory_access_type != MEM_CONTROL_REG
@@ -238,7 +238,7 @@ module dcache_tag_stage
         .update_executable(1'b0),
         .update_writable(new_tlb_value.writable),
         .update_supervisor(new_tlb_value.supervisor),
-        .update_global(new_tlb_value.global),
+        .update_global(new_tlb_value.global_map),
         .lookup_ppage_idx(tlb_ppage_idx),
         .lookup_hit(tlb_hit),
         .lookup_present(tlb_present),

@@ -247,7 +247,7 @@ typedef logic[`PAGE_NUM_BITS - 1:0] page_index_t;
 typedef struct packed {
     logic[`PAGE_NUM_BITS - 1:0] ppage_idx;
     logic[32 - (`PAGE_NUM_BITS + 5) - 1:0] unused;
-    logic global;
+    logic global_map;
     logic supervisor;
     logic executable;
     logic writable;
