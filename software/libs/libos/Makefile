@@ -18,7 +18,7 @@ TOPDIR=../../../
 
 include $(TOPDIR)/build/target.mk
 
-CFLAGS+=-g -Wall -W
+CFLAGS+=-g
 
 SRCS=schedule.c \
 	sdmmc.c \

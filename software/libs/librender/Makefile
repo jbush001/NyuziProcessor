@@ -18,7 +18,7 @@ TOPDIR=../../../
 
 include $(TOPDIR)/build/target.mk
 
-CFLAGS=-g -Wall -W -Wnon-virtual-dtor -Wold-style-cast -Wsign-conversion -O3 -fno-rtti -std=c++11 -ffast-math -I../libc/include -I../libos/
+CFLAGS+=-g -Wnon-virtual-dtor -Wold-style-cast -Wsign-conversion -fno-rtti -std=c++11 -ffast-math
 
 SRCS=Texture.cpp \
 	Surface.cpp \

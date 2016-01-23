@@ -18,7 +18,7 @@ TOPDIR=../../
 
 include $(TOPDIR)/build/target.mk
 
-CFLAGS=-O3
+CFLAGS=-O3  # Override default CFLAGS, since this builds standalone
 BASE_ADDRESS=0xfffee000
 
 SRCS=boot.c start.s

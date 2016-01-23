@@ -18,7 +18,7 @@ TOPDIR=../../../
 
 include $(TOPDIR)/build/target.mk
 
-CFLAGS=-g -Wall -W -O3 -Iinclude -I../libos
+CFLAGS+=-g
 VPATH=src
 
 SRCS=math.c \
