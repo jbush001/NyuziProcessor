@@ -146,36 +146,36 @@ typedef enum logic [1:0] {
 } pipeline_sel_t;
 
 typedef enum logic [4:0] {
-    CR_THREAD_ID        = 5'd0,
-    CR_TRAP_HANDLER     = 5'd1,
-    CR_TRAP_PC          = 5'd2,
-    CR_TRAP_REASON      = 5'd3,
-    CR_FLAGS            = 5'd4,
-    CR_TRAP_ADDRESS     = 5'd5,
-    CR_CYCLE_COUNT      = 5'd6,
-    CR_TLB_MISS_HANDLER = 5'd7,
-    CR_SAVED_FLAGS      = 5'd8,
-    CR_CURRENT_ASID     = 5'd9,
-    CR_PAGE_DIR         = 5'd10,
-    CR_SCRATCHPAD0      = 5'd11,
-    CR_SCRATCHPAD1      = 5'd12,
-    CR_SUBCYCLE         = 5'd13
+    CR_THREAD_ID            = 5'd0,
+    CR_TRAP_HANDLER         = 5'd1,
+    CR_TRAP_PC              = 5'd2,
+    CR_TRAP_REASON          = 5'd3,
+    CR_FLAGS                = 5'd4,
+    CR_TRAP_ADDRESS         = 5'd5,
+    CR_CYCLE_COUNT          = 5'd6,
+    CR_TLB_MISS_HANDLER     = 5'd7,
+    CR_SAVED_FLAGS          = 5'd8,
+    CR_CURRENT_ASID         = 5'd9,
+    CR_PAGE_DIR             = 5'd10,
+    CR_SCRATCHPAD0          = 5'd11,
+    CR_SCRATCHPAD1          = 5'd12,
+    CR_SUBCYCLE             = 5'd13
 } control_register_t;
 
 typedef enum logic[4:0] {
-    TR_RESET,
-    TR_ILLEGAL_INSTRUCTION,
-    TR_DATA_ALIGNMENT,
-    TR_PAGE_FAULT,
-    TR_IFETCH_ALIGNNMENT,
-    TR_ITLB_MISS,
-    TR_DTLB_MISS,
-    TR_ILLEGAL_WRITE,
-    TR_DATA_SUPERVISOR,
-    TR_IFETCH_SUPERVISOR,
-    TR_PRIVILEGED_OP,
-    TR_SYSCALL,
-    TR_NOT_EXECUTABLE
+    TR_RESET                = 5'd0,
+    TR_ILLEGAL_INSTRUCTION  = 5'd1,
+    TR_DATA_ALIGNMENT       = 5'd2,
+    TR_PAGE_FAULT           = 5'd3,
+    TR_IFETCH_ALIGNNMENT    = 5'd4,
+    TR_ITLB_MISS            = 5'd5,
+    TR_DTLB_MISS            = 5'd6,
+    TR_ILLEGAL_WRITE        = 5'd7,
+    TR_DATA_SUPERVISOR      = 5'd8,
+    TR_IFETCH_SUPERVISOR    = 5'd9,
+    TR_PRIVILEGED_OP        = 5'd10,
+    TR_SYSCALL              = 5'd11,
+    TR_NOT_EXECUTABLE       = 5'd12
 } trap_reason_t;
 
 typedef logic[3:0] interrupt_id_t;
