@@ -65,6 +65,8 @@ module de2_115_top(
     inout                       ps2_clk,
     inout                       ps2_data);
 
+    parameter  bootrom = "../../../software/bootrom/boot.hex";
+
     localparam BOOT_ROM_BASE = 32'hfffee000;
     localparam UART_BAUD = 921600;
     localparam CLOCK_RATE = 50000000;
@@ -113,7 +115,7 @@ module de2_115_top(
     // Boot ROM.  Execution starts here. The boot ROM path is relative
     // to the directory that the synthesis tool is invoked from (this
     // directory).
-    axi_rom #(.FILENAME("../../../software/bootrom/boot.hex")) boot_rom(
+    axi_rom #(.FILENAME(bootrom)) boot_rom(
         .axi_bus(axi_bus_m[1]),
         .*);
 
