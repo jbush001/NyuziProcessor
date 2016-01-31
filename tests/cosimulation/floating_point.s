@@ -39,25 +39,25 @@ test_loop:  load_32 s1, (s0)
 
 
 ops:        .float 17.79, 19.32             ; Exponents are equal.  This will carry into the next significand bit
-            .float 0.34, 44.23                 ; Exponent 2 larger
+            .float 0.34, 44.23              ; Exponent 2 larger
             .float 44.23, 0.034             ; Exponent 1 larger
-            .float -1.0, 5.0                 ; First element is negative and has smaller exponent
-            .float -5.0, 1.0                 ; First element is negative and has larger exponent
-            .float 5.0, -1.0                 ; Second element is negative and has smaller exponent
-            .float 1.0, -5.0                 ; Second element is negative and has larger exponent
+            .float -1.0, 5.0                ; First element is negative and has smaller exponent
+            .float -5.0, 1.0                ; First element is negative and has larger exponent
+            .float 5.0, -1.0                ; Second element is negative and has smaller exponent
+            .float 1.0, -5.0                ; Second element is negative and has larger exponent
             .float 5.0, 0.0                 ; Zero identity (zero is a special case in IEEE754)
             .float 0.0, 5.0
             .float 0.0, 0.0
-            .float 1.0, 1.0                    ; Multiplication normalized
-            .float 7.0, -7.0                 ; Sum is zero, positive first operand
+            .float 1.0, 1.0                 ; Multiplication normalized
+            .float 7.0, -7.0                ; Sum is zero, positive first operand
             .float -7.0, 7.0                ; Sum is zero, negative first operand
-            .float -7.0, -7.0                ; Difference is zero, both negative
+            .float -7.0, -7.0               ; Difference is zero, both negative
             .float 1000000.0, 0.0000001     ; Second op is lost because of precision
-            .float 0.0000001, 0.00000001     ; Very small number
-            .float 1000000.0, 10000000.0     ; Very large number
-            .float -0.0, 2.323                ; negative zero
-            .float 2.323, -0.0                ; negative zero
-            .float 5.67666007898e-42, 0.0    ; subnormal minus zero
+            .float 0.0000001, 0.00000001    ; Very small number
+            .float 1000000.0, 10000000.0    ; Very large number
+            .float -0.0, 2.323              ; negative zero
+            .float 2.323, -0.0              ; negative zero
+            .float 5.67666007898e-42, 0.0   ; subnormal minus zero
             .float nan, 1
             .float 1, nan
             .float nan, nan

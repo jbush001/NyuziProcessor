@@ -35,20 +35,20 @@ _start:         START_ALL_THREADS
                 load_32 s3, generator_c
                 getcr s8, CR_CURRENT_THREAD # get thread ID
                 shl s8, s8, 2        # Compute thread write offset (thread * 4)
-                move s0, 7            # Initialize value to write
+                move s0, 7           # Initialize value to write
 
 main_loop:      mull_i s1, s1, s2    # Generate next random number
                 add_i s1, s1, s3
 
-                shr s4, s1, 17        # Chop high bits (0-32k)
+                shr s4, s1, 17       # Chop high bits (0-32k)
                 shl s4, s4, 4        # Multiply by 16 (four threads times four bytes, 512k)
-                add_i s4, s4, s8    # Add thread offset (0, 4, 8, 12)
+                add_i s4, s4, s8     # Add thread offset (0, 4, 8, 12)
                 add_i s4, s4, 512    # Add to start of write region
 
                 store_32 s0, (s4)    # Write the word
 
-                add_i s0, s0, 13    # Increment write value
-                sub_i s5, s5, 1        # Decrement count
+                add_i s0, s0, 13     # Increment write value
+                sub_i s5, s5, 1      # Decrement count
                 btrue s5, main_loop
 
                 HALT_CURRENT_THREAD

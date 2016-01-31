@@ -51,6 +51,6 @@ _start:             lea s0, interrupt_handler
 
 
 interrupt_handler:  getcr s11, CR_FAULT_PC        # Interrupt PC
-                    getcr s12, CR_FAULT_REASON        # Reason
+                    getcr s12, CR_FAULT_REASON    # Reason
                     move s13, 1
                     eret

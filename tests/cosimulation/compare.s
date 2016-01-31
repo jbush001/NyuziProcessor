@@ -29,7 +29,7 @@ _start:     lea s0, ivec1
             load_v v0, (s0)
             load_v v1, 64(s0)
 
-            ; Vector integer comparisons
+            # Vector integer comparisons
             cmpeq_i s0, v0, v1
             cmpne_i s1, v0, v1
             cmpgt_i s2, v0, v1
@@ -41,7 +41,7 @@ _start:     lea s0, ivec1
             cmpge_u s8, v0, v1
             cmple_u s9, v0, v1
 
-            ; Vector/scalar integer comparison
+            # Vector/scalar integer comparison
             load_32 s20, ival3
             cmpeq_i s0, v0, s20
             cmpne_i s1, v0, s20
@@ -54,7 +54,7 @@ _start:     lea s0, ivec1
             cmpge_u s8, v0, s20
             cmple_u s9, v0, s20
 
-            // Scalar integer comparison
+            # Scalar integer comparison
             load_32 s21, ival4
             cmpeq_i s0, s21, s20
             cmpne_i s1, s21, s20
@@ -67,7 +67,7 @@ _start:     lea s0, ivec1
             cmpge_u s8, s21, s20
             cmple_u s9, s21, s20
 
-            // Vector floating point comparison
+            # Vector floating point comparison
             lea s0, fvec1
             load_v v0, (s0)
             load_v v1, 64(s0)
@@ -76,7 +76,7 @@ _start:     lea s0, ivec1
             cmpge_f s4, v0, v1
             cmple_f s5, v0, v1
 
-            // vector/scalar floating point comparison
+            # vector/scalar floating point comparison
             load_32 s10, fval3
             load_32 s11, fval4
             cmpgt_f s2, v0, s10
@@ -88,7 +88,7 @@ _start:     lea s0, ivec1
             cmpge_f s8, v0, s11
             cmple_f s9, v0, s11
 
-            // sclar floating point comparison
+            # sclar floating point comparison
             cmpgt_i s0, s10, s11
             cmplt_i s1, s10, s11
             cmple_i s2, s10, s11
