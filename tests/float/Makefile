@@ -18,13 +18,6 @@ TOPDIR=../../
 
 include $(TOPDIR)/build/target.mk
 
-TEST_FILES = f32_add.test    \
-	f32_le.test    \
-	f32_lt.test     \
-	f32_mul.test    \
-	f32_sub.test    \
-	f32_to_i32.test \
-	i32_to_f32.test
 
 LIBS=-lc -los
 
@@ -37,14 +30,11 @@ $(OBJ_DIR)/test_float.hex: $(OBJS) $(DEPS)
 	$(LD) $(OBJS) -o $(OBJ_DIR)/test_float.elf $(LIBS) $(LDFLAGS)
 	$(ELF2HEX) -o $@ $(OBJ_DIR)/test_float.elf
 
-fsimage.bin:
-	$(MKFS) $@ $(TEST_FILES)
+test: $(OBJ_DIR)/test_float.hex
+	$(EMULATOR) $(OBJ_DIR)/test_float.hex
 
-test: $(OBJ_DIR)/test_float.hex fsimage.bin
-	$(EMULATOR) -b fsimage.bin $(OBJ_DIR)/test_float.hex
-
-vtest: $(OBJ_DIR)/test_float.hex fsimage.bin
-	$(VERILATOR) +block=fsimage.bin +bin=$(OBJ_DIR)/test_float.hex
+vtest: $(OBJ_DIR)/test_float.hex
+	$(VERILATOR) +bin=$(OBJ_DIR)/test_float.hex
 
 clean: FORCE
 	rm -f $(OBJ_DIR)/*
