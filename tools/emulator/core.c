@@ -322,9 +322,9 @@ bool stoppedOnFault(const Core *core)
     return core->crashed;
 }
 
-bool executeInstructions(Core *core, uint32_t threadId, uint32_t totalInstructions)
+bool executeInstructions(Core *core, uint32_t threadId, uint64_t totalInstructions)
 {
-    uint32_t instructionCount;
+    uint64_t instructionCount;
     uint32_t thread;
 
     core->singleStepping = false;

@@ -44,7 +44,7 @@ bool stoppedOnFault(const Core*);
 // Return false if this hit a breakpoint or crashed
 // threadId of ALL_THREADS means run all threads in a round robin fashion.
 // Otherwise, run just the indicated thread.
-bool executeInstructions(Core*, uint32_t threadId, uint32_t instructions);
+bool executeInstructions(Core*, uint32_t threadId, uint64_t instructions);
 
 void singleStep(Core*, uint32_t threadId);
 uint32_t getPc(const Core*, uint32_t threadId);

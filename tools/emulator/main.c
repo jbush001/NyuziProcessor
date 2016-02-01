@@ -16,6 +16,7 @@
 
 #include <errno.h>
 #include <getopt.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -222,7 +223,7 @@ int main(int argc, char *argv[])
                 }
             }
             else
-                executeInstructions(core, ALL_THREADS, 0x7fffffffu);
+                executeInstructions(core, ALL_THREADS, UINT64_MAX);
 
             break;
 
