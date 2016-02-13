@@ -69,8 +69,8 @@ module axi_rom
                 axi_bus.s_rdata <= rom_data[burst_address[$clog2(MAX_SIZE) - 1:0]];
                 if (axi_bus.m_rready)
                 begin
-                    burst_address <= burst_address + 1;
-                    burst_count <= burst_count - 1;
+                    burst_address <= burst_address + 30'd1;
+                    burst_count <= burst_count - 8'd1;
                 end
             end
         end
@@ -79,7 +79,7 @@ module axi_rom
             // Start a new burst
             burst_active <= 1;
             burst_address <= axi_bus.m_araddr[31:2];
-            burst_count <= axi_bus.m_arlen + 1;
+            burst_count <= axi_bus.m_arlen + 8'd1;
         end
     end
 endmodule

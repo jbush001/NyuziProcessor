@@ -79,7 +79,7 @@ module vga_controller
     // beginning of the vblank period so it will resynchronize if there was
     // an underrun.
     sync_fifo #(
-        .WIDTH(32),
+        .WIDTH(24),
         .SIZE(PIXEL_FIFO_LENGTH),
         .ALMOST_EMPTY_THRESHOLD(PIXEL_FIFO_LENGTH - BURST_LENGTH - 1)) pixel_fifo(
         .clk(clk),
@@ -88,8 +88,8 @@ module vga_controller
         .almost_full(),
         .empty(pixel_fifo_empty),
         .almost_empty(pixel_fifo_almost_empty),
-        .value_o({vga_r, vga_g, vga_b, _ignore_alpha}),
-        .value_i(axi_bus.s_rdata),
+        .value_o({vga_r, vga_g, vga_b}),
+        .value_i(axi_bus.s_rdata[31:8]),
         .enqueue_en(axi_bus.s_rvalid),
         .full(),
         .dequeue_en(pixel_en && in_visible_region && !pixel_fifo_empty));
@@ -185,6 +185,22 @@ module vga_controller
     assign axi_bus.m_arlen = 8'(BURST_LENGTH - 1);
     assign axi_bus.m_arvalid = axi_state == STATE_ISSUE_ADDR;
     assign axi_bus.m_araddr = vram_addr;
+    assign axi_bus.m_awaddr = '0;
+    assign axi_bus.m_awlen = '0;
+    assign axi_bus.m_arsize = 3'2;    // Assumes 32 bit transfers
+    assign axi_bus.m_arburst = AXI_BURST_INCR;
+    assign axi_bus.m_arcache = 4'b1110; // Allocate, Modifiable, Not-Bufferable
+
+    // Write channels not used.
+    assign axi_bus.m_wdata = '0;
+    assign axi_bus.m_awvalid = '0;
+    assign axi_bus.m_wlast = 0;
+    assign axi_bus.m_wvalid = 0;
+    assign axi_bus.m_bready = 0;
+    assign axi_bus.m_awsize = '0;
+    assign axi_bus.m_awburst = '0;
+    assign axi_bus.m_wstrb = '0;
+    assign axi_bus.m_awcache = '0;
 
     always_ff @(posedge clk, posedge reset)
     begin
@@ -203,6 +219,8 @@ module vga_controller
             endcase
         end
     end
+
+    assign io_bus.read_data = '0;
 
     vga_sequencer vga_sequencer(
         .prog_write_en(io_bus.write_en && io_bus.address == BASE_ADDRESS + 4),

@@ -84,7 +84,7 @@ module spi_controller
                             transfer_active <= 0;
                         else
                         begin
-                            transfer_count <= transfer_count - 1;
+                            transfer_count <= transfer_count - 3'd1;
 
                             // Shift out a bit
                             {spi_mosi, mosi_byte} <= {mosi_byte, 1'd0};
@@ -97,7 +97,7 @@ module spi_controller
                     end
                 end
                 else
-                    divider_countdown <= divider_countdown - 1;
+                    divider_countdown <= divider_countdown - 8'd1;
             end
             else if (io_bus.write_en && io_bus.address == TX_REG)
             begin

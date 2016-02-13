@@ -94,11 +94,13 @@ module sdram_controller
         CMD_NOP               = 4'b1000
     } sdram_cmd_t;
 
+    localparam TIMER_WIDTH = 15;
+
     // latched addresses and lengths are in terms of DATA_WIDTH transfers, not bytes.
-    logic[11:0] refresh_timer_ff;
-    logic[11:0] refresh_timer_nxt;
-    logic[14:0] timer_ff;
-    logic[14:0] timer_nxt;
+    logic[TIMER_WIDTH - 1:0] refresh_timer_ff;
+    logic[TIMER_WIDTH - 1:0] refresh_timer_nxt;
+    logic[TIMER_WIDTH - 1:0] timer_ff;
+    logic[TIMER_WIDTH - 1:0] timer_nxt;
     sdram_cmd_t command;
     burst_state_t state_ff;
     burst_state_t state_nxt;
@@ -178,7 +180,7 @@ module sdram_controller
         // Default values
         output_enable = 0;
         command = CMD_NOP;
-        timer_nxt = 0;
+        timer_nxt = TIMER_WIDTH'(0);
         burst_offset_nxt = 0;
         state_nxt = state_ff;
         dram_ba = 0;
@@ -189,19 +191,19 @@ module sdram_controller
 
         lfifo_enqueue = 0;
         if (refresh_timer_ff != 0)
-            refresh_timer_nxt = refresh_timer_ff - 12'd1;
+            refresh_timer_nxt = refresh_timer_ff - TIMER_WIDTH'(1);
         else
-            refresh_timer_nxt = 0;
+            refresh_timer_nxt = TIMER_WIDTH'(0);
 
         if (timer_ff != 0)
-            timer_nxt = timer_ff - 15'd1; // Wait for timer to expire
+            timer_nxt = timer_ff - TIMER_WIDTH'(1); // Wait for timer to expire
         else
         begin
             // Progress to next state.
             unique case (state_ff)
                 STATE_POWERUP:
                 begin
-                    timer_nxt = T_POWERUP;    // Wait for clock to be stable
+                    timer_nxt = TIMER_WIDTH'(T_POWERUP);    // Wait for clock to be stable
                     state_nxt = STATE_INIT0;
                 end
 
@@ -210,7 +212,7 @@ module sdram_controller
                     // Step 1: send precharge all command
                     dram_addr = {SDRAM_ADDR_WIDTH{1'b1}};
                     command = CMD_PRECHARGE;
-                    timer_nxt = T_ROW_PRECHARGE;
+                    timer_nxt = TIMER_WIDTH'(T_ROW_PRECHARGE);
                     state_nxt = STATE_INIT1;
                 end
 
@@ -219,7 +221,7 @@ module sdram_controller
                     // Step 2: send two auto refresh commands
                     dram_addr = {SDRAM_ADDR_WIDTH{1'b1}};
                     command = CMD_AUTO_REFRESH;
-                    timer_nxt = T_AUTO_REFRESH_CYCLE;
+                    timer_nxt = TIMER_WIDTH'(T_AUTO_REFRESH_CYCLE);
                     state_nxt = STATE_INIT2;
                 end
 
@@ -227,7 +229,7 @@ module sdram_controller
                 begin
                     dram_addr = {SDRAM_ADDR_WIDTH{1'b1}};
                     command = CMD_AUTO_REFRESH;
-                    timer_nxt = T_AUTO_REFRESH_CYCLE;
+                    timer_nxt = TIMER_WIDTH'(T_AUTO_REFRESH_CYCLE);
                     state_nxt = STATE_INIT3;
                 end
 
@@ -320,7 +322,7 @@ module sdram_controller
                         dram_ba = write_bank;
 
                     command = CMD_PRECHARGE;
-                    timer_nxt = T_ROW_PRECHARGE;
+                    timer_nxt = TIMER_WIDTH'(T_ROW_PRECHARGE);
                     state_nxt = STATE_OPEN_ROW;
                 end
 
@@ -339,7 +341,7 @@ module sdram_controller
                         state_nxt = STATE_WRITE_BURST;
                     end
                     command = CMD_ACTIVATE;
-                    timer_nxt = T_RAS_CAS_DELAY;
+                    timer_nxt = TIMER_WIDTH'(T_RAS_CAS_DELAY);
                 end
 
                 STATE_CAS_WAIT:
@@ -347,7 +349,7 @@ module sdram_controller
                     command = CMD_READ;
                     dram_addr = SDRAM_ADDR_WIDTH'(read_column);
                     dram_ba = read_bank;
-                    timer_nxt = T_CAS_LATENCY;
+                    timer_nxt = TIMER_WIDTH'(T_CAS_LATENCY);
                     state_nxt = STATE_READ_BURST;
                 end
 
@@ -380,15 +382,15 @@ module sdram_controller
                     // Precharge all banks before auto-refresh
                     dram_addr = SDRAM_ADDR_WIDTH'('b0010000000000);    // XXX parameterize
                     command = CMD_PRECHARGE;
-                    timer_nxt = T_ROW_PRECHARGE;
+                    timer_nxt = TIMER_WIDTH'(T_ROW_PRECHARGE);
                     state_nxt = STATE_AUTO_REFRESH1;
                 end
 
                 STATE_AUTO_REFRESH1:
                 begin
                     command = CMD_AUTO_REFRESH;
-                    timer_nxt = T_AUTO_REFRESH_CYCLE;
-                    refresh_timer_nxt = T_REFRESH;
+                    timer_nxt = TIMER_WIDTH'(T_AUTO_REFRESH_CYCLE);
+                    refresh_timer_nxt = TIMER_WIDTH'(T_REFRESH);
                     state_nxt = STATE_IDLE;
                 end
 

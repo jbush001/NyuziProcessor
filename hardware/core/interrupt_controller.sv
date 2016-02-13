@@ -64,6 +64,7 @@ module interrupt_controller
         end
     end
 
+    assign io_bus.read_data = '0;
     assign processor_halt = ic_thread_en == 0;
 
     genvar thread_idx;

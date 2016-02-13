@@ -83,7 +83,7 @@ module vga_sequencer(
 
     assign counter_nxt = current_uop.instruction_type == INITCNT
         ? current_uop.immediate_value
-        : counter[current_uop.counter_select] - 1;
+        : counter[current_uop.counter_select] - counter_t'(1);
     assign vga_vs = current_uop.vsync && sequencer_en;
     assign vga_hs = current_uop.hsync && sequencer_en;
     assign start_dma = pc == 0 && sequencer_en;
@@ -129,7 +129,7 @@ module vga_sequencer(
             else if (prog_write_en)
             begin
                 pc <= '0;
-                prog_load_addr <= prog_load_addr + 1;
+                prog_load_addr <= prog_load_addr + progaddr_t'(1);
             end
         end
     end
