@@ -356,7 +356,7 @@ module sdram_controller
                 STATE_READ_BURST:
                 begin
                     lfifo_enqueue = 1;
-                    burst_offset_nxt = burst_offset_ff + 1;
+                    burst_offset_nxt = burst_offset_ff + SDRAM_BURST_IDX_WIDTH'(1);
                     if (burst_offset_ff == SDRAM_BURST_IDX_WIDTH'(SDRAM_BURST_LENGTH - 1))
                         state_nxt = STATE_IDLE;
                 end
@@ -372,7 +372,7 @@ module sdram_controller
                         command = CMD_WRITE;
                     end
 
-                    burst_offset_nxt = burst_offset_ff + 1;
+                    burst_offset_nxt = burst_offset_ff + SDRAM_BURST_IDX_WIDTH'(1);
                     if (burst_offset_ff == SDRAM_BURST_IDX_WIDTH'(SDRAM_BURST_LENGTH - 1))
                         state_nxt = STATE_IDLE;
                 end
@@ -411,7 +411,7 @@ module sdram_controller
             end
 
             state_ff <= STATE_INIT0;
-            refresh_timer_ff <= T_REFRESH;
+            refresh_timer_ff <= TIMER_WIDTH'(T_REFRESH);
 
             access_is_read_ff <= '0;
             burst_offset_ff <= '0;
@@ -461,8 +461,8 @@ module sdram_controller
             begin
                 // The bus transfer may be longer than the SDRAM burst.
                 // Determine if we are done yet.
-                write_length <= write_length - SDRAM_BURST_LENGTH;
-                write_address <= write_address + SDRAM_BURST_LENGTH;
+                write_length <= write_length - 8'(SDRAM_BURST_LENGTH);
+                write_address <= write_address + INTERNAL_ADDR_WIDTH'(SDRAM_BURST_LENGTH);
                 if (write_length == SDRAM_BURST_LENGTH - 1)
                     write_pending <= 0;
             end
@@ -492,8 +492,8 @@ module sdram_controller
             if (read_pending && state_ff == STATE_READ_BURST &&
                 state_nxt != STATE_READ_BURST)
             begin
-                read_length <= read_length - SDRAM_BURST_LENGTH;
-                read_address <= read_address + SDRAM_BURST_LENGTH;
+                read_length <= read_length - 8'(SDRAM_BURST_LENGTH);
+                read_address <= read_address + INTERNAL_ADDR_WIDTH'(SDRAM_BURST_LENGTH);
                 if (read_length == SDRAM_BURST_LENGTH - 1)
                     read_pending <= 0;
             end

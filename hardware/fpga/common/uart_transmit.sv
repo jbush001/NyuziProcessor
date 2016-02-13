@@ -62,7 +62,7 @@ module uart_transmit
                     next_edge_clocks <= SAMPLE_COUNT_WIDTH'(CLOCKS_PER_BIT - 1);
                 end
                 else
-                    next_edge_clocks <= next_edge_clocks - 1;
+                    next_edge_clocks <= next_edge_clocks - SAMPLE_COUNT_WIDTH'(1);
             end
             else if (tx_enable)
             begin

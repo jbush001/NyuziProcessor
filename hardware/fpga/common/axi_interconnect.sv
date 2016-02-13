@@ -240,7 +240,7 @@ module axi_interconnect
     assign axi_bus_m[0].m_araddr = read_burst_address;
     assign axi_bus_m[1].m_araddr = read_burst_address - M1_BASE_ADDRESS;
     assign axi_bus_m[0].m_arburst = read_selected_master ? axi_bus_s[1].m_arburst : axi_bus_s[0].m_arburst;
-    assign axi_bus_m[1].m_arburst = '0;
+    assign axi_bus_m[1].m_arburst = AXI_BURST_INCR;
     assign axi_bus_m[0].m_arsize = read_selected_master ? axi_bus_s[1].m_arsize : axi_bus_s[0].m_arsize;
     assign axi_bus_m[1].m_arsize = '0;
     assign axi_bus_m[0].m_awcache = '0;

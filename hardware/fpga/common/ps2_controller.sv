@@ -26,8 +26,8 @@ module ps2_controller
     io_bus_interface.slave      io_bus,
 
     // PS/2 Interface
-    inout                       ps2_clk,
-    inout                       ps2_data);
+    input                       ps2_clk,
+    input                       ps2_data);
 
     localparam STATUS_REG = BASE_ADDRESS;
     localparam DATA_REG = BASE_ADDRESS + 4;

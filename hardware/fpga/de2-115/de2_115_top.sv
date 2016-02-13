@@ -58,12 +58,12 @@ module de2_115_top(
 
     // SD card
     output                      sd_clk,
-    inout                       sd_cmd,
+    output                      sd_cmd,
     inout[3:0]                  sd_dat,
 
     // PS/2
-    inout                       ps2_clk,
-    inout                       ps2_data);
+    input                       ps2_clk,
+    input                       ps2_data);
 
     parameter  bootrom = "../../../software/bootrom/boot.hex";
 

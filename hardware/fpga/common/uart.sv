@@ -87,14 +87,9 @@ module uart
             endcase
 
             if (rx_fifo_read)
-            begin
                 rx_fifo_overrun <= 0;
-            end
             if (rx_char_valid && rx_fifo_full)
-            begin
-                $write("[%d]overflow: %c\n", $time, rx_char);
                 rx_fifo_overrun <= 1;
-            end
         end
     end
 
