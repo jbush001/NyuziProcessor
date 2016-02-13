@@ -280,7 +280,6 @@ typedef logic[(31 - (`CACHE_LINE_OFFSET_WIDTH + $clog2(`L2_SETS))):0] l2_tag_t;
 typedef struct packed {
     l2_tag_t tag;
     l2_set_idx_t set_idx;
-    logic[`CACHE_LINE_OFFSET_WIDTH - 1:0] offset;
 } l2_addr_t;
 
 // Memory address that is multiple of cache line size
@@ -313,7 +312,7 @@ typedef struct packed {
     l1_miss_entry_idx_t id;
     l2req_packet_type_t packet_type;
     cache_type_t cache_type;
-    scalar_t address;
+    l2_addr_t address;
     logic[`CACHE_LINE_BYTES - 1:0] store_mask;
     cache_line_data_t data;
 } l2req_packet_t;
@@ -332,7 +331,7 @@ typedef struct packed {
     l1_miss_entry_idx_t id;
     l2rsp_packet_type_t packet_type;
     cache_type_t cache_type;
-    scalar_t address;
+    l2_addr_t address;
     cache_line_data_t data;
 } l2rsp_packet_t;
 

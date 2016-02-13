@@ -55,16 +55,12 @@ module l2_cache_tag_stage(
     output cache_line_data_t              l2t_data_from_memory,
     output logic                          l2t_is_restarted_flush);
 
-    l2_addr_t l2_addr;
-
-    assign l2_addr = l2a_request.address;
-
     cache_lru #(.NUM_SETS(`L2_SETS), .NUM_WAYS(`L2_WAYS)) cache_lru(
         .fill_en(l2a_is_l2_fill),
-        .fill_set(l2_addr.set_idx),
+        .fill_set(l2a_request.address.set_idx),
         .fill_way(l2t_fill_way),    // Output to next stage
         .access_en(l2a_request_valid),
-        .access_set(l2_addr.set_idx),
+        .access_set(l2a_request.address.set_idx),
         .access_update_en(l2r_update_lru_en),
         .access_update_way(l2r_update_lru_hit_way),
         .*);
@@ -84,7 +80,7 @@ module l2_cache_tag_stage(
                 .READ_DURING_WRITE("NEW_DATA")
             ) sram_tags(
                 .read_en(l2a_request_valid),
-                .read_addr(l2_addr.set_idx),
+                .read_addr(l2a_request.address.set_idx),
                 .read_data(l2t_tag[way_idx]),
                 .write_en(l2r_update_tag_en[way_idx]),
                 .write_addr(l2r_update_tag_set),
@@ -97,7 +93,7 @@ module l2_cache_tag_stage(
                 .READ_DURING_WRITE("NEW_DATA")
             ) sram_dirty_flags(
                 .read_en(l2a_request_valid),
-                .read_addr(l2_addr.set_idx),
+                .read_addr(l2a_request.address.set_idx),
                 .read_data(l2t_dirty[way_idx]),
                 .write_en(l2r_update_dirty_en[way_idx]),
                 .write_addr(l2r_update_dirty_set),
@@ -120,10 +116,10 @@ module l2_cache_tag_stage(
                 if (l2a_request_valid)
                 begin
                     if (l2r_update_tag_en[way_idx] && l2r_update_tag_set
-                        == l2_addr.set_idx)
+                        == l2a_request.address.set_idx)
                         l2t_valid[way_idx] <= l2r_update_tag_valid;    // Bypass
                     else
-                        l2t_valid[way_idx] <= line_valid[l2_addr.set_idx];
+                        l2t_valid[way_idx] <= line_valid[l2a_request.address.set_idx];
                 end
             end
         end

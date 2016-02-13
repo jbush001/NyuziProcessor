@@ -58,7 +58,7 @@ module ifetch_data_stage(
 
     // To l1_l2_interface
     output logic                     ifd_cache_miss,
-    output scalar_t                  ifd_cache_miss_paddr,
+    output cache_line_index_t        ifd_cache_miss_paddr,
     output thread_idx_t              ifd_cache_miss_thread_idx,    // also to ifetch_tag
 
     // From control registers
@@ -128,7 +128,7 @@ module ifetch_data_stage(
         && ift_tlb_hit
         && ift_instruction_requested
         && !ifd_near_miss;
-    assign ifd_cache_miss_paddr = {ift_pc_paddr.tag, ift_pc_paddr.set_idx, {`CACHE_LINE_OFFSET_WIDTH{1'b0}}};
+    assign ifd_cache_miss_paddr = {ift_pc_paddr.tag, ift_pc_paddr.set_idx};
     assign ifd_cache_miss_thread_idx = ift_thread_idx;
     assign perf_icache_hit = cache_hit && ift_instruction_requested;
     assign perf_icache_miss = !cache_hit && ift_tlb_hit && ift_instruction_requested;

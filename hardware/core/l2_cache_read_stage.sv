@@ -94,7 +94,6 @@ module l2_cache_read_stage(
     logic can_store_sync;
 
     logic[`L2_WAYS - 1:0] hit_way_oh;
-    l2_addr_t l2_addr;
     logic cache_hit;
     l2_way_idx_t hit_way_idx;
     logic[$clog2(`L2_WAYS * `L2_SETS) - 1:0] read_address;
@@ -109,7 +108,6 @@ module l2_cache_read_stage(
     l2_way_idx_t tag_update_way;
     logic[GLOBAL_THREAD_IDX_WIDTH - 1:0] request_sync_slot;
 
-    assign l2_addr = l2t_request.address;
     assign is_load = l2t_request.packet_type == L2REQ_LOAD
         || l2t_request.packet_type == L2REQ_LOAD_SYNC;
     assign is_store = l2t_request.packet_type == L2REQ_STORE
@@ -125,7 +123,7 @@ module l2_cache_read_stage(
     generate
         for (way_idx = 0; way_idx < `L2_WAYS; way_idx++)
         begin : hit_way_gen
-            assign hit_way_oh[way_idx] = l2_addr.tag == l2t_tag[way_idx] && l2t_valid[way_idx];
+            assign hit_way_oh[way_idx] = l2t_request.address.tag == l2t_tag[way_idx] && l2t_valid[way_idx];
         end
     endgenerate
 
@@ -137,7 +135,7 @@ module l2_cache_read_stage(
 
     // If this is a fill, read the old (potentially dirty line) so it can be written back.
     // If it is a cache hit, read the line data.
-    assign read_address = {(l2t_is_l2_fill ? l2t_fill_way : hit_way_idx), l2_addr.set_idx};
+    assign read_address = {(l2t_is_l2_fill ? l2t_fill_way : hit_way_idx), l2t_request.address.set_idx};
 
     //
     // Cache memory
@@ -164,7 +162,7 @@ module l2_cache_read_stage(
         && !l2t_is_restarted_flush;
     assign update_dirty = l2t_request_valid && (l2t_is_l2_fill
         || (cache_hit && (is_store || is_flush_first_pass)));
-    assign l2r_update_dirty_set = l2_addr.set_idx;
+    assign l2r_update_dirty_set = l2t_request.address.set_idx;
     assign l2r_update_dirty_value = is_store;    // This is zero if this is a flush
 
     genvar dirty_update_idx;
@@ -191,9 +189,9 @@ module l2_cache_read_stage(
         end
     endgenerate
 
-    assign l2r_update_tag_set = l2_addr.set_idx;
+    assign l2r_update_tag_set = l2t_request.address.set_idx;
     assign l2r_update_tag_valid = !is_dinvalidate;
-    assign l2r_update_tag_value = l2_addr.tag;
+    assign l2r_update_tag_value = l2t_request.address.tag;
 
     //
     // Update LRU
@@ -206,7 +204,7 @@ module l2_cache_read_stage(
     //
     assign request_sync_slot = GLOBAL_THREAD_IDX_WIDTH'({l2t_request.core, l2t_request.id});
     assign can_store_sync = sync_load_address[request_sync_slot]
-        == {l2_addr.tag, l2_addr.set_idx}
+        == {l2t_request.address.tag, l2t_request.address.set_idx}
         && sync_load_address_valid[request_sync_slot]
         && l2t_request.packet_type == L2REQ_STORE_SYNC;
 
@@ -260,7 +258,7 @@ module l2_cache_read_stage(
                 case (l2t_request.packet_type)
                     L2REQ_LOAD_SYNC:
                     begin
-                        sync_load_address[request_sync_slot] <= {l2_addr.tag, l2_addr.set_idx};
+                        sync_load_address[request_sync_slot] <= {l2t_request.address.tag, l2t_request.address.set_idx};
                         sync_load_address_valid[request_sync_slot] <= 1;
                     end
 
@@ -274,7 +272,7 @@ module l2_cache_read_stage(
                             // Invalidate
                             for (int entry_idx = 0; entry_idx < `TOTAL_THREADS; entry_idx++)
                             begin
-                                if (sync_load_address[entry_idx] == {l2_addr.tag, l2_addr.set_idx})
+                                if (sync_load_address[entry_idx] == {l2t_request.address.tag, l2t_request.address.set_idx})
                                     sync_load_address_valid[entry_idx] <= 0;
                             end
                         end

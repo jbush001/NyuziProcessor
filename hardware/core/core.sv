@@ -64,7 +64,7 @@ module core
     logic               cr_mmu_en [`THREADS_PER_CORE];// From control_registers of control_registers.v
     logic               cr_supervisor_en [`THREADS_PER_CORE];// From control_registers of control_registers.v
     logic               dd_cache_miss;          // From dcache_data_stage of dcache_data_stage.v
-    scalar_t            dd_cache_miss_addr;     // From dcache_data_stage of dcache_data_stage.v
+    cache_line_index_t  dd_cache_miss_addr;     // From dcache_data_stage of dcache_data_stage.v
     logic               dd_cache_miss_synchronized;// From dcache_data_stage of dcache_data_stage.v
     thread_idx_t        dd_cache_miss_thread_idx;// From dcache_data_stage of dcache_data_stage.v
     control_register_t  dd_creg_index;          // From dcache_data_stage of dcache_data_stage.v
@@ -90,8 +90,8 @@ module core
     l1d_addr_t          dd_request_vaddr;       // From dcache_data_stage of dcache_data_stage.v
     logic               dd_rollback_en;         // From dcache_data_stage of dcache_data_stage.v
     scalar_t            dd_rollback_pc;         // From dcache_data_stage of dcache_data_stage.v
-    scalar_t            dd_store_addr;          // From dcache_data_stage of dcache_data_stage.v
-    scalar_t            dd_store_bypass_addr;   // From dcache_data_stage of dcache_data_stage.v
+    cache_line_index_t  dd_store_addr;          // From dcache_data_stage of dcache_data_stage.v
+    cache_line_index_t  dd_store_bypass_addr;   // From dcache_data_stage of dcache_data_stage.v
     thread_idx_t        dd_store_bypass_thread_idx;// From dcache_data_stage of dcache_data_stage.v
     cache_line_data_t   dd_store_data;          // From dcache_data_stage of dcache_data_stage.v
     logic               dd_store_en;            // From dcache_data_stage of dcache_data_stage.v
@@ -207,7 +207,7 @@ module core
     thread_idx_t        id_thread_idx;          // From instruction_decode_stage of instruction_decode_stage.v
     logic               ifd_alignment_fault;    // From ifetch_data_stage of ifetch_data_stage.v
     logic               ifd_cache_miss;         // From ifetch_data_stage of ifetch_data_stage.v
-    scalar_t            ifd_cache_miss_paddr;   // From ifetch_data_stage of ifetch_data_stage.v
+    cache_line_index_t  ifd_cache_miss_paddr;   // From ifetch_data_stage of ifetch_data_stage.v
     thread_idx_t        ifd_cache_miss_thread_idx;// From ifetch_data_stage of ifetch_data_stage.v
     logic               ifd_executable_fault;   // From ifetch_data_stage of ifetch_data_stage.v
     scalar_t            ifd_instruction;        // From ifetch_data_stage of ifetch_data_stage.v

@@ -371,8 +371,7 @@ module l2_axi_bus_interface(
         if (state_ff == STATE_READ_TRANSFER && axi_bus.s_rvalid)
             bif_load_buffer[burst_offset_ff] <= axi_bus.s_rdata;
 
-        axi_bus.m_araddr <= {l2bi_request.address[31:`CACHE_LINE_OFFSET_WIDTH],
-            {`CACHE_LINE_OFFSET_WIDTH{1'b0}}};
+        axi_bus.m_araddr <= {l2bi_request.address, {`CACHE_LINE_OFFSET_WIDTH{1'b0}}};
         axi_bus.m_awaddr <= {bif_writeback_address, {`CACHE_LINE_OFFSET_WIDTH{1'b0}}};
         axi_bus.m_wdata <= bif_writeback_lanes[~burst_offset_nxt];
     end

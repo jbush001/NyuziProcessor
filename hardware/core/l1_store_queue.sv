@@ -35,12 +35,12 @@ module l1_store_queue(
     input                                  dd_membar_en,
     input                                  dd_iinvalidate_en,
     input                                  dd_dinvalidate_en,
-    input l1d_addr_t                       dd_store_addr,
+    input cache_line_index_t               dd_store_addr,
     input [`CACHE_LINE_BYTES - 1:0]        dd_store_mask,
     input cache_line_data_t                dd_store_data,
     input                                  dd_store_synchronized,
     input thread_idx_t                     dd_store_thread_idx,
-    input l1d_addr_t                       dd_store_bypass_addr,
+    input cache_line_index_t               dd_store_bypass_addr,
     input thread_idx_t                     dd_store_bypass_thread_idx,
 
     // To writeback_stage
@@ -50,7 +50,7 @@ module l1_store_queue(
 
     // To l1_l2_interface
     output logic                           sq_dequeue_ready,
-    output scalar_t                        sq_dequeue_addr,
+    output cache_line_index_t              sq_dequeue_addr,
     output l1_miss_entry_idx_t             sq_dequeue_idx,
     output [`CACHE_LINE_BYTES - 1:0]       sq_dequeue_mask,
     output cache_line_data_t               sq_dequeue_data,
@@ -79,21 +79,12 @@ module l1_store_queue(
         logic valid;
         cache_line_data_t data;
         logic[`CACHE_LINE_BYTES - 1:0] mask;
-        scalar_t address;
+        cache_line_index_t address;
     } pending_stores[`THREADS_PER_CORE];
     thread_bitmap_t rollback;
     thread_bitmap_t send_request;
     thread_idx_t send_grant_idx;
     thread_bitmap_t send_grant_oh;
-    l1d_addr_t cache_aligned_store_addr;
-    l1d_addr_t cache_aligned_bypass_addr;
-
-    assign cache_aligned_store_addr.tag = dd_store_addr.tag;
-    assign cache_aligned_store_addr.set_idx = dd_store_addr.set_idx;
-    assign cache_aligned_store_addr.offset = 0;
-    assign cache_aligned_bypass_addr.tag = dd_store_bypass_addr.tag;
-    assign cache_aligned_bypass_addr.set_idx = dd_store_bypass_addr.set_idx;
-    assign cache_aligned_bypass_addr.offset = 0;
 
     rr_arbiter #(.NUM_REQUESTERS(`THREADS_PER_CORE)) request_arbiter(
         .request(send_request),
@@ -124,7 +115,7 @@ module l1_store_queue(
             assign membar_requested_this_entry = dd_membar_en && dd_store_thread_idx == thread_idx_t'(thread_idx);
             assign send_this_cycle = send_grant_oh[thread_idx] && sq_dequeue_ack;
             assign can_write_combine = pending_stores[thread_idx].valid
-                && pending_stores[thread_idx].address == cache_aligned_store_addr
+                && pending_stores[thread_idx].address == dd_store_addr
                 && !pending_stores[thread_idx].synchronized
                 && !pending_stores[thread_idx].flush
                 && !pending_stores[thread_idx].iinvalidate
@@ -230,7 +221,7 @@ module l1_store_queue(
                             assert(!enqueue_cache_control);
 
                             pending_stores[thread_idx].valid <= 1;
-                            pending_stores[thread_idx].address <= cache_aligned_store_addr;
+                            pending_stores[thread_idx].address <= dd_store_addr;
                             pending_stores[thread_idx].synchronized <= dd_store_synchronized;
                             pending_stores[thread_idx].flush <= 0;
                             pending_stores[thread_idx].iinvalidate <= 0;
@@ -244,7 +235,7 @@ module l1_store_queue(
                         assert(!rollback[thread_idx]);
 
                         pending_stores[thread_idx].valid <= 1;
-                        pending_stores[thread_idx].address <= cache_aligned_store_addr;
+                        pending_stores[thread_idx].address <= dd_store_addr;
                         pending_stores[thread_idx].synchronized <= 0;
                         pending_stores[thread_idx].flush <= dd_flush_en;
                         pending_stores[thread_idx].iinvalidate <= dd_iinvalidate_en;
@@ -296,7 +287,7 @@ module l1_store_queue(
     always_ff @(posedge clk)
     begin
         sq_store_bypass_data <= pending_stores[dd_store_bypass_thread_idx].data;
-        if (cache_aligned_bypass_addr == pending_stores[dd_store_bypass_thread_idx].address
+        if (dd_store_bypass_addr == pending_stores[dd_store_bypass_thread_idx].address
             && pending_stores[dd_store_bypass_thread_idx].valid
             && !pending_stores[dd_store_bypass_thread_idx].flush
             && !pending_stores[dd_store_bypass_thread_idx].iinvalidate

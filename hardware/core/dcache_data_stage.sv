@@ -91,7 +91,7 @@ module dcache_data_stage(
 
      // To l1_l2_interface
     output logic                              dd_cache_miss,
-    output scalar_t                           dd_cache_miss_addr,
+    output cache_line_index_t                 dd_cache_miss_addr,
     output thread_idx_t                       dd_cache_miss_thread_idx,
     output logic                              dd_cache_miss_synchronized,
     output logic                              dd_store_en,
@@ -100,11 +100,11 @@ module dcache_data_stage(
     output logic                              dd_iinvalidate_en,
     output logic                              dd_dinvalidate_en,
     output [`CACHE_LINE_BYTES - 1:0]          dd_store_mask,
-    output scalar_t                           dd_store_addr,
+    output cache_line_index_t                 dd_store_addr,
     output cache_line_data_t                  dd_store_data,
     output thread_idx_t                       dd_store_thread_idx,
     output logic                              dd_store_synchronized,
-    output scalar_t                           dd_store_bypass_addr,
+    output cache_line_index_t                 dd_store_bypass_addr,
     output thread_idx_t                       dd_store_bypass_thread_idx,
 
     // From writeback_stage
@@ -195,9 +195,9 @@ module dcache_data_stage(
     assign dcache_request_addr = {dt_request_paddr[31:`CACHE_LINE_OFFSET_WIDTH],
         {`CACHE_LINE_OFFSET_WIDTH{1'b0}}};
     assign cache_lane_idx = dt_request_paddr.offset[`CACHE_LINE_OFFSET_WIDTH - 1:2];
-    assign dd_store_bypass_addr = dt_request_paddr;
+    assign dd_store_bypass_addr = dt_request_paddr[31:`CACHE_LINE_OFFSET_WIDTH];
     assign dd_store_bypass_thread_idx = dt_thread_idx;
-    assign dd_store_addr = dt_request_paddr;
+    assign dd_store_addr = dt_request_paddr[31:`CACHE_LINE_OFFSET_WIDTH];
     assign dd_store_synchronized = is_synchronized;
     assign dd_store_en = dcache_store_en
         && !is_unaligned
@@ -440,7 +440,7 @@ module dcache_data_stage(
         && dt_tlb_hit
         && !cache_near_miss
         && !is_unaligned;
-    assign dd_cache_miss_addr = dcache_request_addr;
+    assign dd_cache_miss_addr = dcache_request_addr[31:`CACHE_LINE_OFFSET_WIDTH];
     assign dd_cache_miss_thread_idx = dt_thread_idx;
     assign dd_cache_miss_synchronized = is_synchronized;
 

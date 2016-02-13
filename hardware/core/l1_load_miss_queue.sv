@@ -27,14 +27,14 @@ module l1_load_miss_queue(
 
     // Enqueue request
     input                                   cache_miss,
-    input scalar_t                          cache_miss_addr,
+    input cache_line_index_t                cache_miss_addr,
     input thread_idx_t                      cache_miss_thread_idx,
     input                                   cache_miss_synchronized,
 
     // Dequeue request
     output logic                            dequeue_ready,
     input                                   dequeue_ack,
-    output scalar_t                         dequeue_addr,
+    output cache_line_index_t               dequeue_addr,
     output l1_miss_entry_idx_t              dequeue_idx,
     output logic                            dequeue_synchronized,
 
@@ -47,7 +47,7 @@ module l1_load_miss_queue(
         logic valid;
         logic request_sent;
         thread_bitmap_t waiting_threads;
-        scalar_t address;
+        cache_line_index_t address;
         logic synchronized;
     } pending_entries[`THREADS_PER_CORE];
 

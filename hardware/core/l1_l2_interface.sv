@@ -73,7 +73,7 @@ module l1_l2_interface
 
     // From ifetch_data_stage
     input logic                                   ifd_cache_miss,
-    input scalar_t                                ifd_cache_miss_paddr,
+    input cache_line_index_t                      ifd_cache_miss_paddr,
     input thread_idx_t                            ifd_cache_miss_thread_idx,
 
     // To thread_select_stage
@@ -103,7 +103,7 @@ module l1_l2_interface
 
     // From dcache_data_stage
     input                                         dd_cache_miss,
-    input scalar_t                                dd_cache_miss_addr,
+    input cache_line_index_t                      dd_cache_miss_addr,
     input thread_idx_t                            dd_cache_miss_thread_idx,
     input                                         dd_cache_miss_synchronized,
     input                                         dd_store_en,
@@ -112,11 +112,11 @@ module l1_l2_interface
     input                                         dd_iinvalidate_en,
     input                                         dd_dinvalidate_en,
     input [`CACHE_LINE_BYTES - 1:0]               dd_store_mask,
-    input scalar_t                                dd_store_addr,
+    input cache_line_index_t                      dd_store_addr,
     input cache_line_data_t                       dd_store_data,
     input thread_idx_t                            dd_store_thread_idx,
     input                                         dd_store_synchronized,
-    input scalar_t                                dd_store_bypass_addr,
+    input cache_line_index_t                      dd_store_bypass_addr,
     input thread_idx_t                            dd_store_bypass_thread_idx,
 
     // To writeback_stage
@@ -145,24 +145,26 @@ module l1_l2_interface
     logic icache_dequeue_ack;
     logic dcache_dequeue_ready;
     logic dcache_dequeue_ack;
-    scalar_t dcache_dequeue_addr;
+    cache_line_index_t dcache_dequeue_addr;
     logic dcache_dequeue_synchronized;
-    scalar_t icache_dequeue_addr;
+    cache_line_index_t icache_dequeue_addr;
     l1_miss_entry_idx_t dcache_dequeue_idx;
     l1_miss_entry_idx_t icache_dequeue_idx;
     logic response_stage2_valid;
     l2rsp_packet_t response_stage2;
-    l1d_addr_t dcache_addr_stage1;
-    l1i_addr_t icache_addr_stage1;
-    l1d_addr_t dcache_addr_stage2;
-    l1i_addr_t icache_addr_stage2;
+    l1d_set_idx_t dcache_set_stage1;
+    l1i_set_idx_t icache_set_stage1;
+    l1d_set_idx_t dcache_set_stage2;
+    l1d_set_idx_t icache_set_stage2;
+    l1d_tag_t dcache_tag_stage2;
+    l1i_tag_t icache_tag_stage2;
     logic storebuf_l2_sync_success;
     logic response_is_iinvalidate;
     logic response_is_dinvalidate;
 
     /*AUTOLOGIC*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
-    scalar_t            sq_dequeue_addr;        // From l1_store_queue of l1_store_queue.v
+    cache_line_index_t  sq_dequeue_addr;        // From l1_store_queue of l1_store_queue.v
     cache_line_data_t   sq_dequeue_data;        // From l1_store_queue of l1_store_queue.v
     logic               sq_dequeue_dinvalidate; // From l1_store_queue of l1_store_queue.v
     logic               sq_dequeue_flush;       // From l1_store_queue of l1_store_queue.v
@@ -222,16 +224,16 @@ module l1_l2_interface
     // Response pipeline stage 1
     /////////////////////////////////////////////////
 
-    assign dcache_addr_stage1 = l2_response.address;
-    assign icache_addr_stage1 = l2_response.address;
+    assign dcache_set_stage1 = l2_response.address[$clog2(`L1D_SETS) - 1:0];
+    assign icache_set_stage1 = l2_response.address[$clog2(`L1I_SETS) - 1:0];
     assign l2i_snoop_en = l2_response_valid && l2_response.cache_type == CT_DCACHE;
-    assign l2i_snoop_set = dcache_addr_stage1.set_idx;
+    assign l2i_snoop_set = dcache_set_stage1;
     assign l2i_dcache_lru_fill_en = l2_response_valid && l2_response.cache_type == CT_DCACHE
         && l2_response.packet_type == L2RSP_LOAD_ACK && l2_response.core == CORE_ID;
-    assign l2i_dcache_lru_fill_set = dcache_addr_stage1.set_idx;
+    assign l2i_dcache_lru_fill_set = dcache_set_stage1;
     assign l2i_icache_lru_fill_en = l2_response_valid && l2_response.cache_type == CT_ICACHE
         && l2_response.packet_type == L2RSP_LOAD_ACK && l2_response.core == CORE_ID;
-    assign l2i_icache_lru_fill_set = icache_addr_stage1.set_idx;
+    assign l2i_icache_lru_fill_set = icache_set_stage1;
 
     always_ff @(posedge clk, posedge reset)
     begin
@@ -252,8 +254,8 @@ module l1_l2_interface
     // Response pipeline stage 2
     /////////////////////////////////////////////////
 
-    assign dcache_addr_stage2 = response_stage2.address;
-    assign icache_addr_stage2 = response_stage2.address;
+    assign {icache_tag_stage2, icache_set_stage2} = response_stage2.address;
+    assign {dcache_tag_stage2, dcache_set_stage2} = response_stage2.address;
 
     //
     // Check snoop result
@@ -262,7 +264,7 @@ module l1_l2_interface
     generate
         for (way_idx = 0; way_idx < `L1D_WAYS; way_idx++)
         begin : snoop_hit_check_gen
-            assign snoop_hit_way_oh[way_idx] = dt_snoop_tag[way_idx] == dcache_addr_stage2.tag
+            assign snoop_hit_way_oh[way_idx] = dt_snoop_tag[way_idx] == dcache_tag_stage2
                 && dt_snoop_valid[way_idx];
         end
     endgenerate
@@ -302,8 +304,8 @@ module l1_l2_interface
         && response_stage2.cache_type == CT_DCACHE) || response_stage2.packet_type == L2RSP_STORE_ACK))
         || (response_stage2_valid && response_is_dinvalidate && |snoop_hit_way_oh);
     assign l2i_dtag_update_en_oh = dupdate_way_oh & {`L1D_WAYS{dcache_update_en}};
-    assign l2i_dtag_update_tag = dcache_addr_stage2.tag;
-    assign l2i_dtag_update_set = dcache_addr_stage2.set_idx;
+    assign l2i_dtag_update_tag = dcache_tag_stage2;
+    assign l2i_dtag_update_set = dcache_set_stage2;
     assign l2i_dtag_update_valid = !response_is_dinvalidate;
 
     //
@@ -316,8 +318,8 @@ module l1_l2_interface
         || response_is_iinvalidate;
     assign l2i_itag_update_en = response_is_iinvalidate ? {`L1I_WAYS{1'b1}}
         : (ifill_way_oh & {`L1I_WAYS{icache_update_en}});
-    assign l2i_itag_update_tag = icache_addr_stage2.tag;
-    assign l2i_itag_update_set = icache_addr_stage2.set_idx;
+    assign l2i_itag_update_tag = icache_tag_stage2;
+    assign l2i_itag_update_set = icache_set_stage2;
     assign l2i_itag_update_valid = !response_is_iinvalidate;
 
     // Wake up entries that have had their miss satisfied.
@@ -341,10 +343,10 @@ module l1_l2_interface
     always_ff @(posedge clk)
     begin
         l2i_ddata_update_way <= dupdate_way_idx;
-        l2i_ddata_update_set <= dcache_addr_stage2.set_idx;
+        l2i_ddata_update_set <= dcache_set_stage2;
         l2i_ddata_update_data <= response_stage2.data;
         l2i_idata_update_way <= ift_fill_lru;
-        l2i_idata_update_set <= icache_addr_stage2.set_idx;
+        l2i_idata_update_set <= icache_set_stage2;
         l2i_idata_update_data <= response_stage2.data;
     end
 
