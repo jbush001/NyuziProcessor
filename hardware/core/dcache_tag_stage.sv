@@ -235,15 +235,13 @@ module dcache_tag_stage
         .request_asid(cr_current_asid[of_thread_idx]),
         .update_ppage_idx(new_tlb_value.ppage_idx),
         .update_present(new_tlb_value.present),
-        .update_executable(1'b0),
-        .update_writable(new_tlb_value.writable),
+        .update_exe_writable(new_tlb_value.writable),
         .update_supervisor(new_tlb_value.supervisor),
         .update_global(new_tlb_value.global_map),
         .lookup_ppage_idx(tlb_ppage_idx),
         .lookup_hit(tlb_hit),
         .lookup_present(tlb_present),
-        .lookup_executable(),
-        .lookup_writable(tlb_writable),
+        .lookup_exe_writable(tlb_writable),
         .lookup_supervisor(tlb_supervisor),
         .*);
 

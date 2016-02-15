@@ -29,6 +29,7 @@ module tlb
     input                     reset,
 
     // Command
+    // (exe_writable means executable for icache, writable for dcache)
     input                     lookup_en,
     input                     update_en,
     input                     invalidate_en,
@@ -37,8 +38,7 @@ module tlb
     input [`ASID_WIDTH - 1:0] request_asid,
     input page_index_t        update_ppage_idx,
     input                     update_present,
-    input                     update_executable,
-    input                     update_writable,
+    input                     update_exe_writable,
     input                     update_supervisor,
     input                     update_global,
 
@@ -46,8 +46,7 @@ module tlb
     output page_index_t       lookup_ppage_idx,
     output logic              lookup_hit,
     output logic              lookup_present,
-    output logic              lookup_executable,
-    output logic              lookup_writable,
+    output logic              lookup_exe_writable,
     output logic              lookup_supervisor);
 
     localparam NUM_SETS = NUM_ENTRIES / NUM_WAYS;
@@ -57,8 +56,7 @@ module tlb
     logic[NUM_WAYS - 1:0] way_hit_oh;
     page_index_t way_ppage_idx[NUM_WAYS];
     logic way_present[NUM_WAYS];
-    logic way_executable[NUM_WAYS];
-    logic way_writable[NUM_WAYS];
+    logic way_exe_writable[NUM_WAYS];
     logic way_supervisor[NUM_WAYS];
     page_index_t request_vpage_idx_latched;
     page_index_t update_ppage_idx_latched;
@@ -71,8 +69,7 @@ module tlb
     logic[NUM_WAYS - 1:0] way_update_oh;
     logic[NUM_WAYS - 1:0] next_way_oh;
     logic update_present_latched;
-    logic update_executable_latched;
-    logic update_writable_latched;
+    logic update_exe_writable_latched;
     logic update_supervisor_latched;
     logic update_global_latched;
     logic[`ASID_WIDTH - 1:0] request_asid_latched;
@@ -96,7 +93,7 @@ module tlb
 
             sram_1r1w #(
                 .SIZE(NUM_SETS),
-                .DATA_WIDTH(`PAGE_NUM_BITS * 2 + 5 + `ASID_WIDTH),
+                .DATA_WIDTH(`PAGE_NUM_BITS * 2 + 4 + `ASID_WIDTH),
                 .READ_DURING_WRITE("NEW_DATA")
             ) tlb_paddr_sram(
                 .read_en(tlb_read_en),
@@ -105,8 +102,7 @@ module tlb
                     way_asid,
                     way_ppage_idx[way_idx],
                     way_present[way_idx],
-                    way_executable[way_idx],
-                    way_writable[way_idx],
+                    way_exe_writable[way_idx],
                     way_supervisor[way_idx],
                     way_global}),
                 .write_en(way_update_oh[way_idx]),
@@ -115,8 +111,7 @@ module tlb
                     request_asid_latched,
                     update_ppage_idx_latched,
                     update_present_latched,
-                    update_executable_latched,
-                    update_writable_latched,
+                    update_exe_writable_latched,
                     update_supervisor_latched,
                     update_global_latched}),
                 .*);
@@ -160,8 +155,7 @@ module tlb
     begin
         update_ppage_idx_latched <= update_ppage_idx;
         update_present_latched <= update_present;
-        update_executable_latched <= update_executable;
-        update_writable_latched <= update_writable;
+        update_exe_writable_latched <= update_exe_writable;
         update_supervisor_latched <= update_supervisor;
         update_global_latched <= update_global;
         request_asid_latched <= request_asid;
@@ -197,19 +191,17 @@ module tlb
     begin
         // Enabled mux. Use OR to avoid inferring priority encoder.
         lookup_ppage_idx = 0;
-        lookup_writable = 0;
-        lookup_supervisor = 0;
         lookup_present = 0;
-        lookup_executable = 0;
+        lookup_exe_writable = 0;
+        lookup_supervisor = 0;
         for (int way = 0; way < NUM_WAYS; way++)
         begin
             if (way_hit_oh[way])
             begin
                 lookup_ppage_idx |= way_ppage_idx[way];
-                lookup_writable |= way_writable[way];
-                lookup_supervisor |= way_supervisor[way];
                 lookup_present |= way_present[way];
-                lookup_executable |= way_executable[way];
+                lookup_exe_writable |= way_exe_writable[way];
+                lookup_supervisor |= way_supervisor[way];
             end
         end
     end
