@@ -14,22 +14,12 @@
 // limitations under the License.
 //
 
-unsigned int * volatile mailbox = (unsigned int*) 0x100000;
-
 //
 // This test validates a feature where the emulator can map its
 // system memory as a shared memory file that can be mapped into
 // other emulators or test programs representing a host processor.
 //
-// The shared memory mailbox at 0x100000 consists of two fields:
-//
-// struct mailbox {
-//     unsigned int owner;
-//     unsigned int value;
-// };
-//
-// The owner field is set to 0 if the host owns it, and 1 if
-// the client owns it. For each transaction:
+// For each transfer:
 // 1. Host sets the value it wants to transform and sets owner
 //    to 1 (coprocessor)
 // 2. Client polls on owner. When it sees it is 1, it reads
@@ -38,18 +28,28 @@ unsigned int * volatile mailbox = (unsigned int*) 0x100000;
 // 4. Host polls on owner field. When it sees it is 0, it reads the value.
 //
 
+#define OWNER_HOST 0
+#define OWNER_COPROCESSOR 1
+
+struct mailbox
+{
+    int owner;
+    int value;
+};
+
 int main(void)
 {
-    mailbox[0] = 0;
+    volatile struct mailbox *mbox = (volatile struct mailbox*) 0x100000;
 
+    mbox->owner = OWNER_HOST;
     while (1)
     {
-        if (mailbox[0] == 1)
-        {
-            mailbox[1] = ~mailbox[1];
-            __sync_synchronize();
-            mailbox[0] = 0;
-            __asm("dflush %0" : : "r" (mailbox));
-        }
+        while (mbox->owner != OWNER_COPROCESSOR)
+            ;
+
+        mbox->value = ~mbox->value;
+        __sync_synchronize();
+        mbox->owner = OWNER_HOST;
+        __asm("dflush %0" : : "r" (mbox));
     }
 }

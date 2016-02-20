@@ -21,6 +21,7 @@ import sys
 import tempfile
 import time
 import struct
+import random
 
 sys.path.insert(0, '../..')
 from test_harness import *
@@ -67,20 +68,7 @@ def sharedmem_test(name):
 
         with open(MEM_FILE, 'ab+') as f:
             memory = mmap.mmap(f.fileno(), 0)
-
-            testvalues = [
-                0xec59692d,
-                0x1ae06e9b,
-                0xe7a0dd99,
-                0xfcc8baad,
-                0x6ade3a42,
-                0x6a8bbb5e,
-                0x9df29708,
-                0x4f308269,
-                0x537191dd,
-                0xa65d5314
-            ]
-
+            testvalues = [ random.randint(0, 0xffffffff) for x in range(10) ]
             for value in testvalues:
                 computed = sharedmem_transact(memory, value)
                 if computed != (value ^ 0xffffffff):
