@@ -47,8 +47,9 @@ int main(void)
         while (mbox->owner != OWNER_COPROCESSOR)
             ;
 
+        // Need to update owner after value. Because these are volatile,
+        // the compiler will not reorder them.
         mbox->value = ~mbox->value;
-        __sync_synchronize();
         mbox->owner = OWNER_HOST;
         __asm("dflush %0" : : "r" (mbox));
     }

@@ -46,34 +46,27 @@ def sharedmem_transact(memory, value):
 
 
 def sharedmem_test(name):
-    MEM_FILE = '/tmp/nyuzi_shared_mem'
-
     compile_test('coprocessor.c')
 
     # Start the emulator
-    args = [BIN_DIR + 'emulator', '-s', MEM_FILE, HEX_FILE]
+    memoryFile = tempfile.NamedTemporaryFile()
+    args = [BIN_DIR + 'emulator', '-s', memoryFile.name, HEX_FILE]
     process = subprocess.Popen(args, stdout=subprocess.PIPE,
                                stderr=subprocess.STDOUT)
 
     try:
-        # Hack: Need to wait for a sequence of things
-        # to happen:
-        #  - Emulator creates shared memory file, resizes it, and fills
-        #    it with random data.
-        #  - Test program starts and reads ready flag.
-        # There's currently no way for the emulator to signal that this
-        # has completed, so just sleep long enough that it should have
-        # happened.
+        # Hack: Need to wait for the emulator to create the shared memory
+        # file and initialize it. There's currently no way for the emulator
+        # to signal that this has completed, so just sleep a bit and hope
+        # it's done.
         time.sleep(1.0)
-
-        with open(MEM_FILE, 'ab+') as f:
-            memory = mmap.mmap(f.fileno(), 0)
-            testvalues = [ random.randint(0, 0xffffffff) for x in range(10) ]
-            for value in testvalues:
-                computed = sharedmem_transact(memory, value)
-                if computed != (value ^ 0xffffffff):
-                    raise TestException('Incorrect value from coprocessor expected ' + hex(value ^ 0xffffffff)
-                                        + ' got ' + hex(computed))
+        memory = mmap.mmap(memoryFile.fileno(), 0)
+        testvalues = [ random.randint(0, 0xffffffff) for x in range(10) ]
+        for value in testvalues:
+            computed = sharedmem_transact(memory, value)
+            if computed != (value ^ 0xffffffff):
+                raise TestException('Incorrect value from coprocessor expected ' + hex(value ^ 0xffffffff)
+                                    + ' got ' + hex(computed))
     finally:
         process.kill()
 
