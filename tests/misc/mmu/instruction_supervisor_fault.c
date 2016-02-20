@@ -20,15 +20,6 @@
 // is in supervisor mode, it should be able to execute from pages with the
 // supervisor bit set, but if it is in user mode, it should fault.
 
-void fault_handler()
-{
-    printf("FAULT %d current flags %02x prev flags %02x\n",
-           __builtin_nyuzi_read_control_reg(CR_FAULT_REASON),
-           __builtin_nyuzi_read_control_reg(CR_FLAGS),
-           __builtin_nyuzi_read_control_reg(CR_SAVED_FLAGS));
-    exit(0);
-}
-
 int main(void)
 {
     unsigned int va;
@@ -45,7 +36,7 @@ int main(void)
     add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE
                      | TLB_PRESENT);
 
-    __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);
+    __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, dump_fault_info);
 
     // Enable MMU
     __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
@@ -60,7 +51,9 @@ int main(void)
     // This will fault on instruction fetch.  Interrupts should be enabled, but
     // the processor should be back in supervisor mode. The string should not be
     // printed
-    printf("THIS IS USER MODE\n");	// CHECK: FAULT 9 current flags 06 prev flags 02
+    printf("THIS IS USER MODE\n");
+    // CHECK: FAULT 9
+    // CHECK: current flags 06 prev flags 02
     // CHECKN: THIS IS USER MODE
 }
 

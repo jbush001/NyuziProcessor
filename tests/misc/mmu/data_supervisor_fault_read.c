@@ -20,29 +20,9 @@
 
 volatile unsigned int *data_addr = (volatile unsigned int*) 0x100000;
 
-void fault_handler()
-{
-    printf("FAULT %d %08x current flags %02x prev flags %02x\n",
-           __builtin_nyuzi_read_control_reg(CR_FAULT_REASON),
-           __builtin_nyuzi_read_control_reg(CR_FAULT_ADDRESS),
-           __builtin_nyuzi_read_control_reg(CR_FLAGS),
-           __builtin_nyuzi_read_control_reg(CR_SAVED_FLAGS));
-    exit(0);
-}
-
 int main(void)
 {
-    unsigned int va;
-    unsigned int stack_addr = (unsigned int) &va & ~(PAGE_SIZE - 1);
-
-    // Map code & data
-    for (va = 0; va < 0x10000; va += PAGE_SIZE)
-    {
-        add_itlb_mapping(va, va | TLB_EXECUTABLE | TLB_PRESENT);
-        add_dtlb_mapping(va, va | TLB_WRITABLE | TLB_GLOBAL | TLB_PRESENT);
-    }
-
-    add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE | TLB_PRESENT);
+    map_program_and_stack();
     add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE
                      | TLB_PRESENT);
 
@@ -50,7 +30,7 @@ int main(void)
     add_dtlb_mapping(data_addr, ((unsigned int) data_addr) | TLB_SUPERVISOR
                      | TLB_WRITABLE | TLB_PRESENT);
 
-    __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);
+    __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, dump_fault_info);
     __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
     // We are currently in supervisor mode. write then read to the page

@@ -29,33 +29,17 @@
 // matching way.
 volatile unsigned int *data_addr = (unsigned int*) 0x100000;
 
-void tlb_miss_handler()
-{
-    printf("%cTLB miss %08x\n", __builtin_nyuzi_read_control_reg(CR_FAULT_REASON) == 5 ? 'I' : 'D',
-           __builtin_nyuzi_read_control_reg(CR_FAULT_ADDRESS));
-    exit(0);
-}
-
 int main(void)
 {
-    unsigned int va;
-    unsigned int stack_addr = (unsigned int) &va & ~(PAGE_SIZE - 1);
-
-    // Map code & data
-    for (va = 0; va < 0x10000; va += PAGE_SIZE)
-    {
-        add_itlb_mapping(va, va | TLB_EXECUTABLE | TLB_PRESENT);
-        add_dtlb_mapping(va, va | TLB_WRITABLE | TLB_PRESENT);
-    }
-
-    add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE | TLB_PRESENT);
-    add_dtlb_mapping(data_addr, ((unsigned int)data_addr) | TLB_WRITABLE
-                     | TLB_PRESENT);
+    map_program_and_stack();
     add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE
                      | TLB_PRESENT);
 
+    add_dtlb_mapping(data_addr, ((unsigned int)data_addr) | TLB_WRITABLE
+                     | TLB_PRESENT);
+
     // Enable MMU in flags register
-    __builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, tlb_miss_handler);
+    __builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, dump_fault_info);
     __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
     *data_addr = 0x1f6818aa;
@@ -63,7 +47,7 @@ int main(void)
 
     asm("tlbinval %0" : : "s" (data_addr));
 
-    printf("FAIL: read value %08x\n", *data_addr);	// CHECK: DTLB miss 00100000
+    printf("FAIL: read value %08x\n", *data_addr);	// CHECK: FAULT 6 00100000
     // CHECKN: FAIL: read value
 
     return 0;

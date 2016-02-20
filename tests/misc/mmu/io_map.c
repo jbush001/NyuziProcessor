@@ -34,17 +34,7 @@ void printmsg(const char *value)
 
 int main(void)
 {
-    unsigned int va;
-    unsigned int stack_addr = (unsigned int) &va & ~(PAGE_SIZE - 1);
-
-    // Map code & data
-    for (va = 0; va < 0x10000; va += PAGE_SIZE)
-    {
-        add_itlb_mapping(va, va | TLB_EXECUTABLE | TLB_PRESENT);
-        add_dtlb_mapping(va, va | TLB_WRITABLE | TLB_PRESENT);
-    }
-
-    add_dtlb_mapping(stack_addr, stack_addr | TLB_PRESENT);
+    map_program_and_stack();
 
     // Map data where the I/O region normally goes
     add_dtlb_mapping(IO_REGION_BASE, 0x100000 | TLB_WRITABLE | TLB_PRESENT);

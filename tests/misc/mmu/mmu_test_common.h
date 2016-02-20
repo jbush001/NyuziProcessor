@@ -64,3 +64,30 @@ static void __attribute__((noinline)) set_asid(int asid)
 {
     __builtin_nyuzi_write_control_reg(CR_CURRENT_ASID, asid);
 }
+
+static void map_program_and_stack()
+{
+    unsigned int va;
+
+    // Take the address of a local variable to find stack pointer
+    unsigned int stack_addr = ((unsigned int) &va) & ~(PAGE_SIZE - 1);
+
+    // Map code & data
+    for (va = 0; va < 0x10000; va += PAGE_SIZE)
+    {
+        add_itlb_mapping(va, va | TLB_EXECUTABLE | TLB_GLOBAL | TLB_PRESENT);
+        add_dtlb_mapping(va, va | TLB_WRITABLE | TLB_GLOBAL | TLB_PRESENT);
+    }
+
+    add_dtlb_mapping(stack_addr, stack_addr | TLB_GLOBAL | TLB_WRITABLE | TLB_PRESENT);
+}
+
+static void dump_fault_info(void)
+{
+    printf("FAULT %d %08x current flags %02x prev flags %02x\n",
+           __builtin_nyuzi_read_control_reg(CR_FAULT_REASON),
+           __builtin_nyuzi_read_control_reg(CR_FAULT_ADDRESS),
+           __builtin_nyuzi_read_control_reg(CR_FLAGS),
+           __builtin_nyuzi_read_control_reg(CR_SAVED_FLAGS));
+    exit(0);
+}

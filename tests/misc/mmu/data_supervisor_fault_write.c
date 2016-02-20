@@ -33,18 +33,9 @@ void fault_handler()
 
 int main(void)
 {
-    unsigned int va;
     int asid;
-    unsigned int stack_addr = (unsigned int) &va & ~(PAGE_SIZE - 1);
 
-    // Map code & data
-    for (va = 0; va < 0x10000; va += PAGE_SIZE)
-    {
-        add_itlb_mapping(va, va | TLB_EXECUTABLE | TLB_PRESENT);
-        add_dtlb_mapping(va, va | TLB_WRITABLE | TLB_GLOBAL | TLB_PRESENT);
-    }
-
-    add_dtlb_mapping(stack_addr, stack_addr | TLB_WRITABLE | TLB_PRESENT);
+    map_program_and_stack();
     add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE
                      | TLB_PRESENT);
 
