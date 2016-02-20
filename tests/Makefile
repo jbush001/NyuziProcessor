@@ -27,4 +27,5 @@ test:
 	cd misc/mmu && ./runtest.py
 	cd misc/trap && ./runtest.py
 	cd misc/perf_counters && ./runtest.py
+	cd misc/shared_memory && ./runtest.py
 	cd render && make test

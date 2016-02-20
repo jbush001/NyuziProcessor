@@ -15,15 +15,18 @@
 //
 
 #include <assert.h>
+#include <fcntl.h>
 #include <inttypes.h>
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <time.h>
+#include <unistd.h>
 #include "core.h"
 #include "cosimulation.h"
 #include "device.h"
@@ -153,23 +156,47 @@ static void executeBranchInst(Thread*, uint32_t instruction);
 static void executeCacheControlInst(Thread*, uint32_t instruction);
 static int executeInstruction(Thread*);
 
-Core *initCore(uint32_t memorySize, uint32_t totalThreads, bool randomizeMemory)
+Core *initCore(uint32_t memorySize, uint32_t totalThreads, bool randomizeMemory,
+               const char *sharedMemoryFile)
 {
     uint32_t address;
     uint32_t threadid;
     Core *core;
     int i;
     struct timeval tv;
+    int sharedMemoryFd;
 
     // Currently limited by enable mask
     assert(totalThreads <= 32);
 
     core = (Core*) calloc(sizeof(Core), 1);
     core->memorySize = memorySize;
-    core->memory = (uint32_t*) malloc(memorySize);
+    if (sharedMemoryFile != NULL)
+    {
+        sharedMemoryFd = open(sharedMemoryFile, O_CREAT | O_RDWR, 666);
+        if (sharedMemoryFd < 0)
+        {
+            perror("initCore: Error opening shared memory file");
+            return NULL;
+        }
+
+        if (ftruncate(sharedMemoryFd, memorySize) < 0)
+        {
+            perror("initCore: couldn't resize shared memroy file");
+            return NULL;
+        }
+
+        core->memory = mmap(NULL, memorySize, PROT_READ | PROT_WRITE, MAP_SHARED
+                            | MAP_FILE, sharedMemoryFd, 0);
+    }
+    else
+    {
+        core->memory = (uint32_t*) malloc(memorySize);
+    }
+
     if (core->memory == NULL)
     {
-        fprintf(stderr, "Could not allocate memory\n");
+        perror("initCore: Could not allocate memory");
         return NULL;
     }
 

@@ -45,6 +45,7 @@ static void usage(void)
     fprintf(stderr, "  -t <num> Total threads (default 4)\n");
     fprintf(stderr, "  -c <size> Total amount of memory\n");
     fprintf(stderr, "  -r <cycles> Refresh rate, cycles between each screen update\n");
+    fprintf(stderr, "  -s <file> Memory map file as shared memory\n");
 }
 
 static uint32_t parseNumArg(const char *argval)
@@ -71,6 +72,7 @@ int main(int argc, char *argv[])
     uint32_t totalThreads = 4;
     char *separator;
     uint32_t memorySize = 0x1000000;
+    const char *sharedMemoryFile = NULL;
 
     enum
     {
@@ -87,7 +89,7 @@ int main(int argc, char *argv[])
     setrlimit(RLIMIT_CORE, &limit);
 #endif
 
-    while ((option = getopt(argc, argv, "if:d:vm:b:t:c:r:")) != -1)
+    while ((option = getopt(argc, argv, "if:d:vm:b:t:c:r:s:")) != -1)
     {
         switch (option)
         {
@@ -175,6 +177,10 @@ int main(int argc, char *argv[])
 
                 break;
 
+            case 's':
+                sharedMemoryFile = optarg;
+                break;
+
             case '?':
                 usage();
                 return 1;
@@ -191,7 +197,8 @@ int main(int argc, char *argv[])
     // We don't randomize memory for cosimulation mode, because
     // memory is checked against the hardware model to ensure a match
 
-    core = initCore(memorySize, totalThreads, mode != MODE_COSIMULATION);
+    core = initCore(memorySize, totalThreads, mode != MODE_COSIMULATION,
+                    sharedMemoryFile);
     if (core == NULL)
         return 1;
 
