@@ -187,26 +187,30 @@ Core *initCore(uint32_t memorySize, uint32_t totalThreads, bool randomizeMemory,
 
         core->memory = mmap(NULL, memorySize, PROT_READ | PROT_WRITE, MAP_SHARED
                             | MAP_FILE, sharedMemoryFd, 0);
+        if (core->memory == NULL)
+        {
+            perror("initCore: mmap failed");
+            return NULL;
+        }
     }
     else
     {
         core->memory = (uint32_t*) malloc(memorySize);
-    }
+        if (core->memory == NULL)
+        {
+            perror("initCore: malloc failed");
+            return NULL;
+        }
 
-    if (core->memory == NULL)
-    {
-        perror("initCore: Could not allocate memory");
-        return NULL;
+        if (randomizeMemory)
+        {
+            srand((unsigned int) time(NULL));
+            for (address = 0; address < memorySize / 4; address++)
+                core->memory[address] = (uint32_t) rand();
+        }
+        else
+            memset(core->memory, 0, core->memorySize);
     }
-
-    if (randomizeMemory)
-    {
-        srand((unsigned int) time(NULL));
-        for (address = 0; address < memorySize / 4; address++)
-            core->memory[address] = (uint32_t) rand();
-    }
-    else
-        memset(core->memory, 0, core->memorySize);
 
     core->itlb = (TlbEntry*) malloc(sizeof(TlbEntry) * TLB_SETS * TLB_WAYS);
     core->dtlb = (TlbEntry*) malloc(sizeof(TlbEntry) * TLB_SETS * TLB_WAYS);
