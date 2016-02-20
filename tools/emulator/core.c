@@ -18,7 +18,6 @@
 #include <fcntl.h>
 #include <inttypes.h>
 #include <math.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -182,7 +181,7 @@ Core *initCore(uint32_t memorySize, uint32_t totalThreads, bool randomizeMemory,
 
         if (ftruncate(sharedMemoryFd, memorySize) < 0)
         {
-            perror("initCore: couldn't resize shared memroy file");
+            perror("initCore: couldn't resize shared memory file");
             return NULL;
         }
 
@@ -254,7 +253,7 @@ int loadHexFile(Core *core, const char *filename)
     file = fopen(filename, "r");
     if (file == NULL)
     {
-        perror("Error opening hex memory file");
+        perror("loadHexFile: error opening output file");
         return -1;
     }
 
@@ -263,7 +262,7 @@ int loadHexFile(Core *core, const char *filename)
         *memptr++ = endianSwap32((uint32_t) strtoul(line, NULL, 16));
         if ((uint32_t)((memptr - core->memory) * 4) >= core->memorySize)
         {
-            fprintf(stderr, "hex file too big to fit in memory\n");
+            fprintf(stderr, "loadHexFile: hex file too big to fit in memory\n");
             return -1;
         }
     }
@@ -281,13 +280,13 @@ void writeMemoryToFile(const Core *core, const char *filename, uint32_t baseAddr
     file = fopen(filename, "wb+");
     if (file == NULL)
     {
-        perror("Error opening memory dump file");
+        perror("writeMemoryToFile: Error opening output file");
         return;
     }
 
     if (fwrite((int8_t*) core->memory + baseAddress, MIN(core->memorySize, length), 1, file) <= 0)
     {
-        perror("Error writing memory dump");
+        perror("writeMemoryToFile: fwrite failed");
         return;
     }
 

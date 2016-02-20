@@ -75,7 +75,7 @@ int openBlockDevice(const char *filename)
 
     if (stat(filename, &fs) < 0)
     {
-        perror("failed to open block device file");
+        perror("openBlockDevice: failed to stat block device file");
         return -1;
     }
 
@@ -83,7 +83,7 @@ int openBlockDevice(const char *filename)
     gBlockFd = open(filename, O_RDONLY);
     if (gBlockFd < 0)
     {
-        perror("failed to open block device file");
+        perror("openBlockDevice: failed to open block device file");
         return -1;
     }
 

@@ -43,7 +43,7 @@ static int readByte(void)
     uint8_t ch;
     if (read(gClientSocket, &ch, 1) < 1)
     {
-        perror("error reading from debug socket");
+        perror("readByte: error reading from debug socket");
         return -1;
     }
 
@@ -106,7 +106,7 @@ static void sendResponsePacket(const char *request)
             || write(gClientSocket, request, requestLength) < (ssize_t) requestLength
             || write(gClientSocket, "#", 1) < 1)
     {
-        perror("Error writing to debugger socket");
+        perror("sendResponsePacket: Error writing to debugger socket");
         exit(1);
     }
 
@@ -117,7 +117,7 @@ static void sendResponsePacket(const char *request)
     sprintf(checksumChars, "%02x", checksum);
     if (write(gClientSocket, checksumChars, 2) < 2)
     {
-        perror("Error writing to debugger socket");
+        perror("sendResponsePacket: Error writing to debugger socket");
         exit(1);
     }
 }
@@ -203,14 +203,14 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
     listenSocket = socket(PF_INET, SOCK_STREAM, 0);
     if (listenSocket < 0)
     {
-        perror("error setting up debug socket (socket)");
+        perror("remoteGdbMainLoop: error setting up debug socket (socket)");
         return;
     }
 
     optval = 1;
     if (setsockopt(listenSocket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) < 0)
     {
-        perror("error setting up debug socket (setsockopt)");
+        perror("remoteGdbMainLoop: error setting up debug socket (setsockopt)");
         return;
     }
 
@@ -219,13 +219,13 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
     address.sin_addr.s_addr = htonl(INADDR_ANY);
     if (bind(listenSocket, (struct sockaddr*) &address, sizeof(address)) < 0)
     {
-        perror("error setting up debug socket (bind)");
+        perror("remoteGdbMainLoop: error setting up debug socket (bind)");
         return;
     }
 
     if (listen(listenSocket, 1) < 0)
     {
-        perror("error setting up debug socket (listen)");
+        perror("remoteGdbMainLoop: error setting up debug socket (listen)");
         return;
     }
 
@@ -254,7 +254,7 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
             {
                 if (write(gClientSocket, "+", 1) != 1)
                 {
-                    perror("Error writing to debug socket");
+                    perror("remoteGdbMainLoop: Error writing to debug socket");
                     exit(1);
                 }
             }
