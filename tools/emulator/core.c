@@ -590,6 +590,12 @@ static void invalidateSyncAddress(Core *core, uint32_t address)
 
 static void raiseTrap(Thread *thread, uint32_t trapAddress, TrapReason reason)
 {
+    if (thread->core->enableTracing)
+    {
+        printf("%08x [th %d] trap %d %08x\n", thread->currentPc - 4,
+               thread->id, reason, trapAddress);
+    }
+
     // Save old state. For nested interrupts, push the old saved state into
     // the second save slot.
     thread->trapReason[1] = thread->trapReason[0];
