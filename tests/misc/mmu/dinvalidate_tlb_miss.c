@@ -27,14 +27,14 @@
 
 int main(void)
 {
-    map_program_and_stack();
-    add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE
-                     | TLB_PRESENT);
+    mapProgramAndStack();
+    addDtlbMapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE
+                   | TLB_PRESENT);
 
-    add_dtlb_mapping(DATA_BASE, DATA_BASE | TLB_WRITABLE | TLB_PRESENT);
+    addDtlbMapping(DATA_BASE, DATA_BASE | TLB_WRITABLE | TLB_PRESENT);
 
     // Set up miss handler
-    __builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, dump_fault_info);
+    __builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, (unsigned int) dumpFaultInfo);
     __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
     // This dinvalidate should already be present (invalidate will remove the

@@ -14,6 +14,7 @@
 // limitations under the License.
 //
 
+#include <stdio.h>
 #include "mmu_test_common.h"
 
 unsigned int globaltmp;
@@ -23,17 +24,15 @@ unsigned int globaltmp;
 
 int main(void)
 {
-    int asid;
-
-    map_program_and_stack();
-    add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE
-                     | TLB_PRESENT);
+    mapProgramAndStack();
+    addDtlbMapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE
+                   | TLB_PRESENT);
 
     // Alias mapping that we will use for test (the normal mapped region is used
     // to halt the test). This is supervisor and non-writab
-    add_dtlb_mapping(0x100000, IO_REGION_BASE | TLB_PRESENT);
+    addDtlbMapping(0x100000, IO_REGION_BASE | TLB_PRESENT);
 
-    __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, dump_fault_info);
+    __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, (unsigned int) dumpFaultInfo);
     __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
 

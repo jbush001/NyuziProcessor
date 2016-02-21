@@ -19,8 +19,6 @@
 
 #define FILL_SIZE 0x80000
 
-extern void tlb_miss_handler();
-
 //
 // Fill a memory region with memory identity mapped, testing TLB
 // fault handling.
@@ -28,12 +26,12 @@ extern void tlb_miss_handler();
 
 int main(void)
 {
-    unsigned int rand_seed;
-    int offset;
-    int *mem_region = (int*) 0x400000;
+    unsigned int randSeed;
+    unsigned int offset;
+    unsigned int *memRegion = (unsigned int*) 0x400000;
 
     // Enable MMU in flags register
-    __builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, tlb_miss_handler);
+    __builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, (unsigned int) tlb_miss_handler);
     __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN);
 
     // Make sure MMU is actually enabled
@@ -44,26 +42,26 @@ int main(void)
     }
 
     // Fill memory region
-    rand_seed = 0x2e48fa04;
+    randSeed = 0x2e48fa04;
     for (offset = 0; offset < FILL_SIZE / sizeof(int); offset += PAGE_SIZE
             / sizeof(int))
     {
-        mem_region[offset] = rand_seed;
-        rand_seed = rand_seed * 1664525 + 1013904223;
+        memRegion[offset] = randSeed;
+        randSeed = randSeed * 1664525 + 1013904223;
     }
 
     // Check memory region
-    rand_seed = 0x2e48fa04;
+    randSeed = 0x2e48fa04;
     for (offset = 0; offset < FILL_SIZE / sizeof(int); offset += PAGE_SIZE
             / sizeof(int))
     {
-        if (mem_region[offset] != rand_seed)
+        if (memRegion[offset] != randSeed)
         {
             printf("FAIL: Mismatch at offset %d\n", offset);
             exit(1);
         }
 
-        rand_seed = rand_seed * 1664525 + 1013904223;
+        randSeed = randSeed * 1664525 + 1013904223;
     }
 
     // Make sure MMU is still enabled

@@ -15,6 +15,7 @@
 //
 
 #include <stdint.h>
+#include <stdio.h>
 #include "mmu_test_common.h"
 
 //
@@ -23,12 +24,9 @@
 
 #define EXTPTR ((volatile unsigned int*) 0x300000)
 
-int main();
-extern void tlb_miss_handler();
-
 unsigned int foo;
 
-void fault_handler()
+void faultHandler()
 {
     __builtin_nyuzi_write_control_reg(CR_SCRATCHPAD0, 0x88cf70b4);
     __builtin_nyuzi_write_control_reg(CR_SCRATCHPAD1, 0x78662516);
@@ -59,8 +57,8 @@ int main(void)
 {
     veci16_t pointers = { &foo, &foo, &foo, &foo, &foo, &foo, 0x17,  &foo, &foo, &foo, &foo, &foo, &foo, &foo, &foo, &foo };
 
-    __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);
-    __builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, tlb_miss_handler);
+    __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, (unsigned int) faultHandler);
+    __builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, (unsigned int) tlb_miss_handler);
     __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
     // This ensures the libc functions are mapped into the TLB so we don't generate
@@ -68,7 +66,7 @@ int main(void)
     // debugging cleaner)
     printf("Starting test %d\n", 12);
 
-    // This will cause an alignment fault on the 6th lane and jump to 'fault_handler'.
+    // This will cause an alignment fault on the 6th lane and jump to 'faultHandler'.
     // Use scatter store rather than a normal scalar store to ensure the
     // subcycle counter is saved correctly.
     __builtin_nyuzi_scatter_storei(pointers, __builtin_nyuzi_makevectori(0));

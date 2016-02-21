@@ -14,6 +14,8 @@
 // limitations under the License.
 //
 
+#include <string.h>
+#include <stdio.h>
 #include "mmu_test_common.h"
 
 //
@@ -34,13 +36,13 @@ void printmsg(const char *value)
 
 int main(void)
 {
-    map_program_and_stack();
+    mapProgramAndStack();
 
     // Map data where the I/O region normally goes
-    add_dtlb_mapping(IO_REGION_BASE, 0x100000 | TLB_WRITABLE | TLB_PRESENT);
+    addDtlbMapping(IO_REGION_BASE, 0x100000 | TLB_WRITABLE | TLB_PRESENT);
 
     // Map I/O region in different part of address space.
-    add_dtlb_mapping(0x100000, IO_REGION_BASE | TLB_WRITABLE | TLB_PRESENT);
+    addDtlbMapping(0x100000, IO_REGION_BASE | TLB_WRITABLE | TLB_PRESENT);
 
     // Enable MMU in flags register
     __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
@@ -49,7 +51,7 @@ int main(void)
     printmsg("jabberwocky");
 
     // Copy into memory
-    memcpy(IO_REGION_BASE, "galumphing", 10);
+    memcpy((void*) IO_REGION_BASE, "galumphing", 10);
     asm("dflush %0" : : "s" (IO_REGION_BASE));
 
     // Since I/O is remapped, need to halt using new address

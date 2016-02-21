@@ -14,6 +14,7 @@
 // limitations under the License.
 //
 
+#include <stdio.h>
 #include "mmu_test_common.h"
 
 unsigned int globaltmp;
@@ -23,18 +24,16 @@ unsigned int globaltmp;
 
 int main(void)
 {
-    int asid;
-
-    map_program_and_stack();
-    add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE
-                     | TLB_PRESENT);
+    mapProgramAndStack();
+    addDtlbMapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE
+                   | TLB_PRESENT);
 
     // Alias mapping that we will use for test (the normal mapped region is used
     // to halt the test). This is supervisor and non-writab
-    add_dtlb_mapping(0x100000, IO_REGION_BASE | TLB_SUPERVISOR | TLB_WRITABLE
-                     | TLB_PRESENT);
+    addDtlbMapping(0x100000, IO_REGION_BASE | TLB_SUPERVISOR | TLB_WRITABLE
+                   | TLB_PRESENT);
 
-    __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, dump_fault_info);
+    __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, (unsigned int) dumpFaultInfo);
     __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
     // Can read from page in supervisor mode
@@ -43,7 +42,7 @@ int main(void)
     // CHECK: check1
 
     // Switch to user mode, but leave MMU active
-    switch_to_user_mode();
+    switchToUserMode();
 
     globaltmp = *((volatile unsigned int*) 0x100000);
     // CHECK: FAULT 8 00100000 current flags 06 prev flags 02

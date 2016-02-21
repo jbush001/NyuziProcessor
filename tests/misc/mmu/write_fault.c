@@ -23,40 +23,40 @@
 // bit set will raise a fault and will not update the data in the page.
 //
 
-volatile unsigned int *data_addr = (unsigned int*) 0x100000;
-volatile unsigned int *data_addr2 = (unsigned int*) 0x101000;
+volatile unsigned int *dataAddr1 = (unsigned int*) 0x100000;
+volatile unsigned int *dataAddr2 = (unsigned int*) 0x101000;
 
-void fault_handler()
+void faultHandler(void)
 {
     printf("FAULT %d %08x\n", __builtin_nyuzi_read_control_reg(CR_FAULT_REASON),
            __builtin_nyuzi_read_control_reg(CR_FAULT_ADDRESS));
-    printf("data value = %08x\n", data_addr[PAGE_SIZE / sizeof(int)]);
+    printf("data value = %08x\n", dataAddr1[PAGE_SIZE / sizeof(int)]);
     exit(0);
 }
 
 int main(void)
 {
-    map_program_and_stack();
-    add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE
-                     | TLB_PRESENT);
+    mapProgramAndStack();
+    addDtlbMapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE
+                   | TLB_PRESENT);
 
-    add_dtlb_mapping(data_addr, ((unsigned int)data_addr) | TLB_WRITABLE
-                     | TLB_PRESENT);	// Writable
-    *data_addr2 = 0x12345678;
+    addDtlbMapping((unsigned int) dataAddr1, ((unsigned int)dataAddr1) | TLB_WRITABLE
+                   | TLB_PRESENT);	// Writable
+    *dataAddr2 = 0x12345678;
     // This page is not writeable
-    add_dtlb_mapping(data_addr2, ((unsigned int) data_addr2) | TLB_PRESENT);
+    addDtlbMapping((unsigned int) dataAddr2, ((unsigned int) dataAddr2) | TLB_PRESENT);
 
     // Enable MMU in flags register
-    __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, fault_handler);
-    __builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, fault_handler);
+    __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, (unsigned int) faultHandler);
+    __builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, (unsigned int) faultHandler);
     __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
     // This should write successfully
-    *data_addr = 0x1f6818aa;
-    printf("data value %08x\n", *data_addr); // CHECK: data value 1f6818aa
+    *dataAddr1 = 0x1f6818aa;
+    printf("data value %08x\n", *dataAddr1); // CHECK: data value 1f6818aa
 
     // Attempt to write to write protected page will fail.
-    *data_addr2 = 0xdeadbeef;
+    *dataAddr2 = 0xdeadbeef;
 
     // Ensure two things:
     // - that a fault is raised

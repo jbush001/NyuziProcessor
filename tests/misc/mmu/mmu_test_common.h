@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <stdlib.h>
+
 #define PAGE_SIZE 0x1000
 #define IO_REGION_BASE 0xffff0000
 
@@ -42,30 +44,33 @@
 
 #define INSTRUCTION_RET 0xc0ff03e0
 
-void add_itlb_mapping(unsigned int va, unsigned int pa)
+// in identity_tlb_miss_handler.s
+extern void tlb_miss_handler();
+
+void addItlbMapping(unsigned int va, unsigned int pa)
 {
     asm volatile("itlbinsert %0, %1" : : "r" (va), "r" (pa));
 }
 
-void add_dtlb_mapping(unsigned int va, unsigned int pa)
+void addDtlbMapping(unsigned int va, unsigned int pa)
 {
     asm volatile("dtlbinsert %0, %1" : : "r" (va), "r" (pa));
 }
 
 // Make this a call to flush the pipeline
-void __attribute__((noinline)) switch_to_user_mode()
+void __attribute__((noinline)) switchToUserMode(void)
 {
     __builtin_nyuzi_write_control_reg(CR_FLAGS, __builtin_nyuzi_read_control_reg(CR_FLAGS)
                                       & ~FLAG_SUPERVISOR_EN);
 }
 
 // Make this an explicit call to flush the pipeline
-static void __attribute__((noinline)) set_asid(int asid)
+static void __attribute__((noinline)) setAsid(int asid)
 {
     __builtin_nyuzi_write_control_reg(CR_CURRENT_ASID, asid);
 }
 
-static void map_program_and_stack()
+static void mapProgramAndStack(void)
 {
     unsigned int va;
 
@@ -75,14 +80,14 @@ static void map_program_and_stack()
     // Map code & data
     for (va = 0; va < 0x10000; va += PAGE_SIZE)
     {
-        add_itlb_mapping(va, va | TLB_EXECUTABLE | TLB_GLOBAL | TLB_PRESENT);
-        add_dtlb_mapping(va, va | TLB_WRITABLE | TLB_GLOBAL | TLB_PRESENT);
+        addItlbMapping(va, va | TLB_EXECUTABLE | TLB_GLOBAL | TLB_PRESENT);
+        addDtlbMapping(va, va | TLB_WRITABLE | TLB_GLOBAL | TLB_PRESENT);
     }
 
-    add_dtlb_mapping(stack_addr, stack_addr | TLB_GLOBAL | TLB_WRITABLE | TLB_PRESENT);
+    addDtlbMapping(stack_addr, stack_addr | TLB_GLOBAL | TLB_WRITABLE | TLB_PRESENT);
 }
 
-static void dump_fault_info(void)
+static void dumpFaultInfo(void)
 {
     printf("FAULT %d %08x current flags %02x prev flags %02x\n",
            __builtin_nyuzi_read_control_reg(CR_FAULT_REASON),

@@ -32,33 +32,31 @@
 
 int main(void)
 {
-    int asid;
-
-    map_program_and_stack();
-    add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE
-                     | TLB_GLOBAL | TLB_PRESENT);
+    mapProgramAndStack();
+    addDtlbMapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE
+                   | TLB_GLOBAL | TLB_PRESENT);
 
     // Map a private page into address space 1
-    set_asid(1);
-    add_dtlb_mapping(VADDR1, PADDR1 | TLB_PRESENT);
+    setAsid(1);
+    addDtlbMapping(VADDR1, PADDR1 | TLB_PRESENT);
     *((unsigned int*) PADDR1) = 0xdeadbeef;
 
     // Map a private page into address space 2
-    set_asid(2);
-    add_dtlb_mapping(VADDR1, PADDR2 | TLB_PRESENT);
+    setAsid(2);
+    addDtlbMapping(VADDR1, PADDR2 | TLB_PRESENT);
     *((unsigned int*) PADDR2) = 0xabcdefed;
 
     // Enable MMU in flags register
-    __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, dump_fault_info);
-    __builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, dump_fault_info);
+    __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, (unsigned int) dumpFaultInfo);
+    __builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, (unsigned int) dumpFaultInfo);
     __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
     // Read value from first address space
-    set_asid(1);
+    setAsid(1);
     printf("A1 %08x\n", *((volatile unsigned int*) VADDR1)); // CHECK: A1 deadbeef
 
     // Read value from the second address space
-    set_asid(2);
+    setAsid(2);
     printf("A2 %08x\n", *((volatile unsigned int*) VADDR1)); // CHECK: A2 abcdefed
 
     return 0;

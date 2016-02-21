@@ -14,6 +14,7 @@
 // limitations under the License.
 //
 
+#include <stdio.h>
 #include "mmu_test_common.h"
 
 // Test that attempting to peform itlbinsert while in user mode raises a fault
@@ -21,10 +22,10 @@
 
 int main(void)
 {
-    __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, dump_fault_info);
+    __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, (unsigned int) dumpFaultInfo);
 
     // Switch to user mode, but leave MMU active
-    switch_to_user_mode();
+    switchToUserMode();
 
     asm("itlbinsert %0, %1" : : "r" (0), "r" (0));
     // CHECK: FAULT 10

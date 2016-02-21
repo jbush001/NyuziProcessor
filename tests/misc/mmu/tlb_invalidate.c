@@ -27,27 +27,27 @@
 
 // Note: this aliases to virtual address. Ensure invalidate only removes the
 // matching way.
-volatile unsigned int *data_addr = (unsigned int*) 0x100000;
+volatile unsigned int *dataAddr = (unsigned int*) 0x100000;
 
 int main(void)
 {
-    map_program_and_stack();
-    add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE
-                     | TLB_PRESENT);
+    mapProgramAndStack();
+    addDtlbMapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE
+                   | TLB_PRESENT);
 
-    add_dtlb_mapping(data_addr, ((unsigned int)data_addr) | TLB_WRITABLE
-                     | TLB_PRESENT);
+    addDtlbMapping((unsigned int) dataAddr, ((unsigned int)dataAddr) | TLB_WRITABLE
+                   | TLB_PRESENT);
 
     // Enable MMU in flags register
-    __builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, dump_fault_info);
+    __builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, (unsigned int) dumpFaultInfo);
     __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
-    *data_addr = 0x1f6818aa;
-    printf("data value %08x\n", *data_addr); // CHECK: data value 1f6818aa
+    *dataAddr = 0x1f6818aa;
+    printf("data value %08x\n", *dataAddr); // CHECK: data value 1f6818aa
 
-    asm("tlbinval %0" : : "s" (data_addr));
+    asm("tlbinval %0" : : "s" (dataAddr));
 
-    printf("FAIL: read value %08x\n", *data_addr);	// CHECK: FAULT 6 00100000
+    printf("FAIL: read value %08x\n", *dataAddr);	// CHECK: FAULT 6 00100000
     // CHECKN: FAIL: read value
 
     return 0;

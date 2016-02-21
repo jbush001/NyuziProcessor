@@ -23,29 +23,29 @@
 // second insertion should replace the first.
 //
 
-volatile unsigned int *data_addr = (unsigned int*) 0x100000;
+volatile unsigned int *dataAddr = (unsigned int*) 0x100000;
 
 int main(void)
 {
-    map_program_and_stack();
-    add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE
-                     | TLB_PRESENT);
+    mapProgramAndStack();
+    addDtlbMapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE
+                   | TLB_PRESENT);
 
     // A data region. Enter a few bogus mapping first, then the proper
     // one, which should replace them.
-    add_dtlb_mapping(data_addr, 0x101000 | TLB_WRITABLE | TLB_PRESENT);
-    add_dtlb_mapping(data_addr, 0x102000 | TLB_WRITABLE | TLB_PRESENT);
-    add_dtlb_mapping(data_addr, 0x103000 | TLB_WRITABLE | TLB_PRESENT);
-    add_dtlb_mapping(data_addr, 0x104000 | TLB_WRITABLE | TLB_PRESENT);
-    add_dtlb_mapping(data_addr, ((unsigned int) data_addr) | TLB_WRITABLE
-                     | TLB_PRESENT);
+    addDtlbMapping((unsigned int) dataAddr, 0x101000 | TLB_WRITABLE | TLB_PRESENT);
+    addDtlbMapping((unsigned int) dataAddr, 0x102000 | TLB_WRITABLE | TLB_PRESENT);
+    addDtlbMapping((unsigned int) dataAddr, 0x103000 | TLB_WRITABLE | TLB_PRESENT);
+    addDtlbMapping((unsigned int) dataAddr, 0x104000 | TLB_WRITABLE | TLB_PRESENT);
+    addDtlbMapping((unsigned int) dataAddr, ((unsigned int) dataAddr) | TLB_WRITABLE
+                   | TLB_PRESENT);
 
     // Enable MMU in flags register
-    __builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, dump_fault_info);
+    __builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, (unsigned int) dumpFaultInfo);
     __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
-    *data_addr = 0x1f6818aa;
-    printf("data value %08x\n", *data_addr); // CHECK: data value 1f6818aa
+    *dataAddr = 0x1f6818aa;
+    printf("data value %08x\n", *dataAddr); // CHECK: data value 1f6818aa
 
     return 0;
 }

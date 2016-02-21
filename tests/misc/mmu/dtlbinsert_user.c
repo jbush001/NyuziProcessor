@@ -14,16 +14,17 @@
 // limitations under the License.
 //
 
+#include <stdio.h>
 #include "mmu_test_common.h"
 
 // Check that the processor faults and doesn't update the TLB is
 // dtlbinsert is called from user mode.
 
-volatile unsigned int *data = 0x100000;
+volatile unsigned int *data = (volatile unsigned int*) 0x100000;
 
-void general_fault_handler()
+void faultHandler(void)
 {
-    printf("general fault %d\n", __builtin_nyuzi_read_control_reg(3));
+    printf("faultHandler %d\n", __builtin_nyuzi_read_control_reg(3));
 
     // Attempt to read from address that dtlbinsert was called on.
     // This should fault because TLB wasn't updated
@@ -32,20 +33,21 @@ void general_fault_handler()
 
 int main(void)
 {
-    map_program_and_stack();
-    add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE
-                     | TLB_PRESENT);
+    mapProgramAndStack();
+    addDtlbMapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE
+                   | TLB_PRESENT);
 
     // Enable MMU and disable supervisor mode in flags register
-    __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, general_fault_handler);
-    __builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, dump_fault_info);
+    __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, (unsigned int) faultHandler);
+    __builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, (unsigned int) dumpFaultInfo);
     __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN);
 
     // This will fault because the thread is in user mode. Then the general
     // fault handler will read the address to ensure the mapping wasn't inserted.
     // That should cause a TLB fault.
-    add_dtlb_mapping(data, ((unsigned int)data) | TLB_WRITABLE);
-    // CHECK: general fault 10
+    addDtlbMapping((unsigned int) data, ((unsigned int)data) | TLB_WRITABLE);
+    // CHECK: faultHandler 10
+    // CHECKN: FAIL: data is
     // CHECK: FAULT 6 00100000
 
     printf("should_not_be_here\n"); // CHECKN: should_not_be_here

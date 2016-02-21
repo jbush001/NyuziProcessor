@@ -14,22 +14,24 @@
 // limitations under the License.
 //
 
+#include <stdio.h>
+#include <unistd.h>
 #include "mmu_test_common.h"
 
 // Test that reading from a non-present data page faults
 
-volatile unsigned int *data_addr = (volatile unsigned int*) 0x100000;
+volatile unsigned int *dataAddr = (volatile unsigned int*) 0x100000;
 
 int main(void)
 {
-    map_program_and_stack();
-    add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE
-                     | TLB_PRESENT);
+    mapProgramAndStack();
+    addDtlbMapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE
+                   | TLB_PRESENT);
 
     // Data region that doesn't have the present bit set.
-    add_dtlb_mapping(data_addr, ((unsigned int)data_addr) | TLB_WRITABLE);
+    addDtlbMapping((unsigned int) dataAddr, ((unsigned int)dataAddr) | TLB_WRITABLE);
 
-    __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, dump_fault_info);
+    __builtin_nyuzi_write_control_reg(CR_FAULT_HANDLER, (unsigned int) dumpFaultInfo);
 
     // Turn on MMU and switch to user mode
     __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN);
@@ -37,7 +39,7 @@ int main(void)
     // Flush pipeline
     usleep(0);
 
-    *data_addr = 0x123456789; // CHECK: FAULT 3 00100000 current flags 06 prev flags 02
+    *dataAddr = 0x12345678; // CHECK: FAULT 3 00100000 current flags 06 prev flags 02
     printf("should_not_be_here\n");
     // CHECKN: should_not_be_here
 }
