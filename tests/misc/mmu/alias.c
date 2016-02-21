@@ -34,7 +34,7 @@ char *tmp2 = (char*) 0x900000;
 int main(void)
 {
     __builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, tlb_miss_handler);
-    __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
+    __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN);
 
     // Test that stores are properly translated. Test harness will read
     // physical memory. This should be written to 1MB.

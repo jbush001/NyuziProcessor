@@ -29,11 +29,13 @@
 tlb_miss_handler:   setcr s0, CR_SCRATCHPAD0        # Save s0 in scratchpad
                     setcr s1, CR_SCRATCHPAD1        # Save s1
                     getcr s0, CR_FAULT_ADDR         # Get fault virtual address
+                    shr s0, s0, 12                  # Mask off all low bits to get page aligned address
+                    shl s0, s0, 12
 
                     # Is this in the device region (0xffff0000-0xffffffff)
                     move s1, -1
                     shl s1, s1, 16
-                    cmpgt_u s1, s0, s1
+                    cmpge_u s1, s0, s1
                     btrue s1, map_device
 
                     # Make lowaddress space repeat every 4 MB
