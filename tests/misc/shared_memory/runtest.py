@@ -27,18 +27,31 @@ sys.path.insert(0, '../..')
 from test_harness import *
 
 
+def write_shared_memory(memory, address, value):
+    memory[address:address + 4] = struct.pack('<I', value)
+
+
+def read_shared_memory(memory, address):
+    return struct.unpack('<I', memory[address:address + 4])[0]
+
+OWNER_ADDR = 0x100000
+VALUE_ADDR = 0x100004
+OWNER_HOST = 0
+OWNER_COPROCESSOR = 1
+
+
 def sharedmem_transact(memory, value):
-    memory[0x100004:0x100008] = struct.pack('<I', value)
-    memory[0x100000:0x100004] = '\x01\x00\x00\x00'
+    write_shared_memory(memory, VALUE_ADDR, value)
+    write_shared_memory(memory, OWNER_ADDR, OWNER_COPROCESSOR)
     starttime = time.time()
-    while memory[0x100000:0x100004] != '\x00\x00\x00\x00':
+    while read_shared_memory(memory, OWNER_ADDR) != OWNER_HOST:
         if (time.time() - starttime) > 10:
             raise TestException(
                 'timed out waiting for response from coprocessor')
 
         time.sleep(0.1)
 
-    return struct.unpack('<I', memory[0x100004:0x100008])[0]
+    return read_shared_memory(memory, VALUE_ADDR)
 
 #
 # This test is explained in coprocessor.c
@@ -61,7 +74,7 @@ def sharedmem_test(name):
         # it's done.
         time.sleep(1.0)
         memory = mmap.mmap(memoryFile.fileno(), 0)
-        testvalues = [ random.randint(0, 0xffffffff) for x in range(10) ]
+        testvalues = [random.randint(0, 0xffffffff) for x in range(10)]
         for value in testvalues:
             computed = sharedmem_transact(memory, value)
             if computed != (value ^ 0xffffffff):
