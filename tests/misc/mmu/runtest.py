@@ -25,12 +25,17 @@ DUMP_FILE = 'obj/memdump.bin'
 EXPECT_STRING = bytearray('Test String', encoding='ascii')
 
 
-def test_alias_verilator(name):
+def test_alias(name):
     compile_test(['alias.c', 'wrap_tlb_miss_handler.s'])
-    result = run_verilator(
-        dump_file=DUMP_FILE,
-        dump_base=0x100000,
-        dump_length=32)
+    if name.find('_verilator') != -1:
+        result = run_verilator(
+            dump_file=DUMP_FILE,
+            dump_base=0x100000,
+            dump_length=32)
+    else:
+        result = run_emulator(dump_file=DUMP_FILE, dump_base=0x100000,
+                              dump_length=32)
+
     if result.find('read 00900000 "Test String"') == -1:
         raise TestException(
             'did not get correct read string:\n' + result)
@@ -40,59 +45,28 @@ def test_alias_verilator(name):
             raise TestException('memory contents did not match')
 
 
-def test_alias_emulator(name):
-    compile_test(['alias.c', 'wrap_tlb_miss_handler.s'])
-    result = run_emulator(dump_file=DUMP_FILE, dump_base=0x100000,
-                          dump_length=32)
-    if result.find('read 00900000 "Test String"') == -1:
-        raise TestException(
-            'did not get correct read string:\n' + result)
-
-    with open(DUMP_FILE, 'rb') as f:
-        if f.read(len(EXPECT_STRING)) != EXPECT_STRING:
-            raise TestException('memory contents did not match')
-
-
-def test_fill_verilator(name):
+def test_fill(name):
     compile_test(['fill_test.c', 'identity_tlb_miss_handler.s'])
-    result = run_verilator()
-    if result.find('FAIL') != -1 or result.find('PASS') == -1:
-        raise TestException(
-            result + '\ntest did not signal pass\n' + result)
+    if name.find('_verilator') != -1:
+        result = run_verilator()
+    else:
+        result = run_emulator()
 
-    # XXX check number of DTLB misses to ensure it is above/below thresholds
-
-
-def test_fill_emulator(name):
-    compile_test(['fill_test.c', 'identity_tlb_miss_handler.s'])
-    result = run_emulator()
     if result.find('FAIL') != -1 or result.find('PASS') == -1:
         raise TestException(
             result + '\ntest did not signal pass\n' + result)
 
 
-def test_io_map_verilator(name):
+def test_io_map(name):
     compile_test(['io_map.c'])
-    result = run_verilator(
-        dump_file=DUMP_FILE,
-        dump_base=0x100000,
-        dump_length=32)
-
-    # Check value printed via virtual serial port
-    if result.find('jabberwocky') == -1:
-        raise TestException(
-            'did not get correct read string:\n' + result)
-
-    # Check value written to memory
-    with open(DUMP_FILE, 'rb') as f:
-        if f.read(len('galumphing')) != bytearray('galumphing', 'ascii'):
-            raise TestException('memory contents did not match')
-
-
-def test_io_map_emulator(name):
-    compile_test(['io_map.c'])
-    result = run_emulator(dump_file=DUMP_FILE, dump_base=0x100000,
-                          dump_length=32)
+    if name.find('_verilator') != -1:
+        result = run_verilator(
+            dump_file=DUMP_FILE,
+            dump_base=0x100000,
+            dump_length=32)
+    else:
+        result = run_emulator(dump_file=DUMP_FILE, dump_base=0x100000,
+                              dump_length=32)
 
     # Check value printed via virtual serial port
     if result.find('jabberwocky') == -1:
@@ -115,12 +89,9 @@ def test_nested_fault(name):
 
     check_result('nested_fault.c', result)
 
-register_tests(test_alias_verilator, ['alias_verilator'])
-register_tests(test_alias_emulator, ['alias_emulator'])
-register_tests(test_fill_verilator, ['fill_verilator'])
-register_tests(test_fill_emulator, ['fill_emulator'])
-register_tests(test_io_map_verilator, ['io_map_verilator'])
-register_tests(test_io_map_emulator, ['io_map_emulator'])
+register_tests(test_alias, ['alias_verilator', 'alias_emulator'])
+register_tests(test_fill, ['fill_verilator', 'fill_emulator'])
+register_tests(test_io_map, ['io_map_verilator', 'io_map_emulator'])
 register_tests(
     test_nested_fault, ['nested_fault_verilator', 'nested_fault_emulator'])
 register_generic_test('dflush_tlb_miss')
