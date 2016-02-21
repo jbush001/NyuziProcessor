@@ -24,16 +24,19 @@
 // in the other.
 //
 
-extern void tlb_miss_handler();
-
-// The TLB handler makes memory wrap every 4 MB
-// The MMU maps these to physical address 0x100000.
-char *tmp1 = (char*) 0x500000;
-char *tmp2 = (char*) 0x900000;
-
 int main(void)
 {
-    __builtin_nyuzi_write_control_reg(CR_TLB_MISS_HANDLER, tlb_miss_handler);
+    const char *tmp1 = (char*) 0x500000;
+    const char *tmp2 = (char*) 0x900000;
+
+    map_program_and_stack();
+    add_dtlb_mapping(IO_REGION_BASE, IO_REGION_BASE | TLB_WRITABLE
+                     | TLB_GLOBAL | TLB_PRESENT);
+    add_dtlb_mapping((unsigned int) tmp1, 0x100000 | TLB_PRESENT
+                     | TLB_WRITABLE);
+    add_dtlb_mapping((unsigned int) tmp2, 0x100000 | TLB_PRESENT
+                     | TLB_WRITABLE);
+
     __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_MMU_EN);
 
     // Test that stores are properly translated. Test harness will read

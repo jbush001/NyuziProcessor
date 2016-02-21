@@ -25,8 +25,8 @@ DUMP_FILE = 'obj/memdump.bin'
 EXPECT_STRING = bytearray('Test String', encoding='ascii')
 
 
-def test_alias(name):
-    compile_test(['alias.c', 'wrap_tlb_miss_handler.s'])
+def test_synonym(name):
+    compile_test('synonym.c')
     if name.find('_verilator') != -1:
         result = run_verilator(
             dump_file=DUMP_FILE,
@@ -89,7 +89,7 @@ def test_nested_fault(name):
 
     check_result('nested_fault.c', result)
 
-register_tests(test_alias, ['alias_verilator', 'alias_emulator'])
+register_tests(test_synonym, ['synonym_verilator', 'synonym_emulator'])
 register_tests(test_fill, ['fill_verilator', 'fill_emulator'])
 register_tests(test_io_map, ['io_map_verilator', 'io_map_emulator'])
 register_tests(
