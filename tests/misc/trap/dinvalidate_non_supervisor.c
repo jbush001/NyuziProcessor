@@ -21,7 +21,7 @@
 // occur.
 //
 
-void fault_handler()
+void faultHandler(void)
 {
     printf("FAULT %d current flags %02x prev flags %02x\n",
            __builtin_nyuzi_read_control_reg(3),
@@ -32,18 +32,18 @@ void fault_handler()
 }
 
 // Make this a call to flush the pipeline
-void switch_to_user_mode() __attribute__((noinline))
+void __attribute__((noinline)) switchToUserMode(void)
 {
     __builtin_nyuzi_write_control_reg(4, 0);
 }
 
-int main(int argc, const char *argv[])
+int main(void)
 {
     volatile unsigned int * const test_loc = (volatile unsigned int*) 0x100000;
 
-    __builtin_nyuzi_write_control_reg(1, fault_handler);
+    __builtin_nyuzi_write_control_reg(1, faultHandler);
 
-    switch_to_user_mode();
+    switchToUserMode();
 
     // This will fault
     *test_loc = 0x12345678;

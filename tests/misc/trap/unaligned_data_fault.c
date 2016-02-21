@@ -27,6 +27,7 @@ extern void trap_handler();
 volatile unsigned int dummy1;
 volatile veci16_t dummy2;
 
+// Called by low level trap_handler (trap_handler.s) after it saves registers
 void do_trap(unsigned int *registers)
 {
     printf("FAULT %d address %08x subcycle %d\n", __builtin_nyuzi_read_control_reg(3),

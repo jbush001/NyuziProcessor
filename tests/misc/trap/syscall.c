@@ -19,7 +19,7 @@
 // in reverse order
 //
 
-void fault_handler(void)
+void faultHandler(void)
 {
     printf("FAULT %d current flags %02x prev flags %02x\n",
            __builtin_nyuzi_read_control_reg(3),
@@ -28,30 +28,30 @@ void fault_handler(void)
     exit(0);
 }
 
-void start_user_code(void)
+void startUserCode(void)
 {
-    printf("ENTER start_user_code current flags %02x\n",
+    printf("ENTER startUserCode current flags %02x\n",
            __builtin_nyuzi_read_control_reg(4));
 
-    // This will call fault_handler, which was set up in main
+    // This will call faultHandler, which was set up in main
     asm("syscall" );
     printf("FAIL: syscall did not work\n");
 }
 
 int main(void)
 {
-    __builtin_nyuzi_write_control_reg(1, fault_handler);
+    __builtin_nyuzi_write_control_reg(1, faultHandler);
 
     printf("ENTER main current flags %02x\n",
            __builtin_nyuzi_read_control_reg(4));
     // CHECK: ENTER main current flags 04
 
     // Test using ERET to disable supervisor flag and jump to code
-    __builtin_nyuzi_write_control_reg(2, start_user_code);
+    __builtin_nyuzi_write_control_reg(2, (unsigned int) startUserCode);
     __builtin_nyuzi_write_control_reg(8, 0);	// Prev flags
     asm("eret");
 
-    // CHECK: ENTER start_user_code current flags 00
+    // CHECK: ENTER startUserCode current flags 00
     // CHECK: FAULT 11 current flags 04 prev flags 00
 
     printf("should_not_be_here\n"); // CHECKN: should_not_be_here

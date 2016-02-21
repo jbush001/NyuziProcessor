@@ -25,6 +25,8 @@
 extern void trap_handler();
 extern void illegal_inst();
 
+// This is called by the trap_handler shim in trap_handler.s after it saves
+// registers
 void do_trap(unsigned int *registers)
 {
     printf("FAULT %d index %d\n", __builtin_nyuzi_read_control_reg(3),

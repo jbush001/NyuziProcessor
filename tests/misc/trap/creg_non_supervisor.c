@@ -19,7 +19,7 @@
 // user mode raises a fault and doesn't update the register.
 //
 
-void fault_handler()
+void faultHandler(void)
 {
     printf("FAULT %d current flags %02x prev flags %02x\n",
            __builtin_nyuzi_read_control_reg(3),
@@ -30,20 +30,20 @@ void fault_handler()
 }
 
 // Make this a call to flush the pipeline
-void switch_to_user_mode() __attribute__((noinline))
+void __attribute__((noinline)) switchToUserMode(void)
 {
     __builtin_nyuzi_write_control_reg(4, 0);
 }
 
-int main(int argc, const char *argv[])
+int main(void)
 {
-    __builtin_nyuzi_write_control_reg(1, fault_handler);
+    __builtin_nyuzi_write_control_reg(1, faultHandler);
 
     // Initialize scratchpad0
     __builtin_nyuzi_write_control_reg(11, 0x12345678);
 
     // Switch to user mode, but leave MMU active
-    switch_to_user_mode();
+    switchToUserMode();
 
     // Check two things:
     // - That we raise a fault

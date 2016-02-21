@@ -28,6 +28,8 @@
 
 extern void trap_handler();
 
+// This is called by the low level trap_handler (in trap_handler.s)
+// after it saves registers.
 void do_trap(unsigned int *registers)
 {
     printf("*");
