@@ -46,10 +46,12 @@
 
 #define INVALID_ADDR 0xfffffffful
 
-// This is used to signal an instruction that may be a breakpoint. We use
-// a special instruction to avoid a breakpoint lookup on every instruction cycle.
-// This is an invalid instruction because it uses a reserved format type
-#define BREAKPOINT_OP 0x707fffff
+
+// When a breakpoint is set, this instruction replaces the one at the
+// breakpoint address. It is invalid, because it uses a reserved format
+// type. The interpreter only performs a breakpoint lookup when it sees
+// this instruction as an optimization.
+#define BREAKPOINT_INST 0x707fffff
 
 typedef struct Thread Thread;
 typedef struct TlbEntry TlbEntry;
@@ -59,7 +61,7 @@ struct Thread
 {
     Core *core;
     uint32_t id;
-    uint32_t linkedAddress; // For synchronized store/load. Cache line (addr / 64)
+    uint32_t lastSyncLoadAddr; // Cache line number (addr / 64)
     uint32_t currentPc;
     uint32_t currentAsid;
     uint32_t currentPageDir;
@@ -67,7 +69,7 @@ struct Thread
     bool enableMmu;
     bool enableSupervisor;
     uint32_t currentSubcycle;
-    uint32_t scalarReg[NUM_REGISTERS - 1];	// 31 is PC, which is special
+    uint32_t scalarReg[NUM_REGISTERS - 1];	// PC (31) not included here
     uint32_t vectorReg[NUM_REGISTERS][NUM_VECTOR_LANES];
 
     // Trap information. There are two levels of trap information, to
@@ -165,7 +167,7 @@ Core *initCore(uint32_t memorySize, uint32_t totalThreads, bool randomizeMemory,
     struct timeval tv;
     int sharedMemoryFd;
 
-    // Currently limited by enable mask
+    // Limited by enable mask
     assert(totalThreads <= 32);
 
     core = (Core*) calloc(sizeof(Core), 1);
@@ -227,7 +229,7 @@ Core *initCore(uint32_t memorySize, uint32_t totalThreads, bool randomizeMemory,
     {
         core->threads[threadid].core = core;
         core->threads[threadid].id = threadid;
-        core->threads[threadid].linkedAddress = INVALID_ADDR;
+        core->threads[threadid].lastSyncLoadAddr = INVALID_ADDR;
         core->threads[threadid].enableSupervisor = true;
         core->threads[threadid].trapEnableSupervisor[0] = true;
     }
@@ -442,10 +444,10 @@ int setBreakpoint(Core *core, uint32_t pc)
     core->breakpoints = breakpoint;
     breakpoint->address = pc;
     breakpoint->originalInstruction = core->memory[pc / 4];
-    if (breakpoint->originalInstruction == BREAKPOINT_OP)
+    if (breakpoint->originalInstruction == BREAKPOINT_INST)
         breakpoint->originalInstruction = INSTRUCTION_NOP;	// Avoid infinite loop
 
-    core->memory[pc / 4] = BREAKPOINT_OP;
+    core->memory[pc / 4] = BREAKPOINT_INST;
     return 0;
 }
 
@@ -498,7 +500,7 @@ static void printThreadRegisters(const Thread *thread)
     for (reg = 0; reg < NUM_REGISTERS - 1; reg++)
     {
         if (reg < 10)
-            printf(" "); // Align one digit numbers
+            printf(" "); // Align single digit numbers
 
         printf("s%d %08x ", reg, thread->scalarReg[reg]);
         if (reg % 8 == 7)
@@ -520,7 +522,7 @@ static void printThreadRegisters(const Thread *thread)
     for (reg = 0; reg < NUM_REGISTERS; reg++)
     {
         if (reg < 10)
-            printf(" "); // Align one digit numbers
+            printf(" "); // Align single digit numbers
 
         printf("v%d ", reg);
         for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
@@ -582,8 +584,8 @@ static void invalidateSyncAddress(Core *core, uint32_t address)
 
     for (threadId = 0; threadId < core->totalThreads; threadId++)
     {
-        if (core->threads[threadId].linkedAddress == address / CACHE_LINE_LENGTH)
-            core->threads[threadId].linkedAddress = INVALID_ADDR;
+        if (core->threads[threadId].lastSyncLoadAddr == address / CACHE_LINE_LENGTH)
+            core->threads[threadId].lastSyncLoadAddr = INVALID_ADDR;
     }
 }
 
@@ -644,7 +646,6 @@ static void raiseAccessFault(Thread *thread, uint32_t address, TrapReason reason
     }
     else
     {
-        // Allow core to dispatch
         if (reason == TR_IFETCH_ALIGNNMENT)
             thread->currentPc += 4;
 
@@ -662,15 +663,11 @@ static void raiseIllegalInstructionFault(Thread *thread, uint32_t instruction)
         thread->core->crashed = true;
     }
     else
-    {
-        // Allow core to dispatch
         raiseTrap(thread, 0, TR_ILLEGAL_INSTRUCTION);
-    }
 }
 
-// Translate addresses using the translation lookaside buffer.
-// If there is a TLB miss, update the thread state to make it jump to the fault
-// handler.
+// Translate addresses using the translation lookaside buffer. Raise faults
+// if necessary.
 static bool translateAddress(Thread *thread, uint32_t virtualAddress, uint32_t *outPhysicalAddress,
                              bool dataFetch, bool isWrite)
 {
@@ -726,7 +723,6 @@ static bool translateAddress(Thread *thread, uint32_t virtualAddress, uint32_t *
 
             if (isWrite && (setEntries[way].physAddrAndFlags & TLB_WRITE_ENABLE) == 0)
             {
-                // Write protected page, raise a fault
                 raiseAccessFault(thread, virtualAddress, TR_ILLEGAL_WRITE, false);
                 return false;
             }
@@ -749,7 +745,8 @@ static bool translateAddress(Thread *thread, uint32_t virtualAddress, uint32_t *
         }
     }
 
-    // No translation found, raise exception
+    // No translation found
+
     if (dataFetch)
         raiseTrap(thread, virtualAddress, TR_DTLB_MISS);
     else
@@ -910,10 +907,8 @@ static void executeRegisterArithInst(Thread *thread, uint32_t instruction)
             case FMT_RA_VS_M:
                 TALLY_INSTRUCTION(VectorInst);
 
-                // Vector compare results are packed together in the 16 low
-                // bits of a scalar register, one bit per lane.
-
                 // Vector/Scalar operation
+                // Pack compare results in low 16 bits of scalar register
                 uint32_t scalarValue = getThreadScalarReg(thread, op2reg);
                 for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
                 {
@@ -929,6 +924,7 @@ static void executeRegisterArithInst(Thread *thread, uint32_t instruction)
                 TALLY_INSTRUCTION(VectorInst);
 
                 // Vector/Vector operation
+                // Pack compare results in low 16 bits of scalar register
                 for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
                 {
                     result >>= 1;
@@ -953,7 +949,7 @@ static void executeRegisterArithInst(Thread *thread, uint32_t instruction)
     }
     else
     {
-        // Vector arithmetic...
+        // Vector arithmetic
         uint32_t result[NUM_VECTOR_LANES];
         uint32_t mask;
 
@@ -985,7 +981,7 @@ static void executeRegisterArithInst(Thread *thread, uint32_t instruction)
         }
         else if (fmt == FMT_RA_VS || fmt == FMT_RA_VS_M)
         {
-            // Vector/Scalar operation
+            // Vector/Scalar operands
             uint32_t scalarValue = getThreadScalarReg(thread, op2reg);
             for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
             {
@@ -995,7 +991,7 @@ static void executeRegisterArithInst(Thread *thread, uint32_t instruction)
         }
         else
         {
-            // Vector/Vector operation
+            // Vector/Vector operands
             for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
             {
                 result[lane] = scalarArithmeticOp(op, thread->vectorReg[op1reg][lane],
@@ -1027,7 +1023,6 @@ static void executeImmediateArithInst(Thread *thread, uint32_t instruction)
 
     if (op == OP_GETLANE)
     {
-        // getlane
         TALLY_INSTRUCTION(VectorInst);
         setScalarReg(thread, destreg, thread->vectorReg[op1reg][NUM_VECTOR_LANES - 1 - (immValue & 0xf)]);
     }
@@ -1040,9 +1035,7 @@ static void executeImmediateArithInst(Thread *thread, uint32_t instruction)
             case FMT_IMM_VV_M:
                 TALLY_INSTRUCTION(VectorInst);
 
-                // Vector compares work a little differently than other arithmetic
-                // operations: the results are packed together in the 16 low
-                // bits of a scalar register
+                // Pack compare results into low 16 bits of scalar register
                 for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
                 {
                     result >>= 1;
@@ -1153,11 +1146,8 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instruction)
         return;
     }
 
-    // If translateAddress fails because the TLB entry is not present, it will
-    // jump to the fault handler as a side effect. Return immediately so we don't
-    // perform any other side effects of the faulting instruction.
     if (!translateAddress(thread, virtualAddress, &physicalAddress, true, !isLoad))
-        return;
+        return; // fault raised, bypass other side effects
 
     isDeviceAccess = (physicalAddress & 0xffff0000) == 0xffff0000;
     if (isDeviceAccess && op != MEM_LONG)
@@ -1200,11 +1190,12 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instruction)
 
             case MEM_SYNC:
                 value = *UINT32_PTR(thread->core->memory, physicalAddress);
-                thread->linkedAddress = physicalAddress / CACHE_LINE_LENGTH;
+                thread->lastSyncLoadAddr = physicalAddress / CACHE_LINE_LENGTH;
                 break;
 
             case MEM_CONTROL_REG:
                 assert(0);	// Should have been handled in caller
+                return;
 
             default:
                 raiseIllegalInstructionFault(thread, instruction);
@@ -1216,7 +1207,6 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instruction)
     else
     {
         // Store
-        // Shift and mask in the value.
         uint32_t valueToStore = getThreadScalarReg(thread, destsrcreg);
 
         // Some instruction don't update memory, for example: a synchronized store
@@ -1264,15 +1254,15 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instruction)
                 break;
 
             case MEM_SYNC:
-                if (physicalAddress / CACHE_LINE_LENGTH == thread->linkedAddress)
+                if (physicalAddress / CACHE_LINE_LENGTH == thread->lastSyncLoadAddr)
                 {
                     // Success
 
                     // HACK: cosim can only track one side effect per instruction, but sync
                     // store has two: setting the register to indicate success and updating
-                    // memory. We chose to only log the memory transaction. Instead of
+                    // memory. This only logs the memory transaction. Instead of
                     // calling setScalarReg (which would log the register transfer as
-                    // a side effect), set the value manually here.
+                    // a side effect), set the value explicitly here.
                     thread->scalarReg[destsrcreg] = 1;
 
                     *UINT32_PTR(thread->core->memory, physicalAddress) = valueToStore;
@@ -1285,6 +1275,7 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instruction)
 
             case MEM_CONTROL_REG:
                 assert(0);	// Should have been handled in caller
+                return;
 
             default:
                 raiseIllegalInstructionFault(thread, instruction);
@@ -1352,7 +1343,7 @@ static void executeBlockLoadStoreInst(Thread *thread, uint32_t instruction)
     }
 
     if (!translateAddress(thread, virtualAddress, &physicalAddress, true, !isLoad))
-        return;
+        return; // fault raised, bypass other side effects
 
     blockPtr = UINT32_PTR(thread->core->memory, physicalAddress);
     if (isLoad)
@@ -1410,12 +1401,12 @@ static void executeScatterGatherInst(Thread *thread, uint32_t instruction)
     {
         case MEM_SCGATH:
             mask = 0xffff;
-            offset = extractSignedBits(instruction, 10, 15);	// Not masked
+            offset = extractSignedBits(instruction, 10, 15);
             break;
 
         case MEM_SCGATH_MASK:
             mask = getThreadScalarReg(thread, maskreg);
-            offset = extractSignedBits(instruction, 15, 10);  // masked
+            offset = extractSignedBits(instruction, 15, 10);
             break;
 
         default:
@@ -1431,7 +1422,7 @@ static void executeScatterGatherInst(Thread *thread, uint32_t instruction)
     }
 
     if (!translateAddress(thread, virtualAddress, &physicalAddress, true, !isLoad))
-        return;
+        return; // fault raised, bypass other side effects
 
     if (isLoad)
     {
@@ -1462,7 +1453,7 @@ static void executeScatterGatherInst(Thread *thread, uint32_t instruction)
     }
 
     if (++thread->currentSubcycle == NUM_VECTOR_LANES)
-        thread->currentSubcycle = 0;	// Finish
+        thread->currentSubcycle = 0; // Finish
     else
         thread->currentPc -= 4;	// repeat current instruction
 }
@@ -1549,8 +1540,7 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
     }
     else
     {
-        // Only threads in supervisor mode can write to control
-        // registers.
+        // Only threads in supervisor mode can write control registers.
         if (!thread->enableSupervisor)
         {
             raiseTrap(thread, 0, TR_PRIVILEGED_OP);
@@ -1685,7 +1675,7 @@ static void executeBranchInst(Thread *thread, uint32_t instruction)
         case BRANCH_CALL_REGISTER:
             setScalarReg(thread, LINK_REG, thread->currentPc);
             thread->currentPc = getThreadScalarReg(thread, srcReg);
-            return; // Short circuit out, since we use register as destination.
+            return; // Short circuit, since the source register is the dest
 
         case BRANCH_ERET:
             if (!thread->enableSupervisor)
@@ -1700,7 +1690,7 @@ static void executeBranchInst(Thread *thread, uint32_t instruction)
             thread->currentSubcycle = thread->trapSubcycle[0];
             thread->enableSupervisor = thread->trapEnableSupervisor[0];
 
-            // Restore nested interrupt stage
+            // Restore nested interrupt state
             thread->trapReason[0] = thread->trapReason[1];
             thread->trapScratchpad0[0] = thread->trapScratchpad0[1];
             thread->trapScratchpad1[0] = thread->trapScratchpad1[1];
@@ -1710,7 +1700,7 @@ static void executeBranchInst(Thread *thread, uint32_t instruction)
             thread->trapEnableSupervisor[0] = thread->trapEnableSupervisor[1];
             thread->trapSubcycle[0] = thread->trapSubcycle[1];
             thread->trapAccessAddress[0] = thread->trapAccessAddress[1];
-            return; // Short circuit out
+            return; // Short circuit branch side effect below
     }
 
     if (branchTaken)
@@ -1857,7 +1847,7 @@ restart:
         executeRegisterArithInst(thread, instruction);
     else if ((instruction & 0x80000000) == 0)
     {
-        if (instruction == BREAKPOINT_OP)
+        if (instruction == BREAKPOINT_INST)
         {
             Breakpoint *breakpoint = lookupBreakpoint(thread->core, thread->currentPc - 4);
             if (breakpoint == NULL)
@@ -1871,7 +1861,7 @@ restart:
             {
                 breakpoint->restart = false;
                 instruction = breakpoint->originalInstruction;
-                assert(instruction != BREAKPOINT_OP);
+                assert(instruction != BREAKPOINT_INST);
                 goto restart;
             }
             else

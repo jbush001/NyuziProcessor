@@ -263,7 +263,7 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
             {
                 // Set arguments
                 case 'A':
-                    // We don't support setting program arguments, so just silently ignore.
+                    // Doesn't support setting program arguments, so just silently ignore.
                     sendResponsePacket("OK");
                     break;
 

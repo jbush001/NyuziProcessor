@@ -28,7 +28,7 @@
 #include "fbwindow.h"
 #include "sdmmc.h"
 
-extern void remoteGdbMainLoop(Core *core, int enableFbWindow);
+extern void remoteGdbMainLoop(Core*, int enableFbWindow);
 
 static void usage(void)
 {
@@ -82,14 +82,6 @@ int main(int argc, char *argv[])
         MODE_GDB_REMOTE_DEBUG
     } mode = MODE_NORMAL;
 
-#if 0
-    // Enable coredumps for this process
-    struct rlimit limit;
-    limit.rlim_cur = RLIM_INFINITY;
-    limit.rlim_max = RLIM_INFINITY;
-    setrlimit(RLIMIT_CORE, &limit);
-#endif
-
     while ((option = getopt(argc, argv, "if:d:vm:b:t:c:r:s:")) != -1)
     {
         switch (option)
@@ -131,8 +123,7 @@ int main(int argc, char *argv[])
                 break;
 
             case 'd':
-                // Memory dump, of the form:
-                //  filename,start,length
+                // Memory dump, of the form: filename,start,length
                 separator = strchr(optarg, ',');
                 if (separator == NULL)
                 {
@@ -197,7 +188,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // We don't randomize memory for cosimulation mode, because
+    // Don't randomize memory for cosimulation mode, because
     // memory is checked against the hardware model to ensure a match
 
     core = initCore(memorySize, totalThreads, mode != MODE_COSIMULATION,
