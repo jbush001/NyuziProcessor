@@ -63,7 +63,8 @@ int main(int argc, char *argv[])
     bool enableMemoryDump = false;
     uint32_t memDumpBase = 0;
     uint32_t memDumpLength = 0;
-    char memDumpFilename[256];
+    char *memDumpFilename = NULL;
+    size_t memDumpFilenameLen = 0;
     bool verbose = false;
     uint32_t fbWidth = 640;
     uint32_t fbHeight = 480;
@@ -140,8 +141,10 @@ int main(int argc, char *argv[])
                     return 1;
                 }
 
-                strncpy(memDumpFilename, optarg, separator - optarg);
-                memDumpFilename[separator - optarg] = '\0';
+                memDumpFilenameLen = (size_t)(separator - optarg);
+                memDumpFilename = (char*) malloc(memDumpFilenameLen + 1);
+                strncpy(memDumpFilename, optarg, memDumpFilenameLen);
+                memDumpFilename[memDumpFilenameLen] = '\0';
                 memDumpBase = parseNumArg(separator + 1);
 
                 separator = strchr(separator + 1, ',');
