@@ -32,6 +32,7 @@
 #define TRAP_SIGNAL 5 // SIGTRAP
 
 extern void remoteGdbMainLoop(Core*, int enableFbWindow);
+extern void checkInterruptPipe(Core*);
 static void sendFormattedResponse(const char *format, ...)  __attribute__ ((format (printf, 1, 2)));
 
 static Core *gCore;
@@ -150,7 +151,8 @@ static void runUntilInterrupt(Core *core, uint32_t threadId, bool enableFbWindow
         if (enableFbWindow)
         {
             updateFramebuffer(core);
-            pollEvent();
+            pollFbWindowEvent();
+            checkInterruptPipe(core);
         }
 
         FD_SET(gClientSocket, &readFds);

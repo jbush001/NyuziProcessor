@@ -291,7 +291,7 @@ static void convertAndEnqueueScancode(SDL_Scancode code, int isRelease)
     enqueueKey(ps2Code & 0xff);
 }
 
-void pollEvent(void)
+void pollFbWindowEvent(void)
 {
     SDL_Event event;
 

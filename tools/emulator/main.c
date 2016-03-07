@@ -15,6 +15,7 @@
 //
 
 #include <errno.h>
+#include <fcntl.h>
 #include <getopt.h>
 #include <limits.h>
 #include <stdbool.h>
@@ -26,9 +27,13 @@
 #include "cosimulation.h"
 #include "device.h"
 #include "fbwindow.h"
+#include "instruction-set.h"
 #include "sdmmc.h"
 
 extern void remoteGdbMainLoop(Core*, int enableFbWindow);
+extern void checkInterruptPipe(Core*);
+
+static int recvInterruptFd = -1;
 
 static void usage(void)
 {
@@ -46,6 +51,7 @@ static void usage(void)
     fprintf(stderr, "  -c <size> Total amount of memory\n");
     fprintf(stderr, "  -r <cycles> Refresh rate, cycles between each screen update\n");
     fprintf(stderr, "  -s <file> Memory map file as shared memory\n");
+    fprintf(stderr, "  -i <file> Named pipe to receive interrupts on. Pipe must already be created.\n");
 }
 
 static uint32_t parseNumArg(const char *argval)
@@ -54,6 +60,54 @@ static uint32_t parseNumArg(const char *argval)
         return (uint32_t) strtoul(argval + 2, NULL, 16);
     else
         return (uint32_t) strtoul(argval, NULL, 10);
+}
+
+// An external process can send interrupts to the emulator by writing to a
+// named pipe. Poll the pipe to determine if any messages are pending. If
+// so, call into the core to dispatch.
+void checkInterruptPipe(Core *core)
+{
+    fd_set readFds;
+    int result;
+    struct timeval timeout;
+    char interruptId;
+
+    if (recvInterruptFd < 0)
+        return;
+
+    FD_ZERO(&readFds);
+
+    do
+    {
+        FD_SET(recvInterruptFd, &readFds);
+        timeout.tv_sec = 0;
+        timeout.tv_usec = 0;
+        result = select(recvInterruptFd + 1, &readFds, NULL, NULL, &timeout);
+    }
+    while (result < 0 && errno == EINTR);
+
+    if (result == 0)
+        return;
+
+    if (result < 0)
+    {
+        perror("checkInterruptPipe: select failed");
+        exit(1);
+    }
+
+    if (read(recvInterruptFd, &interruptId, 1) < 1)
+    {
+        perror("checkInterruptPipe: read failed");
+        exit(1);
+    }
+
+    if (interruptId > 16)
+    {
+        fprintf(stderr, "Received invalidate interrupt ID %d\n", interruptId);
+        return; // Ignore invalid interrupt IDs
+    }
+
+    raiseInterrupt(core, 0, (uint32_t) interruptId);
 }
 
 int main(int argc, char *argv[])
@@ -82,7 +136,7 @@ int main(int argc, char *argv[])
         MODE_GDB_REMOTE_DEBUG
     } mode = MODE_NORMAL;
 
-    while ((option = getopt(argc, argv, "if:d:vm:b:t:c:r:s:")) != -1)
+    while ((option = getopt(argc, argv, "f:d:vm:b:t:c:r:s:i:")) != -1)
     {
         switch (option)
         {
@@ -175,6 +229,16 @@ int main(int argc, char *argv[])
                 sharedMemoryFile = optarg;
                 break;
 
+            case 'i':
+                recvInterruptFd = open(optarg, O_RDWR);
+                if (recvInterruptFd < 0)
+                {
+                    perror("main: failed to open interrupt pipe");
+                    return 1;
+                }
+
+                break;
+
             case '?':
                 usage();
                 return 1;
@@ -220,11 +284,15 @@ int main(int argc, char *argv[])
                 while (executeInstructions(core, ALL_THREADS, gScreenRefreshRate))
                 {
                     updateFramebuffer(core);
-                    pollEvent();
+                    pollFbWindowEvent();
+                    checkInterruptPipe(core);
                 }
             }
             else
-                executeInstructions(core, ALL_THREADS, UINT64_MAX);
+            {
+                while (executeInstructions(core, ALL_THREADS, 1000000))
+                    checkInterruptPipe(core);
+            }
 
             break;
 

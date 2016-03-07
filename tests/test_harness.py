@@ -123,19 +123,19 @@ def assemble_test(source_file):
     return HEX_FILE
 
 
-class _TestRunner(threading.Thread):
+class TimedProcessRunner(threading.Thread):
 
     def __init__(self):
         threading.Thread.__init__(self)
         self.finished = threading.Event()
         self.daemon = True  # Kill watchdog if we exit
 
-    def execute(self, args, timeout):
+    # Call process.communicate(), but fail if it takes too long
+    def communicate(self, process, timeout):
         self.timeout = timeout
-        self.process = subprocess.Popen(args, stdout=subprocess.PIPE,
-                                        stderr=subprocess.STDOUT)
+        self.process = process
         self.start()  # Start watchdog
-        output, unused_err = self.process.communicate()
+        result = self.process.communicate()
         if self.finished.is_set():
             raise TestException('Test timed out')
         else:
@@ -143,9 +143,9 @@ class _TestRunner(threading.Thread):
 
         if self.process.poll():
             # Non-zero return code. Probably target program crash.
-            raise TestException('Process returned error: ' + output.decode())
+            raise TestException('Process returned error: ' + result[0].decode())
 
-        return output.decode()
+        return result
 
     # Watchdog thread kills process if it runs too long
     def run(self):
@@ -153,6 +153,13 @@ class _TestRunner(threading.Thread):
             # Timed out
             self.finished.set()
             self.process.kill()
+
+
+def _run_test_with_timeout(args, timeout):
+    process = subprocess.Popen(args, stdout=subprocess.PIPE,
+                               stderr=subprocess.STDOUT)
+    output, unused_err = TimedProcessRunner().communicate(process, timeout)
+    return output.decode()
 
 
 def run_emulator(
@@ -191,7 +198,7 @@ def run_emulator(
                  hex(dump_base) + ',' + hex(dump_length)]
 
     args += [HEX_FILE]
-    return _TestRunner().execute(args, timeout)
+    return _run_test_with_timeout(args, timeout)
 
 
 def run_verilator(block_device=None, dump_file=None, dump_base=None,
@@ -230,7 +237,7 @@ def run_verilator(block_device=None, dump_file=None, dump_base=None,
         args += extra_args
 
     args += ['+bin=' + HEX_FILE]
-    output = _TestRunner().execute(args, timeout)
+    output = _run_test_with_timeout(args, timeout)
     if output.find('***HALTED***') == -1:
         raise TestException(output + '\nProgram did not halt normally')
 

@@ -32,6 +32,7 @@ output and a mass storage device.
 | -c   |  size                     | Total amount of memory                           |
 | -r   |  instructions             | Screen refresh rate, number of instructions to execute between screen updates |
 | -s   |  filename                 | Create the file and map emulated system memory onto it as a shared memory object |
+| -i   |  filename                 | The passed filename is expected to be a named pipe. When bytes are sent over this pipe, it will emulate an external interrupt with the index in the byte. |
 
 The simulator assumes numeric arguments are decimals unless they are prefixed
 with '0x', in which case it interprets them hexadecimal.

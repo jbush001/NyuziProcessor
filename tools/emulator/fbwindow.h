@@ -21,7 +21,7 @@
 
 int initFramebuffer(uint32_t width, uint32_t height);
 void updateFramebuffer(Core*);
-void pollEvent(void);
+void pollFbWindowEvent(void);
 void enableFramebuffer(bool enable);
 void setFramebufferAddress(uint32_t address);
 

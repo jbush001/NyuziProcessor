@@ -71,6 +71,7 @@ struct Thread
     uint32_t currentSubcycle;
     uint32_t scalarReg[NUM_REGISTERS - 1];	// PC (31) not included here
     uint32_t vectorReg[NUM_REGISTERS][NUM_VECTOR_LANES];
+    uint32_t pendingInterrupts;
 
     // Trap information. There are two levels of trap information, to
     // handle a nested TLB miss occurring in the middle of another trap.
@@ -138,6 +139,7 @@ static void setScalarReg(Thread*, uint32_t reg, uint32_t value);
 static void setVectorReg(Thread*, uint32_t reg, uint32_t mask,
                          uint32_t *values);
 static void invalidateSyncAddress(Core*, uint32_t address);
+static void tryToDispatchInterrupts(Thread*);
 static void raiseTrap(Thread*, uint32_t address, TrapReason);
 static void raiseAccessFault(Thread*, uint32_t address, TrapReason, bool isLoad);
 static void raiseIllegalInstructionFault(Thread*, uint32_t instruction);
@@ -318,6 +320,13 @@ void printRegisters(const Core *core, uint32_t threadId)
 void enableCosimulation(Core *core)
 {
     core->enableCosim = true;
+}
+
+void raiseInterrupt(Core *core, uint32_t threadId, uint32_t interruptId)
+{
+    Thread *thread = &core->threads[threadId];
+    thread->pendingInterrupts |= 1 << interruptId;
+    tryToDispatchInterrupts(thread);
 }
 
 // Called when the verilog model in cosimulation indicates an interrupt.
@@ -589,6 +598,25 @@ static void invalidateSyncAddress(Core *core, uint32_t address)
     }
 }
 
+// Check if interrupts are enabled and one is pending. If so, dispatch it now.
+static void tryToDispatchInterrupts(Thread *thread)
+{
+    int nextInterruptId;
+
+    if (!thread->enableInterrupt || thread->pendingInterrupts == 0)
+        return;
+
+    nextInterruptId = 31 - __builtin_clz(thread->pendingInterrupts);
+
+    // Unlike exceptions, an interrupt saves the PC of the *next* instruction,
+    // rather than the current one, but only if a multicycle instruction is
+    // not active. Advance the PC here accordingly.
+    if (thread->currentSubcycle == 0)
+        thread->currentPc += 4;
+
+    raiseTrap(thread, 0, (TrapReason)(TR_INTERRUPT_BASE + nextInterruptId));
+    thread->pendingInterrupts &= ~(1 << nextInterruptId);
+}
 
 static void raiseTrap(Thread *thread, uint32_t trapAddress, TrapReason reason)
 {
@@ -1563,6 +1591,12 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
                 thread->enableInterrupt = (value & 1) != 0;
                 thread->enableMmu = (value & 2) != 0;
                 thread->enableSupervisor = (value & 4) != 0;
+
+                // An interrupt may have occurred while interrupts were
+                // disabled.
+                if (thread->enableInterrupt)
+                    tryToDispatchInterrupts(thread);
+
                 break;
 
             case CR_SAVED_FLAGS:
@@ -1700,6 +1734,11 @@ static void executeBranchInst(Thread *thread, uint32_t instruction)
             thread->trapEnableSupervisor[0] = thread->trapEnableSupervisor[1];
             thread->trapSubcycle[0] = thread->trapSubcycle[1];
             thread->trapAccessAddress[0] = thread->trapAccessAddress[1];
+
+            // There may be other interrupts pending
+            if (thread->enableInterrupt)
+                tryToDispatchInterrupts(thread);
+
             return; // Short circuit branch side effect below
     }
 
