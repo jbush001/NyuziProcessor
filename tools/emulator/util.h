@@ -17,8 +17,10 @@
 #ifndef __UTIL_H
 #define __UTIL_H
 
+#include <errno.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <sys/select.h>
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
@@ -80,6 +82,25 @@ static inline uint32_t valueAsInt(float value)
         return 0x7fffffff;
 
     return u.i;
+}
+
+static inline int canReadFileDescriptor(int fd)
+{
+    fd_set readFds;
+    int result;
+    struct timeval timeout;
+
+    do
+    {
+        FD_ZERO(&readFds);
+        FD_SET(fd, &readFds);
+        timeout.tv_sec = 0;
+        timeout.tv_usec = 0;
+        result = select(fd + 1, &readFds, NULL, NULL, &timeout);
+    }
+    while (result < 0 && errno == EINTR);
+
+    return result;
 }
 
 #endif

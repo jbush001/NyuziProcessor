@@ -137,12 +137,6 @@ static void sendFormattedResponse(const char *format, ...)
 // indicated thread.
 static void runUntilInterrupt(Core *core, uint32_t threadId, bool enableFbWindow)
 {
-    fd_set readFds;
-    int result;
-    struct timeval timeout;
-
-    FD_ZERO(&readFds);
-
     while (true)
     {
         if (!executeInstructions(core, threadId, gScreenRefreshRate))
@@ -155,11 +149,8 @@ static void runUntilInterrupt(Core *core, uint32_t threadId, bool enableFbWindow
             checkInterruptPipe(core);
         }
 
-        FD_SET(gClientSocket, &readFds);
-        timeout.tv_sec = 0;
-        timeout.tv_usec = 0;
-        result = select(gClientSocket + 1, &readFds, NULL, NULL, &timeout);
-        if ((result < 0 && errno != EINTR) || result == 1)
+        // Break on error or if data is ready
+        if (canReadFileDescriptor(gClientSocket) != 0)
             break;
     }
 }

@@ -30,6 +30,7 @@
 #include "fbwindow.h"
 #include "instruction-set.h"
 #include "sdmmc.h"
+#include "util.h"
 
 extern void remoteGdbMainLoop(Core*, int enableFbWindow);
 extern void checkInterruptPipe(Core*);
@@ -68,25 +69,13 @@ static uint32_t parseNumArg(const char *argval)
 // so, call into the core to dispatch.
 void checkInterruptPipe(Core *core)
 {
-    fd_set readFds;
     int result;
-    struct timeval timeout;
     char interruptId;
 
     if (recvInterruptFd < 0)
         return;
 
-    FD_ZERO(&readFds);
-
-    do
-    {
-        FD_SET(recvInterruptFd, &readFds);
-        timeout.tv_sec = 0;
-        timeout.tv_usec = 0;
-        result = select(recvInterruptFd + 1, &readFds, NULL, NULL, &timeout);
-    }
-    while (result < 0 && errno == EINTR);
-
+    result = canReadFileDescriptor(recvInterruptFd);
     if (result == 0)
         return;
 
