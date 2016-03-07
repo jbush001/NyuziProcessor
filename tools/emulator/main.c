@@ -23,6 +23,7 @@
 #include <string.h>
 #include <sys/resource.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "core.h"
 #include "cosimulation.h"
 #include "device.h"
