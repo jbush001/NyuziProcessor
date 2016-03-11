@@ -21,8 +21,8 @@
 // L2 interconnect, and processes responses. Cache control commands go through
 // here as well.
 // A memory barrier request waits until all pending store requests finish.
-// It acts like a store for rollback logic, but doesn't enqueue anything if
-// the store buffer is empty.
+// It acts like a store in terms of rollback logic, but doesn't enqueue
+// anything if the store buffer is empty.
 //
 
 module l1_store_queue(

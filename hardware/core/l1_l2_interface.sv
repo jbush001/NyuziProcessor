@@ -33,11 +33,11 @@
 // 2. Checks the snoop responses. If the data are in the cache, selects the
 //    way for update. For load responses, update tag memory.
 // 3. Update L1D data memory. It must do this a cycle after updating the
-//    tags to avoid a race condition. They are checked in this sequence
+//    tags to avoid a race condition becausethey are checked in this sequence
 //    by the instruction pipeline during load accesses.
 //
-// l2_request does not depend combinationally on l2_ready (to avoid a loop),
-// but the opposite is not true (see l2_cache_arb_stage).
+// l2i_request_valid does not depend combinationally on l2_ready (to avoid a
+// loop), but the opposite is not true (see l2_cache_arb_stage).
 //
 
 module l1_l2_interface

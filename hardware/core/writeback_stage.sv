@@ -18,23 +18,23 @@
 
 //
 // Instruction Pipeline Writeback Stage
-// - Controls signals to write results back to register file
 // - Selects result from appropriate pipeline.
 // - Aligns memory read results
-// - Flags rollbacks. Most are detected earlier in the pipeline, but we
-//   handle them here to avoid having to reconcile multiple rollbacks in
+// - Writes results back to register file
+// - Handles rollbacks. Most are raised earlier in the pipeline, but it
+//   handles them here to avoid having to reconcile multiple rollbacks in
 //   the same cycle.
 //   * Branch
 //   * Data cache miss
 //   * Exception
 //
-// Exceptions and interrupts are precise in this architecture.
-// Instructions may retire out of order because the execution pipelines have
-// different lengths. It's also possible, after a rollback, for earlier
-// instructions from the same thread to arrive at this stage (because they were
-// in the longer floating point pipeline). The rollback signal does not flush
-// later stages of the multicycle pipeline for this reason. This can be
-// challenging to visualize.
+// Exceptions and interrupts are precise in this architecture. This is
+// complicated by the fact that instructions may retire out of order because
+// the execution pipelines have different lengths. It's also possible, after
+// a rollback, for earlier instructions from the same thread to arrive at
+// this stage (because they were in the longer floating point pipeline).
+// The rollback signal does not flush later stages of the multicycle pipeline
+// for this reason.
 //
 
 module writeback_stage(
@@ -85,12 +85,6 @@ module writeback_stage(
     input scalar_t                        ior_read_value,
     input logic                           ior_rollback_en,
 
-    // From control_registers
-    input scalar_t                        cr_creg_read_val,
-    input scalar_t                        cr_trap_handler,
-    input scalar_t                        cr_tlb_miss_handler,
-    input subcycle_t                      cr_eret_subcycle[`THREADS_PER_CORE],
-
     // To control_registers
     output logic                          wb_trap,
     output trap_reason_t                  wb_trap_reason,
@@ -98,6 +92,12 @@ module writeback_stage(
     output thread_idx_t                   wb_trap_thread_idx,
     output scalar_t                       wb_trap_access_vaddr,
     output subcycle_t                     wb_trap_subcycle,
+
+    // From control_registers
+    input scalar_t                        cr_creg_read_val,
+    input scalar_t                        cr_trap_handler,
+    input scalar_t                        cr_tlb_miss_handler,
+    input subcycle_t                      cr_eret_subcycle[`THREADS_PER_CORE],
 
     // To interrupt_controller
     output thread_bitmap_t                wb_interrupt_ack,
@@ -133,7 +133,8 @@ module writeback_stage(
     memory_op_t memory_op;
     cache_line_data_t endian_twiddled_data;
 `ifdef SIMULATION
-    scalar_t __debug_wb_pc;    // Used by testbench
+    // Used by testbench
+    scalar_t __debug_wb_pc;
     pipeline_sel_t __debug_wb_pipeline;
     logic __debug_is_sync_store;
 `endif
@@ -182,9 +183,11 @@ module writeback_stage(
         wb_trap_access_vaddr = 0;
         wb_trap_subcycle = dd_subcycle;
 
-        if (ix_instruction_valid && (ix_instruction.has_trap || ix_privileged_op_fault))
+        if (ix_instruction_valid && (ix_instruction.has_trap
+            || ix_privileged_op_fault))
         begin
-            // Fault piggybacked on instruction, which goes through the integer pipeline.
+            // Fault piggybacked on instruction, which goes through the
+            // integer pipeline.
             wb_rollback_en = 1'b1;
             if (ix_instruction.trap_reason == TR_ITLB_MISS
                 || ix_instruction.trap_reason == TR_DTLB_MISS)
@@ -200,7 +203,7 @@ module writeback_stage(
             else
                 wb_trap_reason = ix_instruction.trap_reason;
 
-            if (ix_instruction.trap_reason[4])  // Is interrrupt
+            if (ix_instruction.trap_reason[4])  // Is interrrupt (>= 16)
                 wb_interrupt_ack[ix_thread_idx] = 1'b1;
 
             wb_trap_pc = ix_instruction.pc;
@@ -367,7 +370,7 @@ module writeback_stage(
         // wb_rollback_thread_idx like other places.
         case ({fx5_instruction_valid, ix_instruction_valid, dd_instruction_valid})
             //
-            // floating point pipeline result
+            // Floating point pipeline result
             //
             3'b100:
             begin
@@ -391,14 +394,19 @@ module writeback_stage(
             //
             3'b010:
             begin
-                if (ix_instruction.is_branch && (ix_instruction.branch_type == BRANCH_CALL_OFFSET
+                if (ix_instruction.is_branch
+                    && (ix_instruction.branch_type == BRANCH_CALL_OFFSET
                     || ix_instruction.branch_type == BRANCH_CALL_REGISTER))
                 begin
-                    // Call is a special case: it both rolls back and writes back a register (ra)
+                    // Call is a special case: it both rolls back and writes
+                    // back a register (ra)
                     writeback_en_nxt = 1;
                 end
                 else if (ix_instruction.has_dest && !wb_rollback_en)
-                    writeback_en_nxt = 1;    // This is a normal, non-rolled-back instruction
+                begin
+                    // This is a normal, non-rolled-back instruction
+                    writeback_en_nxt = 1;
+                end
 
                 writeback_thread_idx_nxt = ix_thread_idx;
                 writeback_is_vector_nxt = ix_instruction.dest_is_vector;
@@ -463,7 +471,7 @@ module writeback_stage(
 
                             default:
                             begin
-                                // gather load
+                                // Gather load
                                 // Grab the appropriate lane.
                                 writeback_value_nxt = {`VECTOR_LANES{swapped_word_value}};
                                 writeback_mask_nxt = dd_vector_lane_oh & dd_lane_mask;
@@ -472,8 +480,8 @@ module writeback_stage(
                     end
                     else if (memory_op == MEM_SYNC)
                     begin
-                        // Synchronized stores are special because they write back (whether they
-                        // were successful).
+                        // Synchronized stores are special because they write
+                        // back (whether they were successful).
                         writeback_value_nxt[0] = scalar_t'(sq_store_sync_success);
                     end
                 end

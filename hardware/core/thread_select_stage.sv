@@ -57,7 +57,7 @@ module thread_select_stage(
     input pipeline_sel_t               wb_rollback_pipeline,
     input subcycle_t                   wb_rollback_subcycle,
 
-    // From top level module
+    // From interrupt_controller
     input thread_bitmap_t              ic_thread_en,
 
     // From dcache_data_stage
@@ -76,6 +76,8 @@ module thread_select_stage(
     // Difference between longest and shortest execution pipeline
     localparam WRITEBACK_ALLOC_STAGES = 4;
 
+    localparam SCOREBOARD_ENTRIES = `NUM_REGISTERS * 2;
+
     decoded_instruction_t thread_instr[`THREADS_PER_CORE];
     decoded_instruction_t issue_instr;
     thread_bitmap_t thread_blocked;
@@ -89,15 +91,15 @@ module thread_select_stage(
 
     // The scoreboard tracks registers that are busy (have a result pending), with one bit
     // per register. Bits 0-31 are scalar registers and 32-63 are vector registers.
-    logic[`NUM_REGISTERS * 2 - 1:0] scoreboard[`THREADS_PER_CORE];
-    logic[`NUM_REGISTERS * 2 - 1:0] scoreboard_nxt[`THREADS_PER_CORE];
-    logic[`NUM_REGISTERS * 2 - 1:0] scoreboard_dest_bitmap[`THREADS_PER_CORE];
+    logic[SCOREBOARD_ENTRIES - 1:0] scoreboard[`THREADS_PER_CORE];
+    logic[SCOREBOARD_ENTRIES - 1:0] scoreboard_nxt[`THREADS_PER_CORE];
+    logic[SCOREBOARD_ENTRIES - 1:0] scoreboard_dest_bitmap[`THREADS_PER_CORE];
 
     // Track issued instructions so we can clear scoreboard entries on a rollback
     struct packed {
         logic valid;
         thread_idx_t thread_idx;
-        logic[`NUM_REGISTERS * 2 - 1:0] scoreboard_bitmap;
+        logic[SCOREBOARD_ENTRIES - 1:0] scoreboard_bitmap;
     } rollback_dest[ROLLBACK_STAGES];
 
 `ifdef SIMULATION
@@ -120,17 +122,23 @@ module thread_select_stage(
         begin : thread_logic_gen
             logic ififo_almost_full;
             logic ififo_empty;
-            logic[`NUM_REGISTERS * 2 - 1:0] scoreboard_clear_bitmap;
-            logic[`NUM_REGISTERS * 2 - 1:0] scoreboard_dep_bitmap;
-            logic[`NUM_REGISTERS * 2 - 1:0] scoreboard_dep_bitmap_nxt;
-            logic[`NUM_REGISTERS * 2 - 1:0] scoreboard_dest_bitmap_nxt;
+            logic[SCOREBOARD_ENTRIES - 1:0] scoreboard_clear_bitmap;
+            logic[SCOREBOARD_ENTRIES - 1:0] scoreboard_set_bitmap;
+            logic[SCOREBOARD_ENTRIES - 1:0] scoreboard_dep_bitmap;
+            logic[SCOREBOARD_ENTRIES - 1:0] scoreboard_dep_bitmap_nxt;
+            logic[SCOREBOARD_ENTRIES - 1:0] scoreboard_dest_bitmap_nxt;
             decoded_instruction_t thread_instr_nxt;
             logic instruction_latched;
             logic writeback_conflict;
             logic rollback_this_thread;
+            logic enqueue_this_thread;
             logic instruction_latch_en;
+            logic scoreboard_conflict;
 
-            assign rollback_this_thread = wb_rollback_en && wb_rollback_thread_idx == thread_idx_t'(thread_idx);
+            assign rollback_this_thread = wb_rollback_en
+                && wb_rollback_thread_idx == thread_idx_t'(thread_idx);
+            assign enqueue_this_thread = id_instruction_valid
+                && id_thread_idx == thread_idx_t'(thread_idx);
 
             sync_fifo #(
                 .WIDTH($bits(id_instruction)),
@@ -140,7 +148,7 @@ module thread_select_stage(
                 .flush_en(rollback_this_thread),
                 .full(),
                 .almost_full(ififo_almost_full),
-                .enqueue_en(id_instruction_valid && id_thread_idx == thread_idx_t'(thread_idx)),
+                .enqueue_en(enqueue_this_thread),
                 .value_i(id_instruction),
                 .empty(ififo_empty),
                 .almost_empty(),
@@ -151,7 +159,7 @@ module thread_select_stage(
             assign issue_last_subcycle[thread_idx] = thread_issue_oh[thread_idx]
                 && current_subcycle[thread_idx] == thread_instr[thread_idx].last_subcycle;
 
-            // This signal goes back to the thread fetch stage to enable fetching more
+            // This signal goes back to the ifetch_tag_stage to enable fetching more
             // instructions. Deassert fetch enable a few cycles before the FIFO
             // fills up because there are several stages in-between.
             assign ts_fetch_en[thread_idx] = !ififo_almost_full && ic_thread_en[thread_idx];
@@ -237,9 +245,10 @@ module thread_select_stage(
             // Determine which scoreboard bits to clear
             always_comb
             begin
-                // Clear scoreboard entries for completed instructions. Only do this on the
-                // last subcycle of an instruction. Since this doesn't wait on the scoreboard to
-                // issue intermediate subcycles, we must do this for correctness.
+                // Clear scoreboard entries for completed instructions.
+                // Only do this on the last subcycle of an instruction.
+                // Since this doesn't wait on the scoreboard to issue
+                // intermediate subcycles, we must do this for correctness.
                 scoreboard_clear_bitmap = 0;
                 if (wb_writeback_en && wb_writeback_thread_idx == thread_idx_t'(thread_idx)
                     && wb_writeback_is_last_subcycle)
@@ -259,13 +268,16 @@ module thread_select_stage(
                             scoreboard_clear_bitmap |= rollback_dest[i].scoreboard_bitmap;
                     end
 
-                    // The memory pipeline is one stage longer than the single cycle arithmetic pipeline,
-                    // so only invalidate the last stage if this originated there.
+                    // The memory pipeline is one stage longer than the single
+                    // cycle arithmetic pipeline, so only invalidate the last
+                    // stage if this originated there.
                     if (rollback_dest[ROLLBACK_STAGES - 1].valid
-                        && rollback_dest[ROLLBACK_STAGES - 1].thread_idx == thread_idx_t'(thread_idx)
+                        && rollback_dest[ROLLBACK_STAGES - 1].thread_idx
+                        == thread_idx_t'(thread_idx)
                         && wb_rollback_pipeline == PIPE_MEM)
                     begin
-                        scoreboard_clear_bitmap |= rollback_dest[ROLLBACK_STAGES - 1].scoreboard_bitmap;
+                        scoreboard_clear_bitmap |= rollback_dest[ROLLBACK_STAGES - 1]
+                            .scoreboard_bitmap;
                     end
                 end
             end
@@ -286,16 +298,21 @@ module thread_select_stage(
             // cases, this is fine, but with a multi-cycle operation (like a gather
             // load), which writes back to the same register multiple times, this
             // would delay the load.
+            assign scoreboard_conflict = (scoreboard[thread_idx]
+                & scoreboard_dep_bitmap) != 0 && current_subcycle[thread_idx] == 0;
             assign can_issue_thread[thread_idx] = instruction_latched
-                && ((scoreboard[thread_idx] & scoreboard_dep_bitmap) == 0 || current_subcycle[thread_idx] != 0)
+                && !scoreboard_conflict
                 && ic_thread_en[thread_idx]
                 && !rollback_this_thread
                 && !writeback_conflict
                 && !thread_blocked[thread_idx];
 
             // Update scoreboard.
-            assign scoreboard_nxt[thread_idx] = (scoreboard[thread_idx] & ~scoreboard_clear_bitmap)
-                | (thread_issue_oh[thread_idx] ? scoreboard_dest_bitmap[thread_idx]  : 0);
+            assign scoreboard_set_bitmap = scoreboard_dest_bitmap[thread_idx]
+                & {SCOREBOARD_ENTRIES{thread_issue_oh[thread_idx]}};
+            assign scoreboard_nxt[thread_idx] =
+                (scoreboard[thread_idx] & ~scoreboard_clear_bitmap)
+                | scoreboard_set_bitmap;
 
             always_ff @(posedge clk, posedge reset)
             begin
@@ -317,7 +334,7 @@ module thread_select_stage(
             end
 
 `ifdef SIMULATION
-            // Used for visualizer app. There can be multiple events that prevent
+            // Used for visualizer tool. There can be multiple events that prevent
             // a thread from executing, but I picked a order that seemed logical
             // to prioritize them so there is only one "state."
             always_comb
@@ -426,8 +443,8 @@ module thread_select_stage(
             // suspend and wake will be asserted simultaneously. Wake will win
             // because of the order of this expression. This is intended, since
             // cache data is now available and the thread won't be rolled back.
-            thread_blocked <= (thread_blocked | wb_suspend_thread_oh) & ~(l2i_dcache_wake_bitmap
-                | ior_wake_bitmap);
+            thread_blocked <= (thread_blocked | wb_suspend_thread_oh)
+                & ~(l2i_dcache_wake_bitmap | ior_wake_bitmap);
 
             // Track issued instructions for scoreboard clearing
             for (int i = 1; i < ROLLBACK_STAGES; i++)

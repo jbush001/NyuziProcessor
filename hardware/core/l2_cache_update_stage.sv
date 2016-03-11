@@ -18,7 +18,7 @@
 
 //
 // L2 cache pipeline - update stage.
-// - Generates signals to update cache data if this is a cache fill or store.
+// - Update cache data if this is a cache fill or store.
 //   This applies the store mask and requested data to the original data.
 // - Sends response packet to cores.
 //
@@ -132,7 +132,8 @@ module l2_cache_update_stage(
 
     always_ff @(posedge clk)
     begin
-        l2_response.status <= l2r_request.packet_type == L2REQ_STORE_SYNC ? l2r_store_sync_success : 1'b1;
+        l2_response.status <= l2r_request.packet_type == L2REQ_STORE_SYNC
+            ? l2r_store_sync_success : 1'b1;
         l2_response.core <= l2r_request.core;
         l2_response.id <= l2r_request.id;
         l2_response.packet_type <= response_type;
