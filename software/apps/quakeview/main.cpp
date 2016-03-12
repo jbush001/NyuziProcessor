@@ -44,10 +44,12 @@ namespace
 {
 
 Vec3 gCameraPos;
-float gFacingAngle;
-Vec3 gFacingVector;
+Vec3 kUpVector(0, 0, 1);
+Matrix gCameraOrientationMatrix;
+Matrix kRotateLeft = Matrix::getRotationMatrix(-M_PI / 8, kUpVector);
+Matrix kRotateRight = Matrix::getRotationMatrix(M_PI / 8, kUpVector);
+const float kMoveSpeed = 20.0;
 
-const Vec3 kUpVector(0, 0, 1);
 bool gKeyPressed[6] = { false, false, false, false, false, false };
 bool gWireframeRendering = false;
 bool gBilinearFiltering = true;
@@ -127,34 +129,21 @@ void processKeyboardEvents()
 
         }
     }
-
     // Handle movement
     if (gKeyPressed[kRightArrow])
-    {
-        gFacingAngle -= M_PI / 16;
-        if (gFacingAngle < 0)
-            gFacingAngle += M_PI * 2;
-
-        gFacingVector = Vec3(cos(gFacingAngle), sin(gFacingAngle), 0);
-    }
+        gCameraOrientationMatrix *= kRotateRight;
     else if (gKeyPressed[kLeftArrow])
-    {
-        gFacingAngle += M_PI / 16;
-        if (gFacingAngle > M_PI * 2)
-            gFacingAngle -= M_PI * 2;
-
-        gFacingVector = Vec3(cos(gFacingAngle), sin(gFacingAngle), 0);
-    }
+        gCameraOrientationMatrix *= kRotateLeft;
 
     if (gKeyPressed[kUpArrow])
-        gCameraPos = gCameraPos + gFacingVector * 30;
+        gCameraPos += gCameraOrientationMatrix.inverse() * Vec3(0, 0, -kMoveSpeed);
     else if (gKeyPressed[kDownArrow])
-        gCameraPos = gCameraPos - gFacingVector * 30;
+        gCameraPos += gCameraOrientationMatrix.inverse() * Vec3(0, 0, kMoveSpeed);
 
     if (gKeyPressed[kUKey])
-        gCameraPos = gCameraPos + Vec3(0, 0, 30);
+        gCameraPos += gCameraOrientationMatrix.inverse() * Vec3(0, kMoveSpeed, 0);
     else if (gKeyPressed[kDKey])
-        gCameraPos = gCameraPos + Vec3(0, 0, -30);
+        gCameraPos += gCameraOrientationMatrix.inverse() * Vec3(0, -kMoveSpeed, 0);
 }
 
 void parseCoordinateString(const char *string, float outCoord[3])
@@ -222,14 +211,16 @@ int main()
         return 1;
     }
 
-    gFacingAngle = float(atoi(ent->getAttribute("angle"))) / 360.0 * M_PI * 2;
-    gFacingVector = Vec3(cos(gFacingAngle), sin(gFacingAngle), 0);
+    float facingAngle = float(atoi(ent->getAttribute("angle"))) / 360.0 * M_PI * 2;
+    gCameraOrientationMatrix = Matrix::lookAt(Vec3(0, 0, 0), Vec3(cos(facingAngle),
+                               sin(facingAngle), 0), kUpVector);
+
     float coords[3];
     parseCoordinateString(ent->getAttribute("origin"), coords);
     for (int i = 0; i < 3; i++)
         gCameraPos[i] = coords[i];
 
-    printf("position %g %g %g angle %g\n", coords[0], coords[1], coords[2], gFacingAngle);
+    printf("position %g %g %g angle %g\n", coords[0], coords[1], coords[2], facingAngle);
 
     // Start worker threads
     startAllThreads();
@@ -245,8 +236,8 @@ int main()
         atlasTexture->enableBilinearFiltering(gBilinearFiltering);
 
         // Set up uniforms
-        Matrix modelViewMatrix = Matrix::lookAt(gCameraPos, gCameraPos + gFacingVector, kUpVector);
-        uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
+        Matrix viewMatrix = gCameraOrientationMatrix * Matrix::getTranslationMatrix(-gCameraPos);
+        uniforms.fMVPMatrix = projectionMatrix * viewMatrix;
         uniforms.enableLightmap = gEnableLightmap;
         uniforms.lightmapOnly = gLightmapOnly;
 

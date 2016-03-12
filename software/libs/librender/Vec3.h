@@ -66,6 +66,12 @@ public:
         return newVal;
     }
 
+    Vec3 &operator+=(const Vec3 &other)
+    {
+        *this = *this + other;
+        return *this;
+    }
+
     Vec3 operator/(float other) const
     {
         Vec3 newVal;

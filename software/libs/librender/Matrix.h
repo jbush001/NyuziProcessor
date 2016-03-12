@@ -87,6 +87,23 @@ public:
         return *this;
     }
 
+     Vec3 operator*(const Vec3 &rhs) const
+     {
+         float result[3];
+         for (int row = 0; row < 3; row++)
+         {
+             float sum = 0.0f;
+             for (int col = 0; col < 3; col++)
+                 sum += fValues[row][col] * rhs[col];
+
+             // Assume last row of vector is 1
+             sum += fValues[row][3];
+             result[row] = sum;
+         }
+
+         return Vec3(result[0], result[1], result[2]);
+     }
+
     // Multiply 16 Vec3s by this matrix.
     void mulVec(vecf16_t *outVec, const vecf16_t *inVec) const
     {
