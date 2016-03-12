@@ -28,8 +28,6 @@
 #include "Render.h"
 #include "TextureShader.h"
 
-#define DEBUG_DISPLAY_ATLAS 0
-
 using namespace librender;
 
 enum Button
@@ -247,10 +245,6 @@ int main()
         atlasTexture->enableBilinearFiltering(gBilinearFiltering);
 
         // Set up uniforms
-#if DEBUG_DISPLAY_ATLAS
-        context->bindUniforms(&uniforms, sizeof(uniforms));
-        renderTextureAtlas(context);
-#else
         Matrix modelViewMatrix = Matrix::lookAt(gCameraPos, gCameraPos + gFacingVector, kUpVector);
         uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
         uniforms.enableLightmap = gEnableLightmap;
@@ -259,7 +253,7 @@ int main()
         context->bindUniforms(&uniforms, sizeof(uniforms));
 
         renderScene(context, gCameraPos);
-#endif
+
         clock_t startTime = clock();
         context->finish();
         printf("rendered frame in %d uS\n", clock() - startTime);
