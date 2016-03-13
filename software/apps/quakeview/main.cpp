@@ -43,8 +43,8 @@ enum Button
 namespace
 {
 
+const Vec3 kUpVector(0, 0, 1);
 Vec3 gCameraPos;
-Vec3 kUpVector(0, 0, 1);
 Matrix gCameraOrientationMatrix;
 Matrix kRotateLeft = Matrix::getRotationMatrix(-M_PI / 8, kUpVector);
 Matrix kRotateRight = Matrix::getRotationMatrix(M_PI / 8, kUpVector);
@@ -54,7 +54,7 @@ bool gKeyPressed[6] = { false, false, false, false, false, false };
 bool gWireframeRendering = false;
 bool gBilinearFiltering = true;
 bool gEnableLightmap = true;
-bool gLightmapOnly = false;
+bool gEnableTexture = true;
 
 void processKeyboardEvents()
 {
@@ -102,25 +102,25 @@ void processKeyboardEvents()
             case 'l':
                 if (keyCode & KBD_PRESSED)
                 {
-                    // Toggle through three modes: no lightmaps, lightmaps,
-                    // lightmaps only.
+                    // Toggle through three modes: texture + lightmap, texture only,
+                    // lightmap only
                     if (gEnableLightmap)
                     {
-                        if (gLightmapOnly)
-                        {
+                        if (gEnableTexture)
                             gEnableLightmap = false;
-                            gLightmapOnly = false;
-                        }
                         else
-                            gLightmapOnly = true;
+                            gEnableTexture = true;
                     }
                     else
+                    {
                         gEnableLightmap = true;
+                        gEnableTexture = false;
+                    }
                 }
 
                 break;
 
-            // Toggle gBilinearFiltering filtering
+            // Toggle bilinear filtering
             case 'b':
                 if (keyCode & KBD_PRESSED)
                     gBilinearFiltering = !gBilinearFiltering;
@@ -239,7 +239,7 @@ int main()
         Matrix viewMatrix = gCameraOrientationMatrix * Matrix::getTranslationMatrix(-gCameraPos);
         uniforms.fMVPMatrix = projectionMatrix * viewMatrix;
         uniforms.enableLightmap = gEnableLightmap;
-        uniforms.lightmapOnly = gLightmapOnly;
+        uniforms.enableTexture = gEnableTexture;
 
         context->bindUniforms(&uniforms, sizeof(uniforms));
 

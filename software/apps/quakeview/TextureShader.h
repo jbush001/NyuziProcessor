@@ -28,7 +28,7 @@ struct TextureUniforms
 {
     Matrix fMVPMatrix;
     bool enableLightmap;
-    bool lightmapOnly;
+    bool enableTexture;
 };
 
 enum ShaderAttribute
@@ -116,20 +116,20 @@ public:
     {
         TextureUniforms *uniforms = (TextureUniforms*) _castToUniforms;
 
-        if (uniforms->lightmapOnly)
-        {
-            outColor[0] = splatf(1.0f);
-            outColor[1] = splatf(1.0f);
-            outColor[2] = splatf(1.0f);
-            outColor[3] = splatf(1.0f);
-        }
-        else
+        if (uniforms->enableTexture)
         {
             vecf16_t atlasU = wrappedAtlasCoord(inParams[kParamTextureU - 4], inParams[kParamAtlasLeft - 4],
                                                 inParams[kParamAtlasWidth - 4]);
             vecf16_t atlasV = wrappedAtlasCoord(inParams[kParamTextureV - 4], inParams[kParamAtlasTop - 4],
                                                 inParams[kParamAtlasHeight - 4]);
             sampler[0]->readPixels(atlasU, atlasV, mask, outColor);
+        }
+        else
+        {
+            outColor[0] = splatf(1.0f);
+            outColor[1] = splatf(1.0f);
+            outColor[2] = splatf(1.0f);
+            outColor[3] = splatf(1.0f);
         }
 
         if (uniforms->enableLightmap)
