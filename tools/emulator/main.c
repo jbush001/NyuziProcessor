@@ -20,9 +20,10 @@
 #include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/resource.h>
-#include <stdlib.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include "core.h"
 #include "cosimulation.h"
@@ -36,6 +37,7 @@ extern void remoteGdbMainLoop(Core*, int enableFbWindow);
 extern void checkInterruptPipe(Core*);
 
 static int recvInterruptFd = -1;
+static int sendInterruptFd = -1;
 
 static void usage(void)
 {
@@ -53,7 +55,8 @@ static void usage(void)
     fprintf(stderr, "  -c <size> Total amount of memory\n");
     fprintf(stderr, "  -r <cycles> Refresh rate, cycles between each screen update\n");
     fprintf(stderr, "  -s <file> Memory map file as shared memory\n");
-    fprintf(stderr, "  -i <file> Named pipe to receive interrupts on. Pipe must already be created.\n");
+    fprintf(stderr, "  -i <file> Named pipe to receive interrupts. Pipe must already be created.\n");
+    fprintf(stderr, "  -o <file> Named pipe to send interrupts. Pipe must already be created\n");
 }
 
 static uint32_t parseNumArg(const char *argval)
@@ -100,6 +103,20 @@ void checkInterruptPipe(Core *core)
     raiseInterrupt(core, 0, (uint32_t) interruptId);
 }
 
+void sendHostInterrupt(uint32_t num)
+{
+    char c = (char) num;
+
+    if (sendInterruptFd < 0)
+        return;
+
+    if (write(sendInterruptFd, &c, 1) < 1)
+    {
+        perror("sendHostInterrupt: write failed");
+        exit(1);
+    }
+}
+
 int main(int argc, char *argv[])
 {
     Core *core;
@@ -118,6 +135,7 @@ int main(int argc, char *argv[])
     char *separator;
     uint32_t memorySize = 0x1000000;
     const char *sharedMemoryFile = NULL;
+    struct stat st;
 
     enum
     {
@@ -126,7 +144,7 @@ int main(int argc, char *argv[])
         MODE_GDB_REMOTE_DEBUG
     } mode = MODE_NORMAL;
 
-    while ((option = getopt(argc, argv, "f:d:vm:b:t:c:r:s:i:")) != -1)
+    while ((option = getopt(argc, argv, "f:d:vm:b:t:c:r:s:i:o:")) != -1)
     {
         switch (option)
         {
@@ -223,7 +241,41 @@ int main(int argc, char *argv[])
                 recvInterruptFd = open(optarg, O_RDWR);
                 if (recvInterruptFd < 0)
                 {
-                    perror("main: failed to open interrupt pipe");
+                    perror("main: failed to open receive interrupt pipe");
+                    return 1;
+                }
+
+                if (fstat(recvInterruptFd, &st) < 0)
+                {
+                    perror("main: stat failed on receive interrupt pipe");
+                    return 1;
+                }
+
+                if ((st.st_mode & S_IFMT) != S_IFIFO)
+                {
+                    fprintf(stderr, "%s is not a pipe\n", optarg);
+                    return 1;
+                }
+
+                break;
+
+            case 'o':
+                sendInterruptFd = open(optarg, O_RDWR);
+                if (sendInterruptFd < 0)
+                {
+                    perror("main: failed to open send interrupt pipe");
+                    return 1;
+                }
+
+                if (fstat(sendInterruptFd, &st) < 0)
+                {
+                    perror("main: stat failed on send interrupt pipe");
+                    return 1;
+                }
+
+                if ((st.st_mode & S_IFMT) != S_IFIFO)
+                {
+                    fprintf(stderr, "%s is not a pipe\n", optarg);
                     return 1;
                 }
 

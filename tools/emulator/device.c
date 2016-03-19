@@ -27,6 +27,8 @@
 
 #define KEY_BUFFER_SIZE 64
 
+extern void sendHostInterrupt(uint32_t num);
+
 static uint32_t keyBuffer[KEY_BUFFER_SIZE];
 static int keyBufferHead;
 static int keyBufferTail;
@@ -50,6 +52,10 @@ void writeDeviceRegister(uint32_t address, uint32_t value)
 
         case REG_VGA_BASE:
             setFramebufferAddress(value);
+            break;
+
+        case REG_HOST_INTERRUPT:
+            sendHostInterrupt(value);
             break;
     }
 }

@@ -86,21 +86,26 @@ def run_illegal_instruction(name):
 
 # Test the mechanism for delivering interrupts to the emulator from a
 # separate host process (useful for co-emulation)
-def run_host_interrupt(name):
-    PIPE_NAME = '/tmp/nyuzi_emulator_intpipe'
+# XXX A number of error cases do not clean up resources
+def run_recv_host_interrupt(name):
+    PIPE_NAME = '/tmp/nyuzi_emulator_recvint'
     try:
         os.remove(PIPE_NAME)
     except:
         pass
 
+    compile_test(['recv_host_interrupt.c', 'trap_handler.s'])
+
     os.mknod(PIPE_NAME, stat.S_IFIFO | 0666)
-    compile_test(['host_interrupt.c', 'trap_handler.s'])
+
+
     args = [BIN_DIR + 'emulator', '-i', PIPE_NAME, HEX_FILE]
     process = subprocess.Popen(args, stdout=subprocess.PIPE,
                                stderr=subprocess.STDOUT)
 
     try:
         interruptPipe = os.open(PIPE_NAME, os.O_WRONLY)
+
         # Send periodic interrupts to process
         for x in range(5):
             os.write(interruptPipe, chr(x))
@@ -108,14 +113,43 @@ def run_host_interrupt(name):
 
         # Wait for completion
         result, unused_err = TimedProcessRunner().communicate(process, 60)
-        check_result('host_interrupt.c', result)
+        check_result('recv_host_interrupt.c', result)
+    finally:
+        os.close(interruptPipe)
+        os.unlink(PIPE_NAME)
+
+# XXX A number of error cases do not clean up resources
+def run_send_host_interrupt(name):
+    PIPE_NAME = '/tmp/nyuzi_emulator_sendint'
+    try:
+        os.remove(PIPE_NAME)
+    except:
+        pass
+
+    compile_test(['send_host_interrupt.c'])
+
+    os.mknod(PIPE_NAME, stat.S_IFIFO | 0666)
+
+    args = [BIN_DIR + 'emulator', '-o', PIPE_NAME, HEX_FILE]
+    process = subprocess.Popen(args, stdout=subprocess.PIPE,
+                               stderr=subprocess.STDOUT)
+
+    try:
+        interruptPipe = os.open(PIPE_NAME, os.O_RDONLY | os.O_NONBLOCK)
+        result, unused_err = TimedProcessRunner().communicate(process, 60)
+
+        # Interrupts should be in pipe now
+        interrupts = os.read(interruptPipe, 5)
+        if interrupts != '\x05\x06\x07\x08\x09':
+            raise TestException('Did not receive proper host interrupts')
     finally:
         os.close(interruptPipe)
         os.unlink(PIPE_NAME)
 
 register_tests(run_io_interrupt, ['io_interrupt'])
 register_tests(run_multicycle, ['multicycle'])
-register_tests(run_host_interrupt, ['host_interrupt'])
+register_tests(run_recv_host_interrupt, ['recv_host_interrupt'])
+register_tests(run_send_host_interrupt, ['send_host_interrupt'])
 register_generic_test('creg_non_supervisor')
 register_generic_test('eret_non_supervisor')
 register_generic_test('dinvalidate_non_supervisor')
