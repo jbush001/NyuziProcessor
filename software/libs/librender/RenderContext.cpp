@@ -160,8 +160,8 @@ void RenderContext::shadeVertices(int index)
     int startIndex = index * 16;
     for (int attrib = 0; attrib < attribsPerVertex; attrib++)
     {
-        packedAttribs[attrib] = state.fVertexAttrBuffer->gatherElements(startIndex, attrib,
-                                numVertices);
+        packedAttribs[attrib] = state.fVertexAttrBuffer->gatherElements(startIndex,
+                                attrib, mask);
     }
 
     int paramsPerVertex = state.fShader->getNumParams();

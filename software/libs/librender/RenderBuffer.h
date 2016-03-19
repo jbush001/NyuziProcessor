@@ -89,18 +89,22 @@ public:
         return fData;
     }
 
+    // Load up to 16 parameters with contiguous indices.
     // Given a packed array of the form a0b0 a0b1... a_1b_0 a_1b_1...
     // Return up to 16 elements packed in a vector: a_mb_n, a_mb_(n+1)...
-    veci16_t gatherElements(int index1, int index2, int count) const
+    vecu16_t gatherElements(int baseIndex, int paramNum, int mask) const
     {
-        int mask;
-        if (count < 16)
-            mask = (0xffff0000 >> count) & 0xffff;
-        else
-            mask = 0xffff;
-
-        const vecu16_t ptrVec = *fBaseStepPointers + splati(index1 * fStride + index2
+        const vecu16_t ptrVec = *fBaseStepPointers + splatu(baseIndex * fStride + paramNum
                                 * sizeof(unsigned int));
+        return __builtin_nyuzi_gather_loadf_masked(ptrVec, mask);
+    }
+
+    // Load up to 16 parameters with arbitrary indices.
+    vecu16_t gatherElements(vecu16_t indices, int paramNum, int mask) const
+    {
+        const vecu16_t ptrVec = indices * splatu(fStride) + splatu(paramNum * sizeof(unsigned int))
+            + splatu(reinterpret_cast<unsigned int>(fData));
+
         return __builtin_nyuzi_gather_loadf_masked(ptrVec, mask);
     }
 
