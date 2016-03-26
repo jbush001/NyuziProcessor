@@ -37,6 +37,7 @@
 #define PAGE_SIZE 0x1000u
 #define ROUND_TO_PAGE(addr) ((addr) & ~(PAGE_SIZE - 1u))
 #define PAGE_OFFSET(addr) ((addr) & (PAGE_SIZE - 1u))
+#define TRAP_LEVELS 2
 
 #ifdef DUMP_INSTRUCTION_STATS
 #define TALLY_INSTRUCTION(type) thread->core->stat ## type++
@@ -75,15 +76,15 @@ struct Thread
 
     // Trap information. There are two levels of trap information, to
     // handle a nested TLB miss occurring in the middle of another trap.
-    TrapReason trapReason[2];
-    uint32_t trapScratchpad0[2];
-    uint32_t trapScratchpad1[2];
-    uint32_t trapPc[2];
-    uint32_t trapAccessAddress[2];
-    uint32_t trapSubcycle[2];
-    bool trapEnableInterrupt[2];
-    bool trapEnableMmu[2];
-    bool trapEnableSupervisor[2];
+    TrapReason trapReason[TRAP_LEVELS];
+    uint32_t trapScratchpad0[TRAP_LEVELS];
+    uint32_t trapScratchpad1[TRAP_LEVELS];
+    uint32_t trapPc[TRAP_LEVELS];
+    uint32_t trapAccessAddress[TRAP_LEVELS];
+    uint32_t trapSubcycle[TRAP_LEVELS];
+    bool trapEnableInterrupt[TRAP_LEVELS];
+    bool trapEnableMmu[TRAP_LEVELS];
+    bool trapEnableSupervisor[TRAP_LEVELS];
 };
 
 struct TlbEntry
@@ -157,7 +158,7 @@ static void executeControlRegisterInst(Thread*, uint32_t instruction);
 static void executeMemoryAccessInst(Thread*, uint32_t instruction);
 static void executeBranchInst(Thread*, uint32_t instruction);
 static void executeCacheControlInst(Thread*, uint32_t instruction);
-static int executeInstruction(Thread*);
+static bool executeInstruction(Thread*);
 
 Core *initCore(uint32_t memorySize, uint32_t totalThreads, bool randomizeMemory,
                const char *sharedMemoryFile)
@@ -626,25 +627,28 @@ static void raiseTrap(Thread *thread, uint32_t trapAddress, TrapReason reason)
                thread->id, reason, trapAddress);
     }
 
-    // Save old state. For nested interrupts, push the old saved state into
+    // For nested interrupts, push the old saved state into
     // the second save slot.
     thread->trapReason[1] = thread->trapReason[0];
-    thread->trapReason[0] = reason;
     thread->trapScratchpad0[1] = thread->trapScratchpad0[0];
     thread->trapScratchpad1[1] = thread->trapScratchpad1[0];
     thread->trapPc[1] = thread->trapPc[0];
-    thread->trapPc[0] = thread->currentPc - 4;
     thread->trapEnableInterrupt[1] = thread->trapEnableInterrupt[0];
-    thread->trapEnableInterrupt[0] = thread->enableInterrupt;
     thread->trapEnableMmu[1] = thread->trapEnableMmu[0];
-    thread->trapEnableMmu[0] = thread->enableMmu;
     thread->trapEnableSupervisor[1] = thread->trapEnableSupervisor[0];
-    thread->trapEnableSupervisor[0] = thread->enableSupervisor;
     thread->trapSubcycle[1] = thread->trapSubcycle[0];
-    thread->trapSubcycle[0] = thread->currentSubcycle;
     thread->trapAccessAddress[1] = thread->trapAccessAddress[0];
 
-    // Update state
+    // Save trap information
+    thread->trapReason[0] = reason;
+    thread->trapPc[0] = thread->currentPc - 4;
+    thread->trapEnableInterrupt[0] = thread->enableInterrupt;
+    thread->trapEnableMmu[0] = thread->enableMmu;
+    thread->trapEnableSupervisor[0] = thread->enableSupervisor;
+    thread->trapSubcycle[0] = thread->currentSubcycle;
+    thread->trapAccessAddress[0] = trapAddress;
+
+    // Update thread state
     thread->enableInterrupt = false;
     if (reason == TR_ITLB_MISS || reason == TR_DTLB_MISS)
     {
@@ -656,10 +660,6 @@ static void raiseTrap(Thread *thread, uint32_t trapAddress, TrapReason reason)
 
     thread->currentSubcycle = 0;
     thread->enableSupervisor = true;
-
-    // Save trap information
-    thread->trapReason[0] = reason;
-    thread->trapAccessAddress[0] = trapAddress;
 }
 
 static void raiseAccessFault(Thread *thread, uint32_t address, TrapReason reason, bool isLoad)
@@ -1862,7 +1862,9 @@ static void executeCacheControlInst(Thread *thread, uint32_t instruction)
     }
 }
 
-static int executeInstruction(Thread *thread)
+// Returns 0 if this hit a breakpoint and should break out of execution
+// loop.
+static bool executeInstruction(Thread *thread)
 {
     uint32_t instruction;
     uint32_t physicalPc;
@@ -1871,11 +1873,12 @@ static int executeInstruction(Thread *thread)
     if ((thread->currentPc & 3) != 0)
     {
         raiseAccessFault(thread, thread->currentPc, TR_IFETCH_ALIGNNMENT, true);
-        return 1;
+        return true;   // XXX if stop on fault was enabled, should return false
     }
 
     if (!translateAddress(thread, thread->currentPc, &physicalPc, false, false))
-        return 1;	// On next execution will start in TLB miss handler
+        return true;	// On next execution will start in TLB miss handler
+                    // XXX if stop on fault was enabled, should return false
 
     instruction = *UINT32_PTR(thread->core->memory, physicalPc);
     thread->currentPc += 4;
@@ -1891,9 +1894,13 @@ restart:
             Breakpoint *breakpoint = lookupBreakpoint(thread->core, thread->currentPc - 4);
             if (breakpoint == NULL)
             {
+                // We use a special instruction to trigger breakpoint lookup
+                // as an optimization to avoid doing a lookup on every
+                // instruction. In this case, the special instruction was
+                // already in the program, so raise a fault.
                 thread->currentPc += 4;
                 raiseIllegalInstructionFault(thread, instruction);
-                return 1;
+                return true;
             }
 
             if (breakpoint->restart || thread->core->singleStepping)
@@ -1907,7 +1914,7 @@ restart:
             {
                 // Hit a breakpoint
                 breakpoint->restart = true;
-                return 0;
+                return false;
             }
         }
         else if (instruction != INSTRUCTION_NOP)
@@ -1929,5 +1936,5 @@ restart:
     else
         printf("Bad instruction @%08x\n", thread->currentPc - 4);
 
-    return 1;
+    return true;
 }
