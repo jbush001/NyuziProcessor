@@ -28,6 +28,11 @@
 // virtually indexed and physically tagged: the tag memories contain physical
 // addresses, translated by the TLB.
 //
+// Snoop addresses from the l1_l2_interface are physical addresses, but the
+// tag memory is virtually indexed. To avoid aliasing, the size of a way must
+// be the same size or smaller than a virtual page
+// (cache line size * num sets <= page_size).
+//
 
 module dcache_tag_stage
     (input                                      clk,

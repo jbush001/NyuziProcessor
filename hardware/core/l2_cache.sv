@@ -30,6 +30,9 @@
 // If the evicted line has unwritten data, the read stage reads it from cache
 // memory and puts it into a writeback queue in the system memory interface.
 //
+// The L2 cache is physically indexed/physically tagged, and thus all addresses
+// used here are physical. Address translation is done by TLBs in the L1 caches.
+//
 
 module l2_cache(
     input                                 clk,
