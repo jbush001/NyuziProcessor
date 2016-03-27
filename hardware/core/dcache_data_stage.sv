@@ -501,6 +501,7 @@ module dcache_data_stage(
         dd_request_vaddr <= dt_request_vaddr;
         dd_subcycle <= dt_subcycle;
         dd_rollback_pc <= dt_instruction.pc;
+        dd_is_io_address <= is_io_address;
 
         // Check for TLB miss first, since permission bits are not valid if
         // there is a TLB miss. The order of the remaining items should match
@@ -527,7 +528,6 @@ module dcache_data_stage(
             // Beginning of autoreset for uninitialized flops
             dd_fault <= '0;
             dd_instruction_valid <= '0;
-            dd_is_io_address <= '0;
             dd_rollback_en <= '0;
             dd_suspend_thread <= '0;
             // End of automatics
@@ -543,7 +543,6 @@ module dcache_data_stage(
                 dd_creg_write_en, dd_creg_read_en}));
 
             dd_instruction_valid <= dt_instruction_valid && !rollback_this_stage;
-            dd_is_io_address <= is_io_address;
 
             // Rollback on cache miss
             dd_rollback_en <= dcache_load_en && !cache_hit && dt_tlb_hit;

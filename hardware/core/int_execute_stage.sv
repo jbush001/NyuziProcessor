@@ -315,6 +315,14 @@ module int_execute_stage(
         ix_mask_value <= of_mask_value;
         ix_thread_idx <= of_thread_idx;
         ix_subcycle <= of_subcycle;
+
+        // Branch handling
+        case (of_instruction.branch_type)
+            BRANCH_CALL_REGISTER: ix_rollback_pc <= of_operand1[0];
+            BRANCH_ERET: ix_rollback_pc <= cr_eret_address[of_thread_idx];
+            default:
+                ix_rollback_pc <= of_instruction.pc + 4 + of_instruction.immediate_value;
+        endcase
     end
 
     always_ff @(posedge clk, posedge reset)
@@ -327,7 +335,6 @@ module int_execute_stage(
             ix_is_eret <= '0;
             ix_privileged_op_fault <= '0;
             ix_rollback_en <= '0;
-            ix_rollback_pc <= '0;
             // End of automatics
         end
         else
@@ -335,17 +342,6 @@ module int_execute_stage(
             if (is_valid_instruction)
             begin
                 ix_instruction_valid <= 1;
-
-                //
-                // Branch handling
-                //
-                case (of_instruction.branch_type)
-                    BRANCH_CALL_REGISTER: ix_rollback_pc <= of_operand1[0];
-                    BRANCH_ERET: ix_rollback_pc <= cr_eret_address[of_thread_idx];
-                    default:
-                        ix_rollback_pc <= of_instruction.pc + 4 + of_instruction.immediate_value;
-                endcase
-
                 ix_is_eret <= is_eret && !privileged_op_fault;
                 ix_privileged_op_fault <= privileged_op_fault;
                 ix_rollback_en <= branch_taken;

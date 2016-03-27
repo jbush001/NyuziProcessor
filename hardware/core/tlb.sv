@@ -137,12 +137,12 @@ module tlb
 
             always_ff @(posedge clk)
             begin
-                if (way_update_oh[way_idx] && tlb_read_en && update_set_idx == request_set_idx)
-                    way_valid <= update_valid;  // Bypass
-                else if (tlb_read_en)
-                    way_valid <= entry_valid[request_set_idx];
-                else
+                if (!tlb_read_en)
                     way_valid <= 0;
+                else if (way_update_oh[way_idx] && update_set_idx == request_set_idx)
+                    way_valid <= update_valid;  // Bypass
+                else
+                    way_valid <= entry_valid[request_set_idx];
             end
 
             assign way_hit_oh[way_idx] = way_valid
@@ -159,6 +159,7 @@ module tlb
         update_supervisor_latched <= update_supervisor;
         update_global_latched <= update_global;
         request_asid_latched <= request_asid;
+        request_vpage_idx_latched <= request_vpage_idx;
     end
 
     always_ff @(posedge clk, posedge reset)
@@ -168,16 +169,12 @@ module tlb
             /*AUTORESET*/
             // Beginning of autoreset for uninitialized flops
             invalidate_en_latched <= '0;
-            request_vpage_idx_latched <= '0;
             update_en_latched <= '0;
             // End of automatics
         end
         else
         begin
             assert($onehot0({lookup_en, update_en, invalidate_en, invalidate_all_en}));
-            if (tlb_read_en)
-                request_vpage_idx_latched <= request_vpage_idx;
-
             update_en_latched <= update_en;
             invalidate_en_latched <= invalidate_en;
         end
