@@ -313,14 +313,6 @@ int main (int argc, char **argv) {
 	printf("\n\n");
     // CHECK: 9ea886efe268dbecce420c7524df32e0751a2a26
 
-	// Long tests
-	printf("Test: FIPS 180-2 C.3 and RFC3174 7.3 TEST3\n");
-	printf("Result:");
-	sha1_init(&s);
-	for (a=0; a<1000000; a++) sha1_writebyte(&s, 'a');
-	printHash(sha1_result(&s));
-    // CHECK: 34aa973cd4c4daa4f61eeb2bdbad27316534016f
-
 	return 0;
 }
 #endif /* self-test */
