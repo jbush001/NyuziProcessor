@@ -17,7 +17,7 @@
 #include <stdio.h>
 
 // Regression for https://github.com/jbush001/NyuziToolchain/issues/26
-// This program causes a crash in genSpace() triggered by the use of
+// This program caused a crash in genSpace() triggered by the use of
 // a large stack frame.
 
 typedef float vecf16 __attribute__ ((vector_size(16 * sizeof(float))));
