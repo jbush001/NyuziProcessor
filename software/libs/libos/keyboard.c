@@ -54,11 +54,11 @@ static const unsigned char kExtendedScancodeTable[] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
-static int isExtendedCode = 0;
-static int isRelease = 0;
-static int leftShiftPressed = 0;
-static int rightShiftPressed = 0;
-static int shiftLock = 0;
+static int gIsExtendedCode = 0;
+static int gIsRelease = 0;
+static int gLeftShiftPressed = 0;
+static int gRightShiftPressed = 0;
+static int gShiftLock = 0;
 
 unsigned int pollKeyboard(void)
 {
@@ -67,17 +67,17 @@ unsigned int pollKeyboard(void)
     {
         unsigned int code = REGISTERS[REG_KB_SCANCODE];
         if (code == 0xe0)
-            isExtendedCode = 1;
+            gIsExtendedCode = 1;
         else if (code == 0xf0)
-            isRelease = 1;
+            gIsRelease = 1;
         else
         {
             int result;
             if (code < 0x90)
             {
-                if (isExtendedCode)
+                if (gIsExtendedCode)
                     result = kExtendedScancodeTable[code];
-                else if (leftShiftPressed || rightShiftPressed || shiftLock)
+                else if (gLeftShiftPressed || gRightShiftPressed || gShiftLock)
                     result = kShiftedScancodeTable[code];
                 else
                     result = kUnshiftedScancodeTable[code];
@@ -86,16 +86,16 @@ unsigned int pollKeyboard(void)
                 result = 0;	// Unknown scancode
 
             if (result == KBD_RSHIFT)
-                rightShiftPressed = !isRelease;
+                gRightShiftPressed = !gIsRelease;
 
             if (result == KBD_LSHIFT)
-                leftShiftPressed = !isRelease;
+                gLeftShiftPressed = !gIsRelease;
 
-            if (!isRelease)
+            if (!gIsRelease)
                 result |= KBD_PRESSED;
 
-            isExtendedCode = 0;
-            isRelease = 0;
+            gIsExtendedCode = 0;
+            gIsRelease = 0;
             return result;
         }
     }

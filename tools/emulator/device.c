@@ -29,9 +29,9 @@
 
 extern void sendHostInterrupt(uint32_t num);
 
-static uint32_t keyBuffer[KEY_BUFFER_SIZE];
-static int keyBufferHead;
-static int keyBufferTail;
+static uint32_t gKeyBuffer[KEY_BUFFER_SIZE];
+static int gKeyBufferHead;
+static int gKeyBufferTail;
 
 void writeDeviceRegister(uint32_t address, uint32_t value)
 {
@@ -70,16 +70,16 @@ uint32_t readDeviceRegister(uint32_t address)
             return 1;
 
         case REG_KEYBOARD_STATUS:
-            if (keyBufferHead != keyBufferTail)
+            if (gKeyBufferHead != gKeyBufferTail)
                 return 1;
             else
                 return 0;
 
         case REG_KEYBOARD_READ:
-            if (keyBufferHead != keyBufferTail)
+            if (gKeyBufferHead != gKeyBufferTail)
             {
-                value = keyBuffer[keyBufferTail];
-                keyBufferTail = (keyBufferTail + 1) % KEY_BUFFER_SIZE;
+                value = gKeyBuffer[gKeyBufferTail];
+                gKeyBufferTail = (gKeyBufferTail + 1) % KEY_BUFFER_SIZE;
             }
             else
                 value = 0;
@@ -97,10 +97,10 @@ uint32_t readDeviceRegister(uint32_t address)
 
 void enqueueKey(uint32_t scanCode)
 {
-    keyBuffer[keyBufferHead] = scanCode;
-    keyBufferHead = (keyBufferHead + 1) % KEY_BUFFER_SIZE;
+    gKeyBuffer[gKeyBufferHead] = scanCode;
+    gKeyBufferHead = (gKeyBufferHead + 1) % KEY_BUFFER_SIZE;
 
     // If the buffer is full, discard the oldest character
-    if (keyBufferHead == keyBufferTail)
-        keyBufferTail = (keyBufferTail + 1) % KEY_BUFFER_SIZE;
+    if (gKeyBufferHead == gKeyBufferTail)
+        gKeyBufferTail = (gKeyBufferTail + 1) % KEY_BUFFER_SIZE;
 }

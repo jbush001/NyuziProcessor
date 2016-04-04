@@ -36,8 +36,8 @@
 extern void remoteGdbMainLoop(Core*, int enableFbWindow);
 extern void checkInterruptPipe(Core*);
 
-static int recvInterruptFd = -1;
-static int sendInterruptFd = -1;
+static int gRecvInterruptFd = -1;
+static int gSendInterruptFd = -1;
 
 static void usage(void)
 {
@@ -75,10 +75,10 @@ void checkInterruptPipe(Core *core)
     int result;
     char interruptId;
 
-    if (recvInterruptFd < 0)
+    if (gRecvInterruptFd < 0)
         return;
 
-    result = canReadFileDescriptor(recvInterruptFd);
+    result = canReadFileDescriptor(gRecvInterruptFd);
     if (result == 0)
         return;
 
@@ -88,7 +88,7 @@ void checkInterruptPipe(Core *core)
         exit(1);
     }
 
-    if (read(recvInterruptFd, &interruptId, 1) < 1)
+    if (read(gRecvInterruptFd, &interruptId, 1) < 1)
     {
         perror("checkInterruptPipe: read failed");
         exit(1);
@@ -107,10 +107,10 @@ void sendHostInterrupt(uint32_t num)
 {
     char c = (char) num;
 
-    if (sendInterruptFd < 0)
+    if (gSendInterruptFd < 0)
         return;
 
-    if (write(sendInterruptFd, &c, 1) < 1)
+    if (write(gSendInterruptFd, &c, 1) < 1)
     {
         perror("sendHostInterrupt: write failed");
         exit(1);
@@ -238,14 +238,14 @@ int main(int argc, char *argv[])
                 break;
 
             case 'i':
-                recvInterruptFd = open(optarg, O_RDWR);
-                if (recvInterruptFd < 0)
+                gRecvInterruptFd = open(optarg, O_RDWR);
+                if (gRecvInterruptFd < 0)
                 {
                     perror("main: failed to open receive interrupt pipe");
                     return 1;
                 }
 
-                if (fstat(recvInterruptFd, &st) < 0)
+                if (fstat(gRecvInterruptFd, &st) < 0)
                 {
                     perror("main: stat failed on receive interrupt pipe");
                     return 1;
@@ -260,14 +260,14 @@ int main(int argc, char *argv[])
                 break;
 
             case 'o':
-                sendInterruptFd = open(optarg, O_RDWR);
-                if (sendInterruptFd < 0)
+                gSendInterruptFd = open(optarg, O_RDWR);
+                if (gSendInterruptFd < 0)
                 {
                     perror("main: failed to open send interrupt pipe");
                     return 1;
                 }
 
-                if (fstat(sendInterruptFd, &st) < 0)
+                if (fstat(gSendInterruptFd, &st) < 0)
                 {
                     perror("main: stat failed on send interrupt pipe");
                     return 1;

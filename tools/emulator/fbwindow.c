@@ -37,7 +37,8 @@ int initFramebuffer(uint32_t width, uint32_t height)
     }
 
     gWindow = SDL_CreateWindow("Nyuzi Emulator", SDL_WINDOWPOS_UNDEFINED,
-                               SDL_WINDOWPOS_UNDEFINED, (int) width, (int) height, SDL_WINDOW_SHOWN);
+                               SDL_WINDOWPOS_UNDEFINED, (int) width,
+                               (int) height, SDL_WINDOW_SHOWN);
     if (!gWindow)
     {
         printf("SDL_CreateWindow error: %s\n", SDL_GetError());
@@ -54,7 +55,8 @@ int initFramebuffer(uint32_t width, uint32_t height)
     gFbWidth = width;
     gFbHeight = height;
     gFrameBuffer = SDL_CreateTexture(gRenderer, SDL_PIXELFORMAT_ABGR8888,
-                                     SDL_TEXTUREACCESS_STREAMING, (int) width, (int) height);
+                                     SDL_TEXTUREACCESS_STREAMING,
+                                     (int) width, (int) height);
     if (!gFrameBuffer)
     {
         printf("SDL_CreateTexture error: %s\n", SDL_GetError());
@@ -343,5 +345,3 @@ void updateFramebuffer(Core *core)
 
     SDL_RenderPresent(gRenderer);
 }
-
-
