@@ -24,7 +24,6 @@
 //
 
 #include <errno.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -64,7 +63,7 @@ struct FsHeader
 static FileDescriptor gFileDescriptors[MAX_DESCRIPTORS];
 static int gInitialized;
 static FsHeader *gDirectory;
-static bool gUseRamdisk = false;
+static int gUseRamdisk = 0;
 
 int readBlock(int blockNum, void *ptr)
 {
@@ -88,7 +87,7 @@ static int initFileSystem()
     if (initSdmmcDevice() < 0)
     {
         printf("SDMMC init failed, using ramdisk\n");
-        gUseRamdisk = true;
+        gUseRamdisk = 1;
     }
 
     // Read directory
