@@ -74,17 +74,20 @@ struct Thread
     uint32_t vectorReg[NUM_REGISTERS][NUM_VECTOR_LANES];
     uint32_t pendingInterrupts;
 
-    // Trap information. There are two levels of trap information, to
-    // handle a nested TLB miss occurring in the middle of another trap.
-    TrapReason trapReason[TRAP_LEVELS];
-    uint32_t trapScratchpad0[TRAP_LEVELS];
-    uint32_t trapScratchpad1[TRAP_LEVELS];
-    uint32_t trapPc[TRAP_LEVELS];
-    uint32_t trapAccessAddress[TRAP_LEVELS];
-    uint32_t trapSubcycle[TRAP_LEVELS];
-    bool trapEnableInterrupt[TRAP_LEVELS];
-    bool trapEnableMmu[TRAP_LEVELS];
-    bool trapEnableSupervisor[TRAP_LEVELS];
+    // There are two levels of trap information, to handle a nested TLB
+    // miss occurring in the middle of another trap.
+    struct
+    {
+        TrapReason trapReason;
+        uint32_t pc;
+        uint32_t accessAddress;
+        uint32_t scratchpad0;
+        uint32_t scratchpad1;
+        uint32_t subcycle;
+        bool enableInterrupt;
+        bool enableMmu;
+        bool enableSupervisor;
+    } savedTrapState[TRAP_LEVELS];
 };
 
 struct TlbEntry
@@ -234,7 +237,7 @@ Core *initCore(uint32_t memorySize, uint32_t totalThreads, bool randomizeMemory,
         core->threads[threadid].id = threadid;
         core->threads[threadid].lastSyncLoadAddr = INVALID_ADDR;
         core->threads[threadid].enableSupervisor = true;
-        core->threads[threadid].trapEnableSupervisor[0] = true;
+        core->threads[threadid].savedTrapState[0].enableSupervisor = true;
     }
 
     core->threadEnableMask = 1;
@@ -629,24 +632,16 @@ static void raiseTrap(Thread *thread, uint32_t trapAddress, TrapReason reason)
 
     // For nested interrupts, push the old saved state into
     // the second save slot.
-    thread->trapReason[1] = thread->trapReason[0];
-    thread->trapScratchpad0[1] = thread->trapScratchpad0[0];
-    thread->trapScratchpad1[1] = thread->trapScratchpad1[0];
-    thread->trapPc[1] = thread->trapPc[0];
-    thread->trapEnableInterrupt[1] = thread->trapEnableInterrupt[0];
-    thread->trapEnableMmu[1] = thread->trapEnableMmu[0];
-    thread->trapEnableSupervisor[1] = thread->trapEnableSupervisor[0];
-    thread->trapSubcycle[1] = thread->trapSubcycle[0];
-    thread->trapAccessAddress[1] = thread->trapAccessAddress[0];
+    thread->savedTrapState[1] = thread->savedTrapState[0];
 
-    // Save trap information
-    thread->trapReason[0] = reason;
-    thread->trapPc[0] = thread->currentPc - 4;
-    thread->trapEnableInterrupt[0] = thread->enableInterrupt;
-    thread->trapEnableMmu[0] = thread->enableMmu;
-    thread->trapEnableSupervisor[0] = thread->enableSupervisor;
-    thread->trapSubcycle[0] = thread->currentSubcycle;
-    thread->trapAccessAddress[0] = trapAddress;
+    // Save current trap information
+    thread->savedTrapState[0].trapReason = reason;
+    thread->savedTrapState[0].pc = thread->currentPc - 4;
+    thread->savedTrapState[0].enableInterrupt = thread->enableInterrupt;
+    thread->savedTrapState[0].enableMmu = thread->enableMmu;
+    thread->savedTrapState[0].enableSupervisor = thread->enableSupervisor;
+    thread->savedTrapState[0].subcycle = thread->currentSubcycle;
+    thread->savedTrapState[0].accessAddress = trapAddress;
 
     // Update thread state
     thread->enableInterrupt = false;
@@ -1500,16 +1495,16 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
                 value = thread->id;
                 break;
 
-            case CR_FAULT_HANDLER:
+            case CR_TRAP_HANDLER:
                 value = thread->core->trapHandlerPc;
                 break;
 
-            case CR_FAULT_PC:
-                value = thread->trapPc[0];
+            case CR_TRAP_PC:
+                value = thread->savedTrapState[0].pc;
                 break;
 
-            case CR_FAULT_REASON:
-                value = thread->trapReason[0];
+            case CR_TRAP_REASON:
+                value = thread->savedTrapState[0].trapReason;
                 break;
 
             case CR_FLAGS:
@@ -1519,9 +1514,9 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
                 break;
 
             case CR_SAVED_FLAGS:
-                value = (thread->trapEnableInterrupt[0] ? 1 : 0)
-                        | (thread->trapEnableMmu[0] ? 2 : 0)
-                        | (thread->trapEnableSupervisor[0] ? 4 : 0);
+                value = (thread->savedTrapState[0].enableInterrupt ? 1 : 0)
+                        | (thread->savedTrapState[0].enableMmu ? 2 : 0)
+                        | (thread->savedTrapState[0].enableSupervisor ? 4 : 0);
                 break;
 
             case CR_CURRENT_ASID:
@@ -1532,8 +1527,8 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
                 value = thread->currentPageDir;
                 break;
 
-            case CR_FAULT_ADDRESS:
-                value = thread->trapAccessAddress[0];
+            case CR_TRAP_ACCESS_ADDR:
+                value = thread->savedTrapState[0].accessAddress;
                 break;
 
             case CR_CYCLE_COUNT:
@@ -1552,15 +1547,15 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
                 break;
 
             case CR_SCRATCHPAD0:
-                value = thread->trapScratchpad0[0];
+                value = thread->savedTrapState[0].scratchpad0;
                 break;
 
             case CR_SCRATCHPAD1:
-                value = thread->trapScratchpad1[0];
+                value = thread->savedTrapState[0].scratchpad1;
                 break;
 
             case CR_SUBCYCLE:
-                value = thread->trapSubcycle[0];
+                value = thread->savedTrapState[0].subcycle;
                 break;
         }
 
@@ -1579,12 +1574,12 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
         uint32_t value = getThreadScalarReg(thread, dstSrcReg);
         switch (crIndex)
         {
-            case CR_FAULT_HANDLER:
+            case CR_TRAP_HANDLER:
                 thread->core->trapHandlerPc = value;
                 break;
 
-            case CR_FAULT_PC:
-                thread->trapPc[0] = value;
+            case CR_TRAP_PC:
+                thread->savedTrapState[0].pc = value;
                 break;
 
             case CR_FLAGS:
@@ -1600,9 +1595,9 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
                 break;
 
             case CR_SAVED_FLAGS:
-                thread->trapEnableInterrupt[0] = (value & 1) != 0;
-                thread->trapEnableMmu[0] = (value & 2) != 0;
-                thread->trapEnableSupervisor[0] = (value & 4) != 0;
+                thread->savedTrapState[0].enableInterrupt = (value & 1) != 0;
+                thread->savedTrapState[0].enableMmu = (value & 2) != 0;
+                thread->savedTrapState[0].enableSupervisor = (value & 4) != 0;
                 break;
 
             case CR_CURRENT_ASID:
@@ -1618,15 +1613,15 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
                 break;
 
             case CR_SCRATCHPAD0:
-                thread->trapScratchpad0[0] = value;
+                thread->savedTrapState[0].scratchpad0 = value;
                 break;
 
             case CR_SCRATCHPAD1:
-                thread->trapScratchpad1[0] = value;
+                thread->savedTrapState[0].scratchpad1 = value;
                 break;
 
             case CR_SUBCYCLE:
-                thread->trapSubcycle[0] = value;
+                thread->savedTrapState[0].subcycle = value;
                 break;
         }
     }
@@ -1718,22 +1713,14 @@ static void executeBranchInst(Thread *thread, uint32_t instruction)
                 return;
             }
 
-            thread->enableInterrupt = thread->trapEnableInterrupt[0];
-            thread->enableMmu = thread->trapEnableMmu[0];
-            thread->currentPc = thread->trapPc[0];
-            thread->currentSubcycle = thread->trapSubcycle[0];
-            thread->enableSupervisor = thread->trapEnableSupervisor[0];
+            thread->enableInterrupt = thread->savedTrapState[0].enableInterrupt;
+            thread->enableMmu = thread->savedTrapState[0].enableMmu;
+            thread->currentPc = thread->savedTrapState[0].pc;
+            thread->currentSubcycle = thread->savedTrapState[0].subcycle;
+            thread->enableSupervisor = thread->savedTrapState[0].enableSupervisor;
 
             // Restore nested interrupt state
-            thread->trapReason[0] = thread->trapReason[1];
-            thread->trapScratchpad0[0] = thread->trapScratchpad0[1];
-            thread->trapScratchpad1[0] = thread->trapScratchpad1[1];
-            thread->trapPc[0] = thread->trapPc[1];
-            thread->trapEnableInterrupt[0] = thread->trapEnableInterrupt[1];
-            thread->trapEnableMmu[0] = thread->trapEnableMmu[1];
-            thread->trapEnableSupervisor[0] = thread->trapEnableSupervisor[1];
-            thread->trapSubcycle[0] = thread->trapSubcycle[1];
-            thread->trapAccessAddress[0] = thread->trapAccessAddress[1];
+            thread->savedTrapState[0] = thread->savedTrapState[1];
 
             // There may be other interrupts pending
             if (thread->enableInterrupt)

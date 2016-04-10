@@ -125,11 +125,11 @@ typedef enum _BranchType BranchType;
 enum _ControlRegister
 {
     CR_THREAD_ID = 0,
-    CR_FAULT_HANDLER = 1,
-    CR_FAULT_PC = 2,
-    CR_FAULT_REASON = 3,
+    CR_TRAP_HANDLER = 1,
+    CR_TRAP_PC = 2,
+    CR_TRAP_REASON = 3,
     CR_FLAGS = 4,
-    CR_FAULT_ADDRESS = 5,
+    CR_TRAP_ACCESS_ADDR = 5,
     CR_CYCLE_COUNT = 6,
     CR_TLB_MISS_HANDLER = 7,
     CR_SAVED_FLAGS = 8,
