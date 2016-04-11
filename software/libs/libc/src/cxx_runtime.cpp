@@ -14,6 +14,7 @@
 // limitations under the License.
 //
 
+#include <stdio.h>
 #include <stdlib.h>
 
 namespace __cxxabiv1
@@ -78,6 +79,10 @@ void operator delete[](void *ptr) throw()
 extern "C" void __cxa_atexit(void (*func)(void *), void *objptr, void *dso)
 {
     AtExitCallback *callback = new AtExitCallback();
+
+    // Destructor functions are called in the reverse order that they
+    // are registered (the most recently registered function ise called
+    // first). Put at the beginning of the list.
     callback->next = gAtExitList;
     gAtExitList = callback;
     callback->func = func;
