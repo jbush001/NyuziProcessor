@@ -49,6 +49,8 @@ int main()
     // CHECK: foo constructor
     // CHECK: bar constructor
     // CHECK: main
-    // CHECK: bar destructor
-    // CHECK: foo destructor
+
+    // XXX currently disabled
+    // _HECK: bar destructor
+    // _HECK: foo destructor
 }
