@@ -204,7 +204,7 @@ int fillMemory(int serialFd, unsigned int address, const unsigned char *buffer, 
 }
 int fixConnection(int serialFd)
 {
-    unsigned char ch;
+    unsigned char ch = 0;
     int charsRead = 0;
     // Clear out any waiting BAD_COMMAND bytes
     // May grab an extra byte
