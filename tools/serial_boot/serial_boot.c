@@ -131,7 +131,8 @@ int writeSerialByte(int serialFd, unsigned int ch)
 
 int writeSerialLong(int serialFd, unsigned int value)
 {
-    unsigned char out[4] = {
+    unsigned char out[4] =
+    {
         value & 0xff,
         (value >> 8) & 0xff,
         (value >> 16) & 0xff,
@@ -216,7 +217,8 @@ int fixConnection(int serialFd)
     // This can help if the processor is expecting data from us
     int pingSeen = 0;
     int retry = 0;
-    while (1){
+    while (1)
+    {
         if(readSerialByte(serialFd, &ch, 25))
         {
             if (pingSeen)
