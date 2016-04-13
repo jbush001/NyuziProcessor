@@ -43,4 +43,4 @@ delay0:         sub_i       s4, s4, 1
                 goto        loop0
 
 device_addr:    .long 0xFFFF0000
-delay:          .long 1000000
+delay:          .long 100000
