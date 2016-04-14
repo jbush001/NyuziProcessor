@@ -131,7 +131,8 @@ int writeSerialByte(int serialFd, unsigned int ch)
 
 int writeSerialLong(int serialFd, unsigned int value)
 {
-    unsigned char out[4] = {
+    unsigned char out[4] =
+    {
         value & 0xff,
         (value >> 8) & 0xff,
         (value >> 16) & 0xff,
@@ -170,9 +171,14 @@ int fillMemory(int serialFd, unsigned int address, const unsigned char *buffer, 
     }
 
     // wait for ack
-    if (!readSerialByte(serialFd, &ch, 15000) || ch != LOAD_MEMORY_ACK)
+    if (!readSerialByte(serialFd, &ch, 15000))
     {
         fprintf(stderr, "\n%08x Did not get ack for load memory\n", address);
+        return 0;
+    }
+    else if (ch != LOAD_MEMORY_ACK)
+    {
+        fprintf(stderr, "\n%08x Did not get ack for load memory, got %02x instead\n", address, ch);
         return 0;
     }
 
@@ -196,7 +202,64 @@ int fillMemory(int serialFd, unsigned int address, const unsigned char *buffer, 
 
     return 1;
 }
-
+int fixConnection(int serialFd)
+{
+    unsigned char ch = 0;
+    int charsRead = 0;
+    // Clear out any waiting BAD_COMMAND bytes
+    // May grab an extra byte
+    while (readSerialByte(serialFd, &ch, 250) && ch == BAD_COMMAND)
+    {
+        charsRead++;
+    }
+    printf("%d BAD_COMMAND bytes seen, last was %02x\n", charsRead, ch);
+    // Send pings until the processor responds
+    // This can help if the processor is expecting data from us
+    int pingSeen = 0;
+    int retry = 0;
+    while (1)
+    {
+        if(readSerialByte(serialFd, &ch, 25))
+        {
+            if (pingSeen)
+                // Once you've seen one ping, ignore the rest
+                continue;
+            else if (ch == PING_ACK)
+            {
+                printf("Ping return seen.\n");
+                pingSeen = 1;
+            }
+            else
+            {
+                printf("byte read: %02x\n", ch);
+            }
+        }
+        else
+        {
+            // If there's no more data, and we've seen one ping,
+            // we're done here.
+            if (pingSeen)
+            {
+                return 1;
+            }
+        }
+        if(!pingSeen)
+        {
+            retry++;
+            if(!writeSerialByte(serialFd, PING_REQ))
+            {
+                return 0;
+            }
+        }
+        if (retry > 40)
+        {
+            printf("Cannot fix connection, no ping from board recieved.\n");
+            printf("Try resetting the board (KEY0) and rerunning.\n");
+            return 0;
+        }
+    }
+    return 1;
+}
 int clearMemory(int serialFd, unsigned int address, unsigned int length)
 {
     unsigned char ch;
@@ -429,6 +492,7 @@ int sendFile(int serialFd, unsigned int address, unsigned char *data, unsigned i
     printProgressBar(0, dataLength);
     while (offset < dataLength)
     {
+        int copiedCorrectly = 1;
         unsigned int thisSlice = dataLength - offset;
         if (thisSlice > BLOCK_SIZE)
             thisSlice = BLOCK_SIZE;
@@ -441,10 +505,18 @@ int sendFile(int serialFd, unsigned int address, unsigned char *data, unsigned i
         else
         {
             if (!fillMemory(serialFd, address + offset, data + offset, thisSlice))
-                return 0;
+            {
+                copiedCorrectly = 0;
+                if (!fixConnection(serialFd))
+                {
+                    return 0;
+                }
+            }
         }
-
-        offset += thisSlice;
+        if (copiedCorrectly)
+        {
+            offset += thisSlice;
+        }
         printProgressBar(offset, dataLength);
     }
 
