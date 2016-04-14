@@ -142,7 +142,7 @@ module verilator_tb(
         .MAX_REFRESH_INTERVAL(800)) memory(.*);
 
     assign loopback_uart_rx = loopback_uart_tx & loopback_uart_mask;
-    uart #(.BASE_ADDRESS('h100), .CLOCKS_PER_BIT(8)) loopback_uart(
+    uart #(.BASE_ADDRESS('h100)) loopback_uart(
         .io_bus(loopback_uart_io_bus),
         .uart_tx(loopback_uart_tx),
         .uart_rx(loopback_uart_rx),

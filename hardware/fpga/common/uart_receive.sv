@@ -19,15 +19,15 @@
 //
 
 module uart_receive
-    #(parameter CLOCKS_PER_BIT = 1)
-    (input              clk,
-    input               reset,
-    input               uart_rx,
-    output[7:0]         rx_char,
-    output logic        rx_char_valid,
-    output logic        rx_frame_error);
+    #(parameter DIVISOR_WIDTH = 12)
 
-    localparam SAMPLE_COUNT_WIDTH = 12;
+    (input                              clk,
+    input                               reset,
+    input                               uart_rx,
+    output[7:0]                         rx_char,
+    output logic                        rx_char_valid,
+    output logic                        rx_frame_error,
+    input[DIVISOR_WIDTH - 1:0]          clocks_per_bit);
 
     typedef enum {
         STATE_WAIT_START,
@@ -37,8 +37,8 @@ module uart_receive
 
     receive_state_t state_ff;
     receive_state_t state_nxt;
-    logic[SAMPLE_COUNT_WIDTH - 1:0] sample_count_ff;
-    logic[SAMPLE_COUNT_WIDTH - 1:0] sample_count_nxt;
+    logic[DIVISOR_WIDTH - 1:0] sample_count_ff;
+    logic[DIVISOR_WIDTH - 1:0] sample_count_nxt;
     logic[7:0] shift_register;
     logic[3:0] bit_count_ff;
     logic[3:0] bit_count_nxt;
@@ -74,7 +74,7 @@ module uart_receive
                     // We are at the beginning of the start bit. Next
                     // sample point is in middle of first data bit.
                     // Set divider to 1.5 times bit duration.
-                    sample_count_nxt = SAMPLE_COUNT_WIDTH'((CLOCKS_PER_BIT * 3 / 2) - 1);
+                    sample_count_nxt = (clocks_per_bit + {1'b0, clocks_per_bit[DIVISOR_WIDTH - 1:1]});
                 end
             end
 
@@ -82,12 +82,11 @@ module uart_receive
             begin
                 if (sample_count_ff == 0)
                 begin
-                    sample_count_nxt = SAMPLE_COUNT_WIDTH'(CLOCKS_PER_BIT - 1);
+                    sample_count_nxt = clocks_per_bit;
                     if (bit_count_ff == 8)
                     begin
                         state_nxt = STATE_STOP_BITS;
                         bit_count_nxt = 0;
-                        sample_count_nxt = SAMPLE_COUNT_WIDTH'(CLOCKS_PER_BIT - 1); // 0.5 stop bit
                     end
                     else
                     begin
@@ -96,7 +95,7 @@ module uart_receive
                     end
                 end
                 else
-                    sample_count_nxt = sample_count_ff - SAMPLE_COUNT_WIDTH'(1);
+                    sample_count_nxt = sample_count_ff - DIVISOR_WIDTH'(1);
             end
 
             STATE_STOP_BITS:
@@ -107,7 +106,7 @@ module uart_receive
                     rx_char_valid = 1;
                 end
                 else
-                    sample_count_nxt = sample_count_ff - SAMPLE_COUNT_WIDTH'(1);
+                    sample_count_nxt = sample_count_ff - DIVISOR_WIDTH'(1);
             end
         endcase
     end

@@ -27,6 +27,8 @@ enum MessageType
     PING_ACK,
     CLEAR_MEMORY_REQ,
     CLEAR_MEMORY_ACK,
+    SET_SPEED_REQ,
+    SET_SPEED_ACK,
     BAD_COMMAND
 };
 
