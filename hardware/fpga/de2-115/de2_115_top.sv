@@ -68,6 +68,7 @@ module de2_115_top(
     parameter  bootrom = "../../../software/bootrom/boot.hex";
 
     localparam BOOT_ROM_BASE = 32'hfffee000;
+    localparam UART_BAUD = 921600;
     localparam CLOCK_RATE = 50000000;
 
     /*AUTOLOGIC*/
@@ -150,12 +151,13 @@ module de2_115_top(
     logic trigger;
     logic[31:0] event_count;
 
-    assign capture_data = { perf_dram_page_miss };
+    assign capture_data = {};
     assign capture_enable = 1;
     assign trigger = event_count == 120;
 
     logic_analyzer #(.CAPTURE_WIDTH_BITS($bits(capture_data)),
-        .CAPTURE_SIZE(128)) logic_analyzer(.*);
+        .CAPTURE_SIZE(128),
+        .BAUD_DIVIDE(CLOCK_RATE / UART_BAUD)) logic_analyzer(.*);
 
     always_ff @(posedge clk, posedge reset)
     begin
@@ -165,7 +167,7 @@ module de2_115_top(
             event_count <= event_count + 1;
     end
 `else
-    uart #(.BASE_ADDRESS(24)) uart(
+    uart #(.BASE_ADDRESS(24), .CLOCKS_PER_BIT(CLOCK_RATE / UART_BAUD)) uart(
         .io_bus(uart_io_bus),
         .*);
 `endif

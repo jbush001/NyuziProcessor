@@ -70,9 +70,7 @@ module logic_analyzer
         .write_addr(capture_entry),
         .write_data(capture_data));
 
-    uart_transmit uart_transmit(
-        .clocks_per_bit(BAUD_DIVIDE),
-        .*);
+    uart_transmit #(.BAUD_DIVIDE(BAUD_DIVIDE)) uart_transmit(.*);
 
     assign tx_char = dump_value[(dump_byte * 8)+:8];
 

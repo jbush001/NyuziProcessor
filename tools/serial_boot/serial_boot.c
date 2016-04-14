@@ -41,6 +41,7 @@
 
 int openSerialPort(const char *path)
 {
+    struct termios serialopts;
     int serialFd;
 
     serialFd = open(path, O_RDWR | O_NOCTTY);
@@ -50,27 +51,21 @@ int openSerialPort(const char *path)
         return -1;
     }
 
-    // Clear out any junk that may already be buffered in the
-    // serial driver (otherwise the ping sequence may fail)
-    tcflush(serialFd, TCIOFLUSH);
-
-    return serialFd;
-}
-
-int setLocalSerialSpeed(int serialFd, speed_t bitsPerSecond)
-{
-    struct termios serialopts;
-
+    // Configure serial options
     memset(&serialopts, 0, sizeof(serialopts));
     serialopts.c_cflag = CS8 | CLOCAL | CREAD;
-    cfsetspeed(&serialopts, bitsPerSecond);
+    cfsetspeed(&serialopts, 921600);
     if (tcsetattr(serialFd, TCSANOW, &serialopts) != 0)
     {
         perror("Unable to initialize serial port");
         return -1;
     }
 
-    return 0;
+    // Clear out any junk that may already be buffered in the
+    // serial driver (otherwise the ping sequence may fail)
+    tcflush(serialFd, TCIOFLUSH);
+
+    return serialFd;
 }
 
 // Returns 1 if the byte was read successfully, 0 if a timeout
@@ -153,31 +148,6 @@ int writeSerialLong(int serialFd, unsigned int value)
     return 1;
 }
 
-int setRemoteSerialSpeed(int serialFd, speed_t bitsPerSecond)
-{
-    unsigned char ch;
-
-    if (!writeSerialByte(serialFd, SET_SPEED_REQ))
-        return 0;
-
-    if (!writeSerialLong(serialFd, (unsigned int) bitsPerSecond))
-        return 0;
-
-    if (!readSerialByte(serialFd, &ch, 15000))
-    {
-        fprintf(stderr, "\nTimed out waitng for set serial speed response\n");
-        return 0;
-    }
-    else if (ch != SET_SPEED_ACK)
-    {
-        fprintf(stderr, "\nDid not get ack for set serial speed, got %02x instead\n", ch);
-        return 0;
-    }
-
-    return 1;
-}
-
-
 int fillMemory(int serialFd, unsigned int address, const unsigned char *buffer, unsigned int length)
 {
     unsigned int targetChecksum;
@@ -203,7 +173,7 @@ int fillMemory(int serialFd, unsigned int address, const unsigned char *buffer, 
     // wait for ack
     if (!readSerialByte(serialFd, &ch, 15000))
     {
-        fprintf(stderr, "\n%08x Timed out waiting for load memory response\n", address);
+        fprintf(stderr, "\n%08x Did not get ack for load memory\n", address);
         return 0;
     }
     else if (ch != LOAD_MEMORY_ACK)
@@ -219,7 +189,7 @@ int fillMemory(int serialFd, unsigned int address, const unsigned char *buffer, 
 
     if (!readSerialLong(serialFd, &targetChecksum, 5000))
     {
-        fprintf(stderr, "\n%08x Timed out reading checksum\n", address);
+        fprintf(stderr, "\n%08x timed out reading checksum\n", address);
         return 0;
     }
 
@@ -232,7 +202,6 @@ int fillMemory(int serialFd, unsigned int address, const unsigned char *buffer, 
 
     return 1;
 }
-
 int fixConnection(int serialFd)
 {
     unsigned char ch = 0;
@@ -289,8 +258,8 @@ int fixConnection(int serialFd)
             return 0;
         }
     }
+    return 1;
 }
-
 int clearMemory(int serialFd, unsigned int address, unsigned int length)
 {
     unsigned char ch;
@@ -582,18 +551,7 @@ int main(int argc, const char *argv[])
     if (serialFd < 0)
         return 1;
 
-    // Set default speed
-    if (setLocalSerialSpeed(serialFd, 115200) < 0)
-        return 1;
-
     if (!pingTarget(serialFd))
-        return 1;
-
-    // Crank up speed
-    if (!setRemoteSerialSpeed(serialFd, 921600))
-        return 1;
-
-    if (setLocalSerialSpeed(serialFd, 921600) < 0)
         return 1;
 
     printf("Program is %d bytes\n", programLength);

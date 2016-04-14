@@ -23,8 +23,6 @@
 // use global variables.
 //
 
-#define CLOCK_RATE 50000000
-
 extern void *memset(void *_dest, int value, unsigned int length);
 
 static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
@@ -35,13 +33,7 @@ enum RegisterIndex
     REG_UART_STATUS         = 0x0018 / 4,
     REG_UART_RX             = 0x001c / 4,
     REG_UART_TX             = 0x0020 / 4,
-    REG_DIVISOR             = 0x0024 / 4
 };
-
-void setSerialRate(unsigned int bitsPerSecond)
-{
-    REGISTERS[REG_DIVISOR] = (CLOCK_RATE / bitsPerSecond) - 1;
-}
 
 unsigned int readSerialByte(void)
 {
@@ -78,8 +70,6 @@ void writeSerialLong(unsigned int value)
 
 int main()
 {
-    setSerialRate(115200);
-
     // Turn on red LED to indicate bootloader is waiting
     REGISTERS[REG_RED_LED] = 0x1;
 
@@ -123,20 +113,6 @@ int main()
             case PING_REQ:
                 writeSerialByte(PING_ACK);
                 break;
-
-            case SET_SPEED_REQ:
-            {
-                unsigned int baudRate = readSerialLong();
-                writeSerialByte(SET_SPEED_ACK);
-
-                // Wait for transmission to complete before changing
-                // divisor.
-                while ((REGISTERS[REG_UART_STATUS] & 1) == 0)
-                    ;
-
-                setSerialRate(baudRate);
-                break;
-            }
 
             default:
                 writeSerialByte(BAD_COMMAND);

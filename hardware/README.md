@@ -81,7 +81,6 @@ E = emulator, V = verilator.
 | ffff0018 | r  | FEV | Serial status.<sup>1</sup> |
 | ffff001c | r  | F   | Serial read |
 | ffff0020 |  w | FEV | Serial write<sup>2</sup> |
-| ffff0024 |  w | F   | Serial divisor (clocks per bit) |
 | ffff0038 | r  | FEV | PS/2 Keyboard status. 1 indicates there are scancodes in FIFO. |
 | ffff003c | r  | FEV | PS/2 Keyboard scancode. Remove from FIFO on read.<sup>3</sup> |
 | ffff0044 |  w | FEV | SD SPI write byte<sup>4</sup> |
