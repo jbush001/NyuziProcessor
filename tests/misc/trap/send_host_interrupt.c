@@ -21,7 +21,7 @@ int main()
     int i;
 
     for (i = 5; i < 10; i++)
-        *((volatile unsigned int*) 0xffff00fc) = i;
+        *((volatile unsigned int*) 0xffff00f8) = i;
 
     return 0;
 }

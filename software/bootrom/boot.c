@@ -76,7 +76,7 @@ int main()
 {
     // Turn on red LED to indicate bootloader is waiting
     REGISTERS[REG_RED_LED] = 0x1;
-    REGISTERS[REG_UART_DIVISOR] = CLOCK_RATE / DEFAULT_UART_BAUD;
+    REGISTERS[REG_UART_DIVISOR] = (CLOCK_RATE / DEFAULT_UART_BAUD) - 1;
 
     for (;;)
     {
