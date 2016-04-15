@@ -258,8 +258,8 @@ int fixConnection(int serialFd)
             return 0;
         }
     }
-    return 1;
 }
+
 int clearMemory(int serialFd, unsigned int address, unsigned int length)
 {
     unsigned char ch;
