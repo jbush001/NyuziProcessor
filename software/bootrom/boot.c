@@ -23,16 +23,20 @@
 // use global variables.
 //
 
+#define CLOCK_RATE 50000000
+#define DEFAULT_UART_BAUD 921600
+
 extern void *memset(void *_dest, int value, unsigned int length);
 
 static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
 
 enum RegisterIndex
 {
-    REG_RED_LED             = 0x0000 / 4,
-    REG_UART_STATUS         = 0x0018 / 4,
-    REG_UART_RX             = 0x001c / 4,
-    REG_UART_TX             = 0x0020 / 4,
+    REG_RED_LED             = 0x00 / 4,
+    REG_UART_STATUS         = 0x18 / 4,
+    REG_UART_RX             = 0x1c / 4,
+    REG_UART_TX             = 0x20 / 4,
+    REG_UART_DIVISOR        = 0x24 / 4
 };
 
 unsigned int readSerialByte(void)
@@ -72,6 +76,7 @@ int main()
 {
     // Turn on red LED to indicate bootloader is waiting
     REGISTERS[REG_RED_LED] = 0x1;
+    REGISTERS[REG_UART_DIVISOR] = CLOCK_RATE / DEFAULT_UART_BAUD;
 
     for (;;)
     {

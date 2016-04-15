@@ -55,7 +55,6 @@ module logic_analyzer
     logic[7:0] tx_char;
     logic[CAPTURE_WIDTH_BITS - 1:0] dump_value;
 
-
     /*AUTOLOGIC*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
     logic               tx_ready;               // From uart_transmit of uart_transmit.v
@@ -70,7 +69,9 @@ module logic_analyzer
         .write_addr(capture_entry),
         .write_data(capture_data));
 
-    uart_transmit #(.BAUD_DIVIDE(BAUD_DIVIDE)) uart_transmit(.*);
+    uart_transmit #(.DIVISOR_WIDTH(12)) uart_transmit(
+        .clocks_per_bit(50000000 / 921600),
+        .*);
 
     assign tx_char = dump_value[(dump_byte * 8)+:8];
 

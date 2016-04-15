@@ -78,9 +78,10 @@ E = emulator, V = verilator.
 | ffff000c |  w | F   | Set value of 7 segment display 1 |
 | ffff0010 |  w | F   | Set value of 7 segment display 2 |
 | ffff0014 |  w | F   | Set value of 7 segment display 3 |
-| ffff0018 | r  | FEV | Serial status.<sup>1</sup> |
-| ffff001c | r  | F   | Serial read |
-| ffff0020 |  w | FEV | Serial write<sup>2</sup> |
+| ffff0018 | r  | FEV | UART status.<sup>1</sup> |
+| ffff001c | r  | F   | UART read |
+| ffff0020 |  w | FEV | UART write<sup>2</sup> |
+| ffff0024 |  w | F   | UART divider (clocks per bit) |
 | ffff0038 | r  | FEV | PS/2 Keyboard status. 1 indicates there are scancodes in FIFO. |
 | ffff003c | r  | FEV | PS/2 Keyboard scancode. Remove from FIFO on read.<sup>3</sup> |
 | ffff0044 |  w | FEV | SD SPI write byte<sup>4</sup> |
@@ -92,11 +93,12 @@ E = emulator, V = verilator.
 | ffff005c |  w | F   | SD GPIO value |
 | ffff0060 |  w | FEV | Thread resume mask. A 1 bit starts a thread. (bit 0 = thread 0) |
 | ffff0064 |  w | FEV | Thread halt mask. A 1 bit halts a thread. (bit 0 = thread 0) |
-| ffff00fc |  w |  E  | Sends interrupt to host via pipe in emulator |
+| ffff00f8 |  w |  E  | Sends interrupt to host via pipe in emulator |
+| ffff00fc |  w |   V | Toggle UART tx line (used to force framing error in test) |
 | ffff0100 | r  |   V | Loopback UART Status<sup>6</sup> (same as above) |
 | ffff0104 | r  |   V | Loopback UART read |
 | ffff0108 |  w |   V | Loopback UART write |
-| ffff010c |  w |   V | Toggle UART tx line (used to force framing error in test) |
+| ffff010c |  w |   V | Loopback UART divider |
 | ffff0110 |  w | FE  | VGA sequencer enable |
 | ffff0114 |  w | F   | VGA microcode write |
 | ffff0118 |  w | FE  | VGA frame buffer base address |
