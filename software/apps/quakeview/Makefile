@@ -54,7 +54,7 @@ debug: $(OBJ_DIR)/program.hex fsimage.bin
 	$(LLDB) --arch nyuzi $(OBJ_DIR)/program.elf -o "gdb-remote 8000"
 
 fpgarun: $(OBJ_DIR)/program.hex fsimage.bin
-	$(SERIAL_BOOT) $(SERIAL_PORT) $(OBJ_DIR)/program.hex fsimage.bin
+	$(SERIAL_BOOT) $(SERIAL_BOOT_ARGS) -r fsimage.bin $(OBJ_DIR)/program.hex
 
 verirun: $(OBJ_DIR)/program.hex fsimage.bin
 	@rm -f $(OBJ_DIR)/output.bin output.png

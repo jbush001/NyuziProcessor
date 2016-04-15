@@ -99,7 +99,7 @@ verirun: $(OBJ_DIR)  $(OBJ_DIR)/doom.hex fsimage.bin
 	$(VERILATOR) +bin=obj/doom.hex +block=fsimage.bin
 
 fpgarun: $(OBJ_DIR)/doom.hex
-	$(SERIAL_BOOT) $(SERIAL_PORT) $(OBJ_DIR)/doom.hex fsimage.bin
+	$(SERIAL_BOOT) $(SERIAL_BOOT_ARGS) -r fsimage.bin $(OBJ_DIR)/doom.hex
 
 fsimage.bin: DOOM1.WAD
 	$(MKFS) fsimage.bin DOOM1.WAD

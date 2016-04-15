@@ -23,7 +23,7 @@ blinky.hex:
 	$(ELF2HEX) -o blinky.hex blinky.elf
 
 fpgarun: blinky.hex
-	$(SERIAL_BOOT) $(SERIAL_PORT) blinky.hex
+	$(SERIAL_BOOT) $(SERIAL_BOOT_ARGS) blinky.hex
 
 clean:
 	rm -f blinky.elf blinky.hex

@@ -25,7 +25,7 @@ sdmmc_dump.hex: sdmmc_dump.c
 	$(ELF2HEX) -o sdmmc_dump.hex sdmmc_dump.elf
 
 fpgarun: sdmmc_dump.hex
-	$(SERIAL_BOOT) $(SERIAL_PORT) sdmmc_dump.hex
+	$(SERIAL_BOOT) $(SERIAL_BOOT_ARGS) sdmmc_dump.hex
 
 clean: FORCE
 	rm -f sdmmc_dump.elf sdmmc_dump.hex

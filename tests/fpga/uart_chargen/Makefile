@@ -23,7 +23,7 @@ chargen.hex: chargen.c
 	$(ELF2HEX) -o chargen.hex chargen.elf
 
 fpgarun: chargen.hex
-	$(SERIAL_BOOT) $(SERIAL_PORT) chargen.hex
+	$(SERIAL_BOOT) $(SERIAL_BOOT_ARGS) chargen.hex
 
 run-verilator: chargen.hex
 	../../../bin/verilator_model +bin=chargen.hex

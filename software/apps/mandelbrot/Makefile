@@ -37,7 +37,7 @@ verirun: $(OBJ_DIR)/mandelbrot.hex
 	@convert -depth 8 -size 640x480 rgba:$(OBJ_DIR)/output.bin output.png
 
 fpgarun: $(OBJ_DIR)/mandelbrot.hex
-	$(SERIAL_BOOT) $(SERIAL_PORT) $(OBJ_DIR)/mandelbrot.hex
+	$(SERIAL_BOOT) $(SERIAL_BOOT_ARGS) $(OBJ_DIR)/mandelbrot.hex
 
 clean:
 	rm -rf $(OBJ_DIR)

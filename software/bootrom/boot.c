@@ -24,7 +24,7 @@
 //
 
 #define CLOCK_RATE 50000000
-#define DEFAULT_UART_BAUD 921600
+#define DEFAULT_UART_BAUD 115200
 
 extern void *memset(void *_dest, int value, unsigned int length);
 
@@ -109,15 +109,27 @@ int main()
             }
 
             case EXECUTE_REQ:
-            {
                 REGISTERS[REG_RED_LED] = 0;	// Turn off LED
                 writeSerialByte(EXECUTE_ACK);
                 return 0;	// Break out of main
-            }
 
             case PING_REQ:
                 writeSerialByte(PING_ACK);
                 break;
+
+            case SET_SERIAL_SPEED_REQ:
+            {
+                unsigned int newSpeed = readSerialLong();
+                writeSerialByte(SET_SERIAL_SPEED_ACK);
+
+                // Wait for byte to finish transmitting before monkeying
+                // with divider.
+                while ((REGISTERS[REG_UART_STATUS] & 1) == 0)
+                    ;
+
+                REGISTERS[REG_UART_DIVISOR] = (CLOCK_RATE / newSpeed) - 1;
+                break;
+            }
 
             default:
                 writeSerialByte(BAD_COMMAND);

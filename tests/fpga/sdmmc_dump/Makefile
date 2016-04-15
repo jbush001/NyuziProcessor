@@ -30,7 +30,7 @@ sdmmc_dump.hex: $(OBJS) $(DEPS)
 	$(ELF2HEX) -o sdmmc_dump.hex $(OBJ_DIR)/sdmmc_dump.elf
 
 fpgarun: sdmmc_dump.hex
-	$(SERIAL_BOOT) $(SERIAL_PORT) sdmmc_dump.hex
+	$(SERIAL_BOOT) $(SERIAL_BOOT_ARGS) sdmmc_dump.hex
 
 clean: FORCE
 	rm -f $(OBJ_DIR)/*

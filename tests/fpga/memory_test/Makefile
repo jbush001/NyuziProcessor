@@ -23,7 +23,7 @@ memory_test.hex:
 	$(ELF2HEX) -o memory_test.hex memory_test.elf
 
 fpgarun: memory_test.hex
-	$(SERIAL_BOOT) $(SERIAL_PORT) memory_test.hex
+	$(SERIAL_BOOT) $(SERIAL_BOOT_ARGS) memory_test.hex
 
 clean:
 	rm -f memorytest.elf memory_test.hex

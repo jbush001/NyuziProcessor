@@ -26,6 +26,7 @@
 //
 
 #include <errno.h>
+#include <getopt.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,10 +39,27 @@
 #define RAMDISK_BASE 0x4000000
 #define BLOCK_SIZE 1024
 #define PROGRESS_BAR_WIDTH 40
+#define DEFAULT_SERIAL_RATE 115200
+
+int setLocalSerialSpeed(int serialFd, unsigned int speed)
+{
+    struct termios serialopts;
+
+    // Configure serial options
+    memset(&serialopts, 0, sizeof(serialopts));
+    serialopts.c_cflag = CS8 | CLOCAL | CREAD;
+    cfsetspeed(&serialopts, speed);
+    if (tcsetattr(serialFd, TCSANOW, &serialopts) != 0)
+    {
+        perror("Unable to initialize serial port");
+        return -1;
+    }
+
+    return 0;
+}
 
 int openSerialPort(const char *path)
 {
-    struct termios serialopts;
     int serialFd;
 
     serialFd = open(path, O_RDWR | O_NOCTTY);
@@ -51,15 +69,7 @@ int openSerialPort(const char *path)
         return -1;
     }
 
-    // Configure serial options
-    memset(&serialopts, 0, sizeof(serialopts));
-    serialopts.c_cflag = CS8 | CLOCAL | CREAD;
-    cfsetspeed(&serialopts, 921600);
-    if (tcsetattr(serialFd, TCSANOW, &serialopts) != 0)
-    {
-        perror("Unable to initialize serial port");
-        return -1;
-    }
+    setLocalSerialSpeed(serialFd, DEFAULT_SERIAL_RATE);
 
     // Clear out any junk that may already be buffered in the
     // serial driver (otherwise the ping sequence may fail)
@@ -219,7 +229,7 @@ int fixConnection(int serialFd)
     int retry = 0;
     while (1)
     {
-        if(readSerialByte(serialFd, &ch, 25))
+        if (readSerialByte(serialFd, &ch, 25))
         {
             if (pingSeen)
                 // Once you've seen one ping, ignore the rest
@@ -243,10 +253,10 @@ int fixConnection(int serialFd)
                 return 1;
             }
         }
-        if(!pingSeen)
+        if (!pingSeen)
         {
             retry++;
-            if(!writeSerialByte(serialFd, PING_REQ))
+            if (!writeSerialByte(serialFd, PING_REQ))
             {
                 return 0;
             }
@@ -258,8 +268,8 @@ int fixConnection(int serialFd)
             return 0;
         }
     }
-    return 1;
 }
+
 int clearMemory(int serialFd, unsigned int address, unsigned int length)
 {
     unsigned char ch;
@@ -310,6 +320,31 @@ int pingTarget(int serialFd)
     }
 
     printf("\n");
+
+    return 1;
+}
+
+int setRemoteSerialSpeed(int serialFd, unsigned int speed)
+{
+    unsigned char ch;
+
+    if (!writeSerialByte(serialFd, SET_SERIAL_SPEED_REQ))
+        return 0;
+
+    if (!writeSerialLong(serialFd, speed))
+        return 0;
+
+    // wait for ack
+    if (!readSerialByte(serialFd, &ch, 15000))
+    {
+        fprintf(stderr, "\nTimed out waiting for ack for SET_SERIAL_SPEED_REQ\n");
+        return 0;
+    }
+    else if (ch != SET_SERIAL_SPEED_ACK)
+    {
+        fprintf(stderr, "\nReceived invalid ack %02x for SET_SERIAL_SPEED_REQ\n", ch);
+        return 0;
+    }
 
     return 1;
 }
@@ -523,36 +558,82 @@ int sendFile(int serialFd, unsigned int address, unsigned char *data, unsigned i
     return 1;
 }
 
-int main(int argc, const char *argv[])
+void usage(void)
+{
+    fprintf(stderr, "usage: serial_boot [options] <hex image file>\n");
+    fprintf(stderr, "options:\n");
+    fprintf(stderr, "  -r <image> Ramdisk image to load\n");
+    fprintf(stderr, "  -b <rate> Baud rate to transfer\n");
+    fprintf(stderr, "  -p <path> Path to serial port device (e.g. /dev/ttyS0)\n");
+}
+
+int main(int argc, char *argv[])
 {
     unsigned char *programData;
     unsigned int programLength;
     unsigned char *ramdiskData = NULL;
     unsigned int ramdiskLength = 0;
     int serialFd;
+    int option;
+    unsigned int serialSpeed = 921600;
+    const char *port = "/dev/ttyS0";
 
-    if (argc < 3)
+    while ((option = getopt(argc, argv, "r:b:p:")) != -1)
     {
-        fprintf(stderr, "USAGE:\n    serialBoot <serial port name> <hex file> [<ramdisk image>]\n");
+        switch (option)
+        {
+            case 'r':
+                if (!readBinaryFile(optarg, &ramdiskData, &ramdiskLength))
+                    return 1;
+
+                break;
+
+            case 'b':
+                serialSpeed = (unsigned int) strtoul(optarg, NULL, 10);
+                if (serialSpeed == 0)
+                {
+                    fprintf(stderr, "Invalid serial speed\n");
+                    return 1;
+                }
+
+                break;
+
+            case 'p':
+                port = optarg;
+                break;
+
+            case '?':
+                usage();
+                return 0;
+        }
+    }
+
+    if (optind == argc)
+    {
+        fprintf(stderr, "No image filename specified\n");
+        usage();
         return 1;
     }
 
-    if (!readHexFile(argv[2], &programData, &programLength))
+    if (!readHexFile(argv[optind], &programData, &programLength))
         return 1;
 
-    if (argc == 4)
-    {
-        // Load binary ramdisk image
-        if (!readBinaryFile(argv[3], &ramdiskData, &ramdiskLength))
-            return 1;
-    }
-
-    serialFd = openSerialPort(argv[1]);
+    serialFd = openSerialPort(port);
     if (serialFd < 0)
         return 1;
 
     if (!pingTarget(serialFd))
         return 1;
+
+    if (serialSpeed != DEFAULT_SERIAL_RATE)
+    {
+        // Adjust serial rate
+        if (!setRemoteSerialSpeed(serialFd, serialSpeed))
+            return 1;
+
+        if (setLocalSerialSpeed(serialFd, serialSpeed) < 0)
+            return 1;
+    }
 
     printf("Program is %d bytes\n", programLength);
     if (!sendFile(serialFd, 0, programData, programLength))

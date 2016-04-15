@@ -61,7 +61,7 @@ verirun: $(OBJ_DIR)/program.hex
 	@convert -depth 8 -size 640x480 rgba:$(OBJ_DIR)/output.bin output.png
 
 fpgarun: $(OBJ_DIR)/program.hex
-	$(SERIAL_BOOT) $(SERIAL_PORT) $(OBJ_DIR)/program.hex fsimage.bin
+	$(SERIAL_BOOT) $(SERIAL_BOOT_ARGS) -r fsimage.bin $(OBJ_DIR)/program.hex
 
 fsimage.bin:
 	./make_resource_file.py $(MODEL_FILE)

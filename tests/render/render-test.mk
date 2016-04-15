@@ -58,7 +58,7 @@ test: $(OBJ_DIR)/program.hex
 	@echo "PASS"
 
 fpgarun: $(OBJ_DIR)/program.hex
-	$(SERIAL_BOOT) $(SERIAL_PORT) $(OBJ_DIR)/program.hex
+	$(SERIAL_BOOT) $(SERIAL_BOOT_ARGS) $(OBJ_DIR)/program.hex
 
 # Run in emulator under debugger
 debug: $(OBJ_DIR)/program.hex

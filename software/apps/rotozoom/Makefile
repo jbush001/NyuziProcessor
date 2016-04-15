@@ -32,7 +32,7 @@ run: $(OBJ_DIR)/rotozoom.hex
 	$(EMULATOR) -r 100000 -f 640x480 $(OBJ_DIR)/rotozoom.hex
 
 fpgarun: $(OBJ_DIR)/rotozoom.hex
-	$(SERIAL_BOOT) $(SERIAL_PORT) $(OBJ_DIR)/rotozoom.hex
+	$(SERIAL_BOOT) $(SERIAL_BOOT_ARGS) $(OBJ_DIR)/rotozoom.hex
 
 clean:
 	rm -rf $(OBJ_DIR)

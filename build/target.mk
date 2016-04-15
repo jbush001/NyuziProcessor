@@ -34,6 +34,7 @@ LLDB=$(COMPILER_DIR)/lldb
 EMULATOR=$(BINDIR)/emulator
 VERILATOR=$(BINDIR)/verilator_model
 SERIAL_BOOT=$(BINDIR)/serial_boot
+SERIAL_BOOT_ARGS=-p $(SERIAL_PORT) -b 921600
 MKFS=$(BINDIR)/mkfs
 
 CFLAGS=-O3 -I$(TOPDIR)/software/libs/libc/include -I$(TOPDIR)/software/libs/libos -Wall -W

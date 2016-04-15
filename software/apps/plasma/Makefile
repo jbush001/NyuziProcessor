@@ -33,7 +33,7 @@ run: $(OBJ_DIR)/plasma.hex
 	$(EMULATOR) -f 640x480 $(OBJ_DIR)/plasma.hex
 
 fpgarun: $(OBJ_DIR)/plasma.hex
-	$(SERIAL_BOOT) $(SERIAL_PORT) $(OBJ_DIR)/plasma.hex
+	$(SERIAL_BOOT) $(SERIAL_BOOT_ARGS) $(OBJ_DIR)/plasma.hex
 
 clean:
 	rm -rf $(OBJ_DIR)
