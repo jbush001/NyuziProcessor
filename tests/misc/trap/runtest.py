@@ -29,9 +29,11 @@ def run_io_interrupt(name):
     result = run_verilator()
     lines = result.split('\n')
     output = None
+
     for x in lines:
-        if x.startswith('>>'):
-            output = x[2:]
+        start = x.find('>')
+        if start != -1:
+            output = x[start + 1:]
 
     if output is None:
         raise TestException(

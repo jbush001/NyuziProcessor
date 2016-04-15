@@ -29,7 +29,7 @@ enum DeviceAddress
     REG_SD_READ_DATA = 0x48,
     REG_SD_STATUS = 0x4c,
     REG_SD_CONTROL = 0x50,
-    REG_HOST_INTERRUPT = 0xfc,
+    REG_HOST_INTERRUPT = 0xf8,
     REG_VGA_ENABLE = 0x110,
     REG_VGA_BASE = 0x118
 };

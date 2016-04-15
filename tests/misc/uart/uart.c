@@ -33,7 +33,8 @@ enum UartRegs
 {
     kStatus = 0,
     kRx = 1,
-    kTx = 2
+    kTx = 2,
+    kDivisor = 3
 };
 
 void writeLoopbackUart(char ch)
@@ -66,7 +67,7 @@ int readLoopbackUart(void)
 
 void setLoopbackUartMask(int value)
 {
-    LOOPBACK_UART[3] = value;
+    *((volatile unsigned int*) 0xffff00fc) = value;
 }
 
 int main ()
@@ -76,6 +77,8 @@ int main ()
     char txChar = 1;
     char rxChar = 1;
     int readCount;
+
+    LOOPBACK_UART[kDivisor] = 10;
 
     // Overrun Error Test
     for (fifoCount = 1; fifoCount < kMaxFifoDepth + 3; fifoCount++)
