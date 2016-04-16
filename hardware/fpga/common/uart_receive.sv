@@ -82,16 +82,14 @@ module uart_receive
                 if (sample_count_ff == 0)
                 begin
                     sample_count_nxt = clocks_per_bit;
-                    if (bit_count_ff == 8)
+                    do_shift = 1;
+                    if (bit_count_ff == 7)
                     begin
                         state_nxt = STATE_STOP_BITS;
                         bit_count_nxt = 0;
                     end
                     else
-                    begin
-                        do_shift = 1;
                         bit_count_nxt = bit_count_ff + 4'd1;
-                    end
                 end
                 else
                     sample_count_nxt = sample_count_ff - DIVISOR_WIDTH'(1);
