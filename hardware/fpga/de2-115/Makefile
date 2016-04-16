@@ -23,4 +23,4 @@ synthesize:
 	./print_summary.py
 
 program:
-	quartus_pgm -c USB-Blaster -m jtag -o "P;output_files/de2_115.sof"
+	quartus_pgm -m jtag -o "P;output_files/de2_115.sof"
