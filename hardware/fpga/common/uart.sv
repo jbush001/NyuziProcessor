@@ -36,7 +36,7 @@ module uart
     localparam TX_REG = BASE_ADDRESS + 8;
     localparam DIVISOR_REG = BASE_ADDRESS + 12;
     localparam FIFO_LENGTH = 8;
-    localparam DIVISOR_WIDTH = 12;
+    localparam DIVISOR_WIDTH = 16;
 
     /*AUTOLOGIC*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -52,10 +52,10 @@ module uart
     logic rx_fifo_frame_error;
     logic[7:0] rx_char;
     logic rx_frame_error;
-    logic tx_enable;
+    logic tx_en;
     logic[DIVISOR_WIDTH - 1:0] clocks_per_bit;
 
-    assign tx_enable = io_bus.write_en && io_bus.address == TX_REG;
+    assign tx_en = io_bus.write_en && io_bus.address == TX_REG;
 
     uart_transmit #(.DIVISOR_WIDTH(DIVISOR_WIDTH)) uart_transmit(
         .tx_char(io_bus.write_data[7:0]),
@@ -75,17 +75,14 @@ module uart
         end
         else
         begin
+            if (io_bus.address == DIVISOR_REG && io_bus.write_en)
+                clocks_per_bit <= io_bus.write_data[DIVISOR_WIDTH - 1:0];
+
             case (io_bus.address)
                 STATUS_REG:
                 begin
                     io_bus.read_data[31:4] <= 0;
                     io_bus.read_data[3:0] <= {rx_fifo_frame_error, rx_fifo_overrun, !rx_fifo_empty, tx_ready};
-                end
-
-                DIVISOR_REG:
-                begin
-                    if (io_bus.write_en)
-                        clocks_per_bit <= io_bus.write_data[DIVISOR_WIDTH - 1:0];
                 end
 
                 default:
@@ -103,21 +100,17 @@ module uart
         end
     end
 
-    always_comb
-    begin
-        if (rx_char_valid && rx_fifo_full)
-            rx_fifo_overrun_dq = 1;
-        else
-            rx_fifo_overrun_dq = 0;
-    end
+    assign rx_fifo_overrun_dq = rx_char_valid && rx_fifo_full;
 
     // Up to ALMOST_FULL_THRESHOLD characters can be filled. FIFO is
     // automatically dequeued and OE bit is asserted when a character is queued
     // after this point. The OE bit is deasserted when rx_fifo_read or the
     // number of stored characters is lower than the threshold.
-    sync_fifo #(.WIDTH(9), .SIZE(FIFO_LENGTH),
-        .ALMOST_FULL_THRESHOLD(FIFO_LENGTH - 1))
-        rx_fifo(
+    sync_fifo #(
+        .WIDTH(9),
+        .SIZE(FIFO_LENGTH),
+        .ALMOST_FULL_THRESHOLD(FIFO_LENGTH - 1)
+    ) rx_fifo(
         .clk(clk),
         .reset(reset),
         .almost_empty(),

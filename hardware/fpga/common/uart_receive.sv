@@ -19,7 +19,7 @@
 //
 
 module uart_receive
-    #(parameter DIVISOR_WIDTH = 12)
+    #(parameter DIVISOR_WIDTH = 16)
     (input                        clk,
     input                         reset,
     input[DIVISOR_WIDTH - 1:0]    clocks_per_bit,

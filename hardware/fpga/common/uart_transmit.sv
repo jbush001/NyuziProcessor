@@ -19,11 +19,11 @@
 //
 
 module uart_transmit
-    #(parameter DIVISOR_WIDTH = 12)
+    #(parameter DIVISOR_WIDTH = 16)
     (input                        clk,
     input                         reset,
     input[DIVISOR_WIDTH - 1:0]    clocks_per_bit,
-    input                         tx_enable,
+    input                         tx_en,
     output                        tx_ready,
     input[7:0]                    tx_char,
     output                        uart_tx);
@@ -64,7 +64,7 @@ module uart_transmit
                 else
                     next_edge_clocks <= next_edge_clocks - DIVISOR_WIDTH'(1);
             end
-            else if (tx_enable)
+            else if (tx_en)
             begin
                 shift_count <= 4'd10;
                 tx_shift <= {STOP_BIT, tx_char, START_BIT};
