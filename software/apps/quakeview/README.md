@@ -34,7 +34,7 @@ serial port into a ramdisk in memory. This will take a while. The repak utility
 can reduce the size of the PAK file. Move the original PAK file in a different
 directory, then:
 
-    gcc -o repak repak.cpp
+    g++ -o repak repak.cpp
     ./repak -o pak0.pak <original pak location> gfx/palette.lmp maps/e1m1.bsp
 
 If you want to load a different mission, it to the end of the repak command line (for example,
