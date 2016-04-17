@@ -44,6 +44,11 @@ int main(void)
 
     printf(">ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\n");
 
+    // XXX work around issue #43. Clear interrupts so they won't occur during the
+    // synchronization phase in crt0.s
+    __builtin_nyuzi_write_control_reg(CR_FLAGS, FLAG_SUPERVISOR_EN);
+
+
     return 0;
 }
 
