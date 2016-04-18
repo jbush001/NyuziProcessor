@@ -116,8 +116,8 @@ E = emulator, V = verilator.
 
     | Bit | Meaning |
 	|---- | ------- |
-	|  0  | Bytes in read FIFO |
-	|  1  | Space available in write FIFO |
+	|  0  | Space available in write FIFO |
+	|  1  | Bytes in read FIFO |
 	|  2  | Receive FIFO overrun |
 	|  3  | Receive Framing error |
 
