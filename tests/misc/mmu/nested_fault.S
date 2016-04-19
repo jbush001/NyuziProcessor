@@ -16,6 +16,10 @@
 
 #include "mmu_test_common.inc"
 
+;
+; Verify a TLB miss in the middle of another fault works correctly
+;
+
                 .globl _start
 _start:         load_tlb_entries itlb_entries, dtlb_entries
 
@@ -32,7 +36,7 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
 
                 ; Set up vector register
                 load_v v1, vecptr
-                store_scat v0, (v1) ; This will fault when it hits address 17 and call handle_fault
+align_fault_loc: store_scat v0, (v1) ; This will fault when it hits address 17 and call handle_fault
 
                 should_not_get_here
 
@@ -50,7 +54,7 @@ handle_fault:   load_const s10, 0x88cf70b4
                 setcr s10, CR_SCRATCHPAD1
 
                 load_const s10, 0x2000
-                store_32 s10, (s10)     ; This will cause a TLB miss
+tlb_miss_loc:   store_32 s10, (s10)     ; This will cause a TLB miss
 
                 ; We have returned from the TLB miss here. Ensure the
                 ; fault control registers were restored
@@ -67,6 +71,12 @@ handle_fault:   load_const s10, 0x88cf70b4
                 getcr s10, CR_FLAGS
                 assert_reg s10, 6
 
+                lea s25, align_fault_loc
+                getcr s26, CR_FAULT_PC
+                cmpeq_i s25, s25, s26
+                btrue s25, 1f
+                call fail_test
+1:
                 call pass_test
 
 
@@ -74,17 +84,27 @@ handle_fault:   load_const s10, 0x88cf70b4
 ; This handles the nested trap
 ;
 handle_tlb_miss:
-                ; Clobber both scratchpads. When this returns, handle_fault will
-                ; ensure the previous value is restored
+                ; Clobber some control registers. When this returns,
+                ; handle_fault will ensure the previous value is restored
                 move s10, 0
                 setcr s10, CR_SCRATCHPAD0
                 setcr s10, CR_SCRATCHPAD1
+                setcr s10, CR_SUBCYCLE
 
-                ; Check fault, populate TLB, then return
+                ; Check fault
                 getcr s26, CR_FAULT_REASON
                 assert_reg s26, TR_DTLB_MISS
                 getcr s26, CR_FAULT_ADDRESS
                 assert_reg s26, 0x2000
+
+                lea s25, tlb_miss_loc
+                getcr s26, CR_FAULT_PC
+                cmpeq_i s25, s25, s26
+                btrue s25, 1f
+                call fail_test
+1:
+
+                ; Update TLB
                 load_const s26, 0x2000
                 load_const s27, 0x2000 | TLB_PRESENT | TLB_WRITABLE
                 dtlbinsert s26, s27
