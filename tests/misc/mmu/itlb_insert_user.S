@@ -17,7 +17,7 @@
 #include "mmu_test_common.inc"
 
 ;
-; Check that the processor faults and doesn't update the TLB is
+; Check that the processor faults and doesn't update the TLB if
 ; itlbinsert is called from user mode.
 ;
 

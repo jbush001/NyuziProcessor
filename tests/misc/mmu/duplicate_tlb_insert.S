@@ -16,8 +16,17 @@
 
 #include "mmu_test_common.inc"
 
+;
+; Ensure inserting TLB entries for the same virtual address will update
+; the entry. This inserts several different physical mappings and checks
+; that only the last mapping takes effect
+;
+
                 .globl _start
 _start:         load_tlb_entries itlb_entries, dtlb_entries
+
+                ; Before enabling MMU, write a value that we will
+                ; read back later to ensure the proper page is mapped.
                 load_const s0, 0xdeadbeef
                 load_const s1, 0x2000
                 store_32 s0, (s1)

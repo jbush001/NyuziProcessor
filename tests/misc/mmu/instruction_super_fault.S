@@ -18,7 +18,7 @@
 
 ;
 ; Check that processor raises page fault if it attempts to execute from a
-; page that does not have the present bit set.
+; page that is marked as a supervisor when it is in user mode.
 ;
 
                 .globl _start

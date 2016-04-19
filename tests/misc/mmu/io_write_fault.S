@@ -18,7 +18,8 @@
 
 ;
 ; This test writes from a page that has a TLB entry, but is not marked
-; present
+; present. It's similar to write_fault, but checks pages that are mapped
+; into the I/O physical region, since those are handled differently in hardware.
 ;
 
                 .globl _start

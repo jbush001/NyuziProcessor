@@ -18,7 +18,7 @@
 
 ;
 ; This test writes from a page that has a TLB entry, but is not marked
-; present
+; present and ensures it raises a page fault.
 ;
 
                 .globl _start

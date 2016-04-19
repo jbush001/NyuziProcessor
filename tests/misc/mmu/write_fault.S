@@ -17,8 +17,8 @@
 #include "mmu_test_common.inc"
 
 ;
-; This test writes from a page that has a TLB entry, but is not marked
-; present
+; This test that writes to a page that does not have its writable bit set
+; faults.
 ;
 
                 .globl _start
