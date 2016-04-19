@@ -1,0 +1,99 @@
+;
+; Copyright 2016 Jeff Bush
+;
+; Licensed under the Apache License, Version 2.0 (the "License");
+; you may not use this file except in compliance with the License.
+; You may obtain a copy of the License at
+;
+;     http://www.apache.org/licenses/LICENSE-2.0
+;
+; Unless required by applicable law or agreed to in writing, software
+; distributed under the License is distributed on an "AS IS" BASIS,
+; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+; See the License for the specific language governing permissions and
+; limitations under the License.
+;
+
+#include "mmu_test_common.inc"
+
+                .globl _start
+_start:         load_tlb_entries itlb_entries, dtlb_entries
+
+                lea s0, handle_fault
+                setcr s0, CR_FAULT_HANDLER
+                lea s0, handle_tlb_miss
+                setcr s0, CR_TLB_MISS_HANDLER
+
+                ; Enable MMU
+                move s0, FLAG_MMU_EN | FLAG_SUPERVISOR_EN
+                setcr s0, CR_FLAGS
+                flush_pipeline
+
+
+                ; Set up vector register
+                load_v v1, vecptr
+                store_scat v0, (v1) ; This will fault when it hits address 17 and call handle_fault
+
+                should_not_get_here
+
+                .align 64, 0xff
+vecptr:         .long foo, foo, foo, foo, foo, foo, foo, 17, foo, foo, foo, foo, foo, foo, foo, foo
+foo:            .long 0
+
+
+;
+; This handles the first alignment fault
+;
+handle_fault:   load_const s10, 0x88cf70b4
+                setcr s10, CR_SCRATCHPAD0
+                load_const s10, 0x78662516
+                setcr s10, CR_SCRATCHPAD1
+
+                load_const s10, 0x2000
+                store_32 s10, (s10)     ; This will cause a TLB miss
+
+                ; We have returned from the TLB miss here. Ensure the
+                ; fault control registers were restored
+                getcr s10, CR_FAULT_REASON
+                assert_reg s10, TR_DATA_ALIGNMENT
+                getcr s10, CR_FAULT_ADDRESS
+                assert_reg s10, 17
+                getcr s10, CR_SCRATCHPAD0
+                assert_reg s10, 0x88cf70b4
+                getcr s10, CR_SCRATCHPAD1
+                assert_reg s10, 0x78662516
+                getcr s10, CR_SUBCYCLE
+                assert_reg s10, 7
+                getcr s10, CR_FLAGS
+                assert_reg s10, 6
+
+                call pass_test
+
+
+;
+; This handles the nested trap
+;
+handle_tlb_miss:
+                ; Clobber both scratchpads. When this returns, handle_fault will
+                ; ensure the previous value is restored
+                move s10, 0
+                setcr s10, CR_SCRATCHPAD0
+                setcr s10, CR_SCRATCHPAD1
+
+                ; Check fault, populate TLB, then return
+                getcr s26, CR_FAULT_REASON
+                assert_reg s26, TR_DTLB_MISS
+                getcr s26, CR_FAULT_ADDRESS
+                assert_reg s26, 0x2000
+                load_const s26, 0x2000
+                load_const s27, 0x2000 | TLB_PRESENT | TLB_WRITABLE
+                dtlbinsert s26, s27
+                eret
+
+
+itlb_entries:   .long 0x00000000, TLB_PRESENT | TLB_EXECUTABLE
+                .long 0xffffffff, 0xfffffff
+
+dtlb_entries:   .long 0x00000000, TLB_PRESENT | TLB_WRITABLE
+                .long 0xffff0000, 0xffff0000 | TLB_PRESENT | TLB_WRITABLE    ; I/O area
+                .long 0xffffffff, 0xffffffff

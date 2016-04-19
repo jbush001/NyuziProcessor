@@ -21,96 +21,53 @@ import subprocess
 sys.path.insert(0, '../..')
 from test_harness import *
 
-DUMP_FILE = 'obj/memdump.bin'
-EXPECT_STRING = bytearray('Test String', encoding='ascii')
+def run_mmu_test(name):
+    if name.endswith('_emulator'):
+        basename = name[0:-len('_emulator')]
+        isverilator = False
+    elif name.endswith('_verilator'):
+        basename = name[0:-len('_verilator')]
+        isverilator = True
 
-
-def test_synonym(name):
-    compile_test('synonym.c')
-    if name.find('_verilator') != -1:
-        result = run_verilator(
-            dump_file=DUMP_FILE,
-            dump_base=0x100000,
-            dump_length=32)
-    else:
-        result = run_emulator(dump_file=DUMP_FILE, dump_base=0x100000,
-                              dump_length=32)
-
-    if result.find('read 00900000 "Test String"') == -1:
-        raise TestException(
-            'did not get correct read string:\n' + result)
-
-    with open(DUMP_FILE, 'rb') as f:
-        if f.read(len(EXPECT_STRING)) != EXPECT_STRING:
-            raise TestException('memory contents did not match')
-
-
-def test_fill(name):
-    compile_test(['fill_test.c', 'identity_tlb_miss_handler.s'])
-    if name.find('_verilator') != -1:
+    assemble_test(basename + '.S')
+    if isverilator:
         result = run_verilator()
     else:
         result = run_emulator()
 
-    if result.find('FAIL') != -1 or result.find('PASS') == -1:
-        raise TestException(
-            result + '\ntest did not signal pass\n' + result)
+    if result.find('PASS') == -1 or result.find('FAIL') != -1:
+        raise TestException('Test failed ' + result)
 
+def register_mmu_tests(list):
+    for name in list:
+        register_tests(run_mmu_test, [name + '_verilator'])
+        register_tests(run_mmu_test, [name + '_emulator'])
 
-def test_io_map(name):
-    compile_test(['io_map.c'])
-    if name.find('_verilator') != -1:
-        result = run_verilator(
-            dump_file=DUMP_FILE,
-            dump_base=0x100000,
-            dump_length=32)
-    else:
-        result = run_emulator(dump_file=DUMP_FILE, dump_base=0x100000,
-                              dump_length=32)
+# XXX dump memory contents and ensure they are written out properly
 
-    # Check value printed via virtual serial port
-    if result.find('jabberwocky') == -1:
-        raise TestException(
-            'did not get correct read string:\n' + result)
+register_mmu_tests([
+    'data_page_fault_read',
+    'data_page_fault_write',
+    'data_supervisor_fault_read',
+    'data_supervisor_fault_write',
+    'dflush_tlb_miss',
+    'dinvalidate_tlb_miss',
+    'dtlb_insert_user',
+    'asid',
+    'execute_fault',
+    'instruction_page_fault',
+    'instruction_super_fault',
+    'write_fault',
+    'tlb_invalidate',
+    'tlb_invalidate_all',
+    'synonym',
+    'duplicate_tlb_insert',
+    'itlb_insert_user',
+    'io_supervisor_fault_read',
+    'io_supervisor_fault_write',
+    'io_write_fault',
+    'io_map',
+    'nested_fault'
+]);
 
-    # Check value written to memory
-    with open(DUMP_FILE, 'rb') as f:
-        if f.read(len('galumphing')) != bytearray('galumphing', 'ascii'):
-            raise TestException('memory contents did not match')
-
-
-def test_nested_fault(name):
-    compile_test(
-        ['nested_fault.c', 'identity_tlb_miss_handler.s'])
-    if name.find('_verilator') != -1:
-        result = run_verilator()
-    else:
-        result = run_emulator()
-
-    check_result('nested_fault.c', result)
-
-register_tests(test_synonym, ['synonym_verilator', 'synonym_emulator'])
-register_tests(test_fill, ['fill_verilator', 'fill_emulator'])
-register_tests(test_io_map, ['io_map_verilator', 'io_map_emulator'])
-register_tests(
-    test_nested_fault, ['nested_fault_verilator', 'nested_fault_emulator'])
-register_generic_test('dflush_tlb_miss')
-register_generic_test('dinvalidate_tlb_miss')
-register_generic_test('duplicate_tlb_insert')
-register_generic_test('write_fault')
-register_generic_test('data_supervisor_fault_read')
-register_generic_test('data_supervisor_fault_write')
-register_generic_test('inst_supervisor_fault')
-register_generic_test('tlb_invalidate')
-register_generic_test('tlb_invalidate_all')
-register_generic_test('asid')
-register_generic_test('io_supervisor_fault_read')
-register_generic_test('io_supervisor_fault_write')
-register_generic_test('io_write_fault')
-register_generic_test('dtlbinsert_user')
-register_generic_test('itlbinsert_user')
-register_generic_test('data_page_fault_read')
-register_generic_test('data_page_fault_write')
-register_generic_test('inst_page_fault')
-register_generic_test('execute_fault')
 execute_tests()
