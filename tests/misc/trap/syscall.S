@@ -32,8 +32,7 @@ _start:
                 setcr s0, CR_FLAGS
                 flush_pipeline
 
-                ; Try dinvalidate
-fault_loc:     syscall
+fault_loc:      syscall     ; This should fault
 
                 should_not_get_here
 

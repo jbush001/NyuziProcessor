@@ -36,9 +36,8 @@ _start:
                 setcr s0, CR_FLAGS
                 flush_pipeline
 
-                ; Try to write a control register
                 load_const s0, 0xdeadbeef
-fault_loc:      setcr s0, CR_SCRATCHPAD0
+fault_loc:      setcr s0, CR_SCRATCHPAD0        ; This should fault
 
                 should_not_get_here
 

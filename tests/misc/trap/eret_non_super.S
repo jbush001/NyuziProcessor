@@ -32,8 +32,7 @@ _start:
                 setcr s0, CR_FLAGS
                 flush_pipeline
 
-                ; Try eret
-fault_loc:      eret
+fault_loc:      eret    ; This should fault
 
                 should_not_get_here
 
