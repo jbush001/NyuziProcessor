@@ -152,7 +152,6 @@ register_tests(run_io_interrupt, ['io_interrupt'])
 register_tests(run_multicycle, ['multicycle'])
 register_tests(run_recv_host_interrupt, ['recv_host_interrupt'])
 register_tests(run_send_host_interrupt, ['send_host_interrupt'])
-register_generic_test('inst_align_fault')
 register_tests(
     run_unaligned_data_fault, [
         'unaligned_data_fault_emulator', 'unaligned_data_fault_verilator'])
@@ -163,7 +162,8 @@ register_generic_assembly_tests([
     'setcr_non_super',
     'eret_non_super',
     'dinvalidate_non_super',
-    'syscall'
+    'syscall',
+    'inst_align_fault'
 ])
 
 execute_tests()
