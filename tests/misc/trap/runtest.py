@@ -57,35 +57,6 @@ def run_io_interrupt(name):
         raise TestException(
             'Base string does not match:\n' + result)
 
-
-def run_multicycle(name):
-    assemble_test('multicycle.s')
-    result = run_verilator()
-    if result.find('PASS') == -1 or result.find('FAIL') != -1:
-        raise TestException('Test failed:\n' + result)
-
-
-def run_unaligned_data_fault(name):
-    compile_test(['unaligned_data_fault.c', 'trap_handler.s'])
-    if name.endswith('_emulator'):
-        result = run_emulator()
-    else:
-        result = run_verilator()
-
-    check_result('unaligned_data_fault.c', result)
-
-
-def run_illegal_instruction(name):
-    compile_test(
-        ['illegal_instruction.c', 'trap_handler.s', 'gen_illegal_inst_trap.S'])
-    if name.endswith('_emulator'):
-        result = run_emulator()
-    else:
-        result = run_verilator()
-
-    check_result('gen_illegal_inst_trap.S', result)
-
-
 # Test the mechanism for delivering interrupts to the emulator from a
 # separate host process (useful for co-emulation)
 # XXX A number of error cases do not clean up resources
@@ -128,7 +99,7 @@ def run_send_host_interrupt(name):
     except:
         pass
 
-    compile_test(['send_host_interrupt.c'])
+    assemble_test('send_host_interrupt.S')
 
     os.mknod(PIPE_NAME, stat.S_IFIFO | 0666)
 
@@ -149,21 +120,17 @@ def run_send_host_interrupt(name):
         os.unlink(PIPE_NAME)
 
 register_tests(run_io_interrupt, ['io_interrupt'])
-register_tests(run_multicycle, ['multicycle'])
 register_tests(run_recv_host_interrupt, ['recv_host_interrupt'])
 register_tests(run_send_host_interrupt, ['send_host_interrupt'])
-register_tests(
-    run_unaligned_data_fault, [
-        'unaligned_data_fault_emulator', 'unaligned_data_fault_verilator'])
-register_tests(
-    run_illegal_instruction, [
-        'illegal_instruction_emulator', 'illegal_instruction_verilator'])
 register_generic_assembly_tests([
     'setcr_non_super',
     'eret_non_super',
     'dinvalidate_non_super',
     'syscall',
-    'inst_align_fault'
+    'inst_align_fault',
+    'unaligned_data_fault',
+    'multicycle',
+    'illegal_instruction'
 ])
 
 execute_tests()
