@@ -143,7 +143,8 @@ class TimedProcessRunner(threading.Thread):
 
         if self.process.poll():
             # Non-zero return code. Probably target program crash.
-            raise TestException('Process returned error: ' + result[0].decode())
+            raise TestException(
+                'Process returned error: ' + result[0].decode())
 
         return result
 
@@ -491,6 +492,7 @@ def _run_generic_test(name):
     check_result(basename + '.c', result)
 
 
+# XXX make this take a list of names
 def register_generic_test(name):
     """Allows registering a test without having to create a test handler
     function. This will compile the passed program, then use
@@ -508,3 +510,43 @@ def register_generic_test(name):
     """
     register_tests(_run_generic_test, [name + '_verilator'])
     register_tests(_run_generic_test, [name + '_emulator'])
+
+
+def _run_generic_assembly_test(name):
+    if name.endswith('_emulator'):
+        basename = name[0:-len('_emulator')]
+        isverilator = False
+    elif name.endswith('_verilator'):
+        basename = name[0:-len('_verilator')]
+        isverilator = True
+
+    assemble_test(basename + '.S')
+    if isverilator:
+        result = run_verilator()
+    else:
+        result = run_emulator()
+
+    if result.find('PASS') == -1 or result.find('FAIL') != -1:
+        raise TestException('Test failed ' + result)
+
+# XXX should this somehow be combined with register_generic_test?
+
+
+def register_generic_assembly_tests(list):
+    """Allows registering an assembly only test without having to
+    create a test handler function. This will assemble the passed
+    program, then look for PASS or FAIL strings.
+    It runs it both in verilator and emulator configurations.
+
+    Args:
+            list: list of base names of source file (without extension)
+
+    Returns:
+            Nothing
+
+    Raises:
+            Nothing
+    """
+    for name in list:
+        register_tests(_run_generic_assembly_test, [name + '_verilator'])
+        register_tests(_run_generic_assembly_test, [name + '_emulator'])

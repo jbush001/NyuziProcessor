@@ -21,31 +21,10 @@ import subprocess
 sys.path.insert(0, '../..')
 from test_harness import *
 
-def run_mmu_test(name):
-    if name.endswith('_emulator'):
-        basename = name[0:-len('_emulator')]
-        isverilator = False
-    elif name.endswith('_verilator'):
-        basename = name[0:-len('_verilator')]
-        isverilator = True
+# XXX need test to dump memory contents and ensure they are written out
+# properly
 
-    assemble_test(basename + '.S')
-    if isverilator:
-        result = run_verilator()
-    else:
-        result = run_emulator()
-
-    if result.find('PASS') == -1 or result.find('FAIL') != -1:
-        raise TestException('Test failed ' + result)
-
-def register_mmu_tests(list):
-    for name in list:
-        register_tests(run_mmu_test, [name + '_verilator'])
-        register_tests(run_mmu_test, [name + '_emulator'])
-
-# XXX dump memory contents and ensure they are written out properly
-
-register_mmu_tests([
+register_generic_assembly_tests([
     'data_page_fault_read',
     'data_page_fault_write',
     'data_supervisor_fault_read',
@@ -68,6 +47,6 @@ register_mmu_tests([
     'io_write_fault',
     'io_map',
     'nested_fault'
-]);
+])
 
 execute_tests()
