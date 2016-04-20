@@ -148,7 +148,7 @@ haltaddr:          .long 0xffff0064
                     flush_pipeline
 
                     load_const s0, \address
-                    \access_op s0, (s0)            # This should fault
+fault_loc:          \access_op s0, (s0)            # This should fault
                     call fail_test                 # Fail if no
 
                     # After fault resumes from here. Check that it behaved as
@@ -157,6 +157,14 @@ handle_fault:       getcr s0, CR_FAULT_REASON
                     assert_reg s0, \reason
                     getcr s0, CR_FAULT_ADDRESS
                     assert_reg s0, \address
+
+                    ; Check that fault PC is correct
+                    getcr s0, CR_FAULT_PC
+                    lea s1, fault_loc
+                    cmpeq_i s0, s0, s1
+                    btrue s0, 1f
+                    call fail_test
+1:
 
                     call pass_test
 .endm

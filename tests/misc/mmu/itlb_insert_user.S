@@ -36,12 +36,20 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
 
                 load_const s0, 0x1000
                 load_const s1, 0x1000 | TLB_PRESENT | TLB_EXECUTABLE
-                itlbinsert s0, s1   ; This should fault
+fault_loc:      itlbinsert s0, s1   ; This should fault
 
                 should_not_get_here
 
 handle_fault1:  getcr s0, CR_FAULT_REASON
                 assert_reg s0, TR_PRIVILEGED_OP
+
+                ; Check that fault PC is correct
+                getcr s0, CR_FAULT_PC
+                lea s1, fault_loc
+                cmpeq_i s0, s0, s1
+                btrue s0, 1f
+                call fail_test
+1:
 
                 ; Jump to new page. This should fail because the entry
                 ; wasn't added to the TLB

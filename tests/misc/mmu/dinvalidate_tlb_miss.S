@@ -40,7 +40,7 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
                 setcr s0, CR_TLB_MISS_HANDLER
 
                 load_const s0, 0x2234
-                dinvalidate s0                  ; This should raise a tlb fault
+fault_loc:      dinvalidate s0                  ; This should raise a tlb fault
 
                 should_not_get_here
 
@@ -49,6 +49,14 @@ tlb_fault:      ; Check that the fault is correct
                 assert_reg s0, TR_DTLB_MISS
                 getcr s0, CR_FAULT_ADDRESS
                 assert_reg s0, 0x2234
+
+                ; Check that fault PC is correct
+                getcr s0, CR_FAULT_PC
+                lea s1, fault_loc
+                cmpeq_i s0, s0, s1
+                btrue s0, 1f
+                call fail_test
+1:
 
                 call pass_test
 

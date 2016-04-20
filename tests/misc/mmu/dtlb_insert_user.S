@@ -46,7 +46,7 @@ handle_fault1:  getcr s0, CR_FAULT_REASON
                 ; Try to read data from new address. This should cause
                 ; a TLB miss because the dtlbinsert has have failed.
                 load_const s0, 0x1430
-                load_32 s0, (s0)    ; This should fault
+fault_loc:      load_32 s0, (s0)    ; This should fault
 
                 should_not_get_here
 
@@ -54,6 +54,14 @@ handle_fault2:  getcr s0, CR_FAULT_REASON
                 assert_reg s0, TR_DTLB_MISS
                 getcr s0, CR_FAULT_ADDRESS
                 assert_reg s0, 0x1430
+
+                ; Check that fault PC is correct
+                getcr s0, CR_FAULT_PC
+                lea s1, fault_loc
+                cmpeq_i s0, s0, s1
+                btrue s0, 1f
+                call fail_test
+1:
 
                 call pass_test
 

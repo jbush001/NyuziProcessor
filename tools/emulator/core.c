@@ -725,6 +725,10 @@ static bool translateAddress(Thread *thread, uint32_t virtualAddress, uint32_t *
         {
             if ((setEntries[way].physAddrAndFlags & TLB_PRESENT) == 0)
             {
+            	// In instruction fetch, hadn't been incremented yet
+                if (!dataFetch)
+                    thread->currentPc += 4;
+
                 raiseTrap(thread, virtualAddress, TR_PAGE_FAULT);
                 return false;
             }
@@ -732,6 +736,10 @@ static bool translateAddress(Thread *thread, uint32_t virtualAddress, uint32_t *
             if ((setEntries[way].physAddrAndFlags & TLB_SUPERVISOR) != 0
                     && !thread->enableSupervisor)
             {
+            	// In instruction fetch, hadn't been incremented yet
+                if (!dataFetch)
+                    thread->currentPc += 4;
+
                 raiseTrap(thread, virtualAddress, dataFetch ? TR_DATA_SUPERVISOR
                           : TR_IFETCH_SUPERVISOR);
                 return false;
@@ -740,6 +748,7 @@ static bool translateAddress(Thread *thread, uint32_t virtualAddress, uint32_t *
             if ((setEntries[way].physAddrAndFlags & TLB_EXECUTABLE) == 0
                     && !dataFetch)
             {
+                thread->currentPc += 4;
                 raiseTrap(thread, virtualAddress, TR_NOT_EXECUTABLE);
                 return false;
             }
@@ -1859,7 +1868,7 @@ static bool executeInstruction(Thread *thread)
     // Check PC alignment
     if ((thread->currentPc & 3) != 0)
     {
-        raiseAccessFault(thread, thread->currentPc, TR_IFETCH_ALIGNNMENT, true);
+        raiseAccessFault(thread, thread->currentPc + 4, TR_IFETCH_ALIGNNMENT, true);
         return true;   // XXX if stop on fault was enabled, should return false
     }
 

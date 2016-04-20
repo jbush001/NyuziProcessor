@@ -35,6 +35,14 @@ fault_handler:  getcr s0, CR_FAULT_REASON
                 getcr s0, CR_FAULT_ADDRESS
                 assert_reg s0, 0x2000   ; Will resume here
 
+                ; Check that fault PC is correct
+                getcr s0, CR_FAULT_PC
+                lea s1, notpresent_page
+                cmpeq_i s0, s0, s1
+                btrue s0, 1f
+                call fail_test
+1:
+
                 call pass_test
 
 itlb_entries:   .long 0x00000000, TLB_PRESENT | TLB_EXECUTABLE

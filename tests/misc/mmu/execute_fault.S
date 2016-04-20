@@ -35,8 +35,11 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
 fault_handler:  getcr s0, CR_FAULT_REASON
                 assert_reg s0, TR_NOT_EXECUTABLE
                 getcr s0, CR_FAULT_ADDRESS
-                assert_reg s0, 0x2000   ; Will resume here
+                assert_reg s0, 0x2000
 
+                ; Check that fault PC is correct
+                getcr s0, CR_FAULT_PC
+                assert_reg s0, 0x2000
                 call pass_test
 
 itlb_entries:   .long 0x00000000, TLB_PRESENT | TLB_EXECUTABLE
