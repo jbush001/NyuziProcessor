@@ -40,6 +40,7 @@
 .set TR_NOT_EXECUTABLE, 12
 .set TR_INTERRUPT_BASE, 16
 
+.set FLAG_INTERRUPT_EN, (1 << 0)
 .set FLAG_SUPERVISOR_EN, (1 << 2)
 
 # Takes s0 as parameter, null terminated string. Clobbers s0-s3.

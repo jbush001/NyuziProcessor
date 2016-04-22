@@ -25,13 +25,13 @@ from test_harness import *
 
 
 def run_io_interrupt(name):
-    compile_test(['io_interrupt.c', 'trap_handler.s'])
+    assemble_test('io_interrupt.S')
     result = run_verilator()
     lines = result.split('\n')
     output = None
 
     for x in lines:
-        start = x.find('>')
+        start = x.find('!')
         if start != -1:
             output = x[start + 1:]
 
@@ -51,11 +51,9 @@ def run_io_interrupt(name):
             'No instances of interrupt return:\n' + result)
 
     # Remove all asterisks (interrupts) and make sure string is intact
-    if output.replace(
-            '*',
-            '') != 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789':
-        raise TestException(
-            'Base string does not match:\n' + result)
+    stripped = output.replace('*','')
+    if stripped != '0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz' * 10:
+        raise TestException('Base string does not match:\n' + stripped)
 
 # Test the mechanism for delivering interrupts to the emulator from a
 # separate host process (useful for co-emulation)
@@ -67,26 +65,31 @@ def run_recv_host_interrupt(name):
     except:
         pass
 
-    compile_test(['recv_host_interrupt.c', 'trap_handler.s'])
+    assemble_test('recv_host_interrupt.S')
 
     os.mknod(PIPE_NAME, stat.S_IFIFO | 0666)
 
-
     args = [BIN_DIR + 'emulator', '-i', PIPE_NAME, HEX_FILE]
-    process = subprocess.Popen(args, stdout=subprocess.PIPE,
+    emulatorProcess = subprocess.Popen(args, stdout=subprocess.PIPE,
                                stderr=subprocess.STDOUT)
 
     try:
         interruptPipe = os.open(PIPE_NAME, os.O_WRONLY)
 
-        # Send periodic interrupts to process
-        for x in range(5):
-            os.write(interruptPipe, chr(x))
-            time.sleep(0.2)
+        # Send periodic interrupts to process'
+        try:
+            for x in range(5):
+                os.write(interruptPipe, chr(x))
+                time.sleep(0.2)
+        except OSError:
+            # Broken pipe will occur if the emulator exits early.
+            # We'll flag an error after communicate if we don't see a PASS.
+            pass
 
         # Wait for completion
-        result, unused_err = TimedProcessRunner().communicate(process, 60)
-        check_result('recv_host_interrupt.c', result)
+        result, unused_err = TimedProcessRunner().communicate(emulatorProcess, 60)
+        if result.find('PASS') == -1 or result.find('FAIL') != -1:
+            raise TestException('Test failed ' + result)
     finally:
         os.close(interruptPipe)
         os.unlink(PIPE_NAME)
@@ -104,12 +107,12 @@ def run_send_host_interrupt(name):
     os.mknod(PIPE_NAME, stat.S_IFIFO | 0666)
 
     args = [BIN_DIR + 'emulator', '-o', PIPE_NAME, HEX_FILE]
-    process = subprocess.Popen(args, stdout=subprocess.PIPE,
+    emulatorProcess = subprocess.Popen(args, stdout=subprocess.PIPE,
                                stderr=subprocess.STDOUT)
 
     try:
         interruptPipe = os.open(PIPE_NAME, os.O_RDONLY | os.O_NONBLOCK)
-        result, unused_err = TimedProcessRunner().communicate(process, 60)
+        result, unused_err = TimedProcessRunner().communicate(emulatorProcess, 60)
 
         # Interrupts should be in pipe now
         interrupts = os.read(interruptPipe, 5)
