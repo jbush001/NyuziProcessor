@@ -24,13 +24,13 @@
 _start:
                 ; Set up fault handler
                 lea s0, handle_fault
-                setcr s0, CR_FAULT_HANDLER
+                setcr s0, CR_TRAP_HANDLER
 
                 ; jump to bad address
                 move pc, 0x357
 
-handle_fault:   getcr s0, CR_FAULT_REASON
+handle_fault:   getcr s0, CR_TRAP_REASON
                 assert_reg s0, TR_IFETCH_ALIGNNMENT
-                getcr s0, CR_FAULT_PC
+                getcr s0, CR_TRAP_PC
                 assert_reg s0, 0x357
                 call pass_test

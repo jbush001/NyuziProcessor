@@ -20,11 +20,11 @@
 .set TLB_SUPERVISOR, (1 << 3)
 .set TLB_GLOBAL, (1 << 4)
 
-.set CR_FAULT_HANDLER, 1
-.set CR_FAULT_PC, 2
-.set CR_FAULT_REASON, 3
+.set CR_TRAP_HANDLER, 1
+.set CR_TRAP_PC, 2
+.set CR_TRAP_REASON, 3
 .set CR_FLAGS, 4
-.set CR_FAULT_ADDRESS, 5
+.set CR_TRAP_ADDRESS, 5
 .set CR_TLB_MISS_HANDLER, 7
 .set CR_SAVED_FLAGS, 8
 .set CR_CURRENT_ASID, 9
@@ -139,7 +139,7 @@ haltaddr:          .long 0xffff0064
                     load_tlb_entries \itlb_entries, \dtlb_entries
 
                     lea s0, handle_fault
-                    setcr s0, CR_FAULT_HANDLER
+                    setcr s0, CR_TRAP_HANDLER
                     lea s0, fail_test
                     setcr s0, CR_TLB_MISS_HANDLER # Fail on TLB miss
 
@@ -153,13 +153,13 @@ fault_loc:          \access_op s0, (s0)            # This should fault
 
                     # After fault resumes from here. Check that it behaved as
                     # expected.
-handle_fault:       getcr s0, CR_FAULT_REASON
+handle_fault:       getcr s0, CR_TRAP_REASON
                     assert_reg s0, \reason
-                    getcr s0, CR_FAULT_ADDRESS
+                    getcr s0, CR_TRAP_ADDRESS
                     assert_reg s0, \address
 
                     ; Check that fault PC is correct
-                    getcr s0, CR_FAULT_PC
+                    getcr s0, CR_TRAP_PC
                     lea s1, fault_loc
                     cmpeq_i s0, s0, s1
                     btrue s0, 1f

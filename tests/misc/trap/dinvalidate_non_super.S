@@ -25,7 +25,7 @@
 _start:
                 ; Set up fault handler
                 lea s0, handle_fault
-                setcr s0, CR_FAULT_HANDLER
+                setcr s0, CR_TRAP_HANDLER
 
                 ; Switch to user mode
                 move s0, 0
@@ -36,9 +36,9 @@ fault_loc:      dinvalidate s0 ; This should fault
 
                 should_not_get_here
 
-handle_fault:   getcr s0, CR_FAULT_REASON
+handle_fault:   getcr s0, CR_TRAP_REASON
                 assert_reg s0, TR_PRIVILEGED_OP
-                getcr s0, CR_FAULT_PC
+                getcr s0, CR_TRAP_PC
                 lea s1, fault_loc
                 cmpeq_i s0, s0, s1
                 btrue s0, 1f

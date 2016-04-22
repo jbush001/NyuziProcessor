@@ -22,18 +22,18 @@
 
 .macro test_unaligned_fault testnum, op, ptr, value, fault_addr
                 lea s0, handle_fault\testnum
-                setcr s0, CR_FAULT_HANDLER
+                setcr s0, CR_TRAP_HANDLER
 fault_loc\testnum :
                 \op \value, (\ptr\())
                 should_not_get_here
 handle_fault\testnum :
-                getcr s0, CR_FAULT_REASON
+                getcr s0, CR_TRAP_REASON
                 assert_reg s0, TR_DATA_ALIGNMENT
-                getcr s0, CR_FAULT_ADDRESS
+                getcr s0, CR_TRAP_ADDRESS
                 assert_reg s0, \fault_addr
 
                 ; Check that PC is correct
-                getcr s0, CR_FAULT_PC
+                getcr s0, CR_TRAP_PC
                 lea s1, fault_loc\testnum
                 cmpeq_i s0, s0, s1
                 btrue s0, 1f

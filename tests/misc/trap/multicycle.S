@@ -35,7 +35,7 @@ _start:             getcr s0, 0                 ; Find my thread ID
 
                     ; Set up interrupts
                     lea s10, interrupt_handler
-                    setcr s10, CR_FAULT_HANDLER     ; Set fault handler address
+                    setcr s10, CR_TRAP_HANDLER     ; Set fault handler address
                     move s10, 5
                     setcr s10, CR_FLAGS             ; Enable interrupts
 
@@ -52,7 +52,7 @@ loop0:
 
                     call pass_test
 
-interrupt_handler:  getcr s12, CR_FAULT_REASON
+interrupt_handler:  getcr s12, CR_TRAP_REASON
                     cmpeq_i s13, s12, 16
                     bfalse s13, bad_int
                     eret

@@ -24,19 +24,19 @@
                 .globl _start
 _start:         load_tlb_entries itlb_entries, dtlb_entries
                 lea s0, fault_handler
-                setcr s0, CR_FAULT_HANDLER
+                setcr s0, CR_TRAP_HANDLER
                 move s0, FLAG_MMU_EN | FLAG_SUPERVISOR_EN
                 setcr s0, CR_FLAGS
                 flush_pipeline
                 goto notpresent_page        ; Jump to nonexecutable page
 
-fault_handler:  getcr s0, CR_FAULT_REASON
+fault_handler:  getcr s0, CR_TRAP_REASON
                 assert_reg s0, TR_PAGE_FAULT
-                getcr s0, CR_FAULT_ADDRESS
+                getcr s0, CR_TRAP_ADDRESS
                 assert_reg s0, 0x2000   ; Will resume here
 
                 ; Check that fault PC is correct
-                getcr s0, CR_FAULT_PC
+                getcr s0, CR_TRAP_PC
                 lea s1, notpresent_page
                 cmpeq_i s0, s0, s1
                 btrue s0, 1f

@@ -14,11 +14,11 @@
 ; limitations under the License.
 ;
 
-.set CR_FAULT_HANDLER, 1
-.set CR_FAULT_PC, 2
-.set CR_FAULT_REASON, 3
+.set CR_TRAP_HANDLER, 1
+.set CR_TRAP_PC, 2
+.set CR_TRAP_REASON, 3
 .set CR_FLAGS, 4
-.set CR_FAULT_ADDRESS, 5
+.set CR_TRAP_ADDRESS, 5
 .set CR_TLB_MISS_HANDLER, 7
 .set CR_SAVED_FLAGS, 8
 .set CR_CURRENT_ASID, 9

@@ -25,7 +25,7 @@
 _start:         load_tlb_entries itlb_entries, dtlb_entries
 
                 lea s0, handle_fault1
-                setcr s0, CR_FAULT_HANDLER
+                setcr s0, CR_TRAP_HANDLER
                 lea s0, handle_fault2
                 setcr s0, CR_TLB_MISS_HANDLER
 
@@ -40,11 +40,11 @@ fault_loc:      itlbinsert s0, s1   ; This should fault
 
                 should_not_get_here
 
-handle_fault1:  getcr s0, CR_FAULT_REASON
+handle_fault1:  getcr s0, CR_TRAP_REASON
                 assert_reg s0, TR_PRIVILEGED_OP
 
                 ; Check that fault PC is correct
-                getcr s0, CR_FAULT_PC
+                getcr s0, CR_TRAP_PC
                 lea s1, fault_loc
                 cmpeq_i s0, s0, s1
                 btrue s0, 1f
@@ -58,9 +58,9 @@ handle_fault1:  getcr s0, CR_FAULT_REASON
 
                 should_not_get_here
 
-handle_fault2:  getcr s0, CR_FAULT_REASON
+handle_fault2:  getcr s0, CR_TRAP_REASON
                 assert_reg s0, TR_ITLB_MISS
-                getcr s0, CR_FAULT_ADDRESS
+                getcr s0, CR_TRAP_ADDRESS
                 assert_reg s0, 0x1000
 
                 call pass_test

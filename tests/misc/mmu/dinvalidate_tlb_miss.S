@@ -29,7 +29,7 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
                 flush_pipeline
 
                 lea s0, fail_test
-                setcr s0, CR_FAULT_HANDLER
+                setcr s0, CR_TRAP_HANDLER
                 lea s0, fail_test               ; First test fails if there is a TLB miss
                 setcr s0, CR_TLB_MISS_HANDLER
 
@@ -45,13 +45,13 @@ fault_loc:      dinvalidate s0                  ; This should raise a tlb fault
                 should_not_get_here
 
 tlb_fault:      ; Check that the fault is correct
-                getcr s0, CR_FAULT_REASON
+                getcr s0, CR_TRAP_REASON
                 assert_reg s0, TR_DTLB_MISS
-                getcr s0, CR_FAULT_ADDRESS
+                getcr s0, CR_TRAP_ADDRESS
                 assert_reg s0, 0x2234
 
                 ; Check that fault PC is correct
-                getcr s0, CR_FAULT_PC
+                getcr s0, CR_TRAP_PC
                 lea s1, fault_loc
                 cmpeq_i s0, s0, s1
                 btrue s0, 1f

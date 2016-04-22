@@ -22,16 +22,16 @@
 
 .macro test_illegal_inst testnum, instvalue
                 lea s0, handle_fault\testnum
-                setcr s0, CR_FAULT_HANDLER
+                setcr s0, CR_TRAP_HANDLER
 fault_loc\testnum :
                 .long \instvalue
                 should_not_get_here
 handle_fault\testnum :
-                getcr s0, CR_FAULT_REASON
+                getcr s0, CR_TRAP_REASON
                 assert_reg s0, TR_ILLEGAL_INSTRUCTION
 
                 ; Check that PC is correct
-                getcr s0, CR_FAULT_PC
+                getcr s0, CR_TRAP_PC
                 lea s1, fault_loc\testnum
                 cmpeq_i s0, s0, s1
                 btrue s0, 1f

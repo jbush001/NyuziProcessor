@@ -25,7 +25,7 @@
 _start:
                 ; Set up fault handler
                 lea s0, handle_fault
-                setcr s0, CR_FAULT_HANDLER
+                setcr s0, CR_TRAP_HANDLER
 
                 ; Clear scratchpad 0. We will attempt to update it, and the
                 ; fault handler will check that it wasn't.
@@ -43,9 +43,9 @@ fault_loc:      setcr s0, CR_SCRATCHPAD0        ; This should fault
 
 handle_fault:   getcr s0, CR_SCRATCHPAD0
                 assert_reg s0, 0
-                getcr s0, CR_FAULT_REASON
+                getcr s0, CR_TRAP_REASON
                 assert_reg s0, TR_PRIVILEGED_OP
-                getcr s0, CR_FAULT_PC
+                getcr s0, CR_TRAP_PC
                 lea s1, fault_loc
                 cmpeq_i s0, s0, s1
                 btrue s0, 1f

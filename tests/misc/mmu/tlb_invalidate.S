@@ -52,9 +52,9 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
 
                 should_not_get_here
 
-check_fault:    getcr s0, CR_FAULT_REASON
+check_fault:    getcr s0, CR_TRAP_REASON
                 assert_reg s0, TR_DTLB_MISS
-                getcr s0, CR_FAULT_ADDRESS
+                getcr s0, CR_TRAP_ADDRESS
                 assert_reg s0, 0x1234
 
                 call pass_test
