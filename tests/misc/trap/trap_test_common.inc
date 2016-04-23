@@ -1,18 +1,18 @@
-;
-; Copyright 2015-2016 Jeff Bush
-;
-; Licensed under the Apache License, Version 2.0 (the "License");
-; you may not use this file except in compliance with the License.
-; You may obtain a copy of the License at
-;
-;     http://www.apache.org/licenses/LICENSE-2.0
-;
-; Unless required by applicable law or agreed to in writing, software
-; distributed under the License is distributed on an "AS IS" BASIS,
-; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-; See the License for the specific language governing permissions and
-; limitations under the License.
-;
+//
+// Copyright 2015-2016 Jeff Bush
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 
 .set CR_TRAP_HANDLER, 1
 .set CR_TRAP_PC, 2
@@ -46,15 +46,15 @@
 # Takes s0 as parameter, null terminated string. Clobbers s0-s3.
                     .align 4, 0xff
 .macro print_string
-                    load_32 s1, _seraddr    ; Load address of serial registers
-1:                  load_u8 s2, (s0)        ; Read a character
-                    bfalse s2, 3f           ; If delimeter, exit
-2:                  load_32 s3, (s1)        ; Read STATUS
-                    and s3, s3, 1           ; Check write available bit
-                    bfalse s3, 2b           ; If this is clear, busy wait
-                    store_32 s2, 8(s1)      ; Write space available, send char
-                    add_i s0, s0, 1         ; Increment pointer
-                    goto 1b                 ; Loop for next char
+                    load_32 s1, _seraddr    // Load address of serial registers
+1:                  load_u8 s2, (s0)        // Read a character
+                    bfalse s2, 3f           // If delimeter, exit
+2:                  load_32 s3, (s1)        // Read STATUS
+                    and s3, s3, 1           // Check write available bit
+                    bfalse s3, 2b           // If this is clear, busy wait
+                    store_32 s2, 8(s1)      // Write space available, send char
+                    add_i s0, s0, 1         // Increment pointer
+                    goto 1b                 // Loop for next char
 3:
 .endm
 _seraddr:          .long 0xffff0018
@@ -83,9 +83,9 @@ haltaddr:          .long 0xffff0064
 
 # Load a constant value into a register
 .macro load_const oreg, cval
-                    move \oreg, ((\cval >> 20) & 0xfff)   ; Bits 31-20
+                    move \oreg, ((\cval >> 20) & 0xfff)   // Bits 31-20
                     shl \oreg, \oreg, 12
-                    or \oreg, \oreg, ((\cval >> 8) & 0xfff)      ; Bits 19-8
+                    or \oreg, \oreg, ((\cval >> 8) & 0xfff)      // Bits 19-8
                     shl \oreg, \oreg, 8
                     or \oreg, \oreg,    (\cval & 0xff)
 .endm

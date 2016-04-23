@@ -1,47 +1,47 @@
-;
-; Copyright 2016 Jeff Bush
-;
-; Licensed under the Apache License, Version 2.0 (the "License");
-; you may not use this file except in compliance with the License.
-; You may obtain a copy of the License at
-;
-;     http://www.apache.org/licenses/LICENSE-2.0
-;
-; Unless required by applicable law or agreed to in writing, software
-; distributed under the License is distributed on an "AS IS" BASIS,
-; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-; See the License for the specific language governing permissions and
-; limitations under the License.
-;
+//
+// Copyright 2016 Jeff Bush
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 
 #include "trap_test_common.inc"
 
 .macro receive_interrupt intnum
-                    ; Set the trap handler to the next label
+                    // Set the trap handler to the next label
                     lea s0, handle_trap\intnum
                     setcr s0, CR_TRAP_HANDLER
 
-                    ; Once the trap handle is set, (re)enable interrupts
+                    // Once the trap handle is set, (re)enable interrupts
                     move s0, FLAG_SUPERVISOR_EN | FLAG_INTERRUPT_EN
                     setcr s0, CR_FLAGS
                     flush_pipeline
 
-int_addr\intnum :   goto 1b     ; Wait for interrupt
+int_addr\intnum :   goto 1b     // Wait for interrupt
 
 handle_trap\intnum :
-                    ; Check control registers
+                    // Check control registers
                     getcr s0, CR_TRAP_REASON
                     assert_reg s0, (\intnum )
                     getcr s0, CR_FLAGS
-                    assert_reg s0, FLAG_SUPERVISOR_EN   ; Interrupts disabled
+                    assert_reg s0, FLAG_SUPERVISOR_EN   // Interrupts disabled
 
-                    ; Check that trap PC is correct
+                    // Check that trap PC is correct
                     getcr s0, CR_TRAP_PC
                     lea s1, int_addr\intnum
                     cmpeq_i s0, s0, s1
                     btrue s0, 1f
                     call fail_test
-1:                  ; Interrupts are now off
+1:                  // Interrupts are now off
 .endm
 
                     .globl _start

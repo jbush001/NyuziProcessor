@@ -23,7 +23,7 @@
 _start:     lea s0, dataloc
             load_32 s1, storedat
             store_32 s1, (s0)
-            dinvalidate s0        # This should blow away the word we just stored
+            dinvalidate s0      # This should blow away the word we just stored
             membar
             load_32 s2, (s0)    # Reload it to ensure the old value is still present
 
@@ -38,4 +38,4 @@ thread_halt_mask: .long 0xffff0064
 storedat:   .long    0x12345678
 
             .align 128
-dataloc:    .long    0xdeadbeef            ; will be at address 256
+dataloc:    .long    0xdeadbeef # will be at address 256

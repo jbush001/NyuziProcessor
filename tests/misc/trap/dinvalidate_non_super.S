@@ -1,38 +1,38 @@
-;
-; Copyright 2016 Jeff Bush
-;
-; Licensed under the Apache License, Version 2.0 (the "License");
-; you may not use this file except in compliance with the License.
-; You may obtain a copy of the License at
-;
-;     http://www.apache.org/licenses/LICENSE-2.0
-;
-; Unless required by applicable law or agreed to in writing, software
-; distributed under the License is distributed on an "AS IS" BASIS,
-; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-; See the License for the specific language governing permissions and
-; limitations under the License.
-;
+//
+// Copyright 2016 Jeff Bush
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 
 #include "trap_test_common.inc"
 
-;
-; Ensure that attempting to execute the 'dinvalidate'
-; instruction faults if the thread is in user mode
-;
+//
+// Ensure that attempting to execute the 'dinvalidate'
+// instruction faults if the thread is in user mode
+//
 
                 .globl _start
 _start:
-                ; Set up fault handler
+                // Set up fault handler
                 lea s0, handle_fault
                 setcr s0, CR_TRAP_HANDLER
 
-                ; Switch to user mode
+                // Switch to user mode
                 move s0, 0
                 setcr s0, CR_FLAGS
                 flush_pipeline
 
-fault_loc:      dinvalidate s0 ; This should fault
+fault_loc:      dinvalidate s0 // This should fault
 
                 should_not_get_here
 

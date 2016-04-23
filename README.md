@@ -79,6 +79,13 @@ out the following line:_
 
     add_llvm_external_project(lldb)
 
+Occasionally a change will require a new version of the compiler. To rebuild:
+
+    git submodule update
+    cd tools/NyuziToolchain/build
+    sudo chown -R `whoami` .
+    make && make install
+
 ## What next?
 
 Sample applications are available in [software/apps](software/apps). You can

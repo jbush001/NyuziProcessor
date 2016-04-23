@@ -21,11 +21,11 @@
 
                     .globl _start
 _start:             lea s0, foo
-                    membar           ; No outstanding writes, shouldn't wait
-                    dflush s0        ; Address is not dirty, should do nothing
+                    membar           # No outstanding writes, shouldn't wait
+                    dflush s0        # Address is not dirty, should do nothing
                     membar
                     store_32 s0, (s0)
-                    dflush s0        ; Address is dirty.
+                    dflush s0        # Address is dirty.
                     membar
 
                     # Halt
