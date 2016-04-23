@@ -59,12 +59,21 @@ $(OBJ_DIR)/%.o: %.s
 	@echo "Assembling $<"
 	@$(AS) -o $@ -c $<
 
+$(OBJ_DIR)/%.o: %.S
+	@echo "Assembling $<"
+	@$(AS) -o $@ -c $<
+
 $(OBJ_DIR)/%.d: %.cpp
 	@echo "Building dependencies for $<"
 	@mkdir -p $(dir $@)
 	@$(CC) $(CFLAGS) -o $(OBJ_DIR)/$*.d -M -MT $(OBJ_DIR)/$(notdir $(basename $<)).o $<
 
 $(OBJ_DIR)/%.d: %.c
+	@echo "Building dependencies for $<"
+	@mkdir -p $(dir $@)
+	@$(CC) $(CFLAGS) -o $(OBJ_DIR)/$*.d -M -MT $(OBJ_DIR)/$(notdir $(basename $<)).o $<
+
+$(OBJ_DIR)/%.d: %.S
 	@echo "Building dependencies for $<"
 	@mkdir -p $(dir $@)
 	@$(CC) $(CFLAGS) -o $(OBJ_DIR)/$*.d -M -MT $(OBJ_DIR)/$(notdir $(basename $<)).o $<
