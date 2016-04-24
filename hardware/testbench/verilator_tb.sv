@@ -59,7 +59,7 @@ module verilator_tb(
         IO_ONES,
         IO_NONE
     } io_bus_source;
-
+    scalar_t timer_interval;
 
     /*AUTOLOGIC*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -307,6 +307,8 @@ module verilator_tb(
             $display("error opening file");
             $finish;
         end
+
+        timer_interval = 1000;
     end
 
     final
@@ -353,14 +355,14 @@ module verilator_tb(
             interrupt_counter <= 0;
             interrupt_req <= 0;
         end
-        else if (interrupt_counter == 1000)
+        else if (interrupt_counter == 0)
         begin
-            interrupt_counter <= 0;
+            interrupt_counter <= timer_interval;
             interrupt_req <= 1;
         end
         else
         begin
-            interrupt_counter <= interrupt_counter + 1;
+            interrupt_counter <= interrupt_counter - 1;
             interrupt_req <= 0;
         end
     end
@@ -399,6 +401,9 @@ module verilator_tb(
 
                     // Loopback UART: force framing error
                     'h1c: loopback_uart_mask <= nyuzi_io_bus.write_data[0];
+
+                    // Set timer interval
+                    'h20: timer_interval <= nyuzi_io_bus.write_data;
                 endcase
             end
 

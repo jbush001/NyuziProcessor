@@ -30,7 +30,7 @@
 //
 handle_trap:    load_32 s24, seraddr    // Load address of serial registers
                 move s25, '*'
-                store_32 s25, 8(s24)      // Send char
+                store_32 s25, 8(s24)    // Send char
                 eret
 
                 .globl _start
@@ -38,6 +38,11 @@ _start:
                 // Set up trap handler
                 lea s0, handle_trap
                 setcr s0, CR_TRAP_HANDLER
+
+                // Configure timer
+                move s0, 100             // Cycles per interrupt
+                load_32 s1, timer_addr
+                store_32 s0, (s1)
 
                 // Enable interrupts
                 move s0, FLAG_SUPERVISOR_EN | FLAG_INTERRUPT_EN
@@ -62,4 +67,5 @@ print_loop:     store_32 s0, 8(s1)      // Send char
 
                 call halt_test
 
-seraddr:         .long 0xffff0040
+seraddr:        .long 0xffff0040
+timer_addr:     .long 0xffff0020

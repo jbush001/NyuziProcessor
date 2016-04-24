@@ -80,6 +80,7 @@ E = emulator, V = verilator.
 | ffff0014 |  w | F   | Set value of 7 segment display 3 |
 | ffff0018 |  w |  E  | Sends interrupt to host via pipe in emulator |
 | ffff001c |  w |   V | Toggle UART tx line (used to force framing error in test) |
+| ffff0020 |  w |   V | Set interrupt timer interval |
 | ffff0040 | r  | FEV | UART status.<sup>1</sup> |
 | ffff0044 | r  | F   | UART read |
 | ffff0048 |  w | FEV | UART write<sup>2</sup> |
