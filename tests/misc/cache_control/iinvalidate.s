@@ -14,8 +14,6 @@
 # limitations under the License.
 #
 
-.include "macros.inc"
-
 
 # This test patches a nop instruction in the middle of a loop to convert it
 # to a jump out of the loop
@@ -39,5 +37,11 @@ jumploc:    nop                # This location will be patched
             # Control will flow here after patch
 breakout:   move s10, 3
 
-            HALT_CURRENT_THREAD
+            # Halt
+            move s1, -1
+            load_32 s0, halt_reg
+            store_32 s1, (s0)
+1:          goto 1b
+
+halt_reg:   .long 0xffff0104
 newinst:    .long    0xf6000280    ; goto +20

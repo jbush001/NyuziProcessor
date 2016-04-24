@@ -78,7 +78,12 @@ def dflush_wait_test(name):
     assemble_test('dflush_wait.s')
     run_verilator()
 
+def iinvalidate_test(name):
+    assemble_test('iinvalidate.s')
+    run_verilator()
+
 register_tests(dflush_test, ['dflush'])
 register_tests(dinvalidate_test, ['dinvalidate'])
 register_tests(dflush_wait_test, ['dflush_wait'])
+register_tests(iinvalidate_test, ['iinvalidate'])
 execute_tests()
