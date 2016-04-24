@@ -33,10 +33,10 @@ static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff
 enum RegisterIndex
 {
     REG_RED_LED             = 0x00 / 4,
-    REG_UART_STATUS         = 0x18 / 4,
-    REG_UART_RX             = 0x1c / 4,
-    REG_UART_TX             = 0x20 / 4,
-    REG_UART_DIVISOR        = 0x24 / 4
+    REG_UART_STATUS         = 0x40 / 4,
+    REG_UART_RX             = 0x44 / 4,
+    REG_UART_TX             = 0x48 / 4,
+    REG_UART_DIVISOR        = 0x4c / 4
 };
 
 unsigned int readSerialByte(void)
