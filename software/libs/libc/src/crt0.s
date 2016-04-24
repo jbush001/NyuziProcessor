@@ -84,5 +84,5 @@ do_main:            move s0, 0    # Set argc to 0
 stacks_base:        .long 0x200000
 init_array_start:   .long __init_array_start
 init_array_end:     .long __init_array_end
-thread_halt_addr:   .long 0xffff0064
+thread_halt_addr:   .long 0xffff0104
 exit_flag:          .long 0

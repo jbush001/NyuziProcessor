@@ -87,7 +87,7 @@
                     goto 1b                 // Loop for next char
 3:
 .endm
-_seraddr:          .long 0xffff0018
+_seraddr:          .long 0xffff0040
 
 // Does not return
                     .align 4, 0xff
@@ -108,7 +108,7 @@ halt_test:          move s0, -1
                     load_32 s1, haltaddr
                     store_32 s0, (s1)
 2:                  goto 2b
-haltaddr:          .long 0xffff0064
+haltaddr:          .long 0xffff0104
 
 
 // Load a constant value into a register

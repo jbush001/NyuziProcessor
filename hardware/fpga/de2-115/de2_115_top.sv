@@ -139,7 +139,7 @@ module de2_115_top(
     // We always access the full word width, so hard code these to active (low)
     assign dram_dqm = 4'b0000;
 
-    vga_controller #(.BASE_ADDRESS('h110)) vga_controller(
+    vga_controller #(.BASE_ADDRESS('h180)) vga_controller(
         .io_bus(vga_io_bus),
         .axi_bus(axi_bus_m[1]),
         .*);
@@ -165,18 +165,18 @@ module de2_115_top(
             event_count <= event_count + 1;
     end
 `else
-    uart #(.BASE_ADDRESS(24)) uart(
+    uart #(.BASE_ADDRESS('h40)) uart(
         .io_bus(uart_io_bus),
         .*);
 `endif
 
 `ifdef BITBANG_SDMMC
-    gpio_controller #(.BASE_ADDRESS('h58), .NUM_PINS(6)) gpio_controller(
+    gpio_controller #(.BASE_ADDRESS('hc0), .NUM_PINS(6)) gpio_controller(
         .io_bus(sdcard_io_bus),
         .gpio_value({sd_clk, sd_cmd, sd_dat}),
         .*);
 `else
-    spi_controller #(.BASE_ADDRESS('h44)) spi_controller(
+    spi_controller #(.BASE_ADDRESS('hc0)) spi_controller(
         .io_bus(sdcard_io_bus),
         .spi_clk(sd_clk),
         .spi_cs_n(sd_dat[3]),
@@ -185,7 +185,7 @@ module de2_115_top(
         .*);
 `endif
 
-    ps2_controller #(.BASE_ADDRESS('h38)) ps2_controller(
+    ps2_controller #(.BASE_ADDRESS('h80)) ps2_controller(
         .io_bus(ps2_io_bus),
         .*);
 
@@ -235,14 +235,14 @@ module de2_115_top(
 
     always_ff @(posedge clk)
     begin
-        case (nyuzi_io_bus.address)
-            'h18, 'h1c: io_read_source <= IO_UART;
+        casez (nyuzi_io_bus.address)
+            'h4?: io_read_source <= IO_UART;
 `ifdef BITBANG_SDMMC
-            'h5c: io_read_source <= IO_SDCARD;
+            'hc?: io_read_source <= IO_SDCARD;
 `else
-            'h48, 'h4c: io_read_source <= IO_SDCARD;
+            'hc?: io_read_source <= IO_SDCARD;
 `endif
-            'h38, 'h3c: io_read_source <= IO_PS2;
+            'h8?: io_read_source <= IO_PS2;
         endcase
     end
 

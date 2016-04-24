@@ -67,7 +67,7 @@ module nyuzi
         assert(`NUM_CORES >= 1 && `NUM_CORES <= (1 << `CORE_ID_WIDTH));
     end
 
-    interrupt_controller #(.BASE_ADDRESS('h60)) interrupt_controller(
+    interrupt_controller #(.BASE_ADDRESS('h100)) interrupt_controller(
         .io_bus(ic_io_bus),
         .*);
 
@@ -77,9 +77,9 @@ module nyuzi
 
     always_ff @(posedge clk)
     begin
-        if (interconnect_io_bus.address >= 'h130 && interconnect_io_bus.address <= 'h13c)
+        if (interconnect_io_bus.address ==? 'h20? || interconnect_io_bus.address ==? 'h21?)
             io_read_source <= IO_PERF_COUNTERS;
-        else if (interconnect_io_bus.address >= 'h60 && interconnect_io_bus.address < 'h100)
+        else if (interconnect_io_bus.address ==? 'h10?)
             io_read_source <= IO_INT_CONTROLLER;
         else
             io_read_source <= IO_ARBITER;
@@ -115,7 +115,7 @@ module nyuzi
 
     performance_counters #(
         .NUM_EVENTS(`TOTAL_PERF_EVENTS),
-        .BASE_ADDRESS('h120)
+        .BASE_ADDRESS('h200)
     ) performance_counters(
         .io_bus(perf_io_bus),
         .*);

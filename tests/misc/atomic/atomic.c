@@ -23,7 +23,7 @@ volatile int gEndSync = kNumThreads;
 int main()
 {
     // Start worker threads
-    *((unsigned int*) 0xffff0060) = (1 << kNumThreads) - 1;
+    *((unsigned int*) 0xffff0100) = (1 << kNumThreads) - 1;
 
     const int kTotalIncrements = kNumSlots * 10;
     while (1)

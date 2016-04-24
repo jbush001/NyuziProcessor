@@ -19,7 +19,7 @@
 
                 .globl _start
 _start:         move s0, 5
-                load_const s1, 0xffff00f8
+                load_const s1, 0xffff0018
 1:              store_32 s0, (s1)
                 add_i s0, s0, 1
                 cmpge_i s2, s0, 10

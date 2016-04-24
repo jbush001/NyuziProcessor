@@ -142,7 +142,7 @@ module verilator_tb(
         .MAX_REFRESH_INTERVAL(800)) memory(.*);
 
     assign loopback_uart_rx = loopback_uart_tx & loopback_uart_mask;
-    uart #(.BASE_ADDRESS('h100)) loopback_uart(
+    uart #(.BASE_ADDRESS('h140)) loopback_uart(
         .io_bus(loopback_uart_io_bus),
         .uart_tx(loopback_uart_tx),
         .uart_rx(loopback_uart_rx),
@@ -157,7 +157,7 @@ module verilator_tb(
 
     sim_sdmmc sim_sdmmc(.*);
 
-    spi_controller #(.BASE_ADDRESS('h44)) spi_controller(
+    spi_controller #(.BASE_ADDRESS('hc0)) spi_controller(
         .io_bus(sdcard_io_bus),
         .spi_clk(sd_sclk),
         .spi_cs_n(sd_cs_n),
@@ -167,7 +167,7 @@ module verilator_tb(
 
     sim_ps2 sim_ps2(.*);
 
-    ps2_controller #(.BASE_ADDRESS('h38)) ps2_controller(
+    ps2_controller #(.BASE_ADDRESS('h80)) ps2_controller(
         .io_bus(ps2_io_bus),
         .*);
 
@@ -177,7 +177,7 @@ module verilator_tb(
     // - Rebuild hardware: DUMP_WAVEFORM=1 make
     // - Run one of the apps (like mandelbrot) for maybe 20 seconds, ctrl-C to stop
     // - Look the resulting waveform in GtkWave to check that the timings are correct.
-    vga_controller #(.BASE_ADDRESS('h110)) vga_controller(
+    vga_controller #(.BASE_ADDRESS('h180)) vga_controller(
         .io_bus(vga_io_bus),
         .axi_bus(axi_bus_m[1]),
         .*);
@@ -395,33 +395,30 @@ module verilator_tb(
             begin
                 case (nyuzi_io_bus.address)
                     // Serial output
-                    'h20: $write("%c", nyuzi_io_bus.write_data[7:0]);
+                    'h48: $write("%c", nyuzi_io_bus.write_data[7:0]);
 
                     // Loopback UART: force framing error
-                    'hfc: loopback_uart_mask <= nyuzi_io_bus.write_data[0];
+                    'h1c: loopback_uart_mask <= nyuzi_io_bus.write_data[0];
                 endcase
             end
 
             if (nyuzi_io_bus.read_en)
             begin
-                case (nyuzi_io_bus.address)
+                casez (nyuzi_io_bus.address[15:0])
                     // Hack for cosimulation tests
-                    'h4,
-                    'h8,
-                    'h18: // Serial status
+                    'h04,
+                    'h08,
+                    'h40: // Serial status
                         io_bus_source <= IO_ONES;
 
                     // PS2
-                    'h38,
-                    'h3c: io_bus_source <= IO_PS2;
+                    'h8?: io_bus_source <= IO_PS2;
 
                     // SPI (SD card)
-                    'h48,
-                    'h4c: io_bus_source <= IO_SDCARD;
+                    'hc?: io_bus_source <= IO_SDCARD;
 
-                    // External UART 0
-                    'h100,
-                    'h104: io_bus_source <= IO_LOOPBACK_UART;
+                    // Loopback UART
+                    'h14?: io_bus_source <= IO_LOOPBACK_UART;
 
                     default: io_bus_source <= IO_NONE;
                 endcase

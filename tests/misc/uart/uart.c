@@ -27,7 +27,7 @@
 
 const int kMaxTimeout = 10000;
 const int kMaxFifoDepth = 7;
-volatile unsigned int * const LOOPBACK_UART = (volatile unsigned int*) 0xFFFF0100;
+volatile unsigned int * const LOOPBACK_UART = (volatile unsigned int*) 0xFFFF0140;
 
 enum UartRegs
 {
@@ -67,7 +67,7 @@ int readLoopbackUart(void)
 
 void setLoopbackUartMask(int value)
 {
-    *((volatile unsigned int*) 0xffff00fc) = value;
+    *((volatile unsigned int*) 0xffff001c) = value;
 }
 
 int main ()

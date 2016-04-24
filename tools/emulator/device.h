@@ -21,17 +21,17 @@
 
 enum DeviceAddress
 {
-    REG_SERIAL_STATUS = 0x18,
-    REG_SERIAL_OUTPUT = 0x20,
-    REG_KEYBOARD_STATUS = 0x38,
-    REG_KEYBOARD_READ = 0x3c,
-    REG_SD_WRITE_DATA = 0x44,
-    REG_SD_READ_DATA = 0x48,
-    REG_SD_STATUS = 0x4c,
-    REG_SD_CONTROL = 0x50,
-    REG_HOST_INTERRUPT = 0xf8,
-    REG_VGA_ENABLE = 0x110,
-    REG_VGA_BASE = 0x118
+    REG_HOST_INTERRUPT = 0x18,
+    REG_SERIAL_STATUS = 0x40,
+    REG_SERIAL_OUTPUT = 0x48,
+    REG_KEYBOARD_STATUS = 0x80,
+    REG_KEYBOARD_READ = 0x84,
+    REG_SD_WRITE_DATA = 0xc0,
+    REG_SD_READ_DATA = 0xc4,
+    REG_SD_STATUS = 0xc8,
+    REG_SD_CONTROL = 0xcc,
+    REG_VGA_ENABLE = 0x180,
+    REG_VGA_BASE = 0x188
 };
 
 void writeDeviceRegister(uint32_t address, uint32_t value);

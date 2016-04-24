@@ -46,17 +46,17 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
                 lea s0, message
 1:              load_u8 s2, (s0)        // Read a character
                 bfalse s2, 3f           // If delimeter, exit
-2:              load_32 s3, 0x18(s1)    // Read STATUS
+2:              load_32 s3, 0x40(s1)    // Read STATUS
                 and s3, s3, 1           // Check write available bit
                 bfalse s3, 2b           // If this is clear, busy wait
-                store_32 s2, 0x20(s1)   // Write space available, send char
+                store_32 s2, 0x48(s1)   // Write space available, send char
                 add_i s0, s0, 1         // Increment pointer
                 goto 1b                 // Loop for next char
 3:
 
                 // halt
                 move s0, -1
-                store_32 s0, 0x64(s1)
+                store_32 s0, 0x104(s1)
 1:              goto 1b
 
 

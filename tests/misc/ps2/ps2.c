@@ -23,7 +23,7 @@ static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff
 unsigned int wait_keypress()
 {
     int timeout = 5000;
-    while (REGISTERS[0x38 / 4] == 0 && timeout-- > 0)
+    while (REGISTERS[0x80 / 4] == 0 && timeout-- > 0)
         ;
 
     if (timeout == 0)
@@ -32,7 +32,7 @@ unsigned int wait_keypress()
         exit(1);
     }
 
-    return REGISTERS[0x3c / 4];
+    return REGISTERS[0x84 / 4];
 }
 
 int main()

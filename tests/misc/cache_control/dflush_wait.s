@@ -33,6 +33,6 @@ _start:             lea s0, foo
                     load_32 s0, thread_halt_mask
                     store_32 s1, (s0)
 1:                  goto 1b
-thread_halt_mask:   .long 0xffff0064
+thread_halt_mask:   .long 0xffff0104
 
 foo:                .long 0

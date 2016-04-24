@@ -27,7 +27,7 @@ int main()
     if (myThreadId == 0)
     {
         // Start worker threads
-        *((unsigned int*) 0xffff0060) = (1 << kNumThreads) - 1;
+        *((unsigned int*) 0xffff0100) = (1 << kNumThreads) - 1;
     }
 
     for (int i = myThreadId; i < kFillCount; i += kNumThreads)

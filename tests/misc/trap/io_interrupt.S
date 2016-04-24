@@ -62,4 +62,4 @@ print_loop:     store_32 s0, 8(s1)      // Send char
 
                 call halt_test
 
-seraddr:         .long 0xffff0018
+seraddr:         .long 0xffff0040

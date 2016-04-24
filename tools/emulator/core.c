@@ -1263,13 +1263,13 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instruction)
                 if ((physicalAddress & 0xffff0000) == 0xffff0000)
                 {
                     // IO address range
-                    if (physicalAddress == 0xffff0060)
+                    if (physicalAddress == 0xffff0100)
                     {
                         // Thread resume
                         thread->core->threadEnableMask |= valueToStore
                                                           & ((1ull << thread->core->totalThreads) - 1);
                     }
-                    else if (physicalAddress == 0xffff0064)
+                    else if (physicalAddress == 0xffff0104)
                     {
                         // Thread halt
                         thread->core->threadEnableMask &= ~valueToStore;

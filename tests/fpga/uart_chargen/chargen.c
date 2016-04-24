@@ -23,7 +23,7 @@ const char *kPattern = "!#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXY
 const int kPatternLength = 89;
 const int kLineLength = 72;
 
-volatile unsigned int * const UART_BASE = (volatile unsigned int*) 0xFFFF0018;
+volatile unsigned int * const UART_BASE = (volatile unsigned int*) 0xFFFF0040;
 
 enum UartRegs
 {

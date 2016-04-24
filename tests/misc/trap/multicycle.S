@@ -64,9 +64,9 @@ bad_int:            call fail_test
 // the value of the last instruction and the test appears to pass.
 spinner_thread:     goto spinner_thread
 
-threadresume:       .long 0xffff0060
-threadhalt:         .long 0xffff0064
-serialwrite:        .long 0xffff0020
+threadresume:       .long 0xffff0100
+threadhalt:         .long 0xffff0104
+serialwrite:        .long 0xffff0048
                     .align 64
 
 // There will be a cache miss between dataloc1 and dataloc2, which will allow the interrupt to

@@ -32,7 +32,7 @@ _start:     lea s0, dataloc
             load_32 s0, thread_halt_mask
             store_32 s1, (s0)
 1:          goto 1b
-thread_halt_mask: .long 0xffff0064
+thread_halt_mask: .long 0xffff0104
 
 
 storedat:   .long    0x12345678

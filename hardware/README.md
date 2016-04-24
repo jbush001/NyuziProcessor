@@ -78,39 +78,39 @@ E = emulator, V = verilator.
 | ffff000c |  w | F   | Set value of 7 segment display 1 |
 | ffff0010 |  w | F   | Set value of 7 segment display 2 |
 | ffff0014 |  w | F   | Set value of 7 segment display 3 |
-| ffff0018 | r  | FEV | UART status.<sup>1</sup> |
-| ffff001c | r  | F   | UART read |
-| ffff0020 |  w | FEV | UART write<sup>2</sup> |
-| ffff0024 |  w | F   | UART divider (clocks per bit) |
-| ffff0038 | r  | FEV | PS/2 Keyboard status. 1 indicates there are scancodes in FIFO. |
-| ffff003c | r  | FEV | PS/2 Keyboard scancode. Remove from FIFO on read.<sup>3</sup> |
-| ffff0044 |  w | FEV | SD SPI write byte<sup>4</sup> |
-| ffff0048 | r  | FEV | SD SPI read byte |
-| ffff004c | r  | FEV | SD SPI status (bit 0: ready) |
-| ffff0050 |  w | FEV | SD SPI control (bit 0: chip select) |
-| ffff0054 |  w | F V | SD clock divider |
-| ffff0058 |  w | F   | SD GPIO direction<sup>5</sup> |
-| ffff005c |  w | F   | SD GPIO value |
-| ffff0060 |  w | FEV | Thread resume mask. A 1 bit starts a thread. (bit 0 = thread 0) |
-| ffff0064 |  w | FEV | Thread halt mask. A 1 bit halts a thread. (bit 0 = thread 0) |
-| ffff00f8 |  w |  E  | Sends interrupt to host via pipe in emulator |
-| ffff00fc |  w |   V | Toggle UART tx line (used to force framing error in test) |
-| ffff0100 | r  |   V | Loopback UART Status<sup>6</sup> (same as above) |
-| ffff0104 | r  |   V | Loopback UART read |
-| ffff0108 |  w |   V | Loopback UART write |
-| ffff010c |  w |   V | Loopback UART divider |
-| ffff0110 |  w | FE  | VGA sequencer enable |
-| ffff0114 |  w | F   | VGA microcode write |
-| ffff0118 |  w | FE  | VGA frame buffer base address |
-| ffff011c |  w | F   | VGA frame buffer length |
-| ffff0120 |  w | F V | Performance counter 0 event select<sup>7</sup> |
-| ffff0124 |  w | F V | Performance counter 1 event select |
-| ffff0128 |  w | F V | Performance counter 2 event select |
-| ffff012c |  w | F V | Performance counter 3 event select |
-| ffff0130 | r  | F V | Performance counter 0 count |
-| ffff0134 | r  | F V | Performance counter 1 count |
-| ffff0138 | r  | F V | Performance counter 2 count |
-| ffff013c | r  | F V | Performance counter 3 count |
+| ffff0018 |  w |  E  | Sends interrupt to host via pipe in emulator |
+| ffff001c |  w |   V | Toggle UART tx line (used to force framing error in test) |
+| ffff0040 | r  | FEV | UART status.<sup>1</sup> |
+| ffff0044 | r  | F   | UART read |
+| ffff0048 |  w | FEV | UART write<sup>2</sup> |
+| ffff004c |  w | F   | UART divider (clocks per bit) |
+| ffff0080 | r  | FEV | PS/2 Keyboard status. 1 indicates there are scancodes in FIFO. |
+| ffff0084 | r  | FEV | PS/2 Keyboard scancode. Remove from FIFO on read.<sup>3</sup> |
+| ffff00c0 |  w | FEV | SD SPI write byte<sup>4</sup> |
+| ffff00c4 | r  | FEV | SD SPI read byte |
+| ffff00c8 | r  | FEV | SD SPI status (bit 0: ready) |
+| ffff00cc |  w | FEV | SD SPI control (bit 0: chip select) |
+| ffff00d0 |  w | F V | SD clock divider |
+| ffff00c0 |  w | F   | SD GPIO direction<sup>5</sup> |
+| ffff00c4 |  w | F   | SD GPIO value |
+| ffff0100 |  w | FEV | Thread resume mask. A 1 bit starts a thread. (bit 0 = thread 0) |
+| ffff0104 |  w | FEV | Thread halt mask. A 1 bit halts a thread. (bit 0 = thread 0) |
+| ffff0140 | r  |   V | Loopback UART Status<sup>6</sup> (same as above) |
+| ffff0144 | r  |   V | Loopback UART read |
+| ffff0148 |  w |   V | Loopback UART write |
+| ffff014c |  w |   V | Loopback UART divider |
+| ffff0180 |  w | FE  | VGA sequencer enable |
+| ffff0184 |  w | F   | VGA microcode write |
+| ffff0188 |  w | FE  | VGA frame buffer base address |
+| ffff018c |  w | F   | VGA frame buffer length |
+| ffff0200 |  w | F V | Performance counter 0 event select<sup>7</sup> |
+| ffff0204 |  w | F V | Performance counter 1 event select |
+| ffff0208 |  w | F V | Performance counter 2 event select |
+| ffff020c |  w | F V | Performance counter 3 event select |
+| ffff0210 | r  | F V | Performance counter 0 count |
+| ffff0214 | r  | F V | Performance counter 1 count |
+| ffff0218 | r  | F V | Performance counter 2 count |
+| ffff021c | r  | F V | Performance counter 3 count |
 
 1. Serial status bits:
 

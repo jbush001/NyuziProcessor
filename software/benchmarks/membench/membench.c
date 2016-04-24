@@ -48,7 +48,7 @@ void endParallel()
     if (getCurrentThreadId() == 0)
     {
         // Stop all but me
-        *((unsigned int*) 0xffff0064) = ~1;
+        *((unsigned int*) 0xffff0104) = ~1;
     }
 }
 
