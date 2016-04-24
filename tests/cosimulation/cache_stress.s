@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-.include "macros.inc"
+.include "../asm_macros.inc"
 
 #
 # L2 cache stress test. Generate stores to a series of randomly generated
@@ -27,7 +27,7 @@
 #
 
                 .globl _start
-_start:         START_ALL_THREADS
+_start:         start_all_threads
 
                 getcr s1, CR_CURRENT_THREAD # seed for RNG (based on thread ID)
                 load_32 s5, num_iterations
@@ -51,7 +51,7 @@ main_loop:      mull_i s1, s1, s2    # Generate next random number
                 sub_i s5, s5, 1      # Decrement count
                 btrue s5, main_loop
 
-                HALT_CURRENT_THREAD
+                halt_current_thread
 
 generator_a:    .long 1103515245
 generator_c:    .long 12345

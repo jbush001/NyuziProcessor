@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "trap_test_common.inc"
+#include "../../asm_macros.inc"
 
 //
 // This does a lot of I/O writes while the timer interrupt is going off.
@@ -65,7 +65,7 @@ print_loop:     store_32 s0, 8(s1)      // Send char
                 move s0, '\n'
                 store_32 s0, 8(s1)
 
-                call halt_test
+                halt_test
 
 seraddr:        .long 0xffff0040
 timer_addr:     .long 0xffff0020

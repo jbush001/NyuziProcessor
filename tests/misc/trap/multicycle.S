@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "trap_test_common.inc"
+#include "../../asm_macros.inc"
 
 //
 // This checks that, if an interrupt comes in during a gather load, it resumes

@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-.include "macros.inc"
+.include "../asm_macros.inc"
 
 #
 # Test interrupt handling
@@ -27,7 +27,7 @@
                     .align    4
                     .type    main,@function
 _start:             lea s0, interrupt_handler
-                    setcr s0, CR_FAULT_HANDLER
+                    setcr s0, CR_TRAP_HANDLER
                     move s0, 5
                     setcr s0, CR_FLAGS   # Enable interrupts
                     move s1, 1000
@@ -47,10 +47,10 @@ _start:             lea s0, interrupt_handler
                     move s0, 0
                     setcr s0, CR_FLAGS
 
-                    HALT_CURRENT_THREAD
+                    halt_current_thread
 
 
-interrupt_handler:  getcr s11, CR_FAULT_PC        # Interrupt PC
-                    getcr s12, CR_FAULT_REASON    # Reason
+interrupt_handler:  getcr s11, CR_TRAP_PC        # Interrupt PC
+                    getcr s12, CR_TRAP_REASON    # Reason
                     move s13, 1
                     eret

@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "trap_test_common.inc"
+#include "../../asm_macros.inc"
 
 //
 // Ensure that attempting to execute the 'eret' (return from exception)

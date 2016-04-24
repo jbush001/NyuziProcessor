@@ -15,7 +15,7 @@
 #
 
 
-.include "macros.inc"
+.include "../asm_macros.inc"
 
             .globl _start
 _start:     lea s0, ops
@@ -35,7 +35,7 @@ test_loop:  load_32 s1, (s0)
             cmpge_i s6, s0, s15
             bfalse s6, test_loop
 
-            HALT_CURRENT_THREAD
+            halt_current_thread
 
 
 ops:        .float 17.79, 19.32             # Exponents are equal.  This will carry into the next significand bit

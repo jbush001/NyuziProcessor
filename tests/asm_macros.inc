@@ -1,5 +1,5 @@
 //
-// Copyright 2015-2016 Jeff Bush
+// Copyright 2015 Jeff Bush
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,6 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
+
+.set TLB_PRESENT, 1
+.set TLB_WRITABLE, (1 << 1)
+.set TLB_EXECUTABLE, (1 << 2)
+.set TLB_SUPERVISOR, (1 << 3)
+.set TLB_GLOBAL, (1 << 4)
 
 .set CR_TRAP_HANDLER, 1
 .set CR_TRAP_PC, 2
@@ -41,9 +47,38 @@
 .set TR_INTERRUPT_BASE, 16
 
 .set FLAG_INTERRUPT_EN, (1 << 0)
+.set FLAG_MMU_EN, (1 << 1)
 .set FLAG_SUPERVISOR_EN, (1 << 2)
 
-# Takes s0 as parameter, null terminated string. Clobbers s0-s3.
+.macro start_all_threads
+	move s0, 0xffffffff
+	shl s0, s0, 16
+	or s0, s0, 0x100
+	move s1, 0xffffffff
+	store_32 s1, (s0)
+.endm
+
+.macro halt_current_thread
+	getcr s0, CR_CURRENT_THREAD
+	move s1, 1
+	shl s1, s1, s0
+	move s0, 0xffffffff
+	shl s0, s0, 16
+	or s0, s0, 0x104
+	store_32 s1, (s0)
+1:	goto 1b
+.endm
+
+.macro halt_test
+    move s0, 0xffffffff
+    shl s0, s0, 16
+    or s0, s0, 0x104
+    move s1, 0xffffffff
+	store_32 s1, (s0)
+1:	goto 1b
+.endm
+
+// Takes s0 as parameter, null terminated string. Clobbers s0-s3.
                     .align 4, 0xff
 .macro print_string
                     load_32 s1, _seraddr    // Load address of serial registers
@@ -59,39 +94,8 @@
 .endm
 _seraddr:          .long 0xffff0040
 
-# Does not return
-                    .align 4, 0xff
-fail_test:          lea s0, failstr
-                    print_string
-                    call halt_test
-failstr:            .asciz "FAIL"
-
-# Does not return
-                    .align 4, 0xff
-pass_test:          lea s0, passstr
-                    print_string
-                    call halt_test
-passstr:            .asciz "PASS"
-
-                    .align 4, 0xff
-halt_test:          move s0, -1
-                    load_32 s1, haltaddr
-                    store_32 s0, (s1)
-2:                  goto 2b
-haltaddr:          .long 0xffff0104
-
-
-# Load a constant value into a register
-.macro load_const oreg, cval
-                    move \oreg, ((\cval >> 20) & 0xfff)   // Bits 31-20
-                    shl \oreg, \oreg, 12
-                    or \oreg, \oreg, ((\cval >> 8) & 0xfff)      // Bits 19-8
-                    shl \oreg, \oreg, 8
-                    or \oreg, \oreg,    (\cval & 0xff)
-.endm
-
-# If register is not equal to cval, print failure message.
-# Otherwise continue. Clobbers s25
+// If register is not equal to cval, print failure message.
+// Otherwise continue. Clobbers s25
 .macro assert_reg reg, cval
                     load_const s25, \cval
                     cmpeq_i s25, s25, \reg
@@ -108,5 +112,30 @@ haltaddr:          .long 0xffff0104
 .macro should_not_get_here
                     call fail_test
 .endm
+
+// Load a constant value into a register
+.macro load_const oreg, cval
+                    move \oreg, ((\cval >> 20) & 0xfff)     // Bits 31-20
+                    shl \oreg, \oreg, 12
+                    or \oreg, \oreg, ((\cval >> 8) & 0xfff) // Bits 19-8
+                    shl \oreg, \oreg, 8
+                    or \oreg, \oreg,    (\cval & 0xff)
+.endm
+
+// Does not return
+                    .align 4, 0xff
+fail_test:          lea s0, failstr
+                    print_string
+                    halt_test
+failstr:            .asciz "FAIL"
+
+// Does not return
+                    .align 4, 0xff
+pass_test:          lea s0, passstr
+                    print_string
+                    halt_test
+passstr:            .asciz "PASS"
+
+                    .align 4, 0xff
 
 

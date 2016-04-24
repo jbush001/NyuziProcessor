@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "trap_test_common.inc"
+#include "../../asm_macros.inc"
 
 .macro receive_interrupt intnum
                     // Set the trap handler to the next label

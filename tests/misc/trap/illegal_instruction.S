@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "trap_test_common.inc"
+#include "../../asm_macros.inc"
 
 #define REG_ARITH_INST(__type__) (0xc0000000 | ((__type__) << 26))
 #define IMM_ARITH_INST(__type__) ((__type__) << 28)

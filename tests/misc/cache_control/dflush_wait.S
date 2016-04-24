@@ -1,5 +1,5 @@
 //
-// Copyright 2016 Jeff Bush
+// Copyright 2011-2015 Jeff Bush
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,20 +17,19 @@
 #include "../../asm_macros.inc"
 
 //
-// Ensure jumping to an unaligned address faults
+// Test various conditions that should (and should not) cause rollbacks
+// and thread suspends. Ensure processor does not hang.
 //
 
-                .globl _start
-_start:
-                // Set up fault handler
-                lea s0, handle_fault
-                setcr s0, CR_TRAP_HANDLER
+                    .globl _start
+_start:             lea s0, foo
+                    membar           // No outstanding writes, shouldn't wait
+                    dflush s0        // Address is not dirty, should do nothing
+                    membar
+                    store_32 s0, (s0)
+                    dflush s0        // Address is dirty.
+                    membar
 
-                // jump to bad address
-                move pc, 0x357
+                    call pass_test
 
-handle_fault:   getcr s0, CR_TRAP_REASON
-                assert_reg s0, TR_IFETCH_ALIGNNMENT
-                getcr s0, CR_TRAP_PC
-                assert_reg s0, 0x357
-                call pass_test
+foo:                .long 0

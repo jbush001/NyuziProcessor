@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-.include "macros.inc"
+.include "../asm_macros.inc"
 
 
 #
@@ -121,5 +121,5 @@ pcarithhere:    move s10, 26
                 move v31, s1
                 move s10, 27
 
-                HALT_CURRENT_THREAD
+                halt_current_thread
 

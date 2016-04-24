@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-.include "macros.inc"
+.include "../asm_macros.inc"
 
 #
 # Various memory load/store combinations
@@ -91,7 +91,7 @@ _start:    lea s1, testvar1
             store_sync s4, (s0)    # should fail
             move s5, s4        # Check return value
 
-            HALT_CURRENT_THREAD
+            halt_current_thread
 
 
             .align 4

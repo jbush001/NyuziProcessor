@@ -14,8 +14,7 @@
 // limitations under the License.
 //
 
-#include "trap_test_common.inc"
-
+#include "../../asm_macros.inc"
 
                 .globl _start
 _start:         move s0, 5
@@ -24,5 +23,5 @@ _start:         move s0, 5
                 add_i s0, s0, 1
                 cmpge_i s2, s0, 10
                 bfalse s2, 1b
-                call halt_test
+                halt_test
 
