@@ -65,7 +65,7 @@ print_loop:     store_32 s0, 8(s1)      // Send char
                 move s0, '\n'
                 store_32 s0, 8(s1)
 
-                halt_test
+                halt_all_threads
 
 seraddr:        .long 0xffff0040
 timer_addr:     .long 0xffff0020

@@ -14,12 +14,14 @@
 // limitations under the License.
 //
 
+// TLB flags
 .set TLB_PRESENT, 1
 .set TLB_WRITABLE, (1 << 1)
 .set TLB_EXECUTABLE, (1 << 2)
 .set TLB_SUPERVISOR, (1 << 3)
 .set TLB_GLOBAL, (1 << 4)
 
+// Control register indices
 .set CR_TRAP_HANDLER, 1
 .set CR_TRAP_PC, 2
 .set CR_TRAP_REASON, 3
@@ -32,6 +34,7 @@
 .set CR_SCRATCHPAD1, 12
 .set CR_SUBCYCLE, 13
 
+// Trap reasons
 .set TR_ILLEGAL_INSTRUCTION, 1
 .set TR_DATA_ALIGNMENT, 2
 .set TR_PAGE_FAULT, 3
@@ -46,6 +49,7 @@
 .set TR_NOT_EXECUTABLE, 12
 .set TR_INTERRUPT_BASE, 16
 
+// Flag register bits
 .set FLAG_INTERRUPT_EN, (1 << 0)
 .set FLAG_MMU_EN, (1 << 1)
 .set FLAG_SUPERVISOR_EN, (1 << 2)
@@ -69,7 +73,7 @@
 1:	goto 1b
 .endm
 
-.macro halt_test
+.macro halt_all_threads
     move s0, 0xffffffff
     shl s0, s0, 16
     or s0, s0, 0x104
@@ -78,7 +82,8 @@
 1:	goto 1b
 .endm
 
-// Takes s0 as parameter, null terminated string. Clobbers s0-s3.
+// Print a null terminated string pointer to by s0 to the serial
+// port. Clobbers s0-s3.
                     .align 4, 0xff
 .macro print_string
                     load_32 s1, _seraddr    // Load address of serial registers
@@ -94,10 +99,10 @@
 .endm
 _seraddr:          .long 0xffff0040
 
-// If register is not equal to cval, print failure message.
+// If register is not equal to testval, print failure message.
 // Otherwise continue. Clobbers s25
-.macro assert_reg reg, cval
-                    load_const s25, \cval
+.macro assert_reg reg, testval
+                    load_const s25, \testval
                     cmpeq_i s25, s25, \reg
                     btrue s25, 1f
                     call fail_test
@@ -114,26 +119,26 @@ _seraddr:          .long 0xffff0040
 .endm
 
 // Load a constant value into a register
-.macro load_const oreg, cval
-                    move \oreg, ((\cval >> 20) & 0xfff)     // Bits 31-20
+.macro load_const oreg, value
+                    move \oreg, ((\value >> 20) & 0xfff)     // Bits 31-20
                     shl \oreg, \oreg, 12
-                    or \oreg, \oreg, ((\cval >> 8) & 0xfff) // Bits 19-8
+                    or \oreg, \oreg, ((\value >> 8) & 0xfff) // Bits 19-8
                     shl \oreg, \oreg, 8
-                    or \oreg, \oreg,    (\cval & 0xff)
+                    or \oreg, \oreg,    (\value & 0xff)
 .endm
 
-// Does not return
+// Print failure message and halt
                     .align 4, 0xff
 fail_test:          lea s0, failstr
                     print_string
-                    halt_test
+                    halt_all_threads
 failstr:            .asciz "FAIL"
 
-// Does not return
+// Print success message and halt
                     .align 4, 0xff
 pass_test:          lea s0, passstr
                     print_string
-                    halt_test
+                    halt_all_threads
 passstr:            .asciz "PASS"
 
                     .align 4, 0xff

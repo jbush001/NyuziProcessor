@@ -23,5 +23,5 @@ _start:         move s0, 5
                 add_i s0, s0, 1
                 cmpge_i s2, s0, 10
                 bfalse s2, 1b
-                halt_test
+                halt_all_threads
 
