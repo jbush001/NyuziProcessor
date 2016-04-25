@@ -31,14 +31,14 @@ _start:         // Set up first TLB page
                 dtlbinsert s0, s1
                 itlbinsert s0, s1
                 load_const s0, 0xffff0000
-                load_const s1, (0xffff0000 | TLB_PRESENT | TLB_GLOBAL | TLB_WRITABLE)
+                load_const s1, 0xffff0000 | TLB_PRESENT | TLB_GLOBAL | TLB_WRITABLE
                 dtlbinsert s0, s1
 
                 // Map page into ASID 1
                 move s0, 1
                 setcr s0, CR_CURRENT_ASID
                 load_const s0, 0x1000
-                load_const s1, (0x1000 | TLB_PRESENT)
+                load_const s1, 0x1000 | TLB_PRESENT
                 dtlbinsert s0, s1
 
                 // Write value
@@ -49,7 +49,7 @@ _start:         // Set up first TLB page
                 move s0, 2
                 setcr s0, CR_CURRENT_ASID
                 load_const s0, 0x1000
-                load_const s1, (0x2000 | TLB_PRESENT)
+                load_const s1, 0x2000 | TLB_PRESENT
                 dtlbinsert s0, s1
 
                 // Write value
