@@ -18,8 +18,6 @@ TOPDIR=../../../
 
 include $(TOPDIR)/build/target.mk
 
-CFLAGS+=-g
-
 SRCS=schedule.c \
 	sdmmc.c \
 	uart.c \

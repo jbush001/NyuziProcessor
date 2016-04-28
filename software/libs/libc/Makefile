@@ -18,7 +18,6 @@ TOPDIR=../../../
 
 include $(TOPDIR)/build/target.mk
 
-CFLAGS+=-g
 VPATH=src
 
 SRCS=math.c \

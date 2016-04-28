@@ -22,7 +22,7 @@ FB_WIDTH=640
 FB_HEIGHT=480
 MEMORY_SIZE=4000000
 
-CFLAGS+=-g -fno-rtti -std=c++11 -I$(TOPDIR)/software/libs/librender -DFB_WIDTH=$(FB_WIDTH) -DFB_HEIGHT=$(FB_HEIGHT)
+CFLAGS+=-fno-rtti -std=c++11 -I$(TOPDIR)/software/libs/librender -DFB_WIDTH=$(FB_WIDTH) -DFB_HEIGHT=$(FB_HEIGHT)
 LIBS=-lrender -lc -los
 
 SRCS=main.cpp PakFile.cpp MeshBuilder.cpp Render.cpp
