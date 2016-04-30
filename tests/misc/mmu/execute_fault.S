@@ -20,7 +20,7 @@
 // Ensure processor will raise a fault if it attempts to run code from a page
 // that doesn't have the execute bit set.
 // XXX for some reason, aligning noexec_page on 0x1000 also causes start to be
-// page aligned. This might break if the linker changed.
+// page aligned and start at 0x1000. This might break if the linker changed.
 //
 
                 .globl _start

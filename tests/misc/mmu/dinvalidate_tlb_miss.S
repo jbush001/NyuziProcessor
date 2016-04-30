@@ -17,7 +17,7 @@
 #include "mmu_test_common.inc"
 
 //
-// Ensure dflush will cause a TLB miss if there isn't a mapping.
+// Ensure dinvalidate will cause a TLB miss if there isn't a mapping.
 //
 
                 .globl _start

@@ -17,6 +17,12 @@
 #include "../../asm_macros.inc"
 
 // Clobbers s0, s1, s2
+// itlb_entries and dtlb_entries point to two labels, each which points
+// to a table. Each entry of the table is two words, the first being a
+// virtual address and the second being the TLB entry (physical address
+// plus flags). The macro stops reading table entries when it hits
+// an entry where the virtual address is 0xffffffff.
+//
 .macro load_tlb_entries itlb_entries, dtlb_entries
                     // Load ITLB
                     lea s0, \itlb_entries
@@ -40,6 +46,12 @@
 2:
 .endm
 
+//
+// This first loads itlb_entries and dtlb_entries using the load_tlb_entries
+// macro. It then executes 'access_op' memory operation at a given address.
+// This is expected to cause a fault, which this will catch, then check that
+// the reason, fault PC, and fault address are correct.
+//
 .macro mmu_fault_test reason, access_op, address, itlb_entries, dtlb_entries, flags
                     load_tlb_entries \itlb_entries, \dtlb_entries
 

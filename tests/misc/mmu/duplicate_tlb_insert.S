@@ -17,9 +17,9 @@
 #include "mmu_test_common.inc"
 
 //
-// Ensure inserting TLB entries for the same virtual address will update
-// the entry. This inserts several different physical mappings and checks
-// that only the last mapping takes effect
+// Ensure inserting TLB entries multiple times for the same virtual address
+// replaces the existing entry. This inserts several different physical
+// mappings and checks that only the last mapping takes effect
 //
 
                 .globl _start

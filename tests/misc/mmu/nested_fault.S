@@ -18,6 +18,7 @@
 
 //
 // Verify a TLB miss in the middle of another fault works correctly
+// Specifically that it saves the fault state and restores it on eret.
 //
 
                 .globl _start

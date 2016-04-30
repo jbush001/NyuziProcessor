@@ -17,7 +17,7 @@
 #include "mmu_test_common.inc"
 
 //
-// This test writes from a page that has a TLB entry, but is not marked
+// This test writes to a page that has a TLB entry, but is not marked
 // present and ensures it raises a page fault.
 //
 

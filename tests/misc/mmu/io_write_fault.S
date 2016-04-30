@@ -17,9 +17,10 @@
 #include "mmu_test_common.inc"
 
 //
-// This test writes from a page that has a TLB entry, but is not marked
-// present. It's similar to write_fault, but checks pages that are mapped
-// into the I/O physical region, since those are handled differently in hardware.
+// This test writes from a page that is not marked writable.
+// It's similar to write_fault, but checks pages that are mapped
+// into the I/O physical region, since those are handled differently
+// in hardware.
 //
 
                 .globl _start
