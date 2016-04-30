@@ -46,7 +46,8 @@ register_generic_assembly_tests([
     'io_supervisor_fault_write',
     'io_write_fault',
     'io_map',
-    'nested_fault'
+    'nested_fault',
+    'instruction_translate'
 ])
 
 execute_tests()
