@@ -31,7 +31,7 @@ int main(int argc, const char *argv[])
     int result;
     char tmp[32];
 
-    fd = open("test.txt", 0);
+    fd = open("fstest.txt", 0);
     CHECK(fd >= 0);
 
     // Full read
@@ -80,10 +80,10 @@ int main(int argc, const char *argv[])
     CHECK(errno == EBADF);
 
     // Valid access
-    CHECK(access("test.txt", R_OK) == 0);
+    CHECK(access("fstest.txt", R_OK) == 0);
 
     // Invalid permissions
-    CHECK(access("test.txt", W_OK) == -1);
+    CHECK(access("fstest.txt", W_OK) == -1);
     CHECK(errno == EPERM);
 
     // Missing file
