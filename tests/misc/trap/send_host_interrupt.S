@@ -16,6 +16,11 @@
 
 #include "../../asm_macros.inc"
 
+//
+// Test mechanism for delivering interrupts from the emulator to an
+// external program.
+//
+
                 .globl _start
 _start:         move s0, 5
                 load_const s1, 0xffff0018

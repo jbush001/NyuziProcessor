@@ -17,8 +17,7 @@
 #include "../../asm_macros.inc"
 
 //
-// Ensure that attempting to execute the 'dinvalidate'
-// instruction faults if the thread is in user mode
+// Test raising a system call trap.
 //
 
                 .globl _start

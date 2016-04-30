@@ -16,6 +16,11 @@
 
 #include "../../asm_macros.inc"
 
+//
+// Test mechanism for delivering interrupts from an external program
+// to the emulator.
+//
+
 .macro receive_interrupt intnum
                     // Set the trap handler to the next label
                     lea s0, handle_trap\intnum

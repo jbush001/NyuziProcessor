@@ -17,7 +17,7 @@
 #include "../../asm_macros.inc"
 
 //
-// Test that unaligned data accesses properly raise faults
+// Test that unaligned data accesses properly faults
 //
 
 .macro test_unaligned_fault testnum, op, ptr, value, fault_addr
