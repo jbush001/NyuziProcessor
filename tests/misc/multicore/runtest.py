@@ -26,7 +26,7 @@ from test_harness import *
 
 
 def multicore_test(name):
-    compile_test('multicore.c')
+    build_program(['multicore.c'])
     result = run_program(environment='verilator')
     if result.replace('\n', '').find(
             '012345678910111213141516171819202122232425262728293031') == -1:

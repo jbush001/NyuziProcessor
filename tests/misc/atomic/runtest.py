@@ -26,7 +26,7 @@ from test_harness import *
 
 
 def atomic_test(name):
-    assemble_test('atomic.S')
+    build_program(['atomic.S'])
     run_program(
         environment='verilator',
         dump_file='obj/vmem.bin',

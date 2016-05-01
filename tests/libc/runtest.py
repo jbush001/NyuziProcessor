@@ -25,7 +25,7 @@ from test_harness import *
 
 
 def fs_test(name):
-    compile_test('fs.c')
+    build_program(['fs.c'])
     subprocess.check_output(
         ['../../bin/mkfs', 'obj/fsimage.bin', 'fstest.txt'], stderr=subprocess.STDOUT)
     result = run_program(environment='emulator',
@@ -36,7 +36,7 @@ def fs_test(name):
 
 
 def run_emulator_test(source_file):
-    compile_test(source_file, optlevel='3')
+    build_program([source_file])
     result = run_program(environment='emulator')
     check_result(source_file, result)
 

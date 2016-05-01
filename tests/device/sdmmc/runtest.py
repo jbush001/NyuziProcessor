@@ -35,7 +35,7 @@ def test_read(name):
     with open(SOURCE_BLOCK_DEV, 'wb') as f:
         f.write(os.urandom(FILE_SIZE))
 
-    compile_test('sdmmc_read.c')
+    build_program(['sdmmc_read.c'])
     run_program(
         environment='emulator' if name.endswith('_emulator') else 'verilator',
         block_device=SOURCE_BLOCK_DEV,

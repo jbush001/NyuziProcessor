@@ -30,7 +30,7 @@ BASE_ADDRESS = 0x400000
 
 
 def dflush_test(name):
-    assemble_test('dflush.S')
+    build_program(['dflush.S'])
     run_program(
         environment='verilator',
         dump_file='obj/vmem.bin',
@@ -50,7 +50,7 @@ def dflush_test(name):
 
 
 def dinvalidate_test(name):
-    assemble_test('dinvalidate.S')
+    build_program(['dinvalidate.S'])
     result = run_program(
         environment='verilator',
         dump_file='obj/vmem.bin',
@@ -74,14 +74,14 @@ def dinvalidate_test(name):
 
 
 def dflush_wait_test(name):
-    assemble_test('dflush_wait.S')
+    build_program(['dflush_wait.S'])
     output = run_program(environment='verilator')
     if output.find('PASS') == -1:
         raise TestException('Test did not signal pass: ' + output)
 
 
 def iinvalidate_test(name):
-    assemble_test('iinvalidate.S')
+    build_program(['iinvalidate.S'])
     output = run_program(environment='verilator')
     if output.find('PASS') == -1:
         raise TestException('Test did not signal pass: ' + output)

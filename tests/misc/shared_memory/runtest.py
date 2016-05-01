@@ -59,7 +59,7 @@ def sharedmem_transact(memory, value):
 
 
 def sharedmem_test(name):
-    compile_test('coprocessor.c')
+    build_program(['coprocessor.c'])
 
     # Start the emulator
     memoryFile = tempfile.NamedTemporaryFile()

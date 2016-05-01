@@ -25,7 +25,7 @@ from test_harness import *
 
 
 def run_io_interrupt(name):
-    assemble_test('io_interrupt.S')
+    build_program(['io_interrupt.S'])
     result = run_program(environment='verilator')
     lines = result.split('\n')
     output = None
@@ -67,7 +67,7 @@ def run_recv_host_interrupt(name):
     except:
         pass
 
-    assemble_test('recv_host_interrupt.S')
+    build_program(['recv_host_interrupt.S'])
 
     os.mknod(PIPE_NAME, stat.S_IFIFO | 0666)
 
@@ -106,7 +106,7 @@ def run_send_host_interrupt(name):
     except:
         pass
 
-    assemble_test('send_host_interrupt.S')
+    build_program(['send_host_interrupt.S'])
 
     os.mknod(PIPE_NAME, stat.S_IFIFO | 0666)
 

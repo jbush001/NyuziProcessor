@@ -42,17 +42,16 @@ class TestException(Exception):
     def __init__(self, output):
         self.output = output
 
+def build_program(source_files):
+    """Compile/assemble one or more files.
 
-def compile_test(source_file, optlevel='3'):
-    """Compile one or more files.
-
-    This will link in crt0.o, libc, and libos. It converts the binary
-    to a hex file that can be loaded into memory.
+    If there are .c files in the list, this will link in crt0.o, libc,
+    and libos. It converts the binary to a hex file that can be loaded
+    into memory.
 
     Args:
-            source_file: name of a single file or list of files, which can
-              be C/C++ or assembly files.
-            optlevel: optimization level, 0-3
+            source_files: List of files, which can be C/C++ or assembly
+              files.
 
     Returns:
             Name of hex file created
@@ -60,6 +59,7 @@ def compile_test(source_file, optlevel='3'):
     Raises:
             TestException if compilation failed, will contain compiler output
     """
+    assert(isinstance(source_files, list))
 
     if not os.path.exists(OBJ_DIR):
         os.makedirs(OBJ_DIR)
@@ -67,19 +67,23 @@ def compile_test(source_file, optlevel='3'):
     compiler_args = [COMPILER_DIR + 'clang',
                      '-o', ELF_FILE,
                      '-w',
-                     '-O' + optlevel,
-                     '-I' + LIB_DIR + 'libc/include',
-                     '-I' + LIB_DIR + 'libos']
+                     '-O3']
 
-    if isinstance(source_file, list):
-        compiler_args += source_file		# List of files
-    else:
-        compiler_args += [source_file]  # Single file
+    compiler_args += source_files
 
-    compiler_args += [LIB_DIR + 'libc/crt0.o',
-                      LIB_DIR + 'libc/libc.a',
-                      LIB_DIR + 'libos/libos.a',
-                      LIB_DIR + 'compiler-rt/compiler-rt.a']
+    needs_stdlib = False
+    for file_name in source_files:
+        if file_name.endswith('.c') or file_name.endswith('.cpp'):
+            needs_stdlib = True
+            break
+
+    if needs_stdlib:
+        compiler_args += ['-I' + LIB_DIR + 'libc/include',
+                         '-I' + LIB_DIR + 'libos',
+                         LIB_DIR + 'libc/crt0.o',
+                         LIB_DIR + 'libc/libc.a',
+                         LIB_DIR + 'libos/libos.a',
+                         LIB_DIR + 'compiler-rt/compiler-rt.a']
 
     try:
         subprocess.check_output(compiler_args, stderr=subprocess.STDOUT)
@@ -89,39 +93,6 @@ def compile_test(source_file, optlevel='3'):
         raise TestException('Compilation failed:\n' + exc.output)
 
     return HEX_FILE
-
-
-def assemble_test(source_file):
-    """Assemble a file and write the executable as test.hex.
-
-    The file is expected to be standalone; other libraries will not be linked.
-    It converts the binary to a hex file that can be loaded into memory.
-
-    Args:
-            source_file: relative path to a assembler file that ends with .s
-
-    Returns:
-            Name of hex file created
-
-    Raises:
-            TestException if assembly failed, will contain assembler output
-    """
-
-    if not os.path.exists(OBJ_DIR):
-        os.makedirs(OBJ_DIR)
-
-    try:
-        subprocess.check_output(
-            [COMPILER_DIR + 'clang', '-o', ELF_FILE, source_file],
-            stderr=subprocess.STDOUT)
-        subprocess.check_output(
-            [COMPILER_DIR + 'elf2hex', '-o', HEX_FILE, ELF_FILE],
-            stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError as exc:
-        raise TestException('Assembly failed:\n' + exc.output)
-
-    return HEX_FILE
-
 
 class TimedProcessRunner(threading.Thread):
 
@@ -174,7 +145,7 @@ def run_program(
         trace=False):
     """Run test program.
 
-    This uses the hex file produced by assemble_test or compile_test.
+    This uses the hex file produced by build_program.
 
     Args:
             environment: Which environment to execute in. Can be 'verilator'
@@ -470,7 +441,7 @@ def _run_generic_test(name):
 
     environment = name[underscore + 1:]
     basename = name[0:underscore]
-    compile_test([basename + '.c'])
+    build_program([basename + '.c'])
     result = run_program(environment=environment)
     check_result(basename + '.c', result)
 
@@ -504,7 +475,7 @@ def _run_generic_assembly_test(name):
     environment = name[underscore + 1:]
     basename = name[0:underscore]
 
-    assemble_test(basename + '.S')
+    build_program([basename + '.S'])
     result = run_program(environment=environment)
     if result.find('PASS') == -1 or result.find('FAIL') != -1:
         raise TestException('Test failed ' + result)

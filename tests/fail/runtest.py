@@ -26,17 +26,17 @@ from test_harness import *
 
 
 def emulator_timeout(name):
-    compile_test('timeout.c')
+    build_program(['timeout.c'])
     result = run_program(environment='emulator', timeout=3)
 
 
 def verilator_timeout(name):
-    compile_test('timeout.c')
+    build_program(['timeout.c'])
     result = run_program(environment='verilator', timeout=3)
 
 
 def assemble_error(name):
-    assemble_test('assemble_error.s')
+    build_program(['assemble_error.s'])
 
 
 def files_not_equal(name):

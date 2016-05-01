@@ -25,7 +25,7 @@ from test_harness import *
 
 
 def run_verilator_test(source_file):
-    compile_test(source_file, optlevel='3')
+    build_program([source_file])
     result = run_program(environment='verilator')
     check_result(source_file, result)
 
@@ -37,7 +37,7 @@ def run_host_test(source_file):
 
 
 def run_emulator_test(source_file):
-    compile_test(source_file, optlevel='3')
+    build_program([source_file])
     result = run_program(environment='emulator')
     check_result(source_file, result)
 

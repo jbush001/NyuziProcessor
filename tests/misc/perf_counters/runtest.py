@@ -23,7 +23,7 @@ from test_harness import *
 
 
 def perf_counters_test(name):
-    compile_test('perf_counters.c')
+    build_program(['perf_counters.c'])
     result = run_program(environment='verilator')
     if result.find('PASS') == -1:
         raise TestException(
