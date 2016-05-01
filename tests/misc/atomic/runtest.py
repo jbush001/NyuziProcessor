@@ -26,7 +26,7 @@ from test_harness import *
 
 
 def atomic_test(name):
-    compile_test('atomic.c')
+    assemble_test('atomic.S')
     run_program(
         environment='verilator',
         dump_file='obj/vmem.bin',
@@ -35,10 +35,10 @@ def atomic_test(name):
         flush_l2=True)
 
     with open('obj/vmem.bin', 'rb') as f:
-        while True:
+        for index in range(512):
             val = f.read(4)
-            if len(val) == 0:
-                break
+            if len(val) < 4:
+                raise TestException('output file is truncated')
 
             numVal = struct.unpack('<L', val)[0]
             if numVal != 10:

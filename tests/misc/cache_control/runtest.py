@@ -42,8 +42,7 @@ def dflush_test(name):
             if len(val) < 4:
                 raise TestException('output file is truncated')
 
-            numVal = ord(val[0]) | (ord(val[1]) << 8) | (
-                ord(val[2]) << 16) | (ord(val[3]) << 24)
+            numVal = struct.unpack('<L', val)[0]
             expected = 0x1f0e6231 + (index // 16)
             if numVal != expected:
                 raise TestException('FAIL: mismatch at ' + hex(
