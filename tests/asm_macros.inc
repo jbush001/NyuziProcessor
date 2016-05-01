@@ -22,6 +22,7 @@
 .set TLB_GLOBAL, (1 << 4)
 
 // Control register indices
+.set CR_CURRENT_THREAD, 0
 .set CR_TRAP_HANDLER, 1
 .set CR_TRAP_PC, 2
 .set CR_TRAP_REASON, 3
