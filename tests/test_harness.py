@@ -163,17 +163,22 @@ def _run_test_with_timeout(args, timeout):
     return output.decode()
 
 
-def run_emulator(
+def run_program(
+        environment='emulator',
         block_device=None,
         dump_file=None,
         dump_base=None,
         dump_length=None,
-        timeout=60):
-    """Run test program in emulator.
+        timeout=60,
+        flush_l2=False,
+        trace=False):
+    """Run test program.
 
     This uses the hex file produced by assemble_test or compile_test.
 
     Args:
+            environment: Which environment to execute in. Can be 'verilator'
+               or 'emulator'.
             block_device: Relative path to a file that contains a filesystem image.
                If passed, contents will appear as a virtual SDMMC device.
             dump_file: Relative path to a file to write memory contents into after
@@ -186,63 +191,45 @@ def run_emulator(
             Output from program, anything written to virtual serial device
 
     Raises:
-            TestException if emulated program crashes or the emulator cannot
+            TestException if emulated program crashes or the program cannot
               execute for some other reason.
     """
 
-    args = [BIN_DIR + 'emulator']
-    if block_device:
-        args += ['-b', block_device]
+    if environment == 'emulator':
+        args = [BIN_DIR + 'emulator']
+        if block_device:
+            args += ['-b', block_device]
 
-    if dump_file:
-        args += ['-d', dump_file + ',' +
-                 hex(dump_base) + ',' + hex(dump_length)]
+        if dump_file:
+            args += ['-d', dump_file + ',' +
+                     hex(dump_base) + ',' + hex(dump_length)]
 
-    args += [HEX_FILE]
-    return _run_test_with_timeout(args, timeout)
+        args += [HEX_FILE]
+        return _run_test_with_timeout(args, timeout)
+    elif environment == 'verilator':
+        args = [BIN_DIR + 'verilator_model']
+        if block_device:
+            args += ['+block=' + block_device]
 
+        if dump_file:
+            args += ['+memdumpfile=' + dump_file,
+                     '+memdumpbase=' + hex(dump_base)[2:],
+                     '+memdumplen=' + hex(dump_length)[2:]]
 
-def run_verilator(block_device=None, dump_file=None, dump_base=None,
-                  dump_length=None, extra_args=None, timeout=60):
-    """Run test program in Verilog simulator
+        if flush_l2:
+            args += ['+autoflushl2=1']
 
-    This uses the hex file produced by assemble_test or compile_test.
+        if trace:
+            args += ['+trace']
 
-    Args:
-            block_device: Relative path to a file that contains a filesystem image.
-               If passed, contents will appear as a virtual SDMMC device.
-            dump_file: Relative path to a file to write memory contents into after
-               execution completes.
-            dump_base: if dump_file is specified, base physical memory address to start
-               writing mempry from.
-            dump_length: number of bytes of memory to write to dump_file
+        args += ['+bin=' + HEX_FILE]
+        output = _run_test_with_timeout(args, timeout)
+        if output.find('***HALTED***') == -1:
+            raise TestException(output + '\nProgram did not halt normally')
 
-    Returns:
-            Output from program, anything written to virtual serial device
-
-    Raises:
-            TestException if emulated program crashes or the emulator cannot
-              execute for some other reason.
-    """
-
-    args = [BIN_DIR + 'verilator_model']
-    if block_device:
-        args += ['+block=' + block_device]
-
-    if dump_file:
-        args += ['+memdumpfile=' + dump_file,
-                 '+memdumpbase=' + hex(dump_base)[2:],
-                 '+memdumplen=' + hex(dump_length)[2:]]
-
-    if extra_args:
-        args += extra_args
-
-    args += ['+bin=' + HEX_FILE]
-    output = _run_test_with_timeout(args, timeout)
-    if output.find('***HALTED***') == -1:
-        raise TestException(output + '\nProgram did not halt normally')
-
-    return output
+        return output
+    else:
+        raise TestException('Unknown execution environment')
 
 
 def assert_files_equal(file1, file2, error_msg='file mismatch'):
@@ -476,19 +463,15 @@ def check_result(source_file, program_output):
 
 
 def _run_generic_test(name):
-    if name.endswith('_emulator'):
-        basename = name[0:-len('_emulator')]
-        isverilator = False
-    elif name.endswith('_verilator'):
-        basename = name[0:-len('_verilator')]
-        isverilator = True
+    underscore = name.rfind('_')
+    if underscore == -1:
+        raise TestException(
+            'Internal error: _run_generic_test did not have type')
 
+    environment = name[underscore + 1:]
+    basename = name[0:underscore]
     compile_test([basename + '.c'])
-    if isverilator:
-        result = run_verilator()
-    else:
-        result = run_emulator()
-
+    result = run_program(environment=environment)
     check_result(basename + '.c', result)
 
 
@@ -513,19 +496,16 @@ def register_generic_test(name):
 
 
 def _run_generic_assembly_test(name):
-    if name.endswith('_emulator'):
-        basename = name[0:-len('_emulator')]
-        isverilator = False
-    elif name.endswith('_verilator'):
-        basename = name[0:-len('_verilator')]
-        isverilator = True
+    underscore = name.rfind('_')
+    if underscore == -1:
+        raise TestException(
+            'Internal error: _run_generic_test did not have type')
+
+    environment = name[underscore + 1:]
+    basename = name[0:underscore]
 
     assemble_test(basename + '.S')
-    if isverilator:
-        result = run_verilator()
-    else:
-        result = run_emulator()
-
+    result = run_program(environment=environment)
     if result.find('PASS') == -1 or result.find('FAIL') != -1:
         raise TestException('Test failed ' + result)
 

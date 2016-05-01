@@ -29,28 +29,22 @@ FILE_SIZE = 8192
 SOURCE_BLOCK_DEV = 'bdevimage.bin'
 MEMDUMP = 'memory.bin'
 
+
 def test_read(name):
     # Create random file
     with open(SOURCE_BLOCK_DEV, 'wb') as f:
         f.write(os.urandom(FILE_SIZE))
 
     compile_test('sdmmc_read.c')
-    if name.endswith('_emulator'):
-        run_emulator(
-            block_device=SOURCE_BLOCK_DEV,
-            dump_file=MEMDUMP,
-            dump_base=0x200000,
-            dump_length=FILE_SIZE)
-    else:
-        run_verilator(
-            block_device=SOURCE_BLOCK_DEV,
-            dump_file=MEMDUMP,
-            dump_base=0x200000,
-            dump_length=FILE_SIZE,
-            extra_args=['+autoflushl2=1'])
+    run_program(
+        environment='emulator' if name.endswith('_emulator') else 'verilator',
+        block_device=SOURCE_BLOCK_DEV,
+        dump_file=MEMDUMP,
+        dump_base=0x200000,
+        dump_length=FILE_SIZE,
+        flush_l2=True)
 
-    assert_files_equal(
-        SOURCE_BLOCK_DEV, MEMDUMP, 'file mismatch')
+    assert_files_equal(SOURCE_BLOCK_DEV, MEMDUMP, 'file mismatch')
 
 register_tests(test_read, ['sdmmc_read_emulator', 'sdmmc_read_verilator'])
 execute_tests()

@@ -23,18 +23,21 @@ from os import path
 sys.path.insert(0, '..')
 from test_harness import *
 
+
 def fs_test(name):
     compile_test('fs.c')
     subprocess.check_output(
         ['../../bin/mkfs', 'obj/fsimage.bin', 'fstest.txt'], stderr=subprocess.STDOUT)
-    result = run_emulator(block_device='obj/fsimage.bin')
+    result = run_program(environment='emulator',
+                         block_device='obj/fsimage.bin')
     if result.find('PASS') == -1:
         raise TestException(
             'test program did not indicate pass\n' + result)
 
+
 def run_emulator_test(source_file):
     compile_test(source_file, optlevel='3')
-    result = run_emulator()
+    result = run_program(environment='emulator')
     check_result(source_file, result)
 
 # XXX hack: register all source files in this directory except for fs test,

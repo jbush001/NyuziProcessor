@@ -26,7 +26,7 @@ from test_harness import *
 
 def run_io_interrupt(name):
     assemble_test('io_interrupt.S')
-    result = run_verilator()
+    result = run_program(environment='verilator')
     lines = result.split('\n')
     output = None
 
@@ -51,13 +51,15 @@ def run_io_interrupt(name):
             'No instances of interrupt return:\n' + result)
 
     # Remove all asterisks (interrupts) and make sure string is intact
-    stripped = output.replace('*','')
+    stripped = output.replace('*', '')
     if stripped != '0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz' * 10:
         raise TestException('Base string does not match:\n' + stripped)
 
 # Test the mechanism for delivering interrupts to the emulator from a
 # separate host process (useful for co-emulation)
 # XXX A number of error cases do not clean up resources
+
+
 def run_recv_host_interrupt(name):
     PIPE_NAME = '/tmp/nyuzi_emulator_recvint'
     try:
@@ -71,7 +73,7 @@ def run_recv_host_interrupt(name):
 
     args = [BIN_DIR + 'emulator', '-i', PIPE_NAME, HEX_FILE]
     emulatorProcess = subprocess.Popen(args, stdout=subprocess.PIPE,
-                               stderr=subprocess.STDOUT)
+                                       stderr=subprocess.STDOUT)
 
     try:
         interruptPipe = os.open(PIPE_NAME, os.O_WRONLY)
@@ -95,6 +97,8 @@ def run_recv_host_interrupt(name):
         os.unlink(PIPE_NAME)
 
 # XXX A number of error cases do not clean up resources
+
+
 def run_send_host_interrupt(name):
     PIPE_NAME = '/tmp/nyuzi_emulator_sendint'
     try:
@@ -108,7 +112,7 @@ def run_send_host_interrupt(name):
 
     args = [BIN_DIR + 'emulator', '-o', PIPE_NAME, HEX_FILE]
     emulatorProcess = subprocess.Popen(args, stdout=subprocess.PIPE,
-                               stderr=subprocess.STDOUT)
+                                       stderr=subprocess.STDOUT)
 
     try:
         interruptPipe = os.open(PIPE_NAME, os.O_RDONLY | os.O_NONBLOCK)

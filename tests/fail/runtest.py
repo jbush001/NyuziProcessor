@@ -27,12 +27,12 @@ from test_harness import *
 
 def emulator_timeout(name):
     compile_test('timeout.c')
-    result = run_emulator(timeout=3)
+    result = run_program(environment='emulator', timeout=3)
 
 
 def verilator_timeout(name):
     compile_test('timeout.c')
-    result = run_verilator(timeout=3)
+    result = run_program(environment='verilator', timeout=3)
 
 
 def assemble_error(name):

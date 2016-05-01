@@ -31,8 +31,11 @@ BASE_ADDRESS = 0x400000
 
 def dflush_test(name):
     compile_test('dflush.c')
-    run_verilator(
-        dump_file='obj/vmem.bin', dump_base=BASE_ADDRESS, dump_length=0x40000)
+    run_program(
+        environment='verilator',
+        dump_file='obj/vmem.bin',
+        dump_base=BASE_ADDRESS,
+        dump_length=0x40000)
     with open('obj/vmem.bin', 'rb') as f:
         index = 0
         while True:
@@ -52,13 +55,13 @@ def dflush_test(name):
 
 def dinvalidate_test(name):
     assemble_test('dinvalidate.S')
-    result = run_verilator(
+    result = run_program(
+        environment='verilator',
         dump_file='obj/vmem.bin',
         dump_base=0x200,
         dump_length=4,
-        extra_args=[
-            '+trace=1',
-            '+autoflushl2=1'])
+        flush_l2=True,
+        trace=True)
 
     # 1. Check that the proper value was read into s2
     if result.find('02 deadbeef') == -1:
@@ -70,18 +73,20 @@ def dinvalidate_test(name):
     with open('obj/vmem.bin', 'rb') as f:
         numVal = struct.unpack('<L', f.read(4))[0]
         if numVal != 0xdeadbeef:
-            raise TestException('memory contents were incorrect: '+ hex(numVal))
+            raise TestException(
+                'memory contents were incorrect: ' + hex(numVal))
 
 
 def dflush_wait_test(name):
     assemble_test('dflush_wait.S')
-    output = run_verilator()
+    output = run_program(environment='verilator')
     if output.find('PASS') == -1:
         raise TestException('Test did not signal pass: ' + output)
 
+
 def iinvalidate_test(name):
     assemble_test('iinvalidate.S')
-    output = run_verilator()
+    output = run_program(environment='verilator')
     if output.find('PASS') == -1:
         raise TestException('Test did not signal pass: ' + output)
 

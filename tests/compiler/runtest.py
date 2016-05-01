@@ -24,12 +24,9 @@ sys.path.insert(0, '..')
 from test_harness import *
 
 
-use_verilator = 'USE_VERILATOR' in os.environ
-
-
 def run_verilator_test(source_file):
     compile_test(source_file, optlevel='3')
-    result = run_verilator()
+    result = run_program(environment='verilator')
     check_result(source_file, result)
 
 
@@ -41,7 +38,7 @@ def run_host_test(source_file):
 
 def run_emulator_test(source_file):
     compile_test(source_file, optlevel='3')
-    result = run_emulator()
+    result = run_program(environment='emulator')
     check_result(source_file, result)
 
 test_list = [fname for fname in find_files(

@@ -27,11 +27,12 @@ from test_harness import *
 
 def atomic_test(name):
     compile_test('atomic.c')
-    run_verilator(
+    run_program(
+        environment='verilator',
         dump_file='obj/vmem.bin',
         dump_base=0x100000,
         dump_length=0x800,
-        extra_args=['+autoflushl2=1'])
+        flush_l2=True)
 
     with open('obj/vmem.bin', 'rb') as f:
         while True:
@@ -41,8 +42,7 @@ def atomic_test(name):
 
             numVal = struct.unpack('<L', val)[0]
             if numVal != 10:
-                raise TestException(
-                    'FAIL: mismatch: ' + str(numVal))
+                raise TestException('FAIL: mismatch: ' + str(numVal))
 
 register_tests(atomic_test, ['atomic'])
 execute_tests()
