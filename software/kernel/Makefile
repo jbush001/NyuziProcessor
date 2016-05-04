@@ -37,7 +37,7 @@ kernel.hex: kernel.elf
 
 kernel.elf: $(OBJS) $(DEPS)
 	$(LD) -o $(OBJ_DIR)/kernel.elf -Ttext=$(BASE_ADDRESS) $(OBJS) $(TOPDIR)/software/libs/compiler-rt/compiler-rt.a
-	$(OBJDUMP) --disassemble $(OBJ_DIR)/kernel.elf > kernel.lst
+#	$(OBJDUMP) --disassemble $(OBJ_DIR)/kernel.elf > kernel.lst
 
 run: kernel.hex
 	$(EMULATOR) kernel.hex
