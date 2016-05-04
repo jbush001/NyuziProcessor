@@ -30,6 +30,7 @@ all:
 	cd apps/sceneview && make
 	cd benchmarks/hash && make
 	cd benchmarks/membench && make
+	cd kernel && make
 
 clean:
 	cd libs/libc && make clean
@@ -44,6 +45,7 @@ clean:
 	cd apps/sceneview && make clean
 	cd benchmarks/hash && make clean
 	cd benchmarks/membench && make clean
+	cd kernel && make clean
 
 FORCE:
 
