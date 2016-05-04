@@ -26,7 +26,7 @@
 #define CLOCK_RATE 50000000
 #define DEFAULT_UART_BAUD 921600
 
-extern void *memset(void *_dest, int value, unsigned int length);
+void *memset(void *_dest, int value, unsigned int length);
 
 static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
 
@@ -123,4 +123,31 @@ int main()
                 writeSerialByte(BAD_COMMAND);
         }
     }
+}
+
+void* memset(void *_dest, int value, unsigned int length)
+{
+    char *dest = (char*) _dest;
+    value &= 0xff;
+
+    if ((((unsigned int) dest) & 3) == 0)
+    {
+        // Write 4 bytes at a time.
+        unsigned wideVal = value | (value << 8) | (value << 16) | (value << 24);
+        while (length > 4)
+        {
+            *((unsigned int*) dest) = wideVal;
+            dest += 4;
+            length -= 4;
+        }
+    }
+
+    // Write one byte at a time
+    while (length > 0)
+    {
+        *dest++ = value;
+        length--;
+    }
+
+    return _dest;
 }

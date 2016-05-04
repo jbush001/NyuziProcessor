@@ -29,7 +29,10 @@ SRCS=math.c \
 	qsort.c \
 	setjmp.s \
 	time.c \
-	vfprintf.c
+	vfprintf.c \
+	memcpy.s \
+	memset.c \
+	memcmp.c \
 
 OBJS := $(SRCS_TO_OBJS)
 DEPS := $(SRCS_TO_DEPS)
