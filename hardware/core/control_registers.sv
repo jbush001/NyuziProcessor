@@ -125,13 +125,13 @@ module control_registers
             if (wb_trap)
             begin
                 // For nested traps, copy saved flags into second slot
-                trap_access_addr[1] <= trap_access_addr[0];
-                trap_reason[1] <= trap_reason[0];
-                eret_address[1] <= eret_address[0];
-                interrupt_en_saved[1] <= interrupt_en_saved[0];
-                mmu_en_saved[1] <= mmu_en_saved[0];
-                supervisor_en_saved[1] <= supervisor_en_saved[0];
-                subcycle_saved[1] <= subcycle_saved[0];
+                trap_access_addr[1][wb_trap_thread_idx] <= trap_access_addr[0][wb_trap_thread_idx];
+                trap_reason[1][wb_trap_thread_idx] <= trap_reason[0][wb_trap_thread_idx];
+                eret_address[1][wb_trap_thread_idx] <= eret_address[0][wb_trap_thread_idx];
+                interrupt_en_saved[1][wb_trap_thread_idx] <= interrupt_en_saved[0][wb_trap_thread_idx];
+                mmu_en_saved[1][wb_trap_thread_idx] <= mmu_en_saved[0][wb_trap_thread_idx];
+                supervisor_en_saved[1][wb_trap_thread_idx] <= supervisor_en_saved[0][wb_trap_thread_idx];
+                subcycle_saved[1][wb_trap_thread_idx] <= subcycle_saved[0][wb_trap_thread_idx];
                 scratchpad[1][{1'b0, wb_trap_thread_idx}] <= scratchpad[0][{1'b0, wb_trap_thread_idx}];
                 scratchpad[1][{1'b1, wb_trap_thread_idx}] <= scratchpad[0][{1'b1, wb_trap_thread_idx}];
 
@@ -158,13 +158,13 @@ module control_registers
                 cr_supervisor_en[ix_thread_idx] <= supervisor_en_saved[0][ix_thread_idx];
 
                 // Restore nested interrupt stage
-                trap_access_addr[0] <= trap_access_addr[1];
-                trap_reason[0] <= trap_reason[1];
-                eret_address[0] <= eret_address[1];
-                interrupt_en_saved[0] <= interrupt_en_saved[1];
-                mmu_en_saved[0] <= mmu_en_saved[1];
-                supervisor_en_saved[0] <= supervisor_en_saved[1];
-                subcycle_saved[0] <= subcycle_saved[1];
+                trap_access_addr[0][ix_thread_idx] <= trap_access_addr[1][ix_thread_idx];
+                trap_reason[0][ix_thread_idx] <= trap_reason[1][ix_thread_idx];
+                eret_address[0][ix_thread_idx] <= eret_address[1][ix_thread_idx];
+                interrupt_en_saved[0][ix_thread_idx] <= interrupt_en_saved[1][ix_thread_idx];
+                mmu_en_saved[0][ix_thread_idx] <= mmu_en_saved[1][ix_thread_idx];
+                supervisor_en_saved[0][ix_thread_idx] <= supervisor_en_saved[1][ix_thread_idx];
+                subcycle_saved[0][ix_thread_idx] <= subcycle_saved[1][ix_thread_idx];
                 scratchpad[0][{1'b0, ix_thread_idx}] <= scratchpad[1][{1'b0, ix_thread_idx}];
                 scratchpad[0][{1'b1, ix_thread_idx}] <= scratchpad[1][{1'b1, ix_thread_idx}];
             end
