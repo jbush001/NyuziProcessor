@@ -358,8 +358,9 @@ void panic(const char *format, ...)
     va_list args;
     int prevInt;
 
+    kprintf("KERNEL PANIC: ");
+
     va_start(args, format);
-    puts("KERNEL PANIC: ");
     vprintf(format, args);
     va_end(args);
 

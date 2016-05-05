@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "asm_macros.inc"
+#include "asm.h"
 
 //
 // General trap handler. This saves all scalar registers, but does not save
@@ -141,7 +141,7 @@ tlb_miss_handler:   setcr s0, CR_SCRATCHPAD0    // Save s0 in scratchpad
                     getcr s1, CR_PAGE_DIR_BASE  // Read page dir phys addr
 
                     // Read page directory
-                    getcr s0, CR_TRAP_ADDRESS   // Get fault virtual address
+                    getcr s0, CR_TRAP_ADDR      // Get fault virtual address
                     shr s0, s0, 22              // Convert to page directory index
                     shl s0, s0, 2               // Multiply offset by 4 (bytes/entry)
                     add_i s0, s0, s1            // Pointer to page directory entry
@@ -152,7 +152,7 @@ tlb_miss_handler:   setcr s0, CR_SCRATCHPAD0    // Save s0 in scratchpad
                     shl s0, s0, 12
 
                     // Read page table
-                    getcr s1, CR_TRAP_ADDRESS   // Get fault virtual address
+                    getcr s1, CR_TRAP_ADDR      // Get fault virtual address
                     shr s1, s1, 12              // Convert to page table index
                     and s1, s1, 1023            // Mask off page directory index
                     shl s1, s1, 2               // Multiply by 4 (bytes/entry)
@@ -161,14 +161,14 @@ tlb_miss_handler:   setcr s0, CR_SCRATCHPAD0    // Save s0 in scratchpad
 
                     // Update TLB
 update_tlb:         getcr s1, CR_TRAP_REASON    // Get fault reason
-                    cmpeq_i s1, s1, FR_ITLB_MISS // ITLB miss?
+                    cmpeq_i s1, s1, TR_ITLB_MISS // ITLB miss?
                     btrue s1, fill_itlb          // If yes, branch to update ITLB
 
-fill_dltb:          getcr s1, CR_TRAP_ADDRESS   // Get fault virtual address
+fill_dltb:          getcr s1, CR_TRAP_ADDR      // Get fault virtual address
                     dtlbinsert s1, s0           // Set virtual address for DTLB
                     goto done
 
-fill_itlb:          getcr s1, CR_TRAP_ADDRESS   // Get fault virtual address
+fill_itlb:          getcr s1, CR_TRAP_ADDR      // Get fault virtual address
                     itlbinsert s1, s0           // Set virtual address for ITLB
 
 done:               getcr s0, CR_SCRATCHPAD0    // Get saved s0 from scratchpad

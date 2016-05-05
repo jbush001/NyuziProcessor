@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "asm_macros.inc"
+#include "asm.h"
 
 //
 // Execution of the kernel begins at _start. Thread 0 sets up some memory management

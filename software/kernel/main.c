@@ -29,13 +29,14 @@ void kernel_main()
     // Start other threads
     *((volatile unsigned int*) 0xffff0100) = 0xdeadbeef;
 
+//    *((unsigned int*) 1) = 1; // Cause fault
     for (;;)
         ;
 }
 
 void thread_n_main()
 {
-    kprintf("%d\n", __builtin_nyuzi_read_control_reg(0));
+    kprintf("%d", __builtin_nyuzi_read_control_reg(0));
     for (;;)
         ;
 }
