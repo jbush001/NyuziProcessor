@@ -20,20 +20,20 @@ typedef volatile int spinlock_t;
 
 static inline void acquire_spinlock(spinlock_t *sp)
 {
-	do
-	{
-		// Wait while local copy of sp is locked, to avoid creating traffic on
-		// the L2 interconnect.
-		while (*sp)
-			;
+    do
+    {
+        // Wait while local copy of sp is locked, to avoid creating traffic on
+        // the L2 interconnect.
+        while (*sp)
+            ;
 
-		// Attempt to grab lock
-	}
+        // Attempt to grab lock
+    }
     while (!__sync_bool_compare_and_swap(sp, 0, 1));
 }
 
 static inline void release_spinlock(spinlock_t *sp)
 {
-	*sp = 0;
-	__sync_synchronize();
+    *sp = 0;
+    __sync_synchronize();
 }

@@ -89,7 +89,8 @@ static int vprintf(const char *format, va_list args)
     int width = 0;
     int precision = 0;
 
-    enum {
+    enum
+    {
         kScanText,
         kScanFlags,
         kScanWidth,
@@ -98,35 +99,43 @@ static int vprintf(const char *format, va_list args)
         kScanFormat
     } state = kScanText;
 
-    while (*format) {
-        switch (state) {
+    while (*format)
+    {
+        switch (state)
+        {
             case kScanText:
-                if (*format == '%') {
+                if (*format == '%')
+                {
                     format++;
                     state = kScanFlags;
                     flags = 0;				/* reset attributes */
                     prefixes = 0;
                     width = 0;
                     precision = 0;
-                } else
+                }
+                else
                     putc(*format++);
 
                 break;
 
-            case kScanFlags: {
+            case kScanFlags:
+            {
                 const char *c;
 
-                if (*format == '%') {
+                if (*format == '%')
+                {
                     putc(*format++);
                     state = kScanText;
                     break;
                 }
 
                 c = strchr(kFlagCharacters, *format);
-                if (c) {
+                if (c)
+                {
                     SET_FLAG(*format);
                     format++;
-                } else
+                }
+                else
                     state = kScanWidth;
 
                 break;
@@ -135,10 +144,12 @@ static int vprintf(const char *format, va_list args)
             case kScanWidth:
                 if (isdigit(*format))
                     width = width * 10 + *format++ - '0';
-                else if (*format == '.') {
+                else if (*format == '.')
+                {
                     state = kScanPrecision;
                     format++;
-                } else
+                }
+                else
                     state = kScanPrefix;
 
                 break;
@@ -151,25 +162,30 @@ static int vprintf(const char *format, va_list args)
 
                 break;
 
-            case kScanPrefix: {
+            case kScanPrefix:
+            {
                 const char *c = strchr(kPrefixCharacters, *format);
-                if (c) {
+                if (c)
+                {
                     SET_PREFIX(*format);
                     format++;
-                } else
+                }
+                else
                     state = kScanFormat;
 
                 break;
             }
 
-            case kScanFormat: {
+            case kScanFormat:
+            {
                 char temp_string[64];
                 int index;
                 char pad_char;
                 int pad_count;
                 int radix = 10;
 
-                switch (*format) {
+                switch (*format)
+                {
                     case 'p':	/* pointer */
                         width = 8;
                         SET_FLAG('0');
@@ -181,7 +197,8 @@ static int vprintf(const char *format, va_list args)
                     case 'o':	/* octal */
                     case 'u':	/* Unsigned decimal */
                     case 'd':
-                    case 'i':	{ /* Signed decimal */
+                    case 'i':	  /* Signed decimal */
+                    {
                         unsigned int value;
                         value = va_arg(args, unsigned);		/* long */
 
@@ -194,8 +211,10 @@ static int vprintf(const char *format, va_list args)
                             radix = 10;
 
                         /* handle sign */
-                        if ((*format == 'd' || *format == 'i')) {
-                            if ((long) value < 0) {
+                        if ((*format == 'd' || *format == 'i'))
+                        {
+                            if ((long) value < 0)
+                            {
                                 value = (unsigned) (- (long) value);
                                 putc('-');
                             }
@@ -203,7 +222,8 @@ static int vprintf(const char *format, va_list args)
 
                         /* write out the string backwards */
                         index = 63;
-                        for (;;) {
+                        for (;;)
+                        {
                             temp_string[index] = kHexDigits[value % radix];
                             value /= radix;
                             if (value == 0)
@@ -241,7 +261,8 @@ static int vprintf(const char *format, va_list args)
                         putc(va_arg(args, int));
                         break;
 
-                    case 's': {	/* string */
+                    case 's':  	/* string */
+                    {
                         int max_width;
                         char *c = va_arg(args, char*);
 
@@ -253,7 +274,8 @@ static int vprintf(const char *format, va_list args)
                         for (index = 0; index < max_width && *c; index++)
                             putc(*c++);
 
-                        while (index < MIN(width, max_width)) {
+                        while (index < MIN(width, max_width))
+                        {
                             putc(' ');
                             index++;
                         }

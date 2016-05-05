@@ -26,7 +26,8 @@ struct interrupt_frame
 
 void dumpTrap(const struct interrupt_frame*);
 
-static const char *TRAP_NAMES[] = {
+static const char *TRAP_NAMES[] =
+{
     "reset",
     "Illegal Instruction",
     "Data Alignment Fault",
@@ -57,7 +58,7 @@ void dumpTrap(const struct interrupt_frame *frame)
     {
         kprintf("%s ", TRAP_NAMES[trapId]);
         if (trapId == TR_DATA_ALIGNMENT || trapId == TR_PAGE_FAULT
-            || trapId == TR_ILLEGAL_WRITE || trapId == TR_DATA_SUPERVISOR)
+                || trapId == TR_ILLEGAL_WRITE || trapId == TR_DATA_SUPERVISOR)
         {
             kprintf("@%08x\n", trap_address);
         }

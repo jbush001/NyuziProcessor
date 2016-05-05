@@ -53,7 +53,7 @@ unsigned int boot_vm_allocate_pages(struct boot_page_setup *bps, int num_pages)
 }
 
 void boot_vm_map_pages(struct boot_page_setup *bps, unsigned int va, unsigned int pa,
-                    unsigned int length, unsigned int flags)
+                       unsigned int length, unsigned int flags)
 {
     int ppindex = va / PAGE_SIZE;
     int pgdindex = ppindex / 1024;
@@ -93,19 +93,19 @@ void boot_setup_page_tables(void)
 
     // Map kernel
     boot_vm_map_pages(&bps, KERNEL_BASE, 0, kernel_size, PAGE_PRESENT | PAGE_WRITABLE
-        | PAGE_EXECUTABLE | PAGE_SUPERVISOR | PAGE_GLOBAL);
+                      | PAGE_EXECUTABLE | PAGE_SUPERVISOR | PAGE_GLOBAL);
 
     // Map physical memory alias
     boot_vm_map_pages(&bps, PHYS_MEM_ALIAS, 0, MEMORY_SIZE, PAGE_PRESENT | PAGE_WRITABLE
-        | PAGE_SUPERVISOR | PAGE_GLOBAL);
+                      | PAGE_SUPERVISOR | PAGE_GLOBAL);
 
     // Map initial kernel stacks
     boot_vm_map_pages(&bps, INITIAL_KERNEL_STACKS, boot_vm_allocate_pages(&bps, 0x10), 0x10000,
-        PAGE_PRESENT | PAGE_WRITABLE | PAGE_SUPERVISOR | PAGE_GLOBAL);
+                      PAGE_PRESENT | PAGE_WRITABLE | PAGE_SUPERVISOR | PAGE_GLOBAL);
 
     // Map device registers
     boot_vm_map_pages(&bps, DEVICE_REG_BASE, DEVICE_REG_BASE, PAGE_SIZE, PAGE_PRESENT
-                   | PAGE_WRITABLE | PAGE_SUPERVISOR | PAGE_GLOBAL);
+                      | PAGE_WRITABLE | PAGE_SUPERVISOR | PAGE_GLOBAL);
 
     // Write the page dir address where start.S can find it to initialize threads.
     // Using address of will return the virtual address that this will be mapped to.
@@ -114,7 +114,7 @@ void boot_setup_page_tables(void)
     *pgptr = (unsigned int) bps.pgdir;
 
     unsigned int *boot_pages_used_ptr = (unsigned int*) (((unsigned int)
-        &boot_pages_used) & 0xffffff);
+                                        &boot_pages_used) & 0xffffff);
     *boot_pages_used_ptr = (unsigned int) bps.next_alloc_page;
 }
 
