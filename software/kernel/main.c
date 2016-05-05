@@ -15,14 +15,14 @@
 //
 
 #include "libc.h"
-#include "mmu.h"
+#include "vm.h"
 
 // XXX need a global variable for _end to be emitted correctly.
 int foo;
 
 void kernel_main()
 {
-    mmu_finish_init();
+    vm_init();
 
     kprintf("Hello kernel land\n");
 

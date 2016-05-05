@@ -25,5 +25,5 @@
 #define PAGE_SUPERVISOR 8
 #define PAGE_GLOBAL 16
 
-void map_page(unsigned int va, unsigned int pa);
-unsigned int allocate_page(void);
+void vm_map_page(unsigned int va, unsigned int pa);
+unsigned int vm_allocate_page(void);

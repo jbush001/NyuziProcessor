@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "mmu.h"
+#include "vm.h"
 #include "memory_map.h"
 #include "spinlock.h"
 
@@ -22,7 +22,7 @@
 #define PA_TO_VA(x) ((unsigned int) (x) + PHYS_MEM_ALIAS)
 
 //
-// boot_allocate_pages, boot_map_pages, and boot_setup_page_tables
+// boot_vm_allocate_pages, boot_vm_map_pages, and boot_setup_page_tables
 // are called when the MMU is disabled, so they run at their physical
 // addresses in low memory rather than the proper virtual address that the
 // kernel is linked at. Therefore, they can't use non-position-independent
@@ -44,7 +44,7 @@ extern unsigned int boot_pages_used;
 static unsigned int next_alloc_page;
 static spinlock_t pgt_lock;
 
-unsigned int boot_allocate_pages(struct boot_page_setup *bps, int num_pages)
+unsigned int boot_vm_allocate_pages(struct boot_page_setup *bps, int num_pages)
 {
     unsigned int pa = bps->next_alloc_page;
     bps->next_alloc_page += PAGE_SIZE * num_pages;
@@ -52,7 +52,7 @@ unsigned int boot_allocate_pages(struct boot_page_setup *bps, int num_pages)
     return pa;
 }
 
-void boot_map_pages(struct boot_page_setup *bps, unsigned int va, unsigned int pa,
+void boot_vm_map_pages(struct boot_page_setup *bps, unsigned int va, unsigned int pa,
                     unsigned int length, unsigned int flags)
 {
     int ppindex = va / PAGE_SIZE;
@@ -64,7 +64,7 @@ void boot_map_pages(struct boot_page_setup *bps, unsigned int va, unsigned int p
     {
         // Allocate page table if necessary
         if (bps->pgdir[pgdindex] == 0)
-            bps->pgdir[pgdindex] = boot_allocate_pages(bps, 1) | PAGE_PRESENT;
+            bps->pgdir[pgdindex] = boot_vm_allocate_pages(bps, 1) | PAGE_PRESENT;
 
         pgtbl = (unsigned int*) PAGE_ALIGN(bps->pgdir[pgdindex]);
 
@@ -89,22 +89,22 @@ void boot_setup_page_tables(void)
 
     unsigned int kernel_size = PAGE_ALIGN(((unsigned int) &_end) + 0xfff) - KERNEL_BASE;
     bps.next_alloc_page = kernel_size;
-    bps.pgdir = (unsigned int*) boot_allocate_pages(&bps, 1);
+    bps.pgdir = (unsigned int*) boot_vm_allocate_pages(&bps, 1);
 
     // Map kernel
-    boot_map_pages(&bps, KERNEL_BASE, 0, kernel_size, PAGE_PRESENT | PAGE_WRITABLE
+    boot_vm_map_pages(&bps, KERNEL_BASE, 0, kernel_size, PAGE_PRESENT | PAGE_WRITABLE
         | PAGE_EXECUTABLE | PAGE_SUPERVISOR | PAGE_GLOBAL);
 
     // Map physical memory alias
-    boot_map_pages(&bps, PHYS_MEM_ALIAS, 0, MEMORY_SIZE, PAGE_PRESENT | PAGE_WRITABLE
+    boot_vm_map_pages(&bps, PHYS_MEM_ALIAS, 0, MEMORY_SIZE, PAGE_PRESENT | PAGE_WRITABLE
         | PAGE_SUPERVISOR | PAGE_GLOBAL);
 
     // Map initial kernel stacks
-    boot_map_pages(&bps, INITIAL_KERNEL_STACKS, boot_allocate_pages(&bps, 0x10), 0x10000,
+    boot_vm_map_pages(&bps, INITIAL_KERNEL_STACKS, boot_vm_allocate_pages(&bps, 0x10), 0x10000,
         PAGE_PRESENT | PAGE_WRITABLE | PAGE_SUPERVISOR | PAGE_GLOBAL);
 
     // Map device registers
-    boot_map_pages(&bps, DEVICE_REG_BASE, DEVICE_REG_BASE, PAGE_SIZE, PAGE_PRESENT
+    boot_vm_map_pages(&bps, DEVICE_REG_BASE, DEVICE_REG_BASE, PAGE_SIZE, PAGE_PRESENT
                    | PAGE_WRITABLE | PAGE_SUPERVISOR | PAGE_GLOBAL);
 
     // Write the page dir address where start.S can find it to initialize threads.
@@ -119,20 +119,20 @@ void boot_setup_page_tables(void)
 }
 
 // This is called after the MMU has been enabled
-void mmu_finish_init()
+void vm_init(void)
 {
     next_alloc_page = boot_pages_used;
 }
 
 // XXX hack
-unsigned int allocate_page(void)
+unsigned int vm_allocate_page(void)
 {
     unsigned int pa = next_alloc_page;
     next_alloc_page += PAGE_SIZE;
     return pa;
 }
 
-void map_page(unsigned int va, unsigned int pa)
+void vm_map_page(unsigned int va, unsigned int pa)
 {
     int vpindex = va / PAGE_SIZE;
     int pgdindex = vpindex / 1024;
@@ -143,7 +143,7 @@ void map_page(unsigned int va, unsigned int pa)
     acquire_spinlock(&pgt_lock);
 
     if ((pgdir[pgdindex] & PAGE_PRESENT) == 0)
-        pgdir[pgdindex] = allocate_page() | PAGE_PRESENT;
+        pgdir[pgdindex] = vm_allocate_page() | PAGE_PRESENT;
 
     pgtbl = (unsigned int*) PAGE_ALIGN(pgdir[pgdindex]);
     pgtbl[pgtindex] = pa;

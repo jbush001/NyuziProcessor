@@ -21,7 +21,7 @@ include $(TOPDIR)/build/target.mk
 CFLAGS=-O3 # Override default CFLAGS
 BASE_ADDRESS=0xc0000000
 
-SRCS=mmu.c \
+SRCS=vm.c \
 	main.c \
 	start.S \
 	libc.c \
