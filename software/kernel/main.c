@@ -14,6 +14,7 @@
 // limitations under the License.
 //
 
+#include "asm.h"
 #include "libc.h"
 #include "vm.h"
 
@@ -26,8 +27,14 @@ void kernel_main()
 
     kprintf("Hello kernel land\n");
 
+    // Map a page, then read and write to it
+    vm_map_page(0xd0000000, vm_allocate_page() | PAGE_PRESENT | PAGE_WRITABLE
+                | PAGE_SUPERVISOR | PAGE_GLOBAL);
+    *((volatile unsigned int*) 0xd0000000) = 0xabcdef12;
+    kprintf("%08x\n", *((volatile unsigned int*) 0xd0000000));
+
     // Start other threads
-    *((volatile unsigned int*) 0xffff0100) = 0xdeadbeef;
+    *((volatile unsigned int*) 0xffff0100) = 0xffffffff;
 
 //    *((unsigned int*) 1) = 1; // Cause fault
     for (;;)

@@ -146,7 +146,7 @@ void vm_map_page(unsigned int va, unsigned int pa)
         pgdir[pgdindex] = vm_allocate_page() | PAGE_PRESENT;
 
     pgtbl = (unsigned int*) PAGE_ALIGN(pgdir[pgdindex]);
-    pgtbl[pgtindex] = pa;
+    ((unsigned int*)PA_TO_VA(pgtbl))[pgtindex] = pa;
     asm("tlbinval %0" : : "s" (va));
 
     // XXX does not invalidate on other cores
