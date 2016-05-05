@@ -39,6 +39,7 @@ void writeDeviceRegister(uint32_t address, uint32_t value)
     {
         case REG_SERIAL_OUTPUT:
             putc(value & 0xff, stdout);
+            fflush(stdout);
             break;
 
         case REG_SD_WRITE_DATA:
