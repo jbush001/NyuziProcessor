@@ -20,6 +20,7 @@
 
 #define MEMORY_SIZE 0x1000000
 #define PA_TO_VA(x) ((unsigned int) (x) + PHYS_MEM_ALIAS)
+#define BOOT_VA_TO_PA(x) (((unsigned int) (x)) & 0xffffff)
 
 //
 // boot_vm_allocate_pages, boot_vm_map_pages, and boot_setup_page_tables
@@ -99,7 +100,7 @@ void boot_setup_page_tables(void)
     boot_vm_map_pages(&bps, PHYS_MEM_ALIAS, 0, MEMORY_SIZE, PAGE_PRESENT | PAGE_WRITABLE
                       | PAGE_SUPERVISOR | PAGE_GLOBAL);
 
-    // Map initial kernel stacks
+    // Map initial kernel stacks for all threads
     boot_vm_map_pages(&bps, INITIAL_KERNEL_STACKS, boot_vm_allocate_pages(&bps, 0x10), 0x10000,
                       PAGE_PRESENT | PAGE_WRITABLE | PAGE_SUPERVISOR | PAGE_GLOBAL);
 
@@ -107,28 +108,38 @@ void boot_setup_page_tables(void)
     boot_vm_map_pages(&bps, DEVICE_REG_BASE, DEVICE_REG_BASE, PAGE_SIZE, PAGE_PRESENT
                       | PAGE_WRITABLE | PAGE_SUPERVISOR | PAGE_GLOBAL);
 
-    // Write the page dir address where start.S can find it to initialize threads.
-    // Using address of will return the virtual address that this will be mapped to.
-    // However, since MMU is still off, need to convert to the physical address.
-    unsigned int *pgptr = (unsigned int*) (((unsigned int) &page_dir_addr) & 0xffffff);
-    *pgptr = (unsigned int) bps.pgdir;
-
-    unsigned int *boot_pages_used_ptr = (unsigned int*) (((unsigned int)
-                                        &boot_pages_used) & 0xffffff);
-    *boot_pages_used_ptr = (unsigned int) bps.next_alloc_page;
+    // Write the page dir address where start.S can find it to initialize
+    // threads. Using address of will return the virtual address that this
+    // will be mapped to. However, since MMU is still off, need to convert
+    // to the physical address.
+    *((unsigned int*) BOOT_VA_TO_PA(&page_dir_addr)) = (unsigned int) bps.pgdir;
+    *((unsigned int*) BOOT_VA_TO_PA(&boot_pages_used)) = (unsigned int)
+        bps.next_alloc_page;
 }
 
 // This is called after the MMU has been enabled
 void vm_init(void)
 {
     next_alloc_page = boot_pages_used;
+    boot_init_heap(KERNEL_HEAP_BASE);
 }
 
 // XXX hack
-unsigned int vm_allocate_page(void)
+unsigned int vm_allocate_page_nolock(void)
 {
     unsigned int pa = next_alloc_page;
     next_alloc_page += PAGE_SIZE;
+    return pa;
+}
+
+unsigned int vm_allocate_page(void)
+{
+    unsigned int pa;
+
+    acquire_spinlock(&pgt_lock);
+    pa = vm_allocate_page_nolock();
+    release_spinlock(&pgt_lock);
+
     return pa;
 }
 
@@ -142,8 +153,9 @@ void vm_map_page(unsigned int va, unsigned int pa)
 
     acquire_spinlock(&pgt_lock);
 
+    // Allocate a new page table if one is not already present
     if ((pgdir[pgdindex] & PAGE_PRESENT) == 0)
-        pgdir[pgdindex] = vm_allocate_page() | PAGE_PRESENT;
+        pgdir[pgdindex] = vm_allocate_page_nolock() | PAGE_PRESENT;
 
     pgtbl = (unsigned int*) PAGE_ALIGN(pgdir[pgdindex]);
     ((unsigned int*)PA_TO_VA(pgtbl))[pgtindex] = pa;
@@ -153,4 +165,3 @@ void vm_map_page(unsigned int va, unsigned int pa)
 
     release_spinlock(&pgt_lock);
 }
-

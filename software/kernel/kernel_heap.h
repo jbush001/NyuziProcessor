@@ -1,5 +1,5 @@
 //
-// Copyright 2015-2016 Jeff Bush
+// Copyright 2016 Jeff Bush
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,9 +16,6 @@
 
 #pragma once
 
-#define KERNEL_BASE 0xc0000000
-#define PHYS_MEM_ALIAS 0xc1000000
-#define KERNEL_HEAP_BASE 0xd0000000
-#define INITIAL_KERNEL_STACKS 0xfffe0000
-#define DEVICE_REG_BASE 0xffff0000
-
+void boot_init_heap(const char *base_address);
+void *kmalloc(unsigned int size);
+void kfree(void *ptr, unsigned int size);

@@ -15,6 +15,7 @@
 //
 
 #include "asm.h"
+#include "kernel_heap.h"
 #include "libc.h"
 #include "vm.h"
 
@@ -23,15 +24,17 @@ int foo;
 
 void kernel_main()
 {
+    volatile unsigned int *block;
+
     vm_init();
 
     kprintf("Hello kernel land\n");
 
     // Map a page, then read and write to it
-    vm_map_page(0xd0000000, vm_allocate_page() | PAGE_PRESENT | PAGE_WRITABLE
-                | PAGE_SUPERVISOR | PAGE_GLOBAL);
-    *((volatile unsigned int*) 0xd0000000) = 0xabcdef12;
-    kprintf("%08x\n", *((volatile unsigned int*) 0xd0000000));
+    block = (volatile unsigned int*) kmalloc(0x1000);
+
+    *block = 0xabcdef12;
+    kprintf("%08x\n", *block);
 
     // Start other threads
     *((volatile unsigned int*) 0xffff0100) = 0xffffffff;

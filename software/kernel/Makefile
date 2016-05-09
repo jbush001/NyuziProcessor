@@ -27,7 +27,8 @@ SRCS=vm.c \
 	libc.c \
 	uart.c \
 	trap_entry.S \
-	trap.c
+	trap.c \
+	kernel_heap.c
 
 OBJS=$(SRCS_TO_OBJS)
 DEPS=$(SRCS_TO_DEPS)
