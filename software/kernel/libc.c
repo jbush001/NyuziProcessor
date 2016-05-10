@@ -386,6 +386,10 @@ void panic(const char *format, ...)
     vprintf(format, args);
     va_end(args);
 
+    putchar('\n');
+
+    *((volatile unsigned int*) 0xffff0104) = 0xffffffff;
+
     while (1);
 }
 

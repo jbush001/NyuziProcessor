@@ -17,24 +17,55 @@
 #include "asm.h"
 #include "kernel_heap.h"
 #include "libc.h"
+#include "slab.h"
 #include "vm.h"
+
+struct linked_node
+{
+    struct linked_node *next;
+    int value;
+};
+
+MAKE_SLAB(node_slab, struct linked_node);
 
 // XXX need a global variable for _end to be emitted correctly.
 int foo;
 
 void kernel_main()
 {
-    volatile unsigned int *block;
+    int i;
+    int j;
+    struct linked_node *node;
+    struct linked_node *list = 0;
 
     vm_init();
 
     kprintf("Hello kernel land\n");
 
     // Map a page, then read and write to it
-    block = (volatile unsigned int*) kmalloc(0x1000);
+    for (j = 1; j < 30; j++)
+    {
+        for (i = 0; i < j; i++)
+        {
+            node = (struct linked_node*) slab_alloc(&node_slab);
+            node->next = list;
+            list = node;
+            node->value = j;
+        }
 
-    *block = 0xabcdef12;
-    kprintf("%08x\n", *block);
+
+        for (i = 0; i < j - 1; i++)
+        {
+            node = list;
+            list = list->next;
+            slab_free(&node_slab, node);
+        }
+    }
+
+    for (node = list; node; node = node->next)
+        kprintf("%d ", node->value);
+
+    kprintf("\n");
 
     // Start other threads
     *((volatile unsigned int*) 0xffff0100) = 0xffffffff;
@@ -46,7 +77,7 @@ void kernel_main()
 
 void thread_n_main()
 {
-    kprintf("%d", __builtin_nyuzi_read_control_reg(0));
+    kprintf("%c", __builtin_nyuzi_read_control_reg(0) + 'a');
     for (;;)
         ;
 }

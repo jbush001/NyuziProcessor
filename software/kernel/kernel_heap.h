@@ -16,6 +16,14 @@
 
 #pragma once
 
+//
+// This manages kernel data structure allocations. It is a simple first-fit
+// allocator that is not optimized to reduce fragmentation or reduce runtime.
+// As such, it should be used for long lived structures or as a low level allocator
+// for optimized higher level slab allocator. size is not rounded at all, but should
+// be a page multiple.
+//
+
 void boot_init_heap(const char *base_address);
 void *kmalloc(unsigned int size);
 void kfree(void *ptr, unsigned int size);

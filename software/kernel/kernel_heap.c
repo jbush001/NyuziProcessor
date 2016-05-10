@@ -73,7 +73,8 @@ void *kmalloc(unsigned int size)
     {
         // No ranges are large enough, grow heap.
         grow_size = size * 2;
-        kprintf("grow heap %d\n", grow_size);
+        if (grow_size < 0x10000)
+            grow_size = 0x10000;
 
         // Wire in pages
         for (va = wilderness_ptr; va < wilderness_ptr + grow_size; va += PAGE_SIZE)
