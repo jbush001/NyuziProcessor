@@ -37,6 +37,7 @@ void kernel_main()
     int j;
     struct linked_node *node;
     struct linked_node *list = 0;
+    struct vm_translation_map *new_map;
 
     vm_init();
 
@@ -66,6 +67,9 @@ void kernel_main()
         kprintf("%d ", node->value);
 
     kprintf("\n");
+
+    new_map = new_translation_map();
+    destroy_translation_map(new_map);
 
     // Start other threads
     *((volatile unsigned int*) 0xffff0100) = 0xffffffff;

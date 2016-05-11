@@ -419,3 +419,15 @@ void* memset(void *_dest, int value, unsigned int length)
 
     return _dest;
 }
+
+void *memcpy(void *_dest, const void *_src, unsigned int length)
+{
+    char *dest;
+    char *src;
+
+    while (length-- > 0)
+        *dest++ = *src++;
+
+    return _dest;
+}
+

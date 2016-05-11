@@ -15,7 +15,9 @@
 //
 
 #include "vm.h"
+#include "libc.h"
 #include "memory_map.h"
+#include "slab.h"
 #include "spinlock.h"
 
 #define MEMORY_SIZE 0x1000000
@@ -43,7 +45,16 @@ extern unsigned int page_dir_addr;
 extern unsigned int boot_pages_used;
 
 static unsigned int next_alloc_page;
-static spinlock_t pgt_lock;
+static spinlock_t kernel_space_lock;
+static spinlock_t page_lock;
+static unsigned int next_asid;
+
+// The default_map is used during VM initialization, since the heap is not
+// ready yet at that point.
+static struct vm_translation_map default_map;
+static struct vm_translation_map *map_list  = &default_map;
+
+MAKE_SLAB(translation_map_slab, struct vm_translation_map);
 
 unsigned int boot_vm_allocate_pages(struct boot_page_setup *bps, int num_pages)
 {
@@ -121,47 +132,131 @@ void boot_setup_page_tables(void)
 void vm_init(void)
 {
     next_alloc_page = boot_pages_used;
+    default_map.page_dir = __builtin_nyuzi_read_control_reg(10);
     boot_init_heap(KERNEL_HEAP_BASE);
 }
 
 // XXX hack
-unsigned int vm_allocate_page_nolock(void)
-{
-    unsigned int pa = next_alloc_page;
-    next_alloc_page += PAGE_SIZE;
-    return pa;
-}
-
 unsigned int vm_allocate_page(void)
 {
     unsigned int pa;
 
-    acquire_spinlock(&pgt_lock);
-    pa = vm_allocate_page_nolock();
-    release_spinlock(&pgt_lock);
+    acquire_spinlock(&page_lock);
+    pa = next_alloc_page;
+    next_alloc_page += PAGE_SIZE;
+    release_spinlock(&page_lock);
+
+    memset((void*) PA_TO_VA(pa), 0, PAGE_SIZE);
 
     return pa;
 }
 
-void vm_map_page(unsigned int va, unsigned int pa)
+void vm_free_page(unsigned int addr)
+{
+    // XXX implement me
+}
+
+struct vm_translation_map *new_translation_map(void)
+{
+    struct vm_translation_map *map;
+    map = slab_alloc(&translation_map_slab);
+
+    map->page_dir = vm_allocate_page();
+
+    acquire_spinlock(&kernel_space_lock);
+    map->next = map_list->next;
+    map->prev = &map_list;
+    if (map->next)
+        map->next->prev = &map->next;
+
+    map_list = map;
+    map->asid = next_asid++;
+
+    // Copy kernel page tables into new page directory
+    memcpy((unsigned int*) PA_TO_VA(map->page_dir) + 768,
+        (unsigned int*) PA_TO_VA(map_list->page_dir) + 768,
+        256 * sizeof(unsigned int));
+    release_spinlock(&kernel_space_lock);
+
+    return map;
+}
+
+void destroy_translation_map(struct vm_translation_map *map)
+{
+    int i;
+    unsigned int *pgdir;
+
+    acquire_spinlock(&kernel_space_lock);
+    *map->prev = map->next;
+    if (map->next)
+        map->next->prev = map->prev;
+
+    release_spinlock(&kernel_space_lock);
+
+    // Free user space page tables
+    pgdir = PA_TO_VA(map->page_dir);
+    for (i = 0; i < 768; i++)
+    {
+        if (pgdir[i] & PAGE_PRESENT)
+            vm_free_page(PAGE_ALIGN(pgdir[i]));
+    }
+
+    vm_free_page(map->page_dir);
+    slab_free(&translation_map_slab, map);
+}
+
+void vm_map_page(struct vm_translation_map *map, unsigned int va, unsigned int pa)
 {
     int vpindex = va / PAGE_SIZE;
     int pgdindex = vpindex / 1024;
     int pgtindex = vpindex % 1024;
-    unsigned int *pgdir = PA_TO_VA(__builtin_nyuzi_read_control_reg(10));
+    unsigned int *pgdir;
     unsigned int *pgtbl;
+    struct vm_translation_map *other_map;
+    unsigned int new_pgt;
 
-    acquire_spinlock(&pgt_lock);
+    if (va >= KERNEL_BASE)
+    {
+        // Map into kernel space
+        acquire_spinlock(&kernel_space_lock);
 
-    // Allocate a new page table if one is not already present
-    if ((pgdir[pgdindex] & PAGE_PRESENT) == 0)
-        pgdir[pgdindex] = vm_allocate_page_nolock() | PAGE_PRESENT;
+        // The page tables for kernel space are shared by all page directories.
+        // Check the first page directory to see if this is present. If not,
+        // allocate a new one and stick it into all page directories.
+        pgdir = PA_TO_VA(map_list->page_dir);
+        if ((pgdir[pgdindex] & PAGE_PRESENT) == 0)
+        {
+            new_pgt = vm_allocate_page() | PAGE_PRESENT;
+            for (other_map = map_list; other_map; other_map = other_map->next)
+            {
+                pgdir = PA_TO_VA(other_map->page_dir);
+                pgdir[pgdindex] = new_pgt;
+            }
+        }
 
-    pgtbl = (unsigned int*) PAGE_ALIGN(pgdir[pgdindex]);
-    ((unsigned int*)PA_TO_VA(pgtbl))[pgtindex] = pa;
-    asm("tlbinval %0" : : "s" (va));
+        // Now add entry to the page table
+        pgtbl = (unsigned int*) PAGE_ALIGN(pgdir[pgdindex]);
+        ((unsigned int*)PA_TO_VA(pgtbl))[pgtindex] = pa;
+        asm("tlbinval %0" : : "s" (va));
 
-    // XXX does not invalidate on other cores
+        // XXX need to invalidate on other cores
 
-    release_spinlock(&pgt_lock);
+        release_spinlock(&kernel_space_lock);
+    }
+    else
+    {
+        // Map only into this address space
+        acquire_spinlock(&map->lock);
+        pgdir = PA_TO_VA(map->page_dir);
+        if ((pgdir[pgdindex] & PAGE_PRESENT) == 0)
+            pgdir[pgdindex] = vm_allocate_page() | PAGE_PRESENT;
+
+        pgtbl = (unsigned int*) PAGE_ALIGN(pgdir[pgdindex]);
+        ((unsigned int*)PA_TO_VA(pgtbl))[pgtindex] = pa;
+        asm("tlbinval %0" : : "s" (va));
+
+        // XXX need to invalidate on other cores
+
+        release_spinlock(&map->lock);
+    }
 }
