@@ -23,16 +23,19 @@ setjmp:         # Align s0 to a 64 byte boundary to do vector stores
                 and s0, s0, s1
 
                 # Copy callee-saved registers into structure
-                store_v v26, 0(s0)
-                store_v v27, 64(s0)
-                store_v v28, 128(s0)
-                store_v v29, 192(s0)
-                store_v v30, 256(s0)
-                store_v v31, 320(s0)
-                store_32 s27, 384(s0)
-                store_32 fp, 388(s0)
-                store_32 sp, 392(s0)
-                store_32 ra, 396(s0)    # Will return to this address
+                store_v v26, 0x0(s0)
+                store_v v27, 0x40(s0)
+                store_v v28, 0x80(s0)
+                store_v v29, 0xc0(s0)
+                store_v v30, 0x100(s0)
+                store_v v31, 0x140(s0)
+                store_32 s24, 0x180(s0)
+                store_32 s25, 0x184(s0)
+                store_32 s26, 0x188(s0)
+                store_32 s27, 0x18c(s0)
+                store_32 fp, 0x190(s0)
+                store_32 sp, 0x194(s0)
+                store_32 ra, 0x198(s0)    # Will return to this address
                 move s0, 0
                 move pc, ra
 
@@ -45,16 +48,19 @@ longjmp:        # Align s0 to a 64 byte boundary to do vector loads
                 and s0, s0, s2
 
                 # Copy callee-saved registers out of structure
-                load_v v26, 0(s0)
-                load_v v27, 64(s0)
-                load_v v28, 128(s0)
-                load_v v29, 192(s0)
-                load_v v30, 256(s0)
-                load_v v31, 320(s0)
-                load_32 s27, 384(s0)
-                load_32 fp, 388(s0)
-                load_32 sp, 392(s0)
-                load_32 s2, 396(s0)    # Get return address
-                move s0, s1            # Set return value
-                move pc, s2            # Jump back
+                load_v v26, 0x0(s0)
+                load_v v27, 0x40(s0)
+                load_v v28, 0x80(s0)
+                load_v v29, 0xc0(s0)
+                load_v v30, 0x100(s0)
+                load_v v31, 0x140(s0)
+                load_32 s24, 0x180(s0)
+                load_32 s25, 0x184(s0)
+                load_32 s26, 0x188(s0)
+                load_32 s27, 0x18c(s0)
+                load_32 fp, 0x190(s0)
+                load_32 sp, 0x194(s0)
+                load_32 s2, 0x198(s0)   # Get return address
+                move s0, s1             # Set return value
+                move pc, s2             # Jump back
 
