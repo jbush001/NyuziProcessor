@@ -14,11 +14,12 @@
 // limitations under the License.
 //
 
-#include "vm.h"
+#include "asm.h"
 #include "libc.h"
 #include "memory_map.h"
 #include "slab.h"
 #include "spinlock.h"
+#include "vm.h"
 
 #define MEMORY_SIZE 0x1000000
 #define PA_TO_VA(x) ((unsigned int) (x) + PHYS_MEM_ALIAS)
@@ -133,6 +134,7 @@ void vm_init(void)
 {
     next_alloc_page = boot_pages_used;
     default_map.page_dir = __builtin_nyuzi_read_control_reg(10);
+    kprintf("default page dir is %08x\n", default_map.page_dir);
     boot_init_heap(KERNEL_HEAP_BASE);
 }
 
@@ -164,18 +166,22 @@ struct vm_translation_map *new_translation_map(void)
     map->page_dir = vm_allocate_page();
 
     acquire_spinlock(&kernel_space_lock);
+    // Copy kernel page tables into new page directory
+    memcpy((unsigned int*) PA_TO_VA(map->page_dir) + 768,
+        (unsigned int*) PA_TO_VA(map_list->page_dir) + 768,
+        256 * sizeof(unsigned int));
+
+    map->asid = next_asid++;
+    map->lock = 0;
+
+    // Insert into list (after accessing map_list above, which
+    // we used to find another prototype page directory)
     map->next = map_list->next;
     map->prev = &map_list;
     if (map->next)
         map->next->prev = &map->next;
 
     map_list = map;
-    map->asid = next_asid++;
-
-    // Copy kernel page tables into new page directory
-    memcpy((unsigned int*) PA_TO_VA(map->page_dir) + 768,
-        (unsigned int*) PA_TO_VA(map_list->page_dir) + 768,
-        256 * sizeof(unsigned int));
     release_spinlock(&kernel_space_lock);
 
     return map;
@@ -260,3 +266,10 @@ void vm_map_page(struct vm_translation_map *map, unsigned int va, unsigned int p
         release_spinlock(&map->lock);
     }
 }
+
+void switch_to_translation_map(struct vm_translation_map *map)
+{
+    __builtin_nyuzi_write_control_reg(CR_PAGE_DIR_BASE, map->page_dir);
+    __builtin_nyuzi_write_control_reg(CR_CURRENT_ASID, map->asid);
+}
+

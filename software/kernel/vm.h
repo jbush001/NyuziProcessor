@@ -40,3 +40,5 @@ struct vm_translation_map *new_translation_map(void);
 void destroy_translation_map(struct vm_translation_map*);
 void vm_map_page(struct vm_translation_map *map, unsigned int va, unsigned int pa);
 unsigned int vm_allocate_page(void);
+
+void switch_to_translation_map(struct vm_translation_map *map);

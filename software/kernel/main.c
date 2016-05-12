@@ -37,7 +37,11 @@ void kernel_main()
     int j;
     struct linked_node *node;
     struct linked_node *list = 0;
-    struct vm_translation_map *new_map;
+    struct vm_translation_map *map1;
+    struct vm_translation_map *map2;
+    unsigned int page1;
+    unsigned int page2;
+    unsigned int page3;
 
     vm_init();
 
@@ -68,8 +72,24 @@ void kernel_main()
 
     kprintf("\n");
 
-    new_map = new_translation_map();
-    destroy_translation_map(new_map);
+    // Test multiple address spaces
+    page1 = vm_allocate_page();
+    page2 = vm_allocate_page();
+    page3 = vm_allocate_page();
+    map1 = new_translation_map();
+    map2 = new_translation_map();
+    vm_map_page(map1, 0x10000000, page1 | PAGE_PRESENT | PAGE_WRITABLE);
+    vm_map_page(map1, 0x10001000, page2 | PAGE_PRESENT | PAGE_WRITABLE);
+    vm_map_page(map2, 0x10000000, page3 | PAGE_PRESENT | PAGE_WRITABLE);
+    vm_map_page(map2, 0x20000000, page2 | PAGE_PRESENT | PAGE_WRITABLE);
+
+    switch_to_translation_map(map1);
+    *((volatile unsigned int*) 0x10000000) = 0xdeadbeef;
+    *((volatile unsigned int*) 0x10001000) = 0x12345678;
+    switch_to_translation_map(map2);
+    kprintf("1: %08x\n",  *((volatile unsigned int*) 0x10000000));  // Should be 0
+    kprintf("2: %08x\n",  *((volatile unsigned int*) 0x20000000));  // Should be 0x12345678
+    destroy_translation_map(map1);
 
     // Start other threads
     *((volatile unsigned int*) 0xffff0100) = 0xffffffff;

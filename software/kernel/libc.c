@@ -422,8 +422,8 @@ void* memset(void *_dest, int value, unsigned int length)
 
 void *memcpy(void *_dest, const void *_src, unsigned int length)
 {
-    char *dest;
-    char *src;
+    char *dest = _dest;
+    char *src = _src;
 
     while (length-- > 0)
         *dest++ = *src++;
