@@ -29,7 +29,9 @@ SRCS=vm.c \
 	trap_entry.S \
 	trap.c \
 	kernel_heap.c \
-	slab.c
+	slab.c \
+	context_switch.S \
+	thread.c
 
 OBJS=$(SRCS_TO_OBJS)
 DEPS=$(SRCS_TO_DEPS)

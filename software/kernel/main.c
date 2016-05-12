@@ -18,6 +18,7 @@
 #include "kernel_heap.h"
 #include "libc.h"
 #include "slab.h"
+#include "thread.h"
 #include "vm.h"
 
 struct linked_node
@@ -26,6 +27,11 @@ struct linked_node
     int value;
     int stuff[16];
 };
+
+void context_switch(unsigned int **old_stack_ptr_ptr,
+                    unsigned int *new_stack_ptr,
+                    unsigned int new_page_dir_addr,
+                    unsigned int new_address_space_id);
 
 MAKE_SLAB(node_slab, struct linked_node);
 
@@ -105,18 +111,58 @@ void test_trap(void)
     *((unsigned int*) 1) = 1; // Cause fault
 }
 
+struct thread th_a;
+struct thread th_b;
+
+void thread_funca()
+{
+    while (1)
+    {
+        kprintf("A");
+        switch_to_thread(&th_b);
+    }
+}
+
+void thread_funcb()
+{
+    while (1)
+    {
+        kprintf("B");
+        switch_to_thread(&th_a);
+    }
+}
+
+void test_context_switch(void)
+{
+    struct vm_translation_map *map = new_translation_map();
+
+    // Set up thread A
+    boot_init_thread(&th_a);
+    th_a.map = map;
+
+    // Set up thread B
+    th_b.current_stack = (unsigned int*) kmalloc(0x2000) + 0x2000 - 0x840;
+    ((unsigned int*) th_b.current_stack)[0x814 / 4] = (unsigned int) thread_funcb;
+    kprintf("thread start address is %08x\n", &((unsigned int*) th_b.current_stack)[0x808 / 4]);
+    th_b.map = map;
+
+    thread_funca();
+}
+
 void kernel_main(void)
 {
-
     vm_init();
     kprintf("Hello kernel land\n");
+
+#if 0
     test_slab();
     test_translation_map();
-
-    // Start other threads
     *((volatile unsigned int*) 0xffff0100) = 0xffffffff;
+    test_trap();
+#else
+    test_context_switch();
+#endif
 
-//    test_trap();
     for (;;)
         ;
 }
@@ -127,3 +173,4 @@ void thread_n_main(void)
     for (;;)
         ;
 }
+
