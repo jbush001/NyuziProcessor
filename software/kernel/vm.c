@@ -134,7 +134,6 @@ void vm_init(void)
 {
     next_alloc_page = boot_pages_used;
     default_map.page_dir = __builtin_nyuzi_read_control_reg(10);
-    kprintf("default page dir is %08x\n", default_map.page_dir);
     boot_init_heap(KERNEL_HEAP_BASE);
 }
 

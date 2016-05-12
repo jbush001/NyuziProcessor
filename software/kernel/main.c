@@ -24,32 +24,21 @@ struct linked_node
 {
     struct linked_node *next;
     int value;
+    int stuff[16];
 };
 
 MAKE_SLAB(node_slab, struct linked_node);
 
-// XXX need a global variable for _end to be emitted correctly.
-int foo;
-
-void kernel_main()
+void test_slab(void)
 {
     int i;
     int j;
     struct linked_node *node;
     struct linked_node *list = 0;
-    struct vm_translation_map *map1;
-    struct vm_translation_map *map2;
-    unsigned int page1;
-    unsigned int page2;
-    unsigned int page3;
 
-    vm_init();
-
-    kprintf("Hello kernel land\n");
-
-    // Map a page, then read and write to it
-    for (j = 1; j < 30; j++)
+    for (j = 1; j < 128; j++)
     {
+        // Allocate a bunch of nodes
         for (i = 0; i < j; i++)
         {
             node = (struct linked_node*) slab_alloc(&node_slab);
@@ -58,7 +47,7 @@ void kernel_main()
             node->value = j;
         }
 
-
+        // Free all but one
         for (i = 0; i < j - 1; i++)
         {
             node = list;
@@ -71,16 +60,30 @@ void kernel_main()
         kprintf("%d ", node->value);
 
     kprintf("\n");
+}
 
-    // Test multiple address spaces
+void test_translation_map(void)
+{
+    struct vm_translation_map *map1;
+    struct vm_translation_map *map2;
+    unsigned int page1;
+    unsigned int page2;
+    unsigned int page3;
+
     page1 = vm_allocate_page();
     page2 = vm_allocate_page();
     page3 = vm_allocate_page();
     map1 = new_translation_map();
     map2 = new_translation_map();
+
+    // Cache homonym: same virtual address points to two different
+    // physical addresses
     vm_map_page(map1, 0x10000000, page1 | PAGE_PRESENT | PAGE_WRITABLE);
-    vm_map_page(map1, 0x10001000, page2 | PAGE_PRESENT | PAGE_WRITABLE);
     vm_map_page(map2, 0x10000000, page3 | PAGE_PRESENT | PAGE_WRITABLE);
+
+    // Cache synonym: different virtual addresses point to the same
+    // physical address
+    vm_map_page(map1, 0x10001000, page2 | PAGE_PRESENT | PAGE_WRITABLE);
     vm_map_page(map2, 0x20000000, page2 | PAGE_PRESENT | PAGE_WRITABLE);
 
     switch_to_translation_map(map1);
@@ -89,20 +92,38 @@ void kernel_main()
     switch_to_translation_map(map2);
     kprintf("1: %08x\n",  *((volatile unsigned int*) 0x10000000));  // Should be 0
     kprintf("2: %08x\n",  *((volatile unsigned int*) 0x20000000));  // Should be 0x12345678
+    switch_to_translation_map(map1);
+    kprintf("1: %08x\n",  *((volatile unsigned int*) 0x10000000));  // Should be 0xdeadbeef
+    kprintf("2: %08x\n",  *((volatile unsigned int*) 0x10001000));  // Should be 0x12345678
+    switch_to_translation_map(map2);
+
     destroy_translation_map(map1);
+}
+
+void test_trap(void)
+{
+    *((unsigned int*) 1) = 1; // Cause fault
+}
+
+void kernel_main(void)
+{
+
+    vm_init();
+    kprintf("Hello kernel land\n");
+    test_slab();
+    test_translation_map();
 
     // Start other threads
     *((volatile unsigned int*) 0xffff0100) = 0xffffffff;
 
-//    *((unsigned int*) 1) = 1; // Cause fault
+//    test_trap();
     for (;;)
         ;
 }
 
-void thread_n_main()
+void thread_n_main(void)
 {
-    kprintf("%c", __builtin_nyuzi_read_control_reg(0) + 'a');
+    kprintf("%c", __builtin_nyuzi_read_control_reg(0) + 'A');
     for (;;)
         ;
 }
-
