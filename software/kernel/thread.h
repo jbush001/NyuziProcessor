@@ -27,8 +27,21 @@ struct thread
     void *current_stack;
     void (*start_function)(void *param);
     void *param;
+    struct thread *queue_next;
 };
 
-void boot_init_thread(struct thread *th);
-void switch_to_thread(struct thread *th);
+struct thread_queue
+{
+    struct thread *head;
+    struct thread *tail;
+};
+
+void boot_init_thread(struct vm_translation_map *map);
+
 struct thread *current_thread(void);
+struct thread *spawn_thread(struct vm_translation_map *map,
+                            void (*start_function)(void *param),
+                            void *param);
+void enqueue_thread(struct thread_queue*, struct thread*);
+struct thread *dequeue_thread(struct thread_queue*);
+void do_context_switch(void);

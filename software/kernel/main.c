@@ -68,7 +68,25 @@ void test_slab(void)
     kprintf("\n");
 }
 
-void test_translation_map(void)
+void test_trap(void)
+{
+    *((unsigned int*) 1) = 1; // Cause fault
+}
+
+void thread_funcb()
+{
+    // Assign homonym page to ensure it is separate from the one
+    // in the other address space
+    *((volatile unsigned int*) 0x10000000) = 0x12345678;
+    while (1)
+    {
+        kprintf("funcb: %08x %08x\n",  *((volatile unsigned int*) 0x10000000),
+            *((volatile unsigned int*) 0x20000000));  // Should be 0x12345678 <counter>
+        do_context_switch();
+    }
+}
+
+void test_context_switch(void)
 {
     struct vm_translation_map *map1;
     struct vm_translation_map *map2;
@@ -92,61 +110,28 @@ void test_translation_map(void)
     vm_map_page(map1, 0x10001000, page2 | PAGE_PRESENT | PAGE_WRITABLE);
     vm_map_page(map2, 0x20000000, page2 | PAGE_PRESENT | PAGE_WRITABLE);
 
-    switch_to_translation_map(map1);
+    // Current thread
+    boot_init_thread(map1);
+
+    // Create a new thread
+    spawn_thread(map2, thread_funcb, 0);
+
+    // Need to context switch to set up new address space
+    do_context_switch();
+
+    // In map1. Assign homonym address to ensure it doesn't show up in
+    // other address space.
     *((volatile unsigned int*) 0x10000000) = 0xdeadbeef;
-    *((volatile unsigned int*) 0x10001000) = 0x12345678;
-    switch_to_translation_map(map2);
-    kprintf("1: %08x\n",  *((volatile unsigned int*) 0x10000000));  // Should be 0
-    kprintf("2: %08x\n",  *((volatile unsigned int*) 0x20000000));  // Should be 0x12345678
-    switch_to_translation_map(map1);
-    kprintf("1: %08x\n",  *((volatile unsigned int*) 0x10000000));  // Should be 0xdeadbeef
-    kprintf("2: %08x\n",  *((volatile unsigned int*) 0x10001000));  // Should be 0x12345678
-    switch_to_translation_map(map2);
 
-    destroy_translation_map(map1);
-}
-
-void test_trap(void)
-{
-    *((unsigned int*) 1) = 1; // Cause fault
-}
-
-struct thread th_a;
-struct thread th_b;
-
-void thread_funca()
-{
     while (1)
     {
-        kprintf("A");
-        switch_to_thread(&th_b);
+        kprintf("funca: %08x\n",  *((volatile unsigned int*) 0x10000000));
+            // Should be 0xdeadbeef
+
+        // Increment counter in synonym page
+        (*((volatile unsigned int*) 0x10001000))++;
+        do_context_switch();
     }
-}
-
-void thread_funcb()
-{
-    while (1)
-    {
-        kprintf("B");
-        switch_to_thread(&th_a);
-    }
-}
-
-void test_context_switch(void)
-{
-    struct vm_translation_map *map = new_translation_map();
-
-    // Set up thread A
-    boot_init_thread(&th_a);
-    th_a.map = map;
-
-    // Set up thread B
-    th_b.current_stack = (unsigned int*) kmalloc(0x2000) + 0x2000 - 0x840;
-    ((unsigned int*) th_b.current_stack)[0x814 / 4] = (unsigned int) thread_funcb;
-    kprintf("thread start address is %08x\n", &((unsigned int*) th_b.current_stack)[0x808 / 4]);
-    th_b.map = map;
-
-    thread_funca();
 }
 
 void kernel_main(void)

@@ -16,28 +16,21 @@
 
 #include "asm.h"
 #include "libc.h"
+#include "slab.h"
 #include "spinlock.h"
 #include "thread.h"
 
 static struct thread *cur_thread[MAX_CORES];
+static struct thread_queue ready_q;
+static spinlock_t thread_q_lock;
 
-void boot_init_thread(struct thread *th)
+MAKE_SLAB(thread_slab, struct thread);
+
+void boot_init_thread(struct vm_translation_map *map)
 {
+    struct thread *th = slab_alloc(&thread_slab);
+    th->map = map;
     cur_thread[__builtin_nyuzi_read_control_reg(CR_CURRENT_THREAD)] = th;
-}
-
-void switch_to_thread(struct thread *th)
-{
-    // Hardware threads are treated as cores here.
-    int core = __builtin_nyuzi_read_control_reg(CR_CURRENT_THREAD);
-    struct thread *old_thread;
-
-    old_thread = cur_thread[core];
-    cur_thread[core] = th;
-    context_switch(&old_thread->current_stack,
-        th->current_stack,
-        th->map->page_dir,
-        th->map->asid);
 }
 
 struct thread *current_thread(void)
@@ -45,3 +38,78 @@ struct thread *current_thread(void)
     int core = __builtin_nyuzi_read_control_reg(CR_CURRENT_THREAD);
     return cur_thread[core];
 }
+
+void enqueue_thread(struct thread_queue *q, struct thread *th)
+{
+    if (q->head == 0)
+        q->head = q->tail = th;
+    else
+    {
+        q->tail->queue_next = th;
+        q->tail = th;
+    }
+
+    th->queue_next = 0;
+}
+
+struct thread *dequeue_thread(struct thread_queue *q)
+{
+    struct thread *th = q->head;
+    q->head = th->queue_next;
+    if (q->head == 0)
+        q->tail = 0;
+
+    return th;
+}
+
+// Execution of a new thread starts here, called from context_switch.
+// Need to release thread lock.
+static void thread_start(void)
+{
+    int hwthread = __builtin_nyuzi_read_control_reg(CR_CURRENT_THREAD);
+    struct thread *th =  cur_thread[hwthread];
+    release_spinlock(&thread_q_lock);
+    th->start_function(th->param);
+}
+
+struct thread *spawn_thread(struct vm_translation_map *map,
+                            void (*start_function)(void *param),
+                            void *param)
+{
+    struct thread *th = slab_alloc(&thread_slab);
+    th->current_stack = (unsigned int*) kmalloc(0x2000) + 0x2000 - 0x840;
+    th->map = map;
+    ((unsigned int*) th->current_stack)[0x814 / 4] = (unsigned int) thread_start;
+    th->start_function = start_function;
+    th->param = param;
+
+    acquire_spinlock(&thread_q_lock);
+    enqueue_thread(&ready_q, th);
+    release_spinlock(&thread_q_lock);
+}
+
+void do_context_switch(void)
+{
+    int hwthread = __builtin_nyuzi_read_control_reg(CR_CURRENT_THREAD);
+    struct thread *old_thread;
+    struct thread *next_thread;
+
+    // Put current thread back on ready queue
+
+    acquire_spinlock(&thread_q_lock);
+    old_thread = cur_thread[hwthread];
+    enqueue_thread(&ready_q, old_thread);
+    next_thread = dequeue_thread(&ready_q);
+    if (old_thread != next_thread)
+    {
+        cur_thread[hwthread] = next_thread;
+        context_switch(&old_thread->current_stack,
+            next_thread->current_stack,
+            next_thread->map->page_dir,
+            next_thread->map->asid);
+    }
+
+    release_spinlock(&thread_q_lock);
+}
+
+
