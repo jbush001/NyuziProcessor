@@ -26,7 +26,35 @@
 
                         .globl trap_entry
                         .type trap_entry, @function
-trap_entry:             sub_i sp, sp, IFRAME_SIZE
+trap_entry:             setcr s0, CR_SCRATCHPAD0        // Save s0 in scratchpad
+                        setcr s1, CR_SCRATCHPAD1        // Save s1 in scratchpad
+
+                        getcr s0, CR_SAVED_FLAGS        // Get old flags
+                        and s0, s0, FLAG_SUPERVISOR_EN  // Was in supervisor mode?
+                        btrue s0, is_supervisor
+
+                        // Need to switch to kernel stack. First, find the
+                        // current thread for this hardware thread.
+                        getcr s0, CR_CURRENT_THREAD     // Current hardware thread
+                        shl s0, s0, 2                   // Multiply by 4 (bytes/entry)
+                        lea s1, cur_thread_addr
+                        load_32 s1, (s1)                // Get base of cur_thread array
+                        add_i s1, s1, s0                // Find element ptr
+                        load_32 s1, (s1)                // Ptr to current thread struct
+                        load_32 s1, (s1)                // Get kernel_stack pointer
+                        store_32 sp, -76(s1)            // Save user stack pointer
+                        move sp, s1                     // switch stacks
+                        goto save_frame
+
+                        // Already in kernel mode. Don't need to switch stacks, just
+                        // decrement pointer
+is_supervisor:          store_32 sp, -76(sp)
+
+                        // Save remaining registers
+save_frame:             getcr s0, CR_SCRATCHPAD0        // restore s0
+                        getcr s1, CR_SCRATCHPAD1        // restore s1
+                        sub_i sp, sp, IFRAME_SIZE       // Reserve space for iframe
+
                         store_32 s0, 0(sp)
                         store_32 s1, 4(sp)
                         store_32 s2, 8(sp)
@@ -56,7 +84,6 @@ trap_entry:             sub_i sp, sp, IFRAME_SIZE
                         store_32 s26, 104(sp)
                         store_32 s27, 108(sp)
                         store_32 fp, 112(sp)
-                        # Stack pointer slot is unused
                         store_32 ra, 120(sp)
 
                         getcr s0, 2
@@ -100,15 +127,17 @@ trap_entry:             sub_i sp, sp, IFRAME_SIZE
                         load_32 fp, 112(sp)
                         load_32 ra, 120(sp)
 
-                        load_32 s0, 124(sp)   # Saved PC
+                        load_32 s0, 124(sp)     // Saved PC
                         setcr s0, 2
-                        load_32 s0, 128(sp)   # Saved flags
+                        load_32 s0, 128(sp)     // Saved flags
                         setcr s0, 8
-                        load_32 s0, 132(sp)   # Subcycle
+                        load_32 s0, 132(sp)     // Subcycle
                         setcr s0, 13
                         load_32 s0, 0(sp)
-                        add_i sp, sp, IFRAME_SIZE
+                        load_32 sp, 116(sp)     // Restore old stack pointer
                         eret
+
+cur_thread_addr:        .long cur_thread
 
 //
 // TLB miss handler. This is invoked with the MMU disabled.

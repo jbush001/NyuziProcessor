@@ -22,9 +22,10 @@
 
 struct thread
 {
+    void *kernel_stack; // This must be first member, trap_entry references
+    void *current_stack;
     struct vm_translation_map *map;
     void *stack_base;
-    void *current_stack;
     void (*start_function)(void *param);
     void *param;
     struct thread *queue_next;
@@ -44,4 +45,4 @@ struct thread *spawn_thread(struct vm_translation_map *map,
                             void *param);
 void enqueue_thread(struct thread_queue*, struct thread*);
 struct thread *dequeue_thread(struct thread_queue*);
-void do_context_switch(void);
+void reschedule(void);

@@ -20,7 +20,7 @@
 #include "spinlock.h"
 #include "thread.h"
 
-static struct thread *cur_thread[MAX_CORES];
+struct thread *cur_thread[MAX_CORES];
 static struct thread_queue ready_q;
 static spinlock_t thread_q_lock;
 
@@ -66,8 +66,7 @@ struct thread *dequeue_thread(struct thread_queue *q)
 // Need to release thread lock.
 static void thread_start(void)
 {
-    int hwthread = __builtin_nyuzi_read_control_reg(CR_CURRENT_THREAD);
-    struct thread *th =  cur_thread[hwthread];
+    struct thread *th = current_thread();
     release_spinlock(&thread_q_lock);
     th->start_function(th->param);
 }
@@ -77,7 +76,8 @@ struct thread *spawn_thread(struct vm_translation_map *map,
                             void *param)
 {
     struct thread *th = slab_alloc(&thread_slab);
-    th->current_stack = (unsigned int*) kmalloc(0x2000) + 0x2000 - 0x840;
+    th->kernel_stack = (unsigned char*) kmalloc(0x2000) + 0x2000;
+    th->current_stack = (unsigned char*) th->kernel_stack - 0x840;
     th->map = map;
     ((unsigned int*) th->current_stack)[0x814 / 4] = (unsigned int) thread_start;
     th->start_function = start_function;
@@ -88,7 +88,7 @@ struct thread *spawn_thread(struct vm_translation_map *map,
     release_spinlock(&thread_q_lock);
 }
 
-void do_context_switch(void)
+void reschedule(void)
 {
     int hwthread = __builtin_nyuzi_read_control_reg(CR_CURRENT_THREAD);
     struct thread *old_thread;

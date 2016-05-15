@@ -28,11 +28,6 @@ struct linked_node
     int stuff[16];
 };
 
-void context_switch(unsigned int **old_stack_ptr_ptr,
-                    unsigned int *new_stack_ptr,
-                    unsigned int new_page_dir_addr,
-                    unsigned int new_address_space_id);
-
 MAKE_SLAB(node_slab, struct linked_node);
 
 void test_slab(void)
@@ -82,7 +77,7 @@ void thread_funcb()
     {
         kprintf("funcb: %08x %08x\n",  *((volatile unsigned int*) 0x10000000),
             *((volatile unsigned int*) 0x20000000));  // Should be 0x12345678 <counter>
-        do_context_switch();
+        reschedule();
     }
 }
 
@@ -117,7 +112,7 @@ void test_context_switch(void)
     spawn_thread(map2, thread_funcb, 0);
 
     // Need to context switch to set up new address space
-    do_context_switch();
+    reschedule();
 
     // In map1. Assign homonym address to ensure it doesn't show up in
     // other address space.
@@ -130,7 +125,7 @@ void test_context_switch(void)
 
         // Increment counter in synonym page
         (*((volatile unsigned int*) 0x10001000))++;
-        do_context_switch();
+        reschedule();
     }
 }
 
@@ -139,9 +134,8 @@ void kernel_main(void)
     vm_init();
     kprintf("Hello kernel land\n");
 
-#if 0
+#if 1
     test_slab();
-    test_translation_map();
     *((volatile unsigned int*) 0xffff0100) = 0xffffffff;
     test_trap();
 #else
