@@ -37,10 +37,9 @@ trap_entry:             setcr s0, CR_SCRATCHPAD0        // Save s0 in scratchpad
                         // current thread for this hardware thread.
                         getcr s0, CR_CURRENT_THREAD     // Current hardware thread
                         shl s0, s0, 2                   // Multiply by 4 (bytes/entry)
-                        lea s1, cur_thread_addr
-                        load_32 s1, (s1)                // Get base of cur_thread array
+                        lea s1, kernel_stack_addr_addr
+                        load_32 s1, (s1)                // Get base of array
                         add_i s1, s1, s0                // Find element ptr
-                        load_32 s1, (s1)                // Ptr to current thread struct
                         load_32 s1, (s1)                // Get kernel_stack pointer
                         store_32 sp, -76(s1)            // Save user stack pointer
                         move sp, s1                     // switch stacks
@@ -137,7 +136,7 @@ save_frame:             getcr s0, CR_SCRATCHPAD0        // restore s0
                         load_32 sp, 116(sp)     // Restore old stack pointer
                         eret
 
-cur_thread_addr:        .long cur_thread
+kernel_stack_addr_addr: .long kernel_stack_addr
 
 //
 // TLB miss handler. This is invoked with the MMU disabled.

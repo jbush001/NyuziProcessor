@@ -23,6 +23,7 @@
 struct thread *cur_thread[MAX_CORES];
 static struct thread_queue ready_q;
 static spinlock_t thread_q_lock;
+unsigned int kernel_stack_addr[MAX_CORES];
 
 MAKE_SLAB(thread_slab, struct thread);
 
@@ -103,6 +104,7 @@ void reschedule(void)
     if (old_thread != next_thread)
     {
         cur_thread[hwthread] = next_thread;
+        kernel_stack_addr[hwthread] = next_thread->kernel_stack;
         context_switch(&old_thread->current_stack,
             next_thread->current_stack,
             next_thread->map->page_dir,

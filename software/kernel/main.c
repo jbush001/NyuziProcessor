@@ -134,7 +134,7 @@ void kernel_main(void)
     vm_init();
     kprintf("Hello kernel land\n");
 
-#if 1
+#if 0
     test_slab();
     *((volatile unsigned int*) 0xffff0100) = 0xffffffff;
     test_trap();

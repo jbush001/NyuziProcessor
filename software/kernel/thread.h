@@ -22,7 +22,7 @@
 
 struct thread
 {
-    void *kernel_stack; // This must be first member, trap_entry references
+    void *kernel_stack;
     void *current_stack;
     struct vm_translation_map *map;
     void *stack_base;
