@@ -14,14 +14,11 @@
 // limitations under the License.
 //
 
-#pragma once
+                .globl _start
+_start:         call main
+1:              goto 1b
 
-int kprintf(const char *format, ...);
-void *memcpy(void *dest, const void *src, unsigned int length);
-void panic(const char *fmt, ...);
-void *memset(void *dest, int value, unsigned int length);
-char* strncpy(char *dest, const char *src, unsigned int length);
 
-#define assert(cond) if (!(cond)) { panic("ASSERT FAILED: %s:%d: %s\n", __FILE__, __LINE__, \
-		#cond); }
-
+                .globl __syscall
+__syscall:      syscall
+                ret

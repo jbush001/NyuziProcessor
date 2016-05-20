@@ -1,5 +1,5 @@
 //
-// Copyright 2016 Jeff Bush
+// Copyright 2015-2016 Jeff Bush
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,12 +16,6 @@
 
 #pragma once
 
-int kprintf(const char *format, ...);
-void *memcpy(void *dest, const void *src, unsigned int length);
-void panic(const char *fmt, ...);
-void *memset(void *dest, int value, unsigned int length);
-char* strncpy(char *dest, const char *src, unsigned int length);
-
-#define assert(cond) if (!(cond)) { panic("ASSERT FAILED: %s:%d: %s\n", __FILE__, __LINE__, \
-		#cond); }
+struct file_handle *open_file(const char *name);
+int read_file(struct file_handle *handle, unsigned int offset, void *out_buf, int length);
 

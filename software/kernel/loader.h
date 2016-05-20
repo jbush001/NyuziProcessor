@@ -16,12 +16,7 @@
 
 #pragma once
 
-int kprintf(const char *format, ...);
-void *memcpy(void *dest, const void *src, unsigned int length);
-void panic(const char *fmt, ...);
-void *memset(void *dest, int value, unsigned int length);
-char* strncpy(char *dest, const char *src, unsigned int length);
+#include "vm.h"
 
-#define assert(cond) if (!(cond)) { panic("ASSERT FAILED: %s:%d: %s\n", __FILE__, __LINE__, \
-		#cond); }
-
+int load_program(const char *filename,
+                 unsigned int *out_entry);

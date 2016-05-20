@@ -265,7 +265,7 @@ int loadHexFile(Core *core, const char *filename)
     file = fopen(filename, "r");
     if (file == NULL)
     {
-        perror("loadHexFile: error opening output file");
+        perror("loadHexFile: error opening hex file");
         return -1;
     }
 

@@ -111,8 +111,8 @@ static void insert_free_range(struct free_range *new_range)
     if (free_list == 0 || new_range < free_list)
     {
         // Insert as first element in list
-        free_list = new_range;
         new_range->next = free_list;
+        free_list = new_range;
         prev_range = 0;
     }
     else

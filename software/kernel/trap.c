@@ -43,9 +43,36 @@ static const char *TRAP_NAMES[] =
     "Non Executable Page"
 };
 
+
+void handle_syscall(struct interrupt_frame *frame)
+{
+    switch (frame->gpr[0])
+    {
+        case 7: // Print something
+            // !!! Needs to do copy from user. Unsafe.
+            kprintf("%s", frame->gpr[1]);
+            break;
+
+        default:
+            kprintf("Unknown syscall %d\n", frame->gpr[0]);
+    }
+
+    frame->gpr[31] += 4;    // Next instruction
+}
+
 void handle_trap(struct interrupt_frame *frame)
 {
-    dumpTrap(frame);
+    int trapId = __builtin_nyuzi_read_control_reg(CR_TRAP_REASON);
+    switch (trapId)
+    {
+        case TR_SYSCALL:
+            handle_syscall(frame);
+            break;
+
+        default:
+            dumpTrap(frame);
+            panic("Unhandled trap");
+    }
 }
 
 void dumpTrap(const struct interrupt_frame *frame)

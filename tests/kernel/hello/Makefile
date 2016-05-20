@@ -14,39 +14,33 @@
 # limitations under the License.
 #
 
-TOPDIR=../../
+TOPDIR=../../..
 
 include $(TOPDIR)/build/target.mk
 
-CFLAGS=-O3 # Override default CFLAGS
-BASE_ADDRESS=0xc0000000
-
-SRCS=vm.c \
-	main.c \
-	start.S \
-	libc.c \
-	uart.c \
-	trap_entry.S \
-	trap.c \
-	kernel_heap.c \
-	slab.c \
-	context_switch.S \
-	thread.c \
-	loader.c \
-	fs.c \
-	sdmmc.c
+SRCS=hello.c start.s
 
 OBJS=$(SRCS_TO_OBJS)
 DEPS=$(SRCS_TO_DEPS)
 
-kernel.hex: kernel.elf
-	$(ELF2HEX) -b $(BASE_ADDRESS) -o kernel.hex $(OBJ_DIR)/kernel.elf
+program.elf: $(OBJS)
+	$(LD) -o program.elf -Ttext=0x1000 $(OBJS)
 
-kernel.elf: $(OBJS) $(DEPS)
-	$(LD) -o $(OBJ_DIR)/kernel.elf -Ttext=$(BASE_ADDRESS) $(OBJS) $(TOPDIR)/software/libs/compiler-rt/compiler-rt.a
-	$(OBJDUMP) --disassemble $(OBJ_DIR)/kernel.elf > kernel.lst
+#
+# To run, this uses the kernel built in software/kernel.
+# The compiled hello program is bundled into the filesystem
+# and loaded by the kernel.
+#
+run: program.elf fsimage.bin
+	$(EMULATOR) -b fsimage.bin $(TOPDIR)/software/kernel/kernel.hex
+
+verirun: program.elf fsimage.bin
+	$(VERILATOR) +bin=$(TOPDIR)/software/kernel/kernel.hex +block=fsimage.bin
+
+fsimage.bin: program.elf
+	$(MKFS) fsimage.bin program.elf
 
 clean:
-	rm -rf obj $(OBJ_DIR)/kernel.elf
+	rm -f program.elf
 
 -include $(DEPS)

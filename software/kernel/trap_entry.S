@@ -138,6 +138,23 @@ save_frame:             getcr s0, CR_SCRATCHPAD0        // restore s0
 
 kernel_stack_addr_addr: .long kernel_stack_addr
 
+
+//
+// Jump to a user mode task.
+//
+//  void jump_to_user_mode(int argc, void *argv, unsigned int inital_pc,
+//      unsigned int user_stack_ptr);
+//
+// Use eret to simultaneously jump to PC and switch modes.
+//
+
+                        .globl jump_to_user_mode
+jump_to_user_mode:      setcr s2, CR_TRAP_PC        // Address to jump to.
+                        move s10, FLAG_MMU_EN       // XXX interrupts currently disabled
+                        setcr s10, CR_SAVED_FLAGS
+                        move sp, s3
+                        eret
+
 //
 // TLB miss handler. This is invoked with the MMU disabled.
 //

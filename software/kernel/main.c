@@ -132,18 +132,24 @@ void test_context_switch(void)
 void kernel_main(void)
 {
     vm_init();
-    kprintf("Hello kernel land\n");
+    kprintf("Kernel started\n");
 
 #if 0
     test_slab();
     *((volatile unsigned int*) 0xffff0100) = 0xffffffff;
     test_trap();
-#else
+#endif
+
+#if 0
     test_context_switch();
 #endif
 
+    exec_program("program.elf");
+
+    boot_init_thread(new_translation_map());
+
     for (;;)
-        ;
+        reschedule();
 }
 
 void thread_n_main(void)

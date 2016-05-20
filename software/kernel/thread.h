@@ -46,3 +46,4 @@ struct thread *spawn_thread(struct vm_translation_map *map,
 void enqueue_thread(struct thread_queue*, struct thread*);
 struct thread *dequeue_thread(struct thread_queue*);
 void reschedule(void);
+void exec_program(const char *filename);

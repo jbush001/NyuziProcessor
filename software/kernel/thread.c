@@ -16,9 +16,16 @@
 
 #include "asm.h"
 #include "libc.h"
+#include "loader.h"
 #include "slab.h"
 #include "spinlock.h"
 #include "thread.h"
+
+extern __attribute__((noreturn)) void  jump_to_user_mode(
+                              unsigned int inital_pc,
+                              unsigned int user_stack_ptr,
+                              int argc,
+                              void *argv);
 
 struct thread *cur_thread[MAX_CORES];
 static struct thread_queue ready_q;
@@ -114,4 +121,33 @@ void reschedule(void)
     release_spinlock(&thread_q_lock);
 }
 
+// Kernel thread running in new address space starts here.
+static void program_thread_start(void *data)
+{
+    unsigned int entry_point;
+    int page_index;
+    struct vm_translation_map *map = current_thread()->map;
 
+    kprintf("Loading %s\n", (char*) data);
+    if (load_program((char*) data, &entry_point) < 0)
+        return;
+
+    // Map 32k stack
+    for (page_index = 0; page_index < 8; page_index++)
+    {
+        vm_map_page(map, 0xc0000000 - (page_index + 1) * PAGE_SIZE,
+                    vm_allocate_page() | PAGE_WRITABLE | PAGE_PRESENT);
+    }
+
+    kprintf("About to jump to user start 0x%08x\n", entry_point);
+    jump_to_user_mode(0, 0, entry_point, 0xc0000000);
+}
+
+void exec_program(const char *filename)
+{
+    struct vm_translation_map *map = new_translation_map();
+    char *filename_copy = kmalloc(PAGE_SIZE);   // XXX hack
+    strncpy(filename_copy, filename, PAGE_SIZE);
+    filename_copy[PAGE_SIZE - 1] = '\0';
+    spawn_thread(map, program_thread_start, filename_copy);
+}

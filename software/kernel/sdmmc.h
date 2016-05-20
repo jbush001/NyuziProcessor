@@ -1,5 +1,5 @@
 //
-// Copyright 2016 Jeff Bush
+// Copyright 2011-2015 Jeff Bush
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,12 +16,12 @@
 
 #pragma once
 
-int kprintf(const char *format, ...);
-void *memcpy(void *dest, const void *src, unsigned int length);
-void panic(const char *fmt, ...);
-void *memset(void *dest, int value, unsigned int length);
-char* strncpy(char *dest, const char *src, unsigned int length);
+// Read only SDMMC block device driver.
 
-#define assert(cond) if (!(cond)) { panic("ASSERT FAILED: %s:%d: %s\n", __FILE__, __LINE__, \
-		#cond); }
+#define BLOCK_SIZE 512
 
+int initSdmmcDevice();
+
+// Read a single BLOCK_SIZE block from the given byte offset in the device into
+// the passed buffer.
+int readSdmmcDevice(unsigned int offset, void *ptr);
