@@ -18,9 +18,15 @@
 
 // XXX hack
 #define MEMORY_SIZE 0x1000000
+#define PAGE_STRUCTURES_SIZE (sizeof(struct vm_page) * (MEMORY_SIZE / PAGE_SIZE))
 
 #define PAGE_SIZE 0x1000
 #define PAGE_ALIGN(x) (x & ~(PAGE_SIZE - 1))
+
+struct vm_page
+{
+    struct vm_page *next;
+};
 
 void vm_page_init(void);
 unsigned int vm_allocate_page(void);

@@ -134,6 +134,7 @@ void kernel_main(void)
 {
     vm_page_init();
     vm_translation_map_init();
+    boot_init_heap(KERNEL_HEAP_BASE + PAGE_STRUCTURES_SIZE);
     kprintf("Kernel started\n");
 
 #if 0

@@ -113,20 +113,26 @@ void boot_setup_page_tables(void)
     boot_vm_map_pages(&bps, DEVICE_REG_BASE, DEVICE_REG_BASE, PAGE_SIZE, PAGE_PRESENT
                       | PAGE_WRITABLE | PAGE_SUPERVISOR | PAGE_GLOBAL);
 
+    // Map preallocated space on the kernel heap for page structures. This needs to be
+    // done early in boot because vm_map_page may call into the page allocator to
+    // allocate page tables, and that won't work until the page tables are allocated.
+    boot_vm_map_pages(&bps, KERNEL_HEAP_BASE, boot_vm_allocate_pages(&bps,
+                      PAGE_STRUCTURES_SIZE / PAGE_SIZE), PAGE_STRUCTURES_SIZE,
+                      PAGE_PRESENT | PAGE_WRITABLE | PAGE_SUPERVISOR | PAGE_GLOBAL);
+
     // Write the page dir address where start.S can find it to initialize
     // threads. Using address of will return the virtual address that this
     // will be mapped to. However, since MMU is still off, need to convert
     // to the physical address.
     *((unsigned int*) BOOT_VA_TO_PA(&page_dir_addr)) = (unsigned int) bps.pgdir;
     *((unsigned int*) BOOT_VA_TO_PA(&boot_pages_used)) = (unsigned int)
-        bps.next_alloc_page;
+        bps.next_alloc_page / PAGE_SIZE;
 }
 
 // This is called after the MMU has been enabled
 void vm_translation_map_init(void)
 {
     default_map.page_dir = __builtin_nyuzi_read_control_reg(10);
-    boot_init_heap(KERNEL_HEAP_BASE);
 }
 
 struct vm_translation_map *new_translation_map(void)
