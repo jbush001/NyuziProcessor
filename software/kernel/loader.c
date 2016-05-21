@@ -19,6 +19,8 @@
 #include "libc.h"
 #include "loader.h"
 #include "thread.h"
+#include "vm_page.h"
+#include "vm_translation_map.h"
 
 #define MAX_SEGMENTS 4
 

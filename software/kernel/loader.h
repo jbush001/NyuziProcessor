@@ -16,7 +16,5 @@
 
 #pragma once
 
-#include "vm.h"
-
 int load_program(const char *filename,
                  unsigned int *out_entry);

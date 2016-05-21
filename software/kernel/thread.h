@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "vm.h"
+#include "vm_translation_map.h"
 
 #define MAX_CORES 32
 

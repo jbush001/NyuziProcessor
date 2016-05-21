@@ -14,15 +14,10 @@
 // limitations under the License.
 //
 
-#include "asm.h"
-#include "libc.h"
-#include "memory_map.h"
+#include "vm_page.h"
+#include "vm_translation_map.h"
 #include "slab.h"
-#include "spinlock.h"
-#include "vm.h"
 
-#define MEMORY_SIZE 0x1000000
-#define PA_TO_VA(x) ((unsigned int) (x) + PHYS_MEM_ALIAS)
 #define BOOT_VA_TO_PA(x) (((unsigned int) (x)) & 0xffffff)
 
 //
@@ -45,9 +40,7 @@ extern unsigned int _end;
 extern unsigned int page_dir_addr;
 extern unsigned int boot_pages_used;
 
-static unsigned int next_alloc_page;
 static spinlock_t kernel_space_lock;
-static spinlock_t page_lock;
 static unsigned int next_asid;
 
 // The default_map is used during VM initialization, since the heap is not
@@ -130,31 +123,10 @@ void boot_setup_page_tables(void)
 }
 
 // This is called after the MMU has been enabled
-void vm_init(void)
+void vm_translation_map_init(void)
 {
-    next_alloc_page = boot_pages_used;
     default_map.page_dir = __builtin_nyuzi_read_control_reg(10);
     boot_init_heap(KERNEL_HEAP_BASE);
-}
-
-// XXX hack
-unsigned int vm_allocate_page(void)
-{
-    unsigned int pa;
-
-    acquire_spinlock(&page_lock);
-    pa = next_alloc_page;
-    next_alloc_page += PAGE_SIZE;
-    release_spinlock(&page_lock);
-
-    memset((void*) PA_TO_VA(pa), 0, PAGE_SIZE);
-
-    return pa;
-}
-
-void vm_free_page(unsigned int addr)
-{
-    // XXX implement me
 }
 
 struct vm_translation_map *new_translation_map(void)
@@ -265,10 +237,3 @@ void vm_map_page(struct vm_translation_map *map, unsigned int va, unsigned int p
         release_spinlock(&map->lock);
     }
 }
-
-void switch_to_translation_map(struct vm_translation_map *map)
-{
-    __builtin_nyuzi_write_control_reg(CR_PAGE_DIR_BASE, map->page_dir);
-    __builtin_nyuzi_write_control_reg(CR_CURRENT_ASID, map->asid);
-}
-

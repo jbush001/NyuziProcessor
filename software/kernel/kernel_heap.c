@@ -14,7 +14,8 @@
 // limitations under the License.
 //
 
-#include "vm.h"
+#include "vm_translation_map.h"
+#include "vm_page.h"
 #include "kernel_heap.h"
 #include "libc.h"
 #include "spinlock.h"

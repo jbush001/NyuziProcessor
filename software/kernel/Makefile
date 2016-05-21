@@ -21,8 +21,7 @@ include $(TOPDIR)/build/target.mk
 CFLAGS=-O3 # Override default CFLAGS
 BASE_ADDRESS=0xc0000000
 
-SRCS=vm.c \
-	main.c \
+SRCS=main.c \
 	start.S \
 	libc.c \
 	uart.c \
@@ -34,7 +33,9 @@ SRCS=vm.c \
 	thread.c \
 	loader.c \
 	fs.c \
-	sdmmc.c
+	sdmmc.c \
+	vm_translation_map.c \
+	vm_page.c
 
 OBJS=$(SRCS_TO_OBJS)
 DEPS=$(SRCS_TO_DEPS)

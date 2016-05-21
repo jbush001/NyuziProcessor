@@ -19,7 +19,8 @@
 #include "libc.h"
 #include "slab.h"
 #include "thread.h"
-#include "vm.h"
+#include "vm_page.h"
+#include "vm_translation_map.h"
 
 struct linked_node
 {
@@ -131,7 +132,8 @@ void test_context_switch(void)
 
 void kernel_main(void)
 {
-    vm_init();
+    vm_page_init();
+    vm_translation_map_init();
     kprintf("Kernel started\n");
 
 #if 0

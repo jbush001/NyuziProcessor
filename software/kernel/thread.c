@@ -20,6 +20,7 @@
 #include "slab.h"
 #include "spinlock.h"
 #include "thread.h"
+#include "vm_page.h"
 
 extern __attribute__((noreturn)) void  jump_to_user_mode(
                               unsigned int inital_pc,

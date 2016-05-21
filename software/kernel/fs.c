@@ -18,7 +18,7 @@
 #include "kernel_heap.h"
 #include "libc.h"
 #include "sdmmc.h"
-#include "vm.h"
+#include "vm_page.h"
 
 #define RAMDISK_BASE ((unsigned char*) 0x4000000)
 #define FS_MAGIC "spfs"
