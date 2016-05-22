@@ -84,7 +84,8 @@ Occasionally a change will require a new version of the compiler. To rebuild:
     git submodule update
     cd tools/NyuziToolchain/build
     sudo chown -R `whoami` .
-    make && make install
+    make 
+	sudo make install
 
 ## What next?
 
