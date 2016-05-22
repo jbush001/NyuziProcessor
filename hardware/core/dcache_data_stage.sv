@@ -28,6 +28,9 @@ module dcache_data_stage(
     input                                     clk,
     input                                     reset,
 
+    // To instruction_decode_stage
+    output thread_bitmap_t                    dd_sync_load_pending,
+
     // From dcache_tag_stage
     input                                     dt_instruction_valid,
     input decoded_instruction_t               dt_instruction,
@@ -108,7 +111,6 @@ module dcache_data_stage(
     output thread_idx_t                       dd_store_bypass_thread_idx,
 
     // From writeback_stage
-    input thread_bitmap_t                     wb_interrupt_ack,
     input logic                               wb_rollback_en,
     input thread_idx_t                        wb_rollback_thread_idx,
     input pipeline_sel_t                      wb_rollback_pipeline,
@@ -137,7 +139,6 @@ module dcache_data_stage(
     logic rollback_this_stage;
     logic cache_near_miss;
     logic dcache_store_en;
-    thread_bitmap_t sync_load_pending;
     logic io_access_en;
     logic is_unaligned;
     logic is_synchronized;
@@ -281,7 +282,7 @@ module dcache_data_stage(
 
     // Treat a synchronized load as a cache miss the first time it occurs, because
     // it needs to send it to the L2 cache to register it.
-    assign cache_hit = |way_hit_oh && (!is_synchronized || sync_load_pending[dt_thread_idx])
+    assign cache_hit = |way_hit_oh && (!is_synchronized || dd_sync_load_pending[dt_thread_idx])
         && dt_tlb_hit;
 
     //
@@ -462,17 +463,11 @@ module dcache_data_stage(
             always_ff @(posedge clk, posedge reset)
             begin
                 if (reset)
-                    sync_load_pending[thread_idx] <= 0;
-                else if (wb_interrupt_ack[thread_idx])
-                begin
-                    // If a thread dispatches an interrupt while waiting on a synchronized
-                    // load, reset the sync load pending flag.
-                    sync_load_pending[thread_idx] <= 0;
-                end
+                    dd_sync_load_pending[thread_idx] <= 0;
                 else if (dcache_load_en && is_synchronized && dt_thread_idx == thread_idx_t'(thread_idx))
                 begin
                     // Track if this is the first or restarted request.
-                    sync_load_pending[thread_idx] <= !sync_load_pending[thread_idx];
+                    dd_sync_load_pending[thread_idx] <= !dd_sync_load_pending[thread_idx];
                 end
             end
         end

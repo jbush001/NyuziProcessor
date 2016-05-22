@@ -100,6 +100,7 @@ module core
     thread_idx_t        dd_store_thread_idx;    // From dcache_data_stage of dcache_data_stage.v
     subcycle_t          dd_subcycle;            // From dcache_data_stage of dcache_data_stage.v
     logic               dd_suspend_thread;      // From dcache_data_stage of dcache_data_stage.v
+    thread_bitmap_t     dd_sync_load_pending;   // From dcache_data_stage of dcache_data_stage.v
     thread_idx_t        dd_thread_idx;          // From dcache_data_stage of dcache_data_stage.v
     logic               dd_update_lru_en;       // From dcache_data_stage of dcache_data_stage.v
     l1d_way_idx_t       dd_update_lru_way;      // From dcache_data_stage of dcache_data_stage.v

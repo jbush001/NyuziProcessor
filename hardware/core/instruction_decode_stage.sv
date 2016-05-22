@@ -54,6 +54,9 @@ module instruction_decode_stage(
     input                         ifd_executable_fault,
     input                         ifd_tlb_miss,
 
+    // From dcache_data_stage
+    input thread_bitmap_t         dd_sync_load_pending,
+
     // To thread_select_stage
     output decoded_instruction_t  id_instruction,
     output logic                  id_instruction_valid,
@@ -241,19 +244,14 @@ module instruction_decode_stage(
             decoded_instr_nxt.trap_reason = TR_RESET;
     end
 
-    // Subtle: Don't raise an interrupt if there is a I/O request pending.
-    // I/O load instructions are issued twice. The first issue queues the
-    // request in io_request_queue and triggers a rollback. When the I/O
-    // subsystem returns the result, the io_request_queue latches the result
-    // and wakesthe thread, which reissues the load. The io_request_queue
-    // then returns the result.
-    // If an interrupt occurs after the first issue, and the ISR subsequently
-    // does another I/O request, it will get the stale value from the first
-    // read. Lots of other weird things can happen (writes also works similarily.
-    // They don't strictly have to, but I implemented it this way for simplicity).
-    // The solution is to not interrupt between the two instructions.
+    // Subtle: Certain instructions need to be issued twice, including I/O
+    // requests and synchronized loads. The first queues the transaction and
+    // the second collects the result. Because the first instruction updates
+    // internal state, bad things would happen if an interrupt were dispatched
+    // between them. To avoid this, don't dispatch an interrupt if the
+    // first instruction has been issued.
     assign masked_interrupt_flags = ic_interrupt_pending & cr_interrupt_en
-        & ~ior_pending;
+        & ~ior_pending & ~dd_sync_load_pending;
     assign raise_interrupt = masked_interrupt_flags[ifd_thread_idx];
     assign decoded_instr_nxt.has_trap = has_trap;
 
