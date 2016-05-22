@@ -295,6 +295,7 @@ module core
     cache_line_data_t   sq_store_bypass_data;   // From l1_l2_interface of l1_l2_interface.v
     logic [`CACHE_LINE_BYTES-1:0] sq_store_bypass_mask;// From l1_l2_interface of l1_l2_interface.v
     logic               sq_store_sync_success;  // From l1_l2_interface of l1_l2_interface.v
+    thread_bitmap_t     sq_sync_store_pending;  // From l1_l2_interface of l1_l2_interface.v
     thread_bitmap_t     ts_fetch_en;            // From thread_select_stage of thread_select_stage.v
     decoded_instruction_t ts_instruction;       // From thread_select_stage of thread_select_stage.v
     logic               ts_instruction_valid;   // From thread_select_stage of thread_select_stage.v

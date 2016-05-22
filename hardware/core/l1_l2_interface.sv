@@ -62,6 +62,10 @@ module l1_l2_interface
     output l1i_tag_t                              l2i_itag_update_tag,
     output logic                                  l2i_itag_update_valid,
 
+    // To instruction_decode_stage
+    output thread_bitmap_t                        sq_sync_store_pending,
+
+
     // From ifetch_tag_stage
     input l1i_way_idx_t                           ift_fill_lru,
 

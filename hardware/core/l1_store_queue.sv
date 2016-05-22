@@ -29,6 +29,9 @@ module l1_store_queue(
     input                                  clk,
     input                                  reset,
 
+    // To instruction_decode_stage
+    output thread_bitmap_t                sq_sync_store_pending,
+
     // From dache_data_stage
     input                                  dd_store_en,
     input                                  dd_flush_en,
@@ -139,6 +142,8 @@ module l1_store_queue(
             assign enqueue_cache_control = dd_store_thread_idx == thread_idx_t'(thread_idx)
                 && (!pending_stores[thread_idx].valid || got_response_this_entry)
                 && (dd_flush_en || dd_dinvalidate_en || dd_iinvalidate_en);
+            assign sq_sync_store_pending[thread_idx] = pending_stores[thread_idx].valid
+                && pending_stores[thread_idx].synchronized;
 
             always_comb
             begin

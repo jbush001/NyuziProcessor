@@ -57,6 +57,9 @@ module instruction_decode_stage(
     // From dcache_data_stage
     input thread_bitmap_t         dd_sync_load_pending,
 
+    // From l1_l2_interface
+    input thread_bitmap_t         sq_sync_store_pending,
+
     // To thread_select_stage
     output decoded_instruction_t  id_instruction,
     output logic                  id_instruction_valid,
@@ -245,13 +248,13 @@ module instruction_decode_stage(
     end
 
     // Subtle: Certain instructions need to be issued twice, including I/O
-    // requests and synchronized loads. The first queues the transaction and
-    // the second collects the result. Because the first instruction updates
-    // internal state, bad things would happen if an interrupt were dispatched
-    // between them. To avoid this, don't dispatch an interrupt if the
-    // first instruction has been issued.
+    // requests and synchronized memory accesses. The first queues the
+    // transaction and the second collects the result. Because the first
+    // instruction updates internal state, bad things would happen if an
+    // interrupt were dispatched between them. To avoid this, don't dispatch
+    // an interrupt if the first instruction has been issued.
     assign masked_interrupt_flags = ic_interrupt_pending & cr_interrupt_en
-        & ~ior_pending & ~dd_sync_load_pending;
+        & ~ior_pending & ~dd_sync_load_pending & ~sq_sync_store_pending;
     assign raise_interrupt = masked_interrupt_flags[ifd_thread_idx];
     assign decoded_instr_nxt.has_trap = has_trap;
 
