@@ -50,31 +50,37 @@ module interrupt_controller
         if (reset)
         begin
             ic_thread_en <= 1;
-            trigger_type <= 0;
-            interrupt_latched <= 0;
+            /*AUTORESET*/
+            // Beginning of autoreset for uninitialized flops
+            interrupt_latched <= '0;
+            trigger_type <= '0;
+            // End of automatics
         end
-        else if (io_bus.write_en)
+        else
         begin
-            case (io_bus.address)
-                // Thread enable flag handling. This is limited to 32 threads.
-                // To add more, put the next 32 bits in subsequent io addresses.
-                BASE_ADDRESS: // resume thread
-                    ic_thread_en <= ic_thread_en | io_bus.write_data[`TOTAL_THREADS - 1:0];
+            if (io_bus.write_en)
+            begin
+                case (io_bus.address)
+                    // Thread enable flag handling. This is limited to 32 threads.
+                    // To add more, put the next 32 bits in subsequent io addresses.
+                    BASE_ADDRESS: // resume thread
+                        ic_thread_en <= ic_thread_en | io_bus.write_data[`TOTAL_THREADS - 1:0];
 
-                BASE_ADDRESS + 4: // halt thread
-                    ic_thread_en <= ic_thread_en & ~io_bus.write_data[`TOTAL_THREADS - 1:0];
+                    BASE_ADDRESS + 4: // halt thread
+                        ic_thread_en <= ic_thread_en & ~io_bus.write_data[`TOTAL_THREADS - 1:0];
 
-                BASE_ADDRESS + 8: // Trigger type
-                    trigger_type <= io_bus.write_data[0];
+                    BASE_ADDRESS + 8: // Trigger type
+                        trigger_type <= io_bus.write_data[0];
 
-                BASE_ADDRESS + 12: // Interrupt acknowledge
-                    interrupt_latched <= 0;
-            endcase
+                    BASE_ADDRESS + 12: // Interrupt acknowledge
+                        interrupt_latched <= 0;
+                endcase
+            end
+
+            // Note: if an ack occurs the same cycle a new edge comes, this one wins.
+            if (interrupt_req)
+                interrupt_latched <= 1;
         end
-
-        // Note: if an ack occurs the same cycle a new edge comes, this one wins.
-        if (interrupt_req)
-            interrupt_latched <= 1;
     end
 
     assign io_bus.read_data = '0;
