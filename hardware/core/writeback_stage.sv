@@ -99,9 +99,6 @@ module writeback_stage(
     input scalar_t                        cr_tlb_miss_handler,
     input subcycle_t                      cr_eret_subcycle[`THREADS_PER_CORE],
 
-    // To interrupt_controller
-    output thread_bitmap_t                wb_interrupt_ack,
-
     // Rollback signals to all stages
     output logic                          wb_rollback_en,
     output thread_idx_t                   wb_rollback_thread_idx,
@@ -179,7 +176,6 @@ module writeback_stage(
         // XXX wb_trap_thread_idx seems to be the same as wb_rollback_thread_idx.
         // Should these be combined?
         wb_trap_thread_idx = 0;
-        wb_interrupt_ack = '0;
         wb_trap_access_vaddr = 0;
         wb_trap_subcycle = dd_subcycle;
 
@@ -202,9 +198,6 @@ module writeback_stage(
                 wb_trap_reason = TR_PRIVILEGED_OP;
             else
                 wb_trap_reason = ix_instruction.trap_reason;
-
-            if (ix_instruction.trap_reason[4])  // Is interrrupt (>= 16)
-                wb_interrupt_ack[ix_thread_idx] = 1'b1;
 
             wb_trap_pc = ix_instruction.pc;
             wb_trap_access_vaddr = ix_instruction.pc;

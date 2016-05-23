@@ -96,6 +96,8 @@ E = emulator, V = verilator.
 | ffff00c4 |  w | F   | SD GPIO value |
 | ffff0100 |  w | FEV | Thread resume mask. A 1 bit starts a thread. (bit 0 = thread 0) |
 | ffff0104 |  w | FEV | Thread halt mask. A 1 bit halts a thread. (bit 0 = thread 0) |
+| ffff0108 |  w | F V | Trigger type: 0 - edge triggered 1 - level triggered. one bit per interrupt |
+| ffff010c |  w | F V | Interrupt acknowledge (edge triggered only) |
 | ffff0140 | r  |   V | Loopback UART Status<sup>6</sup> (same as above) |
 | ffff0144 | r  |   V | Loopback UART read |
 | ffff0148 |  w |   V | Loopback UART write |

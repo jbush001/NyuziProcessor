@@ -162,8 +162,8 @@ module axi_interconnect
             // Beginning of autoreset for uninitialized flops
             read_burst_address <= '0;
             read_burst_length <= '0;
-            read_selected_slave <= '0;
             read_selected_master <= '0;
+            read_selected_slave <= '0;
             // End of automatics
         end
         else if (read_state == STATE_ACTIVE_BURST)

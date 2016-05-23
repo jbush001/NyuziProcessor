@@ -31,6 +31,12 @@
 handle_trap:    load_32 s24, seraddr    // Load address of serial registers
                 move s25, '*'
                 store_32 s25, 8(s24)    // Send char
+
+                # Ack interrupt
+                load_const s24, 0xffff010c
+                move s25, 1
+                store_32 s25, (s24)
+
                 eret
 
                 .globl _start

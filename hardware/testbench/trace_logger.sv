@@ -40,7 +40,6 @@ module trace_logger(
     input vector_t                   wb_writeback_value,
     input vector_lane_mask_t         wb_writeback_mask,
     input thread_idx_t               wb_rollback_thread_idx,
-    input thread_bitmap_t            wb_interrupt_ack,
     input scalar_t                   wb_trap_pc,
     input scalar_t                   wb_rollback_pc,
     input                            debug_is_sync_store,
@@ -53,6 +52,9 @@ module trace_logger(
     input register_idx_t             ix_instruction_dest_reg,
     input                            ix_instruction_dest_is_vector,
     input scalar_t                   ix_instruction_pc,
+    input                            ix_instruction_has_trap,
+    input trap_reason_t              ix_instruction_trap_reason,
+
 
     // From memory pipeline
     input                            dd_instruction_valid,
@@ -235,7 +237,8 @@ module trace_logger(
 
             // Signal interrupt to emulator. These are piggybacked on instructions
             // and flow down the integer pipeline.
-            if (wb_interrupt_ack != 0)
+            if (ix_instruction_valid && ix_instruction_has_trap
+                && ix_instruction_trap_reason[4])   // trap_reason >= 16
             begin
                 assert(trace_reorder_queue[6].event_type == EVENT_INVALID);
                 trace_reorder_queue[5].event_type <= EVENT_INTERRUPT;

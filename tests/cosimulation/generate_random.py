@@ -378,6 +378,16 @@ fill_loop:		store_32 s5, (s3)
 				# Interrupt handler
 interrupt_handler: 	getcr s11, CR_TRAP_PC
 					getcr s12, CR_TRAP_REASON
+                    setcr s0, CR_SCRATCHPAD0
+                    setcr s1, CR_SCRATCHPAD1
+
+                    # Ack interrupt
+                    load_const s0, 0xffff010c
+                    move s1, 1
+                    store_32 s1, (s0)
+
+                    getcr s0, CR_SCRATCHPAD0
+                    getcr s1, CR_SCRATCHPAD1
 					eret
 
 				.align 64

@@ -53,4 +53,10 @@ _start:             lea s0, interrupt_handler
 interrupt_handler:  getcr s11, CR_TRAP_PC        # Interrupt PC
                     getcr s12, CR_TRAP_REASON    # Reason
                     move s13, 1
+
+                    # Ack interrupt
+                    load_const s24, 0xffff010c
+                    move s25, 1
+                    store_32 s25, (s24)
+
                     eret

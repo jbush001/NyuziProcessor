@@ -41,15 +41,19 @@ module interrupt_controller
     output logic[`TOTAL_THREADS - 1:0]          ic_thread_en,
     output logic[`TOTAL_THREADS - 1:0]          ic_interrupt_pending,
     output interrupt_id_t                       ic_interrupt_id[`TOTAL_THREADS - 1:0],
-    output                                      processor_halt,
+    output                                      processor_halt);
 
-    // From cores
-    input [`TOTAL_THREADS - 1:0]                wb_interrupt_ack);
+    logic trigger_type;
+    logic interrupt_latched;
 
     always_ff @(posedge clk, posedge reset)
     begin
         if (reset)
+        begin
             ic_thread_en <= 1;
+            trigger_type <= 0;
+            interrupt_latched <= 0;
+        end
         else if (io_bus.write_en)
         begin
             case (io_bus.address)
@@ -60,8 +64,18 @@ module interrupt_controller
 
                 BASE_ADDRESS + 4: // halt thread
                     ic_thread_en <= ic_thread_en & ~io_bus.write_data[`TOTAL_THREADS - 1:0];
+
+                BASE_ADDRESS + 8: // Trigger type
+                    trigger_type <= io_bus.write_data[0];
+
+                BASE_ADDRESS + 12: // Interrupt acknowledge
+                    interrupt_latched <= 0;
             endcase
         end
+
+        // Note: if an ack occurs the same cycle a new edge comes, this one wins.
+        if (interrupt_req)
+            interrupt_latched <= 1;
     end
 
     assign io_bus.read_data = '0;
@@ -72,15 +86,10 @@ module interrupt_controller
         for (thread_idx = 0; thread_idx < `TOTAL_THREADS; thread_idx++)
         begin : core_int_gen
             assign ic_interrupt_id[thread_idx] = 0;
-            always_ff @(posedge clk, posedge reset)
-            begin
-                if (reset)
-                    ic_interrupt_pending[thread_idx] <= 0;
-                else if (!ic_interrupt_pending[thread_idx] && interrupt_req && thread_idx == 0) // XXX hardcoded
-                    ic_interrupt_pending[thread_idx] <= 1;
-                else if (wb_interrupt_ack[thread_idx])
-                    ic_interrupt_pending[thread_idx] <= 0;
-            end
+
+            // XXX hardcoded for now so only thread 0 dispatches interrupts
+            assign ic_interrupt_pending[thread_idx] = thread_idx == 0 &&
+                (trigger_type ? interrupt_req : interrupt_latched);
         end
     endgenerate
 endmodule

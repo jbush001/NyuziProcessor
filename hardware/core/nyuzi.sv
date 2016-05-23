@@ -36,7 +36,6 @@ module nyuzi
     ioreq_packet_t ior_request[`NUM_CORES];
     logic[`TOTAL_PERF_EVENTS - 1:0] perf_events;
     logic[`TOTAL_THREADS - 1:0] ic_interrupt_pending;
-    logic[`TOTAL_THREADS - 1:0] wb_interrupt_ack;
     io_bus_interface ic_io_bus();
     io_bus_interface perf_io_bus();
     io_bus_interface interconnect_io_bus();
@@ -141,7 +140,6 @@ module nyuzi
                 .ic_thread_en(ic_thread_en[core_idx * `THREADS_PER_CORE+:`THREADS_PER_CORE]),
                 .ic_interrupt_pending(ic_interrupt_pending[core_idx * `THREADS_PER_CORE+:`THREADS_PER_CORE]),
                 .ic_interrupt_id(_interrupt_id_repacked[core_idx]),
-                .wb_interrupt_ack(wb_interrupt_ack[core_idx * `THREADS_PER_CORE+:`THREADS_PER_CORE]),
                 .ior_request_valid(ior_request_valid[core_idx]),
                 .ior_request(ior_request[core_idx]),
                 .ii_ready(ii_ready[core_idx]),

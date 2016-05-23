@@ -55,6 +55,12 @@ loop0:
 interrupt_handler:  getcr s12, CR_TRAP_REASON
                     cmpeq_i s13, s12, 16
                     bfalse s13, bad_int
+
+                    # Ack interrupt
+                    load_const s24, 0xffff010c
+                    move s25, 1
+                    store_32 s25, (s24)
+
                     eret
 
 bad_int:            call fail_test
