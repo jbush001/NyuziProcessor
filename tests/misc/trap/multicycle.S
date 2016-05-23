@@ -53,7 +53,7 @@ loop0:
                     call pass_test
 
 interrupt_handler:  getcr s12, CR_TRAP_REASON
-                    cmpeq_i s13, s12, 16
+                    cmpeq_i s13, s12, TR_INTERRUPT
                     bfalse s13, bad_int
 
                     # Ack interrupt
