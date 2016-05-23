@@ -48,7 +48,7 @@
 .set TR_PRIVILEGED_OP, 10
 .set TR_SYSCALL, 11
 .set TR_NOT_EXECUTABLE, 12
-.set TR_INTERRUPT_BASE, 16
+.set TR_INTERRUPT, 13
 
 // Flag register bits
 .set FLAG_INTERRUPT_EN, (1 << 0)

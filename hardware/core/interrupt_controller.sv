@@ -40,7 +40,6 @@ module interrupt_controller
     // To cores
     output logic[`TOTAL_THREADS - 1:0]          ic_thread_en,
     output logic[`TOTAL_THREADS - 1:0]          ic_interrupt_pending,
-    output interrupt_id_t                       ic_interrupt_id[`TOTAL_THREADS - 1:0],
     output                                      processor_halt);
 
     logic trigger_type;
@@ -85,8 +84,6 @@ module interrupt_controller
     generate
         for (thread_idx = 0; thread_idx < `TOTAL_THREADS; thread_idx++)
         begin : core_int_gen
-            assign ic_interrupt_id[thread_idx] = 0;
-
             // XXX hardcoded for now so only thread 0 dispatches interrupts
             assign ic_interrupt_pending[thread_idx] = thread_idx == 0 &&
                 (trigger_type ? interrupt_req : interrupt_latched);

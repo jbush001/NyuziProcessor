@@ -67,7 +67,6 @@ module instruction_decode_stage(
 
     // From interrupt_controller
     input thread_bitmap_t         ic_interrupt_pending,
-    input interrupt_id_t          ic_interrupt_id[`THREADS_PER_CORE],
 
     // From io_request_queue
     input thread_bitmap_t         ior_pending,
@@ -228,7 +227,7 @@ module instruction_decode_stage(
     always_comb
     begin
         if (raise_interrupt)
-            decoded_instr_nxt.trap_reason = trap_reason_t'({1'b1, ic_interrupt_id[ifd_thread_idx]});
+            decoded_instr_nxt.trap_reason = TR_INTERRUPT;
         else if (ifd_tlb_miss)
             decoded_instr_nxt.trap_reason = TR_ITLB_MISS;
         else if (ifd_page_fault)

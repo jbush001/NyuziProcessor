@@ -34,11 +34,19 @@
 int_addr\intnum :   goto 1b     // Wait for interrupt
 
 handle_trap\intnum :
+                    // Ack interrupt
+                    load_const s24, 0xffff010c
+                    move s25, 1
+                    store_32 s25, (s24)
+
                     // Check control registers
                     getcr s0, CR_TRAP_REASON
-                    assert_reg s0, (\intnum )
+                    assert_reg s0, TR_INTERRUPT
                     getcr s0, CR_FLAGS
                     assert_reg s0, FLAG_SUPERVISOR_EN   // Interrupts disabled
+
+                    // XXX when multiple interrupts are enabled, check that the
+                    // proper bit in the pending interrupt register is set.
 
                     // Check that trap PC is correct
                     getcr s0, CR_TRAP_PC

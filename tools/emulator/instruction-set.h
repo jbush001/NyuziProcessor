@@ -156,7 +156,7 @@ enum _TrapReason
     TR_PRIVILEGED_OP = 10,
     TR_SYSCALL = 11,
     TR_NOT_EXECUTABLE = 12,
-    TR_INTERRUPT_BASE = 16
+    TR_INTERRUPT = 13
 };
 typedef enum _TrapReason TrapReason;
 
