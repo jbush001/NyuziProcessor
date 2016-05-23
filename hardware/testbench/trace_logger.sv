@@ -238,7 +238,7 @@ module trace_logger(
             // Signal interrupt to emulator. These are piggybacked on instructions
             // and flow down the integer pipeline.
             if (ix_instruction_valid && ix_instruction_has_trap
-                && ix_instruction_trap_reason[4])   // trap_reason >= 16
+                && ix_instruction_trap_reason == TR_INTERRUPT)
             begin
                 assert(trace_reorder_queue[6].event_type == EVENT_INVALID);
                 trace_reorder_queue[5].event_type <= EVENT_INTERRUPT;
