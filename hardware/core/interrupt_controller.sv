@@ -44,6 +44,7 @@ module interrupt_controller
 
     logic trigger_type;
     logic interrupt_latched;
+    logic old_interrupt_req;
 
     always_ff @(posedge clk, posedge reset)
     begin
@@ -53,6 +54,7 @@ module interrupt_controller
             /*AUTORESET*/
             // Beginning of autoreset for uninitialized flops
             interrupt_latched <= '0;
+            old_interrupt_req <= '0;
             trigger_type <= '0;
             // End of automatics
         end
@@ -78,7 +80,8 @@ module interrupt_controller
             end
 
             // Note: if an ack occurs the same cycle a new edge comes, this one wins.
-            if (interrupt_req)
+            old_interrupt_req <= interrupt_req;
+            if (interrupt_req && !old_interrupt_req) // Rising edge
                 interrupt_latched <= 1;
         end
     end
