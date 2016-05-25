@@ -4,8 +4,9 @@ three directories:
   The GPGPU. The top level module is 'nyuzi'. Configurable options (cache size,
   associativity, number of cores) are in core/config.sv
 - fpga/
-  Components of a quick and dirty FPGA system-on-chip test environment. It
-  includes an SDRAM controller, VGA controller, AXI interconnect, and other
+  Components of a quick and dirty system-on-chip test environment. These
+  are not part of the Nyuzi core, but are put here to allow testing on FPGA.
+  Includes an SDRAM controller, VGA controller, AXI interconnect, and other
   peripherals like a serial port. (Documentation is
   [here](https://github.com/jbush001/NyuziProcessor/wiki/FPGA-Test-Environment)).
   The makefile for the DE2-115 board target is in fpga/de2-115.
@@ -64,105 +65,3 @@ The simulator writes a file called `trace.vcd` in
 format in the current working directory. This can be with a waveform
 viewer like [GTKWave](http://gtkwave.sourceforge.net/).
 
-## Device Registers
-
-The processor supports the following memory mapped device registers. The
-'environment' column indicates which environments support it: F = fpga,
-E = emulator, V = verilator.
-
-| Address  |r/w |Environment|Description|
-|----------|----|-----|-----------------|
-| ffff0000 |  w | F   | Set value of red LEDs |
-| ffff0004 |  w | F   | Set value of green LEDs |
-| ffff0008 |  w | F   | Set value of 7 segment display 0 |
-| ffff000c |  w | F   | Set value of 7 segment display 1 |
-| ffff0010 |  w | F   | Set value of 7 segment display 2 |
-| ffff0014 |  w | F   | Set value of 7 segment display 3 |
-| ffff0018 |  w |  E  | Sends interrupt to host via pipe in emulator |
-| ffff001c |  w |   V | Toggle UART tx line (used to force framing error in test) |
-| ffff0020 |  w |   V | Set interrupt timer interval |
-| ffff0040 | r  | FEV | UART status.<sup>1</sup> |
-| ffff0044 | r  | F   | UART read |
-| ffff0048 |  w | FEV | UART write<sup>2</sup> |
-| ffff004c |  w | F   | UART divider (clocks per bit) |
-| ffff0080 | r  | FEV | PS/2 Keyboard status. 1 indicates there are scancodes in FIFO. |
-| ffff0084 | r  | FEV | PS/2 Keyboard scancode. Remove from FIFO on read.<sup>3</sup> |
-| ffff00c0 |  w | FEV | SD SPI write byte<sup>4</sup> |
-| ffff00c4 | r  | FEV | SD SPI read byte |
-| ffff00c8 | r  | FEV | SD SPI status (bit 0: ready) |
-| ffff00cc |  w | FEV | SD SPI control (bit 0: chip select) |
-| ffff00d0 |  w | F V | SD clock divider |
-| ffff00c0 |  w | F   | SD GPIO direction<sup>5</sup> |
-| ffff00c4 |  w | F   | SD GPIO value |
-| ffff0100 |  w | FEV | Thread resume mask. A 1 bit starts a thread. (bit 0 = thread 0) |
-| ffff0104 |  w | FEV | Thread halt mask. A 1 bit halts a thread. (bit 0 = thread 0) |
-| ffff0108 |  w | F V | Trigger type: 0 - edge triggered 1 - level triggered. one bit per interrupt |
-| ffff010c |  w | F V | Interrupt acknowledge (edge triggered only) |
-| ffff0140 | r  |   V | Loopback UART Status<sup>6</sup> (same as above) |
-| ffff0144 | r  |   V | Loopback UART read |
-| ffff0148 |  w |   V | Loopback UART write |
-| ffff014c |  w |   V | Loopback UART divider |
-| ffff0180 |  w | FE  | VGA sequencer enable |
-| ffff0184 |  w | F   | VGA microcode write |
-| ffff0188 |  w | FE  | VGA frame buffer base address |
-| ffff018c |  w | F   | VGA frame buffer length |
-| ffff0200 |  w | F V | Performance counter 0 event select<sup>7</sup> |
-| ffff0204 |  w | F V | Performance counter 1 event select |
-| ffff0208 |  w | F V | Performance counter 2 event select |
-| ffff020c |  w | F V | Performance counter 3 event select |
-| ffff0210 | r  | F V | Performance counter 0 count |
-| ffff0214 | r  | F V | Performance counter 1 count |
-| ffff0218 | r  | F V | Performance counter 2 count |
-| ffff021c | r  | F V | Performance counter 3 count |
-
-1. Serial status bits:
-
-    | Bit | Meaning |
-	|---- | ------- |
-	|  0  | Space available in write FIFO |
-	|  1  | Bytes in read FIFO |
-	|  2  | Receive FIFO overrun |
-	|  3  | Receive Framing error |
-
-2. Serial writes (including printfs from software) print to standard out in
-Verilator and the emulator.
-3. In the Verilator environment, keyboard scancodes are just an incrementing
-pattern. For the emulator, they are only returned if the framebuffer window is
-displayed and in focus. For the FPGA, they come from the PS/2 port on the board.
-4. SD GPIO and SD SPI are mutually exclusive. SD GPIO is if BITBANG_SDMMC is
-set in hardware/fpga/de2_115/de2_115_top.sv, SPI otherwise.
-5. SD GPIO pins map to the following direction/value register bits:
-
-    |Bit |Connection|
-    |----|----------|
-    |  0 | dat[0]   |
-    |  1 | dat[1]   |
-    |  2 | dat[2]   |
-    |  3 | dat[3]   |
-    |  4 | cmd      |
-    |  5 | clk      |
-
-6. The loopback UART has its transmit and receive signals connected. It's used
-by UART unit tests.
-7. The following performance events are available
-
-    | Index | Event |
-    |-------|-------|
-    | 0     | L2 writeback |
-    | 1     | L2 cache miss |
-    | 2     | L2 cache hit |
-    | 3     | Store rollback (core 0) |
-    | 4     | Store |
-    | 5     | Instruction retired |
-    | 6     | Instruction issued |
-    | 7     | L1 instruction cache miss |
-    | 8     | L1 instruction cache hit |
-    | 9     | Instruction TLB miss |
-    | 10    | L1 data cache miss |
-    | 11    | L1 data cache hit |
-    | 12    | Data TLB miss |
-    | 13    | Unconditional branch |
-    | 14    | Conditional branch, taken |
-    | 15    | Conditional branch, not taken |
-
-    Events 3-15 are duplicated for each core, starting at index 16

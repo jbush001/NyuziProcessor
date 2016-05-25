@@ -34,7 +34,7 @@ module verilator_tb(
     bit profile_en;
     int profile_fd;
     scalar_t io_read_data;
-    logic interrupt_req;
+    logic[15:0] interrupt_req;
     int interrupt_counter;
     scalar_t spi_read_data;
     scalar_t ps2_read_data;
@@ -359,12 +359,12 @@ module verilator_tb(
         else if (interrupt_counter == 0)
         begin
             interrupt_counter <= timer_interval;
-            interrupt_req <= 1;
+            interrupt_req[0] <= 1;
         end
         else
         begin
             interrupt_counter <= interrupt_counter - 1;
-            interrupt_req <= 0;
+            interrupt_req[0] <= 0;
         end
     end
 

@@ -22,14 +22,15 @@
 //
 
 module nyuzi
-    #(parameter RESET_PC = 0)
+    #(parameter RESET_PC = 0,
+    parameter NUM_INTERRUPTS = 16)
 
-    (input                      clk,
-    input                       reset,
-    axi4_interface.master       axi_bus,
-    io_bus_interface.master     io_bus,
-    output                      processor_halt,
-    input                       interrupt_req);
+    (input                          clk,
+    input                           reset,
+    axi4_interface.master           axi_bus,
+    io_bus_interface.master         io_bus,
+    output                          processor_halt,
+    input [NUM_INTERRUPTS - 1:0]    interrupt_req);
 
     l2req_packet_t l2i_request[`NUM_CORES];
     logic[`NUM_CORES - 1:0] l2i_request_valid;
@@ -66,7 +67,10 @@ module nyuzi
         assert(`NUM_CORES >= 1 && `NUM_CORES <= (1 << `CORE_ID_WIDTH));
     end
 
-    interrupt_controller #(.BASE_ADDRESS('h100)) interrupt_controller(
+    interrupt_controller #(
+        .BASE_ADDRESS('h100),
+        .NUM_INTERRUPTS(NUM_INTERRUPTS)
+    ) interrupt_controller(
         .io_bus(ic_io_bus),
         .*);
 

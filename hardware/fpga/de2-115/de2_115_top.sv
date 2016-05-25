@@ -95,7 +95,7 @@ module de2_115_top(
     assign clk = clk50;
 
     nyuzi #(.RESET_PC(BOOT_ROM_BASE)) nyuzi(
-        .interrupt_req(0),
+        .interrupt_req('0),
         .axi_bus(axi_bus_m[0]),
         .io_bus(nyuzi_io_bus),
         .*);
