@@ -191,7 +191,7 @@ module de2_115_top(
         .io_bus(ps2_io_bus),
         .*);
 
-    timer #(.BASE_ADDRESS('h240)) ps2_controller(
+    timer #(.BASE_ADDRESS('h240)) timer(
         .io_bus(timer_io_bus),
         .*);
 
