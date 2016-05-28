@@ -56,11 +56,13 @@
 .set FLAG_SUPERVISOR_EN, (1 << 2)
 
 // Device registers
-.set REG_TIMER_COUNT, 0xffff0240
+.set REG_HOST_INTERRUPT, 0xffff0018
 .set REG_SERIAL_WRITE, 0xffff0048
+.set REG_THREAD_RESUME, 0xffff0100
 .set REG_INTERRUPT_ACK, 0xffff010c
 .set REG_PENDING_INT, 0xffff010c
 .set REG_INT_MASK0, 0xffff0110
+.set REG_TIMER_COUNT, 0xffff0240
 
 .macro start_all_threads
 	move s0, 0xffffffff

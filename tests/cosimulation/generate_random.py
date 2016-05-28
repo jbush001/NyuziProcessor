@@ -382,7 +382,7 @@ interrupt_handler: 	getcr s11, CR_TRAP_PC
                     setcr s1, CR_SCRATCHPAD1
 
                     # Ack interrupt
-                    load_const s0, 0xffff010c
+                    load_const s0, REG_INTERRUPT_ACK
                     move s1, 1
                     store_32 s1, (s0)
 

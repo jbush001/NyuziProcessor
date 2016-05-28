@@ -31,7 +31,7 @@ _start:             getcr s0, 0                 // Find my thread ID
                     btrue s0, spinner_thread    // If it is 1, jump to spinner thread
 
                     // Start spinner thread, which is described below
-                    load_32 s0, threadresume
+                    load_const s0, REG_THREAD_RESUME
                     move s1, 3    // Two threads enabled
                     store_32 s1, (s0)
 
@@ -68,7 +68,7 @@ interrupt_handler:  getcr s12, CR_TRAP_REASON
                     bfalse s13, bad_int
 
                     // Ack interrupt
-                    load_const s24, 0xffff010c
+                    load_const s24, REG_INTERRUPT_ACK
                     move s25, 2
                     store_32 s25, (s24)
 
@@ -86,9 +86,6 @@ bad_int:            call fail_test
 // the value of the last instruction and the test appears to pass.
 spinner_thread:     goto spinner_thread
 
-threadresume:       .long 0xffff0100
-threadhalt:         .long 0xffff0104
-serialwrite:        .long 0xffff0048
                     .align 64
 
 // There will be a cache miss between dataloc1 and dataloc2, which will allow the interrupt to
