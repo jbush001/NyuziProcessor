@@ -100,9 +100,7 @@ void checkInterruptPipe(Core *core)
         return; // Ignore invalid interrupt IDs
     }
 
-    // XXX interrupt ID needs to be plugged into virtual interrupt controller
-    // in device.c
-    raiseInterrupt(core, 0);
+    raiseInterrupt(core, 1 << interruptId);
 }
 
 void sendHostInterrupt(uint32_t num)

@@ -25,8 +25,14 @@ from test_harness import *
 
 
 def run_io_interrupt(name):
+    underscore = name.rfind('_')
+    if underscore == -1:
+        raise TestException(
+            'Internal error: run_io_interrupt did not have type')
+
+    environment = name[underscore + 1:]
     build_program(['io_interrupt.S'])
-    result = run_program(environment='verilator')
+    result = run_program(environment=environment)
     lines = result.split('\n')
     output = None
 
@@ -126,7 +132,7 @@ def run_send_host_interrupt(name):
         os.close(interruptPipe)
         os.unlink(PIPE_NAME)
 
-register_tests(run_io_interrupt, ['io_interrupt'])
+register_tests(run_io_interrupt, ['io_interrupt_emulator', 'io_interrupt_verilator'])
 register_tests(run_recv_host_interrupt, ['recv_host_interrupt'])
 register_tests(run_send_host_interrupt, ['send_host_interrupt'])
 register_generic_assembly_tests([

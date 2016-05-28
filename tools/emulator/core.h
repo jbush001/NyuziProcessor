@@ -37,7 +37,7 @@ void writeMemoryToFile(const Core*, const char *filename, uint32_t baseAddress,
 const void *getMemoryRegionPtr(const Core*, uint32_t address, uint32_t length);
 void printRegisters(const Core*, uint32_t threadId);
 void enableCosimulation(Core*);
-void raiseInterrupt(Core*, uint32_t threadId);
+void raiseInterrupt(Core*, uint32_t intBitmap);
 void cosimInterrupt(Core*, uint32_t threadId, uint32_t pc);
 uint32_t getTotalThreads(const Core*);
 bool coreHalted(const Core*);

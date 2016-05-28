@@ -24,6 +24,8 @@
 // cause an alignment exception if accessed as such.
 //
 
+.set TIMER_INTERVAL, 100
+
                     .globl _start
 _start:             getcr s0, 0                 // Find my thread ID
                     btrue s0, spinner_thread    // If it is 1, jump to spinner thread
@@ -34,6 +36,15 @@ _start:             getcr s0, 0                 // Find my thread ID
                     store_32 s1, (s0)
 
                     // Set up interrupts
+                    move s24, 2
+                    load_const s25, REG_INT_MASK0
+                    store_32 s24, (s25)
+
+                    // Reset timer
+                    load_const s24, TIMER_INTERVAL
+                    load_const s25, REG_TIMER_COUNT
+                    store_32 s24, (s25)
+
                     lea s10, interrupt_handler
                     setcr s10, CR_TRAP_HANDLER     // Set fault handler address
                     move s10, 5
@@ -56,10 +67,15 @@ interrupt_handler:  getcr s12, CR_TRAP_REASON
                     cmpeq_i s13, s12, TR_INTERRUPT
                     bfalse s13, bad_int
 
-                    # Ack interrupt
+                    // Ack interrupt
                     load_const s24, 0xffff010c
-                    move s25, 1
+                    move s25, 2
                     store_32 s25, (s24)
+
+                    // Reset timer
+                    load_const s24, TIMER_INTERVAL
+                    load_const s25, REG_TIMER_COUNT
+                    store_32 s24, (s25)
 
                     eret
 

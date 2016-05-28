@@ -58,14 +58,11 @@ module interrupt_controller
         if (reset)
         begin
             ic_thread_en <= 1;
-            // XXX hardcoded for now so only thread 0 dispatches interrupts
-            interrupt_thread_mask[0] <= {NUM_INTERRUPTS{1'b1}};
-            for (int i = 1; i < `TOTAL_THREADS; i++)
-                interrupt_thread_mask[i] <= '0;
 
             /*AUTORESET*/
             // Beginning of autoreset for uninitialized flops
             interrupt_latched <= '0;
+            interrupt_req_prev <= '0;
             io_bus.read_data <= '0;
             trigger_type <= '0;
             // End of automatics
@@ -86,19 +83,10 @@ module interrupt_controller
                     BASE_ADDRESS + 8: // Trigger type
                         trigger_type <= io_bus.write_data[NUM_INTERRUPTS - 1:0];
                 endcase
-
-                // If address is >= 16, set the thread mask
-                // XXX only supports 16 threads (four cores) currently. Need to renumber
-                // registers again to make room for more.
-                if (io_bus.address >= BASE_ADDRESS + 16 && io_bus.address < BASE_ADDRESS + 48)
-                begin
-                    interrupt_thread_mask[io_bus.address - 16] <=
-                        io_bus.write_data[NUM_INTERRUPTS - 1:0];
-                end
             end
 
             // Read logic
-            io_bus.read_data <= 32'(interrupt_pending[io_bus.address - BASE_ADDRESS]);
+            io_bus.read_data <= 32'(interrupt_pending);
 
             // Note: if an ack occurs the same cycle a new edge comes, this one wins.
             interrupt_latched <= (interrupt_latched & ~interrupt_ack)
@@ -119,6 +107,17 @@ module interrupt_controller
         begin : core_int_gen
             assign ic_interrupt_pending[thread_idx] = |(interrupt_pending
                 & interrupt_thread_mask[thread_idx]);
+
+            always @(posedge clk, posedge reset)
+            begin : thread_mask_gen
+                if (reset)
+                    interrupt_thread_mask[thread_idx] <= '0;
+                else if (io_bus.write_en && io_bus.address
+                    == (BASE_ADDRESS + 16 + thread_idx * 4))
+                begin
+                    interrupt_thread_mask[thread_idx] <= io_bus.write_data[NUM_INTERRUPTS - 1:0];
+                end
+            end
         end
     endgenerate
 endmodule

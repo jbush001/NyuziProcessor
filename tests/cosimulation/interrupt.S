@@ -30,6 +30,13 @@ _start:             lea s0, interrupt_handler
                     setcr s0, CR_TRAP_HANDLER
                     move s0, 5
                     setcr s0, CR_FLAGS   # Enable interrupts
+
+                    # Unmask interrupt
+                    move s24, 1
+                    load_const s25, REG_INT_MASK0
+                    store_32 s24, (s25)
+
+                    # Set up registers
                     move s1, 1000
                     move s2, 7
                     move s3, 17

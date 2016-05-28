@@ -26,7 +26,7 @@ module verilator_tb(
 
     localparam MEM_SIZE = 'h1000000;
 
-    int total_cycles = 0;
+    int total_cycles;
     logic[1000:0] filename;
     bit state_dump_en;
     int state_dump_fd;
@@ -34,8 +34,7 @@ module verilator_tb(
     bit profile_en;
     int profile_fd;
     scalar_t io_read_data;
-    logic[15:0] interrupt_req;
-    int interrupt_counter;
+    int cosim_int_count;
     scalar_t spi_read_data;
     scalar_t ps2_read_data;
     axi4_interface axi_bus_s[1:0]();
@@ -51,6 +50,7 @@ module verilator_tb(
     io_bus_interface ps2_io_bus();
     io_bus_interface sdcard_io_bus();
     io_bus_interface vga_io_bus();
+    io_bus_interface timer_io_bus();
     io_bus_interface nyuzi_io_bus();
     enum logic[2:0] {
         IO_LOOPBACK_UART,
@@ -59,7 +59,9 @@ module verilator_tb(
         IO_ONES,
         IO_NONE
     } io_bus_source;
-    scalar_t timer_interval;
+    scalar_t cosim_timer_interval;
+    logic cosim_int;
+    logic timer_int;
 
     /*AUTOLOGIC*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -111,6 +113,7 @@ module verilator_tb(
     nyuzi #(.RESET_PC(RESET_PC)) nyuzi(
         .axi_bus(axi_bus_m[0]),
         .io_bus(nyuzi_io_bus),
+        .interrupt_req({14'd0, timer_int, cosim_int}),
         .*);
 
     axi_interconnect axi_interconnect(
@@ -169,6 +172,10 @@ module verilator_tb(
 
     ps2_controller #(.BASE_ADDRESS('h80)) ps2_controller(
         .io_bus(ps2_io_bus),
+        .*);
+
+    timer #(.BASE_ADDRESS('h240)) timer(
+        .io_bus(timer_io_bus),
         .*);
 
 `ifdef SIMULATE_VGA
@@ -308,8 +315,6 @@ module verilator_tb(
             $display("error opening file");
             $finish;
         end
-
-        timer_interval = 1000;
     end
 
     final
@@ -353,18 +358,18 @@ module verilator_tb(
     begin
         if (reset)
         begin
-            interrupt_counter <= 0;
-            interrupt_req <= 0;
+            cosim_int_count <= 0;
+            cosim_int <= 0;
         end
-        else if (interrupt_counter == 0)
+        else if (cosim_int_count == 0)
         begin
-            interrupt_counter <= timer_interval;
-            interrupt_req[0] <= 1;
+            cosim_int_count <= cosim_timer_interval;
+            cosim_int <= 1;
         end
         else
         begin
-            interrupt_counter <= interrupt_counter - 1;
-            interrupt_req[0] <= 0;
+            cosim_int_count <= cosim_int_count - 1;
+            cosim_int <= 0;
         end
     end
 
@@ -373,6 +378,9 @@ module verilator_tb(
         if (reset)
         begin
             loopback_uart_mask <= 1;
+            finish_cycles <= '0;
+            total_cycles <= '0;
+            cosim_timer_interval <= 1000;
         end
         else
         begin
@@ -404,7 +412,7 @@ module verilator_tb(
                     'h1c: loopback_uart_mask <= nyuzi_io_bus.write_data[0];
 
                     // Set timer interval
-                    'h20: timer_interval <= nyuzi_io_bus.write_data;
+                    'h20: cosim_timer_interval <= nyuzi_io_bus.write_data;
                 endcase
             end
 
@@ -480,6 +488,10 @@ module verilator_tb(
     assign vga_io_bus.address = nyuzi_io_bus.address;
     assign vga_io_bus.write_data = nyuzi_io_bus.write_data;
 
+    assign timer_io_bus.write_en = nyuzi_io_bus.write_en;
+    assign timer_io_bus.read_en = nyuzi_io_bus.read_en;
+    assign timer_io_bus.address = nyuzi_io_bus.address;
+    assign timer_io_bus.write_data = nyuzi_io_bus.write_data;
 endmodule
 
 // Local Variables:

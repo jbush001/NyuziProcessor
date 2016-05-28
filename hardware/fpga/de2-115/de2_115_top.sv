@@ -85,17 +85,19 @@ module de2_115_top(
     io_bus_interface sdcard_io_bus();
     io_bus_interface ps2_io_bus();
     io_bus_interface vga_io_bus();
+    io_bus_interface timer_io_bus();
     io_bus_interface nyuzi_io_bus();
     enum logic[1:0] {
         IO_UART,
         IO_SDCARD,
         IO_PS2
     } io_read_source;
+    logic timer_int;
 
     assign clk = clk50;
 
     nyuzi #(.RESET_PC(BOOT_ROM_BASE)) nyuzi(
-        .interrupt_req('0),
+        .interrupt_req({14'd0, timer_int, 1'b0}),
         .axi_bus(axi_bus_m[0]),
         .io_bus(nyuzi_io_bus),
         .*);
@@ -189,6 +191,10 @@ module de2_115_top(
         .io_bus(ps2_io_bus),
         .*);
 
+    timer #(.BASE_ADDRESS('h240)) ps2_controller(
+        .io_bus(timer_io_bus),
+        .*);
+
     always_ff @(posedge clk, posedge reset)
     begin
         if (reset)
@@ -232,6 +238,10 @@ module de2_115_top(
     assign vga_io_bus.write_en = nyuzi_io_bus.write_en;
     assign vga_io_bus.write_data = nyuzi_io_bus.write_data;
     assign vga_io_bus.address = nyuzi_io_bus.address;
+    assign timer_io_bus.read_en = nyuzi_io_bus.read_en;
+    assign timer_io_bus.write_en = nyuzi_io_bus.write_en;
+    assign timer_io_bus.write_data = nyuzi_io_bus.write_data;
+    assign timer_io_bus.address = nyuzi_io_bus.address;
 
     always_ff @(posedge clk)
     begin

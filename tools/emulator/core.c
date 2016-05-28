@@ -66,6 +66,7 @@ struct Thread
     uint32_t currentPc;
     uint32_t currentAsid;
     uint32_t currentPageDir;
+    uint32_t interruptMask;
     bool enableInterrupt;
     bool enableMmu;
     bool enableSupervisor;
@@ -105,6 +106,7 @@ struct Core
     uint32_t memorySize;
     uint32_t totalThreads;
     uint32_t threadEnableMask;
+    uint32_t pendingInterrupts;
     uint32_t trapHandlerPc;
     uint32_t tlbMissHandlerPc;
     uint32_t physTlbUpdateAddr;
@@ -117,6 +119,7 @@ struct Core
     bool stopOnFault;
     bool enableTracing;
     bool enableCosim;
+    uint32_t currentTimerCount;
     int64_t totalInstructions;
     uint32_t startCycleCount;
 #ifdef DUMP_INSTRUCTION_STATS
@@ -162,6 +165,7 @@ static void executeMemoryAccessInst(Thread*, uint32_t instruction);
 static void executeBranchInst(Thread*, uint32_t instruction);
 static void executeCacheControlInst(Thread*, uint32_t instruction);
 static bool executeInstruction(Thread*);
+static void timerTick(Core *core);
 
 Core *initCore(uint32_t memorySize, uint32_t totalThreads, bool randomizeMemory,
                const char *sharedMemoryFile)
@@ -326,11 +330,13 @@ void enableCosimulation(Core *core)
     core->enableCosim = true;
 }
 
-void raiseInterrupt(Core *core, uint32_t threadId)
+void raiseInterrupt(Core *core, uint32_t intBitmap)
 {
-    Thread *thread = &core->threads[threadId];
-    thread->interruptPending = true;
-    tryToDispatchInterrupt(thread);
+    uint32_t threadId;
+
+    core->pendingInterrupts |= intBitmap;
+    for (threadId = 0; threadId < core->totalThreads; threadId++)
+        tryToDispatchInterrupt(&core->threads[threadId]);
 }
 
 // Called when the verilog model in cosimulation indicates an interrupt.
@@ -348,8 +354,8 @@ void cosimInterrupt(Core *core, uint32_t threadId, uint32_t pc)
     if (pc != thread->currentPc)
         thread->currentSubcycle = 0;
 
-    thread->currentPc = pc + 4;
-    raiseTrap(thread, 0, TR_INTERRUPT);
+    thread->currentPc = pc;
+    raiseInterrupt(core, INT_COSIM);
 }
 
 uint32_t getTotalThreads(const Core *core)
@@ -401,6 +407,8 @@ bool executeInstructions(Core *core, uint32_t threadId, uint64_t totalInstructio
             if (!executeInstruction(&core->threads[threadId]))
                 return false;  // Hit breakpoint
         }
+
+        timerTick(core);
     }
 
     return true;
@@ -410,6 +418,7 @@ void singleStep(Core *core, uint32_t threadId)
 {
     core->singleStepping = true;
     executeInstruction(&core->threads[threadId]);
+    timerTick(core);
 }
 
 uint32_t getPc(const Core *core, uint32_t threadId)
@@ -602,20 +611,22 @@ static void invalidateSyncAddress(Core *core, uint32_t address)
     }
 }
 
-// Check if interrupts are enabled and one is pending. If so, dispatch it now.
 static void tryToDispatchInterrupt(Thread *thread)
 {
-    if (!thread->enableInterrupt || !thread->interruptPending)
+    uint32_t pendingInterrupts = thread->core->pendingInterrupts;
+    if (!thread->enableInterrupt)
         return;
 
-    // Unlike exceptions, an interrupt saves the PC of the *next* instruction,
-    // rather than the current one, but only if a multicycle instruction is
-    // not active. Advance the PC here accordingly.
-    if (thread->currentSubcycle == 0)
-        thread->currentPc += 4;
+    if ((pendingInterrupts & thread->interruptMask) != 0)
+    {
+        // Unlike exceptions, an interrupt saves the PC of the *next* instruction,
+        // rather than the current one, but only if a multicycle instruction is
+        // not active. Advance the PC here accordingly.
+        if (thread->currentSubcycle == 0)
+            thread->currentPc += 4;
 
-    raiseTrap(thread, 0, TR_INTERRUPT);
-    thread->interruptPending = false;
+        raiseTrap(thread, 0, TR_INTERRUPT);
+    }
 }
 
 static void raiseTrap(Thread *thread, uint32_t trapAddress, TrapReason reason)
@@ -1194,7 +1205,12 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instruction)
         {
             case MEM_LONG:
                 if (isDeviceAccess)
-                    value = readDeviceRegister(physicalAddress & 0xffff);
+                {
+                    if (physicalAddress == REG_PEND_INT)
+                        value = thread->core->pendingInterrupts;
+                    else
+                        value = readDeviceRegister(physicalAddress);
+                }
                 else
                     value = (uint32_t) *UINT32_PTR(thread->core->memory, physicalAddress);
 
@@ -1259,19 +1275,23 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instruction)
                 if ((physicalAddress & 0xffff0000) == 0xffff0000)
                 {
                     // IO address range
-                    if (physicalAddress == 0xffff0100)
+                    if (physicalAddress >= REG_INT_MASK0 && physicalAddress < REG_INT_MASK0 +
+                        sizeof(uint32_t) * 16)
                     {
-                        // Thread resume
+                        thread->core->threads[(physicalAddress - REG_INT_MASK0) / sizeof(uint32_t)]
+                            .interruptMask = valueToStore;
+                    }
+                    else if (physicalAddress == REG_THREAD_RESUME)
                         thread->core->threadEnableMask |= valueToStore
-                                                          & ((1ull << thread->core->totalThreads) - 1);
-                    }
-                    else if (physicalAddress == 0xffff0104)
-                    {
-                        // Thread halt
+                           & ((1ull << thread->core->totalThreads) - 1);
+                    else if (physicalAddress == REG_THREAD_HALT)
                         thread->core->threadEnableMask &= ~valueToStore;
-                    }
+                    else if (physicalAddress == REG_INT_ACK)
+                        thread->core->pendingInterrupts &= ~valueToStore;
+                    else if (physicalAddress == REG_TIMER_INT)
+                        thread->core->currentTimerCount = valueToStore;
                     else
-                        writeDeviceRegister(physicalAddress & 0xffff, valueToStore);
+                        writeDeviceRegister(physicalAddress, valueToStore);
 
                     // Bail to avoid logging and other side effects below.
                     return;
@@ -1929,4 +1949,13 @@ restart:
         printf("Bad instruction @%08x\n", thread->currentPc - 4);
 
     return true;
+}
+
+static void timerTick(Core *core)
+{
+    if (core->currentTimerCount > 0)
+    {
+        if (core->currentTimerCount-- == 1)
+            raiseInterrupt(core, INT_TIMER);
+    }
 }

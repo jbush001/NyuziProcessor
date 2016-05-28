@@ -18,24 +18,42 @@
 
 //
 // This does a lot of I/O writes while the timer interrupt is going off.
-// There was a design issue where an interrupt coming during an I/O write
+// There was a hardware issue where an interrupt coming during an I/O write
 // could duplicate the write. This test ensures that doesn't happen.
+// This also validates the interrupt controller and timer.
 //
-// Note this will only work in verilog simulation. It doesn't check if the
-// UART is ready to send (it always is in the simulator)
+// This assumes the existance of the hardware timer on interrupt 1
+// Note this will only work in verilog simulation and the emulator because it
+// doesn't check if the UART is ready to send (it always is in the simulator)
 //
+
+.set TIMER_INTERVAL, 100
 
 //
 // Interrupt handler clobbers s24-s25
 //
-handle_trap:    load_32 s24, seraddr    // Load address of serial registers
-                move s25, '*'
-                store_32 s25, 8(s24)    // Send char
+handle_trap:    // Check that
+                load_const s24, REG_PENDING_INT
+                load_32 s24, (s24)
+                and s24, s24, 2     // Cosimulation interrupt will also be set, ignore
+                btrue s24, 1f       // If interrupt pending continue
+                call fail_test
+1:
 
-                # Ack interrupt
-                load_const s24, 0xffff010c
-                move s25, 1
+                // Write serial character
+                load_const s24, REG_SERIAL_WRITE
+                move s25, '*'
+                store_32 s25, (s24)    // Send char
+
+                // Ack interrupt
+                load_const s24, REG_INTERRUPT_ACK
+                move s25, 2
                 store_32 s25, (s24)
+
+                // Reset timer
+                load_const s24, TIMER_INTERVAL
+                load_const s25, REG_TIMER_COUNT
+                store_32 s24, (s25)
 
                 eret
 
@@ -45,23 +63,29 @@ _start:
                 lea s0, handle_trap
                 setcr s0, CR_TRAP_HANDLER
 
+                // Unmask interrupt
+                move s24, 2
+                load_const s25, REG_INT_MASK0
+                store_32 s24, (s25)
+
                 // Configure timer
-                move s0, 100             // Cycles per interrupt
-                load_32 s1, timer_addr
-                store_32 s0, (s1)
+                load_const s24, TIMER_INTERVAL
+                load_const s25, REG_TIMER_COUNT
+                store_32 s24, (s25)
 
                 // Enable interrupts
                 move s0, FLAG_SUPERVISOR_EN | FLAG_INTERRUPT_EN
                 setcr s0, CR_FLAGS
                 flush_pipeline
 
-                load_32 s1, seraddr
+                // Write start character
+                load_const s1, REG_SERIAL_WRITE
                 move s0, '!'
-                store_32 s0, 8(s1)
+                store_32 s0, (s1)
 
                 move s5, 10
 repeat_loop:    move s0, '0'
-print_loop:     store_32 s0, 8(s1)      // Send char
+print_loop:     store_32 s0, (s1)      // Send char
                 add_i s0, s0, 1
                 cmpgt_i s2, s0, 'z'
                 bfalse s2, print_loop
@@ -69,9 +93,6 @@ print_loop:     store_32 s0, 8(s1)      // Send char
                 btrue s5, repeat_loop
 
                 move s0, '\n'
-                store_32 s0, 8(s1)
+                store_32 s0, (s1)
 
                 halt_all_threads
-
-seraddr:        .long 0xffff0040
-timer_addr:     .long 0xffff0020
