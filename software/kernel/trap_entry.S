@@ -150,7 +150,7 @@ kernel_stack_addr_addr: .long kernel_stack_addr
 
                         .globl jump_to_user_mode
 jump_to_user_mode:      setcr s2, CR_TRAP_PC        // Address to jump to.
-                        move s10, FLAG_MMU_EN       // XXX interrupts currently disabled
+                        move s10, FLAG_MMU_EN | FLAG_INTERRUPT_EN
                         setcr s10, CR_SAVED_FLAGS
                         move sp, s3
                         eret
@@ -222,3 +222,14 @@ done:               getcr s0, CR_SCRATCHPAD0    // Get saved s0 from scratchpad
 
 pte_not_present:    move s0, 0                  // Null entry (present bit not set)
                     goto update_tlb             // Insert this into TLB
+
+
+                    .globl disable_interrupts
+disable_interrupts: getcr s0, CR_FLAGS
+                    and s1, s0, FLAG_MMU_EN | FLAG_SUPERVISOR_EN
+                    setcr s1, CR_FLAGS
+                    ret
+
+                    .globl restore_interrupts
+restore_interrupts: setcr s0, CR_FLAGS
+                    ret

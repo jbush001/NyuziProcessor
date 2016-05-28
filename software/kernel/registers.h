@@ -40,6 +40,9 @@ enum RegisterIndex
     REG_SD_SPI_CLOCK_DIVIDE = 0x00d0 / 4,
     REG_THREAD_RESUME       = 0x0100 / 4,
     REG_THREAD_HALT         = 0x0104 / 4,
+    REG_ACK_INTERRUPT       = 0x010c / 4,
+    REG_PENDING_INTERRUPT   = 0x010c / 4,
+    REG_INT_MASK0           = 0x0110 / 4,
     REG_VGA_ENABLE          = 0x0180 / 4,
     REG_VGA_MICROCODE       = 0x0184 / 4,
     REG_VGA_BASE            = 0x0188 / 4,
@@ -51,6 +54,7 @@ enum RegisterIndex
     REG_PERF0_VAL           = 0x0210 / 4,
     REG_PERF1_VAL           = 0x0214 / 4,
     REG_PERF2_VAL           = 0x0218 / 4,
-    REG_PERF3_VAL           = 0x021c / 4
+    REG_PERF3_VAL           = 0x021c / 4,
+    REG_TIMER_INTERVAL      = 0x0240 / 4,
 };
 

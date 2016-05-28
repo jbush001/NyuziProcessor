@@ -19,6 +19,7 @@
 #include "kernel_heap.h"
 #include "libc.h"
 #include "spinlock.h"
+#include "trap.h"
 
 struct free_range
 {
@@ -45,7 +46,9 @@ void *kmalloc(unsigned int size)
     unsigned int grow_size;
     void *result = 0;
     unsigned int va;
+    int old_flags;
 
+    old_flags = disable_interrupts();
     acquire_spinlock(&heap_lock);
 
     // Walk ranges in order to find one that is big enough
@@ -92,6 +95,7 @@ void *kmalloc(unsigned int size)
     }
 
     release_spinlock(&heap_lock);
+    restore_interrupts(old_flags);
 
     return result;
 }
@@ -99,11 +103,15 @@ void *kmalloc(unsigned int size)
 void kfree(void *ptr, unsigned int size)
 {
     struct free_range *new_range = (struct free_range*) ptr;
+    int old_flags;
+
     new_range->size = size;
 
+    old_flags = disable_interrupts();
     acquire_spinlock(&heap_lock);
     insert_free_range(new_range);
     release_spinlock(&heap_lock);
+    restore_interrupts(old_flags);
 }
 
 static void insert_free_range(struct free_range *new_range)

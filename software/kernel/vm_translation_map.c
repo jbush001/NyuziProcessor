@@ -138,10 +138,12 @@ void vm_translation_map_init(void)
 struct vm_translation_map *new_translation_map(void)
 {
     struct vm_translation_map *map;
-    map = slab_alloc(&translation_map_slab);
+    int old_flags;
 
+    map = slab_alloc(&translation_map_slab);
     map->page_dir = vm_allocate_page();
 
+    old_flags = disable_interrupts();
     acquire_spinlock(&kernel_space_lock);
     // Copy kernel page tables into new page directory
     memcpy((unsigned int*) PA_TO_VA(map->page_dir) + 768,
@@ -160,6 +162,7 @@ struct vm_translation_map *new_translation_map(void)
 
     map_list = map;
     release_spinlock(&kernel_space_lock);
+    restore_interrupts(old_flags);
 
     return map;
 }
@@ -168,13 +171,16 @@ void destroy_translation_map(struct vm_translation_map *map)
 {
     int i;
     unsigned int *pgdir;
+    int old_flags;
 
+    old_flags = disable_interrupts();
     acquire_spinlock(&kernel_space_lock);
     *map->prev = map->next;
     if (map->next)
         map->next->prev = map->prev;
 
     release_spinlock(&kernel_space_lock);
+    restore_interrupts(old_flags);
 
     // Free user space page tables
     pgdir = PA_TO_VA(map->page_dir);
@@ -197,10 +203,12 @@ void vm_map_page(struct vm_translation_map *map, unsigned int va, unsigned int p
     unsigned int *pgtbl;
     struct vm_translation_map *other_map;
     unsigned int new_pgt;
+    int old_flags;
 
     if (va >= KERNEL_BASE)
     {
         // Map into kernel space
+        old_flags = disable_interrupts();
         acquire_spinlock(&kernel_space_lock);
 
         // The page tables for kernel space are shared by all page directories.
@@ -225,10 +233,12 @@ void vm_map_page(struct vm_translation_map *map, unsigned int va, unsigned int p
         // XXX need to invalidate on other cores
 
         release_spinlock(&kernel_space_lock);
+        restore_interrupts(old_flags);
     }
     else
     {
         // Map only into this address space
+        old_flags = disable_interrupts();
         acquire_spinlock(&map->lock);
         pgdir = PA_TO_VA(map->page_dir);
         if ((pgdir[pgdindex] & PAGE_PRESENT) == 0)
@@ -241,5 +251,6 @@ void vm_map_page(struct vm_translation_map *map, unsigned int va, unsigned int p
         // XXX need to invalidate on other cores
 
         release_spinlock(&map->lock);
+        restore_interrupts(old_flags);
     }
 }

@@ -16,6 +16,8 @@
 
 #include "asm.h"
 #include "libc.h"
+#include "registers.h"
+#include "trap.h"
 
 struct interrupt_frame
 {
@@ -43,6 +45,8 @@ static const char *TRAP_NAMES[] =
     "Non Executable Page"
 };
 
+static interrupt_handler_t handlers[NUM_INTERRUPTS];
+static unsigned int enabled_interrupts;
 
 void handle_syscall(struct interrupt_frame *frame)
 {
@@ -60,6 +64,37 @@ void handle_syscall(struct interrupt_frame *frame)
     frame->gpr[31] += 4;    // Next instruction
 }
 
+void register_interrupt_handler(int interrupt, interrupt_handler_t handler)
+{
+    // XXX lock
+    handlers[interrupt] = handler;
+    enabled_interrupts |= 1 << interrupt;
+    REGISTERS[REG_INT_MASK0] = enabled_interrupts;
+}
+
+static void handle_interrupt(struct interrupt_frame *frame)
+{
+    unsigned int interrupt_bitmap = REGISTERS[REG_PENDING_INTERRUPT]
+         & enabled_interrupts;
+    while (interrupt_bitmap)
+    {
+        int next_int = __builtin_ctz(interrupt_bitmap);
+        interrupt_bitmap &= ~(1 << next_int);
+        if (handlers[next_int] == 0)
+        {
+            kprintf("No handler for interrupt %d", next_int);
+            panic("STOPPING");
+        }
+
+        (*handlers[next_int])();
+    }
+}
+
+void ack_interrupt(int interrupt)
+{
+    REGISTERS[REG_ACK_INTERRUPT] = 1 << interrupt;
+}
+
 void handle_trap(struct interrupt_frame *frame)
 {
     int trapId = __builtin_nyuzi_read_control_reg(CR_TRAP_REASON);
@@ -67,6 +102,10 @@ void handle_trap(struct interrupt_frame *frame)
     {
         case TR_SYSCALL:
             handle_syscall(frame);
+            break;
+
+        case TR_INTERRUPT:
+            handle_interrupt(frame);
             break;
 
         default:

@@ -15,6 +15,7 @@
 //
 
 #include "spinlock.h"
+#include "trap.h"
 
 //
 // Utilities to print debug output to the UART
@@ -33,10 +34,14 @@ static spinlock_t uart_lock;
 
 void putc(int c)
 {
+    int old_flags;
+
+    old_flags = disable_interrupts();
     acquire_spinlock(&uart_lock);
     while ((REGISTERS[REG_UART_STATUS] & UART_TX_READY) == 0)
         ;	// Wait for space
 
     REGISTERS[REG_UART_TX] = c;
     release_spinlock(&uart_lock);
+    restore_interrupts(old_flags);
 }

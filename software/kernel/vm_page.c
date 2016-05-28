@@ -47,11 +47,15 @@ unsigned int vm_allocate_page(void)
 {
     struct vm_page *page;
     unsigned int pa;
+    int old_flags;
 
+    old_flags = disable_interrupts();
     acquire_spinlock(&page_lock);
     page = free_page_list;
     free_page_list = page->next;
     release_spinlock(&page_lock);
+    restore_interrupts(old_flags);
+
     pa = (page - pages) * PAGE_SIZE;
 
     memset((void*) PA_TO_VA(pa), 0, PAGE_SIZE);
@@ -62,9 +66,13 @@ unsigned int vm_allocate_page(void)
 void vm_free_page(unsigned int addr)
 {
     struct vm_page *page = &pages[addr / PAGE_SIZE];
+    int old_flags;
+
+    old_flags = disable_interrupts();
     acquire_spinlock(&page_lock);
     page->next = free_page_list;
     free_page_list = page;
     release_spinlock(&page_lock);
+    restore_interrupts(old_flags);
 }
 

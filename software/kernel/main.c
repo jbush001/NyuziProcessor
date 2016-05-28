@@ -17,6 +17,7 @@
 #include "asm.h"
 #include "kernel_heap.h"
 #include "libc.h"
+#include "registers.h"
 #include "slab.h"
 #include "thread.h"
 #include "vm_page.h"
@@ -130,11 +131,28 @@ void test_context_switch(void)
     }
 }
 
+#define TIMER_INTERVAL 500000
+
+void start_timer(void)
+{
+    REGISTERS[REG_TIMER_INTERVAL] = TIMER_INTERVAL;
+}
+
+void timer_tick(void)
+{
+    kprintf(".");
+    REGISTERS[REG_TIMER_INTERVAL] = TIMER_INTERVAL;
+    ack_interrupt(1);
+}
+
 void kernel_main(void)
 {
     vm_page_init();
     vm_translation_map_init();
     boot_init_heap(KERNEL_HEAP_BASE + PAGE_STRUCTURES_SIZE);
+
+    register_interrupt_handler(1, timer_tick);
+    start_timer();
     kprintf("Kernel started\n");
 
 #if 0

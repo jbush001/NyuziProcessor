@@ -55,7 +55,7 @@ start_thread_n:     // Set up entry address for trampoline
                     // eret as a trampoline to do this.
 trampoline:         load_32 s0, page_dir_addr   // Set up page directory
                     setcr s0, CR_PAGE_DIR_BASE
-                    move s0, (FLAG_MMU_EN | FLAG_SUPERVISOR_EN)
+                    move s0, (FLAG_MMU_EN | FLAG_SUPERVISOR_EN | FLAG_INTERRUPT_EN)
                     setcr s0, CR_SAVED_FLAGS
 
                     // Set up new stack address in virtual memory

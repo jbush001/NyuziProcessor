@@ -76,7 +76,12 @@ struct thread *dequeue_thread(struct thread_queue *q)
 static void thread_start(void)
 {
     struct thread *th = current_thread();
+
+    // We will branch here from within reschedule, after context_switch.
+    // Need to release the lock acquired at the beginning of that function.
     release_spinlock(&thread_q_lock);
+    restore_interrupts(FLAG_INTERRUPT_EN | FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
+
     th->start_function(th->param);
 }
 
@@ -84,7 +89,10 @@ struct thread *spawn_thread(struct vm_translation_map *map,
                             void (*start_function)(void *param),
                             void *param)
 {
-    struct thread *th = slab_alloc(&thread_slab);
+    int old_flags;
+    struct thread *th;
+
+    th = slab_alloc(&thread_slab);
     th->kernel_stack = (unsigned char*) kmalloc(0x2000) + 0x2000;
     th->current_stack = (unsigned char*) th->kernel_stack - 0x840;
     th->map = map;
@@ -92,9 +100,11 @@ struct thread *spawn_thread(struct vm_translation_map *map,
     th->start_function = start_function;
     th->param = param;
 
+    old_flags = disable_interrupts();
     acquire_spinlock(&thread_q_lock);
     enqueue_thread(&ready_q, th);
     release_spinlock(&thread_q_lock);
+    restore_interrupts(old_flags);
 }
 
 void reschedule(void)
@@ -102,9 +112,11 @@ void reschedule(void)
     int hwthread = __builtin_nyuzi_read_control_reg(CR_CURRENT_THREAD);
     struct thread *old_thread;
     struct thread *next_thread;
+    int old_flags;
 
     // Put current thread back on ready queue
 
+    old_flags = disable_interrupts();
     acquire_spinlock(&thread_q_lock);
     old_thread = cur_thread[hwthread];
     enqueue_thread(&ready_q, old_thread);
@@ -120,6 +132,7 @@ void reschedule(void)
     }
 
     release_spinlock(&thread_q_lock);
+    restore_interrupts(old_flags);
 }
 
 // Kernel thread running in new address space starts here.

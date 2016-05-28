@@ -21,7 +21,9 @@
 void *slab_alloc(struct slab_allocator *sa)
 {
     void *object = 0;
+    int old_flags;
 
+    old_flags = disable_interrupts();
     acquire_spinlock(&sa->lock);
     if (sa->free_list)
     {
@@ -45,14 +47,19 @@ void *slab_alloc(struct slab_allocator *sa)
     }
 
     release_spinlock(&sa->lock);
+    restore_interrupts(old_flags);
 
     return object;
 }
 
 void slab_free(struct slab_allocator *sa, void *object)
 {
+    int old_flags;
+
+    old_flags = disable_interrupts();
     acquire_spinlock(&sa->lock);
     *((void**) object) = sa->free_list;
     sa->free_list = object;
     release_spinlock(&sa->lock);
+    restore_interrupts(old_flags);
 }
