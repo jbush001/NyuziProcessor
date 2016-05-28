@@ -75,7 +75,7 @@ void register_interrupt_handler(int interrupt, interrupt_handler_t handler)
 static void handle_interrupt(struct interrupt_frame *frame)
 {
     unsigned int interrupt_bitmap = REGISTERS[REG_PENDING_INTERRUPT]
-         & enabled_interrupts;
+                                    & enabled_interrupts;
     while (interrupt_bitmap)
     {
         int next_int = __builtin_ctz(interrupt_bitmap);

@@ -14,6 +14,7 @@
 // limitations under the License.
 //
 
+#include "registers.h"
 #include "spinlock.h"
 #include "trap.h"
 
@@ -23,13 +24,6 @@
 
 #define UART_TX_READY 	(1 << 0)
 
-enum RegisterIndex
-{
-    REG_UART_STATUS         = 0x0040 / 4,
-    REG_UART_TX             = 0x0048 / 4,
-};
-
-static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
 static spinlock_t uart_lock;
 
 void putc(int c)

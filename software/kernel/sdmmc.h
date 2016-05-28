@@ -20,7 +20,7 @@
 
 #define BLOCK_SIZE 512
 
-int initSdmmcDevice();
+int initSdmmcDevice(void);
 
 // Read a single BLOCK_SIZE block from the given byte offset in the device into
 // the passed buffer.

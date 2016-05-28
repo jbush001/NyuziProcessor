@@ -84,7 +84,7 @@ void *kmalloc(unsigned int size)
         for (va = wilderness_ptr; va < wilderness_ptr + grow_size; va += PAGE_SIZE)
         {
             vm_map_page(0, va, vm_allocate_page() | PAGE_PRESENT | PAGE_WRITABLE
-                | PAGE_SUPERVISOR | PAGE_GLOBAL);
+                        | PAGE_SUPERVISOR | PAGE_GLOBAL);
         }
 
         result = (void*) wilderness_ptr;
@@ -130,7 +130,7 @@ static void insert_free_range(struct free_range *new_range)
         for (prev_range = free_list; prev_range; prev_range = prev_range->next)
         {
             if (prev_range->next == 0 || (new_range > prev_range
-                && new_range < prev_range->next))
+                                          && new_range < prev_range->next))
             {
                 new_range->next = prev_range->next;
                 prev_range->next = new_range;
@@ -141,7 +141,7 @@ static void insert_free_range(struct free_range *new_range)
 
     // Try to merge with next block
     if (new_range->next != 0
-        && ((char*) new_range + new_range->size == (char*) new_range->next))
+            && ((char*) new_range + new_range->size == (char*) new_range->next))
     {
         new_range->size += new_range->next->size;
         new_range->next = new_range->next->next;
@@ -149,7 +149,7 @@ static void insert_free_range(struct free_range *new_range)
 
     // Try to merge with previous block
     if (prev_range != 0
-        && (char*) prev_range + prev_range->size == (char*) new_range)
+            && (char*) prev_range + prev_range->size == (char*) new_range)
     {
         prev_range->next = new_range->next;
         prev_range->size += new_range->size;

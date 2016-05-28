@@ -70,8 +70,8 @@ trampoline:         load_32 s0, page_dir_addr   // Set up page directory
                     .globl page_dir_addr
                     .globl boot_pages_used
 
-// temp_stack is only used while calling boot_setup_page_tables. As soon as it returns,
-// it is free to use for other things.
+// temp_stack is only used while calling boot_setup_page_tables. As soon as that returns,
+// this memory will not be touched again and can be used for other things.
 temp_stack:         .long 0x400000
 page_dir_addr:      .long 0
 boot_pages_used:    .long 0

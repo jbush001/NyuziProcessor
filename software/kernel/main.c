@@ -78,7 +78,7 @@ void thread_funcb()
     while (1)
     {
         kprintf("funcb: %08x %08x\n",  *((volatile unsigned int*) 0x10000000),
-            *((volatile unsigned int*) 0x20000000));  // Should be 0x12345678 <counter>
+                *((volatile unsigned int*) 0x20000000));  // Should be 0x12345678 <counter>
         reschedule();
     }
 }
@@ -123,7 +123,7 @@ void test_context_switch(void)
     while (1)
     {
         kprintf("funca: %08x\n",  *((volatile unsigned int*) 0x10000000));
-            // Should be 0xdeadbeef
+        // Should be 0xdeadbeef
 
         // Increment counter in synonym page
         (*((volatile unsigned int*) 0x10001000))++;

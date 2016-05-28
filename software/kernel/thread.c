@@ -23,10 +23,10 @@
 #include "vm_page.h"
 
 extern __attribute__((noreturn)) void  jump_to_user_mode(
-                              unsigned int inital_pc,
-                              unsigned int user_stack_ptr,
-                              int argc,
-                              void *argv);
+    unsigned int inital_pc,
+    unsigned int user_stack_ptr,
+    int argc,
+    void *argv);
 
 struct thread *cur_thread[MAX_CORES];
 static struct thread_queue ready_q;
@@ -126,9 +126,9 @@ void reschedule(void)
         cur_thread[hwthread] = next_thread;
         kernel_stack_addr[hwthread] = next_thread->kernel_stack;
         context_switch(&old_thread->current_stack,
-            next_thread->current_stack,
-            next_thread->map->page_dir,
-            next_thread->map->asid);
+                       next_thread->current_stack,
+                       next_thread->map->page_dir,
+                       next_thread->map->asid);
     }
 
     release_spinlock(&thread_q_lock);

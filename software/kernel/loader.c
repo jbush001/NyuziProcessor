@@ -81,15 +81,15 @@ int load_program(const char *filename,
             continue;
 
         kprintf("Loading segment %d offset %08x vaddr %08x file size %08x mem size %08x flags %x\n",
-               segment_index, segment->p_offset, segment->p_vaddr, segment->p_filesz,
-               segment->p_memsz, segment->p_flags);
+                segment_index, segment->p_offset, segment->p_vaddr, segment->p_filesz,
+                segment->p_memsz, segment->p_flags);
 
         // Ensure this doesn't clobber the kernel
         if (segment->p_vaddr > 0xc0000000 || (segment->p_vaddr + segment->p_memsz) > 0xc0000000
-            || (segment->p_vaddr + segment->p_memsz) < segment->p_vaddr)
+                || (segment->p_vaddr + segment->p_memsz) < segment->p_vaddr)
         {
             kprintf("segment %08x-%08x clobbers kernel, aborting\n", segment->p_vaddr,
-                segment->p_vaddr + segment->p_memsz);
+                    segment->p_vaddr + segment->p_memsz);
             return -1;
         }
 
@@ -115,7 +115,7 @@ int load_program(const char *filename,
 
         // Load initialized portion
         if (read_file(file, segment->p_offset, (void*) segment->p_vaddr,
-                     segment->p_filesz) < 0)
+                      segment->p_filesz) < 0)
         {
             kprintf("Error loading initialized portion\n");
             return -1;

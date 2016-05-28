@@ -36,7 +36,7 @@ void *slab_alloc(struct slab_allocator *sa)
         // If there is no wilderness, or the slab is full, create a new
         // wilderness slab
         if (sa->wilderness_slab == 0
-            || sa->wilderness_offset + sa->object_size > sa->slab_size)
+                || sa->wilderness_offset + sa->object_size > sa->slab_size)
         {
             sa->wilderness_slab = kmalloc(sa->slab_size);
             sa->wilderness_offset = 0;

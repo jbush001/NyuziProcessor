@@ -126,7 +126,7 @@ void boot_setup_page_tables(void)
     // to the physical address.
     *((unsigned int*) BOOT_VA_TO_PA(&page_dir_addr)) = (unsigned int) bps.pgdir;
     *((unsigned int*) BOOT_VA_TO_PA(&boot_pages_used)) = (unsigned int)
-        bps.next_alloc_page / PAGE_SIZE;
+            bps.next_alloc_page / PAGE_SIZE;
 }
 
 // This is called after the MMU has been enabled
@@ -147,8 +147,8 @@ struct vm_translation_map *new_translation_map(void)
     acquire_spinlock(&kernel_space_lock);
     // Copy kernel page tables into new page directory
     memcpy((unsigned int*) PA_TO_VA(map->page_dir) + 768,
-        (unsigned int*) PA_TO_VA(map_list->page_dir) + 768,
-        256 * sizeof(unsigned int));
+           (unsigned int*) PA_TO_VA(map_list->page_dir) + 768,
+           256 * sizeof(unsigned int));
 
     map->asid = next_asid++;
     map->lock = 0;

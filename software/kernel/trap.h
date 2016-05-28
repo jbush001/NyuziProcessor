@@ -18,12 +18,12 @@
 
 #define NUM_INTERRUPTS 16
 
-typedef void (*interrupt_handler_t)();
+typedef void (*interrupt_handler_t)(void);
 
 // Returns old flag state before interrupts were disabled. The return
 // value must be passed to restore_interrupts. If interrupts were
 // already disabled, restore_interrupts will not turn them back on.
-extern int disable_interrupts();
+extern int disable_interrupts(void);
 
 // restore interrupts to value before disable_interrupts was called.
 extern void restore_interrupts(int value);

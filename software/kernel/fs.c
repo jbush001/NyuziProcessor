@@ -20,7 +20,6 @@
 #include "sdmmc.h"
 #include "vm_page.h"
 
-#define RAMDISK_BASE ((unsigned char*) 0x4000000)
 #define FS_MAGIC "spfs"
 
 struct file_handle
@@ -44,18 +43,11 @@ struct fs_header
 };
 
 static int initialized;
-static int use_ramdisk;
 static struct fs_header *directory;
 
 int read_block(int block_num, void *ptr)
 {
-    if (use_ramdisk)
-    {
-        memcpy(ptr, RAMDISK_BASE + block_num * BLOCK_SIZE, BLOCK_SIZE);
-        return BLOCK_SIZE;
-    }
-    else
-        return read_sdmmc_device(block_num, ptr);
+    return read_sdmmc_device(block_num, ptr);
 }
 
 static int init_file_system(void)
@@ -65,11 +57,10 @@ static int init_file_system(void)
     int block_num;
     struct fs_header *header;
 
-    // SDMMC not supported on FPGA currently. Fall back to ramdisk if it fails.
     if (init_sdmmc_device() < 0)
     {
-        printf("init_file_system: SDMMC init failed, using ramdisk\n");
-        use_ramdisk = 1;
+        printf("init_file_system: SDMMC init failed\n");
+        return -1;
     }
 
     // Read directory
@@ -87,11 +78,11 @@ static int init_file_system(void)
     }
 
     num_directory_blocks = ((header->num_directory_entries - 1)
-                          * sizeof(struct directory_entry)
-                          + sizeof(struct fs_header) + BLOCK_SIZE - 1)
-                          / BLOCK_SIZE;
+                            * sizeof(struct directory_entry)
+                            + sizeof(struct fs_header) + BLOCK_SIZE - 1)
+                           / BLOCK_SIZE;
     directory = (struct fs_header*) kmalloc((num_directory_blocks * BLOCK_SIZE + PAGE_SIZE - 1)
-        & ~(PAGE_SIZE - 1));
+                                            & ~(PAGE_SIZE - 1));
     memcpy(directory, super_block, BLOCK_SIZE);
     for (block_num = 1; block_num < num_directory_blocks; block_num++)
     {
