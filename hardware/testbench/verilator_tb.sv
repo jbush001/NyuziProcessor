@@ -406,7 +406,11 @@ module verilator_tb(
             begin
                 case (nyuzi_io_bus.address)
                     // Serial output
-                    'h48: $write("%c", nyuzi_io_bus.write_data[7:0]);
+                    'h48:
+                    begin
+                        $write("%c", nyuzi_io_bus.write_data[7:0]);
+                        $fflush(1);
+                    end
 
                     // Loopback UART: force framing error
                     'h1c: loopback_uart_mask <= nyuzi_io_bus.write_data[0];
