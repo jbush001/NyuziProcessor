@@ -101,7 +101,15 @@ void handle_trap(struct interrupt_frame *frame)
     switch (trapId)
     {
         case TR_SYSCALL:
+            // Enable interrupts
+            __builtin_nyuzi_write_control_reg(CR_FLAGS,
+                __builtin_nyuzi_read_control_reg(CR_FLAGS) | FLAG_INTERRUPT_EN);
+
             handle_syscall(frame);
+
+            // Disable interrupts
+            __builtin_nyuzi_write_control_reg(CR_FLAGS,
+                __builtin_nyuzi_read_control_reg(CR_FLAGS) & ~FLAG_INTERRUPT_EN);
             break;
 
         case TR_INTERRUPT:
