@@ -22,8 +22,8 @@
 
 struct thread
 {
-    void *kernel_stack;
-    void *current_stack;
+    unsigned int *kernel_stack;
+    unsigned int *current_stack;
     struct vm_translation_map *map;
     void *stack_base;
     void (*start_function)(void *param);

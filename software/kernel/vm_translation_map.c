@@ -14,9 +14,11 @@
 // limitations under the License.
 //
 
+#include "libc.h"
+#include "slab.h"
+#include "trap.h"
 #include "vm_page.h"
 #include "vm_translation_map.h"
-#include "slab.h"
 
 #define BOOT_VA_TO_PA(x) (((unsigned int) (x)) & 0xffffff)
 
@@ -181,7 +183,7 @@ void destroy_translation_map(struct vm_translation_map *map)
     restore_interrupts(old_flags);
 
     // Free user space page tables
-    pgdir = PA_TO_VA(map->page_dir);
+    pgdir = (unsigned int*) PA_TO_VA(map->page_dir);
     for (i = 0; i < 768; i++)
     {
         if (pgdir[i] & PAGE_PRESENT)
@@ -212,13 +214,13 @@ void vm_map_page(struct vm_translation_map *map, unsigned int va, unsigned int p
         // The page tables for kernel space are shared by all page directories.
         // Check the first page directory to see if this is present. If not,
         // allocate a new one and stick it into all page directories.
-        pgdir = PA_TO_VA(map_list->page_dir);
+        pgdir = (unsigned int*) PA_TO_VA(map_list->page_dir);
         if ((pgdir[pgdindex] & PAGE_PRESENT) == 0)
         {
             new_pgt = vm_allocate_page() | PAGE_PRESENT;
             for (other_map = map_list; other_map; other_map = other_map->next)
             {
-                pgdir = PA_TO_VA(other_map->page_dir);
+                pgdir = (unsigned int*) PA_TO_VA(other_map->page_dir);
                 pgdir[pgdindex] = new_pgt;
             }
         }
@@ -238,7 +240,7 @@ void vm_map_page(struct vm_translation_map *map, unsigned int va, unsigned int p
         // Map only into this address space
         old_flags = disable_interrupts();
         acquire_spinlock(&map->lock);
-        pgdir = PA_TO_VA(map->page_dir);
+        pgdir = (unsigned int*) PA_TO_VA(map->page_dir);
         if ((pgdir[pgdindex] & PAGE_PRESENT) == 0)
             pgdir[pgdindex] = vm_allocate_page() | PAGE_PRESENT;
 

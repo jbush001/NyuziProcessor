@@ -20,6 +20,7 @@
 #include "registers.h"
 #include "slab.h"
 #include "thread.h"
+#include "trap.h"
 #include "vm_page.h"
 #include "vm_translation_map.h"
 
@@ -151,7 +152,7 @@ void kernel_main(void)
 
     vm_page_init();
     init_map = vm_translation_map_init();
-    boot_init_heap(KERNEL_HEAP_BASE + PAGE_STRUCTURES_SIZE);
+    boot_init_heap((char*) KERNEL_HEAP_BASE + PAGE_STRUCTURES_SIZE);
     boot_init_thread(init_map);
     kprintf("Kernel started\n");
 

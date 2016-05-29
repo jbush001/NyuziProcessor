@@ -17,6 +17,7 @@
 #include "kernel_heap.h"
 #include "libc.h"
 #include "slab.h"
+#include "trap.h"
 
 void *slab_alloc(struct slab_allocator *sa)
 {

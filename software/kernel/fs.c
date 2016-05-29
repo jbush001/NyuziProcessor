@@ -18,6 +18,7 @@
 #include "kernel_heap.h"
 #include "libc.h"
 #include "sdmmc.h"
+#include "slab.h"
 #include "vm_page.h"
 
 #define FS_MAGIC "spfs"
@@ -44,6 +45,7 @@ struct fs_header
 
 static int initialized;
 static struct fs_header *directory;
+MAKE_SLAB(file_handle_slab, struct file_handle);
 
 int read_block(int block_num, void *ptr)
 {
@@ -59,21 +61,21 @@ static int init_file_system(void)
 
     if (init_sdmmc_device() < 0)
     {
-        printf("init_file_system: SDMMC init failed\n");
+        kprintf("init_file_system: SDMMC init failed\n");
         return -1;
     }
 
     // Read directory
     if (read_block(0, super_block) <= 0)
     {
-        printf("init_file_system: error reading directory\n");
+        kprintf("init_file_system: error reading directory\n");
         return -1;
     }
 
     header = (struct fs_header*) super_block;
     if (memcmp(header->magic, FS_MAGIC, 4) != 0)
     {
-        printf("init_file_system: invalid magic value\n");
+        kprintf("init_file_system: invalid magic value\n");
         return -1;
     }
 
@@ -101,7 +103,7 @@ struct file_handle *open_file(const char *path)
     if (!initialized)
     {
         if (init_file_system() < 0)
-            return -1;
+            return 0;
 
         initialized = 1;
     }
@@ -111,10 +113,10 @@ struct file_handle *open_file(const char *path)
         struct directory_entry *entry = directory->dir + directory_index;
         if (strcmp(entry->name, path) == 0)
         {
-            handle = (struct file_handle*) malloc(sizeof(struct file_handle));
+            handle = (struct file_handle*) slab_alloc(&file_handle_slab);
             handle->base_location = entry->start_offset;
             handle->length = entry->length;
-            return entry;
+            return handle;
         }
     }
 
@@ -138,7 +140,7 @@ int read_file(struct file_handle *handle, unsigned int offset, void *out_ptr, in
         {
             if (read_block(block_number, ((unsigned char*)out_ptr) + total_read) < 0)
             {
-                printf("Error reading SDMMC device\n");
+                kprintf("Error reading SDMMC device\n");
                 return -1;
             }
 
@@ -149,7 +151,7 @@ int read_file(struct file_handle *handle, unsigned int offset, void *out_ptr, in
         {
             if (read_block(block_number, tmp_block) < 0)
             {
-                printf("Error reading SDMMC device\n");
+                kprintf("Error reading SDMMC device\n");
                 return -1;
             }
 

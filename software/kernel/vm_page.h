@@ -30,3 +30,5 @@ struct vm_page
 
 void vm_page_init(void);
 unsigned int vm_allocate_page(void);
+void vm_free_page(unsigned int addr);
+struct vm_page *page_for_address(unsigned int addr);

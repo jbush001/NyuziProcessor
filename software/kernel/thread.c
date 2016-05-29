@@ -15,11 +15,13 @@
 //
 
 #include "asm.h"
+#include "kernel_heap.h"
 #include "libc.h"
 #include "loader.h"
 #include "slab.h"
 #include "spinlock.h"
 #include "thread.h"
+#include "trap.h"
 #include "vm_page.h"
 
 extern __attribute__((noreturn)) void  jump_to_user_mode(
@@ -27,6 +29,10 @@ extern __attribute__((noreturn)) void  jump_to_user_mode(
     unsigned int user_stack_ptr,
     int argc,
     void *argv);
+extern void context_switch(unsigned int **old_stack_ptr_ptr,
+                           unsigned int *new_stack_ptr,
+                           unsigned int new_page_dir_addr,
+                           unsigned int new_address_space_id);
 
 struct thread *cur_thread[MAX_CORES];
 static struct thread_queue ready_q;
@@ -93,8 +99,8 @@ struct thread *spawn_thread(struct vm_translation_map *map,
     struct thread *th;
 
     th = slab_alloc(&thread_slab);
-    th->kernel_stack = (unsigned char*) kmalloc(0x2000) + 0x2000;
-    th->current_stack = (unsigned char*) th->kernel_stack - 0x840;
+    th->kernel_stack = (unsigned int*)((unsigned char*) kmalloc(0x2000) + 0x2000);
+    th->current_stack = (unsigned int*) ((unsigned char*) th->kernel_stack - 0x840);
     th->map = map;
     ((unsigned int*) th->current_stack)[0x814 / 4] = (unsigned int) thread_start;
     th->start_function = start_function;
@@ -105,6 +111,8 @@ struct thread *spawn_thread(struct vm_translation_map *map,
     enqueue_thread(&ready_q, th);
     release_spinlock(&thread_q_lock);
     restore_interrupts(old_flags);
+
+    return th;
 }
 
 void reschedule(void)
@@ -124,7 +132,7 @@ void reschedule(void)
     if (old_thread != next_thread)
     {
         cur_thread[hwthread] = next_thread;
-        kernel_stack_addr[hwthread] = next_thread->kernel_stack;
+        kernel_stack_addr[hwthread] = (unsigned int) next_thread->kernel_stack;
         context_switch(&old_thread->current_stack,
                        next_thread->current_stack,
                        next_thread->map->page_dir,
@@ -154,7 +162,7 @@ static void program_thread_start(void *data)
     }
 
     kprintf("About to jump to user start 0x%08x\n", entry_point);
-    jump_to_user_mode(0, 0, entry_point, 0xc0000000);
+    jump_to_user_mode(0, 0, entry_point, (void*) 0xc0000000);
 }
 
 void exec_program(const char *filename)

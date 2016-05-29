@@ -17,6 +17,7 @@
 #include "libc.h"
 #include "memory_map.h"
 #include "spinlock.h"
+#include "trap.h"
 #include "vm_page.h"
 #include "vm_translation_map.h"
 
@@ -76,3 +77,7 @@ void vm_free_page(unsigned int addr)
     restore_interrupts(old_flags);
 }
 
+struct vm_page *page_for_address(unsigned int addr)
+{
+    return &pages[addr / PAGE_SIZE];
+}

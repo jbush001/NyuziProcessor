@@ -291,7 +291,7 @@ static int vprintf(const char *format, va_list args)
                         // See "How to Print Floating Point Numbers Accurately" by Guy L. Steele Jr.
                         // and Jon L. White for the gory details.
                         // XXX does not handle inf and NaN
-                        float floatval = va_arg(args, float);
+                        float floatval = va_arg(args, double);
                         int wholePart;
                         float frac;
 
@@ -423,7 +423,7 @@ void* memset(void *_dest, int value, unsigned int length)
 void *memcpy(void *_dest, const void *_src, unsigned int length)
 {
     char *dest = _dest;
-    char *src = _src;
+    const char *src = _src;
 
     while (length-- > 0)
         *dest++ = *src++;
@@ -441,4 +441,17 @@ char* strncpy(char *dest, const char *src, unsigned int length)
     return dest;
 }
 
+int memcmp(const void *_str1, const void *_str2, unsigned int len)
+{
+    const char *str1 = _str1;
+    const char *str2 = _str2;
 
+    while (len--)
+    {
+        int diff = *str1++ - *str2++;
+        if (diff)
+            return diff;
+    }
+
+    return 0;
+}

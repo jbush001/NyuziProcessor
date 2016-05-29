@@ -1,7 +1,8 @@
-This is a quick and dirty kernel that exercises MMU and supervisor mode
-related functionality. This is not used by other applications now, which
-run on bare metal and use libos.
+This is a quick and dirty kernel that exercises MMU and supervisor mode related
+functionality. This is not used by the other applications now, which run on
+bare metal and use libos.
 
-In the current default configuration, it attempts to load a file "program.elf"
-from the filesystem as a user space program and execute it. The test program
-is located in tests/kernel/.
+This isn't executed directly from this directory. There are test programs in
+tests/kernel that use the image produced here. When it executes, it attempts to
+load the file "program.elf" from the filesystem and execute it as a user space
+program.
