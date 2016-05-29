@@ -36,17 +36,14 @@ struct boot_page_setup
     unsigned int *pgdir;
 };
 
-extern unsigned int _end;
 extern unsigned int page_dir_addr;
 extern unsigned int boot_pages_used;
 
 static spinlock_t kernel_space_lock;
 static unsigned int next_asid;
 
-// The default_map is used during VM initialization, since the heap is not
-// ready yet at that point.
-static struct vm_translation_map default_map;
-static struct vm_translation_map *map_list  = &default_map;
+static struct vm_translation_map kernel_map;
+static struct vm_translation_map *map_list  = &kernel_map;
 
 MAKE_SLAB(translation_map_slab, struct vm_translation_map);
 
@@ -93,7 +90,7 @@ void boot_setup_page_tables(void)
     // Need a local since we can't access globals
     struct boot_page_setup bps;
 
-    unsigned int kernel_size = PAGE_ALIGN(((unsigned int) &_end) + 0xfff) - KERNEL_BASE;
+    unsigned int kernel_size = KERNEL_END - KERNEL_BASE;
     bps.next_alloc_page = kernel_size;
     bps.pgdir = (unsigned int*) boot_vm_allocate_pages(&bps, 1);
 
@@ -130,9 +127,10 @@ void boot_setup_page_tables(void)
 }
 
 // This is called after the MMU has been enabled
-void vm_translation_map_init(void)
+struct vm_translation_map *vm_translation_map_init(void)
 {
-    default_map.page_dir = __builtin_nyuzi_read_control_reg(10);
+    kernel_map.page_dir = __builtin_nyuzi_read_control_reg(10);
+    return &kernel_map;
 }
 
 struct vm_translation_map *new_translation_map(void)

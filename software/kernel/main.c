@@ -147,13 +147,16 @@ void timer_tick(void)
 
 void kernel_main(void)
 {
+    struct vm_translation_map *init_map;
+
     vm_page_init();
-    vm_translation_map_init();
+    init_map = vm_translation_map_init();
     boot_init_heap(KERNEL_HEAP_BASE + PAGE_STRUCTURES_SIZE);
+    boot_init_thread(init_map);
+    kprintf("Kernel started\n");
 
     register_interrupt_handler(1, timer_tick);
     start_timer();
-    kprintf("Kernel started\n");
 
 #if 0
     test_slab();
@@ -166,8 +169,6 @@ void kernel_main(void)
 #endif
 
     exec_program("program.elf");
-
-    boot_init_thread(new_translation_map());
 
     for (;;)
         reschedule();
