@@ -138,7 +138,7 @@ module control_registers
                 // Save current flags
                 interrupt_en_saved[0][wb_trap_thread_idx] <= cr_interrupt_en[wb_trap_thread_idx];
                 mmu_en_saved[0][wb_trap_thread_idx] <= cr_mmu_en[wb_trap_thread_idx];
-                supervisor_en_saved[0][wb_trap_thread_idx] <= cr_supervisor_en[ix_thread_idx];
+                supervisor_en_saved[0][wb_trap_thread_idx] <= cr_supervisor_en[wb_trap_thread_idx];
                 subcycle_saved[0][wb_trap_thread_idx] <= wb_trap_subcycle;
 
                 // Dispatch fault
@@ -146,7 +146,7 @@ module control_registers
                 eret_address[0][wb_trap_thread_idx] <= wb_trap_pc;
                 trap_access_addr[0][wb_trap_thread_idx] <= wb_trap_access_vaddr;
                 cr_interrupt_en[wb_trap_thread_idx] <= 0;    // Disable interrupts for this thread
-                cr_supervisor_en[ix_thread_idx] <= 1; // Enter supervisor mode on fault
+                cr_supervisor_en[wb_trap_thread_idx] <= 1; // Enter supervisor mode on fault
                 if (wb_trap_reason == TR_ITLB_MISS || wb_trap_reason == TR_DTLB_MISS)
                     cr_mmu_en[wb_trap_thread_idx] <= 0;
             end
