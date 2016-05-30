@@ -85,12 +85,12 @@ save_frame:             getcr s0, CR_SCRATCHPAD0        // restore s0
                         store_32 fp, 112(sp)
                         store_32 ra, 120(sp)
 
-                        getcr s0, 2
-                        store_32 s0, 124(sp)   # Saved PC
-                        getcr s0, 8
-                        store_32 s0, 128(sp)   # Saved flags
-                        getcr s0, 13
-                        store_32 s0, 132(sp)   # Subcycle
+                        getcr s0, CR_TRAP_PC
+                        store_32 s0, 124(sp)
+                        getcr s0, CR_SAVED_FLAGS
+                        store_32 s0, 128(sp)
+                        getcr s0, CR_SUBCYCLE
+                        store_32 s0, 132(sp)
 
                         move s0, sp
 
@@ -126,12 +126,12 @@ save_frame:             getcr s0, CR_SCRATCHPAD0        // restore s0
                         load_32 fp, 112(sp)
                         load_32 ra, 120(sp)
 
-                        load_32 s0, 124(sp)     // Saved PC
-                        setcr s0, 2
-                        load_32 s0, 128(sp)     // Saved flags
-                        setcr s0, 8
-                        load_32 s0, 132(sp)     // Subcycle
-                        setcr s0, 13
+                        load_32 s0, 124(sp)
+                        setcr s0, CR_TRAP_PC
+                        load_32 s0, 128(sp)
+                        setcr s0, CR_SAVED_FLAGS
+                        load_32 s0, 132(sp)
+                        setcr s0, CR_SUBCYCLE
                         load_32 s0, 0(sp)
                         load_32 sp, 116(sp)     // Restore old stack pointer
                         eret

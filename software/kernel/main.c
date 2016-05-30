@@ -26,69 +26,6 @@
 #include "vm_translation_map.h"
 #include "vm_address_space.h"
 
-void test_trap(void)
-{
-    *((unsigned int*) 1) = 1; // Cause fault
-}
-
-void thread_funcb()
-{
-    // Assign homonym page to ensure it is separate from the one
-    // in the other address space
-    *((volatile unsigned int*) 0x10000000) = 0x12345678;
-    while (1)
-    {
-        kprintf("funcb: %08x %08x\n",  *((volatile unsigned int*) 0x10000000),
-                *((volatile unsigned int*) 0x20000000));  // Should be 0x12345678 <counter>
-        reschedule();
-    }
-}
-
-void test_context_switch(void)
-{
-    struct vm_address_space *space1;
-    struct vm_address_space *space2;
-    unsigned int page1;
-    unsigned int page2;
-    unsigned int page3;
-
-    page1 = vm_allocate_page();
-    page2 = vm_allocate_page();
-    page3 = vm_allocate_page();
-    space1 = create_address_space();
-    space2 = create_address_space();
-
-    // Cache homonym: same virtual address points to two different
-    // physical addresses
-    vm_map_page(space1->translation_map, 0x10000000, page1 | PAGE_PRESENT | PAGE_WRITABLE);
-    vm_map_page(space2->translation_map, 0x10000000, page3 | PAGE_PRESENT | PAGE_WRITABLE);
-
-    // Cache synonym: different virtual addresses point to the same
-    // physical address
-    vm_map_page(space1->translation_map, 0x10001000, page2 | PAGE_PRESENT | PAGE_WRITABLE);
-    vm_map_page(space2->translation_map, 0x20000000, page2 | PAGE_PRESENT | PAGE_WRITABLE);
-
-    // Create a new thread
-    spawn_kernel_thread(space2, thread_funcb, 0);
-
-    // Need to context switch to set up new address space
-    reschedule();
-
-    // In map1. Assign homonym address to ensure it doesn't show up in
-    // other address space.
-    *((volatile unsigned int*) 0x10000000) = 0xdeadbeef;
-
-    while (1)
-    {
-        kprintf("funca: %08x\n",  *((volatile unsigned int*) 0x10000000));
-        // Should be 0xdeadbeef
-
-        // Increment counter in synonym page
-        (*((volatile unsigned int*) 0x10001000))++;
-        reschedule();
-    }
-}
-
 #define TIMER_INTERVAL 500000
 
 void start_timer(void)
@@ -98,9 +35,12 @@ void start_timer(void)
 
 void timer_tick(void)
 {
-    kprintf(".");
     REGISTERS[REG_TIMER_INTERVAL] = TIMER_INTERVAL;
+
+    // XXX will this prevent the interrupt in some cases from being
+    // delivered to other processes?
     ack_interrupt(1);
+    reschedule();
 }
 
 void kernel_main(void)
@@ -113,35 +53,31 @@ void kernel_main(void)
     vm_address_space_init(init_map);
     boot_init_thread();
     kprintf("Kernel started\n");
-    dump_area_map(&get_kernel_address_space()->area_map);
-
-#if 0
-    test_area_map();
-#endif
 
     register_interrupt_handler(1, timer_tick);
     start_timer();
 
-#if 0
-    test_slab();
-    *((volatile unsigned int*) 0xffff0100) = 0xffffffff;
-    test_trap();
-#endif
+    // Start other threads
+    REGISTERS[REG_THREAD_RESUME] = 0xffffffff;
 
-#if 0
-    test_context_switch();
-#endif
+    // Enable timer interrupt on other hardware threads
+    REGISTERS[REG_INT_MASK0 + 1] = 2;
+    REGISTERS[REG_INT_MASK0 + 2] = 2;
+    REGISTERS[REG_INT_MASK0 + 3] = 2;
 
     exec_program("program.elf");
 
+    // Idle task
     for (;;)
         reschedule();
 }
 
 void thread_n_main(void)
 {
-    kprintf("%c", __builtin_nyuzi_read_control_reg(0) + 'A');
+    boot_init_thread();
+
+    // Idle task
     for (;;)
-        ;
+        reschedule();
 }
 

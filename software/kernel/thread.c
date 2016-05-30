@@ -37,6 +37,7 @@ extern void context_switch(unsigned int **old_stack_ptr_ptr,
 struct thread *cur_thread[MAX_CORES];
 static struct thread_queue ready_q;
 static spinlock_t thread_q_lock;
+static int next_thread_id;
 
 // Used by fault handler when it performs stack switch
 unsigned int trap_kernel_stack[MAX_CORES];
@@ -98,6 +99,7 @@ struct thread *spawn_thread_internal(struct vm_address_space *space,
     ((unsigned int*) th->current_stack)[0x814 / 4] = (unsigned int) kernel_start;
     th->start_func = real_start;
     th->param = param;
+    th->id = __sync_fetch_and_add(&next_thread_id, 1);
     if (!kernel_only)
     {
         th->user_stack_area = create_area(space, 0xffffffff, 0x10000,

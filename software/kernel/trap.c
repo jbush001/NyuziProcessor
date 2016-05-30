@@ -17,6 +17,7 @@
 #include "asm.h"
 #include "libc.h"
 #include "registers.h"
+#include "thread.h"
 #include "trap.h"
 #include "vm_address_space.h"
 
@@ -27,7 +28,9 @@ struct interrupt_frame
     unsigned int subcycle;
 };
 
-void dumpTrap(const struct interrupt_frame*);
+void dump_trap(const struct interrupt_frame*);
+extern int handle_syscall(int arg0, int arg1, int arg2, int arg3, int arg4,
+    int arg5);
 
 static const char *TRAP_NAMES[] =
 {
@@ -48,22 +51,6 @@ static const char *TRAP_NAMES[] =
 
 static interrupt_handler_t handlers[NUM_INTERRUPTS];
 static unsigned int enabled_interrupts;
-
-void handle_syscall(struct interrupt_frame *frame)
-{
-    switch (frame->gpr[0])
-    {
-        case 7: // Print something
-            // !!! Needs to do copy from user. Unsafe.
-            kprintf("%s", frame->gpr[1]);
-            break;
-
-        default:
-            kprintf("Unknown syscall %d\n", frame->gpr[0]);
-    }
-
-    frame->gpr[31] += 4;    // Next instruction
-}
 
 void register_interrupt_handler(int interrupt, interrupt_handler_t handler)
 {
@@ -100,20 +87,9 @@ void handle_trap(struct interrupt_frame *frame)
 {
     unsigned int address;
     int trapId = __builtin_nyuzi_read_control_reg(CR_TRAP_REASON);
+
     switch (trapId)
     {
-        case TR_SYSCALL:
-            // Enable interrupts
-            __builtin_nyuzi_write_control_reg(CR_FLAGS,
-                __builtin_nyuzi_read_control_reg(CR_FLAGS) | FLAG_INTERRUPT_EN);
-
-            handle_syscall(frame);
-
-            // Disable interrupts
-            __builtin_nyuzi_write_control_reg(CR_FLAGS,
-                __builtin_nyuzi_read_control_reg(CR_FLAGS) & ~FLAG_INTERRUPT_EN);
-            break;
-
         case TR_PAGE_FAULT:
             // Enable interrupts
             address = __builtin_nyuzi_read_control_reg(CR_TRAP_ADDR);
@@ -123,8 +99,8 @@ void handle_trap(struct interrupt_frame *frame)
             if (!handle_page_fault(address))
             {
                 // XXX should kill process
-                kprintf("Invalid page fault\n");
-                dumpTrap(frame);
+                kprintf("Invalid page fault thread %d\n", current_thread()->id);
+                dump_trap(frame);
                 panic("stopping");
             }
 
@@ -133,17 +109,39 @@ void handle_trap(struct interrupt_frame *frame)
                 __builtin_nyuzi_read_control_reg(CR_FLAGS) & ~FLAG_INTERRUPT_EN);
             break;
 
+        case TR_SYSCALL:
+            // Enable interrupts
+            address = __builtin_nyuzi_read_control_reg(CR_TRAP_ADDR);
+            __builtin_nyuzi_write_control_reg(CR_FLAGS,
+                __builtin_nyuzi_read_control_reg(CR_FLAGS) | FLAG_INTERRUPT_EN);
+
+            frame->gpr[0] = handle_syscall(
+                frame->gpr[0],
+                frame->gpr[1],
+                frame->gpr[2],
+                frame->gpr[3],
+                frame->gpr[4],
+                frame->gpr[5]);
+
+            frame->gpr[31] += 4;    // Next instruction
+
+            // Disable interrupts
+            __builtin_nyuzi_write_control_reg(CR_FLAGS,
+                __builtin_nyuzi_read_control_reg(CR_FLAGS) & ~FLAG_INTERRUPT_EN);
+            break;
+            break;
+
         case TR_INTERRUPT:
             handle_interrupt(frame);
             break;
 
         default:
-            dumpTrap(frame);
+            dump_trap(frame);
             panic("Unhandled trap");
     }
 }
 
-void dumpTrap(const struct interrupt_frame *frame)
+void dump_trap(const struct interrupt_frame *frame)
 {
     int reg;
     int trapId = __builtin_nyuzi_read_control_reg(CR_TRAP_REASON);
@@ -177,10 +175,10 @@ void dumpTrap(const struct interrupt_frame *frame)
         kprintf("I");
 
     if (frame->flags & 2)
-        kprintf("S");
+        kprintf("M");
 
     if (frame->flags & 4)
-        kprintf("M");
+        kprintf("S");
 
     kprintf(" (%02x)\n\n", frame->flags);
     panic("HALT");

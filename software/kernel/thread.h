@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "asm.h"
 #include "vm_address_space.h"
 #include "vm_translation_map.h"
 
@@ -23,6 +24,7 @@
 
 struct thread
 {
+    int id;
     unsigned int *kernel_stack_ptr;
     unsigned int *current_stack;
     struct vm_area *kernel_stack_area;
@@ -52,3 +54,9 @@ void enqueue_thread(struct thread_queue*, struct thread*);
 struct thread *dequeue_thread(struct thread_queue*);
 void reschedule(void);
 void exec_program(const char *filename);
+
+inline int current_hw_thread()
+{
+    return __builtin_nyuzi_read_control_reg(CR_CURRENT_THREAD);
+}
+
