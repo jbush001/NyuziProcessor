@@ -64,3 +64,49 @@ void slab_free(struct slab_allocator *sa, void *object)
     release_spinlock(&sa->lock);
     restore_interrupts(old_flags);
 }
+
+#ifdef TEST_SLAB
+
+struct linked_node
+{
+    struct linked_node *next;
+    int value;
+    int stuff[16];
+};
+
+MAKE_SLAB(node_slab, struct linked_node);
+
+void test_slab(void)
+{
+    int i;
+    int j;
+    struct linked_node *node;
+    struct linked_node *list = 0;
+
+    for (j = 1; j < 128; j++)
+    {
+        // Allocate a bunch of nodes
+        for (i = 0; i < j; i++)
+        {
+            node = (struct linked_node*) slab_alloc(&node_slab);
+            node->next = list;
+            list = node;
+            node->value = j;
+        }
+
+        // Free all but one
+        for (i = 0; i < j - 1; i++)
+        {
+            node = list;
+            list = list->next;
+            slab_free(&node_slab, node);
+        }
+    }
+
+    for (node = list; node; node = node->next)
+        kprintf("%d ", node->value);
+
+    kprintf("\n");
+}
+
+#endif

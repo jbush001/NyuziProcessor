@@ -21,50 +21,9 @@
 #include "slab.h"
 #include "thread.h"
 #include "trap.h"
+#include "vm_area_map.h"
 #include "vm_page.h"
 #include "vm_translation_map.h"
-
-struct linked_node
-{
-    struct linked_node *next;
-    int value;
-    int stuff[16];
-};
-
-MAKE_SLAB(node_slab, struct linked_node);
-
-void test_slab(void)
-{
-    int i;
-    int j;
-    struct linked_node *node;
-    struct linked_node *list = 0;
-
-    for (j = 1; j < 128; j++)
-    {
-        // Allocate a bunch of nodes
-        for (i = 0; i < j; i++)
-        {
-            node = (struct linked_node*) slab_alloc(&node_slab);
-            node->next = list;
-            list = node;
-            node->value = j;
-        }
-
-        // Free all but one
-        for (i = 0; i < j - 1; i++)
-        {
-            node = list;
-            list = list->next;
-            slab_free(&node_slab, node);
-        }
-    }
-
-    for (node = list; node; node = node->next)
-        kprintf("%d ", node->value);
-
-    kprintf("\n");
-}
 
 void test_trap(void)
 {
@@ -155,6 +114,8 @@ void kernel_main(void)
     boot_init_heap((char*) KERNEL_HEAP_BASE + PAGE_STRUCTURES_SIZE);
     boot_init_thread(init_map);
     kprintf("Kernel started\n");
+
+    test_area_map();
 
     register_interrupt_handler(1, timer_tick);
     start_timer();

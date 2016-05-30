@@ -35,7 +35,8 @@ SRCS=main.c \
 	fs.c \
 	sdmmc.c \
 	vm_translation_map.c \
-	vm_page.c
+	vm_page.c \
+	vm_area_map.c
 
 OBJS=$(SRCS_TO_OBJS)
 DEPS=$(SRCS_TO_DEPS)
