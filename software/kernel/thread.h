@@ -16,17 +16,19 @@
 
 #pragma once
 
+#include "vm_address_space.h"
 #include "vm_translation_map.h"
 
 #define MAX_CORES 32
 
 struct thread
 {
-    unsigned int *kernel_stack;
+    unsigned int *kernel_stack_ptr;
     unsigned int *current_stack;
-    struct vm_translation_map *map;
-    void *stack_base;
-    void (*start_function)(void *param);
+    struct vm_area *kernel_stack_area;
+    struct vm_area *user_stack_area;
+    struct vm_address_space *space;
+    void (*start_func)(void *param);
     void *param;
     struct thread *queue_next;
 };
@@ -37,10 +39,13 @@ struct thread_queue
     struct thread *tail;
 };
 
-void boot_init_thread(struct vm_translation_map *map);
+void boot_init_thread(void);
 
 struct thread *current_thread(void);
-struct thread *spawn_thread(struct vm_translation_map *map,
+struct thread *spawn_user_thread(struct vm_address_space *space,
+                            void (*start_function)(void *param),
+                            void *param);
+struct thread *spawn_kernel_thread(struct vm_address_space *space,
                             void (*start_function)(void *param),
                             void *param);
 void enqueue_thread(struct thread_queue*, struct thread*);

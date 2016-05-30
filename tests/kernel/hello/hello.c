@@ -21,10 +21,16 @@ void printstr(const char *str)
     __syscall(7, str, 0, 0, 0, 0);
 }
 
+int global_count;
+
 int main()
 {
-    printstr("Hello ");
-    printstr("World\n");
+    for (global_count = 0; global_count < 20; global_count++)
+    {
+        printstr("Hello ");
+        printstr("World\n");
+    }
+
     return 0;
 }
 

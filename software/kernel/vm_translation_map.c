@@ -105,8 +105,9 @@ void boot_setup_page_tables(void)
                       | PAGE_SUPERVISOR | PAGE_GLOBAL);
 
     // Map initial kernel stacks for all threads
-    boot_vm_map_pages(&bps, INITIAL_KERNEL_STACKS, boot_vm_allocate_pages(&bps, 0x10), 0x10000,
-                      PAGE_PRESENT | PAGE_WRITABLE | PAGE_SUPERVISOR | PAGE_GLOBAL);
+    boot_vm_map_pages(&bps, INITIAL_KERNEL_STACKS, boot_vm_allocate_pages(&bps, 0x10),
+                      KERNEL_STACK_SIZE * 4, PAGE_PRESENT | PAGE_WRITABLE
+                      | PAGE_SUPERVISOR | PAGE_GLOBAL);
 
     // Map device registers
     boot_vm_map_pages(&bps, DEVICE_REG_BASE, DEVICE_REG_BASE, PAGE_SIZE, PAGE_PRESENT
@@ -135,7 +136,7 @@ struct vm_translation_map *vm_translation_map_init(void)
     return &kernel_map;
 }
 
-struct vm_translation_map *new_translation_map(void)
+struct vm_translation_map *create_translation_map(void)
 {
     struct vm_translation_map *map;
     int old_flags;

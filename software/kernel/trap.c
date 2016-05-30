@@ -18,6 +18,7 @@
 #include "libc.h"
 #include "registers.h"
 #include "trap.h"
+#include "vm_address_space.h"
 
 struct interrupt_frame
 {
@@ -40,7 +41,7 @@ static const char *TRAP_NAMES[] =
     "Illegal Write",
     "Data Supervisor Fault",
     "Instruction Supervisor Fault",
-    "Priveleged Operation",
+    "Privileged Operation",
     "Syscall",
     "Non Executable Page"
 };
@@ -97,6 +98,7 @@ void ack_interrupt(int interrupt)
 
 void handle_trap(struct interrupt_frame *frame)
 {
+    unsigned int address;
     int trapId = __builtin_nyuzi_read_control_reg(CR_TRAP_REASON);
     switch (trapId)
     {
@@ -106,6 +108,25 @@ void handle_trap(struct interrupt_frame *frame)
                 __builtin_nyuzi_read_control_reg(CR_FLAGS) | FLAG_INTERRUPT_EN);
 
             handle_syscall(frame);
+
+            // Disable interrupts
+            __builtin_nyuzi_write_control_reg(CR_FLAGS,
+                __builtin_nyuzi_read_control_reg(CR_FLAGS) & ~FLAG_INTERRUPT_EN);
+            break;
+
+        case TR_PAGE_FAULT:
+            // Enable interrupts
+            address = __builtin_nyuzi_read_control_reg(CR_TRAP_ADDR);
+            __builtin_nyuzi_write_control_reg(CR_FLAGS,
+                __builtin_nyuzi_read_control_reg(CR_FLAGS) | FLAG_INTERRUPT_EN);
+
+            if (!handle_page_fault(address))
+            {
+                // XXX should kill process
+                kprintf("Invalid page fault\n");
+                dumpTrap(frame);
+                panic("stopping");
+            }
 
             // Disable interrupts
             __builtin_nyuzi_write_control_reg(CR_FLAGS,

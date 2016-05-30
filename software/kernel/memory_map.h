@@ -22,5 +22,7 @@ extern unsigned int _end;
 #define KERNEL_END PAGE_ALIGN(((unsigned int) &_end) + 0xfff)
 #define PHYS_MEM_ALIAS 0xc1000000
 #define KERNEL_HEAP_BASE 0xd0000000
+#define KERNEL_HEAP_SIZE 0x01000000
 #define INITIAL_KERNEL_STACKS 0xfffe0000
+#define KERNEL_STACK_SIZE 0x4000
 #define DEVICE_REG_BASE 0xffff0000

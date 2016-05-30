@@ -24,6 +24,7 @@
 #include "vm_area_map.h"
 #include "vm_page.h"
 #include "vm_translation_map.h"
+#include "vm_address_space.h"
 
 void test_trap(void)
 {
@@ -45,8 +46,8 @@ void thread_funcb()
 
 void test_context_switch(void)
 {
-    struct vm_translation_map *map1;
-    struct vm_translation_map *map2;
+    struct vm_address_space *space1;
+    struct vm_address_space *space2;
     unsigned int page1;
     unsigned int page2;
     unsigned int page3;
@@ -54,24 +55,21 @@ void test_context_switch(void)
     page1 = vm_allocate_page();
     page2 = vm_allocate_page();
     page3 = vm_allocate_page();
-    map1 = new_translation_map();
-    map2 = new_translation_map();
+    space1 = create_address_space();
+    space2 = create_address_space();
 
     // Cache homonym: same virtual address points to two different
     // physical addresses
-    vm_map_page(map1, 0x10000000, page1 | PAGE_PRESENT | PAGE_WRITABLE);
-    vm_map_page(map2, 0x10000000, page3 | PAGE_PRESENT | PAGE_WRITABLE);
+    vm_map_page(space1->translation_map, 0x10000000, page1 | PAGE_PRESENT | PAGE_WRITABLE);
+    vm_map_page(space2->translation_map, 0x10000000, page3 | PAGE_PRESENT | PAGE_WRITABLE);
 
     // Cache synonym: different virtual addresses point to the same
     // physical address
-    vm_map_page(map1, 0x10001000, page2 | PAGE_PRESENT | PAGE_WRITABLE);
-    vm_map_page(map2, 0x20000000, page2 | PAGE_PRESENT | PAGE_WRITABLE);
-
-    // Current thread
-    boot_init_thread(map1);
+    vm_map_page(space1->translation_map, 0x10001000, page2 | PAGE_PRESENT | PAGE_WRITABLE);
+    vm_map_page(space2->translation_map, 0x20000000, page2 | PAGE_PRESENT | PAGE_WRITABLE);
 
     // Create a new thread
-    spawn_thread(map2, thread_funcb, 0);
+    spawn_kernel_thread(space2, thread_funcb, 0);
 
     // Need to context switch to set up new address space
     reschedule();
@@ -112,10 +110,14 @@ void kernel_main(void)
     vm_page_init();
     init_map = vm_translation_map_init();
     boot_init_heap((char*) KERNEL_HEAP_BASE + PAGE_STRUCTURES_SIZE);
-    boot_init_thread(init_map);
+    vm_address_space_init(init_map);
+    boot_init_thread();
     kprintf("Kernel started\n");
+    dump_area_map(&get_kernel_address_space()->area_map);
 
+#if 0
     test_area_map();
+#endif
 
     register_interrupt_handler(1, timer_tick);
     start_timer();

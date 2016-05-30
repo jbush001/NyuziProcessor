@@ -167,7 +167,7 @@ static struct vm_area *insert_fixed(struct vm_area_map *map, unsigned int addres
         if (hole_start > address)
             return 0;   // Address range is covered
 
-        if (hole_start <= address && next_area->low_address >= address + size)
+        if (hole_start <= address && next_area->low_address >= address + size - 1)
             return insert_area(map, address, size, next_area->prev, next_area);
 
         hole_start = next_area->high_address;
@@ -189,7 +189,8 @@ void init_area_map(struct vm_area_map *map, unsigned int low_address,
 }
 
 struct vm_area *create_vm_area(struct vm_area_map *map, unsigned int address,
-    unsigned int size, enum placement place, const char *name)
+    unsigned int size, enum placement place, const char *name,
+    unsigned int flags)
 {
     struct vm_area *area = 0;
 
@@ -216,6 +217,8 @@ struct vm_area *create_vm_area(struct vm_area_map *map, unsigned int address,
     {
         strncpy(area->name, name, 32);
         area->name[31] = '\0';
+        area->flags = flags;
+        area->file = 0;
     }
 
     return area;
@@ -256,11 +259,11 @@ void dump_area_map(const struct vm_area_map *map)
 {
     struct vm_area *area;
 
-    kprintf("Name                 Start    End\n");
+    kprintf("Name                 Start    End      Flags\n");
     for (area = map->list_head; area; area = area->next)
     {
-        kprintf("%20s %08x %08x\n", area->name, area->low_address,
-            area->high_address);
+        kprintf("%20s %08x %08x %08x\n", area->name, area->low_address,
+            area->high_address, area->flags);
     }
 }
 
@@ -343,20 +346,22 @@ void test_area_map(void)
     // and 2. Insert an area between them by searching. Then create another
     // area and ensure it is below all the others
     //
-    areas[0] = create_vm_area(&map, 0x30000000, 0x1000, PLACE_SEARCH_UP, "area0");
-    areas[1] = create_vm_area(&map, 0x30002000, 0x1000, PLACE_EXACT, "area1");
-    areas[2] = create_vm_area(&map, 0x30000000, 0x1000, PLACE_SEARCH_UP, "area2");
-    areas[3] = create_vm_area(&map, 0x30000000, 0x1000, PLACE_SEARCH_UP, "area3");
+    areas[0] = create_vm_area(&map, 0x30000000, 0x1000, PLACE_SEARCH_UP, "area0", 0);
+    areas[1] = create_vm_area(&map, 0x30002000, 0x1000, PLACE_EXACT, "area1", 0);
+    areas[2] = create_vm_area(&map, 0x30000000, 0x1000, PLACE_SEARCH_UP, "area2", 0);
+    areas[3] = create_vm_area(&map, 0x30000000, 0x1000, PLACE_SEARCH_UP, "area3", 0);
+    sanity_check_map(&map);
     assert(areas[2]->low_address == 0x30001000);
     assert(areas[2]->high_address == 0x30001fff);
     assert(areas[3]->low_address == 0x30003000);
     assert(areas[3]->high_address == 0x30003fff);
 
     // Same as above, except searching down.
-    areas[4] = create_vm_area(&map, 0x30000000, 0x1000, PLACE_SEARCH_DOWN, "area4");
-    areas[5] = create_vm_area(&map, 0x2fffd000, 0x1000, PLACE_EXACT, "area5");
-    areas[6] = create_vm_area(&map, 0x30000000, 0x1000, PLACE_SEARCH_DOWN, "area6");
-    areas[7] = create_vm_area(&map, 0x30000000, 0x1000, PLACE_SEARCH_DOWN, "area7");
+    areas[4] = create_vm_area(&map, 0x30000000, 0x1000, PLACE_SEARCH_DOWN, "area4", 0);
+    areas[5] = create_vm_area(&map, 0x2fffd000, 0x1000, PLACE_EXACT, "area5", 0);
+    areas[6] = create_vm_area(&map, 0x30000000, 0x1000, PLACE_SEARCH_DOWN, "area6", 0);
+    areas[7] = create_vm_area(&map, 0x30000000, 0x1000, PLACE_SEARCH_DOWN, "area7", 0);
+    sanity_check_map(&map);
     assert(areas[6]->low_address = 0x2fffe000);
     assert(areas[6]->high_address == 0x2fffefff);
     assert(areas[7]->low_address == 0x2fffc000);
@@ -392,7 +397,7 @@ void test_area_map(void)
         else
             address = 0x10000000 * (rand() % 8);
 
-        areas[slot] = create_vm_area(&map, address, size, place, "area");
+        areas[slot] = create_vm_area(&map, address, size, place, "area", 0);
         assert(areas[slot] != 0);
         assert(areas[slot]->high_address - areas[slot]->low_address + 1 == size);
         if (place == PLACE_SEARCH_DOWN)
@@ -427,47 +432,50 @@ void test_area_map(void)
 
     // Test if the starting search address is outside map limits, which will
     // make it impossible to find an area.
-    assert(create_vm_area(&map, TEST_MAP_LOW, 0x1000, PLACE_SEARCH_DOWN, "")
+    assert(create_vm_area(&map, TEST_MAP_LOW, 0x1000, PLACE_SEARCH_DOWN, "", 0)
         == 0);
-    assert(create_vm_area(&map, TEST_MAP_HIGH, 0x1000, PLACE_SEARCH_UP, "")
+    assert(create_vm_area(&map, TEST_MAP_HIGH, 0x1000, PLACE_SEARCH_UP, "", 0)
         == 0);
 
     // Try to create an area when there is already in area taking available
     // space
-    areas[0] = create_vm_area(&map, 0xffffffff, 0x8000, PLACE_SEARCH_DOWN, "");
+    areas[0] = create_vm_area(&map, 0xffffffff, 0x8000, PLACE_SEARCH_DOWN, "", 0);
     assert(create_vm_area(&map, areas[0]->low_address - 0x1000, 0x2000,
-        PLACE_SEARCH_UP, "") == 0);
+        PLACE_SEARCH_UP, "", 0) == 0);
     destroy_vm_area(&map, areas[0]);
 
-    areas[0] = create_vm_area(&map, 0, 0x8000, PLACE_SEARCH_UP, "");
+    areas[0] = create_vm_area(&map, 0, 0x8000, PLACE_SEARCH_UP, "", 0);
     assert(create_vm_area(&map, areas[0]->high_address + 0x1000, 0x2000,
-        PLACE_SEARCH_DOWN, "") == 0);
+        PLACE_SEARCH_DOWN, "", 0) == 0);
     destroy_vm_area(&map, areas[0]);
 
     // Create a few fixed areas for next tests
-    areas[0] = create_vm_area(&map, 0x30000000, 0x2000, PLACE_EXACT, "");
+    areas[0] = create_vm_area(&map, 0x30000000, 0x2000, PLACE_EXACT, "", 0);
     assert(areas[0] != 0);
     assert(areas[0]->low_address == 0x30000000);
     assert(areas[0]->high_address == 0x30001fff);
 
-    areas[1] = create_vm_area(&map, 0x30003000, 0x2000, PLACE_EXACT, "");
+    areas[1] = create_vm_area(&map, 0x30003000, 0x2000, PLACE_EXACT, "", 0);
     assert(areas[1] != 0);
     assert(areas[1]->low_address == 0x30003000);
     assert(areas[1]->high_address == 0x30004fff);
+    sanity_check_map(&map);
 
     // Try to create fixed areas that collide with existing ones. Ensure
     // this fails (hit all overlap cases)
-    assert(create_vm_area(&map, 0x30000000 - 0x1000, 0x2000, PLACE_EXACT, "") == 0);
-    assert(create_vm_area(&map, 0x30001000, 0x2000, PLACE_EXACT, "") == 0);
-    assert(create_vm_area(&map, 0x30002000, 0x2000, PLACE_EXACT, "") == 0);
-    assert(create_vm_area(&map, 0x30004000, 0x2000, PLACE_EXACT, "") == 0);
+    assert(create_vm_area(&map, 0x30000000 - 0x1000, 0x2000, PLACE_EXACT, "", 0) == 0);
+    assert(create_vm_area(&map, 0x30001000, 0x2000, PLACE_EXACT, "", 0) == 0);
+    assert(create_vm_area(&map, 0x30002000, 0x2000, PLACE_EXACT, "", 0) == 0);
+    assert(create_vm_area(&map, 0x30004000, 0x2000, PLACE_EXACT, "", 0) == 0);
+    sanity_check_map(&map);
 
     // now create an area in the middle of the two that exactly fits.
     // Ensure this is successful.
-    areas[2] = create_vm_area(&map, 0x30002000, 0x1000, PLACE_EXACT, "");
+    areas[2] = create_vm_area(&map, 0x30002000, 0x1000, PLACE_EXACT, "", 0);
     assert(areas[2] != 0);
     assert(areas[2]->low_address == 0x30002000);
     assert(areas[2]->high_address == 0x30002fff);
+    sanity_check_map(&map);
 
     for (i = 0; i < 3; i++)
     {
@@ -480,10 +488,14 @@ void test_area_map(void)
     //
     assert(lookup_area(&map, 0xfff) == 0);  // Empty map
 
-    areas[0] = create_vm_area(&map, 0x30001000, 0x2000, PLACE_EXACT, "");
-    areas[1] = create_vm_area(&map, 0x30003000, 0x2000, PLACE_EXACT, "");
-    areas[2] = create_vm_area(&map, 0x30006000, 0x1000, PLACE_EXACT, "");
-    areas[3] = create_vm_area(&map, 0x30009000, 0x5000, PLACE_EXACT, "");
+    areas[1] = create_vm_area(&map, 0x30003000, 0x2000, PLACE_EXACT, "", 0);
+    sanity_check_map(&map);
+    areas[0] = create_vm_area(&map, 0x30001000, 0x2000, PLACE_EXACT, "", 0);
+    sanity_check_map(&map);
+    areas[2] = create_vm_area(&map, 0x30006000, 0x1000, PLACE_EXACT, "", 0);
+    sanity_check_map(&map);
+    areas[3] = create_vm_area(&map, 0x30009000, 0x5000, PLACE_EXACT, "", 0);
+    sanity_check_map(&map);
 
     assert(lookup_area(&map, 0x30000fff) == 0);
     assert(lookup_area(&map, 0x30001000) == areas[0]);
@@ -506,6 +518,14 @@ void test_area_map(void)
         destroy_vm_area(&map, areas[i]);
         areas[i] = 0;
     }
+
+    // Check for overflow in the high_address
+    init_area_map(&map, 0xc0000000, 0xffffffff);
+    create_vm_area(&map, 0xc0000000, 0xd0000000, PLACE_EXACT, "kernel", 0);
+    create_vm_area(&map, 0xffff0000, 0x10000, PLACE_EXACT, "device registers",
+        0);
+
+    sanity_check_map(&map);
 
     kprintf("all tests passed\n");
 }

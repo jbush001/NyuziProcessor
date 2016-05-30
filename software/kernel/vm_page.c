@@ -53,9 +53,13 @@ unsigned int vm_allocate_page(void)
     old_flags = disable_interrupts();
     acquire_spinlock(&page_lock);
     page = free_page_list;
-    free_page_list = page->next;
+    if (page)
+        free_page_list = page->next;
+
     release_spinlock(&page_lock);
     restore_interrupts(old_flags);
+    if (page == 0)
+        panic("Out of memory!");
 
     pa = (page - pages) * PAGE_SIZE;
 

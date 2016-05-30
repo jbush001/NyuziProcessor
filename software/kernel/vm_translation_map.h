@@ -37,6 +37,6 @@ struct vm_translation_map
 };
 
 struct vm_translation_map *vm_translation_map_init(void);
-struct vm_translation_map *new_translation_map(void);
+struct vm_translation_map *create_translation_map(void);
 void destroy_translation_map(struct vm_translation_map*);
 void vm_map_page(struct vm_translation_map *map, unsigned int va, unsigned int pa);

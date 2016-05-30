@@ -32,12 +32,12 @@ int load_program(const char *filename,
 {
     struct Elf32_Ehdr image_header;
     struct Elf32_Phdr segments[MAX_SEGMENTS];
-    struct vm_translation_map *map = current_thread()->map;
+    struct vm_address_space *space = current_thread()->space;
 
     struct file_handle *file = open_file(filename);
     if (file == 0)
     {
-        kprintf("Couldn't find kernel file\n");
+        kprintf("Couldn't find executable file\n");
         return -1;
     }
 
@@ -71,7 +71,7 @@ int load_program(const char *filename,
         const struct Elf32_Phdr *segment = &segments[segment_index];
         int num_pages;
         int page_index;
-        unsigned int pte_flags;
+        unsigned int area_flags;
 
         if ((segment->p_type & PT_LOAD) == 0)
             continue;	// Skip non-loadable segment
@@ -93,37 +93,20 @@ int load_program(const char *filename,
             return -1;
         }
 
-        pte_flags = PAGE_PRESENT;
-#if 0
+        area_flags = 0;
         if (segment->p_flags & PF_W)
-            pte_flags |= PAGE_WRITABLE;
-#else
-        // XXX needs to be writable to read data into it. fixme.
-        pte_flags |= PAGE_WRITABLE;
-#endif
+            area_flags |= AREA_WRITABLE;
 
         if (segment->p_flags & PF_X)
-            pte_flags |= PAGE_EXECUTABLE;
+            area_flags |= AREA_EXECUTABLE;
 
         // Map region
-        num_pages = (segment->p_memsz + PAGE_SIZE - 1) / PAGE_SIZE;
-        for (page_index = 0; page_index < num_pages; page_index++)
+        if (create_area(space, segment->p_vaddr, segment->p_memsz,
+            PLACE_EXACT, "program segment", area_flags, file) == 0)
         {
-            vm_map_page(map, segment->p_vaddr + page_index * PAGE_SIZE,
-                        vm_allocate_page() | pte_flags);
-        }
-
-        // Load initialized portion
-        if (read_file(file, segment->p_offset, (void*) segment->p_vaddr,
-                      segment->p_filesz) < 0)
-        {
-            kprintf("Error loading initialized portion\n");
+            // XXX cleanup
             return -1;
         }
-
-        // Zero uninitialized portion of segment (BSS)
-        memset((char*) segment->p_vaddr + segment->p_filesz, 0,
-               segment->p_memsz - segment->p_filesz);
     }
 
     *out_entry = image_header.e_entry;
