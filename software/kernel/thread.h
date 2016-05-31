@@ -20,7 +20,7 @@
 #include "vm_address_space.h"
 #include "vm_translation_map.h"
 
-#define MAX_CORES 32
+#define MAX_HW_THREADS 32
 
 struct process
 {
@@ -43,6 +43,12 @@ struct thread
     struct thread *queue_next;
     struct thread *process_next;
     struct thread **process_prev;
+    enum {
+        THREAD_READY,
+        THREAD_RUNNING,
+        THREAD_BLOCKED,
+        THREAD_DEAD
+    } state;
 };
 
 struct thread_queue
@@ -52,6 +58,9 @@ struct thread_queue
 };
 
 void bool_init_kernel_process(void);
+
+// This must be called by each hardware thread to create a software
+// thread context for itself.
 void boot_init_thread(void);
 
 struct thread *current_thread(void);
@@ -64,8 +73,9 @@ void enqueue_thread(struct thread_queue*, struct thread*);
 struct thread *dequeue_thread(struct thread_queue*);
 void reschedule(void);
 struct process *exec_program(const char *filename);
+void __attribute__((noreturn)) thread_exit(int retcode);
 
-inline int current_hw_thread()
+inline int current_hw_thread(void)
 {
     return __builtin_nyuzi_read_control_reg(CR_CURRENT_THREAD);
 }

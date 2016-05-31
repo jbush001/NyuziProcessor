@@ -34,7 +34,7 @@ extern void context_switch(unsigned int **old_stack_ptr_ptr,
                            unsigned int new_page_dir_addr,
                            unsigned int new_address_space_id);
 
-struct thread *cur_thread[MAX_CORES];
+struct thread *cur_thread[MAX_HW_THREADS];
 static struct thread_queue ready_q;
 static spinlock_t thread_q_lock;
 static int next_thread_id;
@@ -42,7 +42,7 @@ static int next_process_id;
 static struct process *kernel_proc;
 
 // Used by fault handler when it performs stack switch
-unsigned int trap_kernel_stack[MAX_CORES];
+unsigned int trap_kernel_stack[MAX_HW_THREADS];
 
 MAKE_SLAB(thread_slab, struct thread);
 MAKE_SLAB(process_slab, struct process);
@@ -73,6 +73,7 @@ void boot_init_thread(void)
     struct thread *th;
 
     th = slab_alloc(&thread_slab);
+    th->state = THREAD_RUNNING;
     th->proc = kernel_proc;
     cur_thread[current_hw_thread()] = th;
     old_flags = disable_interrupts();
@@ -103,9 +104,12 @@ void enqueue_thread(struct thread_queue *q, struct thread *th)
 struct thread *dequeue_thread(struct thread_queue *q)
 {
     struct thread *th = q->head;
-    q->head = th->queue_next;
-    if (q->head == 0)
-        q->tail = 0;
+    if (th)
+    {
+        q->head = th->queue_next;
+        if (q->head == 0)
+            q->tail = 0;
+    }
 
     return th;
 }
@@ -130,6 +134,7 @@ struct thread *spawn_thread_internal(struct process *proc,
     th->start_func = real_start;
     th->param = param;
     th->id = __sync_fetch_and_add(&next_thread_id, 1);
+    th->state = THREAD_READY;
     if (!kernel_only)
     {
         th->user_stack_area = create_area(proc->space, 0xffffffff, 0x10000,
@@ -183,6 +188,8 @@ static void kernel_thread_kernel_start(void)
     restore_interrupts(FLAG_INTERRUPT_EN | FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
     th->start_func(th->param);
+
+    thread_exit(1);
 }
 
 struct thread *spawn_kernel_thread(void (*start_function)(void *param),
@@ -195,7 +202,7 @@ struct thread *spawn_kernel_thread(void (*start_function)(void *param),
 
 void reschedule(void)
 {
-    int hwthread = __builtin_nyuzi_read_control_reg(CR_CURRENT_THREAD);
+    int hwthread = current_hw_thread();
     struct thread *old_thread;
     struct thread *next_thread;
     int old_flags;
@@ -205,8 +212,20 @@ void reschedule(void)
     old_flags = disable_interrupts();
     acquire_spinlock(&thread_q_lock);
     old_thread = cur_thread[hwthread];
-    enqueue_thread(&ready_q, old_thread);
+    assert(old_thread->state != THREAD_READY);
+
+    if (old_thread->state == THREAD_RUNNING)
+    {
+        // If this thread is not running (blocked or dead),
+        // don't add back to ready queue.
+        old_thread->state = THREAD_READY;
+        enqueue_thread(&ready_q, old_thread);
+    }
+
     next_thread = dequeue_thread(&ready_q);
+    assert(next_thread);
+    next_thread->state = THREAD_RUNNING;
+
     if (old_thread != next_thread)
     {
         cur_thread[hwthread] = next_thread;
@@ -255,3 +274,15 @@ struct process *exec_program(const char *filename)
     spawn_thread_internal(proc, new_process_start, entry_point, 0, 0);
     return proc;
 }
+
+void thread_exit(int retcode)
+{
+    (void) retcode;
+
+    // XXX need to reap this threads resources
+    current_thread()->state = THREAD_DEAD;
+    reschedule();
+
+    panic("dead thread was rescheduled!");
+}
+
