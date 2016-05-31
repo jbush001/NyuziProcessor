@@ -102,7 +102,7 @@ int load_program(const char *filename,
 
         // Map region
         if (create_area(space, segment->p_vaddr, segment->p_memsz,
-            PLACE_EXACT, "program segment", area_flags, file) == 0)
+                        PLACE_EXACT, "program segment", area_flags, file) == 0)
         {
             // XXX cleanup
             return -1;

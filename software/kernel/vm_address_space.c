@@ -27,7 +27,7 @@ static struct vm_address_space kernel_address_space;
 MAKE_SLAB(address_space_slab, struct vm_address_space);
 
 static int soft_fault(struct vm_address_space *space,
-    const struct vm_area *area, unsigned int address);
+                      const struct vm_area *area, unsigned int address);
 
 struct vm_address_space *get_kernel_address_space(void)
 {
@@ -42,18 +42,18 @@ void vm_address_space_init(struct vm_translation_map *translation_map)
     kernel_address_space.translation_map = translation_map;
     init_area_map(amap, KERNEL_BASE, 0xffffffff);
     create_vm_area(amap, KERNEL_BASE, KERNEL_END - KERNEL_BASE, PLACE_EXACT,
-        "kernel", AREA_WIRED | AREA_WRITABLE);
+                   "kernel", AREA_WIRED | AREA_WRITABLE);
     create_vm_area(amap, PHYS_MEM_ALIAS, MEMORY_SIZE, PLACE_EXACT,
-        "memory alias", AREA_WIRED | AREA_WRITABLE);
+                   "memory alias", AREA_WIRED | AREA_WRITABLE);
     create_vm_area(amap, KERNEL_HEAP_BASE, KERNEL_HEAP_SIZE, PLACE_EXACT,
-        "kernel_heap", AREA_WIRED | AREA_WRITABLE);
+                   "kernel_heap", AREA_WIRED | AREA_WRITABLE);
     create_vm_area(amap, DEVICE_REG_BASE, 0x10000, PLACE_EXACT, "device registers",
-        AREA_WIRED | AREA_WRITABLE);
+                   AREA_WIRED | AREA_WRITABLE);
     for (i = 0; i < 4; i++)
     {
         create_vm_area(amap, INITIAL_KERNEL_STACKS + i * KERNEL_STACK_SIZE,
-            KERNEL_STACK_SIZE, PLACE_EXACT, "kernel stack",
-            AREA_WIRED | AREA_WRITABLE);
+                       KERNEL_STACK_SIZE, PLACE_EXACT, "kernel stack",
+                       AREA_WIRED | AREA_WRITABLE);
     }
 }
 
@@ -70,8 +70,8 @@ struct vm_address_space *create_address_space(void)
 }
 
 struct vm_area *create_area(struct vm_address_space *space, unsigned int address,
-    unsigned int size, enum placement place, const char *name, unsigned int flags,
-    struct file_handle *file)
+                            unsigned int size, enum placement place, const char *name, unsigned int flags,
+                            struct file_handle *file)
 {
     struct vm_area *area;
     unsigned int fault_addr;
@@ -91,7 +91,7 @@ struct vm_area *create_area(struct vm_address_space *space, unsigned int address
     if (flags & AREA_WIRED)
     {
         for (fault_addr = area->low_address; fault_addr < area->high_address;
-            fault_addr += PAGE_SIZE)
+                fault_addr += PAGE_SIZE)
         {
             if (!soft_fault(space, area, fault_addr))
                 panic("create_area: soft fault failed");
@@ -138,7 +138,7 @@ error1:
 
 // Always called with lock held
 static int soft_fault(struct vm_address_space *space, const struct vm_area *area,
-    unsigned int address)
+                      unsigned int address)
 {
     int got;
     unsigned int pa;
@@ -156,7 +156,7 @@ static int soft_fault(struct vm_address_space *space, const struct vm_area *area
     if (area->file)
     {
         got = read_file(area->file, PAGE_ALIGN(address) - area->low_address,
-            (void*) PA_TO_VA(pa), PAGE_SIZE);
+                        (void*) PA_TO_VA(pa), PAGE_SIZE);
         if (got < 0)
         {
             kprintf("failed to read from file\n");

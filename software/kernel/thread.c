@@ -111,18 +111,18 @@ struct thread *dequeue_thread(struct thread_queue *q)
 }
 
 struct thread *spawn_thread_internal(struct process *proc,
-                            void (*kernel_start)(),
-                            void (*real_start)(void *param),
-                            void *param,
-                            int kernel_only)
+                                     void (*kernel_start)(),
+                                     void (*real_start)(void *param),
+                                     void *param,
+                                     int kernel_only)
 {
     int old_flags;
     struct thread *th;
 
     th = slab_alloc(&thread_slab);
     th->kernel_stack_area = create_area(get_kernel_address_space(),
-        0xffffffff, KERNEL_STACK_SIZE, PLACE_SEARCH_DOWN, "kernel stack",
-        AREA_WIRED | AREA_WRITABLE, 0);
+                                        0xffffffff, KERNEL_STACK_SIZE, PLACE_SEARCH_DOWN, "kernel stack",
+                                        AREA_WIRED | AREA_WRITABLE, 0);
     th->kernel_stack_ptr = (unsigned int*) (th->kernel_stack_area->high_address + 1);
     th->current_stack = (unsigned int*) ((unsigned char*) th->kernel_stack_ptr - 0x840);
     th->proc = proc;
@@ -133,7 +133,7 @@ struct thread *spawn_thread_internal(struct process *proc,
     if (!kernel_only)
     {
         th->user_stack_area = create_area(proc->space, 0xffffffff, 0x10000,
-            PLACE_SEARCH_DOWN, "user stack", AREA_WRITABLE, 0);
+                                          PLACE_SEARCH_DOWN, "user stack", AREA_WRITABLE, 0);
     }
 
     old_flags = disable_interrupts();
@@ -162,15 +162,15 @@ static void user_thread_kernel_start(void)
     restore_interrupts(FLAG_INTERRUPT_EN | FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
     jump_to_user_mode(0, 0, (unsigned int) th->start_func,
-        th->user_stack_area->high_address + 1);
+                      th->user_stack_area->high_address + 1);
 }
 
 struct thread *spawn_user_thread(struct process *proc,
-                            void (*start_function)(void *param),
-                            void *param)
+                                 void (*start_function)(void *param),
+                                 void *param)
 {
     return spawn_thread_internal(proc, user_thread_kernel_start,
-        start_function, 0, 0);
+                                 start_function, 0, 0);
 }
 
 static void kernel_thread_kernel_start(void)
@@ -186,11 +186,11 @@ static void kernel_thread_kernel_start(void)
 }
 
 struct thread *spawn_kernel_thread(void (*start_function)(void *param),
-                            void *param)
+                                   void *param)
 {
     return spawn_thread_internal(kernel_proc,
-        kernel_thread_kernel_start,
-        start_function, param, 1);
+                                 kernel_thread_kernel_start,
+                                 start_function, param, 1);
 }
 
 void reschedule(void)

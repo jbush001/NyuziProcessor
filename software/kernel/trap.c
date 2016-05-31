@@ -30,7 +30,7 @@ struct interrupt_frame
 
 void dump_trap(const struct interrupt_frame*);
 extern int handle_syscall(int arg0, int arg1, int arg2, int arg3, int arg4,
-    int arg5);
+                          int arg5);
 
 static const char *TRAP_NAMES[] =
 {
@@ -94,7 +94,7 @@ void handle_trap(struct interrupt_frame *frame)
             // Enable interrupts
             address = __builtin_nyuzi_read_control_reg(CR_TRAP_ADDR);
             __builtin_nyuzi_write_control_reg(CR_FLAGS,
-                __builtin_nyuzi_read_control_reg(CR_FLAGS) | FLAG_INTERRUPT_EN);
+                                              __builtin_nyuzi_read_control_reg(CR_FLAGS) | FLAG_INTERRUPT_EN);
 
             if (!handle_page_fault(address))
             {
@@ -106,28 +106,28 @@ void handle_trap(struct interrupt_frame *frame)
 
             // Disable interrupts
             __builtin_nyuzi_write_control_reg(CR_FLAGS,
-                __builtin_nyuzi_read_control_reg(CR_FLAGS) & ~FLAG_INTERRUPT_EN);
+                                              __builtin_nyuzi_read_control_reg(CR_FLAGS) & ~FLAG_INTERRUPT_EN);
             break;
 
         case TR_SYSCALL:
             // Enable interrupts
             address = __builtin_nyuzi_read_control_reg(CR_TRAP_ADDR);
             __builtin_nyuzi_write_control_reg(CR_FLAGS,
-                __builtin_nyuzi_read_control_reg(CR_FLAGS) | FLAG_INTERRUPT_EN);
+                                              __builtin_nyuzi_read_control_reg(CR_FLAGS) | FLAG_INTERRUPT_EN);
 
             frame->gpr[0] = handle_syscall(
-                frame->gpr[0],
-                frame->gpr[1],
-                frame->gpr[2],
-                frame->gpr[3],
-                frame->gpr[4],
-                frame->gpr[5]);
+                                frame->gpr[0],
+                                frame->gpr[1],
+                                frame->gpr[2],
+                                frame->gpr[3],
+                                frame->gpr[4],
+                                frame->gpr[5]);
 
             frame->gpr[31] += 4;    // Next instruction
 
             // Disable interrupts
             __builtin_nyuzi_write_control_reg(CR_FLAGS,
-                __builtin_nyuzi_read_control_reg(CR_FLAGS) & ~FLAG_INTERRUPT_EN);
+                                              __builtin_nyuzi_read_control_reg(CR_FLAGS) & ~FLAG_INTERRUPT_EN);
             break;
             break;
 

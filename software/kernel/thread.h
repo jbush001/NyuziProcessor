@@ -56,10 +56,10 @@ void boot_init_thread(void);
 
 struct thread *current_thread(void);
 struct thread *spawn_user_thread(struct process *proc,
-                            void (*start_function)(void *param),
-                            void *param);
+                                 void (*start_function)(void *param),
+                                 void *param);
 struct thread *spawn_kernel_thread(void (*start_function)(void *param),
-                            void *param);
+                                   void *param);
 void enqueue_thread(struct thread_queue*, struct thread*);
 struct thread *dequeue_thread(struct thread_queue*);
 void reschedule(void);

@@ -25,8 +25,8 @@ MAKE_SLAB(area_slab, struct vm_area);
 
 // Allocate an area and insert it into the list
 static struct vm_area *insert_area(struct vm_area_map *map,
-    unsigned int low_address, unsigned int size, struct vm_area *prev,
-    struct vm_area *next)
+                                   unsigned int low_address, unsigned int size, struct vm_area *prev,
+                                   struct vm_area *next)
 {
     struct vm_area *new_area = slab_alloc(&area_slab);
     new_area->low_address = low_address;
@@ -47,7 +47,7 @@ static struct vm_area *insert_area(struct vm_area_map *map,
 }
 
 static struct vm_area *search_up(struct vm_area_map *map, unsigned int address,
-    unsigned int size)
+                                 unsigned int size)
 {
     struct vm_area *new_area;
     struct vm_area *next_area = map->list_head;
@@ -96,7 +96,7 @@ static struct vm_area *search_up(struct vm_area_map *map, unsigned int address,
 }
 
 static struct vm_area *search_down(struct vm_area_map *map, unsigned int address,
-    unsigned int size)
+                                   unsigned int size)
 {
     struct vm_area *new_area;
     struct vm_area *prev_area = map->list_tail;
@@ -132,7 +132,7 @@ static struct vm_area *search_down(struct vm_area_map *map, unsigned int address
         if (hole_end - prev_area->high_address + 1 >= size)
         {
             return insert_area(map, hole_end - size + 1, size, prev_area,
-                prev_area->next);
+                               prev_area->next);
         }
 
         hole_end = prev_area->low_address - 1;
@@ -148,7 +148,7 @@ static struct vm_area *search_down(struct vm_area_map *map, unsigned int address
 }
 
 static struct vm_area *insert_fixed(struct vm_area_map *map, unsigned int address,
-    unsigned int size)
+                                    unsigned int size)
 {
     struct vm_area *next_area;
     struct vm_area *new_area;
@@ -182,15 +182,15 @@ static struct vm_area *insert_fixed(struct vm_area_map *map, unsigned int addres
 }
 
 void init_area_map(struct vm_area_map *map, unsigned int low_address,
-    unsigned int high_address)
+                   unsigned int high_address)
 {
     map->low_address = PAGE_ALIGN(low_address);
     map->high_address = PAGE_ALIGN(high_address + 1) - 1;
 }
 
 struct vm_area *create_vm_area(struct vm_area_map *map, unsigned int address,
-    unsigned int size, enum placement place, const char *name,
-    unsigned int flags)
+                               unsigned int size, enum placement place, const char *name,
+                               unsigned int flags)
 {
     struct vm_area *area = 0;
 
@@ -263,7 +263,7 @@ void dump_area_map(const struct vm_area_map *map)
     for (area = map->list_head; area; area = area->next)
     {
         kprintf("%20s %08x %08x %08x\n", area->name, area->low_address,
-            area->high_address, area->flags);
+                area->high_address, area->flags);
     }
 }
 
@@ -433,20 +433,20 @@ void test_area_map(void)
     // Test if the starting search address is outside map limits, which will
     // make it impossible to find an area.
     assert(create_vm_area(&map, TEST_MAP_LOW, 0x1000, PLACE_SEARCH_DOWN, "", 0)
-        == 0);
+           == 0);
     assert(create_vm_area(&map, TEST_MAP_HIGH, 0x1000, PLACE_SEARCH_UP, "", 0)
-        == 0);
+           == 0);
 
     // Try to create an area when there is already in area taking available
     // space
     areas[0] = create_vm_area(&map, 0xffffffff, 0x8000, PLACE_SEARCH_DOWN, "", 0);
     assert(create_vm_area(&map, areas[0]->low_address - 0x1000, 0x2000,
-        PLACE_SEARCH_UP, "", 0) == 0);
+                          PLACE_SEARCH_UP, "", 0) == 0);
     destroy_vm_area(&map, areas[0]);
 
     areas[0] = create_vm_area(&map, 0, 0x8000, PLACE_SEARCH_UP, "", 0);
     assert(create_vm_area(&map, areas[0]->high_address + 0x1000, 0x2000,
-        PLACE_SEARCH_DOWN, "", 0) == 0);
+                          PLACE_SEARCH_DOWN, "", 0) == 0);
     destroy_vm_area(&map, areas[0]);
 
     // Create a few fixed areas for next tests
@@ -523,7 +523,7 @@ void test_area_map(void)
     init_area_map(&map, 0xc0000000, 0xffffffff);
     create_vm_area(&map, 0xc0000000, 0xd0000000, PLACE_EXACT, "kernel", 0);
     create_vm_area(&map, 0xffff0000, 0x10000, PLACE_EXACT, "device registers",
-        0);
+                   0);
 
     sanity_check_map(&map);
 
