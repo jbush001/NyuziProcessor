@@ -16,5 +16,11 @@
 
 #pragma once
 
-int load_program(const char *filename,
+#include "thread.h"
+
+//
+// Load an ELF program
+//
+
+int load_program(struct process *proc, const char *filename,
                  unsigned int *out_entry);

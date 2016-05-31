@@ -24,10 +24,8 @@
 
 #define MAX_SEGMENTS 4
 
-// Load program into memory. Because this accesses virtual addresses,
-// the thread that executes this must be running the address space of
-// the new process.
-int load_program(const char *filename,
+int load_program(struct process *proc,
+                 const char *filename,
                  unsigned int *out_entry)
 {
     struct Elf32_Ehdr image_header;
@@ -101,7 +99,7 @@ int load_program(const char *filename,
             area_flags |= AREA_EXECUTABLE;
 
         // Map region
-        if (create_area(space, segment->p_vaddr, segment->p_memsz,
+        if (create_area(proc->space, segment->p_vaddr, segment->p_memsz,
                         PLACE_EXACT, "program segment", area_flags, file) == 0)
         {
             // XXX cleanup

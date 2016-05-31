@@ -16,6 +16,10 @@
 
 #pragma once
 
+//
+// Translation map abstracts hardware address translation
+//
+
 #include "memory_map.h"
 #include "spinlock.h"
 

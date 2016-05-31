@@ -221,41 +221,37 @@ void reschedule(void)
     restore_interrupts(old_flags);
 }
 
-static void loader_thread_start(void)
+static void new_process_start(void)
 {
-    unsigned int entry_point;
-    int page_index;
     struct thread *th = current_thread();
-    struct vm_address_space *space = th->proc->space;
 
     // We will branch here from within reschedule, after context_switch.
     // Need to release the lock acquired at the beginning of that function.
     release_spinlock(&thread_q_lock);
     restore_interrupts(FLAG_INTERRUPT_EN | FLAG_MMU_EN | FLAG_SUPERVISOR_EN);
 
-    kprintf("Loading %s\n", (char*) th->param);
-    if (load_program((char*) th->param, &entry_point) < 0)
-    {
-        kprintf("load_program failed\n");
-        return;
-    }
-
-    dump_area_map(&th->proc->space->area_map);
-    kprintf("About to jump to user start 0x%08x\n", entry_point);
-    jump_to_user_mode(0, 0, entry_point, th->user_stack_area->high_address + 1);
+    // XXX could pass argument information here.
+    jump_to_user_mode(0, 0, (unsigned int) th->start_func,
+                      th->user_stack_area->high_address + 1);
 }
 
 struct process *exec_program(const char *filename)
 {
-    struct process *proc = slab_alloc(&process_slab);
+    struct process *proc;
+    unsigned int entry_point;
+
+    proc = slab_alloc(&process_slab);
     proc->id = __sync_fetch_and_add(&next_process_id, 1);
     proc->space = create_address_space();
     proc->lock = 0;
-    char *filename_copy = kmalloc(PAGE_SIZE);   // XXX hack
-    strncpy(filename_copy, filename, PAGE_SIZE);
-    filename_copy[PAGE_SIZE - 1] = '\0';
 
+    if (load_program(proc, filename, &entry_point) < 0)
+    {
+        // XXX cleanup
+        kprintf("load_program failed\n");
+        return 0;
+    }
 
-    spawn_thread_internal(proc, loader_thread_start, 0, filename_copy, 0);
+    spawn_thread_internal(proc, new_process_start, entry_point, 0, 0);
     return proc;
 }

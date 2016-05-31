@@ -37,7 +37,7 @@ int handle_syscall(int arg0, int arg1, int arg2, int arg3, int arg4,
         case 3: // Exec
         {
             // XXX unsafe user copy. Need copy_from_user
-            struct process *proc = exec_program(arg1);
+            struct process *proc = exec_program((const char*) arg1);
             if (proc)
                 return proc->id;
             else
