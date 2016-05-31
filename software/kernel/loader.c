@@ -32,7 +32,7 @@ int load_program(const char *filename,
 {
     struct Elf32_Ehdr image_header;
     struct Elf32_Phdr segments[MAX_SEGMENTS];
-    struct vm_address_space *space = current_thread()->space;
+    struct vm_address_space *space = current_thread()->proc->space;
 
     struct file_handle *file = open_file(filename);
     if (file == 0)

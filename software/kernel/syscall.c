@@ -28,11 +28,21 @@ int handle_syscall(int arg0, int arg1, int arg2, int arg3, int arg4,
                 return 0;
 
             case 1:
-                spawn_user_thread(current_thread()->space, arg1, arg2);
+                spawn_user_thread(current_thread()->proc, arg1, arg2);
                 return 0;
 
             case 2: // Get thread ID
                 return current_thread()->id;
+
+            case 3: // Exec
+            {
+                // XXX unsafe user copy. Need copy_from_user
+                struct process *proc = exec_program(arg1);
+                if (proc)
+                    return proc->id;
+                else
+                    return -1;
+            }
 
             default:
                 panic("Unknown syscall %d\n", arg0);

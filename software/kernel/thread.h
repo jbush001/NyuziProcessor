@@ -22,6 +22,14 @@
 
 #define MAX_CORES 32
 
+struct process
+{
+    int id;
+    spinlock_t lock;
+    struct thread *thread_list;
+    struct vm_address_space *space;
+};
+
 struct thread
 {
     int id;
@@ -29,10 +37,12 @@ struct thread
     unsigned int *current_stack;
     struct vm_area *kernel_stack_area;
     struct vm_area *user_stack_area;
-    struct vm_address_space *space;
+    struct process *proc;
     void (*start_func)(void *param);
     void *param;
     struct thread *queue_next;
+    struct thread *process_next;
+    struct thread **process_prev;
 };
 
 struct thread_queue
@@ -41,19 +51,19 @@ struct thread_queue
     struct thread *tail;
 };
 
+void bool_init_kernel_process(void);
 void boot_init_thread(void);
 
 struct thread *current_thread(void);
-struct thread *spawn_user_thread(struct vm_address_space *space,
+struct thread *spawn_user_thread(struct process *proc,
                             void (*start_function)(void *param),
                             void *param);
-struct thread *spawn_kernel_thread(struct vm_address_space *space,
-                            void (*start_function)(void *param),
+struct thread *spawn_kernel_thread(void (*start_function)(void *param),
                             void *param);
 void enqueue_thread(struct thread_queue*, struct thread*);
 struct thread *dequeue_thread(struct thread_queue*);
 void reschedule(void);
-void exec_program(const char *filename);
+struct process *exec_program(const char *filename);
 
 inline int current_hw_thread()
 {

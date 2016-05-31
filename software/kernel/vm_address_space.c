@@ -107,7 +107,7 @@ error1:
 
 int handle_page_fault(unsigned int address)
 {
-    struct vm_address_space *space = current_thread()->space;
+    struct vm_address_space *space = current_thread()->proc->space;
     const struct vm_area *area;
     int old_flags;
     int result = 0;
@@ -118,7 +118,7 @@ int handle_page_fault(unsigned int address)
     if (address >= KERNEL_BASE)
         space = &kernel_address_space;
     else
-        space = current_thread()->space;
+        space = current_thread()->proc->space;
 
     area = lookup_area(&space->area_map, address);
     if (area == 0)

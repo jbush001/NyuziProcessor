@@ -38,23 +38,53 @@ struct thread *cur_thread[MAX_CORES];
 static struct thread_queue ready_q;
 static spinlock_t thread_q_lock;
 static int next_thread_id;
+static int next_process_id;
+static struct process *kernel_proc;
 
 // Used by fault handler when it performs stack switch
 unsigned int trap_kernel_stack[MAX_CORES];
 
 MAKE_SLAB(thread_slab, struct thread);
+MAKE_SLAB(process_slab, struct process);
 
-void boot_init_thread()
+void add_thread_to_process(struct process *proc, struct thread *th)
 {
-    struct thread *th = slab_alloc(&thread_slab);
-    th->space = get_kernel_address_space();
-    cur_thread[__builtin_nyuzi_read_control_reg(CR_CURRENT_THREAD)] = th;
+    th->process_next = proc->thread_list;
+    proc->thread_list = th;
+    if (th->process_next)
+        th->process_next->process_prev = &th->process_next;
+
+    th->process_prev = &proc->thread_list;
+}
+
+void bool_init_kernel_process(void)
+{
+    kernel_proc = slab_alloc(&process_slab);
+    kernel_proc->thread_list = 0;
+    kernel_proc->space = get_kernel_address_space();
+    kernel_proc->id = 0;
+    kernel_proc->lock = 0;
+    next_process_id = 1;
+}
+
+void boot_init_thread(void)
+{
+    int old_flags;
+    struct thread *th;
+
+    th = slab_alloc(&thread_slab);
+    th->proc = kernel_proc;
+    cur_thread[current_hw_thread()] = th;
+    old_flags = disable_interrupts();
+    acquire_spinlock(&kernel_proc->lock);
+    add_thread_to_process(kernel_proc, th);
+    release_spinlock(&kernel_proc->lock);
+    restore_interrupts(old_flags);
 }
 
 struct thread *current_thread(void)
 {
-    int core = __builtin_nyuzi_read_control_reg(CR_CURRENT_THREAD);
-    return cur_thread[core];
+    return cur_thread[current_hw_thread()];
 }
 
 void enqueue_thread(struct thread_queue *q, struct thread *th)
@@ -80,7 +110,7 @@ struct thread *dequeue_thread(struct thread_queue *q)
     return th;
 }
 
-struct thread *spawn_thread_internal(struct vm_address_space *space,
+struct thread *spawn_thread_internal(struct process *proc,
                             void (*kernel_start)(),
                             void (*real_start)(void *param),
                             void *param,
@@ -91,22 +121,29 @@ struct thread *spawn_thread_internal(struct vm_address_space *space,
 
     th = slab_alloc(&thread_slab);
     th->kernel_stack_area = create_area(get_kernel_address_space(),
-        0xffffffff, 0x2000, PLACE_SEARCH_DOWN, "kernel stack", AREA_WIRED
-        | AREA_WRITABLE, 0);
+        0xffffffff, KERNEL_STACK_SIZE, PLACE_SEARCH_DOWN, "kernel stack",
+        AREA_WIRED | AREA_WRITABLE, 0);
     th->kernel_stack_ptr = (unsigned int*) (th->kernel_stack_area->high_address + 1);
     th->current_stack = (unsigned int*) ((unsigned char*) th->kernel_stack_ptr - 0x840);
-    th->space = space;
+    th->proc = proc;
     ((unsigned int*) th->current_stack)[0x814 / 4] = (unsigned int) kernel_start;
     th->start_func = real_start;
     th->param = param;
     th->id = __sync_fetch_and_add(&next_thread_id, 1);
     if (!kernel_only)
     {
-        th->user_stack_area = create_area(space, 0xffffffff, 0x10000,
+        th->user_stack_area = create_area(proc->space, 0xffffffff, 0x10000,
             PLACE_SEARCH_DOWN, "user stack", AREA_WRITABLE, 0);
     }
 
     old_flags = disable_interrupts();
+
+    // Stick in process list
+    acquire_spinlock(&proc->lock);
+    add_thread_to_process(proc, th);
+    release_spinlock(&proc->lock);
+
+    // Put into ready queue
     acquire_spinlock(&thread_q_lock);
     enqueue_thread(&ready_q, th);
     release_spinlock(&thread_q_lock);
@@ -128,11 +165,11 @@ static void user_thread_kernel_start(void)
         th->user_stack_area->high_address + 1);
 }
 
-struct thread *spawn_user_thread(struct vm_address_space *space,
+struct thread *spawn_user_thread(struct process *proc,
                             void (*start_function)(void *param),
                             void *param)
 {
-    return spawn_thread_internal(space, user_thread_kernel_start,
+    return spawn_thread_internal(proc, user_thread_kernel_start,
         start_function, 0, 0);
 }
 
@@ -148,11 +185,11 @@ static void kernel_thread_kernel_start(void)
     th->start_func(th->param);
 }
 
-struct thread *spawn_kernel_thread(struct vm_address_space *space,
-                            void (*start_function)(void *param),
+struct thread *spawn_kernel_thread(void (*start_function)(void *param),
                             void *param)
 {
-    return spawn_thread_internal(space, kernel_thread_kernel_start,
+    return spawn_thread_internal(kernel_proc,
+        kernel_thread_kernel_start,
         start_function, param, 1);
 }
 
@@ -176,20 +213,20 @@ void reschedule(void)
         trap_kernel_stack[hwthread] = (unsigned int) next_thread->kernel_stack_ptr;
         context_switch(&old_thread->current_stack,
                        next_thread->current_stack,
-                       next_thread->space->translation_map->page_dir,
-                       next_thread->space->translation_map->asid);
+                       next_thread->proc->space->translation_map->page_dir,
+                       next_thread->proc->space->translation_map->asid);
     }
 
     release_spinlock(&thread_q_lock);
     restore_interrupts(old_flags);
 }
 
-static void loader_thread_start()
+static void loader_thread_start(void)
 {
     unsigned int entry_point;
     int page_index;
     struct thread *th = current_thread();
-    struct vm_address_space *space = th->space;
+    struct vm_address_space *space = th->proc->space;
 
     // We will branch here from within reschedule, after context_switch.
     // Need to release the lock acquired at the beginning of that function.
@@ -203,17 +240,22 @@ static void loader_thread_start()
         return;
     }
 
-    dump_area_map(&th->space->area_map);
+    dump_area_map(&th->proc->space->area_map);
     kprintf("About to jump to user start 0x%08x\n", entry_point);
     jump_to_user_mode(0, 0, entry_point, th->user_stack_area->high_address + 1);
 }
 
-void exec_program(const char *filename)
+struct process *exec_program(const char *filename)
 {
-    struct vm_address_space *space = create_address_space();
+    struct process *proc = slab_alloc(&process_slab);
+    proc->id = __sync_fetch_and_add(&next_process_id, 1);
+    proc->space = create_address_space();
+    proc->lock = 0;
     char *filename_copy = kmalloc(PAGE_SIZE);   // XXX hack
     strncpy(filename_copy, filename, PAGE_SIZE);
     filename_copy[PAGE_SIZE - 1] = '\0';
-    spawn_thread_internal(space, loader_thread_start, 0, filename_copy, 0);
-    reschedule();
+
+
+    spawn_thread_internal(proc, loader_thread_start, 0, filename_copy, 0);
+    return proc;
 }

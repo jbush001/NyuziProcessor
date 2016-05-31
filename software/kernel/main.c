@@ -51,6 +51,7 @@ void kernel_main(void)
     init_map = vm_translation_map_init();
     boot_init_heap((char*) KERNEL_HEAP_BASE + PAGE_STRUCTURES_SIZE);
     vm_address_space_init(init_map);
+    bool_init_kernel_process();
     boot_init_thread();
     kprintf("Kernel started\n");
 
