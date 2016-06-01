@@ -47,8 +47,8 @@ void vm_address_space_init(struct vm_translation_map *translation_map)
                    "memory alias", AREA_WIRED | AREA_WRITABLE);
     create_vm_area(amap, KERNEL_HEAP_BASE, KERNEL_HEAP_SIZE, PLACE_EXACT,
                    "kernel_heap", AREA_WIRED | AREA_WRITABLE);
-    create_vm_area(amap, DEVICE_REG_BASE, 0x10000, PLACE_EXACT, "device registers",
-                   AREA_WIRED | AREA_WRITABLE);
+    create_vm_area(amap, DEVICE_REG_BASE, 0x10000, PLACE_EXACT,
+                   "device registers", AREA_WIRED | AREA_WRITABLE);
     for (i = 0; i < 4; i++)
     {
         create_vm_area(amap, INITIAL_KERNEL_STACKS + i * KERNEL_STACK_SIZE,
@@ -70,7 +70,8 @@ struct vm_address_space *create_address_space(void)
 }
 
 struct vm_area *create_area(struct vm_address_space *space, unsigned int address,
-                            unsigned int size, enum placement place, const char *name, unsigned int flags,
+                            unsigned int size, enum placement place,
+                            const char *name, unsigned int flags,
                             struct file_handle *file)
 {
     struct vm_area *area;

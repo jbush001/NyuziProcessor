@@ -17,5 +17,6 @@
 #pragma once
 
 struct file_handle *open_file(const char *name);
-int read_file(struct file_handle *handle, unsigned int offset, void *out_buf, int length);
+int read_file(struct file_handle *handle, unsigned int offset, void *out_buf,
+              int length);
 

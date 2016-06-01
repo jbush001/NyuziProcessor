@@ -19,7 +19,8 @@
 #include "thread.h"
 
 //
-// Load an ELF program
+// Load an ELF program into the passed process, which should be newly
+// created.
 //
 
 int load_program(struct process *proc, const char *filename,

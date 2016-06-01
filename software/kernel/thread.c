@@ -125,7 +125,8 @@ struct thread *spawn_thread_internal(struct process *proc,
 
     th = slab_alloc(&thread_slab);
     th->kernel_stack_area = create_area(get_kernel_address_space(),
-                                        0xffffffff, KERNEL_STACK_SIZE, PLACE_SEARCH_DOWN, "kernel stack",
+                                        0xffffffff, KERNEL_STACK_SIZE,
+                                        PLACE_SEARCH_DOWN, "kernel stack",
                                         AREA_WIRED | AREA_WRITABLE, 0);
     th->kernel_stack_ptr = (unsigned int*) (th->kernel_stack_area->high_address + 1);
     th->current_stack = (unsigned int*) ((unsigned char*) th->kernel_stack_ptr - 0x840);
@@ -138,7 +139,8 @@ struct thread *spawn_thread_internal(struct process *proc,
     if (!kernel_only)
     {
         th->user_stack_area = create_area(proc->space, 0xffffffff, 0x10000,
-                                          PLACE_SEARCH_DOWN, "user stack", AREA_WRITABLE, 0);
+                                          PLACE_SEARCH_DOWN, "user stack",
+                                          AREA_WRITABLE, 0);
     }
 
     old_flags = disable_interrupts();

@@ -24,6 +24,6 @@ char* strncpy(char *dest, const char *src, unsigned int length);
 int memcmp(const void *_str1, const void *_str2, unsigned int len);
 int strcmp(const char *str1, const char *str2);
 
-#define assert(cond) if (!(cond)) { panic("ASSERT FAILED: %s:%d: %s\n", __FILE__, __LINE__, \
-		#cond); }
+#define assert(cond) if (!(cond)) { panic("ASSERT FAILED: %s:%d: %s\n", \
+    __FILE__, __LINE__, #cond); }
 

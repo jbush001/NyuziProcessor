@@ -16,5 +16,8 @@
 
 int main()
 {
+    // Access an invalid address (the lowest page in the address space is
+    // unmapped to catch null pointer references). This should kill this
+    // program.
     *((unsigned int*) 4) = 1;
 }

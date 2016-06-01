@@ -25,8 +25,8 @@ MAKE_SLAB(area_slab, struct vm_area);
 
 // Allocate an area and insert it into the list
 static struct vm_area *insert_area(struct vm_area_map *map,
-                                   unsigned int low_address, unsigned int size, struct vm_area *prev,
-                                   struct vm_area *next)
+                                   unsigned int low_address, unsigned int size,
+                                   struct vm_area *prev, struct vm_area *next)
 {
     struct vm_area *new_area = slab_alloc(&area_slab);
     new_area->low_address = low_address;
@@ -189,8 +189,8 @@ void init_area_map(struct vm_area_map *map, unsigned int low_address,
 }
 
 struct vm_area *create_vm_area(struct vm_area_map *map, unsigned int address,
-                               unsigned int size, enum placement place, const char *name,
-                               unsigned int flags)
+                               unsigned int size, enum placement place,
+                               const char *name, unsigned int flags)
 {
     struct vm_area *area = 0;
 

@@ -57,8 +57,8 @@ unsigned int boot_vm_allocate_pages(struct boot_page_setup *bps, int num_pages)
     return pa;
 }
 
-void boot_vm_map_pages(struct boot_page_setup *bps, unsigned int va, unsigned int pa,
-                       unsigned int length, unsigned int flags)
+void boot_vm_map_pages(struct boot_page_setup *bps, unsigned int va,
+                       unsigned int pa, unsigned int length, unsigned int flags)
 {
     int ppindex = va / PAGE_SIZE;
     int pgdindex = ppindex / 1024;
@@ -113,9 +113,10 @@ void boot_setup_page_tables(void)
     boot_vm_map_pages(&bps, DEVICE_REG_BASE, DEVICE_REG_BASE, PAGE_SIZE, PAGE_PRESENT
                       | PAGE_WRITABLE | PAGE_SUPERVISOR | PAGE_GLOBAL);
 
-    // Map preallocated space on the kernel heap for page structures. This needs to be
-    // done early in boot because vm_map_page may call into the page allocator to
-    // allocate page tables, and that won't work until the page tables are allocated.
+    // Map preallocated space on the kernel heap for page structures. This
+    // needs to be done early in boot because vm_map_page may call into the
+    // page allocator to allocate page tables, and that won't work until the
+    // page tables are allocated.
     boot_vm_map_pages(&bps, KERNEL_HEAP_BASE, boot_vm_allocate_pages(&bps,
                       PAGE_STRUCTURES_SIZE / PAGE_SIZE), PAGE_STRUCTURES_SIZE,
                       PAGE_PRESENT | PAGE_WRITABLE | PAGE_SUPERVISOR | PAGE_GLOBAL);

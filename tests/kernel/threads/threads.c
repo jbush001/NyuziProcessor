@@ -14,6 +14,14 @@
 // limitations under the License.
 //
 
+//
+// Spawn a bunch of user space threads. This exercises:
+// - Returning value from a syscall (getthid)
+// - Syscalls from multiple threads simultaneously.
+// - Spawning a new user space thread.
+// - Interrupts and preemptive task switching
+//
+
 extern int __syscall(int n, int arg0, int arg1, int arg2, int arg3, int arg4);
 
 void printstr(const char *str, int length)

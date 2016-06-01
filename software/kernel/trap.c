@@ -139,13 +139,9 @@ void handle_trap(struct interrupt_frame *frame)
             __builtin_nyuzi_write_control_reg(CR_FLAGS,
                  __builtin_nyuzi_read_control_reg(CR_FLAGS) | FLAG_INTERRUPT_EN);
 
-            frame->gpr[0] = handle_syscall(
-                                frame->gpr[0],
-                                frame->gpr[1],
-                                frame->gpr[2],
-                                frame->gpr[3],
-                                frame->gpr[4],
-                                frame->gpr[5]);
+            frame->gpr[0] = handle_syscall(frame->gpr[0], frame->gpr[1],
+                                           frame->gpr[2], frame->gpr[3],
+                                           frame->gpr[4], frame->gpr[5]);
 
             frame->gpr[31] += 4;    // Next instruction
 

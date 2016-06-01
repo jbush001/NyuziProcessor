@@ -73,8 +73,8 @@ trampoline:         load_32 s0, page_dir_addr   // Set up page directory
 // temp_stack is only used while calling boot_setup_page_tables. As soon as that returns,
 // this memory will not be touched again and can be used for other things.
 temp_stack:         .long 0x400000
-page_dir_addr:      .long 0
-boot_pages_used:    .long 0
+page_dir_addr:      .long 0     // Filled in during boot by VM code
+boot_pages_used:    .long 0     // Ditto
 kernel_main_addr:   .long kernel_main
 kernel_stacks:      .long 0xffff0000
 tlb_miss_addr:      .long tlb_miss_handler
