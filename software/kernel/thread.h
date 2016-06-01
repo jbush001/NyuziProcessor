@@ -77,6 +77,6 @@ void __attribute__((noreturn)) thread_exit(int retcode);
 
 inline int current_hw_thread(void)
 {
-    return __builtin_nyuzi_read_control_reg(CR_CURRENT_THREAD);
+    return __builtin_nyuzi_read_control_reg(CR_CURRENT_HW_THREAD);
 }
 

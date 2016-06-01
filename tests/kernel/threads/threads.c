@@ -16,21 +16,33 @@
 
 extern int __syscall(int n, int arg0, int arg1, int arg2, int arg3, int arg4);
 
-unsigned int strlen(const char *str)
+void printstr(const char *str, int length)
 {
-    unsigned int len = 0;
-    while (*str++)
-        len++;
-
-    return len;
+    __syscall(0, (int) str, length, 0, 0, 0);
 }
 
-void printstr(const char *str)
+int getthid()
 {
-    __syscall(0, (int) str, strlen(str), 0, 0, 0);
+    return __syscall(2, 0, 0, 0, 0, 0);
+}
+
+int spawn_thread(void (*func)(void*), void *param)
+{
+    return __syscall(1, (int) func, (int) param, 0, 0, 0);
+}
+
+void thread_start()
+{
+    int th = getthid();
+    char c = th + 'A';
+    for (;;)
+        printstr(&c, 1);
 }
 
 int main()
 {
-    printstr("Hello World\n");
+    int i;
+
+    for (i = 0; i < 10; i++)
+        spawn_thread(thread_start, 0);
 }

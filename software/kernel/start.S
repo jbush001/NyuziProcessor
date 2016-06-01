@@ -59,7 +59,7 @@ trampoline:         load_32 s0, page_dir_addr   // Set up page directory
                     setcr s0, CR_SAVED_FLAGS
 
                     // Set up new stack address in virtual memory
-                    getcr s0, CR_CURRENT_THREAD // get my thread ID
+                    getcr s0, CR_CURRENT_HW_THREAD // get my thread ID
                     shl s0, s0, 14              // 16k bytes per stack
                     load_32 sp, kernel_stacks
                     sub_i sp, sp, s0            // Compute stack address

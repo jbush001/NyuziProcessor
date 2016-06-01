@@ -52,6 +52,9 @@ static const char *TRAP_NAMES[] =
 static interrupt_handler_t handlers[NUM_INTERRUPTS];
 static unsigned int enabled_interrupts;
 
+// These are set by the user_copy routine.
+unsigned int fault_handler[MAX_HW_THREADS];
+
 void register_interrupt_handler(int interrupt, interrupt_handler_t handler)
 {
     // XXX lock
@@ -115,7 +118,15 @@ void handle_trap(struct interrupt_frame *frame)
                 __builtin_nyuzi_read_control_reg(CR_FLAGS) | FLAG_INTERRUPT_EN);
 
             if (!handle_page_fault(address))
-                bad_fault(frame);
+            {
+                if (fault_handler[current_hw_thread()] != 0)
+                {
+                    // Jump to user_copy fault handler
+                    frame->gpr[31] = fault_handler[current_hw_thread()];
+                }
+                else
+                    bad_fault(frame);
+            }
 
             // Disable interrupts
             __builtin_nyuzi_write_control_reg(CR_FLAGS,

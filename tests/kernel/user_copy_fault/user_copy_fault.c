@@ -16,21 +16,14 @@
 
 extern int __syscall(int n, int arg0, int arg1, int arg2, int arg3, int arg4);
 
-unsigned int strlen(const char *str)
+int printstr(const char *str, int length)
 {
-    unsigned int len = 0;
-    while (*str++)
-        len++;
-
-    return len;
-}
-
-void printstr(const char *str)
-{
-    __syscall(0, (int) str, strlen(str), 0, 0, 0);
+    return __syscall(0, (int) str, length, 0, 0, 0);
 }
 
 int main()
 {
-    printstr("Hello World\n");
+    if (printstr((char*) 0, 5) < 0)
+        printstr("FAULT\n", 6);
 }
+

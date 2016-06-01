@@ -17,14 +17,30 @@
 #include "thread.h"
 #include "libc.h"
 
+extern int user_copy(void *dest, const void *src, int count);
+
 int handle_syscall(int arg0, int arg1, int arg2, int arg3, int arg4,
                    int arg5)
 {
+    char tmp[64];
+
     switch (arg0)
     {
         case 0: // Print something
-            // !!! Needs to do copy from user. Unsafe.
-            kprintf("%s", arg1);
+            if (arg2 >= sizeof(tmp) - 2)
+            {
+                kprintf("size out of range\n");
+                return -1;
+            }
+
+            if (user_copy(tmp, (void*) arg1, arg2) < 0)
+            {
+                kprintf("user copy failed\n");
+                return -1;
+            }
+
+            tmp[arg2] = '\0';
+            kprintf("%s", tmp);
             return 0;
 
         case 1:

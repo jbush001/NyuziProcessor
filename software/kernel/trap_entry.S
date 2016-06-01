@@ -35,7 +35,7 @@ trap_entry:             setcr s0, CR_SCRATCHPAD0        // Save s0 in scratchpad
 
                         // Need to switch to kernel stack. First, find the
                         // current thread for this hardware thread.
-                        getcr s0, CR_CURRENT_THREAD     // Current hardware thread
+                        getcr s0, CR_CURRENT_HW_THREAD     // Current hardware thread
                         shl s0, s0, 2                   // Multiply by 4 (bytes/entry)
                         lea s1, trap_kernel_stack_addr
                         load_32 s1, (s1)                // Get base of array

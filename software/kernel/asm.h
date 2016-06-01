@@ -15,7 +15,7 @@
 //
 
 // Control register indices
-#define CR_CURRENT_THREAD 0
+#define CR_CURRENT_HW_THREAD 0
 #define CR_TRAP_HANDLER 1
 #define CR_TRAP_PC 2
 #define CR_TRAP_REASON 3

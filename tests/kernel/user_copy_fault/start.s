@@ -14,23 +14,11 @@
 // limitations under the License.
 //
 
-extern int __syscall(int n, int arg0, int arg1, int arg2, int arg3, int arg4);
+                .globl _start
+_start:         call main
+1:              goto 1b
 
-unsigned int strlen(const char *str)
-{
-    unsigned int len = 0;
-    while (*str++)
-        len++;
 
-    return len;
-}
-
-void printstr(const char *str)
-{
-    __syscall(0, (int) str, strlen(str), 0, 0, 0);
-}
-
-int main()
-{
-    printstr("Hello World\n");
-}
+                .globl __syscall
+__syscall:      syscall
+                ret
