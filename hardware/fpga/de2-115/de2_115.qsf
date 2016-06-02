@@ -333,6 +333,7 @@ set_global_assignment -name VERILOG_FILE ../common/uart_receive.sv
 set_global_assignment -name VERILOG_FILE ../common/synchronizer.sv
 set_global_assignment -name VERILOG_FILE ../common/gpio_controller.sv
 set_global_assignment -name VERILOG_FILE ../common/ps2_controller.sv
+set_global_assignment -name VERILOG_FILE ../common/timer.sv
 set_global_assignment -name VERILOG_FILE ../../core/io_request_queue.sv
 set_global_assignment -name VERILOG_FILE ../../core/idx_to_oh.sv
 set_global_assignment -name VERILOG_FILE ../../core/oh_to_idx.sv
