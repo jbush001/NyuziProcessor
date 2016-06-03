@@ -165,7 +165,7 @@ static inline struct list_node *__list_prev(struct list_node *list,
 #define list_remove_tail(list, type) ((type*) __list_remove_head(list));
 
 #define member_to_struct(ptr, member, type) \
-    (type*) ((char*) ptr) - __builtin_offsetof(type, member))
+    ((type*)(((char*) ptr) - __builtin_offsetof(type, member)))
 
 #define multilist_remove_head(list, type, member) ({ \
     struct list_node *node = (struct list_node*) __list_remove_head(list); \
@@ -185,10 +185,10 @@ static inline struct list_node *__list_prev(struct list_node *list,
         __elem = 0; \
     __elem; });
 
-#define multilist_for_each(list, node, member, type) \
-    for (node = member_to_struct((list)->next, member, type); \
-        &(node)->member != (list); \
-        node = member_to_struct((node)->member.next, type, member)
+#define multilist_for_each(head, node, member, type) \
+    for (node = member_to_struct((head)->next, member, type); \
+        &(node)->member != (head); \
+        node = member_to_struct((node)->member.next, member, type))
 
 #define list_next(list, node, type) \
     ((type*)__list_next(list, (struct list_node*) node))

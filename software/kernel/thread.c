@@ -40,6 +40,8 @@ static spinlock_t thread_q_lock;
 static int next_thread_id;
 static int next_process_id;
 static struct process *kernel_proc;
+static struct list_node process_list;
+static spinlock_t process_list_lock;
 
 // Used by fault handler when it performs stack switch
 unsigned int trap_kernel_stack[MAX_HW_THREADS];
@@ -50,12 +52,14 @@ MAKE_SLAB(process_slab, struct process);
 void bool_init_kernel_process(void)
 {
     list_init(&ready_q);
+    list_init(&process_list);
 
     kernel_proc = slab_alloc(&process_slab);
     list_init(&kernel_proc->thread_list);
     kernel_proc->space = get_kernel_address_space();
     kernel_proc->id = 0;
     kernel_proc->lock = 0;
+    list_add_tail(&process_list, kernel_proc);
     next_process_id = 1;
 }
 
@@ -67,6 +71,8 @@ void boot_init_thread(void)
     th = slab_alloc(&thread_slab);
     th->state = THREAD_RUNNING;
     th->proc = kernel_proc;
+    th->id = __sync_fetch_and_add(&next_thread_id, 1);
+
     cur_thread[current_hw_thread()] = th;
     old_flags = disable_interrupts();
     acquire_spinlock(&kernel_proc->lock);
@@ -113,7 +119,7 @@ struct thread *spawn_thread_internal(struct process *proc,
 
     // Stick in process list
     acquire_spinlock(&proc->lock);
-    list_add_tail(&kernel_proc->thread_list, &th->process_entry);
+    list_add_tail(&proc->thread_list, &th->process_entry);
     release_spinlock(&proc->lock);
 
     // Put into ready queue
@@ -226,11 +232,19 @@ struct process *exec_program(const char *filename)
 {
     struct process *proc;
     unsigned int entry_point;
+    int old_flags;
 
     proc = slab_alloc(&process_slab);
     proc->id = __sync_fetch_and_add(&next_process_id, 1);
     proc->space = create_address_space();
     proc->lock = 0;
+    list_init(&proc->thread_list);
+
+    old_flags = disable_interrupts();
+    acquire_spinlock(&process_list_lock);
+    list_add_tail(&process_list, proc);
+    release_spinlock(&process_list_lock);
+    restore_interrupts(old_flags);
 
     if (load_program(proc, filename, &entry_point) < 0)
     {
@@ -253,4 +267,28 @@ void thread_exit(int retcode)
 
     panic("dead thread was rescheduled!");
 }
+
+void dump_process_list(void)
+{
+    int old_flags;
+    struct process *proc;
+    struct thread *th;
+
+    kprintf("process list\n");
+    old_flags = disable_interrupts();
+    acquire_spinlock(&process_list_lock);
+    list_for_each(&process_list, proc, struct process)
+    {
+        kprintf("process %d\n", proc->id);
+        acquire_spinlock(&proc->lock);
+        multilist_for_each(&proc->thread_list, th, process_entry, struct thread)
+            kprintf("  thread %d %p\n", th->id, th);
+
+        release_spinlock(&proc->lock);
+    }
+
+    release_spinlock(&process_list_lock);
+    restore_interrupts(old_flags);
+}
+
 

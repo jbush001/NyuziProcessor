@@ -25,6 +25,7 @@
 
 struct process
 {
+    struct list_node list_entry;
     int id;
     spinlock_t lock;
     struct list_node thread_list;
@@ -76,6 +77,8 @@ struct thread *dequeue_thread(struct thread_queue*);
 void reschedule(void);
 struct process *exec_program(const char *filename);
 void __attribute__((noreturn)) thread_exit(int retcode);
+
+void dump_process_list(void);
 
 inline int current_hw_thread(void)
 {
