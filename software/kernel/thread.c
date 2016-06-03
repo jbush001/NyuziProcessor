@@ -35,7 +35,7 @@ extern void context_switch(unsigned int **old_stack_ptr_ptr,
                            unsigned int new_address_space_id);
 
 struct thread *cur_thread[MAX_HW_THREADS];
-static struct thread_queue ready_q;
+static struct list_node ready_q;
 static spinlock_t thread_q_lock;
 static int next_thread_id;
 static int next_process_id;
@@ -47,20 +47,12 @@ unsigned int trap_kernel_stack[MAX_HW_THREADS];
 MAKE_SLAB(thread_slab, struct thread);
 MAKE_SLAB(process_slab, struct process);
 
-void add_thread_to_process(struct process *proc, struct thread *th)
-{
-    th->process_next = proc->thread_list;
-    proc->thread_list = th;
-    if (th->process_next)
-        th->process_next->process_prev = &th->process_next;
-
-    th->process_prev = &proc->thread_list;
-}
-
 void bool_init_kernel_process(void)
 {
+    list_init(&ready_q);
+
     kernel_proc = slab_alloc(&process_slab);
-    kernel_proc->thread_list = 0;
+    list_init(&kernel_proc->thread_list);
     kernel_proc->space = get_kernel_address_space();
     kernel_proc->id = 0;
     kernel_proc->lock = 0;
@@ -78,7 +70,7 @@ void boot_init_thread(void)
     cur_thread[current_hw_thread()] = th;
     old_flags = disable_interrupts();
     acquire_spinlock(&kernel_proc->lock);
-    add_thread_to_process(kernel_proc, th);
+    list_add_tail(&kernel_proc->thread_list, &th->process_entry);
     release_spinlock(&kernel_proc->lock);
     restore_interrupts(old_flags);
 }
@@ -86,32 +78,6 @@ void boot_init_thread(void)
 struct thread *current_thread(void)
 {
     return cur_thread[current_hw_thread()];
-}
-
-void enqueue_thread(struct thread_queue *q, struct thread *th)
-{
-    if (q->head == 0)
-        q->head = q->tail = th;
-    else
-    {
-        q->tail->queue_next = th;
-        q->tail = th;
-    }
-
-    th->queue_next = 0;
-}
-
-struct thread *dequeue_thread(struct thread_queue *q)
-{
-    struct thread *th = q->head;
-    if (th)
-    {
-        q->head = th->queue_next;
-        if (q->head == 0)
-            q->tail = 0;
-    }
-
-    return th;
 }
 
 struct thread *spawn_thread_internal(struct process *proc,
@@ -147,12 +113,12 @@ struct thread *spawn_thread_internal(struct process *proc,
 
     // Stick in process list
     acquire_spinlock(&proc->lock);
-    add_thread_to_process(proc, th);
+    list_add_tail(&kernel_proc->thread_list, &th->process_entry);
     release_spinlock(&proc->lock);
 
     // Put into ready queue
     acquire_spinlock(&thread_q_lock);
-    enqueue_thread(&ready_q, th);
+    list_add_tail(&ready_q, th);
     release_spinlock(&thread_q_lock);
     restore_interrupts(old_flags);
 
@@ -221,10 +187,10 @@ void reschedule(void)
         // If this thread is not running (blocked or dead),
         // don't add back to ready queue.
         old_thread->state = THREAD_READY;
-        enqueue_thread(&ready_q, old_thread);
+        list_add_tail(&ready_q, old_thread);
     }
 
-    next_thread = dequeue_thread(&ready_q);
+    next_thread = list_remove_head(&ready_q, struct thread);
     assert(next_thread);
     next_thread->state = THREAD_RUNNING;
 

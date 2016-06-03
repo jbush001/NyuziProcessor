@@ -23,10 +23,8 @@ int printstr(const char *str, int length)
 
 int main()
 {
-    // Note the parameter is a null pointer, which is invalid. This will
-    // fail and return an error. Then the second string "FAULT" will be
-    // printed.
+    // The parameter to the first syscall is a null pointer, which will fail and
+    // return an error. Then the second string "FAULT" will be printed.
     if (printstr((char*) 0, 5) < 0)
         printstr("FAULT\n", 6);
 }
-

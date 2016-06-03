@@ -17,6 +17,7 @@
 #pragma once
 
 #include "fs.h"
+#include "list.h"
 
 // An area is a set of contiguous virtual memory addresses that share some
 // characteristics like permissions or data source The area map tracks all areas
@@ -35,10 +36,9 @@ enum placement
 
 struct vm_area
 {
+    struct list_node list_entry;
     unsigned int low_address;
     unsigned int high_address;
-    struct vm_area *next;
-    struct vm_area *prev;
     struct file_handle *file;
     unsigned int flags;
     char name[32];
@@ -48,8 +48,7 @@ struct vm_area_map
 {
     unsigned int low_address;
     unsigned int high_address;
-    struct vm_area *list_head;
-    struct vm_area *list_tail;
+    struct list_node area_list;
 };
 
 void init_area_map(struct vm_area_map *map, unsigned int low_address,
@@ -61,4 +60,3 @@ void destroy_vm_area(struct vm_area_map *map, struct vm_area *area);
 const struct vm_area *lookup_area(const struct vm_area_map*,
                                   unsigned int address);
 void dump_area_map(const struct vm_area_map*);
-int count_areas(const struct vm_area_map*);

@@ -23,34 +23,19 @@
 
 MAKE_SLAB(area_slab, struct vm_area);
 
-// Allocate an area and insert it into the list
-static struct vm_area *insert_area(struct vm_area_map *map,
-                                   unsigned int low_address, unsigned int size,
-                                   struct vm_area *prev, struct vm_area *next)
+static struct vm_area *alloc_area(unsigned int low_address, unsigned int size)
 {
-    struct vm_area *new_area = slab_alloc(&area_slab);
-    new_area->low_address = low_address;
-    new_area->high_address = low_address + size - 1;
-    new_area->next = next;
-    new_area->prev = prev;
-    if (next)
-        next->prev = new_area;
-    else
-        map->list_tail = new_area;
-
-    if (prev)
-        prev->next = new_area;
-    else
-        map->list_head = new_area;
-
-    return new_area;
+    struct vm_area *area = slab_alloc(&area_slab);
+    area->low_address = low_address;
+    area->high_address = low_address + size - 1;
+    return area;
 }
 
 static struct vm_area *search_up(struct vm_area_map *map, unsigned int address,
                                  unsigned int size)
 {
     struct vm_area *new_area;
-    struct vm_area *next_area = map->list_head;
+    struct vm_area *next_area;
     int hole_start = map->low_address;
 
     if (address + size > map->high_address)
@@ -62,15 +47,19 @@ static struct vm_area *search_up(struct vm_area_map *map, unsigned int address,
     address = PAGE_ALIGN(address);
 
     // Empty list?
-    if (map->list_head == 0)
-        return insert_area(map, address, size, 0, 0);
+    if (list_is_empty(&map->area_list))
+    {
+        return (struct vm_area*) list_add_tail(&map->area_list,
+                                               alloc_area(address, size));
+    }
 
     // If address is higher than the beginning of the region,
     // need to skip areas that are before it.
+    next_area = list_peek_head(&map->area_list, struct vm_area);
     while (next_area && next_area->low_address < address)
     {
         hole_start = next_area->high_address + 1;
-        next_area = next_area->next;
+        next_area = list_next(&map->area_list, next_area, struct vm_area);
     }
 
     // Adjust hole start if necessary
@@ -81,15 +70,15 @@ static struct vm_area *search_up(struct vm_area_map *map, unsigned int address,
     while (next_area)
     {
         if (next_area->low_address - hole_start >= size)
-            return insert_area(map, hole_start, size, next_area->prev, next_area);
+            return (struct vm_area*) list_add_before(next_area, alloc_area(hole_start, size));
 
         hole_start = next_area->high_address + 1;
-        next_area = next_area->next;
+        next_area = (struct vm_area*) list_next(&map->area_list, next_area, struct list_node);
     }
 
     // Insert at end?
     if (map->high_address - hole_start + 1 >= size)
-        return insert_area(map, hole_start, size, map->list_tail, 0);
+        return (struct vm_area*) list_add_tail(&map->area_list, alloc_area(hole_start, size));
 
     // No space, sorry
     return 0;
@@ -99,7 +88,7 @@ static struct vm_area *search_down(struct vm_area_map *map, unsigned int address
                                    unsigned int size)
 {
     struct vm_area *new_area;
-    struct vm_area *prev_area = map->list_tail;
+    struct vm_area *prev_area = list_peek_tail(&map->area_list, struct vm_area);
     int hole_end = map->high_address;
 
     if (address - size < map->low_address)
@@ -111,15 +100,15 @@ static struct vm_area *search_down(struct vm_area_map *map, unsigned int address
     address = PAGE_ALIGN(address + 1) - 1;
 
     // Empty list?
-    if (map->list_tail == 0)
-        return insert_area(map, address - size + 1, size, 0, 0);
+    if (list_is_empty(&map->area_list))
+        return (struct vm_area*) list_add_tail(&map->area_list, alloc_area(address - size + 1, size));
 
     // If address is lower than the end of the region,
     // need to skip areas that are after it.
     while (prev_area && prev_area->high_address > address)
     {
         hole_end = prev_area->low_address - 1;
-        prev_area = prev_area->prev;
+        prev_area = list_prev(&map->area_list, prev_area, struct vm_area);
     }
 
     // Adjust hole end if necessary
@@ -130,18 +119,15 @@ static struct vm_area *search_down(struct vm_area_map *map, unsigned int address
     while (prev_area)
     {
         if (hole_end - prev_area->high_address + 1 >= size)
-        {
-            return insert_area(map, hole_end - size + 1, size, prev_area,
-                               prev_area->next);
-        }
+            return (struct vm_area*) list_add_after(prev_area, alloc_area(hole_end - size + 1, size));
 
         hole_end = prev_area->low_address - 1;
-        prev_area = prev_area->prev;
+        prev_area = list_prev(&map->area_list, prev_area, struct vm_area);
     }
 
     // Insert at beginning?
     if (hole_end - map->low_address + 1 >= size)
-        return insert_area(map, hole_end - size + 1, size, 0, map->list_head);
+        return (struct vm_area*) list_add_head(&map->area_list, alloc_area(hole_end - size + 1, size));
 
     // No space, sorry
     return 0;
@@ -154,28 +140,29 @@ static struct vm_area *insert_fixed(struct vm_area_map *map, unsigned int addres
     struct vm_area *new_area;
     int hole_start = map->low_address;
 
-    if (address < map->low_address || address + size - 1 > map->high_address)
+    if (address < map->low_address || address + size - 1 > map->high_address
+        || address + size - 1 < address)
         return 0;
 
     // Empty list?
-    if (map->list_head == 0)
-        return insert_area(map, address, size, 0, 0);
+    if (list_is_empty(&map->area_list))
+        return (struct vm_area*) list_add_tail(&map->area_list, alloc_area(address, size));
 
     // Search list
-    for (next_area = map->list_head; next_area; next_area = next_area->next)
+    list_for_each(&map->area_list, next_area, struct vm_area)
     {
         if (hole_start > address)
             return 0;   // Address range is covered
 
         if (hole_start <= address && next_area->low_address >= address + size - 1)
-            return insert_area(map, address, size, next_area->prev, next_area);
+            return (struct vm_area*) list_add_before(next_area, alloc_area(address, size));
 
         hole_start = next_area->high_address;
     }
 
     // Insert at end?
     if (hole_start <= address)
-        return insert_area(map, address, size, map->list_tail, 0);
+        return (struct vm_area*) list_add_tail(&map->area_list, alloc_area(address, size));
 
     // No space, sorry
     return 0;
@@ -186,6 +173,7 @@ void init_area_map(struct vm_area_map *map, unsigned int low_address,
 {
     map->low_address = PAGE_ALIGN(low_address);
     map->high_address = PAGE_ALIGN(high_address + 1) - 1;
+    list_init(&map->area_list);
 }
 
 struct vm_area *create_vm_area(struct vm_area_map *map, unsigned int address,
@@ -226,18 +214,7 @@ struct vm_area *create_vm_area(struct vm_area_map *map, unsigned int address,
 
 void destroy_vm_area(struct vm_area_map *map, struct vm_area *area)
 {
-    if (area == map->list_head)
-        map->list_head = area->next;
-
-    if (area == map->list_tail)
-        map->list_tail = area->prev;
-
-    if (area->prev)
-        area->prev->next = area->next;
-
-    if (area->next)
-        area->next->prev = area->prev;
-
+    list_remove_node(area);
     slab_free(&area_slab, area);
 }
 
@@ -246,7 +223,7 @@ const struct vm_area *lookup_area(const struct vm_area_map *map,
 {
     const struct vm_area *area;
 
-    for (area = map->list_head; area; area = area->next)
+    list_for_each(&map->area_list, area, struct vm_area)
     {
         if (address >= area->low_address && address <= area->high_address)
             return area;
@@ -260,23 +237,13 @@ void dump_area_map(const struct vm_area_map *map)
     struct vm_area *area;
 
     kprintf("Name                 Start    End      Flags\n");
-    for (area = map->list_head; area; area = area->next)
+    list_for_each(&map->area_list, area, struct vm_area)
     {
         kprintf("%20s %08x %08x %08x\n", area->name, area->low_address,
                 area->high_address, area->flags);
     }
 }
 
-int count_areas(const struct vm_area_map *map)
-{
-    struct vm_area *area;
-    int count = 0;
-
-    for (area = map->list_head; area; area = area->next)
-        count++;
-
-    return count;
-}
 
 #ifdef TEST_AREA_MAP
 
@@ -290,36 +257,32 @@ static int rand(void)
 
 #define NUM_TEST_AREAS 128
 
+static int count_areas(const struct vm_area_map *map)
+{
+    struct vm_area *area;
+    int count = 0;
+
+    list_for_each(&map->area_list, area, struct vm_area)
+        count++;
+
+    return count;
+}
+
 static void sanity_check_map(struct vm_area_map *map)
 {
     struct vm_area *area;
 
-    if (map->list_head == 0)
-    {
-        // Empty list
-        assert(map->list_tail == 0);
-        return;
-    }
+    // If this is empty, ensure both pointers are correct
+    assert((map->area_list.prev == &map->area_list)
+        == (map->area_list.next == &map->area_list));
 
-    assert(map->list_tail != 0);
-
-    assert(map->list_head->prev == 0);
-
-    for (area = map->list_head; area; area = area->next)
+    list_for_each(&map->area_list, area, struct vm_area)
     {
         assert(area->low_address < area->high_address);
         assert((area->low_address & (PAGE_SIZE - 1)) == 0);
         assert((area->high_address & (PAGE_SIZE - 1)) == (PAGE_SIZE - 1));
-
-        if (area->next)
-        {
-            assert(area->next->prev == area);
-            assert(area->next->low_address > area->high_address);
-        }
-        else
-        {
-            assert(area == map->list_tail);
-        }
+        assert (area->list_entry.next->prev == &area->list_entry);
+        assert (area->list_entry.prev->next == &area->list_entry);
     }
 }
 
@@ -350,6 +313,7 @@ void test_area_map(void)
     areas[1] = create_vm_area(&map, 0x30002000, 0x1000, PLACE_EXACT, "area1", 0);
     areas[2] = create_vm_area(&map, 0x30000000, 0x1000, PLACE_SEARCH_UP, "area2", 0);
     areas[3] = create_vm_area(&map, 0x30000000, 0x1000, PLACE_SEARCH_UP, "area3", 0);
+    assert(count_areas(&map) == 4);
     sanity_check_map(&map);
     assert(areas[2]->low_address == 0x30001000);
     assert(areas[2]->high_address == 0x30001fff);
@@ -361,6 +325,7 @@ void test_area_map(void)
     areas[5] = create_vm_area(&map, 0x2fffd000, 0x1000, PLACE_EXACT, "area5", 0);
     areas[6] = create_vm_area(&map, 0x30000000, 0x1000, PLACE_SEARCH_DOWN, "area6", 0);
     areas[7] = create_vm_area(&map, 0x30000000, 0x1000, PLACE_SEARCH_DOWN, "area7", 0);
+    assert(count_areas(&map) == 8);
     sanity_check_map(&map);
     assert(areas[6]->low_address = 0x2fffe000);
     assert(areas[6]->high_address == 0x2fffefff);
@@ -372,6 +337,8 @@ void test_area_map(void)
         destroy_vm_area(&map, areas[i]);
         areas[i] = 0;
     }
+
+    sanity_check_map(&map);
 
     // Random positive tests. Create and delete a bunch of areas by searching.
     // These should all succeed. This will ensure the newly created areas
@@ -519,12 +486,14 @@ void test_area_map(void)
         areas[i] = 0;
     }
 
-    // Check for overflow in the high_address
+    // Ensure we detect (and fail) a wrapping region
     init_area_map(&map, 0xc0000000, 0xffffffff);
-    create_vm_area(&map, 0xc0000000, 0xd0000000, PLACE_EXACT, "kernel", 0);
-    create_vm_area(&map, 0xffff0000, 0x10000, PLACE_EXACT, "device registers",
-                   0);
+    assert(create_vm_area(&map, 0xc0000000, 0xd0000000, PLACE_EXACT, "kernel", 0) == 0);
 
+    // Check for overflow in the memory area
+    create_vm_area(&map, 0xc0000000, 0x10000000, PLACE_EXACT, "kernel", 0);
+    create_vm_area(&map, 0xffff0000, 0x10000, PLACE_EXACT, "device registers", 0);
+    dump_area_map(&map);
     sanity_check_map(&map);
 
     kprintf("all tests passed\n");

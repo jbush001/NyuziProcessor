@@ -17,6 +17,7 @@
 #pragma once
 
 #include "asm.h"
+#include "list.h"
 #include "vm_address_space.h"
 #include "vm_translation_map.h"
 
@@ -26,12 +27,15 @@ struct process
 {
     int id;
     spinlock_t lock;
-    struct thread *thread_list;
+    struct list_node thread_list;
     struct vm_address_space *space;
 };
 
 struct thread
 {
+    struct list_node queue_entry;
+    struct list_node process_entry;
+
     int id;
     unsigned int *kernel_stack_ptr;
     unsigned int *current_stack;
@@ -40,10 +44,8 @@ struct thread
     struct process *proc;
     void (*start_func)(void *param);
     void *param;
-    struct thread *queue_next;
-    struct thread *process_next;
-    struct thread **process_prev;
-    enum {
+    enum
+    {
         THREAD_READY,
         THREAD_RUNNING,
         THREAD_BLOCKED,

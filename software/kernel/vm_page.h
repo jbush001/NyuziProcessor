@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include "list.h"
+
 // XXX hack
 #define MEMORY_SIZE 0x1000000
 #define PAGE_STRUCTURES_SIZE (sizeof(struct vm_page) * (MEMORY_SIZE / PAGE_SIZE))
@@ -25,7 +27,7 @@
 
 struct vm_page
 {
-    struct vm_page *next;
+    struct list_node list_entry;
 };
 
 void vm_page_init(void);

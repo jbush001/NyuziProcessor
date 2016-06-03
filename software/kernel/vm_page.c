@@ -29,7 +29,7 @@ extern int boot_pages_used;
 // This is necessary because of the circular dependency on page stuctures
 // to grow the heap.
 static struct vm_page *pages = (struct vm_page*) KERNEL_HEAP_BASE;
-static struct vm_page *free_page_list;
+struct list_node free_page_list;
 
 void vm_page_init(void)
 {
@@ -37,11 +37,9 @@ void vm_page_init(void)
     int pgidx;
 
     // Set up the free page list
+    list_init(&free_page_list);
     for (pgidx = boot_pages_used; pgidx < num_pages - 1; pgidx++)
-        pages[pgidx].next = &pages[pgidx + 1];
-
-    pages[num_pages - 1].next = 0;
-    free_page_list = &pages[boot_pages_used];
+        list_add_tail(&free_page_list, &pages[pgidx]);
 }
 
 unsigned int vm_allocate_page(void)
@@ -52,10 +50,7 @@ unsigned int vm_allocate_page(void)
 
     old_flags = disable_interrupts();
     acquire_spinlock(&page_lock);
-    page = free_page_list;
-    if (page)
-        free_page_list = page->next;
-
+    page = list_remove_head(&free_page_list, struct vm_page);
     release_spinlock(&page_lock);
     restore_interrupts(old_flags);
     if (page == 0)
@@ -75,8 +70,7 @@ void vm_free_page(unsigned int addr)
 
     old_flags = disable_interrupts();
     acquire_spinlock(&page_lock);
-    page->next = free_page_list;
-    free_page_list = page;
+    list_add_head(&free_page_list, page);
     release_spinlock(&page_lock);
     restore_interrupts(old_flags);
 }
