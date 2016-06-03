@@ -44,7 +44,7 @@ int handle_syscall(int arg0, int arg1, int arg2, int arg3, int arg4,
             return 0;
 
         case 1:
-            spawn_user_thread(current_thread()->proc, arg1, arg2);
+            spawn_user_thread(arg1, current_thread()->proc, arg2, arg3);
             return 0;
 
         case 2: // Get thread ID

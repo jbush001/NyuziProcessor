@@ -52,6 +52,7 @@ struct thread
         THREAD_BLOCKED,
         THREAD_DEAD
     } state;
+    char name[32];
 };
 
 struct thread_queue
@@ -67,10 +68,12 @@ void bool_init_kernel_process(void);
 void boot_init_thread(void);
 
 struct thread *current_thread(void);
-struct thread *spawn_user_thread(struct process *proc,
+struct thread *spawn_user_thread(const char *name,
+                                 struct process *proc,
                                  void (*start_function)(void *param),
                                  void *param);
-struct thread *spawn_kernel_thread(void (*start_function)(void *param),
+struct thread *spawn_kernel_thread(const char *name,
+                                   void (*start_function)(void *param),
                                    void *param);
 void enqueue_thread(struct thread_queue*, struct thread*);
 struct thread *dequeue_thread(struct thread_queue*);

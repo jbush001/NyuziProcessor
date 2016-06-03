@@ -72,6 +72,7 @@ void boot_init_thread(void)
     th->state = THREAD_RUNNING;
     th->proc = kernel_proc;
     th->id = __sync_fetch_and_add(&next_thread_id, 1);
+    strlcpy(th->name, "idle_thread", sizeof(th->name));
 
     cur_thread[current_hw_thread()] = th;
     old_flags = disable_interrupts();
@@ -86,7 +87,8 @@ struct thread *current_thread(void)
     return cur_thread[current_hw_thread()];
 }
 
-struct thread *spawn_thread_internal(struct process *proc,
+struct thread *spawn_thread_internal(const char *name,
+                                     struct process *proc,
                                      void (*kernel_start)(),
                                      void (*real_start)(void *param),
                                      void *param,
@@ -96,6 +98,7 @@ struct thread *spawn_thread_internal(struct process *proc,
     struct thread *th;
 
     th = slab_alloc(&thread_slab);
+    strlcpy(th->name, name, sizeof(th->name));
     th->kernel_stack_area = create_area(get_kernel_address_space(),
                                         0xffffffff, KERNEL_STACK_SIZE,
                                         PLACE_SEARCH_DOWN, "kernel stack",
@@ -144,11 +147,11 @@ static void user_thread_kernel_start(void)
                       th->user_stack_area->high_address + 1);
 }
 
-struct thread *spawn_user_thread(struct process *proc,
+struct thread *spawn_user_thread(const char *name, struct process *proc,
                                  void (*start_function)(void *param),
                                  void *param)
 {
-    return spawn_thread_internal(proc, user_thread_kernel_start,
+    return spawn_thread_internal(name, proc, user_thread_kernel_start,
                                  start_function, 0, 0);
 }
 
@@ -166,11 +169,11 @@ static void kernel_thread_kernel_start(void)
     thread_exit(1);
 }
 
-struct thread *spawn_kernel_thread(void (*start_function)(void *param),
+struct thread *spawn_kernel_thread(const char *name,
+                                   void (*start_function)(void *param),
                                    void *param)
 {
-    return spawn_thread_internal(kernel_proc,
-                                 kernel_thread_kernel_start,
+    return spawn_thread_internal(name, kernel_proc, kernel_thread_kernel_start,
                                  start_function, param, 1);
 }
 
@@ -253,7 +256,7 @@ struct process *exec_program(const char *filename)
         return 0;
     }
 
-    spawn_thread_internal(proc, new_process_start, entry_point, 0, 0);
+    spawn_thread_internal("user_thread", proc, new_process_start, entry_point, 0, 0);
     return proc;
 }
 
@@ -282,7 +285,7 @@ void dump_process_list(void)
         kprintf("process %d\n", proc->id);
         acquire_spinlock(&proc->lock);
         multilist_for_each(&proc->thread_list, th, process_entry, struct thread)
-            kprintf("  thread %d %p\n", th->id, th);
+            kprintf("  thread %d %p %s\n", th->id, th, th->name);
 
         release_spinlock(&proc->lock);
     }

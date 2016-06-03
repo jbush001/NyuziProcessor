@@ -20,7 +20,7 @@ int kprintf(const char *format, ...);
 void *memcpy(void *dest, const void *src, unsigned int length);
 void __attribute__((noreturn)) panic(const char *fmt, ...);
 void *memset(void *dest, int value, unsigned int length);
-char* strncpy(char *dest, const char *src, unsigned int length);
+unsigned int strlcpy(char *dest, const char *src, unsigned int length);
 int memcmp(const void *_str1, const void *_str2, unsigned int len);
 int strcmp(const char *str1, const char *str2);
 

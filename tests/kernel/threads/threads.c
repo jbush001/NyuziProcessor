@@ -34,9 +34,9 @@ int getthid()
     return __syscall(2, 0, 0, 0, 0, 0);
 }
 
-int spawn_thread(void (*func)(void*), void *param)
+int spawn_thread(const char *name, void (*func)(void*), void *param)
 {
-    return __syscall(1, (int) func, (int) param, 0, 0, 0);
+    return __syscall(1, (int) name, (int) func, (int) param, 0, 0);
 }
 
 void thread_start()
@@ -52,5 +52,5 @@ int main()
     int i;
 
     for (i = 0; i < 10; i++)
-        spawn_thread(thread_start, 0);
+        spawn_thread("spinner thread", thread_start, 0);
 }

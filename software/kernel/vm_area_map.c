@@ -203,8 +203,7 @@ struct vm_area *create_vm_area(struct vm_area_map *map, unsigned int address,
 
     if (area)
     {
-        strncpy(area->name, name, 32);
-        area->name[31] = '\0';
+        strlcpy(area->name, name, 32);
         area->flags = flags;
         area->file = 0;
     }
@@ -239,8 +238,10 @@ void dump_area_map(const struct vm_area_map *map)
     kprintf("Name                 Start    End      Flags\n");
     list_for_each(&map->area_list, area, struct vm_area)
     {
-        kprintf("%20s %08x %08x %08x\n", area->name, area->low_address,
-                area->high_address, area->flags);
+        kprintf("%20s %08x %08x %c%c%c\n", area->name, area->low_address,
+                area->high_address, (area->flags & AREA_WIRED) ? 'p' : '-',
+                (area->flags & AREA_WRITABLE) ? 'w' : '-',
+                (area->flags & AREA_EXECUTABLE) ? 'x' : '-');
     }
 }
 

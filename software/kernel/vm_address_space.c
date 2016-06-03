@@ -42,7 +42,7 @@ void vm_address_space_init(struct vm_translation_map *translation_map)
     kernel_address_space.translation_map = translation_map;
     init_area_map(amap, KERNEL_BASE, 0xffffffff);
     create_vm_area(amap, KERNEL_BASE, KERNEL_END - KERNEL_BASE, PLACE_EXACT,
-                   "kernel", AREA_WIRED | AREA_WRITABLE);
+                   "kernel", AREA_WIRED | AREA_WRITABLE | AREA_EXECUTABLE);
     create_vm_area(amap, PHYS_MEM_ALIAS, MEMORY_SIZE, PLACE_EXACT,
                    "memory alias", AREA_WIRED | AREA_WRITABLE);
     create_vm_area(amap, KERNEL_HEAP_BASE, KERNEL_HEAP_SIZE, PLACE_EXACT,

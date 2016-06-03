@@ -431,14 +431,14 @@ void *memcpy(void *_dest, const void *_src, unsigned int length)
     return _dest;
 }
 
-char* strncpy(char *dest, const char *src, unsigned int length)
+unsigned int strlcpy(char *dest, const char *src, unsigned int length)
 {
     char *d = dest;
     while (*src && length-- > 0)
         *d++ = *src++;
 
     *d = 0;
-    return dest;
+    return d - src;
 }
 
 int memcmp(const void *_str1, const void *_str2, unsigned int len)

@@ -53,7 +53,6 @@ void kernel_main(void)
     vm_address_space_init(init_map);
     bool_init_kernel_process();
     boot_init_thread();
-    kprintf("Kernel started\n");
 
     register_interrupt_handler(1, timer_tick);
     start_timer();
@@ -67,6 +66,9 @@ void kernel_main(void)
     REGISTERS[REG_INT_MASK0 + 3] = 2;
 
     exec_program("program.elf");
+
+//    dump_process_list();
+//    dump_area_map(&get_kernel_address_space()->area_map);
 
     // Idle task
     for (;;)
