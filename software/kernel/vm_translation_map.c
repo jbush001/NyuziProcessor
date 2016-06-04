@@ -14,6 +14,7 @@
 // limitations under the License.
 //
 
+#include "asm.h"
 #include "libc.h"
 #include "slab.h"
 #include "trap.h"
@@ -245,3 +246,13 @@ void vm_map_page(struct vm_translation_map *map, unsigned int va, unsigned int p
         restore_interrupts(old_flags);
     }
 }
+
+void switch_to_translation_map(struct vm_translation_map *map)
+{
+    // XXX if there are more maps that ASIDs and this map doesn't have an
+    // ASID assigned, this must be able to steal it.
+
+    __builtin_nyuzi_write_control_reg(CR_PAGE_DIR_BASE, map->page_dir);
+    __builtin_nyuzi_write_control_reg(CR_CURRENT_ASID, map->asid);
+}
+

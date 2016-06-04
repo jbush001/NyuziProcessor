@@ -17,18 +17,20 @@
 #include "asm.h"
 
 //
+// Push registers onto the current kernel stack, switch to a new stack, and pop
+// the registers from the new thread off the stack.
+//
 // void context_switch(unsigned int **old_stack_ptr_ptr,
-//                     unsigned int *new_stack_ptr,
-//                     unsigned int new_page_dir_addr,
-//                     unsigned int new_address_space_id)
+//                     unsigned int *new_stack_ptr)
 //
 
                     .global context_switch
                     .type context_switch,@function
 context_switch:     sub_i sp, sp, 0x840
 
-                    // Vector registers are not used in the kernel or saved on
-                    // kernel entry, so we need to save them
+                    // This must save and restore *all* vector registers,
+                    // because they are not used in the kernel and are not
+                    // saved by the trap handler.
                     store_v v0,  0(sp)
                     store_v v1,  0x40(sp)
                     store_v v2,  0x80(sp)
@@ -62,8 +64,9 @@ context_switch:     sub_i sp, sp, 0x840
                     store_v v30, 0x780(sp)
                     store_v v31, 0x7c0(sp)
 
-                    // Only need to save callee-saved scalar registers on the stack.
-                    // The calling function(s) have already saved all caller-saved register.
+                    // Only need to save callee-saved scalar registers on the
+                    // stack. The calling function(s) have already saved all
+                    // caller-saved registers if needed.
                     store_32 s24, 0x800(sp)
                     store_32 s25, 0x804(sp)
                     store_32 s26, 0x808(sp)
@@ -74,15 +77,6 @@ context_switch:     sub_i sp, sp, 0x840
                     // Swap stacks
                     store_32 sp, (s0)   // Save old stack
                     move sp, s1         // Load new stack
-
-                    // Switch address space
-                    setcr s2,  CR_PAGE_DIR_BASE
-                    setcr s3, CR_CURRENT_ASID
-
-                    // Rollback so we're sure address space switch has
-                    // occurred.
-                    goto 1f
-1:
 
                     // Restore vector registers from new stack
                     load_v v0,  0(sp)

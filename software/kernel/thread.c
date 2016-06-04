@@ -30,9 +30,7 @@ extern __attribute__((noreturn)) void  jump_to_user_mode(
     unsigned int inital_pc,
     unsigned int user_stack_ptr);
 extern void context_switch(unsigned int **old_stack_ptr_ptr,
-                           unsigned int *new_stack_ptr,
-                           unsigned int new_page_dir_addr,
-                           unsigned int new_address_space_id);
+                           unsigned int *new_stack_ptr);
 
 struct thread *cur_thread[MAX_HW_THREADS];
 static struct list_node ready_q;
@@ -207,10 +205,8 @@ void reschedule(void)
     {
         cur_thread[hwthread] = next_thread;
         trap_kernel_stack[hwthread] = (unsigned int) next_thread->kernel_stack_ptr;
-        context_switch(&old_thread->current_stack,
-                       next_thread->current_stack,
-                       next_thread->proc->space->translation_map->page_dir,
-                       next_thread->proc->space->translation_map->asid);
+        switch_to_translation_map(next_thread->proc->space->translation_map);
+        context_switch(&old_thread->current_stack, next_thread->current_stack);
     }
 
     release_spinlock(&thread_q_lock);
