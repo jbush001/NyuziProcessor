@@ -349,8 +349,7 @@ module instruction_decode_stage(
 
     always_comb
     begin
-        if (dlut_out.illegal || ifd_alignment_fault || ifd_tlb_miss || ifd_supervisor_fault
-            || is_syscall || raise_interrupt)
+        if (has_trap)
             decoded_instr_nxt.pipeline_sel = PIPE_SCYCLE_ARITH;
         else if (is_fmt_r || is_fmt_i)
         begin
