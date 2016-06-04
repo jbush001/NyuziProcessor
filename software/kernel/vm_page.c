@@ -29,12 +29,15 @@ extern int boot_pages_used;
 // This is necessary because of the circular dependency on page stuctures
 // to grow the heap.
 static struct vm_page *pages = (struct vm_page*) KERNEL_HEAP_BASE;
-struct list_node free_page_list;
+static struct list_node free_page_list;
+unsigned int memory_size;
 
-void vm_page_init(void)
+void vm_page_init(unsigned int memory)
 {
-    int num_pages = MEMORY_SIZE / PAGE_SIZE;
+    int num_pages = memory / PAGE_SIZE;
     int pgidx;
+
+    memory_size = memory;
 
     // Set up the free page list
     list_init(&free_page_list);

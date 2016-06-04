@@ -27,6 +27,7 @@ _start:             getcr s0, 0
                     btrue s0, start_thread_n
 
                     load_32 sp, temp_stack
+                    load_32 s0, memory_size
                     call boot_setup_page_tables
 
                     // Set up TLB miss handler. This is a physical address, so need
@@ -64,6 +65,8 @@ trampoline:         load_32 s0, page_dir_addr   // Set up page directory
                     load_32 sp, kernel_stacks
                     sub_i sp, sp, s0            // Compute stack address
 
+                    load_32 s0, memory_size
+
                     // Go!
                     eret
 
@@ -73,8 +76,9 @@ trampoline:         load_32 s0, page_dir_addr   // Set up page directory
 // temp_stack is only used while calling boot_setup_page_tables. As soon as that returns,
 // this memory will not be touched again and can be used for other things.
 temp_stack:         .long 0x400000
-page_dir_addr:      .long 0     // Filled in during boot by VM code
-boot_pages_used:    .long 0     // Ditto
+memory_size:        .long 0x1000000 // XXX hardcoded
+page_dir_addr:      .long 0         // Filled in during boot by VM code
+boot_pages_used:    .long 0         // Ditto
 kernel_main_addr:   .long kernel_main
 kernel_stacks:      .long 0xffff0000
 tlb_miss_addr:      .long tlb_miss_handler

@@ -43,13 +43,13 @@ void timer_tick(void)
     reschedule();
 }
 
-void kernel_main(void)
+void kernel_main(unsigned int memory_size)
 {
     struct vm_translation_map *init_map;
 
-    vm_page_init();
+    vm_page_init(memory_size);
     init_map = vm_translation_map_init();
-    boot_init_heap((char*) KERNEL_HEAP_BASE + PAGE_STRUCTURES_SIZE);
+    boot_init_heap((char*) KERNEL_HEAP_BASE + PAGE_STRUCTURES_SIZE(memory_size));
     vm_address_space_init(init_map);
     bool_init_kernel_process();
     boot_init_thread();

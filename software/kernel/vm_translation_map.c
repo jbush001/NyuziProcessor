@@ -87,7 +87,7 @@ void boot_vm_map_pages(struct boot_page_setup *bps, unsigned int va,
     }
 }
 
-void boot_setup_page_tables(void)
+void boot_setup_page_tables(unsigned int memory_size)
 {
     // Need a local since we can't access globals
     struct boot_page_setup bps;
@@ -101,7 +101,7 @@ void boot_setup_page_tables(void)
                       | PAGE_EXECUTABLE | PAGE_SUPERVISOR | PAGE_GLOBAL);
 
     // Map physical memory alias
-    boot_vm_map_pages(&bps, PHYS_MEM_ALIAS, 0, MEMORY_SIZE, PAGE_PRESENT | PAGE_WRITABLE
+    boot_vm_map_pages(&bps, PHYS_MEM_ALIAS, 0, memory_size, PAGE_PRESENT | PAGE_WRITABLE
                       | PAGE_SUPERVISOR | PAGE_GLOBAL);
 
     // Map initial kernel stacks for all threads
@@ -118,7 +118,8 @@ void boot_setup_page_tables(void)
     // page allocator to allocate page tables, and that won't work until the
     // page tables are allocated.
     boot_vm_map_pages(&bps, KERNEL_HEAP_BASE, boot_vm_allocate_pages(&bps,
-                      PAGE_STRUCTURES_SIZE / PAGE_SIZE), PAGE_STRUCTURES_SIZE,
+                      PAGE_STRUCTURES_SIZE(memory_size) / PAGE_SIZE),
+                      PAGE_STRUCTURES_SIZE(memory_size),
                       PAGE_PRESENT | PAGE_WRITABLE | PAGE_SUPERVISOR | PAGE_GLOBAL);
 
     // Write the page dir address where start.S can find it to initialize

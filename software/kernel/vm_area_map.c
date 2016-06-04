@@ -19,8 +19,6 @@
 #include "vm_area_map.h"
 #include "vm_page.h"
 
-#define TEST_AREA_MAP 1
-
 MAKE_SLAB(area_slab, struct vm_area);
 
 static struct vm_area *alloc_area(unsigned int low_address, unsigned int size)

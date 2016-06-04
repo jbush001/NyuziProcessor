@@ -18,10 +18,8 @@
 
 #include "list.h"
 
-// XXX hack
-#define MEMORY_SIZE 0x1000000
-#define PAGE_STRUCTURES_SIZE (sizeof(struct vm_page) * (MEMORY_SIZE / PAGE_SIZE))
-
+#define PAGE_STRUCTURES_SIZE(memory_size) (sizeof(struct vm_page) * (memory_size \
+    / PAGE_SIZE))
 #define PAGE_SIZE 0x1000
 #define PAGE_ALIGN(x) (x & ~(PAGE_SIZE - 1))
 
@@ -30,7 +28,10 @@ struct vm_page
     struct list_node list_entry;
 };
 
-void vm_page_init(void);
+extern unsigned int memory_size;
+
+void vm_page_init(unsigned int memory_size);
 unsigned int vm_allocate_page(void);
 void vm_free_page(unsigned int addr);
 struct vm_page *page_for_address(unsigned int addr);
+
