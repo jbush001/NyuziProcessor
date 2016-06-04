@@ -35,32 +35,38 @@ int load_program(struct process *proc,
     struct file_handle *file = open_file(filename);
     if (file == 0)
     {
-        kprintf("Couldn't find executable file\n");
+        kprintf("load_program: couldn't find executable file\n");
         return -1;
     }
 
     if (read_file(file, 0, &image_header, sizeof(image_header)) < 0)
     {
-        kprintf("Couldn't read header\n");
+        kprintf("load_program: couldn't read header\n");
         return -1;
     }
 
     if (memcmp(image_header.e_ident, ELF_MAGIC, 4) != 0)
     {
-        kprintf("Not an elf file\n");
+        kprintf("load_program: not an elf file\n");
         return -1;
     }
 
     if (image_header.e_machine != EM_NYUZI)
     {
-        kprintf("Incorrect architecture\n");
+        kprintf("load_program: incorrect architecture\n");
         return -1;
     }
 
     if (read_file(file, image_header.e_phoff, &segments, image_header.e_phnum
                   * sizeof(struct Elf32_Phdr)) < 0)
     {
-        kprintf("error reading segment table\n");
+        kprintf("load_program: error reading segment table\n");
+        return -1;
+    }
+
+    if (image_header.e_phnum > MAX_SEGMENTS)
+    {
+        kprintf("load_program: image has too many segments\n");
         return -1;
     }
 
@@ -110,4 +116,3 @@ int load_program(struct process *proc,
     *out_entry = image_header.e_entry;
     return 0;
 }
-

@@ -89,8 +89,8 @@ struct thread *current_thread(void)
 
 struct thread *spawn_thread_internal(const char *name,
                                      struct process *proc,
-                                     void (*kernel_start)(),
-                                     void (*real_start)(void *param),
+                                     void (*init_func)(),
+                                     thread_start_func_t start_func,
                                      void *param,
                                      int kernel_only)
 {
@@ -106,8 +106,8 @@ struct thread *spawn_thread_internal(const char *name,
     th->kernel_stack_ptr = (unsigned int*) (th->kernel_stack_area->high_address + 1);
     th->current_stack = (unsigned int*) ((unsigned char*) th->kernel_stack_ptr - 0x840);
     th->proc = proc;
-    ((unsigned int*) th->current_stack)[0x814 / 4] = (unsigned int) kernel_start;
-    th->start_func = real_start;
+    ((unsigned int*) th->current_stack)[0x814 / 4] = (unsigned int) init_func;
+    th->start_func = start_func;
     th->param = param;
     th->id = __sync_fetch_and_add(&next_thread_id, 1);
     th->state = THREAD_READY;
@@ -148,11 +148,11 @@ static void user_thread_kernel_start(void)
 }
 
 struct thread *spawn_user_thread(const char *name, struct process *proc,
-                                 void (*start_function)(void *param),
+                                 unsigned int start_address,
                                  void *param)
 {
     return spawn_thread_internal(name, proc, user_thread_kernel_start,
-                                 start_function, 0, 0);
+                                 (thread_start_func_t) start_address, 0, 0);
 }
 
 static void kernel_thread_kernel_start(void)
@@ -170,11 +170,11 @@ static void kernel_thread_kernel_start(void)
 }
 
 struct thread *spawn_kernel_thread(const char *name,
-                                   void (*start_function)(void *param),
+                                   thread_start_func_t start_func,
                                    void *param)
 {
     return spawn_thread_internal(name, kernel_proc, kernel_thread_kernel_start,
-                                 start_function, param, 1);
+                                 start_func, param, 1);
 }
 
 void reschedule(void)
@@ -256,7 +256,8 @@ struct process *exec_program(const char *filename)
         return 0;
     }
 
-    spawn_thread_internal("user_thread", proc, new_process_start, entry_point, 0, 0);
+    spawn_thread_internal("user_thread", proc, new_process_start,
+        (thread_start_func_t) entry_point, 0, 0);
     return proc;
 }
 

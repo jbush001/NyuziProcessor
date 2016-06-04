@@ -40,13 +40,10 @@ struct boot_page_setup
 
 extern unsigned int page_dir_addr;
 extern unsigned int boot_pages_used;
-
 static spinlock_t kernel_space_lock;
 static unsigned int next_asid;
-
 static struct vm_translation_map kernel_map;
 static struct list_node map_list;
-
 MAKE_SLAB(translation_map_slab, struct vm_translation_map);
 
 unsigned int boot_vm_allocate_pages(struct boot_page_setup *bps, int num_pages)

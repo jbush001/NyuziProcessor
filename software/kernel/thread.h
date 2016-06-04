@@ -23,6 +23,8 @@
 
 #define MAX_HW_THREADS 32
 
+typedef int (*thread_start_func_t)(void*);
+
 struct process
 {
     struct list_node list_entry;
@@ -43,7 +45,7 @@ struct thread
     struct vm_area *kernel_stack_area;
     struct vm_area *user_stack_area;
     struct process *proc;
-    void (*start_func)(void *param);
+    thread_start_func_t start_func;
     void *param;
     enum
     {
@@ -70,10 +72,10 @@ void boot_init_thread(void);
 struct thread *current_thread(void);
 struct thread *spawn_user_thread(const char *name,
                                  struct process *proc,
-                                 void (*start_function)(void *param),
+                                 unsigned int start_address,
                                  void *param);
 struct thread *spawn_kernel_thread(const char *name,
-                                   void (*start_function)(void *param),
+                                   thread_start_func_t start_func,
                                    void *param);
 void enqueue_thread(struct thread_queue*, struct thread*);
 struct thread *dequeue_thread(struct thread_queue*);
