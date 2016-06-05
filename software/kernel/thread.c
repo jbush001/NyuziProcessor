@@ -191,8 +191,6 @@ void reschedule(void)
 
     if (old_thread->state == THREAD_RUNNING)
     {
-        // If this thread is not running (blocked or dead),
-        // don't add back to ready queue.
         old_thread->state = THREAD_READY;
         list_add_tail(&ready_q, old_thread);
     }
@@ -271,6 +269,10 @@ void thread_exit(int retcode)
 void make_thread_ready(struct thread *th)
 {
     int old_flags;
+
+    assert(th->state != THREAD_READY);
+    assert(th->state != THREAD_RUNNING);
+    assert(th->state != THREAD_DEAD);
 
     old_flags = disable_interrupts();
     acquire_spinlock(&thread_q_lock);

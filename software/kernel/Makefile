@@ -24,6 +24,7 @@ BASE_ADDRESS=0xc0000000
 SRCS=main.c \
 	start.S \
 	libc.c \
+	rwlock.c \
 	uart.c \
 	trap_entry.S \
 	trap.c \
@@ -39,8 +40,7 @@ SRCS=main.c \
 	vm_area_map.c \
 	vm_address_space.c \
 	syscall.c \
-	user_copy.S \
-	mutex.c
+	user_copy.S
 
 OBJS=$(SRCS_TO_OBJS)
 DEPS=$(SRCS_TO_DEPS)

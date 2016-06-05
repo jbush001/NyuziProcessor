@@ -19,13 +19,17 @@
 #include "list.h"
 #include "spinlock.h"
 
-struct mutex
+struct rwlock
 {
     spinlock_t spinlock;
-    int locked;
-    struct list_node wait_list;
+    volatile int write_locked;
+    volatile int active_read_count;
+    struct list_node reader_wait_list;
+    struct list_node writer_wait_list;
 };
 
-void init_mutex(struct mutex*);
-void acquire_mutex(struct mutex*);
-void release_mutex(struct mutex*);
+void init_rwlock(struct rwlock*);
+void rwlock_lock_read(struct rwlock*);
+void rwlock_unlock_read(struct rwlock*);
+void rwlock_lock_write(struct rwlock*);
+void rwlock_unlock_write(struct rwlock*);

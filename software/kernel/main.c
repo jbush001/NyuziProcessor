@@ -17,7 +17,7 @@
 #include "asm.h"
 #include "kernel_heap.h"
 #include "libc.h"
-#include "mutex.h"
+#include "rwlock.h"
 #include "registers.h"
 #include "slab.h"
 #include "thread.h"
@@ -44,29 +44,6 @@ void timer_tick(void)
     reschedule();
 }
 
-#if 0
-
-struct mutex mut;
-
-int mutex_test_thread(void *ignore)
-{
-    for (;;)
-    {
-        acquire_mutex(&mut);
-        kprintf("Thread %d has mutex\n", current_thread()->id);
-        release_mutex(&mut);
-    }
-}
-
-void test_mutexes(void)
-{
-    init_mutex(&mut);
-    for (int i = 0; i < 10; i++)
-        spawn_kernel_thread("looper", mutex_test_thread, 0);
-}
-
-#endif
-
 void kernel_main(unsigned int memory_size)
 {
     struct vm_translation_map *init_map;
@@ -90,9 +67,6 @@ void kernel_main(unsigned int memory_size)
     REGISTERS[REG_INT_MASK0 + 3] = 2;
 
     exec_program("program.elf");
-
-//    dump_process_list();
-//    dump_area_map(&get_kernel_address_space()->area_map);
 
     // Idle task
     for (;;)

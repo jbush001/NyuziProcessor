@@ -51,7 +51,7 @@ struct thread
     {
         THREAD_READY,
         THREAD_RUNNING,
-        THREAD_WAIT,
+        THREAD_WAITING,
         THREAD_DEAD
     } state;
     char name[32];
@@ -86,7 +86,7 @@ void make_thread_ready(struct thread*);
 
 void dump_process_list(void);
 
-inline int current_hw_thread(void)
+static inline int current_hw_thread(void)
 {
     return __builtin_nyuzi_read_control_reg(CR_CURRENT_HW_THREAD);
 }
