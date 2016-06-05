@@ -203,7 +203,8 @@ struct vm_area *create_vm_area(struct vm_area_map *map, unsigned int address,
     {
         strlcpy(area->name, name, 32);
         area->flags = flags;
-        area->file = 0;
+        area->cache = 0;
+        area->cache_offset = 0;
     }
 
     return area;

@@ -42,7 +42,11 @@ void vm_page_init(unsigned int memory)
     // Set up the free page list
     list_init(&free_page_list);
     for (pgidx = boot_pages_used; pgidx < num_pages - 1; pgidx++)
+    {
+        pages[pgidx].busy = 0;
+        pages[pgidx].cache = 0;
         list_add_tail(&free_page_list, &pages[pgidx]);
+    }
 }
 
 unsigned int vm_allocate_page(void)
@@ -54,6 +58,8 @@ unsigned int vm_allocate_page(void)
     old_flags = disable_interrupts();
     acquire_spinlock(&page_lock);
     page = list_remove_head(&free_page_list, struct vm_page);
+    page->busy = 0;
+    page->cache = 0;
     release_spinlock(&page_lock);
     restore_interrupts(old_flags);
     if (page == 0)
@@ -82,3 +88,10 @@ struct vm_page *page_for_address(unsigned int addr)
 {
     return &pages[addr / PAGE_SIZE];
 }
+
+unsigned int address_for_page(struct vm_page *page)
+{
+    return (page - pages) * PAGE_SIZE;
+}
+
+

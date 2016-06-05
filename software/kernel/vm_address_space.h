@@ -34,5 +34,5 @@ struct vm_address_space *create_address_space(void);
 struct vm_area *create_area(struct vm_address_space*, unsigned int address,
                             unsigned int size, enum placement place,
                             const char *name, unsigned int flags,
-                            struct file_handle *file);
+                            struct vm_cache *cache, unsigned int cache_offset);
 int handle_page_fault(unsigned int address);

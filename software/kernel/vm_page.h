@@ -25,7 +25,11 @@
 
 struct vm_page
 {
-    struct list_node list_entry;
+    struct list_node list_entry;    // Object or free list
+    struct list_node hash_entry;
+    unsigned int cache_offset;
+    struct vm_cache *cache;
+    volatile int busy;
 };
 
 extern unsigned int memory_size;
@@ -34,4 +38,5 @@ void vm_page_init(unsigned int memory_size);
 unsigned int vm_allocate_page(void);
 void vm_free_page(unsigned int addr);
 struct vm_page *page_for_address(unsigned int addr);
+unsigned int address_for_page(struct vm_page*);
 

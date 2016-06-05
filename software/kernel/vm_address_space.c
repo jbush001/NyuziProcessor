@@ -20,6 +20,7 @@
 #include "thread.h"
 #include "trap.h"
 #include "vm_address_space.h"
+#include "vm_cache.h"
 #include "vm_page.h"
 
 static struct vm_address_space kernel_address_space;
@@ -73,14 +74,17 @@ struct vm_address_space *create_address_space(void)
 struct vm_area *create_area(struct vm_address_space *space, unsigned int address,
                             unsigned int size, enum placement place,
                             const char *name, unsigned int flags,
-                            struct file_handle *file)
+                            struct vm_cache *cache, unsigned int cache_offset)
 {
     struct vm_area *area;
     unsigned int fault_addr;
     int old_flags;
 
-    rwlock_lock_write(&space->mut);
+    // Anonymous area, create a cache if non is specified.
+    if (cache == 0)
+        cache = create_vm_cache();
 
+    rwlock_lock_write(&space->mut);
     area = create_vm_area(&space->area_map, address, size, place, name, flags);
     if (area == 0)
     {
@@ -88,7 +92,8 @@ struct vm_area *create_area(struct vm_address_space *space, unsigned int address
         goto error1;
     }
 
-    area->file = file;
+    area->cache = cache;
+    area->cache_offset = cache_offset;
     if (flags & AREA_WIRED)
     {
         for (fault_addr = area->low_address; fault_addr < area->high_address;
@@ -112,12 +117,7 @@ int handle_page_fault(unsigned int address)
     int old_flags;
     int result = 0;
 
-    // XXX this should be acquired as reader, which will protect the area from
-    // going away while the page fault is in progress, but allow multiple
-    // concurrent faults. It's currently locked write because this is doing
-    // double duty also protecting against collided faults. That should be
-    // handled at the vm_cache layer, which doesn't exist yet.
-    rwlock_lock_write(&space->mut);
+    rwlock_lock_read(&space->mut);
 
     if (address >= KERNEL_BASE)
         space = &kernel_address_space;
@@ -134,18 +134,73 @@ int handle_page_fault(unsigned int address)
     result = soft_fault(space, area, address);
 
 error1:
-    rwlock_unlock_write(&space->mut);
+    rwlock_unlock_read(&space->mut);
 
     return result;
 }
 
-// Always called with lock held
+//
+// This is always called with the address space lock held, so the
+// area is guaranteed not to change.
+//
 static int soft_fault(struct vm_address_space *space, const struct vm_area *area,
                       unsigned int address)
 {
     int got;
+    int page_flags;
+    struct vm_page *page;
     unsigned int pa;
-    int page_flags = PAGE_PRESENT;
+    unsigned int cache_offset;
+    struct vm_cache *cache = area->cache;
+    int old_flags;
+
+    cache_offset = PAGE_ALIGN(address - area->low_address + area->cache_offset);
+    old_flags = disable_interrupts();
+    lock_vm_cache();
+    page = lookup_cache_page(cache, cache_offset);
+    if (page == 0)
+    {
+        pa = vm_allocate_page();
+        page = page_for_address(pa);
+
+        // Insert the page first so, if a collided fault occurs, it will not
+        // load a different page (the vm cache lock protects the busy bit)
+        page->busy = 1;
+        insert_cache_page(cache, cache_offset, page);
+
+        if (cache->file)
+        {
+            unlock_vm_cache();
+            restore_interrupts(old_flags);
+            got = read_file(cache->file, cache_offset, (void*) PA_TO_VA(pa),
+                            PAGE_SIZE);
+            if (got < 0)
+            {
+                kprintf("failed to read from file\n");
+
+                // XXX kill process?
+
+                return 0;
+            }
+
+            disable_interrupts();
+            lock_vm_cache();
+        }
+
+        page->busy = 0;
+    }
+
+    unlock_vm_cache();
+    restore_interrupts(old_flags);
+
+    // XXX busy way for page to finish loading
+    while (page->busy)
+        reschedule();
+
+    // It's possible two threads will fault on the same VA and end up mapping
+    // the page twice. This is fine, because the code above ensures it will
+    // be the same page.
+    page_flags = PAGE_PRESENT;
     if (area->flags & AREA_WRITABLE)
         page_flags |= PAGE_WRITABLE;
 
@@ -155,19 +210,8 @@ static int soft_fault(struct vm_address_space *space, const struct vm_area *area
     if (space == &kernel_address_space)
         page_flags |= PAGE_SUPERVISOR | PAGE_GLOBAL;
 
-    pa = vm_allocate_page();
-    if (area->file)
-    {
-        got = read_file(area->file, PAGE_ALIGN(address) - area->low_address,
-                        (void*) PA_TO_VA(pa), PAGE_SIZE);
-        if (got < 0)
-        {
-            kprintf("failed to read from file\n");
-            vm_free_page(pa);
-            return 0;
-        }
-    }
+    vm_map_page(space->translation_map, address, address_for_page(page)
+        | page_flags);
 
-    vm_map_page(space->translation_map, address, pa | page_flags);
     return 1;
 }

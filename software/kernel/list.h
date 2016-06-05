@@ -157,6 +157,7 @@ static inline struct list_node *__list_prev(struct list_node *list,
 #define list_remove_node(node) \
     __list_remove_node((struct list_node*) (node))
 
+// XXX note: when this finishes, node will not be null.
 #define list_for_each(list, node, type) \
     for (node = (type*)(list)->next; node != (type*)(list); \
         node = (type*)((struct list_node*)(node))->next)

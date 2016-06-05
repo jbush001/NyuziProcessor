@@ -16,15 +16,21 @@
 
 #pragma once
 
-int kprintf(const char *format, ...);
-void *memcpy(void *dest, const void *src, unsigned int length);
-void __attribute__((noreturn)) panic(const char *fmt, ...);
-void *memset(void *dest, int value, unsigned int length);
-unsigned int strlcpy(char *dest, const char *src, unsigned int length);
-int memcmp(const void *_str1, const void *_str2, unsigned int len);
-int strcmp(const char *str1, const char *str2);
-void panic(const char *format, ...);
+#include "list.h"
+#include "vm_page.h"
 
-#define assert(cond) if (!(cond)) { panic("ASSERT FAILED: %s:%d: %s\n", \
-    __FILE__, __LINE__, #cond); }
+struct vm_cache
+{
+    struct list_node page_list;
+    struct file_handle *file;
+};
 
+void bootstrap_vm_cache(void);
+void lock_vm_cache(void);
+void unlock_vm_cache(void);
+
+// All of these must be called with the vm_cache lock held.
+struct vm_cache *create_vm_cache(void);
+void insert_cache_page(struct vm_cache *, unsigned int offset,  struct vm_page*);
+struct vm_page *lookup_cache_page(struct vm_cache*, unsigned int offset);
+void remove_cache_page(struct vm_page *page);

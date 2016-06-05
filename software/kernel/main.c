@@ -23,6 +23,7 @@
 #include "thread.h"
 #include "trap.h"
 #include "vm_area_map.h"
+#include "vm_cache.h"
 #include "vm_page.h"
 #include "vm_translation_map.h"
 #include "vm_address_space.h"
@@ -52,6 +53,7 @@ void kernel_main(unsigned int memory_size)
     init_map = vm_translation_map_init();
     boot_init_heap((char*) KERNEL_HEAP_BASE + PAGE_STRUCTURES_SIZE(memory_size));
     vm_address_space_init(init_map);
+    bootstrap_vm_cache();
     bool_init_kernel_process();
     boot_init_thread();
 

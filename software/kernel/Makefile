@@ -39,6 +39,7 @@ SRCS=main.c \
 	vm_page.c \
 	vm_area_map.c \
 	vm_address_space.c \
+	vm_cache.c \
 	syscall.c \
 	user_copy.S
 

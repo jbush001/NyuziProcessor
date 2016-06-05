@@ -39,7 +39,8 @@ struct vm_area
     struct list_node list_entry;
     unsigned int low_address;
     unsigned int high_address;
-    struct file_handle *file;
+    struct vm_cache *cache;
+    unsigned int cache_offset;
     unsigned int flags;
     char name[32];
 };

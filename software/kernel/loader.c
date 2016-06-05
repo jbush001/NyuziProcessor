@@ -19,6 +19,7 @@
 #include "libc.h"
 #include "loader.h"
 #include "thread.h"
+#include "vm_cache.h"
 #include "vm_page.h"
 #include "vm_translation_map.h"
 
@@ -31,6 +32,7 @@ int load_program(struct process *proc,
     struct Elf32_Ehdr image_header;
     struct Elf32_Phdr segments[MAX_SEGMENTS];
     struct vm_address_space *space = current_thread()->proc->space;
+    struct vm_cache *image_cache;
 
     struct file_handle *file = open_file(filename);
     if (file == 0)
@@ -70,6 +72,8 @@ int load_program(struct process *proc,
         return -1;
     }
 
+    image_cache = create_vm_cache();
+    image_cache->file = file;
     for (int segment_index = 0; segment_index < image_header.e_phnum; segment_index++)
     {
         const struct Elf32_Phdr *segment = &segments[segment_index];
@@ -106,8 +110,10 @@ int load_program(struct process *proc,
 
         // Map region
         if (create_area(proc->space, segment->p_vaddr, segment->p_memsz,
-                        PLACE_EXACT, "program segment", area_flags, file) == 0)
+                        PLACE_EXACT, "program segment", area_flags, image_cache,
+                        segment->p_offset) == 0)
         {
+            kprintf("create area failed, bailing\n");
             // XXX cleanup
             return -1;
         }

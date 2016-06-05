@@ -14,6 +14,7 @@
 // limitations under the License.
 //
 
+#include "libc.h"
 
 #define va_start(AP, LASTARG) __builtin_va_start(AP, LASTARG);
 #define va_arg(AP, TYPE) __builtin_va_arg(AP, TYPE)
