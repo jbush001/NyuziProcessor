@@ -39,7 +39,8 @@ SRCS=main.c \
 	vm_area_map.c \
 	vm_address_space.c \
 	syscall.c \
-	user_copy.S
+	user_copy.S \
+	mutex.c
 
 OBJS=$(SRCS_TO_OBJS)
 DEPS=$(SRCS_TO_DEPS)

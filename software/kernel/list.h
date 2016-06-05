@@ -161,8 +161,8 @@ static inline struct list_node *__list_prev(struct list_node *list,
     for (node = (type*)(list)->next; node != (type*)(list); \
         node = (type*)((struct list_node*)(node))->next)
 
-#define list_remove_head(list, type) ((type*) __list_remove_head(list));
-#define list_remove_tail(list, type) ((type*) __list_remove_head(list));
+#define list_remove_head(list, type) ((type*) __list_remove_head(list))
+#define list_remove_tail(list, type) ((type*) __list_remove_head(list))
 
 #define member_to_struct(ptr, member, type) \
     ((type*)(((char*) ptr) - __builtin_offsetof(type, member)))

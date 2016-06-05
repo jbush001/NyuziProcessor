@@ -51,7 +51,7 @@ struct thread
     {
         THREAD_READY,
         THREAD_RUNNING,
-        THREAD_BLOCKED,
+        THREAD_WAIT,
         THREAD_DEAD
     } state;
     char name[32];
@@ -82,6 +82,7 @@ struct thread *dequeue_thread(struct thread_queue*);
 void reschedule(void);
 struct process *exec_program(const char *filename);
 void __attribute__((noreturn)) thread_exit(int retcode);
+void make_thread_ready(struct thread*);
 
 void dump_process_list(void);
 

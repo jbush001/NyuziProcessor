@@ -17,6 +17,7 @@
 #include "asm.h"
 #include "kernel_heap.h"
 #include "libc.h"
+#include "mutex.h"
 #include "registers.h"
 #include "slab.h"
 #include "thread.h"
@@ -42,6 +43,29 @@ void timer_tick(void)
     ack_interrupt(1);
     reschedule();
 }
+
+#if 0
+
+struct mutex mut;
+
+int mutex_test_thread(void *ignore)
+{
+    for (;;)
+    {
+        acquire_mutex(&mut);
+        kprintf("Thread %d has mutex\n", current_thread()->id);
+        release_mutex(&mut);
+    }
+}
+
+void test_mutexes(void)
+{
+    init_mutex(&mut);
+    for (int i = 0; i < 10; i++)
+        spawn_kernel_thread("looper", mutex_test_thread, 0);
+}
+
+#endif
 
 void kernel_main(unsigned int memory_size)
 {

@@ -268,6 +268,18 @@ void thread_exit(int retcode)
     panic("dead thread was rescheduled!");
 }
 
+void make_thread_ready(struct thread *th)
+{
+    int old_flags;
+
+    old_flags = disable_interrupts();
+    acquire_spinlock(&thread_q_lock);
+    th->state = THREAD_READY;
+    list_add_tail(&ready_q, th);
+    release_spinlock(&thread_q_lock);
+    restore_interrupts(old_flags);
+}
+
 void dump_process_list(void)
 {
     int old_flags;
