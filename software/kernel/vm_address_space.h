@@ -17,12 +17,13 @@
 #pragma once
 
 #include "fs.h"
+#include "mutex.h"
 #include "vm_area_map.h"
 #include "vm_translation_map.h"
 
 struct vm_address_space
 {
-    spinlock_t lock;
+    struct mutex mut;
     struct vm_area_map area_map;
     struct vm_translation_map *translation_map;
 };

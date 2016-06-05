@@ -40,6 +40,7 @@ void vm_address_space_init(struct vm_translation_map *translation_map)
     struct vm_area_map *amap = &kernel_address_space.area_map;
 
     kernel_address_space.translation_map = translation_map;
+    init_mutex(&kernel_address_space.mut);
     init_area_map(amap, KERNEL_BASE, 0xffffffff);
     create_vm_area(amap, KERNEL_BASE, KERNEL_END - KERNEL_BASE, PLACE_EXACT,
                    "kernel", AREA_WIRED | AREA_WRITABLE | AREA_EXECUTABLE);
@@ -64,7 +65,7 @@ struct vm_address_space *create_address_space(void)
     space = slab_alloc(&address_space_slab);
     init_area_map(&space->area_map, PAGE_SIZE, KERNEL_BASE - 1);
     space->translation_map = create_translation_map();
-    space->lock = 0;
+    init_mutex(&space->mut);
 
     return space;
 }
@@ -78,8 +79,7 @@ struct vm_area *create_area(struct vm_address_space *space, unsigned int address
     unsigned int fault_addr;
     int old_flags;
 
-    old_flags = disable_interrupts();
-    acquire_spinlock(&space->lock);
+    acquire_mutex(&space->mut);
 
     area = create_vm_area(&space->area_map, address, size, place, name, flags);
     if (area == 0)
@@ -100,8 +100,7 @@ struct vm_area *create_area(struct vm_address_space *space, unsigned int address
     }
 
 error1:
-    release_spinlock(&space->lock);
-    restore_interrupts(old_flags);
+    release_mutex(&space->mut);
 
     return area;
 }
@@ -113,8 +112,7 @@ int handle_page_fault(unsigned int address)
     int old_flags;
     int result = 0;
 
-    old_flags = disable_interrupts();
-    acquire_spinlock(&space->lock);
+    acquire_mutex(&space->mut);
 
     if (address >= KERNEL_BASE)
         space = &kernel_address_space;
@@ -131,8 +129,7 @@ int handle_page_fault(unsigned int address)
     result = soft_fault(space, area, address);
 
 error1:
-    release_spinlock(&space->lock);
-    restore_interrupts(old_flags);
+    release_mutex(&space->mut);
 
     return result;
 }
