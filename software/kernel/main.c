@@ -68,6 +68,8 @@ void kernel_main(unsigned int memory_size)
     REGISTERS[REG_INT_MASK0 + 2] = 2;
     REGISTERS[REG_INT_MASK0 + 3] = 2;
 
+    spawn_kernel_thread("Grim Reaper", grim_reaper, 0);
+
     exec_program("program.elf");
 
     // Idle task

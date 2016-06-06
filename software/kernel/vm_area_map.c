@@ -216,6 +216,11 @@ void destroy_vm_area(struct vm_area_map *map, struct vm_area *area)
     slab_free(&area_slab, area);
 }
 
+struct vm_area *first_area(struct vm_area_map *map)
+{
+    return list_peek_head(&map->area_list, struct vm_area);
+}
+
 const struct vm_area *lookup_area(const struct vm_area_map *map,
                                   unsigned int address)
 {

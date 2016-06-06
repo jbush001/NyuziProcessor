@@ -83,6 +83,7 @@ void reschedule(void);
 struct process *exec_program(const char *filename);
 void __attribute__((noreturn)) thread_exit(int retcode);
 void make_thread_ready(struct thread*);
+int grim_reaper(void *ignore);
 
 void dump_process_list(void);
 

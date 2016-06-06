@@ -23,11 +23,19 @@ struct vm_cache
 {
     struct list_node page_list;
     struct file_handle *file;
+    volatile int ref_count;
 };
 
 void bootstrap_vm_cache(void);
+
+
 void lock_vm_cache(void);
 void unlock_vm_cache(void);
+
+// These should not be called with vm_cache lock held. They may acquire it as
+// a side effect.
+void inc_cache_ref(struct vm_cache *cache);
+void dec_cache_ref(struct vm_cache *cache);
 
 // All of these must be called with the vm_cache lock held.
 struct vm_cache *create_vm_cache(void);

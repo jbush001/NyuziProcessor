@@ -61,3 +61,4 @@ void destroy_vm_area(struct vm_area_map *map, struct vm_area *area);
 const struct vm_area *lookup_area(const struct vm_area_map*,
                                   unsigned int address);
 void dump_area_map(const struct vm_area_map*);
+struct vm_area *first_area(struct vm_area_map*);

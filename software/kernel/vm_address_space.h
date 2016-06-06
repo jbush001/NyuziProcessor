@@ -31,8 +31,10 @@ struct vm_address_space
 struct vm_address_space *get_kernel_address_space(void);
 void vm_address_space_init(struct vm_translation_map *init_map);
 struct vm_address_space *create_address_space(void);
+void destroy_address_space(struct vm_address_space*);
 struct vm_area *create_area(struct vm_address_space*, unsigned int address,
                             unsigned int size, enum placement place,
                             const char *name, unsigned int flags,
                             struct vm_cache *cache, unsigned int cache_offset);
+void destroy_area(struct vm_address_space*, struct vm_area*);
 int handle_page_fault(unsigned int address);

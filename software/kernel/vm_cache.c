@@ -40,6 +40,7 @@ struct vm_cache *create_vm_cache(void)
 
     cache = slab_alloc(&cache_slab);
     list_init(&cache->page_list);
+    cache->ref_count = 1;
 
     return cache;
 }
@@ -57,6 +58,34 @@ void lock_vm_cache(void)
 void unlock_vm_cache(void)
 {
     release_spinlock(&cache_lock);
+}
+
+void inc_cache_ref(struct vm_cache *cache)
+{
+    __sync_fetch_and_add(&cache->ref_count, 1);
+}
+
+void dec_cache_ref(struct vm_cache *cache)
+{
+    struct vm_page *page;
+
+    assert(cache->ref_count > 0);
+    if (__sync_fetch_and_add(&cache->ref_count, -1) == 1)
+    {
+        lock_vm_cache();
+        kprintf("destroying vm_cache %p\n", cache);
+
+        // Free all pages owned by this cache
+        while (!list_is_empty(&cache->page_list))
+        {
+            page = list_peek_head(&cache->page_list, struct vm_page);
+            remove_cache_page(page);
+            vm_free_page(address_for_page(page));
+            kprintf("free page %08x\n", address_for_page(page));
+        }
+
+        unlock_vm_cache();
+    }
 }
 
 void insert_cache_page(struct vm_cache *cache, unsigned int offset,

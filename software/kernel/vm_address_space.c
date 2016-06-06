@@ -71,6 +71,21 @@ struct vm_address_space *create_address_space(void)
     return space;
 }
 
+// No locking, because at this point only one thread (grim reaper) should
+// be referecing this address space
+void destroy_address_space(struct vm_address_space *space)
+{
+    struct vm_area *area;
+
+    kprintf("destroy_address_space\n");
+    while ((area = first_area(&space->area_map)) != 0)
+    {
+        kprintf("destroy area %s\n", area->name);
+        dec_cache_ref(area->cache);
+        destroy_vm_area(&space->area_map, area);
+    }
+}
+
 struct vm_area *create_area(struct vm_address_space *space, unsigned int address,
                             unsigned int size, enum placement place,
                             const char *name, unsigned int flags,
@@ -108,6 +123,20 @@ error1:
     rwlock_unlock_write(&space->mut);
 
     return area;
+}
+
+void destroy_area(struct vm_address_space *space, struct vm_area *area)
+{
+    struct vm_cache *cache;
+    rwlock_lock_write(&space->mut);
+    cache = area->cache;
+
+    // XXX Unmap all pages in this area
+
+    destroy_vm_area(&space->area_map, area);
+    rwlock_unlock_write(&space->mut);
+
+    dec_cache_ref(cache);
 }
 
 int handle_page_fault(unsigned int address)

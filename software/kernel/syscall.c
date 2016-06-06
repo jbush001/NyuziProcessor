@@ -61,6 +61,11 @@ int handle_syscall(int arg0, int arg1, int arg2, int arg3, int arg4,
                 return -1;
         }
 
+        case 4: // Exit
+            thread_exit(arg1);  // This will not return
+
+            return 0;
+
         default:
             panic("Unknown syscall %d\n", arg0);
     }

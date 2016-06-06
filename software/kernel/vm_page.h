@@ -36,6 +36,9 @@ extern unsigned int memory_size;
 
 void vm_page_init(unsigned int memory_size);
 unsigned int vm_allocate_page(void);
+
+// vm_free_page does not remove the page from its current cache. Calling this
+// without doing that will do bad things.
 void vm_free_page(unsigned int addr);
 struct vm_page *page_for_address(unsigned int addr);
 unsigned int address_for_page(struct vm_page*);
