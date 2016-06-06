@@ -19,6 +19,10 @@
 #include "list.h"
 #include "spinlock.h"
 
+//
+// Reader/writer lock
+//
+
 struct rwlock
 {
     spinlock_t spinlock;

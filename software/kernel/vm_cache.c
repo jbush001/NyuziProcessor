@@ -17,6 +17,7 @@
 #include "libc.h"
 #include "slab.h"
 #include "spinlock.h"
+#include "thread.h"
 #include "trap.h"
 #include "vm_cache.h"
 
@@ -25,6 +26,7 @@
 static spinlock_t cache_lock;
 struct list_node hash_table[NUM_HASH_BUCKETS];
 MAKE_SLAB(cache_slab, struct vm_cache);
+static int debug_cache_lock_owner = -1;
 
 void bootstrap_vm_cache(void)
 {
@@ -53,10 +55,12 @@ static unsigned int gen_hash(struct vm_cache *cache, unsigned int offset)
 void lock_vm_cache(void)
 {
     acquire_spinlock(&cache_lock);
+    debug_cache_lock_owner = current_hw_thread();
 }
 
 void unlock_vm_cache(void)
 {
+    debug_cache_lock_owner = -1;
     release_spinlock(&cache_lock);
 }
 
@@ -69,7 +73,9 @@ void dec_cache_ref(struct vm_cache *cache)
 {
     struct vm_page *page;
 
+    assert(debug_cache_lock_owner != current_hw_thread());
     assert(cache->ref_count > 0);
+
     if (__sync_fetch_and_add(&cache->ref_count, -1) == 1)
     {
         lock_vm_cache();
@@ -93,7 +99,7 @@ void insert_cache_page(struct vm_cache *cache, unsigned int offset,
 {
     unsigned int bucket;
 
-    assert(cache_lock != 0);
+    assert(debug_cache_lock_owner == current_hw_thread());
 
     offset = PAGE_ALIGN(offset);
     bucket = gen_hash(cache, offset) % NUM_HASH_BUCKETS;
@@ -110,7 +116,7 @@ struct vm_page *lookup_cache_page(struct vm_cache *cache, unsigned int offset)
     struct vm_page *page;
     int found = 0;
 
-    assert(cache_lock != 0);
+    assert(debug_cache_lock_owner == current_hw_thread());
 
     offset = PAGE_ALIGN(offset);
     bucket = gen_hash(cache, offset) % NUM_HASH_BUCKETS;
@@ -125,7 +131,7 @@ struct vm_page *lookup_cache_page(struct vm_cache *cache, unsigned int offset)
 
 void remove_cache_page(struct vm_page *page)
 {
-    assert(cache_lock != 0);
+    assert(debug_cache_lock_owner == current_hw_thread());
 
     list_remove_node(&page->list_entry);
     list_remove_node(&page->hash_entry);

@@ -19,6 +19,11 @@
 #include "list.h"
 #include "vm_page.h"
 
+//
+// The OS treats physical memory as a cache for some backing store. Each
+// vm_cache is an independent collection of memory pages.
+//
+
 struct vm_cache
 {
     struct list_node page_list;

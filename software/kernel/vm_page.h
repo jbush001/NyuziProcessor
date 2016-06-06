@@ -23,6 +23,10 @@
 #define PAGE_SIZE 0x1000
 #define PAGE_ALIGN(x) (x & ~(PAGE_SIZE - 1))
 
+//
+// Each vm_page object represents a page frame of physical memory.
+//
+
 struct vm_page
 {
     struct list_node list_entry;    // Object or free list
