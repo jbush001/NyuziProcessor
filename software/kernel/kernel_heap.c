@@ -83,8 +83,9 @@ void *kmalloc(unsigned int size)
         // Wire in pages
         for (va = wilderness_ptr; va < wilderness_ptr + grow_size; va += PAGE_SIZE)
         {
-            vm_map_page(0, va, vm_allocate_page() | PAGE_PRESENT | PAGE_WRITABLE
-                        | PAGE_SUPERVISOR | PAGE_GLOBAL);
+            vm_map_page(0, va, page_to_pa(vm_allocate_page())
+                        | PAGE_PRESENT | PAGE_WRITABLE | PAGE_SUPERVISOR
+                        | PAGE_GLOBAL);
         }
 
         result = (void*) wilderness_ptr;

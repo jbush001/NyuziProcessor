@@ -49,7 +49,7 @@ void vm_page_init(unsigned int memory)
     }
 }
 
-unsigned int vm_allocate_page(void)
+struct vm_page *vm_allocate_page(void)
 {
     struct vm_page *page;
     unsigned int pa;
@@ -70,12 +70,11 @@ unsigned int vm_allocate_page(void)
 
     memset((void*) PA_TO_VA(pa), 0, PAGE_SIZE);
 
-    return pa;
+    return page;
 }
 
-void vm_free_page(unsigned int addr)
+void vm_free_page(struct vm_page *page)
 {
-    struct vm_page *page = &pages[addr / PAGE_SIZE];
     int old_flags;
 
     old_flags = disable_interrupts();
@@ -85,14 +84,12 @@ void vm_free_page(unsigned int addr)
     restore_interrupts(old_flags);
 }
 
-struct vm_page *page_for_address(unsigned int addr)
+struct vm_page *pa_to_page(unsigned int addr)
 {
     return &pages[addr / PAGE_SIZE];
 }
 
-unsigned int address_for_page(struct vm_page *page)
+unsigned int page_to_pa(struct vm_page *page)
 {
     return (page - pages) * PAGE_SIZE;
 }
-
-

@@ -180,7 +180,6 @@ static int soft_fault(struct vm_address_space *space, const struct vm_area *area
     int got;
     int page_flags;
     struct vm_page *page;
-    unsigned int pa;
     unsigned int cache_offset;
     struct vm_cache *cache = area->cache;
     int old_flags;
@@ -198,8 +197,7 @@ static int soft_fault(struct vm_address_space *space, const struct vm_area *area
     page = lookup_cache_page(cache, cache_offset);
     if (page == 0)
     {
-        pa = vm_allocate_page();
-        page = page_for_address(pa);
+        page = vm_allocate_page();
 
         // Insert the page first so, if a collided fault occurs, it will not
         // load a different page (the vm cache lock protects the busy bit)
@@ -210,8 +208,8 @@ static int soft_fault(struct vm_address_space *space, const struct vm_area *area
         {
             unlock_vm_cache();
             restore_interrupts(old_flags);
-            got = read_file(cache->file, cache_offset, (void*) PA_TO_VA(pa),
-                            PAGE_SIZE);
+            got = read_file(cache->file, cache_offset,
+                            (void*) PA_TO_VA(page_to_pa(page)), PAGE_SIZE);
             if (got < 0)
             {
                 kprintf("failed to read from file\n");
@@ -256,7 +254,7 @@ static int soft_fault(struct vm_address_space *space, const struct vm_area *area
     if (space == &kernel_address_space)
         page_flags |= PAGE_SUPERVISOR | PAGE_GLOBAL;
 
-    vm_map_page(space->translation_map, address, address_for_page(page)
+    vm_map_page(space->translation_map, address, page_to_pa(page)
         | page_flags);
 
     return 1;

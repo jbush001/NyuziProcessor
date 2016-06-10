@@ -86,8 +86,8 @@ void dec_cache_ref(struct vm_cache *cache)
         {
             page = list_peek_head(&cache->page_list, struct vm_page);
             remove_cache_page(page);
-            vm_free_page(address_for_page(page));
-            kprintf("free page %08x\n", address_for_page(page));
+            vm_free_page(page);
+            kprintf("free page %08x\n", page_to_pa(page));
         }
 
         unlock_vm_cache();

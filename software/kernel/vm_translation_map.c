@@ -143,7 +143,7 @@ struct vm_translation_map *create_translation_map(void)
     int old_flags;
 
     map = slab_alloc(&translation_map_slab);
-    map->page_dir = vm_allocate_page();
+    map->page_dir = page_to_pa(vm_allocate_page());
 
     old_flags = disable_interrupts();
     acquire_spinlock(&kernel_space_lock);
@@ -179,10 +179,10 @@ void destroy_translation_map(struct vm_translation_map *map)
     for (i = 0; i < 768; i++)
     {
         if (pgdir[i] & PAGE_PRESENT)
-            vm_free_page(PAGE_ALIGN(pgdir[i]));
+            vm_free_page(pa_to_page(PAGE_ALIGN(pgdir[i])));
     }
 
-    vm_free_page(map->page_dir);
+    vm_free_page(pa_to_page(map->page_dir));
     slab_free(&translation_map_slab, map);
 }
 
@@ -209,7 +209,7 @@ void vm_map_page(struct vm_translation_map *map, unsigned int va, unsigned int p
         pgdir = (unsigned int*) PA_TO_VA(kernel_map.page_dir);
         if ((pgdir[pgdindex] & PAGE_PRESENT) == 0)
         {
-            new_pgt = vm_allocate_page() | PAGE_PRESENT;
+            new_pgt = page_to_pa(vm_allocate_page()) | PAGE_PRESENT;
             list_for_each(&map_list, other_map, struct list_node)
             {
                 pgdir = (unsigned int*) PA_TO_VA(((struct vm_translation_map*)other_map)->page_dir);
@@ -234,7 +234,7 @@ void vm_map_page(struct vm_translation_map *map, unsigned int va, unsigned int p
         acquire_spinlock(&map->lock);
         pgdir = (unsigned int*) PA_TO_VA(map->page_dir);
         if ((pgdir[pgdindex] & PAGE_PRESENT) == 0)
-            pgdir[pgdindex] = vm_allocate_page() | PAGE_PRESENT;
+            pgdir[pgdindex] = page_to_pa(vm_allocate_page()) | PAGE_PRESENT;
 
         pgtbl = (unsigned int*) PAGE_ALIGN(pgdir[pgdindex]);
         ((unsigned int*)PA_TO_VA(pgtbl))[pgtindex] = pa;
