@@ -170,8 +170,9 @@ error1:
 }
 
 //
-// This is always called with the address space lock held, so the
-// area is guaranteed not to change.
+// This is always called with the address space lock held, so the area is
+// guaranteed not to change. Returns 1 if it sucessfully satisfied the fault, 0
+// if it failed for some reason.
 //
 static int soft_fault(struct vm_address_space *space, const struct vm_area *area,
                       unsigned int address, int is_store)
@@ -185,6 +186,11 @@ static int soft_fault(struct vm_address_space *space, const struct vm_area *area
     int old_flags;
 
     // XXX check area protections and fail if this shouldn't be allowed
+    if (is_store && (area->flags & AREA_WRITABLE) == 0)
+    {
+        kprintf("store to read only area\n");
+        return 0;
+    }
 
     cache_offset = PAGE_ALIGN(address - area->low_address + area->cache_offset);
     old_flags = disable_interrupts();
@@ -231,11 +237,17 @@ static int soft_fault(struct vm_address_space *space, const struct vm_area *area
 
     // XXX if this is from a copy cache, map read only
 
+    if (is_store)
+        page->dirty = 1;
+
     // It's possible two threads will fault on the same VA and end up mapping
     // the page twice. This is fine, because the code above ensures it will
     // be the same page.
     page_flags = PAGE_PRESENT;
-    if (area->flags & AREA_WRITABLE)
+
+    // If the page is clean, we will mark it not writable. This will fault
+    // on the next write, allowing us to update the dirty flag.
+    if ((area->flags & AREA_WRITABLE) != 0 && (page->dirty || is_store))
         page_flags |= PAGE_WRITABLE;
 
     if (area->flags & AREA_EXECUTABLE)

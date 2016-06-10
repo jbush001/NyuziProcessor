@@ -60,6 +60,7 @@ unsigned int vm_allocate_page(void)
     page = list_remove_head(&free_page_list, struct vm_page);
     page->busy = 0;
     page->cache = 0;
+    page->dirty = 0;
     release_spinlock(&page_lock);
     restore_interrupts(old_flags);
     if (page == 0)

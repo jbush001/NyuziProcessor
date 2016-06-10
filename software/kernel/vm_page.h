@@ -34,6 +34,7 @@ struct vm_page
     unsigned int cache_offset;
     struct vm_cache *cache;
     volatile int busy;
+    int dirty;
 };
 
 extern unsigned int memory_size;
