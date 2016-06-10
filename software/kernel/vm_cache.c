@@ -120,7 +120,7 @@ struct vm_page *lookup_cache_page(struct vm_cache *cache, unsigned int offset)
 
     offset = PAGE_ALIGN(offset);
     bucket = gen_hash(cache, offset) % NUM_HASH_BUCKETS;
-    list_for_each(&hash_table[bucket], page, struct vm_page)
+    multilist_for_each(&hash_table[bucket], page, hash_entry, struct vm_page)
     {
         if (page->cache_offset == offset && page->cache == cache)
             return page;
