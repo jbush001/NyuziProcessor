@@ -73,7 +73,7 @@ module writeback_stage(
     input                                 dd_suspend_thread,
     input                                 dd_is_io_address,
     input logic                           dd_fault,
-    input trap_reason_t                   dd_fault_reason,
+    input trap_cause_t                    dd_fault_cause,
 
     // From l1_store_queue
     input [`CACHE_LINE_BYTES - 1:0]       sq_store_bypass_mask,
@@ -87,7 +87,7 @@ module writeback_stage(
 
     // To control_registers
     output logic                          wb_trap,
-    output trap_reason_t                  wb_trap_reason,
+    output trap_cause_t                   wb_trap_cause,
     output scalar_t                       wb_trap_pc,
     output thread_idx_t                   wb_trap_thread_idx,
     output scalar_t                       wb_trap_access_vaddr,
@@ -170,7 +170,7 @@ module writeback_stage(
         wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
         wb_rollback_subcycle = 0;
         wb_trap = 0;
-        wb_trap_reason = TR_RESET;
+        wb_trap_cause = { 2'b0, TT_RESET };
         wb_trap_pc = 0;
 
         // XXX wb_trap_thread_idx seems to be the same as wb_rollback_thread_idx.
@@ -185,8 +185,7 @@ module writeback_stage(
             // Fault piggybacked on instruction, which goes through the
             // integer pipeline.
             wb_rollback_en = 1'b1;
-            if (ix_instruction.trap_reason == TR_ITLB_MISS
-                || ix_instruction.trap_reason == TR_DTLB_MISS)
+            if (ix_instruction.trap_cause.trap_type == TT_TLB_MISS)
                 wb_rollback_pc = cr_tlb_miss_handler;
             else
                 wb_rollback_pc = cr_trap_handler;
@@ -195,9 +194,9 @@ module writeback_stage(
             wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
             wb_trap = 1;
             if (ix_privileged_op_fault)
-                wb_trap_reason = TR_PRIVILEGED_OP;
+                wb_trap_cause = { 2'b0, TT_PRIVILEGED_OP };
             else
-                wb_trap_reason = ix_instruction.trap_reason;
+                wb_trap_cause = ix_instruction.trap_cause;
 
             wb_trap_pc = ix_instruction.pc;
             wb_trap_access_vaddr = ix_instruction.pc;
@@ -211,12 +210,12 @@ module writeback_stage(
             wb_rollback_thread_idx = dd_thread_idx;
             wb_rollback_pipeline = PIPE_MEM;
             wb_trap = 1;
-            if (dd_fault_reason == TR_DTLB_MISS)
+            if (dd_fault_cause.trap_type == TT_TLB_MISS)
                 wb_rollback_pc = cr_tlb_miss_handler;
             else
                 wb_rollback_pc = cr_trap_handler;
 
-            wb_trap_reason = dd_fault_reason;
+            wb_trap_cause = dd_fault_cause;
             wb_trap_pc = dd_instruction.pc;
             wb_trap_thread_idx = dd_thread_idx;
             wb_trap_access_vaddr = dd_request_vaddr;
@@ -543,8 +542,8 @@ module writeback_stage(
     begin
         if (wb_rollback_en && wb_rollback_pc == 0)
         begin
-            $display("thread %0d rolled back to 0, reason %0d address %08x", wb_rollback_thread_idx,
-                wb_trap_reason, wb_trap_pc);
+            $display("thread %0d rolled back to 0, cause %0d address %08x", wb_rollback_thread_idx,
+                wb_trap_cause, wb_trap_pc);
             $finish;
         end
 

@@ -28,5 +28,7 @@ extern int disable_interrupts(void);
 // restore interrupts to value before disable_interrupts was called.
 extern void restore_interrupts(int value);
 
+extern void enable_interrupts(void);
+
 void register_interrupt_handler(int interrupt, interrupt_handler_t);
 void ack_interrupt(int interrupt);

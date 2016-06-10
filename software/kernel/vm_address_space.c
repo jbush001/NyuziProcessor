@@ -28,7 +28,8 @@ static struct vm_address_space kernel_address_space;
 MAKE_SLAB(address_space_slab, struct vm_address_space);
 
 static int soft_fault(struct vm_address_space *space,
-                      const struct vm_area *area, unsigned int address);
+                      const struct vm_area *area, unsigned int address,
+                      int is_store);
 
 struct vm_address_space *get_kernel_address_space(void)
 {
@@ -114,7 +115,7 @@ struct vm_area *create_area(struct vm_address_space *space, unsigned int address
         for (fault_addr = area->low_address; fault_addr < area->high_address;
                 fault_addr += PAGE_SIZE)
         {
-            if (!soft_fault(space, area, fault_addr))
+            if (!soft_fault(space, area, fault_addr, 1))
                 panic("create_area: soft fault failed");
         }
     }
@@ -139,7 +140,7 @@ void destroy_area(struct vm_address_space *space, struct vm_area *area)
     dec_cache_ref(cache);
 }
 
-int handle_page_fault(unsigned int address)
+int handle_page_fault(unsigned int address, int is_store)
 {
     struct vm_address_space *space = current_thread()->proc->space;
     const struct vm_area *area;
@@ -160,7 +161,7 @@ int handle_page_fault(unsigned int address)
         goto error1;
     }
 
-    result = soft_fault(space, area, address);
+    result = soft_fault(space, area, address, is_store);
 
 error1:
     rwlock_unlock_read(&space->mut);
@@ -173,7 +174,7 @@ error1:
 // area is guaranteed not to change.
 //
 static int soft_fault(struct vm_address_space *space, const struct vm_area *area,
-                      unsigned int address)
+                      unsigned int address, int is_store)
 {
     int got;
     int page_flags;
@@ -182,6 +183,8 @@ static int soft_fault(struct vm_address_space *space, const struct vm_area *area
     unsigned int cache_offset;
     struct vm_cache *cache = area->cache;
     int old_flags;
+
+    // XXX check area protections and fail if this shouldn't be allowed
 
     cache_offset = PAGE_ALIGN(address - area->low_address + area->cache_offset);
     old_flags = disable_interrupts();
@@ -225,6 +228,8 @@ static int soft_fault(struct vm_address_space *space, const struct vm_area *area
     // XXX busy way for page to finish loading
     while (page->busy)
         reschedule();
+
+    // XXX if this is from a copy cache, map read only
 
     // It's possible two threads will fault on the same VA and end up mapping
     // the page twice. This is fine, because the code above ensures it will

@@ -47,7 +47,7 @@ module control_registers
 
     // From writeback_stage
     input                                   wb_trap,
-    input trap_reason_t                     wb_trap_reason,
+    input trap_cause_t                      wb_trap_cause,
     input scalar_t                          wb_trap_pc,
     input scalar_t                          wb_trap_access_vaddr,
     input thread_idx_t                      wb_trap_thread_idx,
@@ -63,7 +63,7 @@ module control_registers
     // We support one level of nested traps, so there are two of
     // each of these trap state arrays.
     scalar_t trap_access_addr[2][`THREADS_PER_CORE];
-    trap_reason_t trap_reason[2][`THREADS_PER_CORE];
+    trap_cause_t trap_cause[2][`THREADS_PER_CORE];
     scalar_t eret_address[2][`THREADS_PER_CORE];
     logic interrupt_en_saved[2][`THREADS_PER_CORE];
     logic mmu_en_saved[2][`THREADS_PER_CORE];
@@ -84,7 +84,7 @@ module control_registers
             begin
                 for (int trap_level = 0; trap_level < 2; trap_level++)
                 begin
-                    trap_reason[trap_level][thread_idx] <= TR_RESET;
+                    trap_cause[trap_level][thread_idx] <= { 2'b00, TT_RESET };
                     trap_access_addr[trap_level][thread_idx] <= '0;
                     subcycle_saved[trap_level][thread_idx] <= '0;
                     interrupt_en_saved[trap_level][thread_idx] <= 0;
@@ -126,7 +126,7 @@ module control_registers
             begin
                 // For nested traps, copy saved flags into second slot
                 trap_access_addr[1][wb_trap_thread_idx] <= trap_access_addr[0][wb_trap_thread_idx];
-                trap_reason[1][wb_trap_thread_idx] <= trap_reason[0][wb_trap_thread_idx];
+                trap_cause[1][wb_trap_thread_idx] <= trap_cause[0][wb_trap_thread_idx];
                 eret_address[1][wb_trap_thread_idx] <= eret_address[0][wb_trap_thread_idx];
                 interrupt_en_saved[1][wb_trap_thread_idx] <= interrupt_en_saved[0][wb_trap_thread_idx];
                 mmu_en_saved[1][wb_trap_thread_idx] <= mmu_en_saved[0][wb_trap_thread_idx];
@@ -142,12 +142,12 @@ module control_registers
                 subcycle_saved[0][wb_trap_thread_idx] <= wb_trap_subcycle;
 
                 // Dispatch fault
-                trap_reason[0][wb_trap_thread_idx] <= wb_trap_reason;
+                trap_cause[0][wb_trap_thread_idx] <= wb_trap_cause;
                 eret_address[0][wb_trap_thread_idx] <= wb_trap_pc;
                 trap_access_addr[0][wb_trap_thread_idx] <= wb_trap_access_vaddr;
                 cr_interrupt_en[wb_trap_thread_idx] <= 0;    // Disable interrupts for this thread
                 cr_supervisor_en[wb_trap_thread_idx] <= 1; // Enter supervisor mode on fault
-                if (wb_trap_reason == TR_ITLB_MISS || wb_trap_reason == TR_DTLB_MISS)
+                if (wb_trap_cause.trap_type == TT_TLB_MISS)
                     cr_mmu_en[wb_trap_thread_idx] <= 0;
             end
             else if (ix_is_eret)
@@ -159,7 +159,7 @@ module control_registers
 
                 // Restore nested interrupt stage
                 trap_access_addr[0][ix_thread_idx] <= trap_access_addr[1][ix_thread_idx];
-                trap_reason[0][ix_thread_idx] <= trap_reason[1][ix_thread_idx];
+                trap_cause[0][ix_thread_idx] <= trap_cause[1][ix_thread_idx];
                 eret_address[0][ix_thread_idx] <= eret_address[1][ix_thread_idx];
                 interrupt_en_saved[0][ix_thread_idx] <= interrupt_en_saved[1][ix_thread_idx];
                 mmu_en_saved[0][ix_thread_idx] <= mmu_en_saved[1][ix_thread_idx];
@@ -232,7 +232,7 @@ module control_registers
 
                 CR_THREAD_ID:        cr_creg_read_val <= scalar_t'({CORE_ID, dt_thread_idx});
                 CR_TRAP_PC:          cr_creg_read_val <= eret_address[0][dt_thread_idx];
-                CR_TRAP_REASON:      cr_creg_read_val <= scalar_t'(trap_reason[0][dt_thread_idx]);
+                CR_TRAP_CAUSE:       cr_creg_read_val <= scalar_t'(trap_cause[0][dt_thread_idx]);
                 CR_TRAP_HANDLER:     cr_creg_read_val <= cr_trap_handler;
                 CR_TRAP_ADDRESS:     cr_creg_read_val <= trap_access_addr[0][dt_thread_idx];
                 CR_TLB_MISS_HANDLER: cr_creg_read_val <= cr_tlb_miss_handler;

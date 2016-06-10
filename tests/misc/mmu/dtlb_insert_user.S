@@ -40,8 +40,8 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
 
                 should_not_get_here
 
-handle_fault1:  getcr s0, CR_TRAP_REASON
-                assert_reg s0, TR_PRIVILEGED_OP
+handle_fault1:  getcr s0, CR_TRAP_CAUSE
+                assert_reg s0, TT_PRIVILEGED_OP
 
                 // Try to read data from new address. This should cause
                 // a TLB miss because the dtlbinsert has have failed.
@@ -50,8 +50,8 @@ fault_loc:      load_32 s0, (s0)    // This should fault
 
                 should_not_get_here
 
-handle_fault2:  getcr s0, CR_TRAP_REASON
-                assert_reg s0, TR_DTLB_MISS
+handle_fault2:  getcr s0, CR_TRAP_CAUSE
+                assert_reg s0, TT_TLB_MISS | TRAP_CAUSE_DCACHE
                 getcr s0, CR_TRAP_ADDRESS
                 assert_reg s0, 0x1430
 

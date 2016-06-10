@@ -149,7 +149,7 @@ typedef enum logic [4:0] {
     CR_THREAD_ID            = 5'd0,
     CR_TRAP_HANDLER         = 5'd1,
     CR_TRAP_PC              = 5'd2,
-    CR_TRAP_REASON          = 5'd3,
+    CR_TRAP_CAUSE           = 5'd3,
     CR_FLAGS                = 5'd4,
     CR_TRAP_ADDRESS         = 5'd5,
     CR_CYCLE_COUNT          = 5'd6,
@@ -162,22 +162,26 @@ typedef enum logic [4:0] {
     CR_SUBCYCLE             = 5'd13
 } control_register_t;
 
-typedef enum logic[4:0] {
-    TR_RESET                = 5'd0,
-    TR_ILLEGAL_INSTRUCTION  = 5'd1,
-    TR_DATA_ALIGNMENT       = 5'd2,
-    TR_PAGE_FAULT           = 5'd3,
-    TR_IFETCH_ALIGNNMENT    = 5'd4,
-    TR_ITLB_MISS            = 5'd5,
-    TR_DTLB_MISS            = 5'd6,
-    TR_ILLEGAL_WRITE        = 5'd7,
-    TR_DATA_SUPERVISOR      = 5'd8,
-    TR_IFETCH_SUPERVISOR    = 5'd9,
-    TR_PRIVILEGED_OP        = 5'd10,
-    TR_SYSCALL              = 5'd11,
-    TR_NOT_EXECUTABLE       = 5'd12,
-    TR_INTERRUPT            = 5'd13
-} trap_reason_t;
+typedef enum logic[3:0] {
+    TT_RESET                = 4'd0,
+    TT_ILLEGAL_INSTRUCTION  = 4'd1,
+    TT_PRIVILEGED_OP        = 4'd2,
+    TT_INTERRUPT            = 4'd3,
+    TT_SYSCALL              = 4'd4,
+    TT_UNALIGNED_ACCESS     = 4'd5,
+    TT_PAGE_FAULT           = 4'd6,
+    TT_TLB_MISS             = 4'd7,
+    TT_ILLEGAL_STORE        = 4'd8,
+    TT_SUPERVISOR_ACCESS    = 4'd9,
+    TT_NOT_EXECUTABLE       = 4'd10
+} trap_type_t;
+
+typedef struct packed
+{
+    logic is_dcache;
+    logic is_store;
+    trap_type_t trap_type;
+} trap_cause_t;
 
 typedef logic[3:0] interrupt_id_t;
 
@@ -186,7 +190,7 @@ typedef struct packed {
 
     // Piggybacked exceptions
     logic has_trap;
-    trap_reason_t trap_reason;
+    trap_cause_t trap_cause;
 
     // Decoded instruction fields
     logic has_scalar1;

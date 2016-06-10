@@ -21,7 +21,7 @@
 // differently in hardware.
 //
                 .globl _start
-_start:         mmu_fault_test TR_DATA_SUPERVISOR, load_32, 0x1350, itlb_entries, dtlb_entries, FLAG_MMU_EN
+_start:         mmu_fault_test (TT_SUPERVISOR_ACCESS | TRAP_CAUSE_DCACHE), load_32, 0x1350, itlb_entries, dtlb_entries, FLAG_MMU_EN
 
 itlb_entries:   .long 0x00000000, TLB_PRESENT | TLB_EXECUTABLE
                 .long 0xffffffff, 0xffffffff

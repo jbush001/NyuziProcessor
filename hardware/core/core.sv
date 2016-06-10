@@ -72,7 +72,7 @@ module core
     scalar_t            dd_creg_write_val;      // From dcache_data_stage of dcache_data_stage.v
     logic               dd_dinvalidate_en;      // From dcache_data_stage of dcache_data_stage.v
     logic               dd_fault;               // From dcache_data_stage of dcache_data_stage.v
-    trap_reason_t       dd_fault_reason;        // From dcache_data_stage of dcache_data_stage.v
+    trap_cause_t        dd_fault_cause;         // From dcache_data_stage of dcache_data_stage.v
     logic               dd_flush_en;            // From dcache_data_stage of dcache_data_stage.v
     logic               dd_iinvalidate_en;      // From dcache_data_stage of dcache_data_stage.v
     decoded_instruction_t dd_instruction;       // From dcache_data_stage of dcache_data_stage.v
@@ -308,8 +308,8 @@ module core
     thread_bitmap_t     wb_suspend_thread_oh;   // From writeback_stage of writeback_stage.v
     logic               wb_trap;                // From writeback_stage of writeback_stage.v
     scalar_t            wb_trap_access_vaddr;   // From writeback_stage of writeback_stage.v
+    trap_cause_t        wb_trap_cause;          // From writeback_stage of writeback_stage.v
     scalar_t            wb_trap_pc;             // From writeback_stage of writeback_stage.v
-    trap_reason_t       wb_trap_reason;         // From writeback_stage of writeback_stage.v
     subcycle_t          wb_trap_subcycle;       // From writeback_stage of writeback_stage.v
     thread_idx_t        wb_trap_thread_idx;     // From writeback_stage of writeback_stage.v
     logic               wb_writeback_en;        // From writeback_stage of writeback_stage.v

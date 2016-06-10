@@ -18,7 +18,7 @@
 #define CR_CURRENT_HW_THREAD 0
 #define CR_TRAP_HANDLER 1
 #define CR_TRAP_PC 2
-#define CR_TRAP_REASON 3
+#define CR_TRAP_CAUSE 3
 #define CR_FLAGS 4
 #define CR_TRAP_ADDR 5
 #define CR_TLB_MISS_HANDLER 7
@@ -34,18 +34,15 @@
 #define FLAG_MMU_EN (1 << 1)
 #define FLAG_SUPERVISOR_EN (1 << 2)
 
-// Trap reasons
-#define TR_RESET 0
-#define TR_ILLEGAL_INSTRUCTION 1
-#define TR_DATA_ALIGNMENT 2
-#define TR_PAGE_FAULT 3
-#define TR_IFETCH_ALIGNNMENT 4
-#define TR_ITLB_MISS 5
-#define TR_DTLB_MISS 6
-#define TR_ILLEGAL_WRITE 7
-#define TR_DATA_SUPERVISOR 8
-#define TR_IFETCH_SUPERVISOR 9
-#define TR_PRIVILEGED_OP 10
-#define TR_SYSCALL 11
-#define TR_NOT_EXECUTABLE 12
-#define TR_INTERRUPT 13
+// Trap types
+#define TT_RESET 0
+#define TT_ILLEGAL_INSTRUCTION 1
+#define TT_PRIVILEGED_OP 2
+#define TT_INTERRUPT 3
+#define TT_SYSCALL 4
+#define TT_UNALIGNED_ACCESS 5
+#define TT_PAGE_FAULT 6
+#define TT_TLB_MISS 7
+#define TT_ILLEGAL_STORE 8
+#define TT_SUPERVISOR_ACCESS 9
+#define TT_NOT_EXECUTABLE 10

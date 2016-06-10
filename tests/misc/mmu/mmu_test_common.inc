@@ -52,7 +52,7 @@
 // This is expected to cause a fault, which this will catch, then check that
 // the reason, fault PC, and fault address are correct.
 //
-.macro mmu_fault_test reason, access_op, address, itlb_entries, dtlb_entries, flags
+.macro mmu_fault_test cause, access_op, address, itlb_entries, dtlb_entries, flags
                     load_tlb_entries \itlb_entries, \dtlb_entries
 
                     lea s0, handle_fault
@@ -70,8 +70,8 @@ fault_loc:          \access_op s0, (s0)            // This should fault
 
                     // After fault resumes from here. Check that it behaved as
                     // expected.
-handle_fault:       getcr s0, CR_TRAP_REASON
-                    assert_reg s0, \reason
+handle_fault:       getcr s0, CR_TRAP_CAUSE
+                    assert_reg s0, \cause
                     getcr s0, CR_TRAP_ADDRESS
                     assert_reg s0, \address
 

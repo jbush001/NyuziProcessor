@@ -59,8 +59,8 @@ tlb_miss_loc:   store_32 s10, (s10)     // This will cause a TLB miss
 
                 // We have returned from the TLB miss here. Ensure the
                 // fault control registers were restored
-                getcr s10, CR_TRAP_REASON
-                assert_reg s10, TR_DATA_ALIGNMENT
+                getcr s10, CR_TRAP_CAUSE
+                assert_reg s10, TT_UNALIGNED_ACCESS | TRAP_CAUSE_DCACHE | TRAP_CAUSE_STORE
                 getcr s10, CR_TRAP_ADDRESS
                 assert_reg s10, 17
                 getcr s10, CR_SCRATCHPAD0
@@ -93,8 +93,8 @@ handle_tlb_miss:
                 setcr s10, CR_SUBCYCLE
 
                 // Check fault
-                getcr s26, CR_TRAP_REASON
-                assert_reg s26, TR_DTLB_MISS
+                getcr s26, CR_TRAP_CAUSE
+                assert_reg s26, TT_TLB_MISS | TRAP_CAUSE_DCACHE | TRAP_CAUSE_STORE
                 getcr s26, CR_TRAP_ADDRESS
                 assert_reg s26, 0x2000
 

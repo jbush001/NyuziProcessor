@@ -30,8 +30,8 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
                 flush_pipeline
                 goto notpresent_page        // Jump to nonexecutable page
 
-fault_handler:  getcr s0, CR_TRAP_REASON
-                assert_reg s0, TR_PAGE_FAULT
+fault_handler:  getcr s0, CR_TRAP_CAUSE
+                assert_reg s0, TT_PAGE_FAULT
                 getcr s0, CR_TRAP_ADDRESS
                 assert_reg s0, 0x2000   // Will resume here
 

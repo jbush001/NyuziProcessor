@@ -37,4 +37,4 @@ struct vm_area *create_area(struct vm_address_space*, unsigned int address,
                             const char *name, unsigned int flags,
                             struct vm_cache *cache, unsigned int cache_offset);
 void destroy_area(struct vm_address_space*, struct vm_area*);
-int handle_page_fault(unsigned int address);
+int handle_page_fault(unsigned int address, int is_write);

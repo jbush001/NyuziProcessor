@@ -21,7 +21,7 @@
 // present and ensures it raises a page fault.
 //
                 .globl _start
-_start:         mmu_fault_test TR_PAGE_FAULT, load_32, 0x1350, itlb_entries, dtlb_entries, FLAG_MMU_EN | FLAG_SUPERVISOR_EN
+_start:         mmu_fault_test (TT_PAGE_FAULT | TRAP_CAUSE_DCACHE), load_32, 0x1350, itlb_entries, dtlb_entries, FLAG_MMU_EN | FLAG_SUPERVISOR_EN
 
 itlb_entries:   .long 0x00000000, TLB_PRESENT | TLB_EXECUTABLE
                 .long 0xffffffff, 0xfffffff

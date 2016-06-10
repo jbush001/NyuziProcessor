@@ -141,24 +141,21 @@ enum _ControlRegister
 };
 typedef enum _ControlRegister ControlRegister;
 
-enum _TrapReason
+enum _TrapType
 {
-    TR_RESET = 0,
-    TR_ILLEGAL_INSTRUCTION = 1,
-    TR_DATA_ALIGNMENT = 2,
-    TR_PAGE_FAULT = 3,
-    TR_IFETCH_ALIGNNMENT = 4,
-    TR_ITLB_MISS = 5,
-    TR_DTLB_MISS = 6,
-    TR_ILLEGAL_WRITE = 7,
-    TR_DATA_SUPERVISOR = 8,
-    TR_IFETCH_SUPERVISOR = 9,
-    TR_PRIVILEGED_OP = 10,
-    TR_SYSCALL = 11,
-    TR_NOT_EXECUTABLE = 12,
-    TR_INTERRUPT = 13
+    TT_RESET = 0,
+    TT_ILLEGAL_INSTRUCTION = 1,
+    TT_PRIVILEGED_OP = 2,
+    TT_INTERRUPT = 3,
+    TT_SYSCALL = 4,
+    TT_UNALIGNED_ACCESS = 5,
+    TT_PAGE_FAULT = 6,
+    TT_TLB_MISS = 7,
+    TT_ILLEGAL_STORE = 8,
+    TT_SUPERVISOR_ACCESS = 9,
+    TT_NOT_EXECUTABLE = 10
 };
-typedef enum _TrapReason TrapReason;
+typedef enum _TrapType TrapType;
 
 enum _CacheControlOp
 {

@@ -43,8 +43,8 @@ fault_loc:      setcr s0, CR_SCRATCHPAD0        // This should fault
 
 handle_fault:   getcr s0, CR_SCRATCHPAD0
                 assert_reg s0, 0
-                getcr s0, CR_TRAP_REASON
-                assert_reg s0, TR_PRIVILEGED_OP
+                getcr s0, CR_TRAP_CAUSE
+                assert_reg s0, TT_PRIVILEGED_OP
                 getcr s0, CR_TRAP_PC
                 lea s1, fault_loc
                 cmpeq_i s0, s0, s1

@@ -208,7 +208,7 @@ module verilator_tb(
         .ix_instruction_dest_reg(`CORE0.ix_instruction.dest_reg),
         .ix_instruction_dest_is_vector(`CORE0.ix_instruction.dest_is_vector),
         .ix_instruction_has_trap(`CORE0.ix_instruction.has_trap),
-        .ix_instruction_trap_reason(`CORE0.ix_instruction.trap_reason),
+        .ix_instruction_trap_cause(`CORE0.ix_instruction.trap_cause),
         .dd_instruction_valid(`CORE0.dd_instruction_valid),
         .dd_instruction_has_dest(`CORE0.dd_instruction.has_dest),
         .dd_instruction_dest_reg(`CORE0.dd_instruction.dest_reg),

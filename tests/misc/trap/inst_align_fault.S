@@ -29,8 +29,8 @@ _start:
                 // jump to bad address
                 move pc, 0x357
 
-handle_fault:   getcr s0, CR_TRAP_REASON
-                assert_reg s0, TR_IFETCH_ALIGNNMENT
+handle_fault:   getcr s0, CR_TRAP_CAUSE
+                assert_reg s0, TT_UNALIGNED_ACCESS
                 getcr s0, CR_TRAP_PC
                 assert_reg s0, 0x357
                 call pass_test

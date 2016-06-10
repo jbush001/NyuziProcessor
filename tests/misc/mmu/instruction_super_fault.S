@@ -30,8 +30,8 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
                 flush_pipeline
                 goto super_page        // Jump to supervisor page
 
-fault_handler:  getcr s0, CR_TRAP_REASON
-                assert_reg s0, TR_PAGE_FAULT
+fault_handler:  getcr s0, CR_TRAP_CAUSE
+                assert_reg s0, TT_SUPERVISOR_ACCESS
                 getcr s0, CR_TRAP_ADDRESS
                 assert_reg s0, 0x2000   // Will resume here
 
@@ -47,7 +47,7 @@ fault_handler:  getcr s0, CR_TRAP_REASON
 
 itlb_entries:   .long 0x00000000, TLB_PRESENT | TLB_EXECUTABLE
                 .long 0x00001000, 0x00001000 | TLB_PRESENT | TLB_EXECUTABLE // code is here
-                .long 0x00002000, 0x00002000 | TLB_EXECUTABLE | TLB_SUPERVISOR   // NOTE: supervisor bit set
+                .long 0x00002000, 0x00002000 | TLB_PRESENT | TLB_EXECUTABLE | TLB_SUPERVISOR   // NOTE: supervisor bit set
                 .long 0xffffffff, 0xffffffff
 
 dtlb_entries:   .long 0x00000000, TLB_PRESENT

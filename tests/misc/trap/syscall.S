@@ -35,8 +35,8 @@ fault_loc:      syscall     // This should fault
 
                 should_not_get_here
 
-handle_fault:   getcr s0, CR_TRAP_REASON
-                assert_reg s0, TR_SYSCALL
+handle_fault:   getcr s0, CR_TRAP_CAUSE
+                assert_reg s0, TT_SYSCALL
                 getcr s0, CR_TRAP_PC
                 lea s1, fault_loc
                 cmpeq_i s0, s0, s1

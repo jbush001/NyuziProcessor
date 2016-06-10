@@ -20,15 +20,15 @@
 // Test that unaligned data accesses properly faults
 //
 
-.macro test_unaligned_fault testnum, op, ptr, value, fault_addr
+.macro test_unaligned_fault testnum, op, ptr, value, fault_addr, is_store
                 lea s0, handle_fault\testnum
                 setcr s0, CR_TRAP_HANDLER
 fault_loc\testnum :
                 \op \value, (\ptr\())
                 should_not_get_here
 handle_fault\testnum :
-                getcr s0, CR_TRAP_REASON
-                assert_reg s0, TR_DATA_ALIGNMENT
+                getcr s0, CR_TRAP_CAUSE
+                assert_reg s0, (TT_UNALIGNED_ACCESS | TRAP_CAUSE_DCACHE | (\is_store << 4))
                 getcr s0, CR_TRAP_ADDRESS
                 assert_reg s0, \fault_addr
 
@@ -46,21 +46,21 @@ handle_fault\testnum :
 _start:         move s10, 17            // Scalar pointer
                 load_v v10, vec_ptr
 
-                test_unaligned_fault 1, load_u16, s10, s11, 17
-                test_unaligned_fault 2, load_32, s10, s11, 17
-                test_unaligned_fault 3, load_v, s10, v11, 17
+                test_unaligned_fault 1, load_u16, s10, s11, 17, 0
+                test_unaligned_fault 2, load_32, s10, s11, 17, 0
+                test_unaligned_fault 3, load_v, s10, v11, 17, 0
 
                 // Gather load will fault on lane 3
-                test_unaligned_fault 4, load_gath, v10, v11, 17
+                test_unaligned_fault 4, load_gath, v10, v11, 17, 0
                 getcr s0, CR_SUBCYCLE
                 assert_reg s0, 3
 
-                test_unaligned_fault 5, store_16, s10, s11, 17
-                test_unaligned_fault 6, store_32, s10, s11, 17
-                test_unaligned_fault 7, store_v, s10, v11, 17
+                test_unaligned_fault 5, store_16, s10, s11, 17, 1
+                test_unaligned_fault 6, store_32, s10, s11, 17, 1
+                test_unaligned_fault 7, store_v, s10, v11, 17, 1
 
                 // Scatter store will fault on lane 3
-                test_unaligned_fault 8, store_scat, v10, v11, 17
+                test_unaligned_fault 8, store_scat, v10, v11, 17, 1
                 getcr s0, CR_SUBCYCLE
                 assert_reg s0, 3
 

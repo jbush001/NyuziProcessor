@@ -227,23 +227,23 @@ module instruction_decode_stage(
     always_comb
     begin
         if (raise_interrupt)
-            decoded_instr_nxt.trap_reason = TR_INTERRUPT;
+            decoded_instr_nxt.trap_cause =  { 2'b00, TT_INTERRUPT };
         else if (ifd_tlb_miss)
-            decoded_instr_nxt.trap_reason = TR_ITLB_MISS;
+            decoded_instr_nxt.trap_cause = { 2'b00, TT_TLB_MISS };
         else if (ifd_page_fault)
-            decoded_instr_nxt.trap_reason = TR_PAGE_FAULT;
+            decoded_instr_nxt.trap_cause = { 2'b00, TT_PAGE_FAULT };
         else if (ifd_supervisor_fault)
-            decoded_instr_nxt.trap_reason = TR_IFETCH_SUPERVISOR;
+            decoded_instr_nxt.trap_cause = { 2'b00, TT_SUPERVISOR_ACCESS };
         else if (ifd_alignment_fault)
-            decoded_instr_nxt.trap_reason = TR_IFETCH_ALIGNNMENT;
+            decoded_instr_nxt.trap_cause = { 2'b00, TT_UNALIGNED_ACCESS };
         else if (ifd_executable_fault)
-            decoded_instr_nxt.trap_reason = TR_NOT_EXECUTABLE;
+            decoded_instr_nxt.trap_cause = { 2'b00, TT_NOT_EXECUTABLE };
         else if (dlut_out.illegal)
-            decoded_instr_nxt.trap_reason = TR_ILLEGAL_INSTRUCTION;
+            decoded_instr_nxt.trap_cause = { 2'b00, TT_ILLEGAL_INSTRUCTION };
         else if (is_syscall)
-            decoded_instr_nxt.trap_reason = TR_SYSCALL;
+            decoded_instr_nxt.trap_cause = { 2'b00, TT_SYSCALL };
         else
-            decoded_instr_nxt.trap_reason = TR_RESET;
+            decoded_instr_nxt.trap_cause = { 2'b00, TT_RESET };
     end
 
     // Subtle: Certain instructions need to be issued twice, including I/O

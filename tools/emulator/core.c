@@ -79,7 +79,7 @@ struct Thread
     // miss occurring in the middle of another trap.
     struct
     {
-        TrapReason trapReason;
+        uint32_t trapCause;
         uint32_t pc;
         uint32_t accessAddress;
         uint32_t scratchpad0;
@@ -147,11 +147,13 @@ static void setVectorReg(Thread*, uint32_t reg, uint32_t mask,
                          uint32_t *values);
 static void invalidateSyncAddress(Core*, uint32_t address);
 static void tryToDispatchInterrupt(Thread*);
-static void raiseTrap(Thread*, uint32_t address, TrapReason);
-static void raiseAccessFault(Thread*, uint32_t address, TrapReason, bool isLoad);
+static void raiseTrap(Thread*, uint32_t address, TrapType type, bool isStore,
+                      bool isDataCache);
+static void raiseAccessFault(Thread*, uint32_t address, TrapType, bool isStore,
+                             bool isDataCache);
 static void raiseIllegalInstructionFault(Thread*, uint32_t instruction);
 static bool translateAddress(Thread*, uint32_t virtualAddress, uint32_t
-                             *physicalAddress, bool data, bool isWrite);
+                             *physicalAddress, bool isStore, bool isDataCache);
 static uint32_t scalarArithmeticOp(ArithmeticOp, uint32_t value1, uint32_t value2);
 static bool isCompareOp(uint32_t op);
 static Breakpoint *lookupBreakpoint(Core*, uint32_t pc);
@@ -625,16 +627,18 @@ static void tryToDispatchInterrupt(Thread *thread)
         if (thread->currentSubcycle == 0)
             thread->currentPc += 4;
 
-        raiseTrap(thread, 0, TR_INTERRUPT);
+        raiseTrap(thread, 0, TT_INTERRUPT, false, false);
     }
 }
 
-static void raiseTrap(Thread *thread, uint32_t trapAddress, TrapReason reason)
+static void raiseTrap(Thread *thread, uint32_t trapAddress, TrapType type,
+                      bool isStore, bool isDataCache)
 {
     if (thread->core->enableTracing)
     {
-        printf("%08x [th %d] trap %d %08x\n", thread->currentPc - 4,
-               thread->id, reason, trapAddress);
+        printf("%08x [th %d] trap %d store %d cache %d %08x\n",
+               thread->currentPc - 4, thread->id, type, isStore, isDataCache,
+               trapAddress);
     }
 
     // For nested interrupts, push the old saved state into
@@ -642,7 +646,8 @@ static void raiseTrap(Thread *thread, uint32_t trapAddress, TrapReason reason)
     thread->savedTrapState[1] = thread->savedTrapState[0];
 
     // Save current trap information
-    thread->savedTrapState[0].trapReason = reason;
+    thread->savedTrapState[0].trapCause = type | (isStore ? 0x10ul : 0)
+                                          | (isDataCache ? 0x20ul : 0);
     thread->savedTrapState[0].pc = thread->currentPc - 4;
     thread->savedTrapState[0].enableInterrupt = thread->enableInterrupt;
     thread->savedTrapState[0].enableMmu = thread->enableMmu;
@@ -652,7 +657,7 @@ static void raiseTrap(Thread *thread, uint32_t trapAddress, TrapReason reason)
 
     // Update thread state
     thread->enableInterrupt = false;
-    if (reason == TR_ITLB_MISS || reason == TR_DTLB_MISS)
+    if (type == TT_TLB_MISS)
     {
         thread->currentPc = thread->core->tlbMissHandlerPc;
         thread->enableMmu = false;
@@ -664,22 +669,23 @@ static void raiseTrap(Thread *thread, uint32_t trapAddress, TrapReason reason)
     thread->enableSupervisor = true;
 }
 
-static void raiseAccessFault(Thread *thread, uint32_t address, TrapReason reason, bool isLoad)
+static void raiseAccessFault(Thread *thread, uint32_t address, TrapType type,
+                             bool isStore, bool isDataCache)
 {
     if (thread->core->stopOnFault || thread->core->trapHandlerPc == 0)
     {
         printf("Invalid %s access thread %d PC %08x address %08x\n",
-               isLoad ? "load" : "store",
+               isStore ? "store" : "load",
                thread->id, thread->currentPc - 4, address);
         printThreadRegisters(thread);
         thread->core->crashed = true;
     }
     else
     {
-        if (reason == TR_IFETCH_ALIGNNMENT)
-            thread->currentPc += 4;
+        if (!isDataCache)
+            thread->currentPc += 4; // PC not incremented where this is called
 
-        raiseTrap(thread, address, reason);
+        raiseTrap(thread, address, type, isStore, isDataCache);
     }
 }
 
@@ -693,13 +699,14 @@ static void raiseIllegalInstructionFault(Thread *thread, uint32_t instruction)
         thread->core->crashed = true;
     }
     else
-        raiseTrap(thread, 0, TR_ILLEGAL_INSTRUCTION);
+        raiseTrap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false);
 }
 
 // Translate addresses using the translation lookaside buffer. Raise faults
 // if necessary.
-static bool translateAddress(Thread *thread, uint32_t virtualAddress, uint32_t *outPhysicalAddress,
-                             bool dataFetch, bool isWrite)
+static bool translateAddress(Thread *thread, uint32_t virtualAddress,
+                             uint32_t *outPhysicalAddress, bool isStore,
+                             bool isDataAccess)
 {
     int tlbSet;
     int way;
@@ -723,7 +730,8 @@ static bool translateAddress(Thread *thread, uint32_t virtualAddress, uint32_t *
     }
 
     tlbSet = (virtualAddress / PAGE_SIZE) % TLB_SETS;
-    setEntries = (dataFetch ? thread->core->dtlb : thread->core->itlb) + tlbSet * TLB_WAYS;
+    setEntries = (isDataAccess ? thread->core->dtlb : thread->core->itlb)
+        + tlbSet * TLB_WAYS;
     for (way = 0; way < TLB_WAYS; way++)
     {
         if (setEntries[way].virtualAddress == ROUND_TO_PAGE(virtualAddress)
@@ -732,37 +740,39 @@ static bool translateAddress(Thread *thread, uint32_t virtualAddress, uint32_t *
         {
             if ((setEntries[way].physAddrAndFlags & TLB_PRESENT) == 0)
             {
-            	// In instruction fetch, hadn't been incremented yet
-                if (!dataFetch)
+                // In instruction fetch, hadn't been incremented yet
+                if (!isDataAccess)
                     thread->currentPc += 4;
 
-                raiseTrap(thread, virtualAddress, TR_PAGE_FAULT);
+                raiseTrap(thread, virtualAddress, TT_PAGE_FAULT, isStore,
+                          isDataAccess);
                 return false;
             }
 
             if ((setEntries[way].physAddrAndFlags & TLB_SUPERVISOR) != 0
                     && !thread->enableSupervisor)
             {
-            	// In instruction fetch, hadn't been incremented yet
-                if (!dataFetch)
+                // In instruction fetch, hadn't been incremented yet
+                if (!isDataAccess)
                     thread->currentPc += 4;
 
-                raiseTrap(thread, virtualAddress, dataFetch ? TR_DATA_SUPERVISOR
-                          : TR_IFETCH_SUPERVISOR);
+                raiseTrap(thread, virtualAddress, TT_SUPERVISOR_ACCESS, isStore,
+                          isDataAccess);
                 return false;
             }
 
             if ((setEntries[way].physAddrAndFlags & TLB_EXECUTABLE) == 0
-                    && !dataFetch)
+                    && !isDataAccess)
             {
                 thread->currentPc += 4;
-                raiseTrap(thread, virtualAddress, TR_NOT_EXECUTABLE);
+                raiseTrap(thread, virtualAddress, TT_NOT_EXECUTABLE, false, false);
                 return false;
             }
 
-            if (isWrite && (setEntries[way].physAddrAndFlags & TLB_WRITE_ENABLE) == 0)
+            if (isStore && (setEntries[way].physAddrAndFlags & TLB_WRITE_ENABLE) == 0)
             {
-                raiseAccessFault(thread, virtualAddress, TR_ILLEGAL_WRITE, false);
+                raiseAccessFault(thread, virtualAddress, TT_ILLEGAL_STORE, true,
+                                 isDataAccess);
                 return false;
             }
 
@@ -786,14 +796,10 @@ static bool translateAddress(Thread *thread, uint32_t virtualAddress, uint32_t *
 
     // No translation found
 
-    if (dataFetch)
-        raiseTrap(thread, virtualAddress, TR_DTLB_MISS);
-    else
-    {
-        thread->currentPc += 4;	// In instruction fetch, hadn't been incremented yet
-        raiseTrap(thread, virtualAddress, TR_ITLB_MISS);
-    }
+    if (!isDataAccess)
+        thread->currentPc += 4;	// Instruction fetch hasn't updated yet
 
+    raiseTrap(thread, virtualAddress, TT_TLB_MISS, isStore, isDataAccess);
     return false;
 }
 
@@ -922,7 +928,7 @@ static void executeRegisterArithInst(Thread *thread, uint32_t instruction)
 
     if (op == OP_SYSCALL)
     {
-        raiseTrap(thread, 0, TR_SYSCALL);
+        raiseTrap(thread, 0, TT_SYSCALL, false, false);
         return;
     }
 
@@ -1181,11 +1187,11 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instruction)
     // Check alignment
     if ((virtualAddress % accessSize) != 0)
     {
-        raiseAccessFault(thread, virtualAddress, TR_DATA_ALIGNMENT, isLoad);
+        raiseAccessFault(thread, virtualAddress, TT_UNALIGNED_ACCESS, !isLoad, true);
         return;
     }
 
-    if (!translateAddress(thread, virtualAddress, &physicalAddress, true, !isLoad))
+    if (!translateAddress(thread, virtualAddress, &physicalAddress, !isLoad, true))
         return; // fault raised, bypass other side effects
 
     isDeviceAccess = (physicalAddress & 0xffff0000) == 0xffff0000;
@@ -1276,14 +1282,14 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instruction)
                 {
                     // IO address range
                     if (physicalAddress >= REG_INT_MASK0 && physicalAddress < REG_INT_MASK0 +
-                        sizeof(uint32_t) * 16)
+                            sizeof(uint32_t) * 16)
                     {
                         thread->core->threads[(physicalAddress - REG_INT_MASK0) / sizeof(uint32_t)]
-                            .interruptMask = valueToStore;
+                        .interruptMask = valueToStore;
                     }
                     else if (physicalAddress == REG_THREAD_RESUME)
                         thread->core->threadEnableMask |= valueToStore
-                           & ((1ull << thread->core->totalThreads) - 1);
+                                                          & ((1ull << thread->core->totalThreads) - 1);
                     else if (physicalAddress == REG_THREAD_HALT)
                         thread->core->threadEnableMask &= ~valueToStore;
                     else if (physicalAddress == REG_INT_ACK)
@@ -1386,11 +1392,12 @@ static void executeBlockLoadStoreInst(Thread *thread, uint32_t instruction)
     // Check alignment
     if ((virtualAddress & (NUM_VECTOR_LANES * 4 - 1)) != 0)
     {
-        raiseAccessFault(thread, virtualAddress, TR_DATA_ALIGNMENT, isLoad);
+        raiseAccessFault(thread, virtualAddress, TT_UNALIGNED_ACCESS, !isLoad,
+                         true);
         return;
     }
 
-    if (!translateAddress(thread, virtualAddress, &physicalAddress, true, !isLoad))
+    if (!translateAddress(thread, virtualAddress, &physicalAddress, !isLoad, true))
         return; // fault raised, bypass other side effects
 
     blockPtr = UINT32_PTR(thread->core->memory, physicalAddress);
@@ -1465,11 +1472,11 @@ static void executeScatterGatherInst(Thread *thread, uint32_t instruction)
     virtualAddress = thread->vectorReg[ptrreg][lane] + offset;
     if ((mask & (1 << lane)) && (virtualAddress & 3) != 0)
     {
-        raiseAccessFault(thread, virtualAddress, TR_DATA_ALIGNMENT, isLoad);
+        raiseAccessFault(thread, virtualAddress, TT_UNALIGNED_ACCESS, !isLoad, true);
         return;
     }
 
-    if (!translateAddress(thread, virtualAddress, &physicalAddress, true, !isLoad))
+    if (!translateAddress(thread, virtualAddress, &physicalAddress, !isLoad, true))
         return; // fault raised, bypass other side effects
 
     if (isLoad)
@@ -1529,7 +1536,7 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
                 break;
 
             case CR_TRAP_REASON:
-                value = thread->savedTrapState[0].trapReason;
+                value = thread->savedTrapState[0].trapCause;
                 break;
 
             case CR_FLAGS:
@@ -1591,7 +1598,7 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
         // Only threads in supervisor mode can write control registers.
         if (!thread->enableSupervisor)
         {
-            raiseTrap(thread, 0, TR_PRIVILEGED_OP);
+            raiseTrap(thread, 0, TT_PRIVILEGED_OP, false, false);
             return;
         }
 
@@ -1734,7 +1741,7 @@ static void executeBranchInst(Thread *thread, uint32_t instruction)
         case BRANCH_ERET:
             if (!thread->enableSupervisor)
             {
-                raiseTrap(thread, 0, TR_PRIVILEGED_OP);
+                raiseTrap(thread, 0, TT_PRIVILEGED_OP, false, false);
                 return;
             }
 
@@ -1770,7 +1777,7 @@ static void executeCacheControlInst(Thread *thread, uint32_t instruction)
         case CC_DINVALIDATE:
             if (!thread->enableSupervisor)
             {
-                raiseTrap(thread, 0, TR_PRIVILEGED_OP);
+                raiseTrap(thread, 0, TT_PRIVILEGED_OP, false, false);
                 return;
             }
 
@@ -1783,7 +1790,7 @@ static void executeCacheControlInst(Thread *thread, uint32_t instruction)
             uint32_t offset = extractSignedBits(instruction, 15, 10);
             uint32_t physicalAddress;
             translateAddress(thread, getThreadScalarReg(thread, ptrReg) + offset,
-                             &physicalAddress, true, false);
+                             &physicalAddress, false, true);
             break;
         }
 
@@ -1798,7 +1805,7 @@ static void executeCacheControlInst(Thread *thread, uint32_t instruction)
 
             if (!thread->enableSupervisor)
             {
-                raiseTrap(thread, 0, TR_PRIVILEGED_OP);
+                raiseTrap(thread, 0, TT_PRIVILEGED_OP, false, false);
                 return;
             }
 
@@ -1884,13 +1891,15 @@ static bool executeInstruction(Thread *thread)
     // Check PC alignment
     if ((thread->currentPc & 3) != 0)
     {
-        raiseAccessFault(thread, thread->currentPc + 4, TR_IFETCH_ALIGNNMENT, true);
+        raiseAccessFault(thread, thread->currentPc + 4, TT_UNALIGNED_ACCESS,
+            false, false);
         return true;   // XXX if stop on fault was enabled, should return false
     }
 
     if (!translateAddress(thread, thread->currentPc, &physicalPc, false, false))
         return true;	// On next execution will start in TLB miss handler
-                    // XXX if stop on fault was enabled, should return false
+
+    // XXX if stop on fault was enabled, should return false
 
     instruction = *UINT32_PTR(thread->core->memory, physicalPc);
     thread->currentPc += 4;

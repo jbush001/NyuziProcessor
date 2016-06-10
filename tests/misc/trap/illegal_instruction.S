@@ -27,8 +27,8 @@ fault_loc\testnum :
                 .long \instvalue
                 should_not_get_here
 handle_fault\testnum :
-                getcr s0, CR_TRAP_REASON
-                assert_reg s0, TR_ILLEGAL_INSTRUCTION
+                getcr s0, CR_TRAP_CAUSE
+                assert_reg s0, TT_ILLEGAL_INSTRUCTION
 
                 // Check that PC is correct
                 getcr s0, CR_TRAP_PC

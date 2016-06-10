@@ -40,8 +40,8 @@ fault_loc:      itlbinsert s0, s1   // This should fault
 
                 should_not_get_here
 
-handle_fault1:  getcr s0, CR_TRAP_REASON
-                assert_reg s0, TR_PRIVILEGED_OP
+handle_fault1:  getcr s0, CR_TRAP_CAUSE
+                assert_reg s0, TT_PRIVILEGED_OP
 
                 // Check that fault PC is correct
                 getcr s0, CR_TRAP_PC
@@ -58,8 +58,8 @@ handle_fault1:  getcr s0, CR_TRAP_REASON
 
                 should_not_get_here
 
-handle_fault2:  getcr s0, CR_TRAP_REASON
-                assert_reg s0, TR_ITLB_MISS
+handle_fault2:  getcr s0, CR_TRAP_CAUSE
+                assert_reg s0, TT_TLB_MISS
                 getcr s0, CR_TRAP_ADDRESS
                 assert_reg s0, 0x1000
 

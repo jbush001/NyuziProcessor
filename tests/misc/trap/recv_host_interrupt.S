@@ -40,8 +40,8 @@ handle_trap\intnum :
                     store_32 s25, (s24) // Acknowledge
 
                     // Check control registers
-                    getcr s0, CR_TRAP_REASON
-                    assert_reg s0, TR_INTERRUPT
+                    getcr s0, CR_TRAP_CAUSE
+                    assert_reg s0, TT_INTERRUPT
                     getcr s0, CR_FLAGS
                     assert_reg s0, FLAG_SUPERVISOR_EN   // Interrupts disabled
 

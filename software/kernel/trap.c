@@ -32,21 +32,31 @@ void dump_interrupt_frame(const struct interrupt_frame*);
 extern int handle_syscall(int arg0, int arg1, int arg2, int arg3, int arg4,
                           int arg5);
 
+#define TT_RESET 0
+#define TT_ILLEGAL_INSTRUCTION 1
+#define TT_PRIVILEGED_OP 2
+#define TT_INTERRUPT 3
+#define TT_SYSCALL 4
+#define TT_UNALIGNED_ACCESS 5
+#define TT_PAGE_FAULT 6
+#define TT_TLB_MISS 7
+#define TT_ILLEGAL_STORE 8
+#define TT_SUPERVISOR_ACCESS 9
+#define TT_NOT_EXECUTABLE 10
+
 static const char *TRAP_NAMES[] =
 {
     "reset",
     "Illegal Instruction",
-    "Data Alignment Fault",
-    "Page Fault",
-    "Instruction Alignment Fault",
-    "ITLB Miss",
-    "DTLB Miss",
-    "Illegal Write",
-    "Data Supervisor Fault",
-    "Instruction Supervisor Fault",
-    "Privileged Operation",
+    "Privileged Op",
+    "Interrupt",
     "Syscall",
-    "Non Executable Page"
+    "Unaligned Access",
+    "Page Fault",
+    "TLB Miss",
+    "Illegal Store",
+    "Illegal Supervisor Page Access",
+    "Page Non Executable"
 };
 
 static interrupt_handler_t handlers[NUM_INTERRUPTS];
@@ -107,17 +117,15 @@ static void __attribute__((noreturn)) bad_fault(struct interrupt_frame *frame)
 void handle_trap(struct interrupt_frame *frame)
 {
     unsigned int address;
-    int trapId = __builtin_nyuzi_read_control_reg(CR_TRAP_REASON);
+    int trap_cause = __builtin_nyuzi_read_control_reg(CR_TRAP_CAUSE);
 
-    switch (trapId)
+    switch (trap_cause & 0xf)
     {
-        case TR_PAGE_FAULT:
-            // Enable interrupts
+        case TT_PAGE_FAULT:
+        case TT_ILLEGAL_STORE:
             address = __builtin_nyuzi_read_control_reg(CR_TRAP_ADDR);
-            __builtin_nyuzi_write_control_reg(CR_FLAGS,
-                                              __builtin_nyuzi_read_control_reg(CR_FLAGS) | FLAG_INTERRUPT_EN);
-
-            if (!handle_page_fault(address))
+            enable_interrupts();
+            if (!handle_page_fault(address, (trap_cause & 0x10) != 0))
             {
                 if (fault_handler[current_hw_thread()] != 0)
                 {
@@ -128,29 +136,23 @@ void handle_trap(struct interrupt_frame *frame)
                     bad_fault(frame);
             }
 
-            // Disable interrupts
-            __builtin_nyuzi_write_control_reg(CR_FLAGS,
-                                              __builtin_nyuzi_read_control_reg(CR_FLAGS) & ~FLAG_INTERRUPT_EN);
+            disable_interrupts();
             break;
 
-        case TR_SYSCALL:
+        case TT_SYSCALL:
             // Enable interrupts
             address = __builtin_nyuzi_read_control_reg(CR_TRAP_ADDR);
-            __builtin_nyuzi_write_control_reg(CR_FLAGS,
-                                              __builtin_nyuzi_read_control_reg(CR_FLAGS) | FLAG_INTERRUPT_EN);
+            enable_interrupts();
 
             frame->gpr[0] = handle_syscall(frame->gpr[0], frame->gpr[1],
                                            frame->gpr[2], frame->gpr[3],
                                            frame->gpr[4], frame->gpr[5]);
 
             frame->gpr[31] += 4;    // Next instruction
-
-            // Disable interrupts
-            __builtin_nyuzi_write_control_reg(CR_FLAGS,
-                                              __builtin_nyuzi_read_control_reg(CR_FLAGS) & ~FLAG_INTERRUPT_EN);
+            disable_interrupts();
             break;
 
-        case TR_INTERRUPT:
+        case TT_INTERRUPT:
             handle_interrupt(frame);
             break;
 
@@ -162,20 +164,23 @@ void handle_trap(struct interrupt_frame *frame)
 void dump_interrupt_frame(const struct interrupt_frame *frame)
 {
     int reg;
-    int trapId = __builtin_nyuzi_read_control_reg(CR_TRAP_REASON);
+    int trap_cause = __builtin_nyuzi_read_control_reg(CR_TRAP_CAUSE);
+    int trap_type = trap_cause & 0xf;
     unsigned int trap_address = __builtin_nyuzi_read_control_reg(CR_TRAP_ADDR);
 
-    if (trapId <= TR_NOT_EXECUTABLE)
+    if (trap_type <= TT_NOT_EXECUTABLE)
     {
-        kprintf("%s ", TRAP_NAMES[trapId]);
-        if (trapId == TR_DATA_ALIGNMENT || trapId == TR_PAGE_FAULT
-                || trapId == TR_ILLEGAL_WRITE || trapId == TR_DATA_SUPERVISOR)
+        kprintf("%s ", TRAP_NAMES[trap_type]);
+        if (trap_type == TT_UNALIGNED_ACCESS || trap_type == TT_PAGE_FAULT
+                || trap_type == TT_TLB_MISS || trap_type == TT_SUPERVISOR_ACCESS)
         {
-            kprintf("@%08x\n", trap_address);
+            kprintf("@%08x %s %s\n", trap_address,
+                (trap_cause & 0x20) ? "dcache" : "icache",
+                (trap_cause & 0x10) ? "store" : "load");
         }
     }
     else
-        kprintf("Unknown trap %d\n", trapId);
+        kprintf("Unknown trap cause %02x\n", trap_cause);
 
     kprintf("REGISTERS\n");
     for (reg = 0; reg < 32; reg++)

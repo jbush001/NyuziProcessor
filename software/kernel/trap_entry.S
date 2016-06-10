@@ -205,9 +205,9 @@ tlb_miss_handler:   setcr s0, CR_SCRATCHPAD0    // Save s0 in scratchpad
                     load_32 s0, (s1)            // Read page table entry value
 
                     // Update TLB
-update_tlb:         getcr s1, CR_TRAP_REASON    // Get fault reason
-                    cmpeq_i s1, s1, TR_ITLB_MISS // ITLB miss?
-                    btrue s1, fill_itlb          // If yes, branch to update ITLB
+update_tlb:         getcr s1, CR_TRAP_CAUSE     // Get fault reason
+                    and s1, s1, 0x20            // Is DTLB miss?
+                    bfalse s1, fill_itlb        // If no, branch to update ITLB
 
 fill_dltb:          getcr s1, CR_TRAP_ADDR      // Get fault virtual address
                     dtlbinsert s1, s0           // Set virtual address for DTLB
@@ -227,6 +227,12 @@ pte_not_present:    move s0, 0                  // Null entry (present bit not s
                     .globl disable_interrupts
 disable_interrupts: getcr s0, CR_FLAGS
                     and s1, s0, FLAG_MMU_EN | FLAG_SUPERVISOR_EN
+                    setcr s1, CR_FLAGS
+                    ret
+
+                    .globl enable_interrupts
+enable_interrupts:  getcr s0, CR_FLAGS
+                    or s1, s0, FLAG_INTERRUPT_EN
                     setcr s1, CR_FLAGS
                     ret
 

@@ -50,8 +50,8 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
 
                 should_not_get_here
 
-check_fault:    getcr s0, CR_TRAP_REASON
-                assert_reg s0, TR_ITLB_MISS
+check_fault:    getcr s0, CR_TRAP_CAUSE
+                assert_reg s0, TT_TLB_MISS
 
                 call pass_test
 

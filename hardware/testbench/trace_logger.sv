@@ -53,7 +53,7 @@ module trace_logger(
     input                            ix_instruction_dest_is_vector,
     input scalar_t                   ix_instruction_pc,
     input                            ix_instruction_has_trap,
-    input trap_reason_t              ix_instruction_trap_reason,
+    input trap_cause_t               ix_instruction_trap_cause,
 
 
     // From memory pipeline
@@ -238,7 +238,7 @@ module trace_logger(
             // Signal interrupt to emulator. These are piggybacked on instructions
             // and flow down the integer pipeline.
             if (ix_instruction_valid && ix_instruction_has_trap
-                && ix_instruction_trap_reason == TR_INTERRUPT)
+                && ix_instruction_trap_cause.trap_type == TT_INTERRUPT)
             begin
                 assert(trace_reorder_queue[6].event_type == EVENT_INVALID);
                 trace_reorder_queue[5].event_type <= EVENT_INTERRUPT;

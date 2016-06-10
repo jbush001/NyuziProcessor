@@ -71,7 +71,7 @@ module dcache_data_stage(
     output logic                              dd_suspend_thread,
     output logic                              dd_is_io_address,
     output logic                              dd_fault,
-    output trap_reason_t                      dd_fault_reason,
+    output trap_cause_t                       dd_fault_cause,
 
     // From control registers
     input logic                               cr_supervisor_en[`THREADS_PER_CORE],
@@ -152,6 +152,7 @@ module dcache_data_stage(
     logic write_fault;
     logic tlb_miss;
     logic page_fault;
+    logic is_store_fault;
 
     // Unlike earlier stages, this commits instruction side effects like stores,
     // so it needs to check if there is a rollback (which would be for the
@@ -487,6 +488,8 @@ module dcache_data_stage(
     assign supervisor_fault = dt_tlb_supervisor && !cr_supervisor_en[dt_thread_idx]
         && dt_tlb_present;
     assign page_fault = (dcache_load_en || dcache_store_en) && !dt_tlb_present;
+    assign is_store_fault = dt_instruction.is_memory_access
+        && !dt_instruction.is_load;
 
     always_ff @(posedge clk)
     begin
@@ -502,17 +505,17 @@ module dcache_data_stage(
         // there is a TLB miss. The order of the remaining items should match
         // that in instruction_decode_stage for consistency.
         if (tlb_miss)
-            dd_fault_reason <= TR_DTLB_MISS;
+            dd_fault_cause <= { 1'b1, is_store_fault, TT_TLB_MISS };
         else if (page_fault)
-            dd_fault_reason <= TR_PAGE_FAULT;
+            dd_fault_cause <= { 1'b1, is_store_fault, TT_PAGE_FAULT };
         else if (supervisor_fault)
-            dd_fault_reason <= TR_DATA_SUPERVISOR;
+            dd_fault_cause <= { 1'b1, is_store_fault, TT_SUPERVISOR_ACCESS };
         else if (alignment_fault)
-            dd_fault_reason <= TR_DATA_ALIGNMENT;
+            dd_fault_cause <= { 1'b1, is_store_fault, TT_UNALIGNED_ACCESS };
         else if (privilege_op_fault)
-            dd_fault_reason <= TR_PRIVILEGED_OP;
+            dd_fault_cause <= { 2'b00, TT_PRIVILEGED_OP };
         else // write fault
-            dd_fault_reason <= TR_ILLEGAL_WRITE;
+            dd_fault_cause <= {  2'b11, TT_ILLEGAL_STORE };
     end
 
     always_ff @(posedge clk, posedge reset)

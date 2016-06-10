@@ -44,8 +44,8 @@ fault_loc:      dflush  s0                      // This should raise a tlb fault
                 should_not_get_here
 
 tlb_fault:      // Check that the fault is correct
-                getcr s0, CR_TRAP_REASON
-                assert_reg s0, TR_DTLB_MISS
+                getcr s0, CR_TRAP_CAUSE
+                assert_reg s0, TT_TLB_MISS | TRAP_CAUSE_DCACHE
                 getcr s0, CR_TRAP_ADDRESS
                 assert_reg s0, 0x2234
 
