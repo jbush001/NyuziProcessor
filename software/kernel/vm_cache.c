@@ -121,7 +121,6 @@ struct vm_page *lookup_cache_page(struct vm_cache *cache, unsigned int offset)
 {
     unsigned int bucket;
     struct vm_page *page;
-    int found = 0;
 
     assert(debug_cache_lock_owner == current_hw_thread());
 

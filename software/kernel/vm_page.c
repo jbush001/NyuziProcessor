@@ -21,7 +21,6 @@
 #include "vm_page.h"
 #include "vm_translation_map.h"
 
-static unsigned int next_alloc_page;
 static spinlock_t page_lock;
 extern int boot_pages_used;
 

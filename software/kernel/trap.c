@@ -32,18 +32,6 @@ void dump_interrupt_frame(const struct interrupt_frame*);
 extern int handle_syscall(int arg0, int arg1, int arg2, int arg3, int arg4,
                           int arg5);
 
-#define TT_RESET 0
-#define TT_ILLEGAL_INSTRUCTION 1
-#define TT_PRIVILEGED_OP 2
-#define TT_INTERRUPT 3
-#define TT_SYSCALL 4
-#define TT_UNALIGNED_ACCESS 5
-#define TT_PAGE_FAULT 6
-#define TT_TLB_MISS 7
-#define TT_ILLEGAL_STORE 8
-#define TT_SUPERVISOR_ACCESS 9
-#define TT_NOT_EXECUTABLE 10
-
 static const char *TRAP_NAMES[] =
 {
     "reset",
@@ -77,6 +65,8 @@ static void handle_interrupt(struct interrupt_frame *frame)
 {
     unsigned int interrupt_bitmap = REGISTERS[REG_PENDING_INTERRUPT]
                                     & enabled_interrupts;
+
+    (void) frame;
     while (interrupt_bitmap)
     {
         int next_int = __builtin_ctz(interrupt_bitmap);
@@ -127,11 +117,9 @@ void handle_trap(struct interrupt_frame *frame)
             enable_interrupts();
             if (!handle_page_fault(address, (trap_cause & 0x10) != 0))
             {
+                // Jump to user_copy fault handler if set
                 if (fault_handler[current_hw_thread()] != 0)
-                {
-                    // Jump to user_copy fault handler
                     frame->gpr[31] = fault_handler[current_hw_thread()];
-                }
                 else
                     bad_fault(frame);
             }

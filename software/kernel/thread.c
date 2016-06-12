@@ -230,6 +230,8 @@ struct thread *spawn_user_thread(const char *name, struct process *proc,
                                  unsigned int start_address,
                                  void *param)
 {
+    (void) param;
+
     return spawn_thread_internal(name, proc, user_thread_kernel_start,
                                  (thread_start_func_t) start_address, 0, 0);
 }

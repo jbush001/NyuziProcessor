@@ -77,8 +77,6 @@ struct thread *spawn_user_thread(const char *name,
 struct thread *spawn_kernel_thread(const char *name,
                                    thread_start_func_t start_func,
                                    void *param);
-void enqueue_thread(struct thread_queue*, struct thread*);
-struct thread *dequeue_thread(struct thread_queue*);
 void reschedule(void);
 struct process *exec_program(const char *filename);
 void __attribute__((noreturn)) thread_exit(int retcode);

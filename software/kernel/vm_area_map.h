@@ -57,7 +57,7 @@ void init_area_map(struct vm_area_map *map, unsigned int low_address,
 struct vm_area *create_vm_area(struct vm_area_map*, unsigned int address,
                                unsigned int size, enum placement place,
                                const char *name, unsigned int flags);
-void destroy_vm_area(struct vm_area_map *map, struct vm_area *area);
+void destroy_vm_area(struct vm_area *area);
 const struct vm_area *lookup_area(const struct vm_area_map*,
                                   unsigned int address);
 void dump_area_map(const struct vm_area_map*);

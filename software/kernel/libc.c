@@ -354,7 +354,6 @@ int kprintf(const char *format, ...)
 {
     va_list args;
     int result;
-    int prevInt;
 
     va_start(args, format);
     result = vprintf(format, args);
@@ -379,7 +378,6 @@ void puts(const char *s)
 void panic(const char *format, ...)
 {
     va_list args;
-    int prevInt;
 
     kprintf("KERNEL PANIC: ");
 

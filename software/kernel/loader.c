@@ -31,7 +31,6 @@ int load_program(struct process *proc,
 {
     struct Elf32_Ehdr image_header;
     struct Elf32_Phdr segments[MAX_SEGMENTS];
-    struct vm_address_space *space = current_thread()->proc->space;
     struct vm_cache *image_cache;
     struct vm_cache *cow_cache = 0;
     struct vm_cache *area_cache;
@@ -79,8 +78,6 @@ int load_program(struct process *proc,
     for (int segment_index = 0; segment_index < image_header.e_phnum; segment_index++)
     {
         const struct Elf32_Phdr *segment = &segments[segment_index];
-        int num_pages;
-        int page_index;
         unsigned int area_flags;
 
         if ((segment->p_type & PT_LOAD) == 0)

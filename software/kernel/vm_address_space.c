@@ -83,7 +83,7 @@ void destroy_address_space(struct vm_address_space *space)
     {
         VM_DEBUG("destroy area %s\n", area->name);
         dec_cache_ref(area->cache);
-        destroy_vm_area(&space->area_map, area);
+        destroy_vm_area(area);
     }
 
     destroy_translation_map(space->translation_map);
@@ -96,7 +96,6 @@ struct vm_area *create_area(struct vm_address_space *space, unsigned int address
 {
     struct vm_area *area;
     unsigned int fault_addr;
-    int old_flags;
 
     // Anonymous area, create a cache if non is specified.
     if (cache == 0)
@@ -149,7 +148,7 @@ void destroy_area(struct vm_address_space *space, struct vm_area *area)
         }
     }
 
-    destroy_vm_area(&space->area_map, area);
+    destroy_vm_area(area);
     rwlock_unlock_write(&space->mut);
 
     dec_cache_ref(cache);
@@ -159,7 +158,6 @@ int handle_page_fault(unsigned int address, int is_store)
 {
     struct vm_address_space *space = current_thread()->proc->space;
     const struct vm_area *area;
-    int old_flags;
     int result = 0;
 
     rwlock_lock_read(&space->mut);

@@ -34,7 +34,6 @@ struct vm_cache
 
 void bootstrap_vm_cache(void);
 
-
 void lock_vm_cache(void);
 void unlock_vm_cache(void);
 

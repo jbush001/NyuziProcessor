@@ -97,7 +97,7 @@ static int init_file_system(void)
 
 struct file_handle *open_file(const char *path)
 {
-    int directory_index;
+    unsigned int directory_index;
     struct file_handle *handle;
 
     if (!initialized)

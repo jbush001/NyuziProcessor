@@ -24,10 +24,13 @@ int handle_syscall(int arg0, int arg1, int arg2, int arg3, int arg4,
 {
     char tmp[64];
 
+    (void) arg4;
+    (void) arg5;
+
     switch (arg0)
     {
         case 0: // Print something
-            if (arg2 >= sizeof(tmp) - 2)
+            if ((unsigned int) arg2 >= sizeof(tmp) - 2)
             {
                 kprintf("size out of range\n");
                 return -1;
