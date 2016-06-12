@@ -44,6 +44,7 @@ struct vm_translation_map *vm_translation_map_init(void);
 struct vm_translation_map *create_translation_map(void);
 void destroy_translation_map(struct vm_translation_map*);
 void vm_map_page(struct vm_translation_map *map, unsigned int va, unsigned int pa);
+unsigned int query_translation_map(struct vm_translation_map *map, unsigned int va);
 
 // Switch to a new address space
 void switch_to_translation_map(struct vm_translation_map *map);

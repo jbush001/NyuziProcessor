@@ -141,7 +141,7 @@ static void destroy_thread(struct thread *th)
     struct process *proc = th->proc;
     int old_flags;
 
-    kprintf("cleaning up thread %d (%s)\n", th->id, th->name);
+    VM_DEBUG("cleaning up thread %d (%s)\n", th->id, th->name);
 
     assert(th->state == THREAD_DEAD);
 
@@ -157,17 +157,17 @@ static void destroy_thread(struct thread *th)
 
     if (th->user_stack_area)
     {
-        kprintf("free user stack\n");
+        VM_DEBUG("free user stack\n");
         destroy_area(th->proc->space, th->user_stack_area);
     }
 
-    kprintf("free kernel stack\n");
+    VM_DEBUG("free kernel stack\n");
     destroy_area(th->proc->space, th->kernel_stack_area);
     slab_free(&thread_slab, th);
 
     if (list_is_empty(&proc->thread_list))
     {
-        kprintf("destroying process %d\n", proc->id);
+        VM_DEBUG("destroying process %d\n", proc->id);
 
         // Need to clean up the process
         old_flags = disable_interrupts();
@@ -207,9 +207,9 @@ int grim_reaper(void *ignore)
             continue;
         }
 
-        kprintf("grim_reaper harvesting thread %d (%s)\n", th->id, th->name);
+        VM_DEBUG("grim_reaper harvesting thread %d (%s)\n", th->id, th->name);
         destroy_thread(th);
-        kprintf("it is done\n");
+        VM_DEBUG("it is done\n");
     }
 }
 
@@ -341,7 +341,7 @@ void thread_exit(int retcode)
     struct thread *th = current_thread();
     (void) retcode;
 
-    kprintf("thread %d (%s) exited\n", th->id, th->name);
+    VM_DEBUG("thread %d (%s) exited\n", th->id, th->name);
 
     // Disable pre-emption
     disable_interrupts();

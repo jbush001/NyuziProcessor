@@ -61,6 +61,7 @@ struct vm_page *vm_allocate_page(void)
     page->busy = 0;
     page->cache = 0;
     page->dirty = 0;
+    page->ref_count = 1;
     release_spinlock(&page_lock);
     restore_interrupts(old_flags);
     if (page == 0)
@@ -73,19 +74,30 @@ struct vm_page *vm_allocate_page(void)
     return page;
 }
 
-void vm_free_page(struct vm_page *page)
+void inc_page_ref(struct vm_page *page)
+{
+    __sync_fetch_and_add(&page->ref_count, 1);
+}
+
+void dec_page_ref(struct vm_page *page)
 {
     int old_flags;
 
-    old_flags = disable_interrupts();
-    acquire_spinlock(&page_lock);
-    list_add_head(&free_page_list, page);
-    release_spinlock(&page_lock);
-    restore_interrupts(old_flags);
+    assert(page->ref_count > 0);
+    if (__sync_fetch_and_add(&page->ref_count, -1) == 1)
+    {
+        VM_DEBUG("freeing page pa %08x\n", page_to_pa(page));
+        old_flags = disable_interrupts();
+        acquire_spinlock(&page_lock);
+        list_add_head(&free_page_list, page);
+        release_spinlock(&page_lock);
+        restore_interrupts(old_flags);
+    }
 }
 
 struct vm_page *pa_to_page(unsigned int addr)
 {
+    assert(addr < memory_size);
     return &pages[addr / PAGE_SIZE];
 }
 

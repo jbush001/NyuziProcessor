@@ -36,13 +36,16 @@ void bootstrap_vm_cache(void)
         list_init(&hash_table[i]);
 }
 
-struct vm_cache *create_vm_cache(void)
+struct vm_cache *create_vm_cache(struct vm_cache *source)
 {
     struct vm_cache *cache;
 
     cache = slab_alloc(&cache_slab);
     list_init(&cache->page_list);
     cache->ref_count = 1;
+    cache->source = source;
+    if (source)
+        inc_cache_ref(source);
 
     return cache;
 }
@@ -60,6 +63,7 @@ void lock_vm_cache(void)
 
 void unlock_vm_cache(void)
 {
+    assert(debug_cache_lock_owner == current_hw_thread());
     debug_cache_lock_owner = -1;
     release_spinlock(&cache_lock);
 }
@@ -78,16 +82,19 @@ void dec_cache_ref(struct vm_cache *cache)
 
     if (__sync_fetch_and_add(&cache->ref_count, -1) == 1)
     {
+        if (cache->source)
+            dec_cache_ref(cache->source);
+
         lock_vm_cache();
-        kprintf("destroying vm_cache %p\n", cache);
+        VM_DEBUG("destroying vm_cache %p\n", cache);
 
         // Free all pages owned by this cache
         while (!list_is_empty(&cache->page_list))
         {
             page = list_peek_head(&cache->page_list, struct vm_page);
             remove_cache_page(page);
-            vm_free_page(page);
-            kprintf("free page %08x\n", page_to_pa(page));
+            VM_DEBUG("dec page ref pa %08x\n", page_to_pa(page));
+            dec_page_ref(page);
         }
 
         unlock_vm_cache();

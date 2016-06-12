@@ -179,10 +179,10 @@ void destroy_translation_map(struct vm_translation_map *map)
     for (i = 0; i < 768; i++)
     {
         if (pgdir[i] & PAGE_PRESENT)
-            vm_free_page(pa_to_page(PAGE_ALIGN(pgdir[i])));
+            dec_page_ref(pa_to_page(PAGE_ALIGN(pgdir[i])));
     }
 
-    vm_free_page(pa_to_page(map->page_dir));
+    dec_page_ref(pa_to_page(map->page_dir));
     slab_free(&translation_map_slab, map);
 }
 
@@ -245,6 +245,57 @@ void vm_map_page(struct vm_translation_map *map, unsigned int va, unsigned int p
         release_spinlock(&map->lock);
         restore_interrupts(old_flags);
     }
+}
+
+unsigned int query_translation_map(struct vm_translation_map *map, unsigned int va)
+{
+    int vpindex = va / PAGE_SIZE;
+    int pgdindex = vpindex / 1024;
+    int pgtindex = vpindex % 1024;
+    unsigned int *pgdir;
+    unsigned int *pgtbl;
+    int old_flags;
+    unsigned int ptentry;
+
+    if (va >= KERNEL_BASE)
+    {
+        // Check kernel space
+        old_flags = disable_interrupts();
+        acquire_spinlock(&kernel_space_lock);
+
+        // The page tables for kernel space are shared by all page directories.
+        // Check the first page directory to see if this is present.
+        pgdir = (unsigned int*) PA_TO_VA(kernel_map.page_dir);
+        if ((pgdir[pgdindex] & PAGE_PRESENT) == 0)
+            ptentry = 0;
+        else
+        {
+            pgtbl = (unsigned int*) PAGE_ALIGN(pgdir[pgdindex]);
+            ptentry = ((unsigned int*)PA_TO_VA(pgtbl))[pgtindex];
+        }
+
+        release_spinlock(&kernel_space_lock);
+        restore_interrupts(old_flags);
+    }
+    else
+    {
+        // Check this user space
+        old_flags = disable_interrupts();
+        acquire_spinlock(&map->lock);
+        pgdir = (unsigned int*) PA_TO_VA(map->page_dir);
+        if ((pgdir[pgdindex] & PAGE_PRESENT) == 0)
+            ptentry = 0;
+        else
+        {
+            pgtbl = (unsigned int*) PAGE_ALIGN(pgdir[pgdindex]);
+            ptentry = ((unsigned int*)PA_TO_VA(pgtbl))[pgtindex];
+        }
+
+        release_spinlock(&map->lock);
+        restore_interrupts(old_flags);
+    }
+
+    return ptentry;
 }
 
 void switch_to_translation_map(struct vm_translation_map *map)

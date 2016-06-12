@@ -33,6 +33,8 @@ int load_program(struct process *proc,
     struct Elf32_Phdr segments[MAX_SEGMENTS];
     struct vm_address_space *space = current_thread()->proc->space;
     struct vm_cache *image_cache;
+    struct vm_cache *cow_cache = 0;
+    struct vm_cache *area_cache;
 
     struct file_handle *file = open_file(filename);
     if (file == 0)
@@ -72,7 +74,7 @@ int load_program(struct process *proc,
         return -1;
     }
 
-    image_cache = create_vm_cache();
+    image_cache = create_vm_cache(0);
     image_cache->file = file;
     for (int segment_index = 0; segment_index < image_header.e_phnum; segment_index++)
     {
@@ -103,14 +105,24 @@ int load_program(struct process *proc,
 
         area_flags = 0;
         if (segment->p_flags & PF_W)
+        {
             area_flags |= AREA_WRITABLE;
+
+            // Use copy-on-write cache for this area
+            if (cow_cache == 0)
+                cow_cache = create_vm_cache(image_cache);
+
+            area_cache = cow_cache;
+        }
+        else
+            area_cache = image_cache;   // Shared, read-only
 
         if (segment->p_flags & PF_X)
             area_flags |= AREA_EXECUTABLE;
 
         // Map region
         if (create_area(proc->space, segment->p_vaddr, segment->p_memsz,
-                        PLACE_EXACT, "program segment", area_flags, image_cache,
+                        PLACE_EXACT, "program segment", area_flags, area_cache,
                         segment->p_offset) == 0)
         {
             kprintf("create area failed, bailing\n");
