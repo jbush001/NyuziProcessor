@@ -17,7 +17,7 @@
 #include "registers.h"
 #include "uart.h"
 
-void writeUart(char ch)
+void write_uart(char ch)
 {
     while ((REGISTERS[REG_UART_STATUS] & UART_TX_READY) == 0)
         ;	// Wait for space
@@ -25,7 +25,7 @@ void writeUart(char ch)
     REGISTERS[REG_UART_TX] = ch;
 }
 
-unsigned char readUart()
+unsigned char read_uart()
 {
     while ((REGISTERS[REG_UART_STATUS] & UART_RX_READY) == 0)
         ;	// Wait for characters to be available

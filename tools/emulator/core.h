@@ -26,38 +26,36 @@
 #define CACHE_LINE_LENGTH 64u
 #define CACHE_LINE_MASK (CACHE_LINE_LENGTH - 1)
 
-typedef struct Core Core;
-
-Core *initCore(uint32_t memsize, uint32_t totalThreads, bool randomizeMemory,
-               const char *sharedMemoryFile);
-void enableTracing(Core*);
-int loadHexFile(Core*, const char *filename);
-void writeMemoryToFile(const Core*, const char *filename, uint32_t baseAddress,
-                       uint32_t length);
-const void *getMemoryRegionPtr(const Core*, uint32_t address, uint32_t length);
-void printRegisters(const Core*, uint32_t threadId);
-void enableCosimulation(Core*);
-void raiseInterrupt(Core*, uint32_t intBitmap);
-void cosimInterrupt(Core*, uint32_t threadId, uint32_t pc);
-uint32_t getTotalThreads(const Core*);
-bool coreHalted(const Core*);
-bool stoppedOnFault(const Core*);
+struct core *init_core(uint32_t memsize, uint32_t total_threads, bool randomize_memory,
+                       const char *shared_memory_file);
+void enable_tracing(struct core*);
+int load_hex_file(struct core*, const char *filename);
+void write_memory_to_file(const struct core*, const char *filename, uint32_t base_address,
+                          uint32_t length);
+const void *get_memory_region_ptr(const struct core*, uint32_t address, uint32_t length);
+void print_registers(const struct core*, uint32_t thread_id);
+void enable_cosimulation(struct core*);
+void raise_interrupt(struct core*, uint32_t int_bitmap);
+void cosim_interrupt(struct core*, uint32_t thread_id, uint32_t pc);
+uint32_t get_total_threads(const struct core*);
+bool core_halted(const struct core*);
+bool stopped_on_fault(const struct core*);
 
 // Return false if this hit a breakpoint or crashed
-// threadId of ALL_THREADS means run all threads in a round robin fashion.
+// thread_id of ALL_THREADS means run all threads in a round robin fashion.
 // Otherwise, run just the indicated thread.
-bool executeInstructions(Core*, uint32_t threadId, uint64_t instructions);
+bool execute_instructions(struct core*, uint32_t thread_id, uint64_t instructions);
 
-void singleStep(Core*, uint32_t threadId);
-uint32_t getPc(const Core*, uint32_t threadId);
-uint32_t getScalarRegister(const Core*, uint32_t threadId, uint32_t regId);
-uint32_t getVectorRegister(const Core*, uint32_t threadId, uint32_t regId, uint32_t lane);
-uint32_t debugReadMemoryByte(const Core*, uint32_t addr);
-void debugWriteMemoryByte(const Core*, uint32_t addr, uint8_t byte);
-int setBreakpoint(Core*, uint32_t pc);
-int clearBreakpoint(Core*, uint32_t pc);
-void setStopOnFault(Core*, bool stopOnFault);
+void single_step(struct core*, uint32_t thread_id);
+uint32_t get_pc(const struct core*, uint32_t thread_id);
+uint32_t get_scalar_register(const struct core*, uint32_t thread_id, uint32_t reg_id);
+uint32_t get_vector_register(const struct core*, uint32_t thread_id, uint32_t reg_id, uint32_t lane);
+uint32_t debug_read_memory_byte(const struct core*, uint32_t addr);
+void debug_write_memory_byte(const struct core*, uint32_t addr, uint8_t byte);
+int set_breakpoint(struct core*, uint32_t pc);
+int clear_breakpoint(struct core*, uint32_t pc);
+void set_stop_on_fault(struct core*, bool stop_on_fault);
 
-void dumpInstructionStats(Core*);
+void dump_instruction_stats(struct core*);
 
 #endif

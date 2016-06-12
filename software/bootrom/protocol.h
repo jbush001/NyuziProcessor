@@ -17,7 +17,7 @@
 #ifndef __PROTOCOL_H
 #define __PROTOCOL_H
 
-enum MessageType
+enum message_type
 {
     LOAD_MEMORY_REQ = 0xc0,
     LOAD_MEMORY_ACK,

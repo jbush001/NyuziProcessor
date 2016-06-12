@@ -19,16 +19,16 @@
 #include "device.h"
 #include "fbwindow.h"
 
-static SDL_Window *gWindow;
-static SDL_Renderer *gRenderer;
-static SDL_Texture *gFrameBuffer;
-static uint32_t gFbWidth;
-static uint32_t gFbHeight;
-static uint32_t gFbAddress;
-static bool gFbEnabled;
-uint32_t gScreenRefreshRate = 500000;
+static SDL_Window *sdl_window;
+static SDL_Renderer *sdl_renderer;
+static SDL_Texture *sdl_frame_buffer;
+static uint32_t fb_width;
+static uint32_t fb_height;
+static uint32_t fb_address;
+static bool fb_enabled;
+uint32_t screen_refresh_rate = 500000;
 
-int initFramebuffer(uint32_t width, uint32_t height)
+int init_frame_buffer(uint32_t width, uint32_t height)
 {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_NOPARACHUTE) != 0)
     {
@@ -36,30 +36,30 @@ int initFramebuffer(uint32_t width, uint32_t height)
         return -1;
     }
 
-    gWindow = SDL_CreateWindow("Nyuzi Emulator", SDL_WINDOWPOS_UNDEFINED,
-                               SDL_WINDOWPOS_UNDEFINED, (int) width,
-                               (int) height, SDL_WINDOW_SHOWN);
-    if (!gWindow)
+    sdl_window = SDL_CreateWindow("Nyuzi Emulator", SDL_WINDOWPOS_UNDEFINED,
+                                  SDL_WINDOWPOS_UNDEFINED, (int) width,
+                                  (int) height, SDL_WINDOW_SHOWN);
+    if (sdl_window == NULL)
     {
-        printf("SDL_CreateWindow error: %s\n", SDL_GetError());
+        printf("SDL_Create_window error: %s\n", SDL_GetError());
         return -1;
     }
 
-    gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED);
-    if (!gRenderer)
+    sdl_renderer = SDL_CreateRenderer(sdl_window, -1, SDL_RENDERER_ACCELERATED);
+    if (sdl_renderer == NULL)
     {
-        printf("SDL_CreateRenderer error: %s\n", SDL_GetError());
+        printf("SDL_Create_renderer error: %s\n", SDL_GetError());
         return -1;
     }
 
-    gFbWidth = width;
-    gFbHeight = height;
-    gFrameBuffer = SDL_CreateTexture(gRenderer, SDL_PIXELFORMAT_ABGR8888,
-                                     SDL_TEXTUREACCESS_STREAMING,
-                                     (int) width, (int) height);
-    if (!gFrameBuffer)
+    fb_width = width;
+    fb_height = height;
+    sdl_frame_buffer = SDL_CreateTexture(sdl_renderer, SDL_PIXELFORMAT_ABGR8888,
+                                         SDL_TEXTUREACCESS_STREAMING,
+                                         (int) width, (int) height);
+    if (!sdl_frame_buffer)
     {
-        printf("SDL_CreateTexture error: %s\n", SDL_GetError());
+        printf("SDL_Create_texture error: %s\n", SDL_GetError());
         return -1;
     }
 
@@ -67,7 +67,7 @@ int initFramebuffer(uint32_t width, uint32_t height)
 }
 
 // PS/2 scancodes set 2
-static unsigned int sdlToPs2(SDL_Scancode code)
+static unsigned int sdl_to_ps2(SDL_Scancode code)
 {
     switch (code)
     {
@@ -278,22 +278,22 @@ static unsigned int sdlToPs2(SDL_Scancode code)
     }
 }
 
-static void convertAndEnqueueScancode(SDL_Scancode code, int isRelease)
+static void convert_and_enqueue_scancode(SDL_Scancode code, int is_release)
 {
-    unsigned int ps2Code = sdlToPs2(code);
+    unsigned int ps2Code = sdl_to_ps2(code);
     if (ps2Code == 0xffffffff)
         return;
 
     if (ps2Code > 0xff)
-        enqueueKey((ps2Code >> 8) & 0xff);
+        enqueue_key((ps2Code >> 8) & 0xff);
 
-    if (isRelease)
-        enqueueKey(0xf0);
+    if (is_release)
+        enqueue_key(0xf0);
 
-    enqueueKey(ps2Code & 0xff);
+    enqueue_key(ps2Code & 0xff);
 }
 
-void pollFbWindowEvent(void)
+void poll_fb_window_event(void)
 {
     SDL_Event event;
 
@@ -305,43 +305,43 @@ void pollFbWindowEvent(void)
                 exit(0);
 
             case SDL_KEYDOWN:
-                convertAndEnqueueScancode(event.key.keysym.scancode, 0);
+                convert_and_enqueue_scancode(event.key.keysym.scancode, 0);
                 break;
 
             case SDL_KEYUP:
-                convertAndEnqueueScancode(event.key.keysym.scancode, 1);
+                convert_and_enqueue_scancode(event.key.keysym.scancode, 1);
                 break;
         }
     }
 }
 
-void enableFramebuffer(bool enable)
+void enable_frame_buffer(bool enable)
 {
-    gFbEnabled = enable;
+    fb_enabled = enable;
 }
 
-void setFramebufferAddress(uint32_t address)
+void set_frame_buffer_address(uint32_t address)
 {
-    gFbAddress = address;
+    fb_address = address;
 }
 
-void updateFramebuffer(Core *core)
+void update_frame_buffer(struct core *core)
 {
-    if (!gFbEnabled)
+    if (!fb_enabled)
         return;
 
-    if (SDL_UpdateTexture(gFrameBuffer, NULL, getMemoryRegionPtr(core, gFbAddress,
-                          gFbWidth * gFbHeight * 4), (int)(gFbWidth * 4)) != 0)
+    if (SDL_UpdateTexture(sdl_frame_buffer, NULL, get_memory_region_ptr(core, fb_address,
+                          fb_width * fb_height * 4), (int)(fb_width * 4)) != 0)
     {
-        printf("SDL_UpdateTexture failed: %s\n", SDL_GetError());
+        printf("SDL_Update_texture failed: %s\n", SDL_GetError());
         abort();
     }
 
-    if (SDL_RenderCopy(gRenderer, gFrameBuffer, NULL, NULL) != 0)
+    if (SDL_RenderCopy(sdl_renderer, sdl_frame_buffer, NULL, NULL) != 0)
     {
-        printf("SDL_RenderCopy failed: %s\n", SDL_GetError());
+        printf("SDL_Render_copy failed: %s\n", SDL_GetError());
         abort();
     }
 
-    SDL_RenderPresent(gRenderer);
+    SDL_RenderPresent(sdl_renderer);
 }

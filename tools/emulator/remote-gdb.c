@@ -27,81 +27,80 @@
 #include <stdlib.h>
 #include "core.h"
 #include "fbwindow.h"
+#include "remote-gdb.h"
 #include "util.h"
 
 #define TRAP_SIGNAL 5 // SIGTRAP
 
-extern void remoteGdbMainLoop(Core*, int enableFbWindow);
-extern void checkInterruptPipe(Core*);
-static void sendFormattedResponse(const char *format, ...)  __attribute__ ((format (printf, 1, 2)));
+extern void check_interrupt_pipe(struct core*);
+static void send_formatted_response(const char *format, ...)  __attribute__ ((format (printf, 1, 2)));
 
-static Core *gCore;
-static int gClientSocket = -1;
-static int *gLastSignals;
+static int client_socket = -1;
+static int *last_signals;
 
-static int readByte(void)
+static int read_byte(void)
 {
     uint8_t ch;
-    if (read(gClientSocket, &ch, 1) < 1)
+    if (read(client_socket, &ch, 1) < 1)
     {
-        perror("readByte: error reading from debug socket");
+        perror("read_byte: error reading from debug socket");
         return -1;
     }
 
     return (int) ch;
 }
 
-static int readPacket(char *request, int maxLength)
+static int read_packet(char *request, int max_length)
 {
     int ch;
-    int packetLen;
+    int packet_len;
 
     // Wait for packet start
     do
     {
-        ch = readByte();
+        ch = read_byte();
         if (ch < 0)
             return -1;
     }
     while (ch != '$');
 
     // Read body
-    packetLen = 0;
+    packet_len = 0;
     while (true)
     {
-        ch = readByte();
+        ch = read_byte();
         if (ch < 0)
             return -1;
 
         if (ch == '#')
             break;
 
-        if (packetLen < maxLength)
-            request[packetLen++] = (char) ch;
+        if (packet_len < max_length)
+            request[packet_len++] = (char) ch;
     }
 
     // Read checksum and discard
-    readByte();
-    readByte();
+    read_byte();
+    read_byte();
 
-    request[packetLen] = '\0';
-    return packetLen;
+    request[packet_len] = '\0';
+    return packet_len;
 }
 
-static const char *kGenericRegs[] = { "fp", "sp", "ra", "pc" };
+static const char *GENERIC_REGS[] = { "fp", "sp", "ra", "pc" };
 
-static void sendResponsePacket(const char *request)
+static void send_response_packet(const char *request)
 {
     uint8_t checksum;
-    char checksumChars[16];
+    char checksum_chars[16];
     int i;
-    size_t requestLength = strlen(request);
+    size_t request_length = strlen(request);
 
-    if (write(gClientSocket, "$", 1) < 1
-            || write(gClientSocket, request, requestLength) < (ssize_t) requestLength
-            || write(gClientSocket, "#", 1) < 1)
+    if (write(client_socket, "$", 1) < 1
+            || write(client_socket, request, request_length) < (ssize_t) request_length
+            || write(client_socket, "#", 1) < 1)
     {
-        perror("sendResponsePacket: Error writing to debugger socket");
+        perror("send_response_packet: Error writing to debugger socket");
         exit(1);
     }
 
@@ -109,47 +108,47 @@ static void sendResponsePacket(const char *request)
     for (i = 0; request[i]; i++)
         checksum += request[i];
 
-    sprintf(checksumChars, "%02x", checksum);
-    if (write(gClientSocket, checksumChars, 2) < 2)
+    sprintf(checksum_chars, "%02x", checksum);
+    if (write(client_socket, checksum_chars, 2) < 2)
     {
-        perror("sendResponsePacket: Error writing to debugger socket");
+        perror("send_response_packet: Error writing to debugger socket");
         exit(1);
     }
 }
 
-static void sendFormattedResponse(const char *format, ...)
+static void send_formatted_response(const char *format, ...)
 {
     char buf[256];
     va_list args;
     va_start(args, format);
     vsnprintf(buf, sizeof(buf) - 1, format, args);
     va_end(args);
-    sendResponsePacket(buf);
+    send_response_packet(buf);
 }
 
-// threadId of ALL_THREADS means run all threads.  Otherwise, run just the
+// thread_id of ALL_THREADS means run all threads.  Otherwise, run just the
 // indicated thread.
-static void runUntilInterrupt(Core *core, uint32_t threadId, bool enableFbWindow)
+static void run_until_interrupt(struct core *core, uint32_t thread_id, bool enable_fb_window)
 {
     while (true)
     {
-        if (!executeInstructions(core, threadId, gScreenRefreshRate))
+        if (!execute_instructions(core, thread_id, screen_refresh_rate))
             break;
 
-        if (enableFbWindow)
+        if (enable_fb_window)
         {
-            updateFramebuffer(core);
-            pollFbWindowEvent();
-            checkInterruptPipe(core);
+            update_frame_buffer(core);
+            poll_fb_window_event();
+            check_interrupt_pipe(core);
         }
 
         // Break on error or if data is ready
-        if (canReadFileDescriptor(gClientSocket) != 0)
+        if (can_read_file_descriptor(client_socket) != 0)
             break;
     }
 }
 
-static uint8_t decodeHexByte(const char *ptr)
+static uint8_t decode_hex_byte(const char *ptr)
 {
     int i;
     int retval = 0;
@@ -169,50 +168,49 @@ static uint8_t decodeHexByte(const char *ptr)
     return (uint8_t) retval;
 }
 
-void remoteGdbMainLoop(Core *core, int enableFbWindow)
+void remote_gdb_main_loop(struct core *core, bool enable_fb_window)
 {
-    int listenSocket;
+    int listen_socket;
     struct sockaddr_in address;
-    socklen_t addressLength;
+    socklen_t address_length;
     int got;
     char request[256];
     uint32_t i;
-    bool noAckMode = false;
+    bool no_ack_mode = false;
     int optval;
     char response[256];
-    uint32_t currentThread = 0;
+    uint32_t current_thread = 0;
 
-    gCore = core;
-    gLastSignals = calloc(sizeof(int), getTotalThreads(core));
-    for (i = 0; i < getTotalThreads(core); i++)
-        gLastSignals[i] = 0;
+    last_signals = calloc(sizeof(int), get_total_threads(core));
+    for (i = 0; i < get_total_threads(core); i++)
+        last_signals[i] = 0;
 
-    listenSocket = socket(PF_INET, SOCK_STREAM, 0);
-    if (listenSocket < 0)
+    listen_socket = socket(PF_INET, SOCK_STREAM, 0);
+    if (listen_socket < 0)
     {
-        perror("remoteGdbMainLoop: error setting up debug socket (socket)");
+        perror("remote_gdb_main_loop: error setting up debug socket (socket)");
         return;
     }
 
     optval = 1;
-    if (setsockopt(listenSocket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) < 0)
+    if (setsockopt(listen_socket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) < 0)
     {
-        perror("remoteGdbMainLoop: error setting up debug socket (setsockopt)");
+        perror("remote_gdb_main_loop: error setting up debug socket (setsockopt)");
         return;
     }
 
     address.sin_family = AF_INET;
     address.sin_port = htons(8000);
     address.sin_addr.s_addr = htonl(INADDR_ANY);
-    if (bind(listenSocket, (struct sockaddr*) &address, sizeof(address)) < 0)
+    if (bind(listen_socket, (struct sockaddr*) &address, sizeof(address)) < 0)
     {
-        perror("remoteGdbMainLoop: error setting up debug socket (bind)");
+        perror("remote_gdb_main_loop: error setting up debug socket (bind)");
         return;
     }
 
-    if (listen(listenSocket, 1) < 0)
+    if (listen(listen_socket, 1) < 0)
     {
-        perror("remoteGdbMainLoop: error setting up debug socket (listen)");
+        perror("remote_gdb_main_loop: error setting up debug socket (listen)");
         return;
     }
 
@@ -221,27 +219,27 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
         // Wait for a new client socket
         while (true)
         {
-            addressLength = sizeof(address);
-            gClientSocket = accept(listenSocket, (struct sockaddr*) &address,
-                                   &addressLength);
-            if (gClientSocket >= 0)
+            address_length = sizeof(address);
+            client_socket = accept(listen_socket, (struct sockaddr*) &address,
+                                   &address_length);
+            if (client_socket >= 0)
                 break;
         }
 
-        noAckMode = false;
+        no_ack_mode = false;
 
         // Process commands
         while (true)
         {
-            got = readPacket(request, sizeof(request));
+            got = read_packet(request, sizeof(request));
             if (got < 0)
                 break;
 
-            if (!noAckMode)
+            if (!no_ack_mode)
             {
-                if (write(gClientSocket, "+", 1) != 1)
+                if (write(client_socket, "+", 1) != 1)
                 {
-                    perror("remoteGdbMainLoop: Error writing to debug socket");
+                    perror("remote_gdb_main_loop: Error writing to debug socket");
                     exit(1);
                 }
             }
@@ -251,15 +249,15 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
                 // Set arguments
                 case 'A':
                     // Doesn't support setting program arguments, so just silently ignore.
-                    sendResponsePacket("OK");
+                    send_response_packet("OK");
                     break;
 
                 // Continue
                 case 'c':
                 case 'C':
-                    runUntilInterrupt(core, ALL_THREADS, enableFbWindow);
-                    gLastSignals[currentThread] = TRAP_SIGNAL;
-                    sendFormattedResponse("S%02x", gLastSignals[currentThread]);
+                    run_until_interrupt(core, ALL_THREADS, enable_fb_window);
+                    last_signals[current_thread] = TRAP_SIGNAL;
+                    send_formatted_response("S%02x", last_signals[current_thread]);
                     break;
 
                 // Pick thread
@@ -268,11 +266,11 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
                     {
                         // XXX hack: the request type controls which operations this
                         // applies for.
-                        currentThread = (uint32_t)(request[2] - '1');
-                        sendResponsePacket("OK");
+                        current_thread = (uint32_t)(request[2] - '1');
+                        send_response_packet("OK");
                     }
                     else
-                        sendResponsePacket("");
+                        send_response_packet("");
 
                     break;
 
@@ -284,30 +282,30 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
                 case 'm':
                 case 'M':
                 {
-                    char *lenPtr;
-                    char *dataPtr;
+                    char *len_ptr;
+                    char *data_ptr;
                     uint32_t start;
                     uint32_t length;
                     uint32_t offset;
 
-                    start = (uint32_t) strtoul(request + 1, &lenPtr, 16);
-                    length = (uint32_t) strtoul(lenPtr + 1, &dataPtr, 16);
+                    start = (uint32_t) strtoul(request + 1, &len_ptr, 16);
+                    length = (uint32_t) strtoul(len_ptr + 1, &data_ptr, 16);
                     if (request[0] == 'm')
                     {
                         // Read memory
                         for (offset = 0; offset < length; offset++)
-                            sprintf(response + offset * 2, "%02x", debugReadMemoryByte(core, start + offset));
+                            sprintf(response + offset * 2, "%02x", debug_read_memory_byte(core, start + offset));
 
-                        sendResponsePacket(response);
+                        send_response_packet(response);
                     }
                     else
                     {
                         // Write memory
-                        dataPtr += 1;	// Skip colon
+                        data_ptr += 1;	// Skip colon
                         for (offset = 0; offset < length; offset++)
-                            debugWriteMemoryByte(core, start + offset, decodeHexByte(dataPtr + offset * 2));
+                            debug_write_memory_byte(core, start + offset, decode_hex_byte(data_ptr + offset * 2));
 
-                        sendResponsePacket("OK");
+                        send_response_packet("OK");
                     }
 
                     break;
@@ -317,27 +315,27 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
                 case 'p':
                 case 'g':
                 {
-                    uint32_t regId = (uint32_t) strtoul(request + 1, NULL, 16);
+                    uint32_t reg_id = (uint32_t) strtoul(request + 1, NULL, 16);
                     uint32_t value;
-                    if (regId < 32)
+                    if (reg_id < 32)
                     {
-                        value = getScalarRegister(core, currentThread, regId);
-                        sendFormattedResponse("%08x", endianSwap32(value));
+                        value = get_scalar_register(core, current_thread, reg_id);
+                        send_formatted_response("%08x", endian_swap32(value));
                     }
-                    else if (regId < 64)
+                    else if (reg_id < 64)
                     {
                         uint32_t lane;
 
                         for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
                         {
-                            value = getVectorRegister(core, currentThread, regId, lane);
-                            sprintf(response + lane * 8, "%08x", endianSwap32(value));
+                            value = get_vector_register(core, current_thread, reg_id, lane);
+                            sprintf(response + lane * 8, "%08x", endian_swap32(value));
                         }
 
-                        sendResponsePacket(response);
+                        send_response_packet(response);
                     }
                     else
-                        sendResponsePacket("");
+                        send_response_packet("");
 
                     break;
                 }
@@ -347,42 +345,42 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
                 // Query
                 case 'q':
                     if (strcmp(request + 1, "LaunchSuccess") == 0)
-                        sendResponsePacket("OK");
+                        send_response_packet("OK");
                     else if (strcmp(request + 1, "HostInfo") == 0)
-                        sendResponsePacket("triple:nyuzi;endian:little;ptrsize:4");
+                        send_response_packet("triple:nyuzi;endian:little;ptrsize:4");
                     else if (strcmp(request + 1, "ProcessInfo") == 0)
-                        sendResponsePacket("pid:1");
+                        send_response_packet("pid:1");
                     else if (strcmp(request + 1, "fThreadInfo") == 0)
-                        sendResponsePacket("m1,2,3,4");	// XXX need to query number of threads
+                        send_response_packet("m1,2,3,4");	// XXX need to query number of threads
                     else if (strcmp(request + 1, "sThreadInfo") == 0)
-                        sendResponsePacket("l");
+                        send_response_packet("l");
                     else if (memcmp(request + 1, "ThreadStopInfo", 14) == 0)
-                        sprintf(response, "S%02x", gLastSignals[currentThread]);
+                        sprintf(response, "S%02x", last_signals[current_thread]);
                     else if (memcmp(request + 1, "RegisterInfo", 12) == 0)
                     {
-                        uint32_t regId = (uint32_t) strtoul(request + 13, NULL, 16);
-                        if (regId < 32)
+                        uint32_t reg_id = (uint32_t) strtoul(request + 13, NULL, 16);
+                        if (reg_id < 32)
                         {
                             sprintf(response, "name:s%d;bitsize:32;encoding:uint;format:hex;set:General Purpose Scalar Registers;gcc:%d;dwarf:%d;",
-                                    regId, regId, regId);
+                                    reg_id, reg_id, reg_id);
 
-                            if (regId >= 28)
-                                sprintf(response + strlen(response), "generic:%s;", kGenericRegs[regId - 28]);
+                            if (reg_id >= 28)
+                                sprintf(response + strlen(response), "generic:%s;", GENERIC_REGS[reg_id - 28]);
                         }
-                        else if (regId < 64)
+                        else if (reg_id < 64)
                         {
                             sprintf(response, "name:v%d;bitsize:512;encoding:uint;format:vector-uint32;set:General Purpose Vector Registers;gcc:%d;dwarf:%d;",
-                                    regId - 32, regId, regId);
+                                    reg_id - 32, reg_id, reg_id);
                         }
                         else
                             strcpy(response, "");
 
-                        sendResponsePacket(response);
+                        send_response_packet(response);
                     }
                     else if (strcmp(request + 1, "C") == 0)
-                        sendFormattedResponse("QC%02x", currentThread + 1);
+                        send_formatted_response("QC%02x", current_thread + 1);
                     else
-                        sendResponsePacket("");	// Not supported
+                        send_response_packet("");	// Not supported
 
                     break;
 
@@ -390,26 +388,26 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
                 case 'Q':
                     if (strcmp(request + 1, "StartNoAckMode") == 0)
                     {
-                        noAckMode = true;
-                        sendResponsePacket("OK");
+                        no_ack_mode = true;
+                        send_response_packet("OK");
                     }
                     else
-                        sendResponsePacket("");	// Not supported
+                        send_response_packet("");	// Not supported
 
                     break;
 
                 // Single step
                 case 's':
                 case 'S':
-                    singleStep(core, currentThread);
-                    gLastSignals[currentThread] = TRAP_SIGNAL;
-                    sendFormattedResponse("S%02x", gLastSignals[currentThread]);
+                    single_step(core, current_thread);
+                    last_signals[current_thread] = TRAP_SIGNAL;
+                    send_formatted_response("S%02x", last_signals[current_thread]);
                     break;
 
                 // Multi-character command
                 case 'v':
                     if (strcmp(request, "vCont?") == 0)
-                        sendResponsePacket("vCont;C;c;S;s");
+                        send_response_packet("vCont;C;c;S;s");
                     else if (memcmp(request, "vCont;", 6) == 0)
                     {
                         // XXX hack.  There are two things lldb requests.  One is
@@ -420,54 +418,54 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
                         if (sreq != NULL)
                         {
                             // s:0001
-                            currentThread = (uint32_t) strtoul(sreq + 2, NULL, 16) - 1;
-                            singleStep(core, currentThread);
-                            gLastSignals[currentThread] = TRAP_SIGNAL;
-                            sendFormattedResponse("S%02x", gLastSignals[currentThread]);
+                            current_thread = (uint32_t) strtoul(sreq + 2, NULL, 16) - 1;
+                            single_step(core, current_thread);
+                            last_signals[current_thread] = TRAP_SIGNAL;
+                            send_formatted_response("S%02x", last_signals[current_thread]);
                         }
                         else
                         {
-                            runUntilInterrupt(core, ALL_THREADS, enableFbWindow);
-                            gLastSignals[currentThread] = TRAP_SIGNAL;
-                            sendFormattedResponse("S%02x", gLastSignals[currentThread]);
+                            run_until_interrupt(core, ALL_THREADS, enable_fb_window);
+                            last_signals[current_thread] = TRAP_SIGNAL;
+                            send_formatted_response("S%02x", last_signals[current_thread]);
                         }
                     }
                     else
-                        sendResponsePacket("");
+                        send_response_packet("");
 
                     break;
 
                 // Clear breakpoint
                 case 'z':
-                    if (clearBreakpoint(core, (uint32_t) strtoul(request + 3, NULL, 16)) < 0)
-                        sendResponsePacket(""); // Error
+                    if (clear_breakpoint(core, (uint32_t) strtoul(request + 3, NULL, 16)) < 0)
+                        send_response_packet(""); // Error
                     else
-                        sendResponsePacket("OK");
+                        send_response_packet("OK");
 
                     break;
 
                 // Set breakpoint
                 case 'Z':
-                    if (setBreakpoint(core, (uint32_t) strtoul(request + 3, NULL, 16)) < 0)
-                        sendResponsePacket(""); // Error
+                    if (set_breakpoint(core, (uint32_t) strtoul(request + 3, NULL, 16)) < 0)
+                        send_response_packet(""); // Error
                     else
-                        sendResponsePacket("OK");
+                        send_response_packet("OK");
 
                     break;
 
                 // Get last signal
                 case '?':
-                    sprintf(response, "S%02x", gLastSignals[currentThread]);
-                    sendResponsePacket(response);
+                    sprintf(response, "S%02x", last_signals[current_thread]);
+                    send_response_packet(response);
                     break;
 
                 // Unknown, return error
                 default:
-                    sendResponsePacket("");
+                    send_response_packet("");
             }
         }
 
-        close(gClientSocket);
+        close(client_socket);
     }
 }
 

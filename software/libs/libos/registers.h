@@ -20,7 +20,7 @@
 
 static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
 
-enum RegisterIndex
+enum register_index
 {
     REG_RED_LED             = 0x0000 / 4,
     REG_GREEN_LED           = 0x0004 / 4,

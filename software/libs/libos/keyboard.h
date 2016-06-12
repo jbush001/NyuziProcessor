@@ -48,7 +48,7 @@ extern "C" {
 #define KBD_DELETE 150
 
 // Return 0xffffffff if no key is pressed
-unsigned int pollKeyboard();
+unsigned int poll_keyboard(void);
 
 
 #ifdef __cplusplus

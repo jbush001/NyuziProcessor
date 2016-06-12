@@ -14,6 +14,7 @@
 // limitations under the License.
 //
 
+#include <nyuzi.h>
 #include <schedule.h>
 #include <stdio.h>
 
@@ -28,9 +29,9 @@ const int kNumThreads = 32;
 
 int main(int argc, const char *argv[])
 {
-    int myThreadId = __builtin_nyuzi_read_control_reg(0);
+    int myThreadId = get_current_thread_id();
 
-    startAllThreads();
+    start_all_threads();
 
     for (;;)
     {

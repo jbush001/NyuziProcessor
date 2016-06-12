@@ -18,7 +18,8 @@
 #include "registers.h"
 
 // PS/2 scancodes, set 2
-static const unsigned char kUnshiftedScancodeTable[] = {
+static const unsigned char UNSHIFTED_SCANCODE_TABLE[] =
+{
     0, KBD_F9, 0, KBD_F5, KBD_F3, KBD_F1, KBD_F2, KBD_F12, 0, KBD_F10, KBD_F8, KBD_F6, KBD_F4, '\t', '`', 0,
     0, KBD_LALT, KBD_LSHIFT, 0, 0, 'q', '1', 0, 0, 0, 'z', 's', 'a', 'w', '2', 0,
     0, 'c', 'x', 'd', 'e', '4', '3', 0, 0, ' ', 'v', 'f', 't', 'r', '5', 0,
@@ -30,7 +31,8 @@ static const unsigned char kUnshiftedScancodeTable[] = {
     0, 0, 0, KBD_F7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
-static const unsigned char kShiftedScancodeTable[] = {
+static const unsigned char SHIFTED_SCANCODE_TABLE[] =
+{
     0, KBD_F9, 0, KBD_F5, KBD_F3, KBD_F1, KBD_F2, KBD_F12, 0, KBD_F10, KBD_F8, KBD_F6, KBD_F4, '\t', '~', 0,
     0, KBD_LALT, KBD_LSHIFT, 0, 0, 'Q', '!', 0, 0, 0, 'Z', 'S', 'A', 'W', '@', 0,
     0, 'C', 'X', 'D', 'E', '$', '#', 0, 0, ' ', 'V', 'F', 'T', 'R', '%', 0,
@@ -42,7 +44,8 @@ static const unsigned char kShiftedScancodeTable[] = {
     0, 0, 0, KBD_F7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
-static const unsigned char kExtendedScancodeTable[] = {
+static const unsigned char EXTENDED_SCANCODE_TABLE[] =
+{
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, KBD_RALT, 0, 0, KBD_RCTRL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -54,48 +57,48 @@ static const unsigned char kExtendedScancodeTable[] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
-static int gIsExtendedCode = 0;
-static int gIsRelease = 0;
-static int gLeftShiftPressed = 0;
-static int gRightShiftPressed = 0;
-static int gShiftLock = 0;
+static int is_extended_code = 0;
+static int is_release = 0;
+static int left_shift_pressed = 0;
+static int right_shift_pressed = 0;
+static int shift_lock = 0;
 
-unsigned int pollKeyboard(void)
+unsigned int poll_keyboard(void)
 {
     // Read keyboard
     while (REGISTERS[REG_KB_STATUS])
     {
         unsigned int code = REGISTERS[REG_KB_SCANCODE];
         if (code == 0xe0)
-            gIsExtendedCode = 1;
+            is_extended_code = 1;
         else if (code == 0xf0)
-            gIsRelease = 1;
+            is_release = 1;
         else
         {
             int result;
             if (code < 0x90)
             {
-                if (gIsExtendedCode)
-                    result = kExtendedScancodeTable[code];
-                else if (gLeftShiftPressed || gRightShiftPressed || gShiftLock)
-                    result = kShiftedScancodeTable[code];
+                if (is_extended_code)
+                    result = EXTENDED_SCANCODE_TABLE[code];
+                else if (left_shift_pressed || right_shift_pressed || shift_lock)
+                    result = SHIFTED_SCANCODE_TABLE[code];
                 else
-                    result = kUnshiftedScancodeTable[code];
+                    result = UNSHIFTED_SCANCODE_TABLE[code];
             }
             else
                 result = 0;	// Unknown scancode
 
             if (result == KBD_RSHIFT)
-                gRightShiftPressed = !gIsRelease;
+                right_shift_pressed = !is_release;
 
             if (result == KBD_LSHIFT)
-                gLeftShiftPressed = !gIsRelease;
+                left_shift_pressed = !is_release;
 
-            if (!gIsRelease)
+            if (!is_release)
                 result |= KBD_PRESSED;
 
-            gIsExtendedCode = 0;
-            gIsRelease = 0;
+            is_extended_code = 0;
+            is_release = 0;
             return result;
         }
     }

@@ -46,12 +46,12 @@ volatile int stopCount = 0;
 // All threads start execution here.
 int main()
 {
-    int myThreadId = getCurrentThreadId();
+    int myThreadId = get_current_thread_id();
     if (myThreadId == 0)
-        initVGA(VGA_MODE_640x480);
+        init_vga(VGA_MODE_640x480);
 
     // Start other threads
-    startAllThreads();
+    start_all_threads();
 
     vecf16_t kInitialX0 = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
     kInitialX0 = kInitialX0 * makevectorf(kXStep) - makevectorf(2.0);

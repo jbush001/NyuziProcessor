@@ -44,14 +44,14 @@ int main()
     int frameNum = 0;
     clock_t lastTime = 0;
 
-    int myThreadId = getCurrentThreadId();
+    int myThreadId = get_current_thread_id();
     if (myThreadId == 0)
     {
-        initVGA(VGA_MODE_640x480);
+        init_vga(VGA_MODE_640x480);
         displayMatrix = Matrix2x2();
     }
 
-    startAllThreads();
+    start_all_threads();
 
     // 1/64 step rotation
     Matrix2x2 stepMatrix(

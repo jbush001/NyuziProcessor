@@ -40,8 +40,8 @@
 #define INT_COSIM 0x00000001
 #define INT_TIMER 0x00000002
 
-void writeDeviceRegister(uint32_t address, uint32_t value);
-uint32_t readDeviceRegister(uint32_t address);
-void enqueueKey(uint32_t scanCode);
+void write_device_register(uint32_t address, uint32_t value);
+uint32_t read_device_register(uint32_t address);
+void enqueue_key(uint32_t scan_code);
 
 #endif

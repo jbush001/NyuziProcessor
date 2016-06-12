@@ -61,7 +61,7 @@ void I_GetEvent(void)
 void I_StartTic (void)
 {
     // Read keyboard
-    unsigned int code = pollKeyboard();
+    unsigned int code = poll_keyboard();
     if (code != 0xffffffff)
     {
         event_t event;
@@ -226,7 +226,7 @@ void I_SetPalette (byte* palette)
 
 void I_InitGraphics(void)
 {
-    initVGA(VGA_MODE_640x400);
+    init_vga(VGA_MODE_640x400);
 }
 
 

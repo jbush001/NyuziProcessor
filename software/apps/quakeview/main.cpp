@@ -61,7 +61,7 @@ void processKeyboardEvents()
     // Consume as many keyboard events as are available.
     while (true)
     {
-        unsigned int keyCode = pollKeyboard();
+        unsigned int keyCode = poll_keyboard();
         if (keyCode == 0xffffffff)
             break;
 
@@ -181,10 +181,10 @@ void parseCoordinateString(const char *string, float outCoord[3])
 // All threads start execution here.
 int main()
 {
-    if (getCurrentThreadId() == 0)
-        initVGA(VGA_MODE_640x480);
+    if (get_current_thread_id() == 0)
+        init_vga(VGA_MODE_640x480);
     else
-        workerThread();
+        worker_thread();
 
     // Set up render context
     RenderContext *context = new RenderContext(0x1000000);
@@ -223,7 +223,7 @@ int main()
     printf("position %g %g %g angle %g\n", coords[0], coords[1], coords[2], facingAngle);
 
     // Start worker threads
-    startAllThreads();
+    start_all_threads();
 
     TextureUniforms uniforms;
     Matrix projectionMatrix = Matrix::getProjectionMatrix(FB_WIDTH, FB_HEIGHT);

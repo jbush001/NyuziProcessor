@@ -17,57 +17,57 @@
 #include <stdio.h>
 #include "schedule.h"
 
-static ParallelFunc gCurrentFunc;
-static volatile int gCurrentIndex;
-static volatile int gMaxIndex;
-static volatile int gActiveJobs;
-static void * volatile gContext;
+static parallel_func_t current_func;
+static volatile int current_index;
+static volatile int max_index;
+static volatile int active_jobs;
+static void * volatile context;
 
-static int dispatchJob()
+static int dispatch_job(void)
 {
-    int thisIndex;
+    int this_index;
 
     do
     {
-        thisIndex = gCurrentIndex;
-        if (thisIndex == gMaxIndex)
+        this_index = current_index;
+        if (this_index == max_index)
             return 0;	// No more jobs in this batch
     }
-    while (!__sync_bool_compare_and_swap(&gCurrentIndex, thisIndex, thisIndex + 1));
+    while (!__sync_bool_compare_and_swap(&current_index, this_index, this_index + 1));
 
-    gCurrentFunc(gContext, thisIndex);
+    current_func(context, this_index);
 
     return 1;
 }
 
-void parallelExecute(ParallelFunc func, void *context, int numElements)
+void parallel_execute(parallel_func_t func, void *_context, int num_elements)
 {
-    gCurrentFunc = func;
-    gContext = context;
-    gCurrentIndex = 0;
-    gMaxIndex = numElements;
+    current_func = func;
+    context = _context;
+    current_index = 0;
+    max_index = num_elements;
 
-    while (gCurrentIndex != gMaxIndex)
-        dispatchJob();
+    while (current_index != max_index)
+        dispatch_job();
 
-    while (gActiveJobs)
+    while (active_jobs)
         ; // Wait for threads to finish
 }
 
-void workerThread()
+void worker_thread(void)
 {
     while (1)
     {
-        while (gCurrentIndex == gMaxIndex)
+        while (current_index == max_index)
             ;
 
-        __sync_fetch_and_add(&gActiveJobs, 1);
-        dispatchJob();
-        __sync_fetch_and_add(&gActiveJobs, -1);
+        __sync_fetch_and_add(&active_jobs, 1);
+        dispatch_job();
+        __sync_fetch_and_add(&active_jobs, -1);
     }
 }
 
-void startAllThreads()
+void start_all_threads(void)
 {
     *((unsigned int*) 0xffff0100) = 0xffffffff;
 }

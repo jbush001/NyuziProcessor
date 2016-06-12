@@ -27,7 +27,7 @@
 #define TLB_SUPERVISOR 8
 #define TLB_GLOBAL 16
 
-enum _ArithmeticOp
+enum arithmetic_op
 {
     OP_OR = 0,
     OP_AND = 1,
@@ -71,9 +71,8 @@ enum _ArithmeticOp
     OP_CMPNE_F = 49,
     OP_SYSCALL = 63
 };
-typedef enum _ArithmeticOp ArithmeticOp;
 
-enum _RegisterArithFormat
+enum register_arith_format
 {
     FMT_RA_SS = 0,
     FMT_RA_VS = 1,
@@ -81,9 +80,8 @@ enum _RegisterArithFormat
     FMT_RA_VV = 4,
     FMT_RA_VV_M = 5
 };
-typedef enum _RegisterArithFormat RegisterArithFormat;
 
-enum _ImmediateArithFormat
+enum immediate_arith_format
 {
     FMT_IMM_SS = 0,
     FMT_IMM_VV = 1,
@@ -91,9 +89,8 @@ enum _ImmediateArithFormat
     FMT_IMM_VS = 4,
     FMT_IMM_VS_M = 5
 };
-typedef enum _ImmediateArithFormat ImmediateArithFormat;
 
-enum _MemoryOp
+enum memory_op
 {
     MEM_BYTE = 0,
     MEM_BYTE_SEXT = 1,
@@ -107,9 +104,8 @@ enum _MemoryOp
     MEM_SCGATH = 13,
     MEM_SCGATH_MASK = 14
 };
-typedef enum _MemoryOp MemoryOp;
 
-enum _BranchType
+enum branch_type
 {
     BRANCH_ALL = 0,
     BRANCH_ZERO = 1,
@@ -120,9 +116,8 @@ enum _BranchType
     BRANCH_CALL_REGISTER = 6,
     BRANCH_ERET = 7
 };
-typedef enum _BranchType BranchType;
 
-enum _ControlRegister
+enum control_register
 {
     CR_THREAD_ID = 0,
     CR_TRAP_HANDLER = 1,
@@ -139,9 +134,8 @@ enum _ControlRegister
     CR_SCRATCHPAD1 = 12,
     CR_SUBCYCLE = 13
 };
-typedef enum _ControlRegister ControlRegister;
 
-enum _TrapType
+enum trap_type
 {
     TT_RESET = 0,
     TT_ILLEGAL_INSTRUCTION = 1,
@@ -155,9 +149,8 @@ enum _TrapType
     TT_SUPERVISOR_ACCESS = 9,
     TT_NOT_EXECUTABLE = 10
 };
-typedef enum _TrapType TrapType;
 
-enum _CacheControlOp
+enum cache_control_op
 {
     CC_DTLB_INSERT = 0,
     CC_DINVALIDATE = 1,
@@ -166,6 +159,5 @@ enum _CacheControlOp
     CC_INVALIDATE_TLB_ALL = 6,
     CC_ITLB_INSERT = 7
 };
-typedef enum _CacheControlOp CacheControlOp;
 
 #endif

@@ -20,13 +20,13 @@
 #include "core.h"
 
 // Returns -1 on error, 0 if successful.
-int runCosimulation(Core*, bool verbose);
-void cosimCheckSetScalarReg(Core*, uint32_t pc, uint32_t reg, uint32_t value);
-void cosimCheckSetVectorReg(Core*, uint32_t pc, uint32_t reg, uint32_t mask,
-                            const uint32_t *value);
-void cosimCheckVectorStore(Core*, uint32_t pc, uint32_t address, uint32_t mask,
-                           const uint32_t *values);
-void cosimCheckScalarStore(Core*, uint32_t pc, uint32_t address, uint32_t size,
-                           uint32_t value);
+int run_cosimulation(struct core*, bool verbose);
+void cosim_check_set_scalar_reg(struct core*, uint32_t pc, uint32_t reg, uint32_t value);
+void cosim_check_set_vector_reg(struct core*, uint32_t pc, uint32_t reg, uint32_t mask,
+                                const uint32_t *value);
+void cosim_check_vector_store(struct core*, uint32_t pc, uint32_t address, uint32_t mask,
+                              const uint32_t *values);
+void cosim_check_scalar_store(struct core*, uint32_t pc, uint32_t address, uint32_t size,
+                              uint32_t value);
 
 #endif

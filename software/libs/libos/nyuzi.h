@@ -16,12 +16,12 @@
 
 #pragma once
 
-inline int getCurrentThreadId()
+inline int get_current_thread_id(void)
 {
     return __builtin_nyuzi_read_control_reg(0);
 }
 
-inline unsigned int getCycleCount()
+inline unsigned int get_cycle_count(void)
 {
     return __builtin_nyuzi_read_control_reg(6);
 }

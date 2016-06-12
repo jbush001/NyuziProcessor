@@ -116,7 +116,7 @@ int puts(const char *s)
 int fputc(int ch, FILE *file)
 {
     if (file == stdout)
-        writeUart(ch);
+        write_uart(ch);
     else if (file->write_buf)
     {
         if (file->write_offset < file->write_buf_len)

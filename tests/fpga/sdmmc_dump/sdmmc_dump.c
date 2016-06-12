@@ -31,7 +31,7 @@ int main()
 {
     int result;
 
-    result = initSdmmcDevice();
+    result = init_sdmmc_device();
     if (result < 0)
     {
         printf("error %d initializing card\n", result);
@@ -41,7 +41,7 @@ int main()
     for (int blockNum = 0; blockNum < TRANSFER_LENGTH; blockNum++)
     {
         unsigned char buf[512];
-        result = readSdmmcDevice(blockNum, buf);
+        result = read_sdmmc_device(blockNum, buf);
         if (result < 0)
         {
             printf("error %d reading from device\n", result);

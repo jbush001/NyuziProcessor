@@ -34,70 +34,66 @@
 #define MAX_DESCRIPTORS 32
 #define RAMDISK_BASE ((unsigned char*) 0x4000000)
 
-typedef struct FileDescriptor FileDescriptor;
-typedef struct DirectoryEntry DirectoryEntry;
-typedef struct FsHeader FsHeader;
-
-struct FileDescriptor
+struct file_descriptor
 {
-    int isOpen;
-    int fileLength;
-    int startOffset;
-    int currentOffset;
+    int is_open;
+    int file_length;
+    int start_offset;
+    int current_offset;
 };
 
-struct DirectoryEntry
+struct directory_entry
 {
-    unsigned int startOffset;
+    unsigned int start_offset;
     unsigned int length;
     char name[32];
 };
 
-struct FsHeader
+struct fs_header
 {
     char magic[4];
-    unsigned int numDirectoryEntries;
-    DirectoryEntry dir[1];
+    unsigned int num_directory_entries;
+    struct directory_entry dir[1];
 };
 
-static FileDescriptor gFileDescriptors[MAX_DESCRIPTORS];
-static int gInitialized;
-static FsHeader *gDirectory;
-static int gUseRamdisk = 0;
+static struct file_descriptor file_descriptors[MAX_DESCRIPTORS];
+static int fs_initialized;
+static struct fs_header *fs_directory;
+static int use_ramdisk = 0;
 
-int readBlock(int blockNum, void *ptr)
+int read_block(int block_num, void *ptr)
 {
-    if (gUseRamdisk)
+    if (use_ramdisk)
     {
-        memcpy(ptr, RAMDISK_BASE + blockNum * BLOCK_SIZE, BLOCK_SIZE);
+        memcpy(ptr, RAMDISK_BASE + block_num * BLOCK_SIZE, BLOCK_SIZE);
         return BLOCK_SIZE;
     }
     else
-        return readSdmmcDevice(blockNum, ptr);
+        return read_sdmmc_device(block_num, ptr);
 }
 
-static int initFileSystem()
+static int init_file_system(void)
 {
-    char superBlock[BLOCK_SIZE];
-    int numDirectoryBlocks;
-    int blockNum;
-    FsHeader *header;
+    char super_block[BLOCK_SIZE];
+    int num_directory_blocks;
+    int block_num;
+    struct fs_header *header;
 
     // SDMMC not supported on FPGA currently. Fall back to ramdisk if it fails.
-    if (initSdmmcDevice() < 0)
+    if (init_sdmmc_device() < 0)
     {
         printf("SDMMC init failed, using ramdisk\n");
-        gUseRamdisk = 1;
+        use_ramdisk = 1;
     }
 
     // Read directory
-    if (readBlock(0, superBlock) <= 0)
+    if (read_block(0, super_block) <= 0)
     {
         errno = EIO;
         return -1;
     }
 
-    header = (FsHeader*) superBlock;
+    header = (struct fs_header*) super_block;
     if (memcmp(header->magic, FS_MAGIC, 4) != 0)
     {
         printf("Bad filesystem: invalid magic value\n");
@@ -105,13 +101,13 @@ static int initFileSystem()
         return -1;
     }
 
-    numDirectoryBlocks = ((header->numDirectoryEntries - 1) * sizeof(DirectoryEntry)
-                          + sizeof(FsHeader) + BLOCK_SIZE - 1) / BLOCK_SIZE;
-    gDirectory = (FsHeader*) malloc(numDirectoryBlocks * BLOCK_SIZE);
-    memcpy(gDirectory, superBlock, BLOCK_SIZE);
-    for (blockNum = 1; blockNum < numDirectoryBlocks; blockNum++)
+    num_directory_blocks = ((header->num_directory_entries - 1) * sizeof(struct directory_entry)
+                            + sizeof(struct fs_header) + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    fs_directory = (struct fs_header*) malloc(num_directory_blocks * BLOCK_SIZE);
+    memcpy(fs_directory, super_block, BLOCK_SIZE);
+    for (block_num = 1; block_num < num_directory_blocks; block_num++)
     {
-        if (readBlock(blockNum, ((char*)gDirectory) + BLOCK_SIZE * blockNum) <= 0)
+        if (read_block(block_num, ((char*)fs_directory) + BLOCK_SIZE * block_num) <= 0)
         {
             errno = EIO;
             return -1;
@@ -121,13 +117,13 @@ static int initFileSystem()
     return 0;
 }
 
-static DirectoryEntry *lookupFile(const char *path)
+static struct directory_entry *lookup_file(const char *path)
 {
-    int directoryIndex;
+    unsigned int directory_index;
 
-    for (directoryIndex = 0; directoryIndex < gDirectory->numDirectoryEntries; directoryIndex++)
+    for (directory_index = 0; directory_index < fs_directory->num_directory_entries; directory_index++)
     {
-        DirectoryEntry *entry = gDirectory->dir + directoryIndex;
+        struct directory_entry *entry = fs_directory->dir + directory_index;
         if (strcmp(entry->name, path) == 0)
             return entry;
     }
@@ -138,22 +134,22 @@ static DirectoryEntry *lookupFile(const char *path)
 int open(const char *path, int mode)
 {
     int fd;
-    struct FileDescriptor *fdPtr;
-    DirectoryEntry *entry;
+    struct file_descriptor *fd_ptr;
+    struct directory_entry *entry;
 
     (void) mode;	// mode is ignored
 
-    if (!gInitialized)
+    if (!fs_initialized)
     {
-        if (initFileSystem() < 0)
+        if (init_file_system() < 0)
             return -1;
 
-        gInitialized = 1;
+        fs_initialized = 1;
     }
 
     for (fd = 0; fd < MAX_DESCRIPTORS; fd++)
     {
-        if (!gFileDescriptors[fd].isOpen)
+        if (!file_descriptors[fd].is_open)
             break;
     }
 
@@ -164,16 +160,16 @@ int open(const char *path, int mode)
         return -1;
     }
 
-    fdPtr = &gFileDescriptors[fd];
+    fd_ptr = &file_descriptors[fd];
 
     // Search for file
-    entry = lookupFile(path);
+    entry = lookup_file(path);
     if (entry)
     {
-        fdPtr->isOpen = 1;
-        fdPtr->fileLength = entry->length;
-        fdPtr->startOffset = entry->startOffset;
-        fdPtr->currentOffset = 0;
+        fd_ptr->is_open = 1;
+        fd_ptr->file_length = entry->length;
+        fd_ptr->start_offset = entry->start_offset;
+        fd_ptr->current_offset = 0;
         return fd;
     }
 
@@ -189,19 +185,19 @@ int close(int fd)
         return -1;
     }
 
-    gFileDescriptors[fd].isOpen = 0;
+    file_descriptors[fd].is_open = 0;
     return 0;
 }
 
 int read(int fd, void *buf, unsigned int nbytes)
 {
-    int sizeToCopy;
-    struct FileDescriptor *fdPtr;
-    int sliceLength;
-    int totalRead;
-    char currentBlock[BLOCK_SIZE];
-    int offsetInBlock;
-    int blockNumber;
+    unsigned int size_to_copy;
+    struct file_descriptor *fd_ptr;
+    unsigned int slice_length;
+    unsigned int total_read;
+    char current_block[BLOCK_SIZE];
+    int offset_in_block;
+    int block_number;
 
     if (fd < 0 || fd >= MAX_DESCRIPTORS)
     {
@@ -209,78 +205,82 @@ int read(int fd, void *buf, unsigned int nbytes)
         return -1;
     }
 
-    fdPtr = &gFileDescriptors[fd];
-    if (!fdPtr->isOpen)
+    fd_ptr = &file_descriptors[fd];
+    if (!fd_ptr->is_open)
     {
         errno = EBADF;
         return -1;
     }
 
-    sizeToCopy = fdPtr->fileLength - fdPtr->currentOffset;
-    if (sizeToCopy <= 0)
+    size_to_copy = fd_ptr->file_length - fd_ptr->current_offset;
+    if (size_to_copy <= 0)
         return 0;	// End of file
 
-    if (nbytes > sizeToCopy)
-        nbytes = sizeToCopy;
+    if (nbytes > size_to_copy)
+        nbytes = size_to_copy;
 
-    offsetInBlock = fdPtr->currentOffset & (BLOCK_SIZE - 1);
-    blockNumber = (fdPtr->startOffset + fdPtr->currentOffset) / BLOCK_SIZE;
+    offset_in_block = fd_ptr->current_offset & (BLOCK_SIZE - 1);
+    block_number = (fd_ptr->start_offset + fd_ptr->current_offset) / BLOCK_SIZE;
 
-    totalRead = 0;
-    while (totalRead < nbytes)
+    total_read = 0;
+    while (total_read < nbytes)
     {
-        if (offsetInBlock == 0 && (nbytes - totalRead) >= BLOCK_SIZE)
+        if (offset_in_block == 0 && (nbytes - total_read) >= BLOCK_SIZE)
         {
-            if (readBlock(blockNumber, (char*) buf + totalRead) <= 0)
+            if (read_block(block_number, (char*) buf + total_read) <= 0)
             {
                 errno = EIO;
                 return -1;
             }
 
-            totalRead += BLOCK_SIZE;
-            blockNumber++;
+            total_read += BLOCK_SIZE;
+            block_number++;
         }
         else
         {
-            if (readBlock(blockNumber, currentBlock) <= 0)
+            if (read_block(block_number, current_block) <= 0)
             {
                 errno = EIO;
                 return -1;
             }
 
-            sliceLength = BLOCK_SIZE - offsetInBlock;
-            if (sliceLength > nbytes - totalRead)
-                sliceLength = nbytes - totalRead;
+            slice_length = BLOCK_SIZE - offset_in_block;
+            if (slice_length > nbytes - total_read)
+                slice_length = nbytes - total_read;
 
-            memcpy((char*) buf + totalRead, currentBlock + offsetInBlock, sliceLength);
-            totalRead += sliceLength;
-            offsetInBlock = 0;
-            blockNumber++;
+            memcpy((char*) buf + total_read, current_block + offset_in_block, slice_length);
+            total_read += slice_length;
+            offset_in_block = 0;
+            block_number++;
         }
     }
 
-    fdPtr->currentOffset += nbytes;
+    fd_ptr->current_offset += nbytes;
 
     return nbytes;
 }
 
 int write(int fd, const void *buf, unsigned int nbyte)
 {
+    (void) fd;
+    (void) buf;
+    (void) nbyte;
+
     errno = EPERM;
     return -1;	// Read-only filesystem
 }
 
 off_t lseek(int fd, off_t offset, int whence)
 {
-    struct FileDescriptor *fdPtr;
+    struct file_descriptor *fd_ptr;
     if (fd < 0 || fd >= MAX_DESCRIPTORS)
     {
         errno = EBADF;
         return -1;
     }
 
-    fdPtr = &gFileDescriptors[fd];
-    if (!fdPtr->isOpen)
+    fd_ptr = &file_descriptors[fd];
+    if (!fd_ptr->is_open)
     {
         errno = EBADF;
         return -1;
@@ -289,15 +289,15 @@ off_t lseek(int fd, off_t offset, int whence)
     switch (whence)
     {
         case SEEK_SET:
-            fdPtr->currentOffset = offset;
+            fd_ptr->current_offset = offset;
             break;
 
         case SEEK_CUR:
-            fdPtr->currentOffset += offset;
+            fd_ptr->current_offset += offset;
             break;
 
         case SEEK_END:
-            fdPtr->currentOffset = fdPtr->fileLength - offset;
+            fd_ptr->current_offset = fd_ptr->file_length - offset;
             break;
 
         default:
@@ -305,17 +305,17 @@ off_t lseek(int fd, off_t offset, int whence)
             return -1;
     }
 
-    if (fdPtr->currentOffset < 0)
-        fdPtr->currentOffset = 0;
+    if (fd_ptr->current_offset < 0)
+        fd_ptr->current_offset = 0;
 
-    return fdPtr->currentOffset;
+    return fd_ptr->current_offset;
 }
 
 int stat(const char *path, struct stat *buf)
 {
-    DirectoryEntry *entry;
+    struct directory_entry *entry;
 
-    entry = lookupFile(path);
+    entry = lookup_file(path);
     if (!entry)
     {
         errno = ENOENT;
@@ -329,30 +329,30 @@ int stat(const char *path, struct stat *buf)
 
 int fstat(int fd, struct stat *buf)
 {
-    struct FileDescriptor *fdPtr;
+    struct file_descriptor *fd_ptr;
     if (fd < 0 || fd >= MAX_DESCRIPTORS)
     {
         errno = EBADF;
         return -1;
     }
 
-    fdPtr = &gFileDescriptors[fd];
-    if (!fdPtr->isOpen)
+    fd_ptr = &file_descriptors[fd];
+    if (!fd_ptr->is_open)
     {
         errno = EBADF;
         return -1;
     }
 
-    buf->st_size = fdPtr->fileLength;
+    buf->st_size = fd_ptr->file_length;
 
     return 0;
 }
 
 int access(const char *path, int mode)
 {
-    DirectoryEntry *entry;
+    struct directory_entry *entry;
 
-    entry = lookupFile(path);
+    entry = lookup_file(path);
     if (!entry)
     {
         errno = ENOENT;

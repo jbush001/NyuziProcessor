@@ -155,12 +155,12 @@ uint32_t gPalette[NUM_PALETTE_ENTRIES];
 // All threads start here
 int main()
 {
-    int myThreadId = getCurrentThreadId();
+    int myThreadId = get_current_thread_id();
     clock_t lastTime = 0;
 
     if (myThreadId == 0)
     {
-        initVGA(VGA_MODE_640x480);
+        init_vga(VGA_MODE_640x480);
         for (int i = 0; i < NUM_PALETTE_ENTRIES; i++)
         {
 #ifdef STRIPES
@@ -173,7 +173,7 @@ int main()
 #endif
         }
 
-        startAllThreads();
+        start_all_threads();
     }
 
     for (;;)

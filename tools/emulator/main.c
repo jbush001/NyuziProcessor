@@ -30,14 +30,14 @@
 #include "device.h"
 #include "fbwindow.h"
 #include "instruction-set.h"
+#include "remote-gdb.h"
 #include "sdmmc.h"
 #include "util.h"
 
-extern void remoteGdbMainLoop(Core*, int enableFbWindow);
-extern void checkInterruptPipe(Core*);
+extern void check_interrupt_pipe(struct core*);
 
-static int gRecvInterruptFd = -1;
-static int gSendInterruptFd = -1;
+static int recv_interrupt_fd = -1;
+static int send_interrupt_fd = -1;
 
 static void usage(void)
 {
@@ -48,7 +48,7 @@ static void usage(void)
     fprintf(stderr, "     normal  Run to completion (default)\n");
     fprintf(stderr, "     cosim   Cosimulation validation mode\n");
     fprintf(stderr, "     gdb     Start GDB listener on port 8000\n");
-    fprintf(stderr, "  -f <width>x<height> Display framebuffer output in window\n");
+    fprintf(stderr, "  -f <width>x<height> Display frame_buffer output in window\n");
     fprintf(stderr, "  -d <filename>,<start>,<length>  Dump memory\n");
     fprintf(stderr, "  -b <filename> Load file into a virtual block device\n");
     fprintf(stderr, "  -t <num> Total threads (default 4)\n");
@@ -59,7 +59,7 @@ static void usage(void)
     fprintf(stderr, "  -o <file> Named pipe to send interrupts. Pipe must already be created\n");
 }
 
-static uint32_t parseNumArg(const char *argval)
+static uint32_t parse_num_arg(const char *argval)
 {
     if (argval[0] == '0' && argval[1] == 'x')
         return (uint32_t) strtoul(argval + 2, NULL, 16);
@@ -70,71 +70,71 @@ static uint32_t parseNumArg(const char *argval)
 // An external process can send interrupts to the emulator by writing to a
 // named pipe. Poll the pipe to determine if any messages are pending. If
 // so, call into the core to dispatch.
-void checkInterruptPipe(Core *core)
+void check_interrupt_pipe(struct core *core)
 {
     int result;
-    char interruptId;
+    char interrupt_id;
 
-    if (gRecvInterruptFd < 0)
+    if (recv_interrupt_fd < 0)
         return;
 
-    result = canReadFileDescriptor(gRecvInterruptFd);
+    result = can_read_file_descriptor(recv_interrupt_fd);
     if (result == 0)
         return;
 
     if (result < 0)
     {
-        perror("checkInterruptPipe: select failed");
+        perror("check_interrupt_pipe: select failed");
         exit(1);
     }
 
-    if (read(gRecvInterruptFd, &interruptId, 1) < 1)
+    if (read(recv_interrupt_fd, &interrupt_id, 1) < 1)
     {
-        perror("checkInterruptPipe: read failed");
+        perror("check_interrupt_pipe: read failed");
         exit(1);
     }
 
-    if (interruptId > 16)
+    if (interrupt_id > 16)
     {
-        fprintf(stderr, "Received invalidate interrupt ID %d\n", interruptId);
+        fprintf(stderr, "Received invalidate interrupt ID %d\n", interrupt_id);
         return; // Ignore invalid interrupt IDs
     }
 
-    raiseInterrupt(core, 1 << interruptId);
+    raise_interrupt(core, 1 << interrupt_id);
 }
 
-void sendHostInterrupt(uint32_t num)
+void send_host_interrupt(uint32_t num)
 {
     char c = (char) num;
 
-    if (gSendInterruptFd < 0)
+    if (send_interrupt_fd < 0)
         return;
 
-    if (write(gSendInterruptFd, &c, 1) < 1)
+    if (write(send_interrupt_fd, &c, 1) < 1)
     {
-        perror("sendHostInterrupt: write failed");
+        perror("send_host_interrupt: write failed");
         exit(1);
     }
 }
 
 int main(int argc, char *argv[])
 {
-    Core *core;
+    struct core *core;
     int option;
-    bool enableMemoryDump = false;
-    uint32_t memDumpBase = 0;
-    uint32_t memDumpLength = 0;
-    char *memDumpFilename = NULL;
-    size_t memDumpFilenameLen = 0;
+    bool enable_memory_dump = false;
+    uint32_t mem_dump_base = 0;
+    uint32_t mem_dump_length = 0;
+    char *mem_dump_filename = NULL;
+    size_t mem_dump_filename_len = 0;
     bool verbose = false;
-    uint32_t fbWidth = 640;
-    uint32_t fbHeight = 480;
-    bool blockDeviceOpen = false;
-    bool enableFbWindow = false;
-    uint32_t totalThreads = 4;
+    uint32_t fb_width = 640;
+    uint32_t fb_height = 480;
+    bool block_device_open = false;
+    bool enable_fb_window = false;
+    uint32_t total_threads = 4;
     char *separator;
-    uint32_t memorySize = 0x1000000;
-    const char *sharedMemoryFile = NULL;
+    uint32_t memory_size = 0x1000000;
+    const char *shared_memory_file = NULL;
     struct stat st;
 
     enum
@@ -153,20 +153,20 @@ int main(int argc, char *argv[])
                 break;
 
             case 'r':
-                gScreenRefreshRate = parseNumArg(optarg);
+                screen_refresh_rate = parse_num_arg(optarg);
                 break;
 
             case 'f':
-                enableFbWindow = true;
+                enable_fb_window = true;
                 separator = strchr(optarg, 'x');
                 if (!separator)
                 {
-                    fprintf(stderr, "Invalid framebuffer size %s\n", optarg);
+                    fprintf(stderr, "Invalid frame_buffer size %s\n", optarg);
                     return 1;
                 }
 
-                fbWidth = parseNumArg(optarg);
-                fbHeight = parseNumArg(separator + 1);
+                fb_width = parse_num_arg(optarg);
+                fb_height = parse_num_arg(separator + 1);
                 break;
 
             case 'm':
@@ -194,11 +194,11 @@ int main(int argc, char *argv[])
                     return 1;
                 }
 
-                memDumpFilenameLen = (size_t)(separator - optarg);
-                memDumpFilename = (char*) malloc(memDumpFilenameLen + 1);
-                strncpy(memDumpFilename, optarg, memDumpFilenameLen);
-                memDumpFilename[memDumpFilenameLen] = '\0';
-                memDumpBase = parseNumArg(separator + 1);
+                mem_dump_filename_len = (size_t)(separator - optarg);
+                mem_dump_filename = (char*) malloc(mem_dump_filename_len + 1);
+                strncpy(mem_dump_filename, optarg, mem_dump_filename_len);
+                mem_dump_filename[mem_dump_filename_len] = '\0';
+                mem_dump_base = parse_num_arg(separator + 1);
 
                 separator = strchr(separator + 1, ',');
                 if (separator == NULL)
@@ -208,24 +208,24 @@ int main(int argc, char *argv[])
                     return 1;
                 }
 
-                memDumpLength = parseNumArg(separator + 1);
-                enableMemoryDump = true;
+                mem_dump_length = parse_num_arg(separator + 1);
+                enable_memory_dump = true;
                 break;
 
             case 'b':
-                if (openBlockDevice(optarg) < 0)
+                if (open_block_device(optarg) < 0)
                     return 1;
 
-                blockDeviceOpen = true;
+                block_device_open = true;
                 break;
 
             case 'c':
-                memorySize = parseNumArg(optarg);
+                memory_size = parse_num_arg(optarg);
                 break;
 
             case 't':
-                totalThreads = parseNumArg(optarg);
-                if (totalThreads < 1 || totalThreads > 32)
+                total_threads = parse_num_arg(optarg);
+                if (total_threads < 1 || total_threads > 32)
                 {
                     fprintf(stderr, "Total threads must be between 1 and 32\n");
                     return 1;
@@ -234,18 +234,18 @@ int main(int argc, char *argv[])
                 break;
 
             case 's':
-                sharedMemoryFile = optarg;
+                shared_memory_file = optarg;
                 break;
 
             case 'i':
-                gRecvInterruptFd = open(optarg, O_RDWR);
-                if (gRecvInterruptFd < 0)
+                recv_interrupt_fd = open(optarg, O_RDWR);
+                if (recv_interrupt_fd < 0)
                 {
                     perror("main: failed to open receive interrupt pipe");
                     return 1;
                 }
 
-                if (fstat(gRecvInterruptFd, &st) < 0)
+                if (fstat(recv_interrupt_fd, &st) < 0)
                 {
                     perror("main: stat failed on receive interrupt pipe");
                     return 1;
@@ -260,14 +260,14 @@ int main(int argc, char *argv[])
                 break;
 
             case 'o':
-                gSendInterruptFd = open(optarg, O_RDWR);
-                if (gSendInterruptFd < 0)
+                send_interrupt_fd = open(optarg, O_RDWR);
+                if (send_interrupt_fd < 0)
                 {
                     perror("main: failed to open send interrupt pipe");
                     return 1;
                 }
 
-                if (fstat(gSendInterruptFd, &st) < 0)
+                if (fstat(send_interrupt_fd, &st) < 0)
                 {
                     perror("main: stat failed on send interrupt pipe");
                     return 1;
@@ -297,20 +297,20 @@ int main(int argc, char *argv[])
     // Don't randomize memory for cosimulation mode, because
     // memory is checked against the hardware model to ensure a match
 
-    core = initCore(memorySize, totalThreads, mode != MODE_COSIMULATION,
-                    sharedMemoryFile);
+    core = init_core(memory_size, total_threads, mode != MODE_COSIMULATION,
+                     shared_memory_file);
     if (core == NULL)
         return 1;
 
-    if (loadHexFile(core, argv[optind]) < 0)
+    if (load_hex_file(core, argv[optind]) < 0)
     {
         fprintf(stderr, "Error reading image %s\n", argv[optind]);
         return 1;
     }
 
-    if (enableFbWindow)
+    if (enable_fb_window)
     {
-        if (initFramebuffer(fbWidth, fbHeight) < 0)
+        if (init_frame_buffer(fb_width, fb_height) < 0)
             return 1;
     }
 
@@ -318,47 +318,47 @@ int main(int argc, char *argv[])
     {
         case MODE_NORMAL:
             if (verbose)
-                enableTracing(core);
+                enable_tracing(core);
 
-            setStopOnFault(core, false);
-            if (enableFbWindow)
+            set_stop_on_fault(core, false);
+            if (enable_fb_window)
             {
-                while (executeInstructions(core, ALL_THREADS, gScreenRefreshRate))
+                while (execute_instructions(core, ALL_THREADS, screen_refresh_rate))
                 {
-                    updateFramebuffer(core);
-                    pollFbWindowEvent();
-                    checkInterruptPipe(core);
+                    update_frame_buffer(core);
+                    poll_fb_window_event();
+                    check_interrupt_pipe(core);
                 }
             }
             else
             {
-                while (executeInstructions(core, ALL_THREADS, 1000000))
-                    checkInterruptPipe(core);
+                while (execute_instructions(core, ALL_THREADS, 1000000))
+                    check_interrupt_pipe(core);
             }
 
             break;
 
         case MODE_COSIMULATION:
-            setStopOnFault(core, false);
-            if (runCosimulation(core, verbose) < 0)
+            set_stop_on_fault(core, false);
+            if (run_cosimulation(core, verbose) < 0)
                 return 1;	// Failed
 
             break;
 
         case MODE_GDB_REMOTE_DEBUG:
-            setStopOnFault(core, true);
-            remoteGdbMainLoop(core, enableFbWindow);
+            set_stop_on_fault(core, true);
+            remote_gdb_main_loop(core, enable_fb_window);
             break;
     }
 
-    if (enableMemoryDump)
-        writeMemoryToFile(core, memDumpFilename, memDumpBase, memDumpLength);
+    if (enable_memory_dump)
+        write_memory_to_file(core, mem_dump_filename, mem_dump_base, mem_dump_length);
 
-    dumpInstructionStats(core);
-    if (blockDeviceOpen)
-        closeBlockDevice();
+    dump_instruction_stats(core);
+    if (block_device_open)
+        close_block_device();
 
-    if (stoppedOnFault(core))
+    if (stopped_on_fault(core))
         return 1;
 
     return 0;

@@ -26,8 +26,8 @@ extern "C" {
 #define UART_RX_READY 	(1 << 1)
 #define UART_TX_READY 	(1 << 0)
 
-void writeUart(char ch);
-unsigned char readUart();
+void write_uart(char ch);
+unsigned char read_uart(void);
 
 #ifdef __cplusplus
 }

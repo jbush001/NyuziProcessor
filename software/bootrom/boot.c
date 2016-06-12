@@ -30,7 +30,7 @@ void *memset(void *_dest, int value, unsigned int length);
 
 static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
 
-enum RegisterIndex
+enum register_index
 {
     REG_RED_LED             = 0x00 / 4,
     REG_UART_STATUS         = 0x40 / 4,
@@ -39,7 +39,7 @@ enum RegisterIndex
     REG_UART_DIVISOR        = 0x4c / 4
 };
 
-unsigned int readSerialByte(void)
+unsigned int read_serial_byte(void)
 {
     while ((REGISTERS[REG_UART_STATUS] & 2) == 0)
         ;
@@ -47,7 +47,7 @@ unsigned int readSerialByte(void)
     return REGISTERS[REG_UART_RX];
 }
 
-void writeSerialByte(unsigned int ch)
+void write_serial_byte(unsigned int ch)
 {
     while ((REGISTERS[REG_UART_STATUS] & 1) == 0)	// Wait for ready
         ;
@@ -55,21 +55,21 @@ void writeSerialByte(unsigned int ch)
     REGISTERS[REG_UART_TX] = ch;
 }
 
-unsigned int readSerialLong(void)
+unsigned int read_serial_long(void)
 {
     unsigned int result = 0;
     for (int i = 0; i < 4; i++)
-        result = (result >> 8) | (readSerialByte() << 24);
+        result = (result >> 8) | (read_serial_byte() << 24);
 
     return result;
 }
 
-void writeSerialLong(unsigned int value)
+void write_serial_long(unsigned int value)
 {
-    writeSerialByte(value & 0xff);
-    writeSerialByte((value >> 8) & 0xff);
-    writeSerialByte((value >> 16) & 0xff);
-    writeSerialByte((value >> 24) & 0xff);
+    write_serial_byte(value & 0xff);
+    write_serial_byte((value >> 8) & 0xff);
+    write_serial_byte((value >> 16) & 0xff);
+    write_serial_byte((value >> 24) & 0xff);
 }
 
 int main()
@@ -80,47 +80,47 @@ int main()
 
     for (;;)
     {
-        switch (readSerialByte())
+        switch (read_serial_byte())
         {
             case LOAD_MEMORY_REQ:
             {
-                unsigned char *loadAddr = (unsigned char*) readSerialLong();
-                unsigned int length = readSerialLong();
+                unsigned char *load_addr = (unsigned char*) read_serial_long();
+                unsigned int length = read_serial_long();
                 unsigned int checksum = 2166136261; // FNV-1a hash
                 for (int i = 0; i < length; i++)
                 {
-                    unsigned int ch = readSerialByte();
+                    unsigned int ch = read_serial_byte();
                     checksum = (checksum ^ ch) * 16777619;
-                    *loadAddr++ = ch;
+                    *load_addr++ = ch;
                 }
 
-                writeSerialByte(LOAD_MEMORY_ACK);
-                writeSerialLong(checksum);
+                write_serial_byte(LOAD_MEMORY_ACK);
+                write_serial_long(checksum);
                 break;
             }
 
             case CLEAR_MEMORY_REQ:
             {
-                void *baseAddress = (void*) readSerialLong();
-                unsigned int length = readSerialLong();
-                memset(baseAddress, 0, length);
-                writeSerialByte(CLEAR_MEMORY_ACK);
+                void *base_address = (void*) read_serial_long();
+                unsigned int length = read_serial_long();
+                memset(base_address, 0, length);
+                write_serial_byte(CLEAR_MEMORY_ACK);
                 break;
             }
 
             case EXECUTE_REQ:
             {
                 REGISTERS[REG_RED_LED] = 0;	// Turn off LED
-                writeSerialByte(EXECUTE_ACK);
+                write_serial_byte(EXECUTE_ACK);
                 return 0;	// Break out of main
             }
 
             case PING_REQ:
-                writeSerialByte(PING_ACK);
+                write_serial_byte(PING_ACK);
                 break;
 
             default:
-                writeSerialByte(BAD_COMMAND);
+                write_serial_byte(BAD_COMMAND);
         }
     }
 }
@@ -133,10 +133,10 @@ void* memset(void *_dest, int value, unsigned int length)
     if ((((unsigned int) dest) & 3) == 0)
     {
         // Write 4 bytes at a time.
-        unsigned wideVal = value | (value << 8) | (value << 16) | (value << 24);
+        unsigned wide_val = value | (value << 8) | (value << 16) | (value << 24);
         while (length > 4)
         {
-            *((unsigned int*) dest) = wideVal;
+            *((unsigned int*) dest) = wide_val;
             dest += 4;
             length -= 4;
         }

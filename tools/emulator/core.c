@@ -54,215 +54,211 @@
 // this instruction as an optimization.
 #define BREAKPOINT_INST 0x707fffff
 
-typedef struct Thread Thread;
-typedef struct TlbEntry TlbEntry;
-typedef struct Breakpoint Breakpoint;
-
-struct Thread
+struct thread
 {
-    Core *core;
+    struct core *core;
     uint32_t id;
-    uint32_t lastSyncLoadAddr; // Cache line number (addr / 64)
-    uint32_t currentPc;
-    uint32_t currentAsid;
-    uint32_t currentPageDir;
-    uint32_t interruptMask;
-    bool enableInterrupt;
-    bool enableMmu;
-    bool enableSupervisor;
-    uint32_t currentSubcycle;
-    uint32_t scalarReg[NUM_REGISTERS - 1];	// PC (31) not included here
-    uint32_t vectorReg[NUM_REGISTERS][NUM_VECTOR_LANES];
-    bool interruptPending;
+    uint32_t last_sync_load_addr; // Cache line number (addr / 64)
+    uint32_t pc;
+    uint32_t asid;
+    uint32_t page_dir;
+    uint32_t interrupt_mask;
+    bool enable_interrupt;
+    bool enable_mmu;
+    bool enable_supervisor;
+    uint32_t subcycle;
+    uint32_t scalar_reg[NUM_REGISTERS - 1];	// PC (31) not included here
+    uint32_t vector_reg[NUM_REGISTERS][NUM_VECTOR_LANES];
+    bool interrupt_pending;
 
     // There are two levels of trap information, to handle a nested TLB
     // miss occurring in the middle of another trap.
     struct
     {
-        uint32_t trapCause;
+        uint32_t trap_cause;
         uint32_t pc;
-        uint32_t accessAddress;
+        uint32_t access_address;
         uint32_t scratchpad0;
         uint32_t scratchpad1;
         uint32_t subcycle;
-        bool enableInterrupt;
-        bool enableMmu;
-        bool enableSupervisor;
-    } savedTrapState[TRAP_LEVELS];
+        bool enable_interrupt;
+        bool enable_mmu;
+        bool enable_supervisor;
+    } saved_trap_state[TRAP_LEVELS];
 };
 
-struct TlbEntry
+struct tlb_entry
 {
     uint32_t asid;
-    uint32_t virtualAddress;
-    uint32_t physAddrAndFlags;
+    uint32_t virtual_address;
+    uint32_t phys_addr_and_flags;
 };
 
-struct Core
+struct core
 {
-    Thread *threads;
-    Breakpoint *breakpoints;
+    struct thread *threads;
+    struct breakpoint *breakpoints;
     uint32_t *memory;
-    uint32_t memorySize;
-    uint32_t totalThreads;
-    uint32_t threadEnableMask;
-    uint32_t pendingInterrupts;
-    uint32_t trapHandlerPc;
-    uint32_t tlbMissHandlerPc;
-    uint32_t physTlbUpdateAddr;
-    TlbEntry *itlb;
-    uint32_t nextITlbWay;
-    TlbEntry *dtlb;
-    uint32_t nextDTlbWay;
+    uint32_t memory_size;
+    uint32_t total_threads;
+    uint32_t thread_enable_mask;
+    uint32_t pending_interrupts;
+    uint32_t trap_handler_pc;
+    uint32_t tlb_miss_handler_pc;
+    uint32_t phys_tlb_update_addr;
+    struct tlb_entry *itlb;
+    uint32_t next_itlb_way;
+    struct tlb_entry *dtlb;
+    uint32_t next_dtlb_way;
     bool crashed;
-    bool singleStepping;
-    bool stopOnFault;
-    bool enableTracing;
-    bool enableCosim;
-    uint32_t currentTimerCount;
-    int64_t totalInstructions;
-    uint32_t startCycleCount;
+    bool single_stepping;
+    bool stop_on_fault;
+    bool enable_tracing;
+    bool enable_cosim;
+    uint32_t current_timer_count;
+    int64_t total_instructions;
+    uint32_t start_cycle_count;
 #ifdef DUMP_INSTRUCTION_STATS
-    int64_t statVectorInst;
-    int64_t statLoadInst;
-    int64_t statStoreInst;
-    int64_t statBranchInst;
-    int64_t statImmArithInst;
-    int64_t statRegArithInst;
+    int64_t stat_vector_inst;
+    int64_t stat_load_inst;
+    int64_t stat_store_inst;
+    int64_t stat_branch_inst;
+    int64_t stat_imm_arith_inst;
+    int64_t stat_reg_arith_inst;
 #endif
 };
 
-struct Breakpoint
+struct breakpoint
 {
-    Breakpoint *next;
+    struct breakpoint *next;
     uint32_t address;
-    uint32_t originalInstruction;
+    uint32_t original_instruction;
     bool restart;
 };
 
-static void printThreadRegisters(const Thread*);
-static uint32_t getThreadScalarReg(const Thread*, uint32_t reg);
-static void setScalarReg(Thread*, uint32_t reg, uint32_t value);
-static void setVectorReg(Thread*, uint32_t reg, uint32_t mask,
-                         uint32_t *values);
-static void invalidateSyncAddress(Core*, uint32_t address);
-static void tryToDispatchInterrupt(Thread*);
-static void raiseTrap(Thread*, uint32_t address, TrapType type, bool isStore,
-                      bool isDataCache);
-static void raiseAccessFault(Thread*, uint32_t address, TrapType, bool isStore,
-                             bool isDataCache);
-static void raiseIllegalInstructionFault(Thread*, uint32_t instruction);
-static bool translateAddress(Thread*, uint32_t virtualAddress, uint32_t
-                             *physicalAddress, bool isStore, bool isDataCache);
-static uint32_t scalarArithmeticOp(ArithmeticOp, uint32_t value1, uint32_t value2);
-static bool isCompareOp(uint32_t op);
-static Breakpoint *lookupBreakpoint(Core*, uint32_t pc);
-static void executeRegisterArithInst(Thread*, uint32_t instruction);
-static void executeImmediateArithInst(Thread*, uint32_t instruction);
-static void executeScalarLoadStoreInst(Thread*, uint32_t instruction);
-static void executeBlockLoadStoreInst(Thread*, uint32_t instruction);
-static void executeScatterGatherInst(Thread*, uint32_t instruction);
-static void executeControlRegisterInst(Thread*, uint32_t instruction);
-static void executeMemoryAccessInst(Thread*, uint32_t instruction);
-static void executeBranchInst(Thread*, uint32_t instruction);
-static void executeCacheControlInst(Thread*, uint32_t instruction);
-static bool executeInstruction(Thread*);
-static void timerTick(Core *core);
+static void print_thread_registers(const struct thread*);
+static uint32_t get_thread_scalar_reg(const struct thread*, uint32_t reg);
+static void set_scalar_reg(struct thread*, uint32_t reg, uint32_t value);
+static void set_vector_reg(struct thread*, uint32_t reg, uint32_t mask,
+                           uint32_t *values);
+static void invalidate_sync_address(struct core*, uint32_t address);
+static void try_to_dispatch_interrupt(struct thread*);
+static void raise_trap(struct thread*, uint32_t address, enum trap_type type, bool is_store,
+                       bool is_data_cache);
+static void raise_access_fault(struct thread*, uint32_t address, enum trap_type, bool is_store,
+                               bool is_data_cache);
+static void raise_illegal_instruction_fault(struct thread*, uint32_t instruction);
+static bool translate_address(struct thread*, uint32_t virtual_address, uint32_t
+                              *physical_address, bool is_store, bool is_data_cache);
+static uint32_t scalar_arithmetic_op(enum arithmetic_op, uint32_t value1, uint32_t value2);
+static bool is_compare_op(uint32_t op);
+static struct breakpoint *lookup_breakpoint(struct core*, uint32_t pc);
+static void execute_register_arith_inst(struct thread*, uint32_t instruction);
+static void execute_immediate_arith_inst(struct thread*, uint32_t instruction);
+static void execute_scalar_load_store_inst(struct thread*, uint32_t instruction);
+static void execute_block_load_store_inst(struct thread*, uint32_t instruction);
+static void execute_scatter_gather_inst(struct thread*, uint32_t instruction);
+static void execute_control_register_inst(struct thread*, uint32_t instruction);
+static void execute_memory_access_inst(struct thread*, uint32_t instruction);
+static void execute_branch_inst(struct thread*, uint32_t instruction);
+static void execute_cache_control_inst(struct thread*, uint32_t instruction);
+static bool execute_instruction(struct thread*);
+static void timer_tick(struct core *core);
 
-Core *initCore(uint32_t memorySize, uint32_t totalThreads, bool randomizeMemory,
-               const char *sharedMemoryFile)
+struct core *init_core(uint32_t memory_size, uint32_t total_threads, bool randomize_memory,
+                       const char *shared_memory_file)
 {
     uint32_t address;
     uint32_t threadid;
-    Core *core;
+    struct core *core;
     int i;
     struct timeval tv;
-    int sharedMemoryFd;
+    int shared_memory_fd;
 
     // Limited by enable mask
-    assert(totalThreads <= 32);
+    assert(total_threads <= 32);
 
-    core = (Core*) calloc(sizeof(Core), 1);
-    core->memorySize = memorySize;
-    if (sharedMemoryFile != NULL)
+    core = (struct core*) calloc(sizeof(struct core), 1);
+    core->memory_size = memory_size;
+    if (shared_memory_file != NULL)
     {
-        sharedMemoryFd = open(sharedMemoryFile, O_CREAT | O_RDWR, 666);
-        if (sharedMemoryFd < 0)
+        shared_memory_fd = open(shared_memory_file, O_CREAT | O_RDWR, 666);
+        if (shared_memory_fd < 0)
         {
-            perror("initCore: Error opening shared memory file");
+            perror("init_core: Error opening shared memory file");
             return NULL;
         }
 
-        if (ftruncate(sharedMemoryFd, memorySize) < 0)
+        if (ftruncate(shared_memory_fd, memory_size) < 0)
         {
-            perror("initCore: couldn't resize shared memory file");
+            perror("init_core: couldn't resize shared memory file");
             return NULL;
         }
 
-        core->memory = mmap(NULL, memorySize, PROT_READ | PROT_WRITE, MAP_SHARED
-                            | MAP_FILE, sharedMemoryFd, 0);
+        core->memory = mmap(NULL, memory_size, PROT_READ | PROT_WRITE, MAP_SHARED
+                            | MAP_FILE, shared_memory_fd, 0);
         if (core->memory == NULL)
         {
-            perror("initCore: mmap failed");
+            perror("init_core: mmap failed");
             return NULL;
         }
     }
     else
     {
-        core->memory = (uint32_t*) malloc(memorySize);
+        core->memory = (uint32_t*) malloc(memory_size);
         if (core->memory == NULL)
         {
-            perror("initCore: malloc failed");
+            perror("init_core: malloc failed");
             return NULL;
         }
 
-        if (randomizeMemory)
+        if (randomize_memory)
         {
             srand((unsigned int) time(NULL));
-            for (address = 0; address < memorySize / 4; address++)
+            for (address = 0; address < memory_size / 4; address++)
                 core->memory[address] = (uint32_t) rand();
         }
         else
-            memset(core->memory, 0, core->memorySize);
+            memset(core->memory, 0, core->memory_size);
     }
 
-    core->itlb = (TlbEntry*) malloc(sizeof(TlbEntry) * TLB_SETS * TLB_WAYS);
-    core->dtlb = (TlbEntry*) malloc(sizeof(TlbEntry) * TLB_SETS * TLB_WAYS);
+    core->itlb = (struct tlb_entry*) malloc(sizeof(struct tlb_entry) * TLB_SETS * TLB_WAYS);
+    core->dtlb = (struct tlb_entry*) malloc(sizeof(struct tlb_entry) * TLB_SETS * TLB_WAYS);
     for (i = 0; i < TLB_SETS * TLB_WAYS; i++)
     {
         // Set to invalid (unaligned) addresses so these don't match
-        core->itlb[i].virtualAddress = INVALID_ADDR;
-        core->dtlb[i].virtualAddress = INVALID_ADDR;
+        core->itlb[i].virtual_address = INVALID_ADDR;
+        core->dtlb[i].virtual_address = INVALID_ADDR;
     }
 
-    core->totalThreads = totalThreads;
-    core->threads = (Thread*) calloc(sizeof(Thread), totalThreads);
-    for (threadid = 0; threadid < totalThreads; threadid++)
+    core->total_threads = total_threads;
+    core->threads = (struct thread*) calloc(sizeof(struct thread), total_threads);
+    for (threadid = 0; threadid < total_threads; threadid++)
     {
         core->threads[threadid].core = core;
         core->threads[threadid].id = threadid;
-        core->threads[threadid].lastSyncLoadAddr = INVALID_ADDR;
-        core->threads[threadid].enableSupervisor = true;
-        core->threads[threadid].savedTrapState[0].enableSupervisor = true;
+        core->threads[threadid].last_sync_load_addr = INVALID_ADDR;
+        core->threads[threadid].enable_supervisor = true;
+        core->threads[threadid].saved_trap_state[0].enable_supervisor = true;
     }
 
-    core->threadEnableMask = 1;
+    core->thread_enable_mask = 1;
     core->crashed = false;
-    core->enableTracing = false;
-    core->trapHandlerPc = 0;
+    core->enable_tracing = false;
+    core->trap_handler_pc = 0;
 
     gettimeofday(&tv, NULL);
-    core->startCycleCount = (uint32_t)(tv.tv_sec * 50000000 + tv.tv_usec * 50);
+    core->start_cycle_count = (uint32_t)(tv.tv_sec * 50000000 + tv.tv_usec * 50);
 
     return core;
 }
 
-void enableTracing(Core *core)
+void enable_tracing(struct core *core)
 {
-    core->enableTracing = true;
+    core->enable_tracing = true;
 }
 
-int loadHexFile(Core *core, const char *filename)
+int load_hex_file(struct core *core, const char *filename)
 {
     FILE *file;
     char line[16];
@@ -271,16 +267,16 @@ int loadHexFile(Core *core, const char *filename)
     file = fopen(filename, "r");
     if (file == NULL)
     {
-        perror("loadHexFile: error opening hex file");
+        perror("load_hex_file: error opening hex file");
         return -1;
     }
 
     while (fgets(line, sizeof(line), file))
     {
-        *memptr++ = endianSwap32((uint32_t) strtoul(line, NULL, 16));
-        if ((uint32_t)((memptr - core->memory) * 4) >= core->memorySize)
+        *memptr++ = endian_swap32((uint32_t) strtoul(line, NULL, 16));
+        if ((uint32_t)((memptr - core->memory) * 4) >= core->memory_size)
         {
-            fprintf(stderr, "loadHexFile: hex file too big to fit in memory\n");
+            fprintf(stderr, "load_hex_file: hex file too big to fit in memory\n");
             return -1;
         }
     }
@@ -290,61 +286,61 @@ int loadHexFile(Core *core, const char *filename)
     return 0;
 }
 
-void writeMemoryToFile(const Core *core, const char *filename, uint32_t baseAddress,
-                       uint32_t length)
+void write_memory_to_file(const struct core *core, const char *filename, uint32_t base_address,
+                          uint32_t length)
 {
     FILE *file;
 
     file = fopen(filename, "wb+");
     if (file == NULL)
     {
-        perror("writeMemoryToFile: Error opening output file");
+        perror("write_memory_to_file: Error opening output file");
         return;
     }
 
-    if (fwrite((int8_t*) core->memory + baseAddress, MIN(core->memorySize, length), 1, file) <= 0)
+    if (fwrite((int8_t*) core->memory + base_address, MIN(core->memory_size, length), 1, file) <= 0)
     {
-        perror("writeMemoryToFile: fwrite failed");
+        perror("write_memory_to_file: fwrite failed");
         return;
     }
 
     fclose(file);
 }
 
-const void *getMemoryRegionPtr(const Core *core, uint32_t address, uint32_t length)
+const void *get_memory_region_ptr(const struct core *core, uint32_t address, uint32_t length)
 {
-    assert(length < core->memorySize);
+    assert(length < core->memory_size);
 
     // Prevent overrun for bad address
-    if (address > core->memorySize || address + length > core->memorySize)
+    if (address > core->memory_size || address + length > core->memory_size)
         return core->memory;
 
     return ((const uint8_t*) core->memory) + address;
 }
 
-void printRegisters(const Core *core, uint32_t threadId)
+void print_registers(const struct core *core, uint32_t thread_id)
 {
-    printThreadRegisters(&core->threads[threadId]);
+    print_thread_registers(&core->threads[thread_id]);
 }
 
-void enableCosimulation(Core *core)
+void enable_cosimulation(struct core *core)
 {
-    core->enableCosim = true;
+    core->enable_cosim = true;
 }
 
-void raiseInterrupt(Core *core, uint32_t intBitmap)
+void raise_interrupt(struct core *core, uint32_t int_bitmap)
 {
-    uint32_t threadId;
+    uint32_t thread_id;
 
-    core->pendingInterrupts |= intBitmap;
-    for (threadId = 0; threadId < core->totalThreads; threadId++)
-        tryToDispatchInterrupt(&core->threads[threadId]);
+    core->pending_interrupts |= int_bitmap;
+    for (thread_id = 0; thread_id < core->total_threads; thread_id++)
+        try_to_dispatch_interrupt(&core->threads[thread_id]);
 }
 
 // Called when the verilog model in cosimulation indicates an interrupt.
-void cosimInterrupt(Core *core, uint32_t threadId, uint32_t pc)
+void cosim_interrupt(struct core *core, uint32_t thread_id, uint32_t pc)
 {
-    Thread *thread = &core->threads[threadId];
+    struct thread *thread = &core->threads[thread_id];
 
     // This handles an edge case where cosimulation mismatches would occur
     // if an interrupt happened during a scatter store. Hardware does not
@@ -353,137 +349,137 @@ void cosimInterrupt(Core *core, uint32_t threadId, uint32_t pc)
     // the instruction to finish in hardware, but the emulator not to have
     // finished it. When it starts executing the ISR, the subcycle counter
     // will be non-zero, which messes up things later.
-    if (pc != thread->currentPc)
-        thread->currentSubcycle = 0;
+    if (pc != thread->pc)
+        thread->subcycle = 0;
 
-    thread->currentPc = pc;
-    raiseInterrupt(core, INT_COSIM);
+    thread->pc = pc;
+    raise_interrupt(core, INT_COSIM);
 }
 
-uint32_t getTotalThreads(const Core *core)
+uint32_t get_total_threads(const struct core *core)
 {
-    return core->totalThreads;
+    return core->total_threads;
 }
 
-bool coreHalted(const Core *core)
+bool core_halted(const struct core *core)
 {
-    return core->threadEnableMask == 0 || core->crashed;
+    return core->thread_enable_mask == 0 || core->crashed;
 }
 
-bool stoppedOnFault(const Core *core)
+bool stopped_on_fault(const struct core *core)
 {
     return core->crashed;
 }
 
-bool executeInstructions(Core *core, uint32_t threadId, uint64_t totalInstructions)
+bool execute_instructions(struct core *core, uint32_t thread_id, uint64_t total_instructions)
 {
-    uint64_t instructionCount;
+    uint64_t instruction_count;
     uint32_t thread;
 
-    core->singleStepping = false;
-    for (instructionCount = 0; instructionCount < totalInstructions; instructionCount++)
+    core->single_stepping = false;
+    for (instruction_count = 0; instruction_count < total_instructions; instruction_count++)
     {
-        if (core->threadEnableMask == 0)
+        if (core->thread_enable_mask == 0)
         {
-            printf("Thread enable mask is now zero\n");
+            printf("struct thread enable mask is now zero\n");
             return false;
         }
 
         if (core->crashed)
             return false;
 
-        if (threadId == ALL_THREADS)
+        if (thread_id == ALL_THREADS)
         {
             // Cycle through threads round-robin
-            for (thread = 0; thread < core->totalThreads; thread++)
+            for (thread = 0; thread < core->total_threads; thread++)
             {
-                if (core->threadEnableMask & (1 << thread))
+                if (core->thread_enable_mask & (1 << thread))
                 {
-                    if (!executeInstruction(&core->threads[thread]))
+                    if (!execute_instruction(&core->threads[thread]))
                         return false;  // Hit breakpoint
                 }
             }
         }
         else
         {
-            if (!executeInstruction(&core->threads[threadId]))
+            if (!execute_instruction(&core->threads[thread_id]))
                 return false;  // Hit breakpoint
         }
 
-        timerTick(core);
+        timer_tick(core);
     }
 
     return true;
 }
 
-void singleStep(Core *core, uint32_t threadId)
+void single_step(struct core *core, uint32_t thread_id)
 {
-    core->singleStepping = true;
-    executeInstruction(&core->threads[threadId]);
-    timerTick(core);
+    core->single_stepping = true;
+    execute_instruction(&core->threads[thread_id]);
+    timer_tick(core);
 }
 
-uint32_t getPc(const Core *core, uint32_t threadId)
+uint32_t get_pc(const struct core *core, uint32_t thread_id)
 {
-    return core->threads[threadId].currentPc;
+    return core->threads[thread_id].pc;
 }
 
-uint32_t getScalarRegister(const Core *core, uint32_t threadId, uint32_t regId)
+uint32_t get_scalar_register(const struct core *core, uint32_t thread_id, uint32_t reg_id)
 {
-    return getThreadScalarReg(&core->threads[threadId], regId);
+    return get_thread_scalar_reg(&core->threads[thread_id], reg_id);
 }
 
-uint32_t getVectorRegister(const Core *core, uint32_t threadId, uint32_t regId, uint32_t lane)
+uint32_t get_vector_register(const struct core *core, uint32_t thread_id, uint32_t reg_id, uint32_t lane)
 {
-    return core->threads[threadId].vectorReg[regId][lane];
+    return core->threads[thread_id].vector_reg[reg_id][lane];
 }
 
-uint32_t debugReadMemoryByte(const Core *core, uint32_t address)
+uint32_t debug_read_memory_byte(const struct core *core, uint32_t address)
 {
     return ((uint8_t*)core->memory)[address];
 }
 
-void debugWriteMemoryByte(const Core *core, uint32_t address, uint8_t byte)
+void debug_write_memory_byte(const struct core *core, uint32_t address, uint8_t byte)
 {
     ((uint8_t*)core->memory)[address] = byte;
 }
 
-int setBreakpoint(Core *core, uint32_t pc)
+int set_breakpoint(struct core *core, uint32_t pc)
 {
-    Breakpoint *breakpoint = lookupBreakpoint(core, pc);
+    struct breakpoint *breakpoint = lookup_breakpoint(core, pc);
     if (breakpoint != NULL)
     {
         printf("already has a breakpoint at address %x\n", pc);
         return -1;
     }
 
-    if (pc >= core->memorySize || (pc & 3) != 0)
+    if (pc >= core->memory_size || (pc & 3) != 0)
     {
         printf("invalid breakpoint address %x\n", pc);
         return -1;
     }
 
-    breakpoint = (Breakpoint*) calloc(sizeof(Breakpoint), 1);
+    breakpoint = (struct breakpoint*) calloc(sizeof(struct breakpoint), 1);
     breakpoint->next = core->breakpoints;
     core->breakpoints = breakpoint;
     breakpoint->address = pc;
-    breakpoint->originalInstruction = core->memory[pc / 4];
-    if (breakpoint->originalInstruction == BREAKPOINT_INST)
-        breakpoint->originalInstruction = INSTRUCTION_NOP;	// Avoid infinite loop
+    breakpoint->original_instruction = core->memory[pc / 4];
+    if (breakpoint->original_instruction == BREAKPOINT_INST)
+        breakpoint->original_instruction = INSTRUCTION_NOP;	// Avoid infinite loop
 
     core->memory[pc / 4] = BREAKPOINT_INST;
     return 0;
 }
 
-int clearBreakpoint(Core *core, uint32_t pc)
+int clear_breakpoint(struct core *core, uint32_t pc)
 {
-    Breakpoint **link;
+    struct breakpoint **link;
 
     for (link = &core->breakpoints; *link; link = &(*link)->next)
     {
         if ((*link)->address == pc)
         {
-            core->memory[pc / 4] = (*link)->originalInstruction;
+            core->memory[pc / 4] = (*link)->original_instruction;
             *link = (*link)->next;
             return 0;
         }
@@ -492,30 +488,30 @@ int clearBreakpoint(Core *core, uint32_t pc)
     return -1; // Not found
 }
 
-void setStopOnFault(Core *core, bool stopOnFault)
+void set_stop_on_fault(struct core *core, bool stop_on_fault)
 {
-    core->stopOnFault = stopOnFault;
+    core->stop_on_fault = stop_on_fault;
 }
 
-void dumpInstructionStats(Core *core)
+void dump_instruction_stats(struct core *core)
 {
-    printf("%" PRId64 " total instructions\n", core->totalInstructions);
+    printf("%" PRId64 " total instructions\n", core->total_instructions);
 #ifdef DUMP_INSTRUCTION_STATS
 #define PRINT_STAT(name) printf("%s %" PRId64 " %.4g%%\n", #name, core->stat ## name, \
-		(double) core->stat ## name/ core->totalInstructions * 100);
+		(double) core->stat ## name/ core->total_instructions * 100);
 
-    PRINT_STAT(VectorInst);
-    PRINT_STAT(LoadInst);
-    PRINT_STAT(StoreInst);
-    PRINT_STAT(BranchInst);
-    PRINT_STAT(ImmArithInst);
-    PRINT_STAT(RegArithInst);
+    PRINT_STAT(vector_inst);
+    PRINT_STAT(load_inst);
+    PRINT_STAT(store_inst);
+    PRINT_STAT(branch_inst);
+    PRINT_STAT(imm_arith_inst);
+    PRINT_STAT(reg_arith_inst);
 
 #undef PRINT_STAT
 #endif
 }
 
-static void printThreadRegisters(const Thread *thread)
+static void print_thread_registers(const struct thread *thread)
 {
     int reg;
     int lane;
@@ -526,20 +522,20 @@ static void printThreadRegisters(const Thread *thread)
         if (reg < 10)
             printf(" "); // Align single digit numbers
 
-        printf("s%d %08x ", reg, thread->scalarReg[reg]);
+        printf("s%d %08x ", reg, thread->scalar_reg[reg]);
         if (reg % 8 == 7)
             printf("\n");
     }
 
-    printf("s31 %08x\n", thread->currentPc - 4);
+    printf("s31 %08x\n", thread->pc - 4);
     printf("Flags: ");
-    if (thread->enableInterrupt)
+    if (thread->enable_interrupt)
         printf("I");
 
-    if (thread->enableMmu)
+    if (thread->enable_mmu)
         printf("M");
 
-    if(thread->enableSupervisor)
+    if(thread->enable_supervisor)
         printf("S");
 
     printf("\n\n");
@@ -550,41 +546,41 @@ static void printThreadRegisters(const Thread *thread)
 
         printf("v%d ", reg);
         for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
-            printf("%08x", thread->vectorReg[reg][lane]);
+            printf("%08x", thread->vector_reg[reg][lane]);
 
         printf("\n");
     }
 }
 
-static uint32_t getThreadScalarReg(const Thread *thread, uint32_t reg)
+static uint32_t get_thread_scalar_reg(const struct thread *thread, uint32_t reg)
 {
     if (reg == PC_REG)
-        return thread->currentPc;
+        return thread->pc;
     else
-        return thread->scalarReg[reg];
+        return thread->scalar_reg[reg];
 }
 
-static void setScalarReg(Thread *thread, uint32_t reg, uint32_t value)
+static void set_scalar_reg(struct thread *thread, uint32_t reg, uint32_t value)
 {
-    if (thread->core->enableTracing)
-        printf("%08x [th %d] s%d <= %08x\n", thread->currentPc - 4, thread->id, reg, value);
+    if (thread->core->enable_tracing)
+        printf("%08x [th %d] s%d <= %08x\n", thread->pc - 4, thread->id, reg, value);
 
-    if (thread->core->enableCosim)
-        cosimCheckSetScalarReg(thread->core, thread->currentPc - 4, reg, value);
+    if (thread->core->enable_cosim)
+        cosim_check_set_scalar_reg(thread->core, thread->pc - 4, reg, value);
 
     if (reg == PC_REG)
-        thread->currentPc = value;
+        thread->pc = value;
     else
-        thread->scalarReg[reg] = value;
+        thread->scalar_reg[reg] = value;
 }
 
-static void setVectorReg(Thread *thread, uint32_t reg, uint32_t mask, uint32_t *values)
+static void set_vector_reg(struct thread *thread, uint32_t reg, uint32_t mask, uint32_t *values)
 {
     int lane;
 
-    if (thread->core->enableTracing)
+    if (thread->core->enable_tracing)
     {
-        printf("%08x [th %d] v%d{%04x} <= ", thread->currentPc - 4, thread->id, reg,
+        printf("%08x [th %d] v%d{%04x} <= ", thread->pc - 4, thread->id, reg,
                mask & 0xffff);
         for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
             printf("%08x ", values[lane]);
@@ -592,200 +588,200 @@ static void setVectorReg(Thread *thread, uint32_t reg, uint32_t mask, uint32_t *
         printf("\n");
     }
 
-    if (thread->core->enableCosim)
-        cosimCheckSetVectorReg(thread->core, thread->currentPc - 4, reg, mask, values);
+    if (thread->core->enable_cosim)
+        cosim_check_set_vector_reg(thread->core, thread->pc - 4, reg, mask, values);
 
     for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
     {
         if (mask & (1 << lane))
-            thread->vectorReg[reg][lane] = values[lane];
+            thread->vector_reg[reg][lane] = values[lane];
     }
 }
 
-static void invalidateSyncAddress(Core *core, uint32_t address)
+static void invalidate_sync_address(struct core *core, uint32_t address)
 {
-    uint32_t threadId;
+    uint32_t thread_id;
 
-    for (threadId = 0; threadId < core->totalThreads; threadId++)
+    for (thread_id = 0; thread_id < core->total_threads; thread_id++)
     {
-        if (core->threads[threadId].lastSyncLoadAddr == address / CACHE_LINE_LENGTH)
-            core->threads[threadId].lastSyncLoadAddr = INVALID_ADDR;
+        if (core->threads[thread_id].last_sync_load_addr == address / CACHE_LINE_LENGTH)
+            core->threads[thread_id].last_sync_load_addr = INVALID_ADDR;
     }
 }
 
-static void tryToDispatchInterrupt(Thread *thread)
+static void try_to_dispatch_interrupt(struct thread *thread)
 {
-    uint32_t pendingInterrupts = thread->core->pendingInterrupts;
-    if (!thread->enableInterrupt)
+    uint32_t pending_interrupts = thread->core->pending_interrupts;
+    if (!thread->enable_interrupt)
         return;
 
-    if ((pendingInterrupts & thread->interruptMask) != 0)
+    if ((pending_interrupts & thread->interrupt_mask) != 0)
     {
         // Unlike exceptions, an interrupt saves the PC of the *next* instruction,
         // rather than the current one, but only if a multicycle instruction is
         // not active. Advance the PC here accordingly.
-        if (thread->currentSubcycle == 0)
-            thread->currentPc += 4;
+        if (thread->subcycle == 0)
+            thread->pc += 4;
 
-        raiseTrap(thread, 0, TT_INTERRUPT, false, false);
+        raise_trap(thread, 0, TT_INTERRUPT, false, false);
     }
 }
 
-static void raiseTrap(Thread *thread, uint32_t trapAddress, TrapType type,
-                      bool isStore, bool isDataCache)
+static void raise_trap(struct thread *thread, uint32_t trap_address, enum trap_type type,
+                       bool is_store, bool is_data_cache)
 {
-    if (thread->core->enableTracing)
+    if (thread->core->enable_tracing)
     {
         printf("%08x [th %d] trap %d store %d cache %d %08x\n",
-               thread->currentPc - 4, thread->id, type, isStore, isDataCache,
-               trapAddress);
+               thread->pc - 4, thread->id, type, is_store, is_data_cache,
+               trap_address);
     }
 
     // For nested interrupts, push the old saved state into
     // the second save slot.
-    thread->savedTrapState[1] = thread->savedTrapState[0];
+    thread->saved_trap_state[1] = thread->saved_trap_state[0];
 
     // Save current trap information
-    thread->savedTrapState[0].trapCause = type | (isStore ? 0x10ul : 0)
-                                          | (isDataCache ? 0x20ul : 0);
-    thread->savedTrapState[0].pc = thread->currentPc - 4;
-    thread->savedTrapState[0].enableInterrupt = thread->enableInterrupt;
-    thread->savedTrapState[0].enableMmu = thread->enableMmu;
-    thread->savedTrapState[0].enableSupervisor = thread->enableSupervisor;
-    thread->savedTrapState[0].subcycle = thread->currentSubcycle;
-    thread->savedTrapState[0].accessAddress = trapAddress;
+    thread->saved_trap_state[0].trap_cause = type | (is_store ? 0x10ul : 0)
+            | (is_data_cache ? 0x20ul : 0);
+    thread->saved_trap_state[0].pc = thread->pc - 4;
+    thread->saved_trap_state[0].enable_interrupt = thread->enable_interrupt;
+    thread->saved_trap_state[0].enable_mmu = thread->enable_mmu;
+    thread->saved_trap_state[0].enable_supervisor = thread->enable_supervisor;
+    thread->saved_trap_state[0].subcycle = thread->subcycle;
+    thread->saved_trap_state[0].access_address = trap_address;
 
     // Update thread state
-    thread->enableInterrupt = false;
+    thread->enable_interrupt = false;
     if (type == TT_TLB_MISS)
     {
-        thread->currentPc = thread->core->tlbMissHandlerPc;
-        thread->enableMmu = false;
+        thread->pc = thread->core->tlb_miss_handler_pc;
+        thread->enable_mmu = false;
     }
     else
-        thread->currentPc = thread->core->trapHandlerPc;
+        thread->pc = thread->core->trap_handler_pc;
 
-    thread->currentSubcycle = 0;
-    thread->enableSupervisor = true;
+    thread->subcycle = 0;
+    thread->enable_supervisor = true;
 }
 
-static void raiseAccessFault(Thread *thread, uint32_t address, TrapType type,
-                             bool isStore, bool isDataCache)
+static void raise_access_fault(struct thread *thread, uint32_t address, enum trap_type type,
+                               bool is_store, bool is_data_cache)
 {
-    if (thread->core->stopOnFault || thread->core->trapHandlerPc == 0)
+    if (thread->core->stop_on_fault || thread->core->trap_handler_pc == 0)
     {
         printf("Invalid %s access thread %d PC %08x address %08x\n",
-               isStore ? "store" : "load",
-               thread->id, thread->currentPc - 4, address);
-        printThreadRegisters(thread);
+               is_store ? "store" : "load",
+               thread->id, thread->pc - 4, address);
+        print_thread_registers(thread);
         thread->core->crashed = true;
     }
     else
     {
-        if (!isDataCache)
-            thread->currentPc += 4; // PC not incremented where this is called
+        if (!is_data_cache)
+            thread->pc += 4; // PC not incremented where this is called
 
-        raiseTrap(thread, address, type, isStore, isDataCache);
+        raise_trap(thread, address, type, is_store, is_data_cache);
     }
 }
 
-static void raiseIllegalInstructionFault(Thread *thread, uint32_t instruction)
+static void raise_illegal_instruction_fault(struct thread *thread, uint32_t instruction)
 {
-    if (thread->core->stopOnFault || thread->core->trapHandlerPc == 0)
+    if (thread->core->stop_on_fault || thread->core->trap_handler_pc == 0)
     {
         printf("Illegal instruction %08x thread %d PC %08x\n", instruction, thread->id,
-               thread->currentPc - 4);
-        printThreadRegisters(thread);
+               thread->pc - 4);
+        print_thread_registers(thread);
         thread->core->crashed = true;
     }
     else
-        raiseTrap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false);
+        raise_trap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false);
 }
 
 // Translate addresses using the translation lookaside buffer. Raise faults
 // if necessary.
-static bool translateAddress(Thread *thread, uint32_t virtualAddress,
-                             uint32_t *outPhysicalAddress, bool isStore,
-                             bool isDataAccess)
+static bool translate_address(struct thread *thread, uint32_t virtual_address,
+                              uint32_t *out_physical_address, bool is_store,
+                              bool is_data_access)
 {
-    int tlbSet;
+    int tlb_set;
     int way;
-    TlbEntry *setEntries;
+    struct tlb_entry *set_entries;
 
-    if (!thread->enableMmu)
+    if (!thread->enable_mmu)
     {
-        if (virtualAddress >= thread->core->memorySize && virtualAddress < 0xffff0000)
+        if (virtual_address >= thread->core->memory_size && virtual_address < 0xffff0000)
         {
             // This isn't an actual fault supported by the hardware, but a debugging
             // aid only available in the emulator.
             printf("Memory access out of range %08x, pc %08x (MMU not enabled)\n",
-                   virtualAddress, thread->currentPc - 4);
-            printThreadRegisters(thread);
+                   virtual_address, thread->pc - 4);
+            print_thread_registers(thread);
             thread->core->crashed = true;
             return false;
         }
 
-        *outPhysicalAddress = virtualAddress;
+        *out_physical_address = virtual_address;
         return true;
     }
 
-    tlbSet = (virtualAddress / PAGE_SIZE) % TLB_SETS;
-    setEntries = (isDataAccess ? thread->core->dtlb : thread->core->itlb)
-        + tlbSet * TLB_WAYS;
+    tlb_set = (virtual_address / PAGE_SIZE) % TLB_SETS;
+    set_entries = (is_data_access ? thread->core->dtlb : thread->core->itlb)
+                  + tlb_set * TLB_WAYS;
     for (way = 0; way < TLB_WAYS; way++)
     {
-        if (setEntries[way].virtualAddress == ROUND_TO_PAGE(virtualAddress)
-                && ((setEntries[way].physAddrAndFlags & TLB_GLOBAL) != 0
-                    || setEntries[way].asid == thread->currentAsid))
+        if (set_entries[way].virtual_address == ROUND_TO_PAGE(virtual_address)
+                && ((set_entries[way].phys_addr_and_flags & TLB_GLOBAL) != 0
+                    || set_entries[way].asid == thread->asid))
         {
-            if ((setEntries[way].physAddrAndFlags & TLB_PRESENT) == 0)
+            if ((set_entries[way].phys_addr_and_flags & TLB_PRESENT) == 0)
             {
                 // In instruction fetch, hadn't been incremented yet
-                if (!isDataAccess)
-                    thread->currentPc += 4;
+                if (!is_data_access)
+                    thread->pc += 4;
 
-                raiseTrap(thread, virtualAddress, TT_PAGE_FAULT, isStore,
-                          isDataAccess);
+                raise_trap(thread, virtual_address, TT_PAGE_FAULT, is_store,
+                           is_data_access);
                 return false;
             }
 
-            if ((setEntries[way].physAddrAndFlags & TLB_SUPERVISOR) != 0
-                    && !thread->enableSupervisor)
+            if ((set_entries[way].phys_addr_and_flags & TLB_SUPERVISOR) != 0
+                    && !thread->enable_supervisor)
             {
                 // In instruction fetch, hadn't been incremented yet
-                if (!isDataAccess)
-                    thread->currentPc += 4;
+                if (!is_data_access)
+                    thread->pc += 4;
 
-                raiseTrap(thread, virtualAddress, TT_SUPERVISOR_ACCESS, isStore,
-                          isDataAccess);
+                raise_trap(thread, virtual_address, TT_SUPERVISOR_ACCESS, is_store,
+                           is_data_access);
                 return false;
             }
 
-            if ((setEntries[way].physAddrAndFlags & TLB_EXECUTABLE) == 0
-                    && !isDataAccess)
+            if ((set_entries[way].phys_addr_and_flags & TLB_EXECUTABLE) == 0
+                    && !is_data_access)
             {
-                thread->currentPc += 4;
-                raiseTrap(thread, virtualAddress, TT_NOT_EXECUTABLE, false, false);
+                thread->pc += 4;
+                raise_trap(thread, virtual_address, TT_NOT_EXECUTABLE, false, false);
                 return false;
             }
 
-            if (isStore && (setEntries[way].physAddrAndFlags & TLB_WRITE_ENABLE) == 0)
+            if (is_store && (set_entries[way].phys_addr_and_flags & TLB_WRITE_ENABLE) == 0)
             {
-                raiseAccessFault(thread, virtualAddress, TT_ILLEGAL_STORE, true,
-                                 isDataAccess);
+                raise_access_fault(thread, virtual_address, TT_ILLEGAL_STORE, true,
+                                   is_data_access);
                 return false;
             }
 
-            *outPhysicalAddress = ROUND_TO_PAGE(setEntries[way].physAddrAndFlags)
-                                  | PAGE_OFFSET(virtualAddress);
+            *out_physical_address = ROUND_TO_PAGE(set_entries[way].phys_addr_and_flags)
+                                    | PAGE_OFFSET(virtual_address);
 
-            if (*outPhysicalAddress >= thread->core->memorySize && *outPhysicalAddress < 0xffff0000)
+            if (*out_physical_address >= thread->core->memory_size && *out_physical_address < 0xffff0000)
             {
                 // This isn't an actual fault supported by the hardware, but a debugging
                 // aid only available in the emulator.
                 printf("Translated physical address out of range. va %08x pa %08x pc %08x\n",
-                       virtualAddress, *outPhysicalAddress, thread->currentPc - 4);
-                printThreadRegisters(thread);
+                       virtual_address, *out_physical_address, thread->pc - 4);
+                print_thread_registers(thread);
                 thread->core->crashed = true;
                 return false;
             }
@@ -796,14 +792,14 @@ static bool translateAddress(Thread *thread, uint32_t virtualAddress,
 
     // No translation found
 
-    if (!isDataAccess)
-        thread->currentPc += 4;	// Instruction fetch hasn't updated yet
+    if (!is_data_access)
+        thread->pc += 4;	// Instruction fetch hasn't updated yet
 
-    raiseTrap(thread, virtualAddress, TT_TLB_MISS, isStore, isDataAccess);
+    raise_trap(thread, virtual_address, TT_TLB_MISS, is_store, is_data_access);
     return false;
 }
 
-static uint32_t scalarArithmeticOp(ArithmeticOp operation, uint32_t value1, uint32_t value2)
+static uint32_t scalar_arithmetic_op(enum arithmetic_op operation, uint32_t value1, uint32_t value2)
 {
     switch (operation)
     {
@@ -854,12 +850,12 @@ static uint32_t scalarArithmeticOp(ArithmeticOp operation, uint32_t value1, uint
         case OP_CMPLE_U:
             return (uint32_t)(value1 <= value2);
         case OP_FTOI:
-            return (uint32_t)(int32_t)valueAsFloat(value2);
+            return (uint32_t)(int32_t)value_as_float(value2);
         case OP_RECIPROCAL:
         {
             // Reciprocal only has 6 bits of accuracy
-            float fresult = 1.0f / valueAsFloat(value2 & 0xfffe0000);
-            uint32_t iresult = valueAsInt(fresult);
+            float fresult = 1.0f / value_as_float(value2 & 0xfffe0000);
+            uint32_t iresult = value_as_int(fresult);
             if (!isnan(fresult))
                 iresult &= 0xfffe0000;	// Truncate, but only if not NaN
 
@@ -873,38 +869,38 @@ static uint32_t scalarArithmeticOp(ArithmeticOp operation, uint32_t value1, uint
         case OP_MULH_I:
             return (uint32_t) (((int64_t)(int32_t)value1 * (int64_t)(int32_t)value2) >> 32);
         case OP_ADD_F:
-            return valueAsInt(valueAsFloat(value1) + valueAsFloat(value2));
+            return value_as_int(value_as_float(value1) + value_as_float(value2));
         case OP_SUB_F:
-            return valueAsInt(valueAsFloat(value1) - valueAsFloat(value2));
+            return value_as_int(value_as_float(value1) - value_as_float(value2));
         case OP_MUL_F:
-            return valueAsInt(valueAsFloat(value1) * valueAsFloat(value2));
+            return value_as_int(value_as_float(value1) * value_as_float(value2));
         case OP_ITOF:
-            return valueAsInt((float)(int32_t)value2);
+            return value_as_int((float)(int32_t)value2);
         case OP_CMPGT_F:
-            return valueAsFloat(value1) > valueAsFloat(value2);
+            return value_as_float(value1) > value_as_float(value2);
         case OP_CMPGE_F:
-            return valueAsFloat(value1) >= valueAsFloat(value2);
+            return value_as_float(value1) >= value_as_float(value2);
         case OP_CMPLT_F:
-            return valueAsFloat(value1) < valueAsFloat(value2);
+            return value_as_float(value1) < value_as_float(value2);
         case OP_CMPLE_F:
-            return valueAsFloat(value1) <= valueAsFloat(value2);
+            return value_as_float(value1) <= value_as_float(value2);
         case OP_CMPEQ_F:
-            return valueAsFloat(value1) == valueAsFloat(value2);
+            return value_as_float(value1) == value_as_float(value2);
         case OP_CMPNE_F:
-            return valueAsFloat(value1) != valueAsFloat(value2);
+            return value_as_float(value1) != value_as_float(value2);
         default:
             return 0u;
     }
 }
 
-static bool isCompareOp(uint32_t op)
+static bool is_compare_op(uint32_t op)
 {
     return (op >= OP_CMPEQ_I && op <= OP_CMPLE_U) || (op >= OP_CMPGT_F && op <= OP_CMPNE_F);
 }
 
-static Breakpoint *lookupBreakpoint(Core *core, uint32_t pc)
+static struct breakpoint *lookup_breakpoint(struct core *core, uint32_t pc)
 {
-    Breakpoint *breakpoint;
+    struct breakpoint *breakpoint;
 
     for (breakpoint = core->breakpoints; breakpoint; breakpoint =
                 breakpoint->next)
@@ -916,81 +912,81 @@ static Breakpoint *lookupBreakpoint(Core *core, uint32_t pc)
     return NULL;
 }
 
-static void executeRegisterArithInst(Thread *thread, uint32_t instruction)
+static void execute_register_arith_inst(struct thread *thread, uint32_t instruction)
 {
-    RegisterArithFormat fmt = extractUnsignedBits(instruction, 26, 3);
-    ArithmeticOp op = extractUnsignedBits(instruction, 20, 6);
-    uint32_t op1reg = extractUnsignedBits(instruction, 0, 5);
-    uint32_t op2reg = extractUnsignedBits(instruction, 15, 5);
-    uint32_t destreg = extractUnsignedBits(instruction, 5, 5);
-    uint32_t maskreg = extractUnsignedBits(instruction, 10, 5);
+    enum register_arith_format fmt = extract_unsigned_bits(instruction, 26, 3);
+    enum arithmetic_op op = extract_unsigned_bits(instruction, 20, 6);
+    uint32_t op1reg = extract_unsigned_bits(instruction, 0, 5);
+    uint32_t op2reg = extract_unsigned_bits(instruction, 15, 5);
+    uint32_t destreg = extract_unsigned_bits(instruction, 5, 5);
+    uint32_t maskreg = extract_unsigned_bits(instruction, 10, 5);
     int lane;
 
     if (op == OP_SYSCALL)
     {
-        raiseTrap(thread, 0, TT_SYSCALL, false, false);
+        raise_trap(thread, 0, TT_SYSCALL, false, false);
         return;
     }
 
-    TALLY_INSTRUCTION(RegArithInst);
+    TALLY_INSTRUCTION(reg_arith_inst);
     if (op == OP_GETLANE)
     {
-        setScalarReg(thread, destreg, thread->vectorReg[op1reg][NUM_VECTOR_LANES - 1
-                     - (getThreadScalarReg(thread, op2reg) & 0xf)]);
+        set_scalar_reg(thread, destreg, thread->vector_reg[op1reg][NUM_VECTOR_LANES - 1
+                       - (get_thread_scalar_reg(thread, op2reg) & 0xf)]);
     }
-    else if (isCompareOp(op))
+    else if (is_compare_op(op))
     {
         uint32_t result = 0;
         switch (fmt)
         {
             case FMT_RA_SS:
-                result = scalarArithmeticOp(op, getThreadScalarReg(thread, op1reg),
-                                            getThreadScalarReg(thread, op2reg)) ? 0xffff : 0;
+                result = scalar_arithmetic_op(op, get_thread_scalar_reg(thread, op1reg),
+                                              get_thread_scalar_reg(thread, op2reg)) ? 0xffff : 0;
                 break;
 
             case FMT_RA_VS:
             case FMT_RA_VS_M:
-                TALLY_INSTRUCTION(VectorInst);
+                TALLY_INSTRUCTION(vector_inst);
 
                 // Vector/Scalar operation
                 // Pack compare results in low 16 bits of scalar register
-                uint32_t scalarValue = getThreadScalarReg(thread, op2reg);
+                uint32_t scalar_value = get_thread_scalar_reg(thread, op2reg);
                 for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
                 {
                     result >>= 1;
-                    result |= scalarArithmeticOp(op, thread->vectorReg[op1reg][lane],
-                                                 scalarValue) ? 0x8000 : 0;
+                    result |= scalar_arithmetic_op(op, thread->vector_reg[op1reg][lane],
+                                                   scalar_value) ? 0x8000 : 0;
                 }
 
                 break;
 
             case FMT_RA_VV:
             case FMT_RA_VV_M:
-                TALLY_INSTRUCTION(VectorInst);
+                TALLY_INSTRUCTION(vector_inst);
 
                 // Vector/Vector operation
                 // Pack compare results in low 16 bits of scalar register
                 for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
                 {
                     result >>= 1;
-                    result |= scalarArithmeticOp(op, thread->vectorReg[op1reg][lane],
-                                                 thread->vectorReg[op2reg][lane]) ? 0x8000 : 0;
+                    result |= scalar_arithmetic_op(op, thread->vector_reg[op1reg][lane],
+                                                   thread->vector_reg[op2reg][lane]) ? 0x8000 : 0;
                 }
 
                 break;
 
             default:
-                raiseIllegalInstructionFault(thread, instruction);
+                raise_illegal_instruction_fault(thread, instruction);
                 return;
         }
 
-        setScalarReg(thread, destreg, result);
+        set_scalar_reg(thread, destreg, result);
     }
     else if (fmt == FMT_RA_SS)
     {
-        uint32_t result = scalarArithmeticOp(op, getThreadScalarReg(thread, op1reg),
-                                             getThreadScalarReg(thread, op2reg));
-        setScalarReg(thread, destreg, result);
+        uint32_t result = scalar_arithmetic_op(op, get_thread_scalar_reg(thread, op1reg),
+                                               get_thread_scalar_reg(thread, op2reg));
+        set_scalar_reg(thread, destreg, result);
     }
     else
     {
@@ -998,12 +994,12 @@ static void executeRegisterArithInst(Thread *thread, uint32_t instruction)
         uint32_t result[NUM_VECTOR_LANES];
         uint32_t mask;
 
-        TALLY_INSTRUCTION(VectorInst);
+        TALLY_INSTRUCTION(vector_inst);
         switch (fmt)
         {
             case FMT_RA_VS_M:
             case FMT_RA_VV_M:
-                mask = getThreadScalarReg(thread, maskreg);
+                mask = get_thread_scalar_reg(thread, maskreg);
                 break;
 
             case FMT_RA_VS:
@@ -1012,14 +1008,14 @@ static void executeRegisterArithInst(Thread *thread, uint32_t instruction)
                 break;
 
             default:
-                raiseIllegalInstructionFault(thread, instruction);
+                raise_illegal_instruction_fault(thread, instruction);
                 return;
         }
 
         if (op == OP_SHUFFLE)
         {
-            const uint32_t *src1 = thread->vectorReg[op1reg];
-            const uint32_t *src2 = thread->vectorReg[op2reg];
+            const uint32_t *src1 = thread->vector_reg[op1reg];
+            const uint32_t *src2 = thread->vector_reg[op2reg];
 
             for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
                 result[lane] = src1[NUM_VECTOR_LANES - 1 - (src2[lane] & 0xf)];
@@ -1027,11 +1023,11 @@ static void executeRegisterArithInst(Thread *thread, uint32_t instruction)
         else if (fmt == FMT_RA_VS || fmt == FMT_RA_VS_M)
         {
             // Vector/Scalar operands
-            uint32_t scalarValue = getThreadScalarReg(thread, op2reg);
+            uint32_t scalar_value = get_thread_scalar_reg(thread, op2reg);
             for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
             {
-                result[lane] = scalarArithmeticOp(op, thread->vectorReg[op1reg][lane],
-                                                  scalarValue);
+                result[lane] = scalar_arithmetic_op(op, thread->vector_reg[op1reg][lane],
+                                                    scalar_value);
             }
         }
         else
@@ -1039,53 +1035,53 @@ static void executeRegisterArithInst(Thread *thread, uint32_t instruction)
             // Vector/Vector operands
             for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
             {
-                result[lane] = scalarArithmeticOp(op, thread->vectorReg[op1reg][lane],
-                                                  thread->vectorReg[op2reg][lane]);
+                result[lane] = scalar_arithmetic_op(op, thread->vector_reg[op1reg][lane],
+                                                    thread->vector_reg[op2reg][lane]);
             }
         }
 
-        setVectorReg(thread, destreg, mask, result);
+        set_vector_reg(thread, destreg, mask, result);
     }
 }
 
-static void executeImmediateArithInst(Thread *thread, uint32_t instruction)
+static void execute_immediate_arith_inst(struct thread *thread, uint32_t instruction)
 {
-    ImmediateArithFormat fmt = extractUnsignedBits(instruction, 28, 3);
-    uint32_t immValue;
-    ArithmeticOp op = extractUnsignedBits(instruction, 23, 5);
-    uint32_t op1reg = extractUnsignedBits(instruction, 0, 5);
-    uint32_t maskreg = extractUnsignedBits(instruction, 10, 5);
-    uint32_t destreg = extractUnsignedBits(instruction, 5, 5);
-    uint32_t hasMask = fmt == FMT_IMM_VV_M || fmt == FMT_IMM_VS_M;
+    enum immediate_arith_format fmt = extract_unsigned_bits(instruction, 28, 3);
+    uint32_t imm_value;
+    enum arithmetic_op op = extract_unsigned_bits(instruction, 23, 5);
+    uint32_t op1reg = extract_unsigned_bits(instruction, 0, 5);
+    uint32_t maskreg = extract_unsigned_bits(instruction, 10, 5);
+    uint32_t destreg = extract_unsigned_bits(instruction, 5, 5);
+    uint32_t has_mask = fmt == FMT_IMM_VV_M || fmt == FMT_IMM_VS_M;
     int lane;
     uint32_t operand1;
 
-    TALLY_INSTRUCTION(ImmArithInst);
-    if (hasMask)
-        immValue = extractSignedBits(instruction, 15, 8);
+    TALLY_INSTRUCTION(imm_arith_inst);
+    if (has_mask)
+        imm_value = extract_signed_bits(instruction, 15, 8);
     else
-        immValue = extractSignedBits(instruction, 10, 13);
+        imm_value = extract_signed_bits(instruction, 10, 13);
 
     if (op == OP_GETLANE)
     {
-        TALLY_INSTRUCTION(VectorInst);
-        setScalarReg(thread, destreg, thread->vectorReg[op1reg][NUM_VECTOR_LANES - 1 - (immValue & 0xf)]);
+        TALLY_INSTRUCTION(vector_inst);
+        set_scalar_reg(thread, destreg, thread->vector_reg[op1reg][NUM_VECTOR_LANES - 1 - (imm_value & 0xf)]);
     }
-    else if (isCompareOp(op))
+    else if (is_compare_op(op))
     {
         uint32_t result = 0;
         switch (fmt)
         {
             case FMT_IMM_VV:
             case FMT_IMM_VV_M:
-                TALLY_INSTRUCTION(VectorInst);
+                TALLY_INSTRUCTION(vector_inst);
 
                 // Pack compare results into low 16 bits of scalar register
                 for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
                 {
                     result >>= 1;
-                    result |= scalarArithmeticOp(op, thread->vectorReg[op1reg][lane],
-                                                 immValue) ? 0x8000 : 0;
+                    result |= scalar_arithmetic_op(op, thread->vector_reg[op1reg][lane],
+                                                   imm_value) ? 0x8000 : 0;
                 }
 
                 break;
@@ -1093,22 +1089,22 @@ static void executeImmediateArithInst(Thread *thread, uint32_t instruction)
             case FMT_IMM_SS:
             case FMT_IMM_VS:
             case FMT_IMM_VS_M:
-                result = scalarArithmeticOp(op, getThreadScalarReg(thread, op1reg),
-                                            immValue) ? 0xffff : 0;
+                result = scalar_arithmetic_op(op, get_thread_scalar_reg(thread, op1reg),
+                                              imm_value) ? 0xffff : 0;
                 break;
 
             default:
-                raiseIllegalInstructionFault(thread, instruction);
+                raise_illegal_instruction_fault(thread, instruction);
                 return;
         }
 
-        setScalarReg(thread, destreg, result);
+        set_scalar_reg(thread, destreg, result);
     }
     else if (fmt == FMT_IMM_SS)
     {
-        uint32_t result = scalarArithmeticOp(op, getThreadScalarReg(thread, op1reg),
-                                             immValue);
-        setScalarReg(thread, destreg, result);
+        uint32_t result = scalar_arithmetic_op(op, get_thread_scalar_reg(thread, op1reg),
+                                               imm_value);
+        set_scalar_reg(thread, destreg, result);
     }
     else
     {
@@ -1116,12 +1112,12 @@ static void executeImmediateArithInst(Thread *thread, uint32_t instruction)
         uint32_t result[NUM_VECTOR_LANES];
         uint32_t mask;
 
-        TALLY_INSTRUCTION(VectorInst);
+        TALLY_INSTRUCTION(vector_inst);
         switch (fmt)
         {
             case FMT_IMM_VV_M:
             case FMT_IMM_VS_M:
-                mask = getThreadScalarReg(thread, maskreg);
+                mask = get_thread_scalar_reg(thread, maskreg);
                 break;
 
             case FMT_IMM_VV:
@@ -1130,7 +1126,7 @@ static void executeImmediateArithInst(Thread *thread, uint32_t instruction)
                 break;
 
             default:
-                raiseIllegalInstructionFault(thread, instruction);
+                raise_illegal_instruction_fault(thread, instruction);
                 return;
         }
 
@@ -1138,109 +1134,109 @@ static void executeImmediateArithInst(Thread *thread, uint32_t instruction)
         {
             for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
             {
-                result[lane] = scalarArithmeticOp(op, thread->vectorReg[op1reg][lane],
-                                                  immValue);
+                result[lane] = scalar_arithmetic_op(op, thread->vector_reg[op1reg][lane],
+                                                    imm_value);
             }
         }
         else
         {
-            operand1 = getThreadScalarReg(thread, op1reg);
+            operand1 = get_thread_scalar_reg(thread, op1reg);
             for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-                result[lane] = scalarArithmeticOp(op, operand1, immValue);
+                result[lane] = scalar_arithmetic_op(op, operand1, imm_value);
         }
 
-        setVectorReg(thread, destreg, mask, result);
+        set_vector_reg(thread, destreg, mask, result);
     }
 }
 
-static void executeScalarLoadStoreInst(Thread *thread, uint32_t instruction)
+static void execute_scalar_load_store_inst(struct thread *thread, uint32_t instruction)
 {
-    MemoryOp op = extractUnsignedBits(instruction, 25, 4);
-    uint32_t ptrreg = extractUnsignedBits(instruction, 0, 5);
-    uint32_t offset = extractSignedBits(instruction, 10, 15);
-    uint32_t destsrcreg = extractUnsignedBits(instruction, 5, 5);
-    bool isLoad = extractUnsignedBits(instruction, 29, 1);
-    uint32_t virtualAddress;
-    uint32_t physicalAddress;
-    int isDeviceAccess;
+    enum memory_op op = extract_unsigned_bits(instruction, 25, 4);
+    uint32_t ptrreg = extract_unsigned_bits(instruction, 0, 5);
+    uint32_t offset = extract_signed_bits(instruction, 10, 15);
+    uint32_t destsrcreg = extract_unsigned_bits(instruction, 5, 5);
+    bool is_load = extract_unsigned_bits(instruction, 29, 1);
+    uint32_t virtual_address;
+    uint32_t physical_address;
+    int is_device_access;
     uint32_t value;
-    uint32_t accessSize;
+    uint32_t access_size;
 
-    virtualAddress = getThreadScalarReg(thread, ptrreg) + offset;
+    virtual_address = get_thread_scalar_reg(thread, ptrreg) + offset;
 
     switch (op)
     {
         case MEM_BYTE:
         case MEM_BYTE_SEXT:
-            accessSize = 1;
+            access_size = 1;
             break;
 
         case MEM_SHORT:
         case MEM_SHORT_EXT:
-            accessSize = 2;
+            access_size = 2;
             break;
 
         default:
-            accessSize = 4;
+            access_size = 4;
     }
 
     // Check alignment
-    if ((virtualAddress % accessSize) != 0)
+    if ((virtual_address % access_size) != 0)
     {
-        raiseAccessFault(thread, virtualAddress, TT_UNALIGNED_ACCESS, !isLoad, true);
+        raise_access_fault(thread, virtual_address, TT_UNALIGNED_ACCESS, !is_load, true);
         return;
     }
 
-    if (!translateAddress(thread, virtualAddress, &physicalAddress, !isLoad, true))
+    if (!translate_address(thread, virtual_address, &physical_address, !is_load, true))
         return; // fault raised, bypass other side effects
 
-    isDeviceAccess = (physicalAddress & 0xffff0000) == 0xffff0000;
-    if (isDeviceAccess && op != MEM_LONG)
+    is_device_access = (physical_address & 0xffff0000) == 0xffff0000;
+    if (is_device_access && op != MEM_LONG)
     {
         // This is not an actual CPU fault, but a debugging aid in the emulator.
-        printf("%s Invalid device access %08x, pc %08x\n", isLoad ? "Load" : "Store",
-               virtualAddress, thread->currentPc - 4);
-        printThreadRegisters(thread);
+        printf("%s Invalid device access %08x, pc %08x\n", is_load ? "Load" : "Store",
+               virtual_address, thread->pc - 4);
+        print_thread_registers(thread);
         thread->core->crashed = true;
         return;
     }
 
-    if (isLoad)
+    if (is_load)
     {
         switch (op)
         {
             case MEM_LONG:
-                if (isDeviceAccess)
+                if (is_device_access)
                 {
-                    if (physicalAddress == REG_PEND_INT)
-                        value = thread->core->pendingInterrupts;
+                    if (physical_address == REG_PEND_INT)
+                        value = thread->core->pending_interrupts;
                     else
-                        value = readDeviceRegister(physicalAddress);
+                        value = read_device_register(physical_address);
                 }
                 else
-                    value = (uint32_t) *UINT32_PTR(thread->core->memory, physicalAddress);
+                    value = (uint32_t) *UINT32_PTR(thread->core->memory, physical_address);
 
                 break;
 
             case MEM_BYTE:
-                value = (uint32_t) *UINT8_PTR(thread->core->memory, physicalAddress);
+                value = (uint32_t) *UINT8_PTR(thread->core->memory, physical_address);
                 break;
 
             case MEM_BYTE_SEXT:
-                value = (uint32_t)(int32_t) *INT8_PTR(thread->core->memory, physicalAddress);
+                value = (uint32_t)(int32_t) *INT8_PTR(thread->core->memory, physical_address);
                 break;
 
             case MEM_SHORT:
-                value = (uint32_t) *UINT16_PTR(thread->core->memory, physicalAddress);
+                value = (uint32_t) *UINT16_PTR(thread->core->memory, physical_address);
                 break;
 
             case MEM_SHORT_EXT:
-                value = (uint32_t)(int32_t) *INT16_PTR(thread->core->memory, physicalAddress);
+                value = (uint32_t)(int32_t) *INT16_PTR(thread->core->memory, physical_address);
                 break;
 
             case MEM_SYNC:
-                value = *UINT32_PTR(thread->core->memory, physicalAddress);
-                thread->lastSyncLoadAddr = physicalAddress / CACHE_LINE_LENGTH;
+                value = *UINT32_PTR(thread->core->memory, physical_address);
+                thread->last_sync_load_addr = physical_address / CACHE_LINE_LENGTH;
                 break;
 
             case MEM_CONTROL_REG:
@@ -1248,82 +1244,82 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instruction)
                 return;
 
             default:
-                raiseIllegalInstructionFault(thread, instruction);
+                raise_illegal_instruction_fault(thread, instruction);
                 return;
         }
 
-        setScalarReg(thread, destsrcreg, value);
+        set_scalar_reg(thread, destsrcreg, value);
     }
     else
     {
         // Store
-        uint32_t valueToStore = getThreadScalarReg(thread, destsrcreg);
+        uint32_t value_to_store = get_thread_scalar_reg(thread, destsrcreg);
 
         // Some instruction don't update memory, for example: a synchronized store
         // that fails or writes to device memory. This tracks whether they
         // did for the cosimulation code below.
-        bool didWrite = false;
+        bool did_write = false;
         switch (op)
         {
             case MEM_BYTE:
             case MEM_BYTE_SEXT:
-                *UINT8_PTR(thread->core->memory, physicalAddress) = (uint8_t) valueToStore;
-                didWrite = true;
+                *UINT8_PTR(thread->core->memory, physical_address) = (uint8_t) value_to_store;
+                did_write = true;
                 break;
 
             case MEM_SHORT:
             case MEM_SHORT_EXT:
-                *UINT16_PTR(thread->core->memory, physicalAddress) = (uint16_t) valueToStore;
-                didWrite = true;
+                *UINT16_PTR(thread->core->memory, physical_address) = (uint16_t) value_to_store;
+                did_write = true;
                 break;
 
             case MEM_LONG:
-                if ((physicalAddress & 0xffff0000) == 0xffff0000)
+                if ((physical_address & 0xffff0000) == 0xffff0000)
                 {
                     // IO address range
-                    if (physicalAddress >= REG_INT_MASK0 && physicalAddress < REG_INT_MASK0 +
+                    if (physical_address >= REG_INT_MASK0 && physical_address < REG_INT_MASK0 +
                             sizeof(uint32_t) * 16)
                     {
-                        thread->core->threads[(physicalAddress - REG_INT_MASK0) / sizeof(uint32_t)]
-                        .interruptMask = valueToStore;
+                        thread->core->threads[(physical_address - REG_INT_MASK0) / sizeof(uint32_t)]
+                        .interrupt_mask = value_to_store;
                     }
-                    else if (physicalAddress == REG_THREAD_RESUME)
-                        thread->core->threadEnableMask |= valueToStore
-                                                          & ((1ull << thread->core->totalThreads) - 1);
-                    else if (physicalAddress == REG_THREAD_HALT)
-                        thread->core->threadEnableMask &= ~valueToStore;
-                    else if (physicalAddress == REG_INT_ACK)
-                        thread->core->pendingInterrupts &= ~valueToStore;
-                    else if (physicalAddress == REG_TIMER_INT)
-                        thread->core->currentTimerCount = valueToStore;
+                    else if (physical_address == REG_THREAD_RESUME)
+                        thread->core->thread_enable_mask |= value_to_store
+                                                            & ((1ull << thread->core->total_threads) - 1);
+                    else if (physical_address == REG_THREAD_HALT)
+                        thread->core->thread_enable_mask &= ~value_to_store;
+                    else if (physical_address == REG_INT_ACK)
+                        thread->core->pending_interrupts &= ~value_to_store;
+                    else if (physical_address == REG_TIMER_INT)
+                        thread->core->current_timer_count = value_to_store;
                     else
-                        writeDeviceRegister(physicalAddress, valueToStore);
+                        write_device_register(physical_address, value_to_store);
 
                     // Bail to avoid logging and other side effects below.
                     return;
                 }
 
-                *UINT32_PTR(thread->core->memory, physicalAddress) = valueToStore;
-                didWrite = true;
+                *UINT32_PTR(thread->core->memory, physical_address) = value_to_store;
+                did_write = true;
                 break;
 
             case MEM_SYNC:
-                if (physicalAddress / CACHE_LINE_LENGTH == thread->lastSyncLoadAddr)
+                if (physical_address / CACHE_LINE_LENGTH == thread->last_sync_load_addr)
                 {
                     // Success
 
                     // HACK: cosim can only track one side effect per instruction, but sync
                     // store has two: setting the register to indicate success and updating
                     // memory. This only logs the memory transaction. Instead of
-                    // calling setScalarReg (which would log the register transfer as
+                    // calling set_scalar_reg (which would log the register transfer as
                     // a side effect), set the value explicitly here.
-                    thread->scalarReg[destsrcreg] = 1;
+                    thread->scalar_reg[destsrcreg] = 1;
 
-                    *UINT32_PTR(thread->core->memory, physicalAddress) = valueToStore;
-                    didWrite = true;
+                    *UINT32_PTR(thread->core->memory, physical_address) = value_to_store;
+                    did_write = true;
                 }
                 else
-                    thread->scalarReg[destsrcreg] = 0;	// Fail. Set register manually as above.
+                    thread->scalar_reg[destsrcreg] = 0;	// Fail. Set register manually as above.
 
                 break;
 
@@ -1332,235 +1328,235 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instruction)
                 return;
 
             default:
-                raiseIllegalInstructionFault(thread, instruction);
+                raise_illegal_instruction_fault(thread, instruction);
                 return;
         }
 
-        if (didWrite)
+        if (did_write)
         {
-            invalidateSyncAddress(thread->core, physicalAddress);
-            if (thread->core->enableTracing)
+            invalidate_sync_address(thread->core, physical_address);
+            if (thread->core->enable_tracing)
             {
-                printf("%08x [th %d] memory store size %d %08x %02x\n", thread->currentPc - 4,
-                       thread->id, accessSize, virtualAddress, valueToStore);
+                printf("%08x [th %d] memory store size %d %08x %02x\n", thread->pc - 4,
+                       thread->id, access_size, virtual_address, value_to_store);
             }
 
-            if (thread->core->enableCosim)
+            if (thread->core->enable_cosim)
             {
-                cosimCheckScalarStore(thread->core, thread->currentPc - 4, virtualAddress, accessSize,
-                                      valueToStore);
+                cosim_check_scalar_store(thread->core, thread->pc - 4, virtual_address, access_size,
+                                         value_to_store);
             }
         }
     }
 }
 
-static void executeBlockLoadStoreInst(Thread *thread, uint32_t instruction)
+static void execute_block_load_store_inst(struct thread *thread, uint32_t instruction)
 {
-    uint32_t op = extractUnsignedBits(instruction, 25, 4);
-    uint32_t ptrreg = extractUnsignedBits(instruction, 0, 5);
-    uint32_t maskreg = extractUnsignedBits(instruction, 10, 5);
-    uint32_t destsrcreg = extractUnsignedBits(instruction, 5, 5);
-    bool isLoad = extractUnsignedBits(instruction, 29, 1);
+    uint32_t op = extract_unsigned_bits(instruction, 25, 4);
+    uint32_t ptrreg = extract_unsigned_bits(instruction, 0, 5);
+    uint32_t maskreg = extract_unsigned_bits(instruction, 10, 5);
+    uint32_t destsrcreg = extract_unsigned_bits(instruction, 5, 5);
+    bool is_load = extract_unsigned_bits(instruction, 29, 1);
     uint32_t offset;
     uint32_t lane;
     uint32_t mask;
-    uint32_t virtualAddress;
-    uint32_t physicalAddress;
-    uint32_t *blockPtr;
+    uint32_t virtual_address;
+    uint32_t physical_address;
+    uint32_t *block_ptr;
 
-    TALLY_INSTRUCTION(VectorInst);
+    TALLY_INSTRUCTION(vector_inst);
 
     // Compute mask value
     switch (op)
     {
         case MEM_BLOCK_VECTOR:
             mask = 0xffff;
-            offset = extractSignedBits(instruction, 10, 15);
+            offset = extract_signed_bits(instruction, 10, 15);
             break;
 
         case MEM_BLOCK_VECTOR_MASK:
-            mask = getThreadScalarReg(thread, maskreg);
-            offset = extractSignedBits(instruction, 15, 10);
+            mask = get_thread_scalar_reg(thread, maskreg);
+            offset = extract_signed_bits(instruction, 15, 10);
             break;
 
         default:
             assert(0);
     }
 
-    virtualAddress = getThreadScalarReg(thread, ptrreg) + offset;
+    virtual_address = get_thread_scalar_reg(thread, ptrreg) + offset;
 
     // Check alignment
-    if ((virtualAddress & (NUM_VECTOR_LANES * 4 - 1)) != 0)
+    if ((virtual_address & (NUM_VECTOR_LANES * 4 - 1)) != 0)
     {
-        raiseAccessFault(thread, virtualAddress, TT_UNALIGNED_ACCESS, !isLoad,
-                         true);
+        raise_access_fault(thread, virtual_address, TT_UNALIGNED_ACCESS, !is_load,
+                           true);
         return;
     }
 
-    if (!translateAddress(thread, virtualAddress, &physicalAddress, !isLoad, true))
+    if (!translate_address(thread, virtual_address, &physical_address, !is_load, true))
         return; // fault raised, bypass other side effects
 
-    blockPtr = UINT32_PTR(thread->core->memory, physicalAddress);
-    if (isLoad)
+    block_ptr = UINT32_PTR(thread->core->memory, physical_address);
+    if (is_load)
     {
-        uint32_t loadValue[NUM_VECTOR_LANES];
+        uint32_t load_value[NUM_VECTOR_LANES];
         for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-            loadValue[lane] = blockPtr[NUM_VECTOR_LANES - lane - 1];
+            load_value[lane] = block_ptr[NUM_VECTOR_LANES - lane - 1];
 
-        setVectorReg(thread, destsrcreg, mask, loadValue);
+        set_vector_reg(thread, destsrcreg, mask, load_value);
     }
     else
     {
-        uint32_t *storeValue = thread->vectorReg[destsrcreg];
+        uint32_t *store_value = thread->vector_reg[destsrcreg];
 
         if ((mask & 0xffff) == 0)
             return;	// Hardware ignores block stores with a mask of zero
 
-        if (thread->core->enableTracing)
+        if (thread->core->enable_tracing)
         {
-            printf("%08x [th %d] writeMemBlock %08x\n", thread->currentPc - 4, thread->id,
-                   virtualAddress);
+            printf("%08x [th %d] write_mem_block %08x\n", thread->pc - 4, thread->id,
+                   virtual_address);
         }
 
-        if (thread->core->enableCosim)
-            cosimCheckVectorStore(thread->core, thread->currentPc - 4, virtualAddress, mask, storeValue);
+        if (thread->core->enable_cosim)
+            cosim_check_vector_store(thread->core, thread->pc - 4, virtual_address, mask, store_value);
 
         for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
         {
-            uint32_t regIndex = NUM_VECTOR_LANES - lane - 1;
-            if (mask & (1 << regIndex))
-                blockPtr[lane] = storeValue[regIndex];
+            uint32_t reg_index = NUM_VECTOR_LANES - lane - 1;
+            if (mask & (1 << reg_index))
+                block_ptr[lane] = store_value[reg_index];
         }
 
-        invalidateSyncAddress(thread->core, physicalAddress);
+        invalidate_sync_address(thread->core, physical_address);
     }
 }
 
-static void executeScatterGatherInst(Thread *thread, uint32_t instruction)
+static void execute_scatter_gather_inst(struct thread *thread, uint32_t instruction)
 {
-    uint32_t op = extractUnsignedBits(instruction, 25, 4);
-    uint32_t ptrreg = extractUnsignedBits(instruction, 0, 5);
-    uint32_t maskreg = extractUnsignedBits(instruction, 10, 5);
-    uint32_t destsrcreg = extractUnsignedBits(instruction, 5, 5);
-    bool isLoad = extractUnsignedBits(instruction, 29, 1);
+    uint32_t op = extract_unsigned_bits(instruction, 25, 4);
+    uint32_t ptrreg = extract_unsigned_bits(instruction, 0, 5);
+    uint32_t maskreg = extract_unsigned_bits(instruction, 10, 5);
+    uint32_t destsrcreg = extract_unsigned_bits(instruction, 5, 5);
+    bool is_load = extract_unsigned_bits(instruction, 29, 1);
     uint32_t offset;
     uint32_t lane;
     uint32_t mask;
-    uint32_t virtualAddress;
-    uint32_t physicalAddress;
+    uint32_t virtual_address;
+    uint32_t physical_address;
 
-    TALLY_INSTRUCTION(VectorInst);
+    TALLY_INSTRUCTION(vector_inst);
 
     // Compute mask value
     switch (op)
     {
         case MEM_SCGATH:
             mask = 0xffff;
-            offset = extractSignedBits(instruction, 10, 15);
+            offset = extract_signed_bits(instruction, 10, 15);
             break;
 
         case MEM_SCGATH_MASK:
-            mask = getThreadScalarReg(thread, maskreg);
-            offset = extractSignedBits(instruction, 15, 10);
+            mask = get_thread_scalar_reg(thread, maskreg);
+            offset = extract_signed_bits(instruction, 15, 10);
             break;
 
         default:
             assert(0);
     }
 
-    lane = NUM_VECTOR_LANES - 1 - thread->currentSubcycle;
-    virtualAddress = thread->vectorReg[ptrreg][lane] + offset;
-    if ((mask & (1 << lane)) && (virtualAddress & 3) != 0)
+    lane = NUM_VECTOR_LANES - 1 - thread->subcycle;
+    virtual_address = thread->vector_reg[ptrreg][lane] + offset;
+    if ((mask & (1 << lane)) && (virtual_address & 3) != 0)
     {
-        raiseAccessFault(thread, virtualAddress, TT_UNALIGNED_ACCESS, !isLoad, true);
+        raise_access_fault(thread, virtual_address, TT_UNALIGNED_ACCESS, !is_load, true);
         return;
     }
 
-    if (!translateAddress(thread, virtualAddress, &physicalAddress, !isLoad, true))
+    if (!translate_address(thread, virtual_address, &physical_address, !is_load, true))
         return; // fault raised, bypass other side effects
 
-    if (isLoad)
+    if (is_load)
     {
-        uint32_t loadValue[NUM_VECTOR_LANES];
-        memset(loadValue, 0, NUM_VECTOR_LANES * sizeof(uint32_t));
+        uint32_t load_value[NUM_VECTOR_LANES];
+        memset(load_value, 0, NUM_VECTOR_LANES * sizeof(uint32_t));
         if (mask & (1 << lane))
-            loadValue[lane] = *UINT32_PTR(thread->core->memory, physicalAddress);
+            load_value[lane] = *UINT32_PTR(thread->core->memory, physical_address);
 
-        setVectorReg(thread, destsrcreg, mask & (1 << lane), loadValue);
+        set_vector_reg(thread, destsrcreg, mask & (1 << lane), load_value);
     }
     else if (mask & (1 << lane))
     {
-        if (thread->core->enableTracing)
+        if (thread->core->enable_tracing)
         {
-            printf("%08x [th %d] storeScatter (%d) %08x %08x\n", thread->currentPc - 4,
-                   thread->id, thread->currentSubcycle, virtualAddress,
-                   thread->vectorReg[destsrcreg][lane]);
+            printf("%08x [th %d] store_scatter (%d) %08x %08x\n", thread->pc - 4,
+                   thread->id, thread->subcycle, virtual_address,
+                   thread->vector_reg[destsrcreg][lane]);
         }
 
-        *UINT32_PTR(thread->core->memory, physicalAddress)
-            = thread->vectorReg[destsrcreg][lane];
-        invalidateSyncAddress(thread->core, physicalAddress);
-        if (thread->core->enableCosim)
+        *UINT32_PTR(thread->core->memory, physical_address)
+            = thread->vector_reg[destsrcreg][lane];
+        invalidate_sync_address(thread->core, physical_address);
+        if (thread->core->enable_cosim)
         {
-            cosimCheckScalarStore(thread->core, thread->currentPc - 4, virtualAddress, 4,
-                                  thread->vectorReg[destsrcreg][lane]);
+            cosim_check_scalar_store(thread->core, thread->pc - 4, virtual_address, 4,
+                                     thread->vector_reg[destsrcreg][lane]);
         }
     }
 
-    if (++thread->currentSubcycle == NUM_VECTOR_LANES)
-        thread->currentSubcycle = 0; // Finish
+    if (++thread->subcycle == NUM_VECTOR_LANES)
+        thread->subcycle = 0; // Finish
     else
-        thread->currentPc -= 4;	// repeat current instruction
+        thread->pc -= 4;	// repeat current instruction
 }
 
-static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
+static void execute_control_register_inst(struct thread *thread, uint32_t instruction)
 {
-    uint32_t crIndex = extractUnsignedBits(instruction, 0, 5);
-    uint32_t dstSrcReg = extractUnsignedBits(instruction, 5, 5);
-    if (extractUnsignedBits(instruction, 29, 1))
+    uint32_t cr_index = extract_unsigned_bits(instruction, 0, 5);
+    uint32_t dst_src_reg = extract_unsigned_bits(instruction, 5, 5);
+    if (extract_unsigned_bits(instruction, 29, 1))
     {
         // Load
         uint32_t value = 0xffffffff;
-        switch (crIndex)
+        switch (cr_index)
         {
             case CR_THREAD_ID:
                 value = thread->id;
                 break;
 
             case CR_TRAP_HANDLER:
-                value = thread->core->trapHandlerPc;
+                value = thread->core->trap_handler_pc;
                 break;
 
             case CR_TRAP_PC:
-                value = thread->savedTrapState[0].pc;
+                value = thread->saved_trap_state[0].pc;
                 break;
 
             case CR_TRAP_REASON:
-                value = thread->savedTrapState[0].trapCause;
+                value = thread->saved_trap_state[0].trap_cause;
                 break;
 
             case CR_FLAGS:
-                value = (thread->enableInterrupt ? 1 : 0)
-                        | (thread->enableMmu ? 2 : 0)
-                        | (thread->enableSupervisor ? 4 : 0);
+                value = (thread->enable_interrupt ? 1 : 0)
+                        | (thread->enable_mmu ? 2 : 0)
+                        | (thread->enable_supervisor ? 4 : 0);
                 break;
 
             case CR_SAVED_FLAGS:
-                value = (thread->savedTrapState[0].enableInterrupt ? 1 : 0)
-                        | (thread->savedTrapState[0].enableMmu ? 2 : 0)
-                        | (thread->savedTrapState[0].enableSupervisor ? 4 : 0);
+                value = (thread->saved_trap_state[0].enable_interrupt ? 1 : 0)
+                        | (thread->saved_trap_state[0].enable_mmu ? 2 : 0)
+                        | (thread->saved_trap_state[0].enable_supervisor ? 4 : 0);
                 break;
 
             case CR_CURRENT_ASID:
-                value = thread->currentAsid;
+                value = thread->asid;
                 break;
 
             case CR_PAGE_DIR:
-                value = thread->currentPageDir;
+                value = thread->page_dir;
                 break;
 
             case CR_TRAP_ACCESS_ADDR:
-                value = thread->savedTrapState[0].accessAddress;
+                value = thread->saved_trap_state[0].access_address;
                 break;
 
             case CR_CYCLE_COUNT:
@@ -1570,104 +1566,104 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instruction)
                 struct timeval tv;
                 gettimeofday(&tv, NULL);
                 value = (uint32_t)(tv.tv_sec * 50000000 + tv.tv_usec * 50)
-                        - thread->core->startCycleCount;
+                        - thread->core->start_cycle_count;
                 break;
             }
 
             case CR_TLB_MISS_HANDLER:
-                value = thread->core->tlbMissHandlerPc;
+                value = thread->core->tlb_miss_handler_pc;
                 break;
 
             case CR_SCRATCHPAD0:
-                value = thread->savedTrapState[0].scratchpad0;
+                value = thread->saved_trap_state[0].scratchpad0;
                 break;
 
             case CR_SCRATCHPAD1:
-                value = thread->savedTrapState[0].scratchpad1;
+                value = thread->saved_trap_state[0].scratchpad1;
                 break;
 
             case CR_SUBCYCLE:
-                value = thread->savedTrapState[0].subcycle;
+                value = thread->saved_trap_state[0].subcycle;
                 break;
         }
 
-        setScalarReg(thread, dstSrcReg, value);
+        set_scalar_reg(thread, dst_src_reg, value);
     }
     else
     {
         // Only threads in supervisor mode can write control registers.
-        if (!thread->enableSupervisor)
+        if (!thread->enable_supervisor)
         {
-            raiseTrap(thread, 0, TT_PRIVILEGED_OP, false, false);
+            raise_trap(thread, 0, TT_PRIVILEGED_OP, false, false);
             return;
         }
 
         // Store
-        uint32_t value = getThreadScalarReg(thread, dstSrcReg);
-        switch (crIndex)
+        uint32_t value = get_thread_scalar_reg(thread, dst_src_reg);
+        switch (cr_index)
         {
             case CR_TRAP_HANDLER:
-                thread->core->trapHandlerPc = value;
+                thread->core->trap_handler_pc = value;
                 break;
 
             case CR_TRAP_PC:
-                thread->savedTrapState[0].pc = value;
+                thread->saved_trap_state[0].pc = value;
                 break;
 
             case CR_FLAGS:
-                thread->enableInterrupt = (value & 1) != 0;
-                thread->enableMmu = (value & 2) != 0;
-                thread->enableSupervisor = (value & 4) != 0;
+                thread->enable_interrupt = (value & 1) != 0;
+                thread->enable_mmu = (value & 2) != 0;
+                thread->enable_supervisor = (value & 4) != 0;
 
                 // An interrupt may have occurred while interrupts were
                 // disabled.
-                if (thread->enableInterrupt)
-                    tryToDispatchInterrupt(thread);
+                if (thread->enable_interrupt)
+                    try_to_dispatch_interrupt(thread);
 
                 break;
 
             case CR_SAVED_FLAGS:
-                thread->savedTrapState[0].enableInterrupt = (value & 1) != 0;
-                thread->savedTrapState[0].enableMmu = (value & 2) != 0;
-                thread->savedTrapState[0].enableSupervisor = (value & 4) != 0;
+                thread->saved_trap_state[0].enable_interrupt = (value & 1) != 0;
+                thread->saved_trap_state[0].enable_mmu = (value & 2) != 0;
+                thread->saved_trap_state[0].enable_supervisor = (value & 4) != 0;
                 break;
 
             case CR_CURRENT_ASID:
-                thread->currentAsid = value;
+                thread->asid = value;
                 break;
 
             case CR_PAGE_DIR:
-                thread->currentPageDir = value;
+                thread->page_dir = value;
                 break;
 
             case CR_TLB_MISS_HANDLER:
-                thread->core->tlbMissHandlerPc = value;
+                thread->core->tlb_miss_handler_pc = value;
                 break;
 
             case CR_SCRATCHPAD0:
-                thread->savedTrapState[0].scratchpad0 = value;
+                thread->saved_trap_state[0].scratchpad0 = value;
                 break;
 
             case CR_SCRATCHPAD1:
-                thread->savedTrapState[0].scratchpad1 = value;
+                thread->saved_trap_state[0].scratchpad1 = value;
                 break;
 
             case CR_SUBCYCLE:
-                thread->savedTrapState[0].subcycle = value;
+                thread->saved_trap_state[0].subcycle = value;
                 break;
         }
     }
 }
 
-static void executeMemoryAccessInst(Thread *thread, uint32_t instruction)
+static void execute_memory_access_inst(struct thread *thread, uint32_t instruction)
 {
-    uint32_t type = extractUnsignedBits(instruction, 25, 4);
+    uint32_t type = extract_unsigned_bits(instruction, 25, 4);
     if (type != MEM_CONTROL_REG)	// Don't count control register transfers
     {
-        if (extractUnsignedBits(instruction, 29, 1))
-            TALLY_INSTRUCTION(LoadInst);
+        if (extract_unsigned_bits(instruction, 29, 1))
+            TALLY_INSTRUCTION(load_inst);
         else
-            TALLY_INSTRUCTION(StoreInst);
+            TALLY_INSTRUCTION(store_inst);
     }
 
     switch (type)
@@ -1678,106 +1674,106 @@ static void executeMemoryAccessInst(Thread *thread, uint32_t instruction)
         case MEM_SHORT_EXT:
         case MEM_LONG:
         case MEM_SYNC:
-            executeScalarLoadStoreInst(thread, instruction);
+            execute_scalar_load_store_inst(thread, instruction);
             break;
 
         case MEM_CONTROL_REG:
-            executeControlRegisterInst(thread, instruction);
+            execute_control_register_inst(thread, instruction);
             break;
 
         case MEM_BLOCK_VECTOR:
         case MEM_BLOCK_VECTOR_MASK:
-            executeBlockLoadStoreInst(thread, instruction);
+            execute_block_load_store_inst(thread, instruction);
             break;
 
         case MEM_SCGATH:
         case MEM_SCGATH_MASK:
-            executeScatterGatherInst(thread, instruction);
+            execute_scatter_gather_inst(thread, instruction);
             break;
 
         default:
-            raiseIllegalInstructionFault(thread, instruction);
+            raise_illegal_instruction_fault(thread, instruction);
     }
 }
 
-static void executeBranchInst(Thread *thread, uint32_t instruction)
+static void execute_branch_inst(struct thread *thread, uint32_t instruction)
 {
-    bool branchTaken = false;
-    uint32_t srcReg = extractUnsignedBits(instruction, 0, 5);
+    bool branch_taken = false;
+    uint32_t src_reg = extract_unsigned_bits(instruction, 0, 5);
 
-    TALLY_INSTRUCTION(BranchInst);
-    switch (extractUnsignedBits(instruction, 25, 3))
+    TALLY_INSTRUCTION(branch_inst);
+    switch (extract_unsigned_bits(instruction, 25, 3))
     {
         case BRANCH_ALL:
-            branchTaken = (getThreadScalarReg(thread, srcReg) & 0xffff) == 0xffff;
+            branch_taken = (get_thread_scalar_reg(thread, src_reg) & 0xffff) == 0xffff;
             break;
 
         case BRANCH_ZERO:
-            branchTaken = getThreadScalarReg(thread, srcReg) == 0;
+            branch_taken = get_thread_scalar_reg(thread, src_reg) == 0;
             break;
 
         case BRANCH_NOT_ZERO:
-            branchTaken = getThreadScalarReg(thread, srcReg) != 0;
+            branch_taken = get_thread_scalar_reg(thread, src_reg) != 0;
             break;
 
         case BRANCH_ALWAYS:
-            branchTaken = true;
+            branch_taken = true;
             break;
 
         case BRANCH_CALL_OFFSET:
-            branchTaken = true;
-            setScalarReg(thread, LINK_REG, thread->currentPc);
+            branch_taken = true;
+            set_scalar_reg(thread, LINK_REG, thread->pc);
             break;
 
         case BRANCH_NOT_ALL:
-            branchTaken = (getThreadScalarReg(thread, srcReg) & 0xffff) != 0xffff;
+            branch_taken = (get_thread_scalar_reg(thread, src_reg) & 0xffff) != 0xffff;
             break;
 
         case BRANCH_CALL_REGISTER:
-            setScalarReg(thread, LINK_REG, thread->currentPc);
-            thread->currentPc = getThreadScalarReg(thread, srcReg);
+            set_scalar_reg(thread, LINK_REG, thread->pc);
+            thread->pc = get_thread_scalar_reg(thread, src_reg);
             return; // Short circuit, since the source register is the dest
 
         case BRANCH_ERET:
-            if (!thread->enableSupervisor)
+            if (!thread->enable_supervisor)
             {
-                raiseTrap(thread, 0, TT_PRIVILEGED_OP, false, false);
+                raise_trap(thread, 0, TT_PRIVILEGED_OP, false, false);
                 return;
             }
 
-            thread->enableInterrupt = thread->savedTrapState[0].enableInterrupt;
-            thread->enableMmu = thread->savedTrapState[0].enableMmu;
-            thread->currentPc = thread->savedTrapState[0].pc;
-            thread->currentSubcycle = thread->savedTrapState[0].subcycle;
-            thread->enableSupervisor = thread->savedTrapState[0].enableSupervisor;
+            thread->enable_interrupt = thread->saved_trap_state[0].enable_interrupt;
+            thread->enable_mmu = thread->saved_trap_state[0].enable_mmu;
+            thread->pc = thread->saved_trap_state[0].pc;
+            thread->subcycle = thread->saved_trap_state[0].subcycle;
+            thread->enable_supervisor = thread->saved_trap_state[0].enable_supervisor;
 
             // Restore nested interrupt state
-            thread->savedTrapState[0] = thread->savedTrapState[1];
+            thread->saved_trap_state[0] = thread->saved_trap_state[1];
 
             // There may be other interrupts pending
-            if (thread->enableInterrupt)
-                tryToDispatchInterrupt(thread);
+            if (thread->enable_interrupt)
+                try_to_dispatch_interrupt(thread);
 
             return; // Short circuit branch side effect below
     }
 
-    if (branchTaken)
-        thread->currentPc += extractSignedBits(instruction, 5, 20);
+    if (branch_taken)
+        thread->pc += extract_signed_bits(instruction, 5, 20);
 }
 
-static void executeCacheControlInst(Thread *thread, uint32_t instruction)
+static void execute_cache_control_inst(struct thread *thread, uint32_t instruction)
 {
-    uint32_t op = extractUnsignedBits(instruction, 25, 3);
-    uint32_t ptrReg = extractUnsignedBits(instruction, 0, 5);
+    uint32_t op = extract_unsigned_bits(instruction, 25, 3);
+    uint32_t ptr_reg = extract_unsigned_bits(instruction, 0, 5);
     uint32_t way;
-    bool updatedEntry;
+    bool updated_entry;
 
     switch (op)
     {
         case CC_DINVALIDATE:
-            if (!thread->enableSupervisor)
+            if (!thread->enable_supervisor)
             {
-                raiseTrap(thread, 0, TT_PRIVILEGED_OP, false, false);
+                raise_trap(thread, 0, TT_PRIVILEGED_OP, false, false);
                 return;
             }
 
@@ -1785,81 +1781,81 @@ static void executeCacheControlInst(Thread *thread, uint32_t instruction)
 
         case CC_DFLUSH:
         {
-            // This needs to fault if the TLB entry isn't present. translateAddress
+            // This needs to fault if the TLB entry isn't present. translate_address
             // will do that as a side effect.
-            uint32_t offset = extractSignedBits(instruction, 15, 10);
-            uint32_t physicalAddress;
-            translateAddress(thread, getThreadScalarReg(thread, ptrReg) + offset,
-                             &physicalAddress, false, true);
+            uint32_t offset = extract_signed_bits(instruction, 15, 10);
+            uint32_t physical_address;
+            translate_address(thread, get_thread_scalar_reg(thread, ptr_reg) + offset,
+                              &physical_address, false, true);
             break;
         }
 
         case CC_DTLB_INSERT:
         case CC_ITLB_INSERT:
         {
-            uint32_t virtualAddress = ROUND_TO_PAGE(getThreadScalarReg(thread, ptrReg));
-            uint32_t physAddrReg = extractUnsignedBits(instruction, 5, 5);
-            uint32_t physAddrAndFlags = getThreadScalarReg(thread, physAddrReg);
-            uint32_t *wayPtr;
-            TlbEntry *tlb;
+            uint32_t virtual_address = ROUND_TO_PAGE(get_thread_scalar_reg(thread, ptr_reg));
+            uint32_t phys_addr_reg = extract_unsigned_bits(instruction, 5, 5);
+            uint32_t phys_addr_and_flags = get_thread_scalar_reg(thread, phys_addr_reg);
+            uint32_t *way_ptr;
+            struct tlb_entry *tlb;
 
-            if (!thread->enableSupervisor)
+            if (!thread->enable_supervisor)
             {
-                raiseTrap(thread, 0, TT_PRIVILEGED_OP, false, false);
+                raise_trap(thread, 0, TT_PRIVILEGED_OP, false, false);
                 return;
             }
 
             if (op == CC_DTLB_INSERT)
             {
                 tlb = thread->core->dtlb;
-                wayPtr = &thread->core->nextDTlbWay;
+                way_ptr = &thread->core->next_dtlb_way;
             }
             else
             {
                 tlb = thread->core->itlb;
-                wayPtr = &thread->core->nextITlbWay;
+                way_ptr = &thread->core->next_itlb_way;
             }
 
-            TlbEntry *entry = &tlb[((virtualAddress / PAGE_SIZE) % TLB_SETS) * TLB_WAYS];
-            updatedEntry = false;
+            struct tlb_entry *entry = &tlb[((virtual_address / PAGE_SIZE) % TLB_SETS) * TLB_WAYS];
+            updated_entry = false;
             for (way = 0; way < TLB_WAYS; way++)
             {
-                if (entry[way].virtualAddress == virtualAddress
-                        && ((entry[way].physAddrAndFlags & TLB_GLOBAL) != 0
-                            || entry[way].asid == thread->currentAsid))
+                if (entry[way].virtual_address == virtual_address
+                        && ((entry[way].phys_addr_and_flags & TLB_GLOBAL) != 0
+                            || entry[way].asid == thread->asid))
                 {
                     // Found existing entry, update it
-                    entry[way].physAddrAndFlags = physAddrAndFlags;
-                    updatedEntry = true;
+                    entry[way].phys_addr_and_flags = phys_addr_and_flags;
+                    updated_entry = true;
                     break;
                 }
             }
 
-            if (!updatedEntry)
+            if (!updated_entry)
             {
                 // Replace entry with a new one
-                entry[*wayPtr].virtualAddress = virtualAddress;
-                entry[*wayPtr].physAddrAndFlags = physAddrAndFlags;
-                entry[*wayPtr].asid = thread->currentAsid;
+                entry[*way_ptr].virtual_address = virtual_address;
+                entry[*way_ptr].phys_addr_and_flags = phys_addr_and_flags;
+                entry[*way_ptr].asid = thread->asid;
             }
 
-            *wayPtr = (*wayPtr + 1) % TLB_WAYS;
+            *way_ptr = (*way_ptr + 1) % TLB_WAYS;
             break;
         }
 
         case CC_INVALIDATE_TLB:
         {
-            uint32_t offset = extractSignedBits(instruction, 15, 10);
-            uint32_t virtualAddress = ROUND_TO_PAGE(getThreadScalarReg(thread, ptrReg) + offset);
-            uint32_t tlbIndex = ((virtualAddress / PAGE_SIZE) % TLB_SETS) * TLB_WAYS;
+            uint32_t offset = extract_signed_bits(instruction, 15, 10);
+            uint32_t virtual_address = ROUND_TO_PAGE(get_thread_scalar_reg(thread, ptr_reg) + offset);
+            uint32_t tlb_index = ((virtual_address / PAGE_SIZE) % TLB_SETS) * TLB_WAYS;
 
             for (way = 0; way < TLB_WAYS; way++)
             {
-                if (thread->core->itlb[tlbIndex + way].virtualAddress == virtualAddress)
-                    thread->core->itlb[tlbIndex + way].virtualAddress = INVALID_ADDR;
+                if (thread->core->itlb[tlb_index + way].virtual_address == virtual_address)
+                    thread->core->itlb[tlb_index + way].virtual_address = INVALID_ADDR;
 
-                if (thread->core->dtlb[tlbIndex + way].virtualAddress == virtualAddress)
-                    thread->core->dtlb[tlbIndex + way].virtualAddress = INVALID_ADDR;
+                if (thread->core->dtlb[tlb_index + way].virtual_address == virtual_address)
+                    thread->core->dtlb[tlb_index + way].virtual_address = INVALID_ADDR;
             }
 
             break;
@@ -1872,8 +1868,8 @@ static void executeCacheControlInst(Thread *thread, uint32_t instruction)
             for (i = 0; i < TLB_SETS * TLB_WAYS; i++)
             {
                 // Set to invalid (unaligned) addresses so these don't match
-                thread->core->itlb[i].virtualAddress = INVALID_ADDR;
-                thread->core->dtlb[i].virtualAddress = INVALID_ADDR;
+                thread->core->itlb[i].virtual_address = INVALID_ADDR;
+                thread->core->dtlb[i].virtual_address = INVALID_ADDR;
             }
 
             break;
@@ -1883,51 +1879,51 @@ static void executeCacheControlInst(Thread *thread, uint32_t instruction)
 
 // Returns 0 if this hit a breakpoint and should break out of execution
 // loop.
-static bool executeInstruction(Thread *thread)
+static bool execute_instruction(struct thread *thread)
 {
     uint32_t instruction;
-    uint32_t physicalPc;
+    uint32_t physical_pc;
 
     // Check PC alignment
-    if ((thread->currentPc & 3) != 0)
+    if ((thread->pc & 3) != 0)
     {
-        raiseAccessFault(thread, thread->currentPc + 4, TT_UNALIGNED_ACCESS,
-            false, false);
+        raise_access_fault(thread, thread->pc + 4, TT_UNALIGNED_ACCESS,
+                           false, false);
         return true;   // XXX if stop on fault was enabled, should return false
     }
 
-    if (!translateAddress(thread, thread->currentPc, &physicalPc, false, false))
+    if (!translate_address(thread, thread->pc, &physical_pc, false, false))
         return true;	// On next execution will start in TLB miss handler
 
     // XXX if stop on fault was enabled, should return false
 
-    instruction = *UINT32_PTR(thread->core->memory, physicalPc);
-    thread->currentPc += 4;
-    thread->core->totalInstructions++;
+    instruction = *UINT32_PTR(thread->core->memory, physical_pc);
+    thread->pc += 4;
+    thread->core->total_instructions++;
 
 restart:
     if ((instruction & 0xe0000000) == 0xc0000000)
-        executeRegisterArithInst(thread, instruction);
+        execute_register_arith_inst(thread, instruction);
     else if ((instruction & 0x80000000) == 0)
     {
         if (instruction == BREAKPOINT_INST)
         {
-            Breakpoint *breakpoint = lookupBreakpoint(thread->core, thread->currentPc - 4);
+            struct breakpoint *breakpoint = lookup_breakpoint(thread->core, thread->pc - 4);
             if (breakpoint == NULL)
             {
                 // We use a special instruction to trigger breakpoint lookup
                 // as an optimization to avoid doing a lookup on every
                 // instruction. In this case, the special instruction was
                 // already in the program, so raise a fault.
-                thread->currentPc += 4;
-                raiseIllegalInstructionFault(thread, instruction);
+                thread->pc += 4;
+                raise_illegal_instruction_fault(thread, instruction);
                 return true;
             }
 
-            if (breakpoint->restart || thread->core->singleStepping)
+            if (breakpoint->restart || thread->core->single_stepping)
             {
                 breakpoint->restart = false;
-                instruction = breakpoint->originalInstruction;
+                instruction = breakpoint->original_instruction;
                 assert(instruction != BREAKPOINT_INST);
                 goto restart;
             }
@@ -1945,26 +1941,26 @@ restart:
             // cause a cosimulation mismatch because the verilog model
             // does not generate an event for it.
 
-            executeImmediateArithInst(thread, instruction);
+            execute_immediate_arith_inst(thread, instruction);
         }
     }
     else if ((instruction & 0xc0000000) == 0x80000000)
-        executeMemoryAccessInst(thread, instruction);
+        execute_memory_access_inst(thread, instruction);
     else if ((instruction & 0xf0000000) == 0xf0000000)
-        executeBranchInst(thread, instruction);
+        execute_branch_inst(thread, instruction);
     else if ((instruction & 0xf0000000) == 0xe0000000)
-        executeCacheControlInst(thread, instruction);
+        execute_cache_control_inst(thread, instruction);
     else
-        printf("Bad instruction @%08x\n", thread->currentPc - 4);
+        printf("Bad instruction @%08x\n", thread->pc - 4);
 
     return true;
 }
 
-static void timerTick(Core *core)
+static void timer_tick(struct core *core)
 {
-    if (core->currentTimerCount > 0)
+    if (core->current_timer_count > 0)
     {
-        if (core->currentTimerCount-- == 1)
-            raiseInterrupt(core, INT_TIMER);
+        if (core->current_timer_count-- == 1)
+            raise_interrupt(core, INT_TIMER);
     }
 }

@@ -17,20 +17,20 @@
 
 #pragma once
 
-typedef void (*ParallelFunc)(void *context, int index);
+typedef void (*parallel_func_t)(void *context, int index);
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-// parallelSpawn should only be called from the main thread. It waits for
+// parallel_spawn should only be called from the main thread. It waits for
 // all jobs to complete before returning.
-void parallelExecute(ParallelFunc func, void *context, int numElements);
+void parallel_execute(parallel_func_t func, void *context, int num_elements);
 
 // main should call this function for all threads other than 0.
-void workerThread() __attribute__ ((noreturn));
+void worker_thread(void) __attribute__ ((noreturn));
 
-void startAllThreads();
+void start_all_threads(void);
 
 #ifdef __cplusplus
 }

@@ -16,7 +16,7 @@
 
 #pragma once
 
-int kprintf(const char *format, ...);
+int kprintf(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
 void *memcpy(void *dest, const void *src, unsigned int length);
 void __attribute__((noreturn)) panic(const char *fmt, ...);
 void *memset(void *dest, int value, unsigned int length);

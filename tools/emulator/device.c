@@ -27,13 +27,13 @@
 
 #define KEY_BUFFER_SIZE 64
 
-extern void sendHostInterrupt(uint32_t num);
+extern void send_host_interrupt(uint32_t num);
 
-static uint32_t gKeyBuffer[KEY_BUFFER_SIZE];
-static int gKeyBufferHead;
-static int gKeyBufferTail;
+static uint32_t key_buffer[KEY_BUFFER_SIZE];
+static int key_buffer_head;
+static int key_buffer_tail;
 
-void writeDeviceRegister(uint32_t address, uint32_t value)
+void write_device_register(uint32_t address, uint32_t value)
 {
     switch (address)
     {
@@ -44,24 +44,24 @@ void writeDeviceRegister(uint32_t address, uint32_t value)
 
         case REG_SD_WRITE_DATA:
         case REG_SD_CONTROL:
-            writeSdCardRegister(address, value);
+            write_sd_card_register(address, value);
             break;
 
         case REG_VGA_ENABLE:
-            enableFramebuffer(value & 1);
+            enable_frame_buffer(value & 1);
             break;
 
         case REG_VGA_BASE:
-            setFramebufferAddress(value);
+            set_frame_buffer_address(value);
             break;
 
         case REG_HOST_INTERRUPT:
-            sendHostInterrupt(value);
+            send_host_interrupt(value);
             break;
     }
 }
 
-uint32_t readDeviceRegister(uint32_t address)
+uint32_t read_device_register(uint32_t address)
 {
     uint32_t value;
 
@@ -71,16 +71,16 @@ uint32_t readDeviceRegister(uint32_t address)
             return 1;
 
         case REG_KEYBOARD_STATUS:
-            if (gKeyBufferHead != gKeyBufferTail)
+            if (key_buffer_head != key_buffer_tail)
                 return 1;
             else
                 return 0;
 
         case REG_KEYBOARD_READ:
-            if (gKeyBufferHead != gKeyBufferTail)
+            if (key_buffer_head != key_buffer_tail)
             {
-                value = gKeyBuffer[gKeyBufferTail];
-                gKeyBufferTail = (gKeyBufferTail + 1) % KEY_BUFFER_SIZE;
+                value = key_buffer[key_buffer_tail];
+                key_buffer_tail = (key_buffer_tail + 1) % KEY_BUFFER_SIZE;
             }
             else
                 value = 0;
@@ -89,19 +89,19 @@ uint32_t readDeviceRegister(uint32_t address)
 
         case REG_SD_READ_DATA:
         case REG_SD_STATUS:
-            return readSdCardRegister(address);
+            return read_sd_card_register(address);
 
         default:
             return 0xffffffff;
     }
 }
 
-void enqueueKey(uint32_t scanCode)
+void enqueue_key(uint32_t scan_code)
 {
-    gKeyBuffer[gKeyBufferHead] = scanCode;
-    gKeyBufferHead = (gKeyBufferHead + 1) % KEY_BUFFER_SIZE;
+    key_buffer[key_buffer_head] = scan_code;
+    key_buffer_head = (key_buffer_head + 1) % KEY_BUFFER_SIZE;
 
     // If the buffer is full, discard the oldest character
-    if (gKeyBufferHead == gKeyBufferTail)
-        gKeyBufferTail = (gKeyBufferTail + 1) % KEY_BUFFER_SIZE;
+    if (key_buffer_head == key_buffer_tail)
+        key_buffer_tail = (key_buffer_tail + 1) % KEY_BUFFER_SIZE;
 }

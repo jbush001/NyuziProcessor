@@ -34,40 +34,40 @@
 #define F_HSYNC 4
 #define F_VSYNC 8
 
-static int gCurrentPc;
-static int gSyncFlags;
+static int ucode_emit_pc;
+static int ucode_sync_flags;
 
-static void emitOp(int opcode, int counterIndex, int value)
+static void emit_op(int opcode, int counter_index, int value)
 {
-    REGISTERS[REG_VGA_MICROCODE] = (opcode << 18) | (counterIndex << 17)
-                                   | (value << 4) | gSyncFlags;
-    gCurrentPc++;
+    REGISTERS[REG_VGA_MICROCODE] = (opcode << 18) | (counter_index << 17)
+                                   | (value << 4) | ucode_sync_flags;
+    ucode_emit_pc++;
 }
 
-static void emitScanline(int hfp, int hs, int hbp, int hres, int visible)
+static void emit_scanline(int hfp, int hs, int hbp, int hres, int visible)
 {
     // Horizontal Front porch
-    emitOp(OP_LOAD, HCOUNT, hfp - 1);
-    emitOp(OP_LOOP, HCOUNT, gCurrentPc);
+    emit_op(OP_LOAD, HCOUNT, hfp - 1);
+    emit_op(OP_LOOP, HCOUNT, ucode_emit_pc);
 
     // Horizontal Sync pulse
-    gSyncFlags ^= F_HSYNC;
-    emitOp(OP_LOAD, HCOUNT, hs - 1);
-    emitOp(OP_LOOP, HCOUNT, gCurrentPc);
-    gSyncFlags ^= F_HSYNC;
+    ucode_sync_flags ^= F_HSYNC;
+    emit_op(OP_LOAD, HCOUNT, hs - 1);
+    emit_op(OP_LOOP, HCOUNT, ucode_emit_pc);
+    ucode_sync_flags ^= F_HSYNC;
 
     // Horizontal Back porch
-    emitOp(OP_LOAD, HCOUNT, hbp - 1);
-    emitOp(OP_LOOP, HCOUNT, gCurrentPc);
+    emit_op(OP_LOAD, HCOUNT, hbp - 1);
+    emit_op(OP_LOOP, HCOUNT, ucode_emit_pc);
 
     // Scanline
     if (visible)
-        gSyncFlags ^= F_VISIBLE;
+        ucode_sync_flags ^= F_VISIBLE;
 
-    emitOp(OP_LOAD, HCOUNT, hres - 1);
-    emitOp(OP_LOOP, HCOUNT, gCurrentPc);
+    emit_op(OP_LOAD, HCOUNT, hres - 1);
+    emit_op(OP_LOOP, HCOUNT, ucode_emit_pc);
     if (visible)
-        gSyncFlags ^= F_VISIBLE;
+        ucode_sync_flags ^= F_VISIBLE;
 }
 
 //
@@ -85,58 +85,58 @@ static void emitScanline(int hfp, int hs, int hbp, int hres, int visible)
 // - vpol: vertical polarity
 // - vres: vertical resolution (pixels)
 //
-static void compileMicrocode(int hfp, int hs, int hbp, int hpol, int hres,
-                             int vfp, int vs, int vbp, int vpol, int vres)
+static void compile_microcode(int hfp, int hs, int hbp, int hpol, int hres,
+                              int vfp, int vs, int vbp, int vpol, int vres)
 {
-    int vLoopTop;
-    gSyncFlags = (vpol ? 0 : F_VSYNC) | (hpol ? 0 : F_HSYNC);
-    gCurrentPc = 0;
+    int v_loop_top;
+    ucode_sync_flags = (vpol ? 0 : F_VSYNC) | (hpol ? 0 : F_HSYNC);
+    ucode_emit_pc = 0;
 
     // Must disable sequencer to load new program into it
     REGISTERS[REG_VGA_ENABLE] = 0;
 
     // Vertical front porch
-    emitOp(OP_LOAD, VCOUNT, vfp);
-    vLoopTop = gCurrentPc;
-    emitScanline(hfp, hs, hbp, hres, 0);
-    emitOp(OP_LOOP, VCOUNT, vLoopTop);
+    emit_op(OP_LOAD, VCOUNT, vfp);
+    v_loop_top = ucode_emit_pc;
+    emit_scanline(hfp, hs, hbp, hres, 0);
+    emit_op(OP_LOOP, VCOUNT, v_loop_top);
 
     // Vertical sync
-    gSyncFlags ^= F_VSYNC;
-    emitOp(OP_LOAD, VCOUNT, vs);
-    vLoopTop = gCurrentPc;
-    emitScanline(hfp, hs, hbp, hres, 0);
-    emitOp(OP_LOOP, VCOUNT, vLoopTop);
-    gSyncFlags ^= F_VSYNC;
+    ucode_sync_flags ^= F_VSYNC;
+    emit_op(OP_LOAD, VCOUNT, vs);
+    v_loop_top = ucode_emit_pc;
+    emit_scanline(hfp, hs, hbp, hres, 0);
+    emit_op(OP_LOOP, VCOUNT, v_loop_top);
+    ucode_sync_flags ^= F_VSYNC;
 
     // Vertical back porch
-    emitOp(OP_LOAD, VCOUNT, vbp);
-    vLoopTop = gCurrentPc;
-    emitScanline(hfp, hs, hbp, hres, 0);
-    emitOp(OP_LOOP, VCOUNT, vLoopTop);
+    emit_op(OP_LOAD, VCOUNT, vbp);
+    v_loop_top = ucode_emit_pc;
+    emit_scanline(hfp, hs, hbp, hres, 0);
+    emit_op(OP_LOOP, VCOUNT, v_loop_top);
 
     // Visible area
-    emitOp(OP_LOAD, VCOUNT, vres);
-    vLoopTop = gCurrentPc;
-    emitScanline(hfp, hs, hbp, hres, 1);
-    emitOp(OP_LOOP, VCOUNT, vLoopTop);
-    REGISTERS[REG_VGA_MICROCODE] = gSyncFlags | F_NEW_FRAME;
+    emit_op(OP_LOAD, VCOUNT, vres);
+    v_loop_top = ucode_emit_pc;
+    emit_scanline(hfp, hs, hbp, hres, 1);
+    emit_op(OP_LOOP, VCOUNT, v_loop_top);
+    REGISTERS[REG_VGA_MICROCODE] = ucode_sync_flags | F_NEW_FRAME;
 
     REGISTERS[REG_VGA_BASE] = 0x200000;
     REGISTERS[REG_VGA_LENGTH] = hres * vres;
     REGISTERS[REG_VGA_ENABLE] = 1;
 }
 
-int initVGA(VGAMode mode)
+int init_vga(enum vga_mode mode)
 {
     switch (mode)
     {
         case VGA_MODE_640x480:
-            compileMicrocode(16, 96, 48, 0, 640, 10, 2, 33, 0, 480);
+            compile_microcode(16, 96, 48, 0, 640, 10, 2, 33, 0, 480);
             break;
 
         case VGA_MODE_640x400:
-            compileMicrocode(16, 96, 48, 0, 640, 12, 2, 35, 1, 400);
+            compile_microcode(16, 96, 48, 0, 640, 12, 2, 35, 1, 400);
             break;
 
         default:

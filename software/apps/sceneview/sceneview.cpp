@@ -138,10 +138,10 @@ Texture *createCheckerboardTexture()
 // All threads start execution here.
 int main()
 {
-    if (getCurrentThreadId() == 0)
-        initVGA(VGA_MODE_640x480);
+    if (get_current_thread_id() == 0)
+        init_vga(VGA_MODE_640x480);
     else
-        workerThread();
+        worker_thread();
 
     // Set up resource data
     char *resourceData = readResourceFile();
@@ -209,7 +209,7 @@ int main()
     uniforms.fAmbient = 0.4f;
     float theta = 0.0;
 
-    startAllThreads();
+    start_all_threads();
 
     for (int frame = 0; ; frame++)
     {

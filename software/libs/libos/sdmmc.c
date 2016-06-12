@@ -33,18 +33,18 @@ typedef enum
     SD_CMD_READ_BLOCK = 0x17
 } SDCommand;
 
-static void setCs(int level)
+static void set_cs(int level)
 {
     REGISTERS[REG_SD_SPI_CONTROL] = level;
 }
 
-static void setClockDivisor(int divisor)
+static void set_clock_divisor(int divisor)
 {
     REGISTERS[REG_SD_SPI_CLOCK_DIVIDE] = divisor - 1;
 }
 
 // Transfer a single byte bidirectionally.
-static int spiTransfer(int value)
+static int spi_transfer(int value)
 {
     REGISTERS[REG_SD_SPI_WRITE] = value & 0xff;
     while ((REGISTERS[REG_SD_SPI_STATUS] & 1) == 0)
@@ -53,95 +53,95 @@ static int spiTransfer(int value)
     return REGISTERS[REG_SD_SPI_READ];
 }
 
-static int sendSdCommand(SDCommand command, unsigned int parameter)
+static int send_sd_command(SDCommand command, unsigned int parameter)
 {
     int result;
-    int retryCount = 0;
+    int retry_count = 0;
 
-    spiTransfer(0x40 | command);
-    spiTransfer((parameter >> 24) & 0xff);
-    spiTransfer((parameter >> 16) & 0xff);
-    spiTransfer((parameter >> 8) & 0xff);
-    spiTransfer(parameter & 0xff);
-    spiTransfer(0x95);	// Checksum (ignored for all but first command)
+    spi_transfer(0x40 | command);
+    spi_transfer((parameter >> 24) & 0xff);
+    spi_transfer((parameter >> 16) & 0xff);
+    spi_transfer((parameter >> 8) & 0xff);
+    spi_transfer(parameter & 0xff);
+    spi_transfer(0x95);	// Checksum (ignored for all but first command)
 
     // Wait while card is busy
     do
     {
-        result = spiTransfer(0xff);
+        result = spi_transfer(0xff);
     }
-    while (result == 0xff && retryCount++ < MAX_RETRIES);
+    while (result == 0xff && retry_count++ < MAX_RETRIES);
 
     return result;
 }
 
-int initSdmmcDevice()
+int init_sdmmc_device()
 {
     int result;
 
-    // Set clock to 200kHz (50Mhz system clock)
-    setClockDivisor(125);
+    // Set clock to 200k_hz (50Mhz system clock)
+    set_clock_divisor(125);
 
     // After power on, send a bunch of clocks to initialize the chip
-    setCs(1);
+    set_cs(1);
     for (int i = 0; i < 10; i++)
-        spiTransfer(0xff);
+        spi_transfer(0xff);
 
-    setCs(0);
+    set_cs(0);
 
     // Reset the card
-    result = sendSdCommand(SD_CMD_RESET, 0);
+    result = send_sd_command(SD_CMD_RESET, 0);
     if (result != 1)
     {
-        printf("initSdmmcDevice: error %d SD_CMD_RESET\n", result);
+        printf("init_sdmmc_device: error %d SD_CMD_RESET\n", result);
         return -1;
     }
 
     // Poll until it is ready
     while (1)
     {
-        result = sendSdCommand(SD_CMD_INIT, 0);
+        result = send_sd_command(SD_CMD_INIT, 0);
         if (result == 0)
             break;
 
         if (result != 1)
         {
-            printf("initSdmmcDevice: error %d SD_CMD_INIT\n", result);
+            printf("init_sdmmc_device: error %d SD_CMD_INIT\n", result);
             return -1;
         }
     }
 
     // Configure the block size
-    result = sendSdCommand(SD_CMD_SET_BLOCK_LEN, BLOCK_SIZE);
+    result = send_sd_command(SD_CMD_SET_BLOCK_LEN, BLOCK_SIZE);
     if (result != 0)
     {
-        printf("initSdmmcDevice: error %d SD_CMD_SET_BLOCK_LEN\n", result);
+        printf("init_sdmmc_device: error %d SD_CMD_SET_BLOCK_LEN\n", result);
         return -1;
     }
 
     // Increase clock rate to 5 Mhz
-    setClockDivisor(5);
+    set_clock_divisor(5);
 
     return 0;
 }
 
-int readSdmmcDevice(unsigned int blockAddress, void *ptr)
+int read_sdmmc_device(unsigned int block_address, void *ptr)
 {
     int result;
 
-    result = sendSdCommand(SD_CMD_READ_BLOCK, blockAddress);
+    result = send_sd_command(SD_CMD_READ_BLOCK, block_address);
     if (result != 0)
     {
-        printf("readSdmmcDevice: error %d SD_CMD_READ_BLOCK\n", result);
+        printf("read_sdmmc_device: error %d SD_CMD_READ_BLOCK\n", result);
         return -1;
     }
 
     for (int i = 0; i < BLOCK_SIZE; i++)
-        ((char*) ptr)[i] = spiTransfer(0xff);
+        ((char*) ptr)[i] = spi_transfer(0xff);
 
     // checksum (ignored)
-    spiTransfer(0xff);
-    spiTransfer(0xff);
+    spi_transfer(0xff);
+    spi_transfer(0xff);
 
     return BLOCK_SIZE;
 }

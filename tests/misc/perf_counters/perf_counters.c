@@ -73,14 +73,14 @@ int main(int argc, const char *argv[])
     {
         for (counter = 0; counter < NUM_COUNTERS && base_event + counter < NUM_EVENTS; counter++)
         {
-            setPerfCounterEvent(counter, base_event + counter);
-            perf_count[base_event + counter] = readPerfCounter(counter);
+            set_perf_counter_event(counter, base_event + counter);
+            perf_count[base_event + counter] = read_perf_counter(counter);
         }
 
         sum += do_stuff(values, 10);
 
         for (counter = 0; counter < NUM_COUNTERS && base_event + counter < NUM_EVENTS; counter++)
-            perf_count[base_event + counter] = readPerfCounter(counter) - perf_count[base_event + counter];
+            perf_count[base_event + counter] = read_perf_counter(counter) - perf_count[base_event + counter];
     }
 
     for (event = 0; event < NUM_EVENTS; event++)
