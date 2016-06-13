@@ -38,15 +38,15 @@ static inline uint32_t endian_swap32(uint32_t value)
            | ((value & 0xff000000) >> 24);
 }
 
-static inline uint32_t extract_unsigned_bits(uint32_t word, uint32_t low_bit_offset, uint32_t size)
+static inline uint32_t extract_unsigned_bits(uint32_t word, uint32_t low_bit, uint32_t size)
 {
-    return (word >> low_bit_offset) & ((1u << size) - 1);
+    return (word >> low_bit) & ((1u << size) - 1);
 }
 
-static inline uint32_t extract_signed_bits(uint32_t word, uint32_t low_bit_offset, uint32_t size)
+static inline uint32_t extract_signed_bits(uint32_t word, uint32_t low_bit, uint32_t size)
 {
     uint32_t mask = (1u << size) - 1;
-    uint32_t value = (word >> low_bit_offset) & mask;
+    uint32_t value = (word >> low_bit) & mask;
     if (value & (1u << (size - 1)))
         value |= ~mask;	// Sign extend
 

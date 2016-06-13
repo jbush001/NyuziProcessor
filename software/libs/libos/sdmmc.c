@@ -75,7 +75,7 @@ static int send_sd_command(SDCommand command, unsigned int parameter)
     return result;
 }
 
-int init_sdmmc_device()
+int init_sdmmc_device(void)
 {
     int result;
 

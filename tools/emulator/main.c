@@ -48,7 +48,7 @@ static void usage(void)
     fprintf(stderr, "     normal  Run to completion (default)\n");
     fprintf(stderr, "     cosim   Cosimulation validation mode\n");
     fprintf(stderr, "     gdb     Start GDB listener on port 8000\n");
-    fprintf(stderr, "  -f <width>x<height> Display frame_buffer output in window\n");
+    fprintf(stderr, "  -f <width>x<height> Display frame buffer output in window\n");
     fprintf(stderr, "  -d <filename>,<start>,<length>  Dump memory\n");
     fprintf(stderr, "  -b <filename> Load file into a virtual block device\n");
     fprintf(stderr, "  -t <num> Total threads (default 4)\n");
@@ -161,7 +161,7 @@ int main(int argc, char *argv[])
                 separator = strchr(optarg, 'x');
                 if (!separator)
                 {
-                    fprintf(stderr, "Invalid frame_buffer size %s\n", optarg);
+                    fprintf(stderr, "Invalid frame buffer size %s\n", optarg);
                     return 1;
                 }
 

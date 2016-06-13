@@ -25,7 +25,7 @@ void write_uart(char ch)
     REGISTERS[REG_UART_TX] = ch;
 }
 
-unsigned char read_uart()
+unsigned char read_uart(void)
 {
     while ((REGISTERS[REG_UART_STATUS] & UART_RX_READY) == 0)
         ;	// Wait for characters to be available

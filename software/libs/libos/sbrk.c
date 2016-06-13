@@ -16,9 +16,9 @@
 
 #include <stdlib.h>
 
-volatile unsigned int g_next_alloc = 0x500000;
+volatile unsigned int next_alloc = 0x500000;
 
 void *sbrk(ptrdiff_t size)
 {
-    return (void*) __sync_fetch_and_add(&g_next_alloc, size);
+    return (void*) __sync_fetch_and_add(&next_alloc, size);
 }

@@ -23,7 +23,7 @@ void *memset(void *dest, int value, unsigned int length);
 unsigned int strlcpy(char *dest, const char *src, unsigned int length);
 int memcmp(const void *_str1, const void *_str2, unsigned int len);
 int strcmp(const char *str1, const char *str2);
-void panic(const char *format, ...);
+void panic(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
 
 #define assert(cond) if (!(cond)) { panic("ASSERT FAILED: %s:%d: %s\n", \
     __FILE__, __LINE__, #cond); }
