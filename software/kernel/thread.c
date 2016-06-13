@@ -45,8 +45,8 @@ static spinlock_t process_list_lock;
 // Used by fault handler when it performs stack switch
 unsigned int trap_kernel_stack[MAX_HW_THREADS];
 
-MAKE_SLAB(thread_slab, struct thread);
-MAKE_SLAB(process_slab, struct process);
+MAKE_SLAB(thread_slab, struct thread)
+MAKE_SLAB(process_slab, struct process)
 
 void bool_init_kernel_process(void)
 {
@@ -213,7 +213,7 @@ int grim_reaper(void *ignore)
     }
 }
 
-static void user_thread_kernel_start(void)
+static void __attribute__((noreturn)) user_thread_kernel_start(void)
 {
     struct thread *th = current_thread();
 
@@ -236,7 +236,7 @@ struct thread *spawn_user_thread(const char *name, struct process *proc,
                                  (thread_start_func_t) start_address, 0, 0);
 }
 
-static void kernel_thread_kernel_start(void)
+static void __attribute__((noreturn)) kernel_thread_kernel_start(void)
 {
     struct thread *th = current_thread();
 
@@ -294,7 +294,7 @@ void reschedule(void)
     restore_interrupts(old_flags);
 }
 
-static void new_process_start(void)
+static void __attribute__((noreturn)) new_process_start(void)
 {
     struct thread *th = current_thread();
 

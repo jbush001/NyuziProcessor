@@ -45,9 +45,9 @@ static spinlock_t kernel_space_lock;
 static unsigned int next_asid;
 static struct vm_translation_map kernel_map;
 static struct list_node map_list;
-MAKE_SLAB(translation_map_slab, struct vm_translation_map);
+MAKE_SLAB(translation_map_slab, struct vm_translation_map)
 
-unsigned int boot_vm_allocate_pages(struct boot_page_setup *bps, int num_pages)
+unsigned int boot_vm_allocate_pages(struct boot_page_setup *bps, unsigned int num_pages)
 {
     unsigned int pa = bps->next_alloc_page;
     bps->next_alloc_page += PAGE_SIZE * num_pages;
@@ -220,7 +220,7 @@ void vm_map_page(struct vm_translation_map *map, unsigned int va, unsigned int p
         // Now add entry to the page table
         pgtbl = (unsigned int*) PAGE_ALIGN(pgdir[pgdindex]);
         ((unsigned int*)PA_TO_VA(pgtbl))[pgtindex] = pa;
-        asm("tlbinval %0" : : "s" (va));
+        __asm__("tlbinval %0" : : "s" (va));
 
         // XXX need to invalidate on other cores
 
@@ -238,7 +238,7 @@ void vm_map_page(struct vm_translation_map *map, unsigned int va, unsigned int p
 
         pgtbl = (unsigned int*) PAGE_ALIGN(pgdir[pgdindex]);
         ((unsigned int*)PA_TO_VA(pgtbl))[pgtindex] = pa;
-        asm("tlbinval %0" : : "s" (va));
+        __asm__("tlbinval %0" : : "s" (va));
 
         // XXX need to invalidate on other cores
 

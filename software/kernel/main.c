@@ -45,13 +45,13 @@ void timer_tick(void)
     reschedule();
 }
 
-void kernel_main(unsigned int memory_size)
+void __attribute__((noreturn)) kernel_main(unsigned int _memory_size)
 {
     struct vm_translation_map *init_map;
 
-    vm_page_init(memory_size);
+    vm_page_init(_memory_size);
     init_map = vm_translation_map_init();
-    boot_init_heap((char*) KERNEL_HEAP_BASE + PAGE_STRUCTURES_SIZE(memory_size));
+    boot_init_heap((char*) KERNEL_HEAP_BASE + PAGE_STRUCTURES_SIZE(_memory_size));
     vm_address_space_init(init_map);
     bootstrap_vm_cache();
     bool_init_kernel_process();
@@ -77,7 +77,7 @@ void kernel_main(unsigned int memory_size)
         reschedule();
 }
 
-void thread_n_main(void)
+void __attribute__((noreturn)) thread_n_main(void)
 {
     boot_init_thread();
 

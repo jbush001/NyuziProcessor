@@ -24,8 +24,8 @@
 #define NUM_HASH_BUCKETS 37
 
 static spinlock_t cache_lock;
-struct list_node hash_table[NUM_HASH_BUCKETS];
-MAKE_SLAB(cache_slab, struct vm_cache);
+static struct list_node hash_table[NUM_HASH_BUCKETS];
+MAKE_SLAB(cache_slab, struct vm_cache)
 static int debug_cache_lock_owner = -1;
 
 void bootstrap_vm_cache(void)
@@ -50,7 +50,7 @@ struct vm_cache *create_vm_cache(struct vm_cache *source)
     return cache;
 }
 
-static unsigned int gen_hash(struct vm_cache *cache, unsigned int offset)
+static unsigned int gen_hash(const struct vm_cache *cache, unsigned int offset)
 {
 	return (unsigned int) cache + (unsigned int) offset / PAGE_SIZE;
 }
@@ -117,7 +117,7 @@ void insert_cache_page(struct vm_cache *cache, unsigned int offset,
     list_add_tail(&cache->page_list, &page->list_entry);
 }
 
-struct vm_page *lookup_cache_page(struct vm_cache *cache, unsigned int offset)
+struct vm_page *lookup_cache_page(const struct vm_cache *cache, unsigned int offset)
 {
     unsigned int bucket;
     struct vm_page *page;

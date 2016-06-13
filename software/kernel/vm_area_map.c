@@ -191,9 +191,6 @@ struct vm_area *create_vm_area(struct vm_area_map *map, unsigned int address,
         case PLACE_SEARCH_UP:
             area = search_up(map, address, size);
             break;
-
-        default:
-            panic("create_vm_area: unknown placement");
     }
 
     if (area)

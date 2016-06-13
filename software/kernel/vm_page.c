@@ -100,7 +100,7 @@ struct vm_page *pa_to_page(unsigned int addr)
     return &pages[addr / PAGE_SIZE];
 }
 
-unsigned int page_to_pa(struct vm_page *page)
+unsigned int page_to_pa(const struct vm_page *page)
 {
     return (page - pages) * PAGE_SIZE;
 }

@@ -51,5 +51,5 @@ struct vm_page *vm_allocate_page(void);
 void inc_page_ref(struct vm_page*);
 void dec_page_ref(struct vm_page*);
 struct vm_page *pa_to_page(unsigned int addr);
-unsigned int page_to_pa(struct vm_page*);
+unsigned int page_to_pa(const struct vm_page*);
 

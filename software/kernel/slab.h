@@ -35,7 +35,7 @@ struct slab_allocator
 };
 
 #define MAKE_SLAB(name, object) \
-    struct slab_allocator name = { 0, sizeof(object), 0, 0, 0, PAGE_SIZE };
+    static struct slab_allocator name = { 0, sizeof(object), 0, 0, 0, PAGE_SIZE };
 
 void *slab_alloc(struct slab_allocator*);
 void slab_free(struct slab_allocator*, void *object);

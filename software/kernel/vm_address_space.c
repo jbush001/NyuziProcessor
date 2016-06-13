@@ -25,7 +25,7 @@
 
 static struct vm_address_space kernel_address_space;
 
-MAKE_SLAB(address_space_slab, struct vm_address_space);
+MAKE_SLAB(address_space_slab, struct vm_address_space)
 
 static int soft_fault(struct vm_address_space *space,
                       const struct vm_area *area, unsigned int address,
@@ -191,7 +191,7 @@ static int soft_fault(struct vm_address_space *space, const struct vm_area *area
                       unsigned int address, int is_store)
 {
     int got;
-    int page_flags;
+    unsigned int page_flags;
     struct vm_page *source_page;
     struct vm_page *dummy_page = 0;
     unsigned int cache_offset;

@@ -14,8 +14,7 @@
 // limitations under the License.
 //
 
-#ifndef _ELF_H
-#define _ELF_H
+#pragma once
 
 typedef unsigned Elf32_Addr;
 typedef unsigned short Elf32_Half;
@@ -63,5 +62,3 @@ struct Elf32_Phdr
 #define PF_R		0x4
 
 #define PT_LOAD 1
-
-#endif
