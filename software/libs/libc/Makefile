@@ -37,18 +37,14 @@ SRCS=math.c \
 OBJS := $(SRCS_TO_OBJS)
 DEPS := $(SRCS_TO_DEPS)
 
-all: $(OBJ_DIR) libc.a crt0.o
+all: $(OBJ_DIR) libc.a
 
 libc.a: $(OBJS) $(DEPS)
 	$(AR) r $@ $(OBJS)
 
-crt0.o: src/crt0.s
-	$(CC) -o $@ -c $<
-
 clean:
 	rm -rf $(OBJ_DIR)
 	rm -f libc.a
-	rm -f crt0.o
 
 $(OBJ_DIR): FORCE
 	mkdir -p $(OBJ_DIR)

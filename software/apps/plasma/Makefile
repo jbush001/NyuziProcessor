@@ -22,7 +22,7 @@ LIBS=-lc -los
 SRCS=plasma.cpp
 CFLAGS+=-ffast-math -std=c++11
 
-OBJS := $(TOPDIR)/software/libs/libc/crt0.o $(SRCS_TO_OBJS)
+OBJS := $(CRT0) $(SRCS_TO_OBJS)
 DEPS := $(SRCS_TO_DEPS)
 
 $(OBJ_DIR)/plasma.hex: $(OBJS)

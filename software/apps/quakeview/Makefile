@@ -27,7 +27,7 @@ LIBS=-lrender -lc -los
 
 SRCS=main.cpp PakFile.cpp MeshBuilder.cpp Render.cpp
 
-OBJS := $(TOPDIR)/software/libs/libc/crt0.o $(SRCS_TO_OBJS)
+OBJS := $(CRT0) $(SRCS_TO_OBJS)
 DEPS := $(SRCS_TO_DEPS)
 
 all: $(OBJ_DIR)/program.hex

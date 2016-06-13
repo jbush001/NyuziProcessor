@@ -31,10 +31,13 @@ SRCS=schedule.c \
 OBJS := $(SRCS_TO_OBJS)
 DEPS := $(SRCS_TO_DEPS)
 
-all: $(OBJ_DIR) libos.a
+all: $(OBJ_DIR) libos.a crt0.o
 
 libos.a: $(DEPS) $(OBJS)
 	$(AR) r $@ $(OBJS)
+
+crt0.o: crt0.s
+	$(CC) -o $@ -c $<
 
 clean:
 	rm -rf $(OBJ_DIR)

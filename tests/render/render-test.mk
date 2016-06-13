@@ -23,7 +23,7 @@ include $(TOPDIR)/build/target.mk
 CFLAGS+=-g -Wall -W -fno-rtti -std=c++11 -ffast-math -I$(TOPDIR)/software/libs/librender
 LIBS=-lrender -lc -los
 
-OBJS := $(SRCS_TO_OBJS) $(TOPDIR)/software/libs/libc/crt0.o
+OBJS := $(SRCS_TO_OBJS) $(CRT0)
 DEPS := $(SRCS_TO_DEPS)
 
 $(OBJ_DIR)/program.hex: $(OBJ_DIR)/program.elf

@@ -75,7 +75,7 @@ SRCS=	doomdef.c		\
 		sounds.c \
 		i_main.c \
 
-OBJS := $(TOPDIR)/software/libs/libc/crt0.o $(SRCS_TO_OBJS)
+OBJS := $(CRT0) $(SRCS_TO_OBJS)
 DEPS := $(SRCS_TO_DEPS)
 
 all: $(OBJ_DIR)/doom.hex fsimage.bin
