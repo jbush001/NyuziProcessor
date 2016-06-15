@@ -29,33 +29,30 @@
 #define FS_MAGIC "spfs"
 #define ROUND_UP(x, y) (((x + y - 1) / y) * y)
 
-typedef struct DirectoryEntry DirectoryEntry;
-typedef struct FsHeader FsHeader;
-
-struct DirectoryEntry
+struct directory_entry
 {
-    unsigned int startOffset;
+    unsigned int start_offset;
     unsigned int length;
     char name[FS_NAME_LEN];
 };
 
-struct FsHeader
+struct fs_header
 {
     char magic[4];
-    unsigned int numDirectoryEntries;
-    DirectoryEntry dir[1];
+    unsigned int num_directory_entries;
+    struct directory_entry dir[1];
 };
 
-static void normalizeFileName(char outName[32], const char *fullPath);
+static void normalize_file_name(char out_name[32], const char *full_path);
 
 int main(int argc, const char *argv[])
 {
-    unsigned int fileIndex;
-    unsigned fileOffset;
-    unsigned int numDirectoryEntries = (unsigned int) argc - 2;
-    FsHeader *header;
-    FILE *outputFp;
-    size_t headerSize;
+    unsigned int file_index;
+    unsigned file_offset;
+    unsigned int num_directory_entries = (unsigned int) argc - 2;
+    struct fs_header *header;
+    FILE *output_fp;
+    size_t header_size;
 
     if (argc < 2)
     {
@@ -63,88 +60,90 @@ int main(int argc, const char *argv[])
         return 1;
     }
 
-    outputFp = fopen(argv[1], "wb");
-    if (outputFp == NULL)
+    output_fp = fopen(argv[1], "wb");
+    if (output_fp == NULL)
     {
         perror("error creating output file");
         return 1;
     }
 
-    fileOffset = ROUND_UP((numDirectoryEntries - 1) * sizeof(DirectoryEntry)
-                          + sizeof(FsHeader), BLOCK_SIZE);
-    printf("first file offset = %d\n", fileOffset);
-    headerSize = sizeof(FsHeader) + sizeof(DirectoryEntry) * (numDirectoryEntries - 1);
-    header = (FsHeader*) malloc(headerSize);
+    file_offset = ROUND_UP((num_directory_entries - 1) * sizeof(struct directory_entry)
+                          + sizeof(struct fs_header), BLOCK_SIZE);
+    printf("first file offset = %d\n", file_offset);
+    header_size = sizeof(struct fs_header) + sizeof(struct directory_entry)
+        * (num_directory_entries - 1);
+    header = (struct fs_header*) malloc(header_size);
 
     // Build the directory
-    for (fileIndex = 0; fileIndex < numDirectoryEntries; fileIndex++)
+    for (file_index = 0; file_index < num_directory_entries; file_index++)
     {
         struct stat st;
 
-        if (stat(argv[fileIndex + 2], &st) < 0)
+        if (stat(argv[file_index + 2], &st) < 0)
         {
-            fprintf(stderr, "error opening %s\n", argv[fileIndex + 2]);
+            fprintf(stderr, "error opening %s\n", argv[file_index + 2]);
             return 1;
         }
 
-        header->dir[fileIndex].startOffset = fileOffset;
-        header->dir[fileIndex].length = (unsigned int) st.st_size;
-        normalizeFileName(header->dir[fileIndex].name, argv[fileIndex + 2]);
-        printf("Adding %s %08x %08x\n", header->dir[fileIndex].name, header->dir[fileIndex].startOffset,
-               header->dir[fileIndex].length);
-        fileOffset = ROUND_UP(fileOffset + (unsigned int) st.st_size, BLOCK_SIZE);
+        header->dir[file_index].start_offset = file_offset;
+        header->dir[file_index].length = (unsigned int) st.st_size;
+        normalize_file_name(header->dir[file_index].name, argv[file_index + 2]);
+        printf("Adding %s %08x %08x\n", header->dir[file_index].name,
+               header->dir[file_index].start_offset,
+               header->dir[file_index].length);
+        file_offset = ROUND_UP(file_offset + (unsigned int) st.st_size, BLOCK_SIZE);
     }
 
     memcpy(header->magic, FS_MAGIC, 4);
-    header->numDirectoryEntries = numDirectoryEntries;
+    header->num_directory_entries = num_directory_entries;
 
-    if (fwrite(header, headerSize, 1, outputFp) != 1)
+    if (fwrite(header, header_size, 1, output_fp) != 1)
     {
         perror("error writing header");
         return 1;
     }
 
     // Copy file contents
-    for (fileIndex = 0; fileIndex < numDirectoryEntries; fileIndex++)
+    for (file_index = 0; file_index < num_directory_entries; file_index++)
     {
         char tmp[0x4000];
-        fseek(outputFp, header->dir[fileIndex].startOffset, SEEK_SET);
-        FILE *sourceFp = fopen(argv[fileIndex + 2], "rb");
-        unsigned int leftToCopy = header->dir[fileIndex].length;
-        while (leftToCopy > 0)
+        fseek(output_fp, header->dir[file_index].start_offset, SEEK_SET);
+        FILE *source_fp = fopen(argv[file_index + 2], "rb");
+        unsigned int left_to_copy = header->dir[file_index].length;
+        while (left_to_copy > 0)
         {
-            unsigned int sliceLength = sizeof(tmp);
-            if (leftToCopy < sliceLength)
-                sliceLength = leftToCopy;
+            unsigned int slice_length = sizeof(tmp);
+            if (left_to_copy < slice_length)
+                slice_length = left_to_copy;
 
-            if (fread(tmp, sliceLength, 1, sourceFp) != 1)
+            if (fread(tmp, slice_length, 1, source_fp) != 1)
             {
                 perror("error reading from source file");
                 return 1;
             }
 
-            if (fwrite(tmp, sliceLength, 1, outputFp) != 1)
+            if (fwrite(tmp, slice_length, 1, output_fp) != 1)
             {
                 perror("error writing to output file");
                 return 1;
             }
 
-            leftToCopy -= sliceLength;
+            left_to_copy -= slice_length;
         }
 
-        fclose(sourceFp);
+        fclose(source_fp);
     }
 
-    fclose(outputFp);
+    fclose(output_fp);
 
     return 0;
 }
 
-void normalizeFileName(char outName[32], const char *fullPath)
+void normalize_file_name(char out_name[32], const char *full_path)
 {
-    const char *end = fullPath + strlen(fullPath) - 1;
+    const char *end = full_path + strlen(full_path) - 1;
     const char *begin = end;
-    while (begin > fullPath && begin[-1] != '/')
+    while (begin > full_path && begin[-1] != '/')
         begin--;
 
     if (end - begin > FS_NAME_LEN - 1)
@@ -153,5 +152,5 @@ void normalizeFileName(char outName[32], const char *fullPath)
         begin = end - (FS_NAME_LEN -1);
     }
 
-    strcpy(outName, begin);
+    strcpy(out_name, begin);
 }

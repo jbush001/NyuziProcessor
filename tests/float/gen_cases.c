@@ -20,12 +20,12 @@
 #define NUM_ELEMS(x) (sizeof(x) / sizeof(x[0]))
 #define RAND_ELEM(x) x[rand() % NUM_ELEMS(x)]
 
-unsigned int addFunc(unsigned int param1, unsigned int param2);
-unsigned int subFunc(unsigned int param1, unsigned int param2);
-unsigned int mulFunc(unsigned int param1, unsigned int param2);
-unsigned int ftoiFunc(unsigned int param1, unsigned int param2);
-unsigned int itofFunc(unsigned int param1, unsigned int param2);
-unsigned int fgtrFunc(unsigned int param1, unsigned int param2);
+unsigned int add_func(unsigned int param1, unsigned int param2);
+unsigned int sub_func(unsigned int param1, unsigned int param2);
+unsigned int mul_func(unsigned int param1, unsigned int param2);
+unsigned int ftoi_func(unsigned int param1, unsigned int param2);
+unsigned int itof_func(unsigned int param1, unsigned int param2);
+unsigned int fgtr_func(unsigned int param1, unsigned int param2);
 
 //
 // Floating point values are constrained so common edge cases are
@@ -59,21 +59,21 @@ unsigned int SIGNIFICANDS[] = {
     0x7fffff
 };
 
-struct Operation
+struct operation
 {
     const char *name;
     unsigned int (*func)(unsigned int op1, unsigned int op2);
-    int numOperands;
+    int num_operands;
 } OPS[] = {
-    { "FADD", addFunc, 2 },
-    { "FSUB", subFunc, 2 },
-    { "FMUL", mulFunc, 2 },
-    { "FGTR", fgtrFunc, 2 },
-    { "ITOF", itofFunc, 1 },
-    { "FTOI", ftoiFunc, 1 }
+    { "FADD", add_func, 2 },
+    { "FSUB", sub_func, 2 },
+    { "FMUL", mul_func, 2 },
+    { "FGTR", fgtr_func, 2 },
+    { "ITOF", itof_func, 1 },
+    { "FTOI", ftoi_func, 1 }
 };
 
-float valueAsFloat(unsigned int value)
+float value_as_float(unsigned int value)
 {
     union
     {
@@ -84,7 +84,7 @@ float valueAsFloat(unsigned int value)
     return u.f;
 }
 
-unsigned int valueAsInt(float value)
+unsigned int value_as_int(float value)
 {
     union
     {
@@ -95,37 +95,37 @@ unsigned int valueAsInt(float value)
     return u.i;
 }
 
-unsigned int addFunc(unsigned int param1, unsigned int param2)
+unsigned int add_func(unsigned int param1, unsigned int param2)
 {
-    return valueAsInt(valueAsFloat(param1) + valueAsFloat(param2));
+    return value_as_int(value_as_float(param1) + value_as_float(param2));
 }
 
-unsigned int subFunc(unsigned int param1, unsigned int param2)
+unsigned int sub_func(unsigned int param1, unsigned int param2)
 {
-    return valueAsInt(valueAsFloat(param1) - valueAsFloat(param2));
+    return value_as_int(value_as_float(param1) - value_as_float(param2));
 }
 
-unsigned int mulFunc(unsigned int param1, unsigned int param2)
+unsigned int mul_func(unsigned int param1, unsigned int param2)
 {
-    return valueAsInt(valueAsFloat(param1) * valueAsFloat(param2));
+    return value_as_int(value_as_float(param1) * value_as_float(param2));
 }
 
-unsigned int ftoiFunc(unsigned int param1, unsigned int param2)
+unsigned int ftoi_func(unsigned int param1, unsigned int param2)
 {
-    return (unsigned int)(int) valueAsFloat(param1);
+    return (unsigned int)(int) value_as_float(param1);
 }
 
-unsigned int itofFunc(unsigned int param1, unsigned int param2)
+unsigned int itof_func(unsigned int param1, unsigned int param2)
 {
-    return valueAsInt((float)(int)param1);
+    return value_as_int((float)(int)param1);
 }
 
-unsigned int fgtrFunc(unsigned int param1, unsigned int param2)
+unsigned int fgtr_func(unsigned int param1, unsigned int param2)
 {
-    return valueAsFloat(param1) > valueAsFloat(param2);
+    return value_as_float(param1) > value_as_float(param2);
 }
 
-unsigned int generateRandomValue(void)
+unsigned int generate_random_value(void)
 {
     return (RAND_ELEM(EXPONENTS) << 23) | RAND_ELEM(SIGNIFICANDS)
         | ((rand() & 1) << 31);
@@ -135,14 +135,14 @@ int main()
 {
     for (int opidx = 0; opidx < NUM_ELEMS(OPS); opidx++)
     {
-        struct Operation *op = &OPS[opidx];
+        struct operation *op = &OPS[opidx];
         for (int i = 0; i < 256; i++)
         {
-            unsigned int value1 = generateRandomValue();
-            unsigned int value2 = op->numOperands == 1 ? 0 : generateRandomValue();
+            unsigned int value1 = generate_random_value();
+            unsigned int value2 = op->num_operands == 1 ? 0 : generate_random_value();
             unsigned int result = op->func(value1, value2);
 
-            if (op->func != ftoiFunc)
+            if (op->func != ftoi_func)
             {
                 // Make NaN consistent
                 if (((result >> 23) & 0xff) == 0xff && (result & 0x7fffff) != 0)

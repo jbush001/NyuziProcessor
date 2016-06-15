@@ -18,9 +18,16 @@ TOPDIR=../../..
 
 include $(TOPDIR)/build/target.mk
 
-chargen.hex: chargen.c
-	$(CC) $(CFLAGS) chargen.c -o chargen.elf ../../../software/libs/libc/crt0.o
-	$(ELF2HEX) -o chargen.hex chargen.elf
+LIBS=-lc -los
+
+SRCS=chargen.c
+
+OBJS := $(CRT0) $(SRCS_TO_OBJS)
+DEPS := $(SRCS_TO_DEPS)
+
+chargen.hex: $(OBJS) $(DEPS)
+	$(LD) $(OBJS) -o $(OBJ_DIR)/chargen.elf $(LIBS) $(LDFLAGS)
+	$(ELF2HEX) -o chargen.hex $(OBJ_DIR)/chargen.elf
 
 fpgarun: chargen.hex
 	$(SERIAL_BOOT) $(SERIAL_PORT) chargen.hex
@@ -33,3 +40,4 @@ clean: FORCE
 
 FORCE:
 
+-include $(DEPS)

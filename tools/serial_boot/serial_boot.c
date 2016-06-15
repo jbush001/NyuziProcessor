@@ -20,9 +20,6 @@
 // It expects the memory file to be in the format used by the Verilog
 // system task $readmemh: each line is a 32 bit hexadecimal value.
 // This may optionally also take a binary ramdisk image to load at 0x4000000.
-// This checks for transfer errors, but does not attempt to recover or
-// retransmit. If it fails, the user can reset the board and try again.
-// Errors are very rare in my experience.
 //
 
 #include <errno.h>
@@ -208,50 +205,45 @@ int fix_connection(int serial_fd)
 {
     unsigned char ch = 0;
     int chars_read = 0;
+    int ping_seen = 0;
+    int retry = 0;
+
     // Clear out any waiting BAD_COMMAND bytes
     // May grab an extra byte
     while (read_serial_byte(serial_fd, &ch, 250) && ch == BAD_COMMAND)
         chars_read++;
 
     printf("%d BAD_COMMAND bytes seen, last was %02x\n", chars_read, ch);
+
     // Send pings until the processor responds
     // This can help if the processor is expecting data from us
-    int ping_seen = 0;
-    int retry = 0;
     while (1)
     {
-        if(read_serial_byte(serial_fd, &ch, 25))
+        if (read_serial_byte(serial_fd, &ch, 25))
         {
             if (ping_seen)
-                // Once you've seen one ping, ignore the rest
-                continue;
+                continue; // Once you've seen one ping, ignore the rest
             else if (ch == PING_ACK)
             {
                 printf("Ping return seen.\n");
                 ping_seen = 1;
             }
             else
-            {
                 printf("byte read: %02x\n", ch);
-            }
         }
         else
         {
             // If there's no more data, and we've seen one ping,
             // we're done here.
             if (ping_seen)
-            {
                 return 1;
-            }
         }
 
-        if(!ping_seen)
+        if (!ping_seen)
         {
             retry++;
-            if(!write_serial_byte(serial_fd, PING_REQ))
-            {
+            if (!write_serial_byte(serial_fd, PING_REQ))
                 return 0;
-            }
         }
 
         if (retry > 40)

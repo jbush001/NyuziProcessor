@@ -18,17 +18,23 @@ TOPDIR=../../..
 
 include $(TOPDIR)/build/target.mk
 
-CFLAGS=-O3 -I../../../software/libs/libc/include -I../../../software/libs/libos/
+LIBS=-lc -los
 
-sdmmc_dump.hex: sdmmc_dump.c
-	$(CC) $(CFLAGS) sdmmc_dump.c -o sdmmc_dump.elf ../../../software/libs/libc/crt0.o ../../../software/libs/libc/libc.a ../../../software/libs/libos/libos.a  ../../../software/libs/compiler-rt/compiler-rt.a
-	$(ELF2HEX) -o sdmmc_dump.hex sdmmc_dump.elf
+SRCS=sdmmc_dump.c
+
+OBJS := $(CRT0) $(SRCS_TO_OBJS)
+DEPS := $(SRCS_TO_DEPS)
+
+sdmmc_dump.hex: $(OBJS) $(DEPS)
+	$(LD) $(OBJS) -o $(OBJ_DIR)/sdmmc_dump.elf $(LIBS) $(LDFLAGS)
+	$(ELF2HEX) -o sdmmc_dump.hex $(OBJ_DIR)/sdmmc_dump.elf
 
 fpgarun: sdmmc_dump.hex
 	$(SERIAL_BOOT) $(SERIAL_PORT) sdmmc_dump.hex
 
 clean: FORCE
-	rm -f sdmmc_dump.elf sdmmc_dump.hex
+	rm -f $(OBJ_DIR)/*
 
 FORCE:
 
+-include $(DEPS)

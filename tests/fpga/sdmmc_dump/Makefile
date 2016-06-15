@@ -22,7 +22,7 @@ LIBS=-lc -los
 
 SRCS=sdmmc_dump.c
 
-OBJS := $(TOPDIR)/software/libs/libc/crt0.o $(SRCS_TO_OBJS)
+OBJS := $(CRT0) $(SRCS_TO_OBJS)
 DEPS := $(SRCS_TO_DEPS)
 
 sdmmc_dump.hex: $(OBJS) $(DEPS)

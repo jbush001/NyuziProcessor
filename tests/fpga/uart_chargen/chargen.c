@@ -19,43 +19,43 @@
 // "chargen" (RFC 864) pattern out the serial port.
 //
 
-const char *kPattern = "!#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz";
-const int kPatternLength = 89;
-const int kLineLength = 72;
+const char *PATTERN = "!#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz";
+const int PATTERN_LENGTH = 89;
+const int LINE_LENGTH = 72;
 
 volatile unsigned int * const UART_BASE = (volatile unsigned int*) 0xFFFF0040;
 
-enum UartRegs
+enum uart_regs
 {
-    kStatus = 0,
-    kRx = 1,
-    kTx = 2
+    UART_STATUS = 0,
+    UART_RX = 1,
+    UART_TX = 2
 };
 
-void writeChar(char ch)
+void write_char(char ch)
 {
-    while ((UART_BASE[kStatus] & 1) == 0)	// Wait for ready
+    while ((UART_BASE[UART_STATUS] & 1) == 0)	// Wait for ready
         ;
 
-    UART_BASE[kTx] = ch;
+    UART_BASE[UART_TX] = ch;
 }
 
 int main()
 {
     for (;;)
     {
-        for (int startIndex = 0; startIndex < kPatternLength; startIndex++)
+        for (int start_index = 0; start_index < PATTERN_LENGTH; start_index++)
         {
-            int index = startIndex;
-            for (int lineOffset = 0; lineOffset < kLineLength; lineOffset++)
+            int index = start_index;
+            for (int line_offset = 0; line_offset < LINE_LENGTH; line_offset++)
             {
-                writeChar(kPattern[index]);
-                if (++index == kPatternLength)
+                write_char(PATTERN[index]);
+                if (++index == PATTERN_LENGTH)
                     index = 0;
             }
 
-            writeChar('\r');
-            writeChar('\n');
+            write_char('\r');
+            write_char('\n');
         }
     }
 }

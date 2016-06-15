@@ -38,10 +38,10 @@ int main()
         return 0;
     }
 
-    for (int blockNum = 0; blockNum < TRANSFER_LENGTH; blockNum++)
+    for (int block_num = 0; block_num < TRANSFER_LENGTH; block_num++)
     {
         unsigned char buf[512];
-        result = read_sdmmc_device(blockNum, buf);
+        result = read_sdmmc_device(block_num, buf);
         if (result < 0)
         {
             printf("error %d reading from device\n", result);
@@ -50,7 +50,7 @@ int main()
 
         for (int address = 0; address < BLOCK_SIZE; address += 16)
         {
-            printf("%08x ", address + blockNum * BLOCK_SIZE);
+            printf("%08x ", address + block_num * BLOCK_SIZE);
             for (int offset = 0; offset < 16; offset++)
                 printf("%02x ", buf[address + offset]);
 
