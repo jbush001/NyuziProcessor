@@ -374,7 +374,7 @@ void remote_gdb_main_loop(struct core *core, bool enable_fb_window)
                                     reg_id - 32, reg_id, reg_id);
                         }
                         else
-                            send_formatted_response("");
+                            send_response_packet("");
 
                     }
                     else if (strcmp(request + 1, "C") == 0)
