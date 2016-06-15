@@ -33,10 +33,11 @@
 #define TRAP_SIGNAL 5 // SIGTRAP
 
 extern void check_interrupt_pipe(struct core*);
-static void send_formatted_response(const char *format, ...)  __attribute__ ((format (printf, 1, 2)));
+static void __attribute__ ((format (printf, 1, 2))) send_formatted_response(const char *format, ...);
 
 static int client_socket = -1;
 static int *last_signals;
+static const char *GENERIC_REGS[] = { "fp", "sp", "ra", "pc" };
 
 static int read_byte(void)
 {
@@ -86,8 +87,6 @@ static int read_packet(char *request, int max_length)
     request[packet_len] = '\0';
     return packet_len;
 }
-
-static const char *GENERIC_REGS[] = { "fp", "sp", "ra", "pc" };
 
 static void send_response_packet(const char *request)
 {
@@ -355,7 +354,7 @@ void remote_gdb_main_loop(struct core *core, bool enable_fb_window)
                     else if (strcmp(request + 1, "sThreadInfo") == 0)
                         send_response_packet("l");
                     else if (memcmp(request + 1, "ThreadStopInfo", 14) == 0)
-                        sprintf(response, "S%02x", last_signals[current_thread]);
+                        send_formatted_response("S%02x", last_signals[current_thread]);
                     else if (memcmp(request + 1, "RegisterInfo", 12) == 0)
                     {
                         uint32_t reg_id = (uint32_t) strtoul(request + 13, NULL, 16);
@@ -366,16 +365,17 @@ void remote_gdb_main_loop(struct core *core, bool enable_fb_window)
 
                             if (reg_id >= 28)
                                 sprintf(response + strlen(response), "generic:%s;", GENERIC_REGS[reg_id - 28]);
+
+                            send_response_packet(response);
                         }
                         else if (reg_id < 64)
                         {
-                            sprintf(response, "name:v%d;bitsize:512;encoding:uint;format:vector-uint32;set:General Purpose Vector Registers;gcc:%d;dwarf:%d;",
+                            send_formatted_response("name:v%d;bitsize:512;encoding:uint;format:vector-uint32;set:General Purpose Vector Registers;gcc:%d;dwarf:%d;",
                                     reg_id - 32, reg_id, reg_id);
                         }
                         else
-                            strcpy(response, "");
+                            send_formatted_response("");
 
-                        send_response_packet(response);
                     }
                     else if (strcmp(request + 1, "C") == 0)
                         send_formatted_response("QC%02x", current_thread + 1);
@@ -455,8 +455,7 @@ void remote_gdb_main_loop(struct core *core, bool enable_fb_window)
 
                 // Get last signal
                 case '?':
-                    sprintf(response, "S%02x", last_signals[current_thread]);
-                    send_response_packet(response);
+                    send_formatted_response("S%02x", last_signals[current_thread]);
                     break;
 
                 // Unknown, return error
