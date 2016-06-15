@@ -145,9 +145,6 @@ static void invalidate_sync_address(struct core*, uint32_t address);
 static void try_to_dispatch_interrupt(struct thread*);
 static void raise_trap(struct thread*, uint32_t address, enum trap_type type, bool is_store,
                        bool is_data_cache);
-static void raise_access_fault(struct thread*, uint32_t address, enum trap_type, bool is_store,
-                               bool is_data_cache);
-static void raise_illegal_instruction_fault(struct thread*, uint32_t instruction);
 static bool translate_address(struct thread*, uint32_t virtual_address, uint32_t
                               *physical_address, bool is_store, bool is_data_cache);
 static uint32_t scalar_arithmetic_op(enum arithmetic_op, uint32_t value1, uint32_t value2);
@@ -637,13 +634,24 @@ static void raise_trap(struct thread *thread, uint32_t trap_address, enum trap_t
                trap_address);
     }
 
+    if ((thread->core->stop_on_fault || thread->core->trap_handler_pc == 0)
+            && type != TT_TLB_MISS
+            && type != TT_INTERRUPT
+            && type != TT_SYSCALL)
+    {
+        printf("Thread %d caught fault %d @%08x\n", thread->id, type, thread->pc - 4);
+        print_thread_registers(thread);
+        thread->core->crashed = true;
+        return;
+    }
+
     // For nested interrupts, push the old saved state into
     // the second save slot.
     thread->saved_trap_state[1] = thread->saved_trap_state[0];
 
     // Save current trap information
     thread->saved_trap_state[0].trap_cause = type | (is_store ? 0x10ul : 0)
-            | (is_data_cache ? 0x20ul : 0);
+        | (is_data_cache ? 0x20ul : 0);
     thread->saved_trap_state[0].pc = thread->pc - 4;
     thread->saved_trap_state[0].enable_interrupt = thread->enable_interrupt;
     thread->saved_trap_state[0].enable_mmu = thread->enable_mmu;
@@ -663,39 +671,6 @@ static void raise_trap(struct thread *thread, uint32_t trap_address, enum trap_t
 
     thread->subcycle = 0;
     thread->enable_supervisor = true;
-}
-
-static void raise_access_fault(struct thread *thread, uint32_t address, enum trap_type type,
-                               bool is_store, bool is_data_cache)
-{
-    if (thread->core->stop_on_fault || thread->core->trap_handler_pc == 0)
-    {
-        printf("Invalid %s access thread %d PC %08x address %08x\n",
-               is_store ? "store" : "load",
-               thread->id, thread->pc - 4, address);
-        print_thread_registers(thread);
-        thread->core->crashed = true;
-    }
-    else
-    {
-        if (!is_data_cache)
-            thread->pc += 4; // PC not incremented where this is called
-
-        raise_trap(thread, address, type, is_store, is_data_cache);
-    }
-}
-
-static void raise_illegal_instruction_fault(struct thread *thread, uint32_t instruction)
-{
-    if (thread->core->stop_on_fault || thread->core->trap_handler_pc == 0)
-    {
-        printf("Illegal instruction %08x thread %d PC %08x\n", instruction, thread->id,
-               thread->pc - 4);
-        print_thread_registers(thread);
-        thread->core->crashed = true;
-    }
-    else
-        raise_trap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false);
 }
 
 // Translate addresses using the translation lookaside buffer. Raise faults
@@ -736,10 +711,6 @@ static bool translate_address(struct thread *thread, uint32_t virtual_address,
         {
             if ((set_entries[way].phys_addr_and_flags & TLB_PRESENT) == 0)
             {
-                // In instruction fetch, hadn't been incremented yet
-                if (!is_data_access)
-                    thread->pc += 4;
-
                 raise_trap(thread, virtual_address, TT_PAGE_FAULT, is_store,
                            is_data_access);
                 return false;
@@ -748,10 +719,6 @@ static bool translate_address(struct thread *thread, uint32_t virtual_address,
             if ((set_entries[way].phys_addr_and_flags & TLB_SUPERVISOR) != 0
                     && !thread->enable_supervisor)
             {
-                // In instruction fetch, hadn't been incremented yet
-                if (!is_data_access)
-                    thread->pc += 4;
-
                 raise_trap(thread, virtual_address, TT_SUPERVISOR_ACCESS, is_store,
                            is_data_access);
                 return false;
@@ -760,15 +727,14 @@ static bool translate_address(struct thread *thread, uint32_t virtual_address,
             if ((set_entries[way].phys_addr_and_flags & TLB_EXECUTABLE) == 0
                     && !is_data_access)
             {
-                thread->pc += 4;
                 raise_trap(thread, virtual_address, TT_NOT_EXECUTABLE, false, false);
                 return false;
             }
 
             if (is_store && (set_entries[way].phys_addr_and_flags & TLB_WRITE_ENABLE) == 0)
             {
-                raise_access_fault(thread, virtual_address, TT_ILLEGAL_STORE, true,
-                                   is_data_access);
+                raise_trap(thread, virtual_address, TT_ILLEGAL_STORE, true,
+                           is_data_access);
                 return false;
             }
 
@@ -791,10 +757,6 @@ static bool translate_address(struct thread *thread, uint32_t virtual_address,
     }
 
     // No translation found
-
-    if (!is_data_access)
-        thread->pc += 4;	// Instruction fetch hasn't updated yet
-
     raise_trap(thread, virtual_address, TT_TLB_MISS, is_store, is_data_access);
     return false;
 }
@@ -976,7 +938,7 @@ static void execute_register_arith_inst(struct thread *thread, uint32_t instruct
                 break;
 
             default:
-                raise_illegal_instruction_fault(thread, instruction);
+                raise_trap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false);
                 return;
         }
 
@@ -1008,7 +970,7 @@ static void execute_register_arith_inst(struct thread *thread, uint32_t instruct
                 break;
 
             default:
-                raise_illegal_instruction_fault(thread, instruction);
+                raise_trap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false);
                 return;
         }
 
@@ -1094,7 +1056,7 @@ static void execute_immediate_arith_inst(struct thread *thread, uint32_t instruc
                 break;
 
             default:
-                raise_illegal_instruction_fault(thread, instruction);
+                raise_trap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false);
                 return;
         }
 
@@ -1126,7 +1088,7 @@ static void execute_immediate_arith_inst(struct thread *thread, uint32_t instruc
                 break;
 
             default:
-                raise_illegal_instruction_fault(thread, instruction);
+                raise_trap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false);
                 return;
         }
 
@@ -1183,7 +1145,7 @@ static void execute_scalar_load_store_inst(struct thread *thread, uint32_t instr
     // Check alignment
     if ((virtual_address % access_size) != 0)
     {
-        raise_access_fault(thread, virtual_address, TT_UNALIGNED_ACCESS, !is_load, true);
+        raise_trap(thread, virtual_address, TT_UNALIGNED_ACCESS, !is_load, true);
         return;
     }
 
@@ -1244,7 +1206,7 @@ static void execute_scalar_load_store_inst(struct thread *thread, uint32_t instr
                 return;
 
             default:
-                raise_illegal_instruction_fault(thread, instruction);
+                raise_trap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false);
                 return;
         }
 
@@ -1328,7 +1290,7 @@ static void execute_scalar_load_store_inst(struct thread *thread, uint32_t instr
                 return;
 
             default:
-                raise_illegal_instruction_fault(thread, instruction);
+                raise_trap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false);
                 return;
         }
 
@@ -1388,8 +1350,8 @@ static void execute_block_load_store_inst(struct thread *thread, uint32_t instru
     // Check alignment
     if ((virtual_address & (NUM_VECTOR_LANES * 4 - 1)) != 0)
     {
-        raise_access_fault(thread, virtual_address, TT_UNALIGNED_ACCESS, !is_load,
-                           true);
+        raise_trap(thread, virtual_address, TT_UNALIGNED_ACCESS, !is_load,
+                   true);
         return;
     }
 
@@ -1468,7 +1430,7 @@ static void execute_scatter_gather_inst(struct thread *thread, uint32_t instruct
     virtual_address = thread->vector_reg[ptrreg][lane] + offset;
     if ((mask & (1 << lane)) && (virtual_address & 3) != 0)
     {
-        raise_access_fault(thread, virtual_address, TT_UNALIGNED_ACCESS, !is_load, true);
+        raise_trap(thread, virtual_address, TT_UNALIGNED_ACCESS, !is_load, true);
         return;
     }
 
@@ -1692,7 +1654,7 @@ static void execute_memory_access_inst(struct thread *thread, uint32_t instructi
             break;
 
         default:
-            raise_illegal_instruction_fault(thread, instruction);
+            raise_trap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false);
     }
 }
 
@@ -1883,22 +1845,22 @@ static bool execute_instruction(struct thread *thread)
 {
     uint32_t instruction;
     uint32_t physical_pc;
+    unsigned int fetch_pc = thread->pc;
+    thread->pc += 4;
 
     // Check PC alignment
-    if ((thread->pc & 3) != 0)
+    if ((fetch_pc & 3) != 0)
     {
-        raise_access_fault(thread, thread->pc + 4, TT_UNALIGNED_ACCESS,
-                           false, false);
+        raise_trap(thread, thread->pc, TT_UNALIGNED_ACCESS, false, false);
         return true;   // XXX if stop on fault was enabled, should return false
     }
 
-    if (!translate_address(thread, thread->pc, &physical_pc, false, false))
+    if (!translate_address(thread, fetch_pc, &physical_pc, false, false))
         return true;	// On next execution will start in TLB miss handler
 
     // XXX if stop on fault was enabled, should return false
 
     instruction = *UINT32_PTR(thread->core->memory, physical_pc);
-    thread->pc += 4;
     thread->core->total_instructions++;
 
 restart:
@@ -1915,8 +1877,7 @@ restart:
                 // as an optimization to avoid doing a lookup on every
                 // instruction. In this case, the special instruction was
                 // already in the program, so raise a fault.
-                thread->pc += 4;
-                raise_illegal_instruction_fault(thread, instruction);
+                raise_trap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false);
                 return true;
             }
 
