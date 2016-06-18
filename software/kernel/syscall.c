@@ -16,6 +16,7 @@
 
 #include "thread.h"
 #include "libc.h"
+#include "vga.h"
 
 extern int user_copy(void *dest, const void *src, int count);
 
@@ -66,6 +67,9 @@ int handle_syscall(int arg0, int arg1, int arg2, int arg3, int arg4,
 
         case 4: // Exit
             thread_exit(arg1);  // This will not return
+
+        case 5: // Open VGA
+            return (int) init_vga(arg1);
 
         default:
             panic("Unknown syscall %d\n", arg0);

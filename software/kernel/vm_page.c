@@ -104,3 +104,59 @@ unsigned int page_to_pa(const struct vm_page *page)
 {
     return (page - pages) * PAGE_SIZE;
 }
+
+unsigned int allocate_contiguous_memory(unsigned int size)
+{
+    const unsigned int page_count = (size + PAGE_SIZE - 1) / PAGE_SIZE;
+    const unsigned int total_pages = memory_size / PAGE_SIZE;
+    unsigned int base_index = 0;
+    unsigned int page_offset;
+    int found_run;
+    int old_flags;
+
+    old_flags = disable_interrupts();
+    acquire_spinlock(&page_lock);
+
+
+    // Find free range
+    do
+    {
+        // Scan for first free page
+        while (pages[base_index].ref_count > 0)
+        {
+            if (base_index == total_pages - page_count)
+            {
+                release_spinlock(&page_lock);
+                restore_interrupts(old_flags);
+                return 0xffffffff;  // No free range
+            }
+
+            base_index++;
+        }
+
+        // Check if range is free
+        found_run = 1;
+        for (page_offset = 1; page_offset < page_count; page_offset++)
+        {
+            if (pages[base_index + page_offset].ref_count > 0)
+            {
+                base_index += page_offset + 1;
+                found_run = 0;
+                break;
+            }
+        }
+    }
+    while (!found_run);
+
+    // Mark range as allocated
+    for (page_offset = 0; page_offset < page_count; page_offset++)
+    {
+        pages[base_index + page_offset].ref_count = 1;
+        list_remove_node(&pages[base_index + page_offset]);
+    }
+
+    release_spinlock(&page_lock);
+    restore_interrupts(old_flags);
+
+    return base_index * PAGE_SIZE;
+}

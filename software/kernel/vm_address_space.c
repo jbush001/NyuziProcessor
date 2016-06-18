@@ -127,6 +127,54 @@ error1:
     return area;
 }
 
+// This area is wired by default and does not take page faults.
+struct vm_area *map_contiguous_memory(struct vm_address_space *space, unsigned int address,
+                                      unsigned int size, enum placement place,
+                                      const char *name, unsigned int area_flags,
+                                      unsigned int phys_addr)
+{
+    struct vm_area *area;
+    unsigned int page_flags;
+    unsigned int offset;
+
+    area_flags |= AREA_WIRED;
+
+    rwlock_lock_write(&space->mut);
+    area = create_vm_area(&space->area_map, address, size, place, name, area_flags);
+    if (area == 0)
+    {
+        kprintf("create area failed\n");
+        goto error1;
+    }
+
+    area->cache = 0;
+
+    page_flags = PAGE_PRESENT;
+
+    // If the page is clean, we will mark it not writable. This will fault
+    // on the next write, allowing us to update the dirty flag.
+    if ((area_flags & AREA_WRITABLE) != 0)
+        page_flags |= PAGE_WRITABLE;
+
+    if (area->flags & AREA_EXECUTABLE)
+        page_flags |= PAGE_EXECUTABLE;
+
+    if (space == &kernel_address_space)
+        page_flags |= PAGE_SUPERVISOR | PAGE_GLOBAL;
+
+    // Map the pages
+    for (offset = 0; offset < size; offset += PAGE_SIZE)
+    {
+        vm_map_page(space->translation_map, area->low_address + offset,
+                    (phys_addr + offset) | page_flags);
+    }
+
+error1:
+    rwlock_unlock_write(&space->mut);
+
+    return area;
+}
+
 void destroy_area(struct vm_address_space *space, struct vm_area *area)
 {
     struct vm_cache *cache;

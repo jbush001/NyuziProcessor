@@ -41,7 +41,8 @@ SRCS=main.c \
 	vm_address_space.c \
 	vm_cache.c \
 	syscall.c \
-	user_copy.S
+	user_copy.S \
+	vga.c
 
 OBJS=$(SRCS_TO_OBJS)
 DEPS=$(SRCS_TO_DEPS)

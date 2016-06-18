@@ -36,5 +36,10 @@ struct vm_area *create_area(struct vm_address_space*, unsigned int address,
                             unsigned int size, enum placement place,
                             const char *name, unsigned int flags,
                             struct vm_cache *cache, unsigned int cache_offset);
+struct vm_area *map_contiguous_memory(struct vm_address_space*, unsigned int address,
+                                      unsigned int size, enum placement place,
+                                      const char *name, unsigned int flags,
+                                      unsigned int phys_addr);
 void destroy_area(struct vm_address_space*, struct vm_area*);
 int handle_page_fault(unsigned int address, int is_write);
+
