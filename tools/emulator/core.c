@@ -652,7 +652,17 @@ static void raise_trap(struct thread *thread, uint32_t trap_address, enum trap_t
     // Save current trap information
     thread->saved_trap_state[0].trap_cause = type | (is_store ? 0x10ul : 0)
         | (is_data_cache ? 0x20ul : 0);
-    thread->saved_trap_state[0].pc = thread->pc - 4;
+
+    // In most cases, the PC points to the next instruction after the one
+    // that is currently executing. In that case, the trap PC should point
+    // to the one that was trapped on. The exception is for multi-cycle
+    // instructions, like load_gath, where the PC points to the currently
+    // executing instruction. In that case don't subtract four.
+    if (thread->subcycle == 0)
+        thread->saved_trap_state[0].pc = thread->pc - 4;
+    else
+        thread->saved_trap_state[0].pc = thread->pc;
+
     thread->saved_trap_state[0].enable_interrupt = thread->enable_interrupt;
     thread->saved_trap_state[0].enable_mmu = thread->enable_mmu;
     thread->saved_trap_state[0].enable_supervisor = thread->enable_supervisor;
