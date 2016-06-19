@@ -111,6 +111,7 @@ struct vm_area *create_area(struct vm_address_space *space, unsigned int address
 
     area->cache = cache;
     area->cache_offset = cache_offset;
+    area->cache_length = size;
     if (flags & AREA_WIRED)
     {
         for (fault_addr = area->low_address; fault_addr < area->high_address;
@@ -246,6 +247,7 @@ static int soft_fault(struct vm_address_space *space, const struct vm_area *area
     struct vm_cache *cache;
     int old_flags;
     int is_cow_page = 0;
+    int size_to_read;
 
     VM_DEBUG("soft fault va %08x %s\n", address, is_store ? "store" : "load");
 
@@ -266,7 +268,7 @@ static int soft_fault(struct vm_address_space *space, const struct vm_area *area
         if (source_page)
             break;
 
-        if (cache->file)
+        if (cache->file && cache_offset < area->cache_length)
         {
             VM_DEBUG("reading page from file\n");
 
@@ -280,8 +282,13 @@ static int soft_fault(struct vm_address_space *space, const struct vm_area *area
             unlock_vm_cache();
             restore_interrupts(old_flags);
 
+            if (area->cache_length - cache_offset < PAGE_SIZE)
+                size_to_read = area->cache_length - cache_offset;
+            else
+                size_to_read = PAGE_SIZE;
+
             got = read_file(cache->file, cache_offset,
-                            (void*) PA_TO_VA(page_to_pa(source_page)), PAGE_SIZE);
+                            (void*) PA_TO_VA(page_to_pa(source_page)), size_to_read);
             if (got < 0)
             {
                 kprintf("failed to read from file\n");
@@ -294,6 +301,13 @@ static int soft_fault(struct vm_address_space *space, const struct vm_area *area
 
                 unlock_vm_cache();
                 return 0;
+            }
+
+            // For BSS, clear out data past the end of the file
+            if (size_to_read < PAGE_SIZE)
+            {
+                memset((char*) PA_TO_VA(page_to_pa(source_page)) + size_to_read, 0,
+                       PAGE_SIZE - size_to_read);
             }
 
             disable_interrupts();

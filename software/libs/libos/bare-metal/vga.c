@@ -17,6 +17,8 @@
 #include "registers.h"
 #include "vga.h"
 
+#define FB_BASE 0x200000
+
 // Microinstruction format:
 //    op (1)  0: load counter 1: loop
 //    counter value or branch dest (13)
@@ -122,12 +124,12 @@ static void compile_microcode(int hfp, int hs, int hbp, int hpol, int hres,
     emit_op(OP_LOOP, VCOUNT, v_loop_top);
     REGISTERS[REG_VGA_MICROCODE] = ucode_sync_flags | F_NEW_FRAME;
 
-    REGISTERS[REG_VGA_BASE] = 0x200000;
+    REGISTERS[REG_VGA_BASE] = FB_BASE;
     REGISTERS[REG_VGA_LENGTH] = hres * vres;
     REGISTERS[REG_VGA_ENABLE] = 1;
 }
 
-int init_vga(enum vga_mode mode)
+void *init_vga(enum vga_mode mode)
 {
     switch (mode)
     {
@@ -140,8 +142,8 @@ int init_vga(enum vga_mode mode)
             break;
 
         default:
-            return -1;
+            return 0;
     }
 
-    return 0;
+    return (void*) FB_BASE;
 }

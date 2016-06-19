@@ -39,6 +39,7 @@ rcsid[] = "$Id: i_x.c,v 1.6 1997/02/03 22:45:10 b1 Exp $";
 static unsigned int gPalette[256];
 static clock_t lastFrameTime = 0;
 static int frameCount = 0;
+static unsigned int *fb_base;
 
 void I_ShutdownGraphics(void)
 {
@@ -159,7 +160,7 @@ void I_UpdateNoBlit (void)
 void I_FinishUpdate (void)
 {
     int x, y, offs;
-    veci16_t *dest = (veci16_t*) 0x200000;
+    veci16_t *dest = (veci16_t*) fb_base;
     const unsigned char *src = screens[0];
     veci16_t pixelVals;
     int mask;
@@ -226,7 +227,7 @@ void I_SetPalette (byte* palette)
 
 void I_InitGraphics(void)
 {
-    init_vga(VGA_MODE_640x400);
+    fb_base = init_vga(VGA_MODE_640x400);
 }
 
 

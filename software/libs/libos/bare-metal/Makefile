@@ -14,29 +14,32 @@
 # limitations under the License.
 #
 
-TOPDIR=../../../
+TOPDIR=../../../../
 
 include $(TOPDIR)/build/target.mk
 
+CFLAGS+=-I..
+
 SRCS=schedule.c \
-	sdmmc.c \
 	uart.c \
+	sdmmc.c \
 	fs.c \
 	keyboard.c \
 	misc.c \
 	sbrk.c \
 	vga.c \
-	performance_counters.c
+	performance_counters.c \
+	nyuzi.c
 
 OBJS := $(SRCS_TO_OBJS)
 DEPS := $(SRCS_TO_DEPS)
 
-all: $(OBJ_DIR) libos.a crt0.o
+all: $(OBJ_DIR) ../libos-bare.a ../crt0-bare.o
 
-libos.a: $(DEPS) $(OBJS)
+../libos-bare.a: $(DEPS) $(OBJS)
 	$(AR) r $@ $(OBJS)
 
-crt0.o: crt0.s
+../crt0-bare.o: crt0.s
 	$(CC) -o $@ -c $<
 
 clean:

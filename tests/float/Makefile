@@ -23,7 +23,7 @@ LIBS=-lc -los
 
 SRCS=test_float.c
 
-OBJS := $(CRT0) $(SRCS_TO_OBJS)
+OBJS := $(CRT0_BARE) $(SRCS_TO_OBJS)
 DEPS := $(SRCS_TO_DEPS)
 
 $(OBJ_DIR)/test_float.hex: $(OBJS) $(DEPS)

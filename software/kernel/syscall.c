@@ -71,6 +71,22 @@ int handle_syscall(int arg0, int arg1, int arg2, int arg3, int arg4,
         case 5: // Open VGA
             return (int) init_vga(arg1);
 
+        case 6: // create_area
+        {
+            struct vm_area *area = create_area(current_thread()->proc->space,
+                (unsigned int) arg1, // Address
+                (unsigned int) arg2, // size
+                arg3, // Placement
+                arg4, // Name (XXX not safe)
+                arg5, // flags,
+                0, 0);
+
+            if (area == 0)
+                return 0;
+
+            return area->low_address;
+        }
+
         default:
             panic("Unknown syscall %d\n", arg0);
     }

@@ -24,11 +24,11 @@ FB_HEIGHT=480
 MEMORY_SIZE=8000000
 
 CFLAGS+=-fno-rtti -ffast-math -std=c++11 -I$(TOPDIR)/software/libs/librender -DFB_WIDTH=$(FB_WIDTH) -DFB_HEIGHT=$(FB_HEIGHT)
-LIBS=-lrender -lc -los
+LIBS=-lrender -lc -los-bare
 
 SRCS=sceneview.cpp
 
-OBJS := $(CRT0) $(SRCS_TO_OBJS)
+OBJS := $(CRT0_BARE) $(SRCS_TO_OBJS)
 DEPS := $(SRCS_TO_DEPS)
 
 all: $(OBJ_DIR)/program.hex fsimage.bin

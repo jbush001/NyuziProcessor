@@ -41,6 +41,7 @@ struct vm_area
     unsigned int high_address;
     struct vm_cache *cache;
     unsigned int cache_offset;
+    unsigned int cache_length;
     unsigned int flags;
     char name[32];
 };

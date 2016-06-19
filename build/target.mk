@@ -35,7 +35,8 @@ EMULATOR=$(BINDIR)/emulator
 VERILATOR=$(BINDIR)/verilator_model
 SERIAL_BOOT=$(BINDIR)/serial_boot
 MKFS=$(BINDIR)/mkfs
-CRT0=$(TOPDIR)/software/libs/libos/crt0.o
+CRT0_BARE=$(TOPDIR)/software/libs/libos/crt0-bare.o
+CRT0_KERN=$(TOPDIR)/software/libs/libos/crt0-kern.o
 
 CFLAGS=-O3 -I$(TOPDIR)/software/libs/libc/include -I$(TOPDIR)/software/libs/libos -Wall -W
 LDFLAGS=-L$(TOPDIR)/software/libs/libc/ -L$(TOPDIR)/software/libs/libos -L$(TOPDIR)/software/libs/librender $(TOPDIR)/software/libs/compiler-rt/compiler-rt.a

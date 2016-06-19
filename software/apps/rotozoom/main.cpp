@@ -16,6 +16,7 @@
 
 #include <nyuzi.h>
 #include <schedule.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <time.h>
 #include <vga.h>
@@ -23,15 +24,12 @@
 #include "image.h"
 #include "Matrix2x2.h"
 
-typedef int veci16 __attribute__((ext_vector_type(16)));
-typedef float vecf16 __attribute__((ext_vector_type(16)));
-
 const int kNumThreads = 4;
 const int kVectorLanes = 16;
-veci16* const kFrameBufferAddress = (veci16*) 0x200000;
-const vecf16 kXOffsets = { 0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f,
-                           8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f
-                         };
+veci16_t* frameBuffer = (veci16_t*) 0x200000;
+const vecf16_t kXOffsets = { 0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f,
+                             8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f
+                           };
 const int kBytesPerPixel = 4;
 const int kScreenWidth = 640;
 const int kScreenHeight = 480;
@@ -47,7 +45,7 @@ int main()
     int myThreadId = get_current_thread_id();
     if (myThreadId == 0)
     {
-        init_vga(VGA_MODE_640x480);
+        frameBuffer = (veci16_t*) init_vga(VGA_MODE_640x480);
         displayMatrix = Matrix2x2();
     }
 
@@ -66,25 +64,25 @@ int main()
     while (true)
     {
         unsigned int imageBase = (unsigned int) kImage;
-        veci16 *outputPtr = kFrameBufferAddress + myThreadId;
+        veci16_t *outputPtr = frameBuffer + myThreadId;
         for (int y = 0; y < kScreenHeight; y++)
         {
             for (int x = myThreadId * kVectorLanes; x < kScreenWidth; x += kNumThreads * kVectorLanes)
             {
-                vecf16 xv = kXOffsets + __builtin_nyuzi_makevectorf((float) x)
-                            - __builtin_nyuzi_makevectorf(kScreenWidth / 2);
-                vecf16 yv = __builtin_nyuzi_makevectorf((float) y)
-                            - __builtin_nyuzi_makevectorf(kScreenHeight / 2);;
-                vecf16 u = xv * __builtin_nyuzi_makevectorf(displayMatrix.a)
-                           + yv * __builtin_nyuzi_makevectorf(displayMatrix.b);
-                vecf16 v = xv * __builtin_nyuzi_makevectorf(displayMatrix.c)
-                           + yv * __builtin_nyuzi_makevectorf(displayMatrix.d);
+                vecf16_t xv = kXOffsets + __builtin_nyuzi_makevectorf((float) x)
+                              - __builtin_nyuzi_makevectorf(kScreenWidth / 2);
+                vecf16_t yv = __builtin_nyuzi_makevectorf((float) y)
+                              - __builtin_nyuzi_makevectorf(kScreenHeight / 2);;
+                vecf16_t u = xv * __builtin_nyuzi_makevectorf(displayMatrix.a)
+                             + yv * __builtin_nyuzi_makevectorf(displayMatrix.b);
+                vecf16_t v = xv * __builtin_nyuzi_makevectorf(displayMatrix.c)
+                             + yv * __builtin_nyuzi_makevectorf(displayMatrix.d);
 
-                veci16 tx = (__builtin_convertvector(u, veci16) & __builtin_nyuzi_makevectori(kImageWidth - 1));
-                veci16 ty = (__builtin_convertvector(v, veci16) & __builtin_nyuzi_makevectori(kImageHeight - 1));
-                veci16 pixelPtrs = (ty * __builtin_nyuzi_makevectori(kImageWidth * kBytesPerPixel))
-                                   + (tx * __builtin_nyuzi_makevectori(kBytesPerPixel))
-                                   + __builtin_nyuzi_makevectori(imageBase);
+                veci16_t tx = (__builtin_convertvector(u, veci16_t) & __builtin_nyuzi_makevectori(kImageWidth - 1));
+                veci16_t ty = (__builtin_convertvector(v, veci16_t) & __builtin_nyuzi_makevectori(kImageHeight - 1));
+                veci16_t pixelPtrs = (ty * __builtin_nyuzi_makevectori(kImageWidth * kBytesPerPixel))
+                                     + (tx * __builtin_nyuzi_makevectori(kBytesPerPixel))
+                                     + __builtin_nyuzi_makevectori(imageBase);
                 *outputPtr = __builtin_nyuzi_gather_loadi(pixelPtrs);
                 __asm("dflush %0" : : "r" (outputPtr));
                 outputPtr += kNumThreads;

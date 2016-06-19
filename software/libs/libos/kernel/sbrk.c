@@ -15,23 +15,27 @@
 //
 
 #include <stdio.h>
-#include <bare-metal/sdmmc.h>
+#include <stdlib.h>
+#include "syscall.h"
 
-#define TRANSFER_LENGTH 16
+#define HEAP_SIZE 0x300000
 
-int main()
+static volatile unsigned int lock;
+unsigned int next_alloc;
+
+void *sbrk(ptrdiff_t size)
 {
-    char *buf = (char*) 0x200000;
+    unsigned int chunk;
+    while (!__sync_lock_test_and_set(&lock, 1))
+        ;
 
-    if (init_sdmmc_device() < 0)
-    {
-        printf("error initializing card\n");
-        return -1;
-    }
+    if (next_alloc == 0)
+        next_alloc = __syscall(6, 0, HEAP_SIZE, 2, (int) "heap", 2);
 
-    // Read blocks in reverse order to verify address is set correctly.
-    for (int i = TRANSFER_LENGTH - 1; i >= 0; i--)
-        read_sdmmc_device(i, buf + i * BLOCK_SIZE);
+    chunk = next_alloc;
+    next_alloc += size;
+    __sync_lock_release(&lock);
 
-    return 0;
+    return (void*) chunk;
 }
+

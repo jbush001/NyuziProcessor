@@ -138,10 +138,12 @@ Texture *createCheckerboardTexture()
 // All threads start execution here.
 int main()
 {
-    if (get_current_thread_id() == 0)
-        init_vga(VGA_MODE_640x480);
-    else
+    void *frameBuffer;
+    if (get_current_thread_id() != 0)
         worker_thread();
+
+    // Set up render context
+    frameBuffer = init_vga(VGA_MODE_640x480);
 
     // Set up resource data
     char *resourceData = readResourceFile();
@@ -188,7 +190,7 @@ int main()
     // Set up render state
     RenderContext *context = new RenderContext(0x1000000);
     RenderTarget *renderTarget = new RenderTarget();
-    Surface *colorBuffer = new Surface(FB_WIDTH, FB_HEIGHT, (void*) 0x200000);
+    Surface *colorBuffer = new Surface(FB_WIDTH, FB_HEIGHT, frameBuffer);
     Surface *depthBuffer = new Surface(FB_WIDTH, FB_HEIGHT);
     renderTarget->setColorBuffer(colorBuffer);
     renderTarget->setDepthBuffer(depthBuffer);

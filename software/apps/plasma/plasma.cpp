@@ -27,7 +27,7 @@
 // Sum-of-sines demo style plasma effect
 //
 
-veci16_t* const kFrameBufferAddress = (veci16_t*) 0x200000;
+veci16_t* fb_address;
 const vecf16_t kXOffsets = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 const int kScreenWidth = 640;
 const int kScreenHeight = 480;
@@ -151,16 +151,17 @@ vecf16_t slow_sqrtfv(vecf16_t value)
 int gFrameNum = 0;
 Barrier<4> gFrameBarrier;
 uint32_t gPalette[NUM_PALETTE_ENTRIES];
+volatile int gThreadId = 0;
 
 // All threads start here
 int main()
 {
-    int myThreadId = get_current_thread_id();
+    int myThreadId = __sync_fetch_and_add(&gThreadId, 1);
     clock_t lastTime = 0;
 
     if (myThreadId == 0)
     {
-        init_vga(VGA_MODE_640x480);
+        fb_address = (veci16_t*) init_vga(VGA_MODE_640x480);
         for (int i = 0; i < NUM_PALETTE_ENTRIES; i++)
         {
 #ifdef STRIPES
@@ -180,7 +181,7 @@ int main()
     {
         for (int y = myThreadId; y < kScreenHeight; y += kNumThreads)
         {
-            veci16_t *ptr = kFrameBufferAddress + y * kScreenWidth / 16;
+            veci16_t *ptr = fb_address + y * kScreenWidth / 16;
             for (int x = 0; x < kScreenWidth; x += 16)
             {
                 vecf16_t xv = (splatf((float) x) + kXOffsets) / splatf(kScreenWidth / 7);

@@ -24,6 +24,7 @@
 #include <nyuzi.h>
 #include <schedule.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <vga.h>
 
 #define makevectorf __builtin_nyuzi_makevectorf
@@ -36,22 +37,23 @@
 const int kMaxIterations = 255;
 const int kScreenWidth = 640;
 const int kScreenHeight = 480;
-const char *kFbBase = (const char*) 0x200000;
 const float kXStep = 2.5 / kScreenWidth;
 const float kYStep = 2.0 / kScreenHeight;
 const int kNumThreads = 4;
 const int kVectorLanes = 16;
 volatile int stopCount = 0;
+char *fbBase;
+volatile int gThreadId = 0;
 
 // All threads start execution here.
 int main()
 {
-    int myThreadId = get_current_thread_id();
+    int myThreadId = __sync_fetch_and_add(&gThreadId, 1);
     if (myThreadId == 0)
-        init_vga(VGA_MODE_640x480);
-
-    // Start other threads
-    start_all_threads();
+    {
+        fbBase = init_vga(VGA_MODE_640x480);
+        start_all_threads();
+    }
 
     vecf16_t kInitialX0 = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
     kInitialX0 = kInitialX0 * makevectorf(kXStep) - makevectorf(2.0);
@@ -59,7 +61,7 @@ int main()
     // Stagger row access by thread ID
     for (int row = myThreadId; row < kScreenHeight; row += kNumThreads)
     {
-        veci16_t *ptr = (veci16_t*)(kFbBase + row * kScreenWidth * 4);
+        veci16_t *ptr = (veci16_t*)(fbBase + row * kScreenWidth * 4);
         vecf16_t x0 = kInitialX0;
         float y0 = kYStep * row - 1.0;
         for (int col = 0; col < kScreenWidth; col += kVectorLanes)

@@ -27,7 +27,7 @@
 #define CR_PAGE_DIR_BASE 10
 #define CR_SCRATCHPAD0 11
 #define CR_SCRATCHPAD1 12
-#define CR_SUBCYCLE 13
+#define CR_SAVED_SUBCYCLE 13
 
 // Flag register bits
 #define FLAG_INTERRUPT_EN (1 << 0)

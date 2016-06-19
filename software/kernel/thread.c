@@ -179,8 +179,6 @@ static void destroy_thread(struct thread *th)
         destroy_address_space(proc->space);
         slab_free(&process_slab, proc);
     }
-    else
-        dump_process_list();
 }
 
 int grim_reaper(void *ignore)

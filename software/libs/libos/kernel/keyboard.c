@@ -1,5 +1,5 @@
 //
-// Copyright 2011-2015 Jeff Bush
+// Copyright 2015 Jeff Bush
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,24 +14,10 @@
 // limitations under the License.
 //
 
-#include <stdio.h>
-#include <bare-metal/sdmmc.h>
+#include "keyboard.h"
 
-#define TRANSFER_LENGTH 16
-
-int main()
+unsigned int poll_keyboard(void)
 {
-    char *buf = (char*) 0x200000;
-
-    if (init_sdmmc_device() < 0)
-    {
-        printf("error initializing card\n");
-        return -1;
-    }
-
-    // Read blocks in reverse order to verify address is set correctly.
-    for (int i = TRANSFER_LENGTH - 1; i >= 0; i--)
-        read_sdmmc_device(i, buf + i * BLOCK_SIZE);
-
-    return 0;
+    // XXX not implemented
+    return 0xffffffff;
 }

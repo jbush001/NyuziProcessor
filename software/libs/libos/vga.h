@@ -26,7 +26,7 @@ enum vga_mode
 extern "C" {
 #endif
 
-int init_vga(enum vga_mode);
+void *init_vga(enum vga_mode);
 
 #ifdef __cplusplus
 }

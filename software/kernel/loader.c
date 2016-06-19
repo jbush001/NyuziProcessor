@@ -34,6 +34,7 @@ int load_program(struct process *proc,
     struct vm_cache *image_cache;
     struct vm_cache *cow_cache = 0;
     struct vm_cache *area_cache;
+    struct vm_area *area;
 
     struct file_handle *file = open_file(filename);
     if (file == 0)
@@ -118,14 +119,17 @@ int load_program(struct process *proc,
             area_flags |= AREA_EXECUTABLE;
 
         // Map region
-        if (create_area(proc->space, segment->p_vaddr, segment->p_memsz,
-                        PLACE_EXACT, "program segment", area_flags, area_cache,
-                        segment->p_offset) == 0)
+        area = create_area(proc->space, segment->p_vaddr, segment->p_memsz,
+                           PLACE_EXACT, "program segment", area_flags, area_cache,
+                           segment->p_offset);
+        if (area == 0)
         {
             kprintf("create area failed, bailing\n");
             // XXX cleanup
             return -1;
         }
+
+        area->cache_length = segment->p_filesz;
     }
 
     *out_entry = image_header.e_entry;

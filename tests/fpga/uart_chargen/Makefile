@@ -22,7 +22,7 @@ LIBS=-lc -los
 
 SRCS=chargen.c
 
-OBJS := $(CRT0) $(SRCS_TO_OBJS)
+OBJS := $(CRT0_BARE) $(SRCS_TO_OBJS)
 DEPS := $(SRCS_TO_DEPS)
 
 chargen.hex: $(OBJS) $(DEPS)

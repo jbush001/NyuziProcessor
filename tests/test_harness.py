@@ -45,7 +45,7 @@ class TestException(Exception):
 def build_program(source_files):
     """Compile/assemble one or more files.
 
-    If there are .c files in the list, this will link in crt0.o, libc,
+    If there are .c files in the list, this will link in crt0, libc,
     and libos. It converts the binary to a hex file that can be loaded
     into memory.
 
@@ -80,9 +80,9 @@ def build_program(source_files):
     if needs_stdlib:
         compiler_args += ['-I' + LIB_DIR + 'libc/include',
                          '-I' + LIB_DIR + 'libos',
-                         LIB_DIR + 'libos/crt0.o',
+                         LIB_DIR + 'libos/crt0-bare.o',
                          LIB_DIR + 'libc/libc.a',
-                         LIB_DIR + 'libos/libos.a',
+                         LIB_DIR + 'libos/libos-bare.a',
                          LIB_DIR + 'compiler-rt/compiler-rt.a']
 
     try:

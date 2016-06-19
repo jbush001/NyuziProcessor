@@ -199,6 +199,7 @@ struct vm_area *create_vm_area(struct vm_area_map *map, unsigned int address,
         area->flags = flags;
         area->cache = 0;
         area->cache_offset = 0;
+        area->cache_length = 0;
     }
 
     return area;

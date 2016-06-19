@@ -52,16 +52,18 @@ static int kTriangleIndices[] = { 0, 1, 2, 3, 4, 5 };
 // All threads start execution here.
 int main()
 {
-    if (get_current_thread_id() == 0)
-        init_vga(VGA_MODE_640x480);
-    else
+    void *frameBuffer;
+    if (get_current_thread_id() != 0)
         worker_thread();
+
+    // Set up render context
+    frameBuffer = init_vga(VGA_MODE_640x480);
 
     start_all_threads();
 
     RenderContext *context = new RenderContext();
     RenderTarget *renderTarget = new RenderTarget();
-    Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
+    Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, frameBuffer);
     Surface *depthBuffer = new Surface(kFbWidth, kFbHeight);
     renderTarget->setColorBuffer(colorBuffer);
     renderTarget->setDepthBuffer(depthBuffer);
