@@ -22,15 +22,24 @@
 
 static volatile unsigned int lock;
 unsigned int next_alloc;
+unsigned int heap_base;
 
 void *sbrk(ptrdiff_t size)
 {
     unsigned int chunk;
-    while (!__sync_lock_test_and_set(&lock, 1))
+
+    while (__sync_lock_test_and_set(&lock, 1))
         ;
 
     if (next_alloc == 0)
-        next_alloc = __syscall(6, 0, HEAP_SIZE, 2, (int) "heap", 2);
+        heap_base = next_alloc = __syscall(6, 0, HEAP_SIZE, 2, (int) "heap", 2);
+
+    if (next_alloc + size - heap_base > HEAP_SIZE)
+    {
+        // XXX should grow heap region
+        printf("out of heap space\n");
+        exit(1);
+    }
 
     chunk = next_alloc;
     next_alloc += size;
