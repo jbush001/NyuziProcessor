@@ -57,14 +57,15 @@ struct vm_page *vm_allocate_page(void)
     old_flags = disable_interrupts();
     acquire_spinlock(&page_lock);
     page = list_remove_head(&free_page_list, struct vm_page);
+    if (page == 0)
+        panic("Out of memory!");
+
     page->busy = 0;
     page->cache = 0;
     page->dirty = 0;
     page->ref_count = 1;
     release_spinlock(&page_lock);
     restore_interrupts(old_flags);
-    if (page == 0)
-        panic("Out of memory!");
 
     pa = (page - pages) * PAGE_SIZE;
 
