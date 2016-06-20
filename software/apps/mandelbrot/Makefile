@@ -50,7 +50,7 @@ fpgarun: $(OBJ_DIR)/mandelbrot.hex
 	$(SERIAL_BOOT) $(SERIAL_PORT) $(OBJ_DIR)/mandelbrot.hex
 
 clean:
-	rm -rf $(OBJ_DIR)
+	rm -rf $(OBJ_DIR) fsimage.bin
 
 -include $(DEPS)
 

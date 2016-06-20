@@ -41,6 +41,6 @@ fsimage.bin: program.elf
 	$(MKFS) fsimage.bin program.elf
 
 clean:
-	rm -f program.elf
+	rm -f program.elf fsimage.bin
 
 -include $(DEPS)

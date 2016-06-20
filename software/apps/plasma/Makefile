@@ -46,7 +46,7 @@ fpgarun: $(OBJ_DIR)/plasma.hex
 	$(SERIAL_BOOT) $(SERIAL_PORT) $(OBJ_DIR)/plasma.hex
 
 clean:
-	rm -rf $(OBJ_DIR)
+	rm -rf $(OBJ_DIR) fsimage.bin
 
 -include $(DEPS)
 

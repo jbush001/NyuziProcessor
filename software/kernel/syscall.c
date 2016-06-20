@@ -30,7 +30,7 @@ int handle_syscall(int arg0, int arg1, int arg2, int arg3, int arg4,
 
     switch (arg0)
     {
-        case 0: // Print something
+        case 0: // int write_serial(const char *data, int length);
             if ((unsigned int) arg2 >= sizeof(tmp) - 2)
             {
                 kprintf("size out of range\n");
@@ -47,15 +47,15 @@ int handle_syscall(int arg0, int arg1, int arg2, int arg3, int arg4,
             kprintf("%s", tmp);
             return 0;
 
-        case 1:
+        case 1: // int spawn_user_thread(const char *name, function, void *arg);
             spawn_user_thread((const char*) arg1, current_thread()->proc, arg2,
                               (void*) arg3);
             return 0;
 
-        case 2: // Get thread ID
+        case 2: // int get_thread_id();
             return current_thread()->id;
 
-        case 3: // Exec
+        case 3: // int exec(const char *path);
         {
             // XXX unsafe user copy. Need copy_from_user
             struct process *proc = exec_program((const char*) arg1);
@@ -65,13 +65,14 @@ int handle_syscall(int arg0, int arg1, int arg2, int arg3, int arg4,
                 return -1;
         }
 
-        case 4: // Exit
+        case 4: // void thread_exit(int code)
             thread_exit(arg1);  // This will not return
 
-        case 5: // Open VGA
+        case 5: // void *init_vga(int mode);
             return (int) init_vga(arg1);
 
-        case 6: // create_area
+        case 6: // void *create_area(unsigned int address, unsigned int size, int placement,
+                //                   const char *name, int flags);
         {
             struct vm_area *area = create_area(current_thread()->proc->space,
                 (unsigned int) arg1, // Address
