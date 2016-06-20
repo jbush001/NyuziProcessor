@@ -270,7 +270,7 @@ static int soft_fault(struct vm_address_space *space, const struct vm_area *area
         if (source_page)
             break;
 
-        if (cache->file && cache_offset < area->cache_length)
+        if (cache->file && address - area->low_address < area->cache_length)
         {
             VM_DEBUG("reading page from file\n");
 
