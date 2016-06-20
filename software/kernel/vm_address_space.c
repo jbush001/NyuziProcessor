@@ -254,13 +254,15 @@ static int soft_fault(struct vm_address_space *space, const struct vm_area *area
     // XXX check area protections and fail if this shouldn't be allowed
     if (is_store && (area->flags & AREA_WRITABLE) == 0)
     {
-        kprintf("store to read only area\n");
+        kprintf("store to read only area %s @%08x\n", area->name, address);
         return 0;
     }
 
     cache_offset = PAGE_ALIGN(address - area->low_address + area->cache_offset);
     old_flags = disable_interrupts();
     lock_vm_cache();
+    assert(area->cache);
+
     for (cache = area->cache; cache; cache = cache->source)
     {
         VM_DEBUG("searching in cache %p\n", cache);
@@ -295,11 +297,14 @@ static int soft_fault(struct vm_address_space *space, const struct vm_area *area
                 dec_page_ref(source_page);
                 if (dummy_page != 0)
                 {
+                    disable_interrupts();
+                    lock_vm_cache();
                     remove_cache_page(dummy_page);
+                    unlock_vm_cache();
+                    restore_interrupts(old_flags);
                     dec_page_ref(dummy_page);
                 }
 
-                unlock_vm_cache();
                 return 0;
             }
 

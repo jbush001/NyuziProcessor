@@ -76,6 +76,7 @@ void inc_cache_ref(struct vm_cache *cache)
 void dec_cache_ref(struct vm_cache *cache)
 {
     struct vm_page *page;
+    int old_flags;
 
     assert(debug_cache_lock_owner != current_hw_thread());
     assert(cache->ref_count > 0);
@@ -85,6 +86,7 @@ void dec_cache_ref(struct vm_cache *cache)
         if (cache->source)
             dec_cache_ref(cache->source);
 
+        old_flags = disable_interrupts();
         lock_vm_cache();
         VM_DEBUG("destroying vm_cache %p\n", cache);
 
@@ -98,6 +100,7 @@ void dec_cache_ref(struct vm_cache *cache)
         }
 
         unlock_vm_cache();
+        restore_interrupts(old_flags);
     }
 }
 
