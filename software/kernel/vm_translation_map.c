@@ -108,7 +108,7 @@ void boot_setup_page_tables(unsigned int memory_size)
                       | PAGE_SUPERVISOR | PAGE_GLOBAL);
 
     // Map device registers
-    boot_vm_map_pages(&bps, DEVICE_REG_BASE, DEVICE_REG_BASE, PAGE_SIZE, PAGE_PRESENT
+    boot_vm_map_pages(&bps, DEVICE_REG_BASE, DEVICE_REG_BASE, 0x10000, PAGE_PRESENT
                       | PAGE_WRITABLE | PAGE_SUPERVISOR | PAGE_GLOBAL);
 
     // Map preallocated space on the kernel heap for page structures. This
