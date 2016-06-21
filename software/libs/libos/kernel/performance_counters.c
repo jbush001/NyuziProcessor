@@ -15,17 +15,15 @@
 //
 
 #include "performance_counters.h"
+#include "syscall.h"
 
 void set_perf_counter_event(int counter, enum performance_event event)
 {
-    // XXX not implemented
-
+    __syscall(7, counter, event, 0, 0, 0);
 }
 
 unsigned int read_perf_counter(int counter)
 {
-    // XXX not implemented
-
-    return 0;
+    return __syscall(8, counter, 0, 0, 0, 0);
 }
 

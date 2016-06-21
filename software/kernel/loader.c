@@ -92,15 +92,6 @@ int load_program(struct process *proc,
                 segment_index, segment->p_offset, segment->p_vaddr, segment->p_filesz,
                 segment->p_memsz, segment->p_flags);
 
-        // Ensure this doesn't clobber the kernel
-        if (segment->p_vaddr > 0xc0000000 || (segment->p_vaddr + segment->p_memsz) > 0xc0000000
-                || (segment->p_vaddr + segment->p_memsz) < segment->p_vaddr)
-        {
-            kprintf("segment %08x-%08x clobbers kernel, aborting\n", segment->p_vaddr,
-                    segment->p_vaddr + segment->p_memsz);
-            return -1;
-        }
-
         area_flags = 0;
         if (segment->p_flags & PF_W)
         {

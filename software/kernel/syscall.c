@@ -16,7 +16,10 @@
 
 #include "thread.h"
 #include "libc.h"
+#include "registers.h"
 #include "vga.h"
+
+#define NUM_PERF_COUNTERS 4
 
 extern int user_copy(void *dest, const void *src, int count);
 
@@ -87,6 +90,18 @@ int handle_syscall(int arg0, int arg1, int arg2, int arg3, int arg4,
 
             return area->low_address;
         }
+
+        case 7: // void set_perf_counter_event(int counter, enum performance_event event)
+            if (arg1 >= 0 && arg1 < NUM_PERF_COUNTERS)
+                REGISTERS[REG_PERF0_SEL + arg1] = arg2;
+
+            return 0;
+
+        case 8: // unsigned int read_perf_counter(int counter)
+            if (arg1 >= 0 && arg1 < NUM_PERF_COUNTERS)
+                return REGISTERS[REG_PERF0_VAL + arg1];
+            else
+                return 0;
 
         default:
             panic("Unknown syscall %d\n", arg0);
