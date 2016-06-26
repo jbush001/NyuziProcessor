@@ -32,6 +32,7 @@
 #include <unistd.h>
 #include "../../software/bootrom/protocol.h"
 
+#define DEFAULT_UART_BAUD 921600
 #define RAMDISK_BASE 0x4000000
 #define BLOCK_SIZE 1024
 #define PROGRESS_BAR_WIDTH 40
@@ -51,7 +52,7 @@ int open_serial_port(const char *path)
     // Configure serial options
     memset(&serialopts, 0, sizeof(serialopts));
     serialopts.c_cflag = CS8 | CLOCAL | CREAD;
-    cfsetspeed(&serialopts, 921600);
+    cfsetspeed(&serialopts, DEFAULT_UART_BAUD);
     if (tcsetattr(serial_fd, TCSANOW, &serialopts) != 0)
     {
         perror("Unable to initialize serial port");

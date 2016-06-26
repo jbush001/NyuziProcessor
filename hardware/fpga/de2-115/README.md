@@ -22,6 +22,13 @@ For a Prolific USB based dongle, for example, the path is.
 
 	    /dev/ttyS0
 
+    This defaults to 921600 baud. If your serial device does not
+    support this, you can change the rate the rate by modifying the
+    DEFAULT_UART_BAUD define in the following two files:
+
+        software/bootrom/boot.c
+        tools/serial_boot/serial_boot.c
+
 3. Ensure you can access the serial port without being root:
 
         sudo usermod -a -G dialout $USER
