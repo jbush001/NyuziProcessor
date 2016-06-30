@@ -62,6 +62,7 @@ The following script will download and install the
 [Nyuzi toolchain](https://github.com/jbush001/NyuziToolchain) and
 [Verilator](http://www.veripool.org/wiki/verilator) Verilog simulator.
 (Although some Linux package managers have Verilator, they have old versions).
+It will ask for your root password a few times to install stuff.
 
     build/setup_tools.sh
 
@@ -84,7 +85,7 @@ Occasionally a change will require a new version of the compiler. To rebuild:
     git submodule update
     cd tools/NyuziToolchain/build
     sudo chown -R `whoami` .
-    make 
+    make
 	sudo make install
 
 ## What next?

@@ -23,8 +23,17 @@ git submodule update
 #
 (
 cd tools/verilator
-autoconf
-./configure
+
+# Configure if necessary
+# XXX if the project has been updated, this should probably do a configure again.
+if [ ! -f Makefile ]; then
+	if [ ! -f configure ]; then
+		autoconf
+	fi
+
+	./configure
+fi
+
 make
 sudo make install
 )
@@ -32,9 +41,21 @@ sudo make install
 #
 # Build the compiler toolchain
 #
-mkdir tools/NyuziToolchain/build
-cd tools/NyuziToolchain/build
-cmake -DCMAKE_BUILD_TYPE=Release ..
+
+if [ ! -d tools/NyuziToolchain/build ]; then
+	# Create cmake files. This only needs to be run once. Once the makefiles are
+	# created, cmake will reconfigure on its own if necessary when the makefile
+	# is invoked.
+	mkdir tools/NyuziToolchain/build
+	cd tools/NyuziToolchain/build
+	cmake -DCMAKE_BUILD_TYPE=Release ..
+else
+	# The install target leaves some files with root permissions in the
+	# build directory. If we are rebuilding, this will cause an error.
+	# Change ownership here to fix that.
+	cd tools/NyuziToolchain/build
+	chown -R `whoami` .
+fi
+
 make
 sudo make install
-
