@@ -24,13 +24,13 @@ which allow hardware and software development without an FPGA.
 
 ### Linux (Ubuntu)
 
-This requires Ubuntu 14 or later to get the proper package versions. It should
-work for other distributions, but you will probably need to change some package
-names.
+This requires Ubuntu 16 (Xenial Xeres) or later to get the proper package
+versions. It should work for other distributions, but you will probably need
+to change some package names.
 
 	sudo apt-get -y install autoconf cmake make gcc g++ bison flex python \
-	    perl emacs openjdk-7-jdk swig zlib1g-dev python-dev libxml2-dev \
-	    libedit-dev ncurses-dev libsdl2-dev gtkwave imagemagick
+	    perl emacs openjdk-8-jdk swig zlib1g-dev python-dev libxml2-dev \
+	    libedit-dev libncurses5-dev libsdl2-dev gtkwave imagemagick
 
 *Emacs is used for [verilog-mode](http://www.veripool.org/wiki/verilog-mode) AUTO macros.
 The makefile executes this operation in batch mode*
