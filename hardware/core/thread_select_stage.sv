@@ -166,7 +166,8 @@ module thread_select_stage(
 
             /// XXX Treat PC specially for scoreboard?
 
-            // Generate destination bitmap for the next instruction to be issued.
+            // Generate destination register bitmap for the next instruction
+            // to be issued.
             always_comb
             begin
                 scoreboard_dest_bitmap_nxt = 0;
@@ -179,7 +180,7 @@ module thread_select_stage(
                 end
             end
 
-            // Generate scoreboard dependency bitmap for next instruction this thread
+            // Generate register dependency bitmap for next instruction this thread
             // will issue. This includes source registers (to detect RAW dependencies)
             // and the destination register (to handle WAW and WAR dependencies)
             always_comb
@@ -248,7 +249,7 @@ module thread_select_stage(
                 // Clear scoreboard entries for completed instructions.
                 // Only do this on the last subcycle of an instruction.
                 // Since this doesn't wait on the scoreboard to issue
-                // intermediate subcycles, we must do this for correctness.
+                // intermediate subcycles, this is necessary for correctness.
                 scoreboard_clear_bitmap = 0;
                 if (wb_writeback_en && wb_writeback_thread_idx == thread_idx_t'(thread_idx)
                     && wb_writeback_is_last_subcycle)
@@ -285,7 +286,7 @@ module thread_select_stage(
             always_comb
             begin
                 // There can be a writeback conflict even if the instruction doesn't
-                // write back to a register (it cause a rollback, for example)
+                // write back to a register (if it cause a rollback, for example)
                 case (thread_instr[thread_idx].pipeline_sel)
                     PIPE_SCYCLE_ARITH: writeback_conflict = writeback_allocate[0];
                     PIPE_MEM: writeback_conflict = writeback_allocate[1];
@@ -354,12 +355,14 @@ module thread_select_stage(
         end
     endgenerate
 
-    // At the writeback stage, pipelines of different lengths merge. This results
-    // in a structural hazard where two instructions issued in different cycles
-    // could arrive during the same cycle. Avoid that by tracking instruction issue
-    // and not scheduling instructions that would conflict. Must track instructions
-    // even if they don't write back to a register, since they may have other side
-    // effects.
+    // At the writeback stage, the floating point, integer, and memory
+    // pipelines merge. Since these have different lengths, there is
+    // a structural hazard where two instructions issued in different
+    // cycles could arrive during the same cycle. Avoid that by tracking
+    // instruction issue and not scheduling instructions that would
+    // collide. Track instructions even if they don't write back to a
+    // register, since they may have other side effects that the writeback
+    // stage handles.
     always_comb
     begin
         writeback_allocate_nxt = {1'b0, writeback_allocate[WRITEBACK_ALLOC_STAGES - 1:1]};

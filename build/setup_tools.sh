@@ -43,9 +43,9 @@ sudo make install
 #
 
 if [ ! -d tools/NyuziToolchain/build ]; then
-	# Create cmake files. This only needs to be run once. Once the makefiles are
-	# created, cmake will reconfigure on its own if necessary when the makefile
-	# is invoked.
+	# Create makefiles. This only needs to be run once. Once the makefiles are
+	# created, cmake will reconfigure on its own if necessary when make is
+	# invoked.
 	mkdir tools/NyuziToolchain/build
 	cd tools/NyuziToolchain/build
 	cmake -DCMAKE_BUILD_TYPE=Release ..
