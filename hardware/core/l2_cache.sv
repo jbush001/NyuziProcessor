@@ -109,8 +109,3 @@ module l2_cache(
         perf_l2_writeback
     };
 endmodule
-
-// Local Variables:
-// verilog-typedef-regexp:"_t$"
-// verilog-auto-reset-widths:unbased
-// End:

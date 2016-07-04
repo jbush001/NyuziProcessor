@@ -376,8 +376,3 @@ module l2_axi_bus_interface(
         axi_bus.m_wdata <= bif_writeback_lanes[~burst_offset_nxt];
     end
 endmodule
-
-// Local Variables:
-// verilog-typedef-regexp:"_t$"
-// verilog-auto-reset-widths:unbased
-// End:

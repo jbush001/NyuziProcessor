@@ -257,10 +257,3 @@ module axi_interconnect
     assign axi_bus_s[0].m_arlen = read_burst_length;
     assign axi_bus_s[1].m_arlen = read_burst_length;
 endmodule
-
-// Local Variables:
-// verilog-library-flags:("-y ../../core" "-y ../../testbench")
-// verilog-typedef-regexp:"_t$"
-// verilog-auto-reset-widths:unbased
-// End:
-

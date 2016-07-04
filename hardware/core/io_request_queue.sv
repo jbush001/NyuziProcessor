@@ -161,7 +161,3 @@ module io_request_queue
         ior_read_value <= pending_request[dd_io_thread_idx].value;
 endmodule
 
-// Local Variables:
-// verilog-typedef-regexp:"_t$"
-// verilog-auto-reset-widths:unbased
-// End:

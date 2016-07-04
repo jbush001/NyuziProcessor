@@ -171,8 +171,3 @@ module operand_fetch_stage(
             : {{`VECTOR_LANES - 1{32'd0}}, scalar_val2};
     end
 endmodule
-
-// Local Variables:
-// verilog-typedef-regexp:"_t$"
-// verilog-auto-reset-widths:unbased
-// End:

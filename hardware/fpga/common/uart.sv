@@ -123,9 +123,3 @@ module uart
         .value_i({rx_frame_error, rx_char}),
         .dequeue_en(rx_fifo_read || rx_fifo_overrun_dq));
 endmodule
-
-// Local Variables:
-// verilog-library-flags:("-y ../../core" "-y ../../testbench")
-// verilog-typedef-regexp:"_t$"
-// verilog-auto-reset-widths:unbased
-// End:

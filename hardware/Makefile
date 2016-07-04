@@ -39,7 +39,11 @@ core/srams.inc: $(TARGET)
 
 # Expands AUTOWIRE/AUTOINST/etc. Requires emacs and verilog-mode module installed.
 autos:
-	emacs --eval "(setq-default indent-tabs-mode nil)" \
+	emacs --eval '(setq-default indent-tabs-mode nil)' \
+		--eval '(setq-default verilog-typedef-regexp "_t$$")' \
+		--eval '(setq-default verilog-auto-reset-widths `unbased)' \
+		--eval '(setq-default verilog-auto-inst-param-value t)' \
+		--eval '(setq-default verilog-library-directories `("$(CURDIR)/core" "$(CURDIR)/testbench" "$(CURDIR)/fpga/common" "."))' \
 		--batch core/*.sv testbench/*.sv fpga/common/*.sv fpga/de2-115/*.sv \
 		-f verilog-batch-auto -f save-buffer
 

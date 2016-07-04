@@ -497,9 +497,3 @@ module verilator_tb(
     assign timer_io_bus.address = nyuzi_io_bus.address;
     assign timer_io_bus.write_data = nyuzi_io_bus.write_data;
 endmodule
-
-// Local Variables:
-// verilog-library-flags:("-y ../core" "-y ../fpga/common")
-// verilog-auto-inst-param-value: t
-// verilog-typedef-regexp:"_t$"
-// End:

@@ -159,8 +159,3 @@ module fp_execute_stage4(
             fx4_instruction_valid <= fx3_instruction_valid;
     end
 endmodule
-
-// Local Variables:
-// verilog-typedef-regexp:"_t$"
-// verilog-auto-reset-widths:unbased
-// End:

@@ -159,10 +159,3 @@ module l1_load_miss_queue(
     end
 `endif
 endmodule
-
-// Local Variables:
-// verilog-typedef-regexp:"_t$"
-// verilog-auto-reset-widths:unbased
-// End:
-
-

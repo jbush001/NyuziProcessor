@@ -216,8 +216,3 @@ module cache_lru
     end
 `endif
 endmodule
-
-// Local Variables:
-// verilog-typedef-regexp:"_t$"
-// verilog-auto-reset-widths:unbased
-// End:

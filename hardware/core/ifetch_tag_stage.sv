@@ -306,9 +306,3 @@ module ifetch_tag_stage
     assign ift_pc_paddr = {ppage_idx, last_selected_pc[31 - `PAGE_NUM_BITS:0]};
     assign ift_pc_vaddr = last_selected_pc;
 endmodule
-
-// Local Variables:
-// verilog-typedef-regexp:"_t$"
-// verilog-auto-reset-widths:unbased
-// End:
-

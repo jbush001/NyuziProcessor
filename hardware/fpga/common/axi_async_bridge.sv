@@ -136,10 +136,3 @@ module axi_async_bridge
     assign axi_bus_m.m_rready = !read_data_full;
     assign axi_bus_s.s_rvalid = !read_data_empty;
 endmodule
-
-// Local Variables:
-// verilog-library-flags:("-y ../../core" "-y ../../testbench")
-// verilog-typedef-regexp:"_t$"
-// verilog-auto-reset-widths:unbased
-// End:
-

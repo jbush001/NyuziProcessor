@@ -314,8 +314,3 @@ module dcache_tag_stage
     assign dt_request_paddr = {ppage_idx, fetched_addr[31 - `PAGE_NUM_BITS:0]};
     assign dt_request_vaddr = fetched_addr;
 endmodule
-
-// Local Variables:
-// verilog-typedef-regexp:"_t$"
-// verilog-auto-reset-widths:unbased
-// End:

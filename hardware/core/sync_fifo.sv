@@ -136,9 +136,3 @@ module sync_fifo
     end
 `endif
 endmodule
-
-// Local Variables:
-// verilog-typedef-regexp:"_t$"
-// verilog-auto-reset-widths:unbased
-// End:
-

@@ -38,8 +38,3 @@ module idx_to_oh
     end
 endmodule
 
-// Local Variables:
-// verilog-typedef-regexp:"_t$"
-// verilog-auto-reset-widths:unbased
-// End:
-

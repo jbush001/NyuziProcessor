@@ -141,8 +141,3 @@ module l2_cache_tag_stage(
             l2t_request_valid <= l2a_request_valid;
     end
 endmodule
-
-// Local Variables:
-// verilog-typedef-regexp:"_t$"
-// verilog-auto-reset-widths:unbased
-// End:

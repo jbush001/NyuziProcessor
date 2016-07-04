@@ -227,9 +227,3 @@ module vga_controller
         .prog_data(io_bus.write_data),
         .*);
 endmodule
-
-// Local Variables:
-// verilog-library-flags:("-y ../../core" "-y ../../testbench")
-// verilog-typedef-regexp:"_t$"
-// verilog-auto-reset-widths:unbased
-// End:

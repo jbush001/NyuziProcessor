@@ -83,7 +83,3 @@ module l2_cache_pending_miss_cam
     end
 endmodule
 
-// Local Variables:
-// verilog-typedef-regexp:"_t$"
-// verilog-auto-reset-widths:unbased
-// End:

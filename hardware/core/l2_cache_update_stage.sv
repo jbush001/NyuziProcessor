@@ -142,8 +142,3 @@ module l2_cache_update_stage(
         l2_response.address <= l2r_request.address;
     end
 endmodule
-
-// Local Variables:
-// verilog-typedef-regexp:"_t$"
-// verilog-auto-reset-widths:unbased
-// End:
