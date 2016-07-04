@@ -362,8 +362,11 @@ fill_loop:		store_32 s5, (s3)
 				###### Set up interrupt handler ###################################
 				lea s10, interrupt_handler
 			    setcr s10, CR_TRAP_HANDLER
-				move s10, 1
+				move s10, (FLAG_INTERRUPT_EN | FLAG_SUPERVISOR_EN)
 				setcr s10, CR_FLAGS   # Enable interrupts
+				move s10, 1
+				setcr s10, CR_INTERRUPT_MASK
+
 ''')
 
     file.write('''
@@ -382,9 +385,8 @@ interrupt_handler: 	getcr s11, CR_TRAP_PC
                     setcr s1, CR_SCRATCHPAD1
 
                     # Ack interrupt
-                    load_const s0, REG_INTERRUPT_ACK
                     move s1, 1
-                    store_32 s1, (s0)
+                    setcr s1, CR_INTERRUPT_ACK
 
                     getcr s0, CR_SCRATCHPAD0
                     getcr s1, CR_SCRATCHPAD1

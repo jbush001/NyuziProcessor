@@ -35,9 +35,8 @@ int_addr\intnum :   goto 1b     // Wait for interrupt
 
 handle_trap\intnum :
                     // Ack interrupt
-                    load_const s24, REG_INTERRUPT_ACK
-                    load_32 s25, (s24)  // Get pending interrupt
-                    store_32 s25, (s24) // Acknowledge
+                    getcr s25, CR_INTERRUPT_PENDING
+                    setcr s25, CR_INTERRUPT_ACK
 
                     // Check control registers
                     getcr s0, CR_TRAP_CAUSE
@@ -60,8 +59,7 @@ handle_trap\intnum :
                     .globl _start
 _start:             // Unmask interrupt
                     move s24, -1
-                    load_const s25, REG_INT_MASK0
-                    store_32 s24, (s25)
+                    setcr s24, CR_INTERRUPT_MASK
 
                     receive_interrupt 16
                     receive_interrupt 17

@@ -63,6 +63,7 @@ struct thread
     uint32_t asid;
     uint32_t page_dir;
     uint32_t interrupt_mask;
+    uint32_t pending_interrupts;
     bool enable_interrupt;
     bool enable_mmu;
     bool enable_supervisor;
@@ -102,7 +103,6 @@ struct core
     uint32_t memory_size;
     uint32_t total_threads;
     uint32_t thread_enable_mask;
-    uint32_t pending_interrupts;
     uint32_t trap_handler_pc;
     uint32_t tlb_miss_handler_pc;
     uint32_t phys_tlb_update_addr;
@@ -329,9 +329,11 @@ void raise_interrupt(struct core *core, uint32_t int_bitmap)
 {
     uint32_t thread_id;
 
-    core->pending_interrupts |= int_bitmap;
     for (thread_id = 0; thread_id < core->total_threads; thread_id++)
+    {
+        core->threads[thread_id].pending_interrupts |= int_bitmap;
         try_to_dispatch_interrupt(&core->threads[thread_id]);
+    }
 }
 
 // Called when the verilog model in cosimulation indicates an interrupt.
@@ -350,7 +352,8 @@ void cosim_interrupt(struct core *core, uint32_t thread_id, uint32_t pc)
         thread->subcycle = 0;
 
     thread->pc = pc;
-    raise_interrupt(core, INT_COSIM);
+    thread->pending_interrupts |= INT_COSIM;
+    try_to_dispatch_interrupt(thread);
 }
 
 uint32_t get_total_threads(const struct core *core)
@@ -608,11 +611,10 @@ static void invalidate_sync_address(struct core *core, uint32_t address)
 
 static void try_to_dispatch_interrupt(struct thread *thread)
 {
-    uint32_t pending_interrupts = thread->core->pending_interrupts;
     if (!thread->enable_interrupt)
         return;
 
-    if ((pending_interrupts & thread->interrupt_mask) != 0)
+    if ((thread->pending_interrupts & thread->interrupt_mask) != 0)
     {
         // Unlike exceptions, an interrupt saves the PC of the *next* instruction,
         // rather than the current one, but only if a multicycle instruction is
@@ -1183,12 +1185,7 @@ static void execute_scalar_load_store_inst(struct thread *thread, uint32_t instr
         {
             case MEM_LONG:
                 if (is_device_access)
-                {
-                    if (physical_address == REG_PEND_INT)
-                        value = thread->core->pending_interrupts;
-                    else
-                        value = read_device_register(physical_address);
-                }
+                    value = read_device_register(physical_address);
                 else
                     value = (uint32_t) *UINT32_PTR(thread->core->memory, physical_address);
 
@@ -1253,19 +1250,11 @@ static void execute_scalar_load_store_inst(struct thread *thread, uint32_t instr
                 if ((physical_address & 0xffff0000) == 0xffff0000)
                 {
                     // IO address range
-                    if (physical_address >= REG_INT_MASK0 && physical_address < REG_INT_MASK0 +
-                            sizeof(uint32_t) * 16)
-                    {
-                        thread->core->threads[(physical_address - REG_INT_MASK0) / sizeof(uint32_t)]
-                        .interrupt_mask = value_to_store;
-                    }
-                    else if (physical_address == REG_THREAD_RESUME)
+                    if (physical_address == REG_THREAD_RESUME)
                         thread->core->thread_enable_mask |= value_to_store
                                                             & ((1ull << thread->core->total_threads) - 1);
                     else if (physical_address == REG_THREAD_HALT)
                         thread->core->thread_enable_mask &= ~value_to_store;
-                    else if (physical_address == REG_INT_ACK)
-                        thread->core->pending_interrupts &= ~value_to_store;
                     else if (physical_address == REG_TIMER_INT)
                         thread->core->current_timer_count = value_to_store;
                     else
@@ -1561,6 +1550,10 @@ static void execute_control_register_inst(struct thread *thread, uint32_t instru
             case CR_SUBCYCLE:
                 value = thread->saved_trap_state[0].subcycle;
                 break;
+
+            case CR_INTERRUPT_PENDING:
+                value = thread->pending_interrupts;
+                break;
         }
 
         set_scalar_reg(thread, dst_src_reg, value);
@@ -1626,6 +1619,15 @@ static void execute_control_register_inst(struct thread *thread, uint32_t instru
 
             case CR_SUBCYCLE:
                 thread->saved_trap_state[0].subcycle = value;
+                break;
+
+            case CR_INTERRUPT_MASK:
+                thread->interrupt_mask = value;
+                printf("thread %d interrupt mask %08x\n", thread->id, value);
+                break;
+
+            case CR_INTERRUPT_ACK:
+                thread->pending_interrupts &= ~value;
                 break;
         }
     }

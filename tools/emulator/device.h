@@ -30,9 +30,6 @@
 #define REG_SD_CONTROL      0xffff00cc
 #define REG_THREAD_RESUME   0xffff0100
 #define REG_THREAD_HALT     0xffff0104
-#define REG_INT_ACK         0xffff010c
-#define REG_PEND_INT        0xffff010c
-#define REG_INT_MASK0       0xffff0110
 #define REG_VGA_ENABLE      0xffff0180
 #define REG_VGA_BASE        0xffff0188
 #define REG_TIMER_INT       0xffff0240

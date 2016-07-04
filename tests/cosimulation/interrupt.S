@@ -33,8 +33,7 @@ _start:             lea s0, interrupt_handler
 
                     # Unmask interrupt
                     move s24, 1
-                    load_const s25, REG_INT_MASK0
-                    store_32 s24, (s25)
+                    setcr s24, CR_INTERRUPT_MASK
 
                     # Set up registers
                     move s1, 1000
@@ -62,8 +61,6 @@ interrupt_handler:  getcr s11, CR_TRAP_PC        # Interrupt PC
                     move s13, 1
 
                     # Ack interrupt
-                    load_const s24, 0xffff010c
                     move s25, 1
-                    store_32 s25, (s24)
-
+                    setcr s25, CR_INTERRUPT_ACK
                     eret

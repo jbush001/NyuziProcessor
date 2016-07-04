@@ -19,18 +19,25 @@
 
 //
 // Storage for control registers.
+// Also contains interrupt handling logic.
 //
 
 module control_registers
-    #(parameter CORE_ID = 0)
+    #(parameter CORE_ID = 0,
+    parameter NUM_INTERRUPTS = 16)
     (input                                  clk,
     input                                   reset,
+
+    input [NUM_INTERRUPTS - 1:0]            interrupt_req,
 
     // To multiple stages
     output scalar_t                         cr_eret_address[`THREADS_PER_CORE],
     output logic                            cr_mmu_en[`THREADS_PER_CORE],
     output logic                            cr_supervisor_en[`THREADS_PER_CORE],
     output logic[`ASID_WIDTH - 1:0]         cr_current_asid[`THREADS_PER_CORE],
+
+    // To instruction_decode_stage
+    output logic[`TOTAL_THREADS - 1:0]      cr_interrupt_pending,
 
     // From int_execute_stage
     input                                   ix_is_eret,
@@ -72,6 +79,12 @@ module control_registers
     scalar_t scratchpad[2][`THREADS_PER_CORE * 2];
     scalar_t page_dir_base[`THREADS_PER_CORE];
     scalar_t cycle_count;
+    logic[NUM_INTERRUPTS - 1:0] interrupt_mask[`THREADS_PER_CORE];
+    logic[NUM_INTERRUPTS - 1:0] interrupt_pending[`THREADS_PER_CORE];
+    logic[NUM_INTERRUPTS - 1:0] interrupt_edge_latched[`THREADS_PER_CORE];
+    logic[NUM_INTERRUPTS - 1:0] int_trigger_type;
+    logic[NUM_INTERRUPTS - 1:0] interrupt_req_prev;
+    logic[NUM_INTERRUPTS - 1:0] interrupt_edge;
 
     assign cr_eret_subcycle = subcycle_saved[0];
     assign cr_eret_address = eret_address[0];
@@ -99,6 +112,7 @@ module control_registers
                 cr_supervisor_en[thread_idx] <= 1;    // Threads start in supervisor mode
                 cr_current_asid[thread_idx] <= '0;
                 page_dir_base[thread_idx] <= '0;
+                interrupt_mask[thread_idx] <= '0;
             end
 
             /*AUTORESET*/
@@ -107,6 +121,7 @@ module control_registers
             cr_tlb_miss_handler <= '0;
             cr_trap_handler <= '0;
             cycle_count <= '0;
+            int_trigger_type <= '0;
             // End of automatics
         end
         else
@@ -189,20 +204,73 @@ module control_registers
                         interrupt_en_saved[0][dt_thread_idx] <= dd_creg_write_val[0];
                     end
 
-                    CR_TRAP_PC:          eret_address[0][dt_thread_idx] <= dd_creg_write_val;
-                    CR_TRAP_HANDLER:     cr_trap_handler <= dd_creg_write_val;
-                    CR_TLB_MISS_HANDLER: cr_tlb_miss_handler <= dd_creg_write_val;
-                    CR_SCRATCHPAD0:      scratchpad[0][{1'b0, dt_thread_idx}] <= dd_creg_write_val;
-                    CR_SCRATCHPAD1:      scratchpad[0][{1'b1, dt_thread_idx}] <= dd_creg_write_val;
-                    CR_SUBCYCLE:         subcycle_saved[0][dt_thread_idx] <= subcycle_t'(dd_creg_write_val);
-                    CR_CURRENT_ASID:     cr_current_asid[dt_thread_idx] <= dd_creg_write_val[`ASID_WIDTH - 1:0];
-                    CR_PAGE_DIR:         page_dir_base[dt_thread_idx] <= dd_creg_write_val;
+                    CR_TRAP_PC:           eret_address[0][dt_thread_idx] <= dd_creg_write_val;
+                    CR_TRAP_HANDLER:      cr_trap_handler <= dd_creg_write_val;
+                    CR_TLB_MISS_HANDLER:  cr_tlb_miss_handler <= dd_creg_write_val;
+                    CR_SCRATCHPAD0:       scratchpad[0][{1'b0, dt_thread_idx}] <= dd_creg_write_val;
+                    CR_SCRATCHPAD1:       scratchpad[0][{1'b1, dt_thread_idx}] <= dd_creg_write_val;
+                    CR_SUBCYCLE:          subcycle_saved[0][dt_thread_idx] <= subcycle_t'(dd_creg_write_val);
+                    CR_CURRENT_ASID:      cr_current_asid[dt_thread_idx] <= dd_creg_write_val[`ASID_WIDTH - 1:0];
+                    CR_PAGE_DIR:          page_dir_base[dt_thread_idx] <= dd_creg_write_val;
+                    CR_INTERRUPT_MASK:    interrupt_mask[dt_thread_idx] <= dd_creg_write_val[NUM_INTERRUPTS - 1:0];
+                    CR_INTERRUPT_TRIGGER: int_trigger_type <= dd_creg_write_val[NUM_INTERRUPTS - 1:0];
                     default:
                         ;
                 endcase
             end
         end
     end
+
+    always @(posedge clk, posedge reset)
+    begin
+        if (reset)
+            interrupt_req_prev <= '0;
+        else
+            interrupt_req_prev <= interrupt_req;
+    end
+
+    assign interrupt_edge = interrupt_req & ~interrupt_req_prev;
+
+    // Interrupt handling
+    genvar thread_idx;
+    generate
+        for (thread_idx = 0; thread_idx < `THREADS_PER_CORE; thread_idx++)
+        begin : interrupt_gen
+            logic[NUM_INTERRUPTS - 1:0] interrupt_ack;
+            logic do_interrupt_ack;
+
+            assign do_interrupt_ack = dt_thread_idx == thread_idx
+                && dd_creg_write_en
+                && dd_creg_index == CR_INTERRUPT_ACK;
+            assign interrupt_ack = {NUM_INTERRUPTS{do_interrupt_ack}}
+                & dd_creg_write_val[NUM_INTERRUPTS - 1:0];
+
+            // interrupt_edge_latched is set when a [positive] edge triggered
+            // interrupt occurs.
+            always_ff @(posedge clk, posedge reset)
+            begin
+                if (reset)
+                    interrupt_edge_latched[thread_idx] <= '0;
+                else
+                begin
+                    interrupt_edge_latched[thread_idx] <=
+                        (interrupt_edge_latched[thread_idx] & ~interrupt_ack)
+                        | interrupt_edge;
+                end
+            end
+
+            // If the trigger type is 1 (level triggered), interrupt pending is
+            // determined by level. Otherwise check interrupt_latch, which stores
+            // if an edge has been detected.
+            assign interrupt_pending[thread_idx] = (int_trigger_type & interrupt_req)
+                | (~int_trigger_type & interrupt_edge_latched[thread_idx]);
+
+            // Output to pipeline indicates if any interrupts are pending for each
+            // thread.
+            assign cr_interrupt_pending[thread_idx] = |(interrupt_pending[thread_idx]
+                & interrupt_mask[thread_idx]);
+        end
+    endgenerate
 
     always_ff @(posedge clk)
     begin
@@ -230,23 +298,23 @@ module control_registers
                     });
                 end
 
-                CR_THREAD_ID:        cr_creg_read_val <= scalar_t'({CORE_ID, dt_thread_idx});
-                CR_TRAP_PC:          cr_creg_read_val <= eret_address[0][dt_thread_idx];
-                CR_TRAP_CAUSE:       cr_creg_read_val <= scalar_t'(trap_cause[0][dt_thread_idx]);
-                CR_TRAP_HANDLER:     cr_creg_read_val <= cr_trap_handler;
-                CR_TRAP_ADDRESS:     cr_creg_read_val <= trap_access_addr[0][dt_thread_idx];
-                CR_TLB_MISS_HANDLER: cr_creg_read_val <= cr_tlb_miss_handler;
-                CR_CYCLE_COUNT:      cr_creg_read_val <= cycle_count;
-                CR_SCRATCHPAD0:      cr_creg_read_val <= scratchpad[0][{1'b0, dt_thread_idx}];
-                CR_SCRATCHPAD1:      cr_creg_read_val <= scratchpad[0][{1'b1, dt_thread_idx}];
-                CR_SUBCYCLE:         cr_creg_read_val <= scalar_t'(subcycle_saved[0][dt_thread_idx]);
-                CR_CURRENT_ASID:     cr_creg_read_val <= scalar_t'(cr_current_asid[dt_thread_idx]);
-                CR_PAGE_DIR:         cr_creg_read_val <= page_dir_base[dt_thread_idx];
-                default:             cr_creg_read_val <= 32'hffffffff;
+                CR_THREAD_ID:         cr_creg_read_val <= scalar_t'({CORE_ID, dt_thread_idx});
+                CR_TRAP_PC:           cr_creg_read_val <= eret_address[0][dt_thread_idx];
+                CR_TRAP_CAUSE:        cr_creg_read_val <= scalar_t'(trap_cause[0][dt_thread_idx]);
+                CR_TRAP_HANDLER:      cr_creg_read_val <= cr_trap_handler;
+                CR_TRAP_ADDRESS:      cr_creg_read_val <= trap_access_addr[0][dt_thread_idx];
+                CR_TLB_MISS_HANDLER:  cr_creg_read_val <= cr_tlb_miss_handler;
+                CR_CYCLE_COUNT:       cr_creg_read_val <= cycle_count;
+                CR_SCRATCHPAD0:       cr_creg_read_val <= scratchpad[0][{1'b0, dt_thread_idx}];
+                CR_SCRATCHPAD1:       cr_creg_read_val <= scratchpad[0][{1'b1, dt_thread_idx}];
+                CR_SUBCYCLE:          cr_creg_read_val <= scalar_t'(subcycle_saved[0][dt_thread_idx]);
+                CR_CURRENT_ASID:      cr_creg_read_val <= scalar_t'(cr_current_asid[dt_thread_idx]);
+                CR_PAGE_DIR:          cr_creg_read_val <= page_dir_base[dt_thread_idx];
+                CR_INTERRUPT_PENDING: cr_creg_read_val <= scalar_t'(interrupt_pending[dt_thread_idx]);
+                default:              cr_creg_read_val <= 32'hffffffff;
             endcase
         end
     end
-
 endmodule
 
 // Local Variables:

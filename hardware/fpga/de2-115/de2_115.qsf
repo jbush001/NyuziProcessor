@@ -374,6 +374,5 @@ set_global_assignment -name VERILOG_FILE ../../core/cache_lru.sv
 set_global_assignment -name VERILOG_FILE ../../core/rr_arbiter.sv
 set_global_assignment -name VERILOG_FILE ../../core/io_interconnect.sv
 set_global_assignment -name VERILOG_FILE ../../core/tlb.sv
-set_global_assignment -name VERILOG_FILE ../../core/interrupt_controller.sv
 
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

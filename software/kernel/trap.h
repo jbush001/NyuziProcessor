@@ -30,5 +30,6 @@ extern void restore_interrupts(int value);
 
 extern void enable_interrupts(void);
 
+void unmask_interrupt(int interrupt);
 void register_interrupt_handler(int interrupt, interrupt_handler_t);
 void ack_interrupt(int interrupt);

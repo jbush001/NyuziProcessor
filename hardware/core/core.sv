@@ -23,13 +23,13 @@
 
 module core
     #(parameter CORE_ID = '0,
-    parameter RESET_PC = '0)
+    parameter RESET_PC = '0,
+    parameter NUM_INTERRUPTS = 16)
 
     (input                                 clk,
     input                                  reset,
-    input thread_bitmap_t                  ic_thread_en,
-    input thread_bitmap_t                  ic_interrupt_pending,
-    input interrupt_id_t                   ic_interrupt_id[`THREADS_PER_CORE],
+    input thread_bitmap_t                  thread_en,
+    input [NUM_INTERRUPTS - 1:0]           interrupt_req,
 
     // L2 interface
     input                                  l2_ready,
@@ -60,6 +60,7 @@ module core
     /*AUTOLOGIC*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
     logic [`ASID_WIDTH-1:0] cr_current_asid [`THREADS_PER_CORE];// From control_registers of control_registers.v
+    logic [`TOTAL_THREADS-1:0] cr_interrupt_pending;// From control_registers of control_registers.v
     logic               cr_mmu_en [`THREADS_PER_CORE];// From control_registers of control_registers.v
     logic               cr_supervisor_en [`THREADS_PER_CORE];// From control_registers of control_registers.v
     logic               dd_cache_miss;          // From dcache_data_stage of dcache_data_stage.v
@@ -339,7 +340,10 @@ module core
     fp_execute_stage5 fp_execute_stage5(.*);
     writeback_stage writeback_stage(.*);
 
-    control_registers #(.CORE_ID(CORE_ID)) control_registers(.*);
+    control_registers #(
+        .CORE_ID(CORE_ID),
+        .NUM_INTERRUPTS(NUM_INTERRUPTS)
+    ) control_registers(.*);
     l1_l2_interface #(.CORE_ID(CORE_ID)) l1_l2_interface(.*);
     io_request_queue #(.CORE_ID(CORE_ID)) io_request_queue(.*);
 

@@ -63,11 +63,6 @@ void __attribute__((noreturn)) kernel_main(unsigned int _memory_size)
     // Start other threads
     REGISTERS[REG_THREAD_RESUME] = 0xffffffff;
 
-    // Enable timer interrupt on other hardware threads
-    REGISTERS[REG_INT_MASK0 + 1] = 2;
-    REGISTERS[REG_INT_MASK0 + 2] = 2;
-    REGISTERS[REG_INT_MASK0 + 3] = 2;
-
     spawn_kernel_thread("Grim Reaper", grim_reaper, 0);
 
     exec_program("program.elf");
@@ -80,6 +75,7 @@ void __attribute__((noreturn)) kernel_main(unsigned int _memory_size)
 void __attribute__((noreturn)) thread_n_main(void)
 {
     boot_init_thread();
+    unmask_interrupt(1);    // Enable timer interrupt
 
     // Idle task
     for (;;)

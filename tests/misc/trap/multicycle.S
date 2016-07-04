@@ -37,8 +37,7 @@ _start:             getcr s0, 0                 // Find my thread ID
 
                     // Set up interrupts
                     move s24, 2
-                    load_const s25, REG_INT_MASK0
-                    store_32 s24, (s25)
+                    setcr s24, CR_INTERRUPT_MASK
 
                     // Reset timer
                     load_const s24, TIMER_INTERVAL
@@ -68,9 +67,8 @@ interrupt_handler:  getcr s12, CR_TRAP_CAUSE
                     bfalse s13, bad_int
 
                     // Ack interrupt
-                    load_const s24, REG_INTERRUPT_ACK
                     move s25, 2
-                    store_32 s25, (s24)
+                    setcr s25, CR_INTERRUPT_ACK
 
                     // Reset timer
                     load_const s24, TIMER_INTERVAL

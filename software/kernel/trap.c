@@ -48,23 +48,30 @@ static const char *TRAP_NAMES[] =
 };
 
 static interrupt_handler_t handlers[NUM_INTERRUPTS];
-static unsigned int enabled_interrupts;
+static unsigned int enabled_interrupts[MAX_HW_THREADS];
 
 // These are set by the user_copy routine.
 unsigned int fault_handler[MAX_HW_THREADS];
+
+void unmask_interrupt(int interrupt)
+{
+    int hwthid = current_hw_thread();
+    enabled_interrupts[hwthid] |= 1 << interrupt;
+    __builtin_nyuzi_write_control_reg(CR_INTERRUPT_MASK, enabled_interrupts[hwthid]);
+}
 
 void register_interrupt_handler(int interrupt, interrupt_handler_t handler)
 {
     // XXX lock
     handlers[interrupt] = handler;
-    enabled_interrupts |= 1 << interrupt;
-    REGISTERS[REG_INT_MASK0] = enabled_interrupts;
+    unmask_interrupt(interrupt);
 }
 
 static void handle_interrupt(struct interrupt_frame *frame)
 {
-    unsigned int interrupt_bitmap = REGISTERS[REG_PENDING_INTERRUPT]
-                                    & enabled_interrupts;
+    int hwthid = current_hw_thread();
+    unsigned int interrupt_bitmap = __builtin_nyuzi_read_control_reg(CR_INTERRUPT_PENDING)
+                                    & enabled_interrupts[hwthid];
 
     (void) frame;
     while (interrupt_bitmap)
@@ -83,7 +90,7 @@ static void handle_interrupt(struct interrupt_frame *frame)
 
 void ack_interrupt(int interrupt)
 {
-    REGISTERS[REG_ACK_INTERRUPT] = 1 << interrupt;
+    __builtin_nyuzi_write_control_reg(CR_INTERRUPT_ACK, 1 << interrupt);
 }
 
 static void __attribute__((noreturn)) bad_fault(struct interrupt_frame *frame)

@@ -36,8 +36,6 @@ module nyuzi
     logic[`NUM_CORES - 1:0] l2i_request_valid;
     ioreq_packet_t ior_request[`NUM_CORES];
     logic[`TOTAL_PERF_EVENTS - 1:0] perf_events;
-    logic[`TOTAL_THREADS - 1:0] ic_interrupt_pending;
-    io_bus_interface ic_io_bus();
     io_bus_interface perf_io_bus();
     io_bus_interface interconnect_io_bus();
     enum logic[1:0] {
@@ -46,16 +44,14 @@ module nyuzi
         IO_ARBITER
     } io_read_source;
     logic[`NUM_CORES - 1:0] ior_request_valid;
+    logic[`TOTAL_THREADS - 1:0] thread_en;
 
     // XXX AUTOLOGIC not generating these
     l2rsp_packet_t l2_response;
     iorsp_packet_t ii_response;
-    interrupt_id_t ic_interrupt_id[`TOTAL_THREADS - 1:0];
-    interrupt_id_t _interrupt_id_repacked[`NUM_CORES][`THREADS_PER_CORE];
 
     /*AUTOLOGIC*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
-    logic [`TOTAL_THREADS-1:0] ic_thread_en;    // From interrupt_controller of interrupt_controller.v
     logic               ii_ready [`NUM_CORES];  // From io_interconnect of io_interconnect.v
     logic               ii_response_valid;      // From io_interconnect of io_interconnect.v
     logic               l2_ready [`NUM_CORES];  // From l2_cache of l2_cache.v
@@ -67,12 +63,28 @@ module nyuzi
         assert(`NUM_CORES >= 1 && `NUM_CORES <= (1 << `CORE_ID_WIDTH));
     end
 
-    interrupt_controller #(
-        .BASE_ADDRESS('h100),
-        .NUM_INTERRUPTS(NUM_INTERRUPTS)
-    ) interrupt_controller(
-        .io_bus(ic_io_bus),
-        .*);
+    // Thread enable
+    always_ff @(posedge clk, posedge reset)
+    begin
+        if (reset)
+            thread_en <= 1;
+        else
+        begin
+            if (io_bus.write_en)
+            begin
+                case (io_bus.address)
+                    // Thread enable flag handling. This is limited to 32 threads.
+                    'h100: // resume thread
+                        thread_en <= thread_en | io_bus.write_data[`TOTAL_THREADS - 1:0];
+
+                    'h104: // halt thread
+                        thread_en <= thread_en & ~io_bus.write_data[`TOTAL_THREADS - 1:0];
+                endcase
+            end
+        end
+    end
+
+    assign processor_halt = thread_en == 0;
 
     l2_cache l2_cache(
         .l2_perf_events(perf_events[`L2_PERF_EVENTS - 1:0]),
@@ -82,8 +94,6 @@ module nyuzi
     begin
         if (interconnect_io_bus.address ==? 'h20? || interconnect_io_bus.address ==? 'h21?)
             io_read_source <= IO_PERF_COUNTERS;
-        else if (interconnect_io_bus.address ==? 'h10?)
-            io_read_source <= IO_INT_CONTROLLER;
         else
             io_read_source <= IO_ARBITER;
     end
@@ -92,11 +102,6 @@ module nyuzi
     assign io_bus.read_en = interconnect_io_bus.read_en;
     assign io_bus.address = interconnect_io_bus.address;
     assign io_bus.write_data = interconnect_io_bus.write_data;
-
-    assign ic_io_bus.write_en = interconnect_io_bus.write_en;
-    assign ic_io_bus.read_en = interconnect_io_bus.read_en;
-    assign ic_io_bus.address = interconnect_io_bus.address;
-    assign ic_io_bus.write_data = interconnect_io_bus.write_data;
 
     assign perf_io_bus.write_en = interconnect_io_bus.write_en;
     assign perf_io_bus.read_en = interconnect_io_bus.read_en;
@@ -107,7 +112,6 @@ module nyuzi
     begin
         case (io_read_source)
             IO_PERF_COUNTERS: interconnect_io_bus.read_data = perf_io_bus.read_data;
-            IO_INT_CONTROLLER: interconnect_io_bus.read_data = ic_io_bus.read_data;
             default: interconnect_io_bus.read_data = io_bus.read_data; // External read
         endcase
     end
@@ -123,27 +127,19 @@ module nyuzi
         .io_bus(perf_io_bus),
         .*);
 
-    genvar thread_idx;
-    generate
-        for (thread_idx = 0; thread_idx < `TOTAL_THREADS; thread_idx++)
-        begin : repack_gen
-            assign _interrupt_id_repacked[thread_idx / `THREADS_PER_CORE][thread_idx % `THREADS_PER_CORE] =
-                ic_interrupt_id[thread_idx];
-        end
-    endgenerate
-
-
     genvar core_idx;
     generate
         for (core_idx = 0; core_idx < `NUM_CORES; core_idx++)
         begin : core_gen
-            core #(.CORE_ID(core_id_t'(core_idx)), .RESET_PC(RESET_PC)) core(
+            core #(
+                .CORE_ID(core_id_t'(core_idx)),
+                .NUM_INTERRUPTS(NUM_INTERRUPTS),
+                .RESET_PC(RESET_PC)
+            ) core(
                 .l2i_request_valid(l2i_request_valid[core_idx]),
                 .l2i_request(l2i_request[core_idx]),
                 .l2_ready(l2_ready[core_idx]),
-                .ic_thread_en(ic_thread_en[core_idx * `THREADS_PER_CORE+:`THREADS_PER_CORE]),
-                .ic_interrupt_pending(ic_interrupt_pending[core_idx * `THREADS_PER_CORE+:`THREADS_PER_CORE]),
-                .ic_interrupt_id(_interrupt_id_repacked[core_idx]),
+                .thread_en(thread_en[core_idx * `THREADS_PER_CORE+:`THREADS_PER_CORE]),
                 .ior_request_valid(ior_request_valid[core_idx]),
                 .ior_request(ior_request[core_idx]),
                 .ii_ready(ii_ready[core_idx]),

@@ -132,7 +132,11 @@ enum control_register
     CR_PAGE_DIR = 10,
     CR_SCRATCHPAD0 = 11,
     CR_SCRATCHPAD1 = 12,
-    CR_SUBCYCLE = 13
+    CR_SUBCYCLE = 13,
+    CR_INTERRUPT_MASK = 14,
+    CR_INTERRUPT_ACK = 15,
+    CR_INTERRUPT_PENDING = 16,
+    CR_INTERRUPT_TRIGGER = 17
 };
 
 enum trap_type

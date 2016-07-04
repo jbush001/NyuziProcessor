@@ -33,8 +33,7 @@
 // Interrupt handler clobbers s24-s25
 //
 handle_trap:    // Check that
-                load_const s24, REG_PENDING_INT
-                load_32 s24, (s24)
+                getcr s24, CR_INTERRUPT_PENDING
                 and s24, s24, 2     // Cosimulation interrupt will also be set, ignore
                 btrue s24, 1f       // If interrupt pending continue
                 call fail_test
@@ -46,9 +45,8 @@ handle_trap:    // Check that
                 store_32 s25, (s24)    // Send char
 
                 // Ack interrupt
-                load_const s24, REG_INTERRUPT_ACK
                 move s25, 2
-                store_32 s25, (s24)
+                setcr s25, CR_INTERRUPT_ACK
 
                 // Reset timer
                 load_const s24, TIMER_INTERVAL
@@ -65,8 +63,7 @@ _start:
 
                 // Unmask interrupt
                 move s24, 2
-                load_const s25, REG_INT_MASK0
-                store_32 s24, (s25)
+                setcr s24, CR_INTERRUPT_MASK
 
                 // Configure timer
                 load_const s24, TIMER_INTERVAL

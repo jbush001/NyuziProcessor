@@ -65,14 +65,12 @@ module instruction_decode_stage(
     output logic                  id_instruction_valid,
     output thread_idx_t           id_thread_idx,
 
-    // From interrupt_controller
-    input thread_bitmap_t         ic_interrupt_pending,
-
     // From io_request_queue
     input thread_bitmap_t         ior_pending,
 
     // From control_registers
     input thread_bitmap_t         cr_interrupt_en,
+    input thread_bitmap_t         cr_interrupt_pending,
 
     // From writeback_stage
     input                         wb_rollback_en,
@@ -252,7 +250,7 @@ module instruction_decode_stage(
     // instruction updates internal state, bad things would happen if an
     // interrupt were dispatched between them. To avoid this, don't dispatch
     // an interrupt if the first instruction has been issued.
-    assign masked_interrupt_flags = ic_interrupt_pending & cr_interrupt_en
+    assign masked_interrupt_flags = cr_interrupt_pending & cr_interrupt_en
         & ~ior_pending & ~dd_sync_load_pending & ~sq_sync_store_pending;
     assign raise_interrupt = masked_interrupt_flags[ifd_thread_idx];
     assign decoded_instr_nxt.has_trap = has_trap;
