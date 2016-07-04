@@ -38,9 +38,8 @@ module nyuzi
     logic[`TOTAL_PERF_EVENTS - 1:0] perf_events;
     io_bus_interface perf_io_bus();
     io_bus_interface interconnect_io_bus();
-    enum logic[1:0] {
+    enum logic {
         IO_PERF_COUNTERS,
-        IO_INT_CONTROLLER,
         IO_ARBITER
     } io_read_source;
     logic[`NUM_CORES - 1:0] ior_request_valid;
@@ -110,10 +109,10 @@ module nyuzi
 
     always_comb
     begin
-        case (io_read_source)
-            IO_PERF_COUNTERS: interconnect_io_bus.read_data = perf_io_bus.read_data;
-            default: interconnect_io_bus.read_data = io_bus.read_data; // External read
-        endcase
+        if (io_read_source == IO_PERF_COUNTERS)
+            interconnect_io_bus.read_data = perf_io_bus.read_data;
+        else
+            interconnect_io_bus.read_data = io_bus.read_data; // External read
     end
 
     io_interconnect io_interconnect(
