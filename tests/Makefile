@@ -15,12 +15,12 @@
 #
 
 test:
-	cd misc/atomic/ && ./runtest.py
-	cd misc/cache_control/ && ./runtest.py
-	cd misc/mmu && ./runtest.py
-	cd misc/trap && ./runtest.py
-	cd misc/perf_counters && ./runtest.py
-	cd misc/shared_memory && ./runtest.py
+	cd core/atomic/ && ./runtest.py
+	cd core/cache_control/ && ./runtest.py
+	cd core/mmu && ./runtest.py
+	cd core/trap && ./runtest.py
+	cd core/perf_counters && ./runtest.py
+	cd core/shared_memory && ./runtest.py
 	cd device/sdmmc/ && ./runtest.py
 	cd device/ps2/ && ./runtest.py
 	cd device/uart && ./runtest.py

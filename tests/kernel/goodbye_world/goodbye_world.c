@@ -14,6 +14,10 @@
 // limitations under the License.
 //
 
+//
+// Test cleanup when a thread/process exits
+//
+
 extern int __syscall(int n, int arg0, int arg1, int arg2, int arg3, int arg4);
 
 unsigned int strlen(const char *str)
