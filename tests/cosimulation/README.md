@@ -145,6 +145,7 @@ compares the side effect of the instruction with the result from the Verilog
 simulator and flags an error if there is a mismatch.
 
 ### Limitations
+
 - The emulator does not model the behavior of the store buffer. As the store
   buffer affects visibility of writes to other threads, this means the emulator
   can't accurately model reads/writes to the same cache lines from multiple
@@ -162,3 +163,7 @@ simulator and flags an error if there is a mismatch.
 - If control register 13 (subcycle) is read after an interrupt, it may not match the
   value in hardware, since hardware does not log scatter stores to lanes that don't
   have the mask bit set.
+- This does not validate virtual memory translation. This has a software managed
+TLB, and the TLB replacement behavior is timing specific, which makes it hard to match
+behavior exactly.
+
