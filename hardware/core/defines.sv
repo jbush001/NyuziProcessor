@@ -161,9 +161,9 @@ typedef enum logic [4:0] {
     CR_SCRATCHPAD1          = 5'd12,
     CR_SUBCYCLE             = 5'd13,
     CR_INTERRUPT_MASK       = 5'd14,
-    CR_INTERRUPT_ACK        = 6'd15,
-    CR_INTERRUPT_PENDING    = 6'd16,
-    CR_INTERRUPT_TRIGGER    = 6'd17
+    CR_INTERRUPT_ACK        = 5'd15,
+    CR_INTERRUPT_PENDING    = 5'd16,
+    CR_INTERRUPT_TRIGGER    = 5'd17
 } control_register_t;
 
 typedef enum logic[3:0] {
