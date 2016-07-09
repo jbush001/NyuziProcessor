@@ -331,12 +331,12 @@ module instruction_decode_stage(
     always_comb
     begin
         case (dlut_out.imm_loc)
-            IMM_22_15:  decoded_instr_nxt.immediate_value = {{24{ifd_instruction[22]}}, ifd_instruction[22:15]};
-            IMM_22_10:    decoded_instr_nxt.immediate_value = {{19{ifd_instruction[22]}}, ifd_instruction[22:10]};
-            IMM_24_15:  decoded_instr_nxt.immediate_value = {{22{ifd_instruction[24]}}, ifd_instruction[24:15]};
-            IMM_24_10:    decoded_instr_nxt.immediate_value = {{17{ifd_instruction[24]}}, ifd_instruction[24:10]};
-            IMM_24_5:         decoded_instr_nxt.immediate_value = {{12{ifd_instruction[24]}}, ifd_instruction[24:5]};
-            default:       decoded_instr_nxt.immediate_value = 0;
+            IMM_22_15: decoded_instr_nxt.immediate_value = scalar_t'($signed(ifd_instruction[22:15]));
+            IMM_22_10: decoded_instr_nxt.immediate_value = scalar_t'($signed(ifd_instruction[22:10]));
+            IMM_24_15: decoded_instr_nxt.immediate_value = scalar_t'($signed(ifd_instruction[24:15]));
+            IMM_24_10: decoded_instr_nxt.immediate_value = scalar_t'($signed(ifd_instruction[24:10]));
+            IMM_24_5: decoded_instr_nxt.immediate_value = scalar_t'($signed(ifd_instruction[24:5]));
+            default: decoded_instr_nxt.immediate_value = 0;
         endcase
     end
 

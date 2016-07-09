@@ -428,11 +428,11 @@ module writeback_stage(
                     if (dd_instruction.is_load)
                     begin
                         unique case (memory_op)
-                            MEM_B:  writeback_value_nxt[0] = {24'b0, byte_aligned};
-                            MEM_BX: writeback_value_nxt[0] = {{24{byte_aligned[7]}}, byte_aligned};
-                            MEM_S:  writeback_value_nxt[0] = {16'b0, half_aligned};
-                            MEM_SX: writeback_value_nxt[0] = {{16{half_aligned[15]}}, half_aligned};
-                            MEM_SYNC: writeback_value_nxt[0] = swapped_word_value;
+                            MEM_B:      writeback_value_nxt[0] = scalar_t'(byte_aligned);
+                            MEM_BX:     writeback_value_nxt[0] = scalar_t'($signed(byte_aligned));
+                            MEM_S:      writeback_value_nxt[0] = scalar_t'(half_aligned);
+                            MEM_SX:     writeback_value_nxt[0] = scalar_t'($signed(half_aligned));
+                            MEM_SYNC:   writeback_value_nxt[0] = swapped_word_value;
                             MEM_L:
                             begin
                                 // Scalar Load
