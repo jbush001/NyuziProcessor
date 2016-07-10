@@ -45,6 +45,9 @@ $(OBJ_DIR)/program.elf: $(OBJS)
 fpgarun: $(OBJ_DIR)/plasma.hex
 	$(SERIAL_BOOT) $(SERIAL_PORT) $(OBJ_DIR)/plasma.hex
 
+fpgakrun: $(OBJ_DIR)/plasma.hex fsimage.bin
+	$(SERIAL_BOOT) $(SERIAL_PORT) $(TOPDIR)/software/kernel/kernel.hex fsimage.bin
+
 clean:
 	rm -rf $(OBJ_DIR) fsimage.bin
 

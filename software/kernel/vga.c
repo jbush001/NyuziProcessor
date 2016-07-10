@@ -155,7 +155,7 @@ void *init_vga(enum vga_mode mode)
         PLACE_SEARCH_UP, "frame buffer", AREA_WIRED | AREA_WRITABLE, phys_addr);
 
     REGISTERS[REG_VGA_BASE] = phys_addr;
-    REGISTERS[REG_VGA_LENGTH] = fb_size;
+    REGISTERS[REG_VGA_LENGTH] = fb_size / 4;
     REGISTERS[REG_VGA_ENABLE] = 1;
 
     kprintf("mapped frame buffer at %08x\n", fb_size);

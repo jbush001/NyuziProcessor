@@ -20,8 +20,12 @@
 #include "sdmmc.h"
 #include "slab.h"
 #include "vm_page.h"
+#include "vm_translation_map.h"
+#include "vm_address_space.h"
 
 #define FS_MAGIC "spfs"
+#define RAMDISK_BASE_PA 0x4000000
+#define RAMDISK_MAX_SIZE 0x800000
 
 struct file_handle
 {
@@ -46,10 +50,19 @@ struct fs_header
 static int initialized;
 static struct fs_header *directory;
 MAKE_SLAB(file_handle_slab, struct file_handle);
+static int use_ramdisk = 0;
+static struct vm_area *ramdisk_area;
+static char *ramdisk_addr;
 
 int read_block(int block_num, void *ptr)
 {
-    return read_sdmmc_device(block_num, ptr);
+    if (use_ramdisk)
+    {
+        memcpy(ptr, ramdisk_addr + block_num * BLOCK_SIZE, BLOCK_SIZE);
+        return BLOCK_SIZE;
+    }
+    else
+        return read_sdmmc_device(block_num, ptr);
 }
 
 static int init_file_system(void)
@@ -61,8 +74,13 @@ static int init_file_system(void)
 
     if (init_sdmmc_device() < 0)
     {
-        kprintf("init_file_system: SDMMC init failed\n");
-        return -1;
+        kprintf("SDMMC init failed, using ramdisk\n");
+        ramdisk_area = map_contiguous_memory(get_kernel_address_space(),
+                                             0, RAMDISK_MAX_SIZE,
+                                             PLACE_SEARCH_UP, "ramdisk",
+                                             AREA_WIRED, RAMDISK_BASE_PA);
+        ramdisk_addr = (char*) ramdisk_area->low_address;
+        use_ramdisk = 1;
     }
 
     // Read directory
