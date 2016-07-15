@@ -27,8 +27,6 @@
 #include <stdio.h>
 #include <vga.h>
 
-#define makevectorf __builtin_nyuzi_makevectorf
-#define makevectori __builtin_nyuzi_makevectori
 #define mask_cmpf_lt __builtin_nyuzi_mask_cmpf_lt
 #define mask_cmpi_ult __builtin_nyuzi_mask_cmpi_ult
 #define mask_cmpi_uge __builtin_nyuzi_mask_cmpi_uge
@@ -56,7 +54,7 @@ int main()
     }
 
     vecf16_t kInitialX0 = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
-    kInitialX0 = kInitialX0 * makevectorf(kXStep) - makevectorf(2.0);
+    kInitialX0 = kInitialX0 * kXStep - 2.0;
 
     // Stagger row access by thread ID
     for (int row = myThreadId; row < kScreenHeight; row += kNumThreads)
@@ -67,9 +65,9 @@ int main()
         for (int col = 0; col < kScreenWidth; col += kVectorLanes)
         {
             // Compute colors for 16 pixels
-            vecf16_t x = makevectorf(0.0);
-            vecf16_t y = makevectorf(0.0);
-            veci16_t iteration = makevectori(0);
+            vecf16_t x = 0.0;
+            vecf16_t y = 0.0;
+            veci16_t iteration = 0;
             int activeLanes = 0xffff;
 
             // Escape loop
@@ -77,21 +75,21 @@ int main()
             {
                 vecf16_t xSquared = x * x;
                 vecf16_t ySquared = y * y;
-                activeLanes &= mask_cmpf_lt(xSquared + ySquared, makevectorf(4.0));
-                activeLanes &= mask_cmpi_ult(iteration, makevectori(kMaxIterations));
+                activeLanes &= mask_cmpf_lt(xSquared + ySquared, (vecf16_t) 4.0);
+                activeLanes &= mask_cmpi_ult(iteration, (veci16_t) kMaxIterations);
                 if (!activeLanes)
                     break;
 
-                y = x * y * makevectorf(2.0) + makevectorf(y0);
+                y = x * y * 2.0 + y0;
                 x = xSquared - ySquared + x0;
-                iteration = vector_mixi(activeLanes, iteration + makevectori(1), iteration);
+                iteration = vector_mixi(activeLanes, iteration + 1, iteration);
             }
 
             // Set pixels inside set black and increase contrast
-            *ptr = makevectori(0xff000000) | vector_mixi(mask_cmpi_uge(iteration, makevectori(255)),
-                    makevectori(0), (iteration << makevectori(2)) + makevectori(80));
+            *ptr = vector_mixi(mask_cmpi_uge(iteration, (veci16_t) 255),
+                    (veci16_t) 0, (iteration << 2) + 80) | (veci16_t) 0xff000000;
             asm("dflush %0" : : "s" (ptr++));
-            x0 += makevectorf(kXStep * kVectorLanes);
+            x0 += kXStep * kVectorLanes;
         }
     }
 

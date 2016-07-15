@@ -78,13 +78,13 @@ int main(int argc, char *argv[])
         else
         {
             beta = dot(r[prev_r], r[prev_r]) / dot(r[prev2_r], r[prev2_r]);
-            p[cur_p] = r[prev_r] + (p[prev_p] * __builtin_nyuzi_makevectorf(beta));
+            p[cur_p] = r[prev_r] + (p[prev_p] * vecf16_t(beta));
         }
 
         s = mul(A, p[cur_p]);
         alpha = dot(r[prev_r], r[prev_r]) / dot(p[cur_p], s);
-        x[cur_x] = x[prev_x] + (p[cur_p] * __builtin_nyuzi_makevectorf(alpha));
-        r[cur_r] = r[prev_r] - (s * __builtin_nyuzi_makevectorf(alpha));
+        x[cur_x] = x[prev_x] + (p[cur_p] * vecf16_t(alpha));
+        r[cur_r] = r[prev_r] - (s * vecf16_t(alpha));
 #else /* !__NYUZI__ */
         else
         {

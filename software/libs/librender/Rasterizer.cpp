@@ -37,8 +37,8 @@ void setupRecurseEdge(int tileLeft, int tileTop, int x1, int y1,
                       int x2, int y2, int &outAcceptEdgeValue, int &outRejectEdgeValue,
                       veci16_t &outAcceptStepMatrix, veci16_t &outRejectStepMatrix)
 {
-    veci16_t xAcceptStepValues = kXStep * splati(kTileSize / 4);
-    veci16_t yAcceptStepValues = kYStep * splati(kTileSize / 4);
+    veci16_t xAcceptStepValues = kXStep * (kTileSize / 4);
+    veci16_t yAcceptStepValues = kYStep * (kTileSize / 4);
     veci16_t xRejectStepValues = xAcceptStepValues;
     veci16_t yRejectStepValues = yAcceptStepValues;
     int trivialAcceptX = tileLeft;
@@ -50,23 +50,23 @@ void setupRecurseEdge(int tileLeft, int tileTop, int x1, int y1,
     if (y2 > y1)
     {
         trivialAcceptX += kTileSize - 1;
-        xAcceptStepValues = xAcceptStepValues - splati(kThreeQuarterTile);
+        xAcceptStepValues = xAcceptStepValues - kThreeQuarterTile;
     }
     else
     {
         trivialRejectX += kTileSize - 1;
-        xRejectStepValues = xRejectStepValues - splati(kThreeQuarterTile);
+        xRejectStepValues = xRejectStepValues - kThreeQuarterTile;
     }
 
     if (x2 > x1)
     {
         trivialRejectY += kTileSize - 1;
-        yRejectStepValues = yRejectStepValues - splati(kThreeQuarterTile);
+        yRejectStepValues = yRejectStepValues - kThreeQuarterTile;
     }
     else
     {
         trivialAcceptY += kTileSize - 1;
-        yAcceptStepValues = yAcceptStepValues - splati(kThreeQuarterTile);
+        yAcceptStepValues = yAcceptStepValues - kThreeQuarterTile;
     }
 
     int xStep = y2 - y1;
@@ -84,12 +84,12 @@ void setupRecurseEdge(int tileLeft, int tileTop, int x1, int y1,
     }
 
     // Set up xStepValues
-    xAcceptStepValues *= splati(xStep);
-    xRejectStepValues *= splati(xStep);
+    xAcceptStepValues *= xStep;
+    xRejectStepValues *= xStep;
 
     // Set up yStepValues
-    yAcceptStepValues *= splati(yStep);
-    yRejectStepValues *= splati(yStep);
+    yAcceptStepValues *= yStep;
+    yRejectStepValues *= yStep;
 
     // Add together
     outAcceptStepMatrix = xAcceptStepValues - yAcceptStepValues;
@@ -118,12 +118,12 @@ void subdivideTile(
     const int clipBottom)
 {
     // Compute accept masks
-    const veci16_t acceptEdgeValue1 = acceptStep1 + splati(acceptCornerValue1);
-    const veci16_t acceptEdgeValue2 = acceptStep2 + splati(acceptCornerValue2);
-    const veci16_t acceptEdgeValue3 = acceptStep3 + splati(acceptCornerValue3);
-    const int trivialAcceptMask = __builtin_nyuzi_mask_cmpi_sle(acceptEdgeValue1, splati(0))
-                                  & __builtin_nyuzi_mask_cmpi_sle(acceptEdgeValue2, splati(0))
-                                  & __builtin_nyuzi_mask_cmpi_sle(acceptEdgeValue3, splati(0));
+    const veci16_t acceptEdgeValue1 = acceptStep1 + acceptCornerValue1;
+    const veci16_t acceptEdgeValue2 = acceptStep2 + acceptCornerValue2;
+    const veci16_t acceptEdgeValue3 = acceptStep3 + acceptCornerValue3;
+    const int trivialAcceptMask = __builtin_nyuzi_mask_cmpi_sle(acceptEdgeValue1, veci16_t(0))
+                                  & __builtin_nyuzi_mask_cmpi_sle(acceptEdgeValue2, veci16_t(0))
+                                  & __builtin_nyuzi_mask_cmpi_sle(acceptEdgeValue3, veci16_t(0));
 
     if (tileSizeBits == 2)
     {
@@ -159,12 +159,12 @@ void subdivideTile(
     }
 
     // Compute reject masks
-    const veci16_t rejectEdgeValue1 = rejectStep1 + splati(rejectCornerValue1);
-    const veci16_t rejectEdgeValue2 = rejectStep2 + splati(rejectCornerValue2);
-    const veci16_t rejectEdgeValue3 = rejectStep3 + splati(rejectCornerValue3);
-    const int trivialRejectMask = __builtin_nyuzi_mask_cmpi_sgt(rejectEdgeValue1, splati(0))
-                                  | __builtin_nyuzi_mask_cmpi_sgt(rejectEdgeValue2, splati(0))
-                                  | __builtin_nyuzi_mask_cmpi_sgt(rejectEdgeValue3, splati(0));
+    const veci16_t rejectEdgeValue1 = rejectStep1 + rejectCornerValue1;
+    const veci16_t rejectEdgeValue2 = rejectStep2 + rejectCornerValue2;
+    const veci16_t rejectEdgeValue3 = rejectStep3 + rejectCornerValue3;
+    const int trivialRejectMask = __builtin_nyuzi_mask_cmpi_sgt(rejectEdgeValue1, veci16_t(0))
+                                  | __builtin_nyuzi_mask_cmpi_sgt(rejectEdgeValue2, veci16_t(0))
+                                  | __builtin_nyuzi_mask_cmpi_sgt(rejectEdgeValue3, veci16_t(0));
 
     // Recurse into blocks that are neither trivially rejected or accepted.
     // They are partially overlapped and need to be further subdivided.
@@ -172,12 +172,12 @@ void subdivideTile(
     if (recurseMask)
     {
         // Divide each step matrix by 4
-        const veci16_t subAcceptStep1 = acceptStep1 >> splati(2);
-        const veci16_t subAcceptStep2 = acceptStep2 >> splati(2);
-        const veci16_t subAcceptStep3 = acceptStep3 >> splati(2);
-        const veci16_t subRejectStep1 = rejectStep1 >> splati(2);
-        const veci16_t subRejectStep2 = rejectStep2 >> splati(2);
-        const veci16_t subRejectStep3 = rejectStep3 >> splati(2);
+        const veci16_t subAcceptStep1 = acceptStep1 >> 2;
+        const veci16_t subAcceptStep2 = acceptStep2 >> 2;
+        const veci16_t subAcceptStep3 = acceptStep3 >> 2;
+        const veci16_t subRejectStep1 = rejectStep1 >> 2;
+        const veci16_t subRejectStep2 = rejectStep2 >> 2;
+        const veci16_t subRejectStep3 = rejectStep3 >> 2;
 
         while (recurseMask)
         {
@@ -275,10 +275,10 @@ inline void setupSweepEdge(int left, int top, int x1, int y1, int x2, int y2,
 {
     int xStep1 = y2 - y1;
     int yStep1 = x2 - x1;
-    outEdgeValue = (kXStep + splati(left) - splati(x2)) * splati(xStep1)
-                   - (kYStep + splati(top) - splati(y2)) * splati(yStep1);
+    outEdgeValue = (kXStep + left - x2) * xStep1
+                   - (kYStep + top - y2) * yStep1;
     if (y1 > y2 || (y1 == y2 && x2 > x1))
-        outEdgeValue -= splati(1);	// Left or top edge
+        outEdgeValue -= 1;	// Left or top edge
 
     outXStep4 = xStep1 * 4;
     outYStep4 = yStep1 * 4;
@@ -315,9 +315,9 @@ void rasterizeSweep(TriangleFiller &filler,
     {
         for (int colCount = 0; ; colCount++)
         {
-            int mask = __builtin_nyuzi_mask_cmpi_sge(edgeValue1, splati(0))
-                       & __builtin_nyuzi_mask_cmpi_sge(edgeValue2, splati(0))
-                       & __builtin_nyuzi_mask_cmpi_sge(edgeValue3, splati(0));
+            int mask = __builtin_nyuzi_mask_cmpi_sge(edgeValue1, veci16_t(0))
+                       & __builtin_nyuzi_mask_cmpi_sge(edgeValue2, veci16_t(0))
+                       & __builtin_nyuzi_mask_cmpi_sge(edgeValue3, veci16_t(0));
             if (mask)
                 filler.fillMasked(col, row, mask);
 
@@ -325,9 +325,9 @@ void rasterizeSweep(TriangleFiller &filler,
                 break;
 
             // Step left/right
-            edgeValue1 += splati(xStep4_1);
-            edgeValue2 += splati(xStep4_2);
-            edgeValue3 += splati(xStep4_3);
+            edgeValue1 += xStep4_1;
+            edgeValue2 += xStep4_2;
+            edgeValue3 += xStep4_3;
             col += stepDir;
         }
 
@@ -336,9 +336,9 @@ void rasterizeSweep(TriangleFiller &filler,
         xStep4_2 = -xStep4_2;
         xStep4_3 = -xStep4_3;
         stepDir = -stepDir;
-        edgeValue1 -= splati(yStep4_1);
-        edgeValue2 -= splati(yStep4_2);
-        edgeValue3 -= splati(yStep4_3);
+        edgeValue1 -= yStep4_1;
+        edgeValue2 -= yStep4_2;
+        edgeValue3 -= yStep4_3;
         row += 4;
     }
     while (row < bbBottom);

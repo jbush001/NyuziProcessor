@@ -109,9 +109,9 @@ public:
     {
         for (int row = 0; row < 4; row++)
         {
-            vecf16_t sum = splatf(0.0f);
+            vecf16_t sum = 0.0f;
             for (int col = 0; col < 4; col++)
-                sum += splatf(fValues[row][col]) * inVec[col];
+                sum += fValues[row][col] * inVec[col];
 
             outVec[row] = sum;
         }

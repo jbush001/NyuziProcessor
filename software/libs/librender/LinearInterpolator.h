@@ -40,7 +40,7 @@ public:
     // x and y.
     inline vecf16_t getValuesAt(vecf16_t x, vecf16_t y) const
     {
-        return x * splatf(fXGradient) + y * splatf(fYGradient) + splatf(fC00);
+        return x * fXGradient + y * fYGradient + fC00;
     }
 
 private:

@@ -44,7 +44,7 @@ public:
         for (int i = 0; i < 3; i++)
             coord[i] = inAttribs[i];
 
-        coord[3] = splatf(1.0f);
+        coord[3] = 1.0f;
         uniforms->fMVPMatrix.mulVec(outParams, coord);
 
         // Copy remaining parameters
@@ -56,11 +56,11 @@ public:
                      const void *, const Texture * const *,
                      unsigned short ) const override
     {
-        int check = __builtin_nyuzi_mask_cmpi_eq(((__builtin_convertvector(inParams[0] * splatf(4), veci16_t) & splati(1))
-                    ^ (__builtin_convertvector(inParams[1] * splatf(4), veci16_t) & splati(1))), splati(0));
-        outColor[kColorR] = outColor[kColorG] = outColor[kColorB] = __builtin_nyuzi_vector_mixf(check, splatf(1.0),
-                                                splatf(0.0));
-        outColor[kColorA] = splatf(1.0);
+        int check = __builtin_nyuzi_mask_cmpi_eq(((__builtin_convertvector(inParams[0] * 4, veci16_t) & 1)
+                    ^ (__builtin_convertvector(inParams[1] * 4, veci16_t) & 1)), veci16_t(0));
+        outColor[kColorR] = outColor[kColorG] = outColor[kColorB] = __builtin_nyuzi_vector_mixf(check, vecf16_t(1.0),
+                                                vecf16_t(0.0));
+        outColor[kColorA] = vecf16_t(1.0);
     }
 };
 

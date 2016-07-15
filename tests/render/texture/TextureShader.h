@@ -44,7 +44,7 @@ public:
         for (int i = 0; i < 3; i++)
             coord[i] = inAttribs[i];
 
-        coord[3] = splatf(1.0f);
+        coord[3] = 1.0f;
         uniforms->fMVPMatrix.mulVec(outParams, coord);
 
         // Copy remaining parameters

@@ -46,7 +46,7 @@ public:
         for (int i = 0; i < 3; i++)
             coord[i] = inAttribs[i];
 
-        coord[3] = splatf(1.0f);
+        coord[3] = 1.0f;
         uniforms->fMVPMatrix.mulVec(outParams, coord);
 
         // Copy depth
@@ -60,12 +60,12 @@ public:
         // Scale depth value.
         // XXX this is hardcoded based on the size of the model. The last parameter
         // may need to be changed for other ones.
-        vecf16_t depthval = splatf(1.0) - ((-inParams[0] - splatf(1.0)) / splatf(20.0));
+        vecf16_t depthval = 1.0 - ((-inParams[0] - 1.0) / 20.0);
 
         outColor[kColorR] = depthval;
         outColor[kColorG] = depthval;
         outColor[kColorB] = depthval;
-        outColor[kColorA] = splatf(1.0);
+        outColor[kColorA] = 1.0;
     }
 };
 

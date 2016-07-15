@@ -59,7 +59,7 @@ void Surface::initializeOffsetVectors()
         0, 1, 2, 3,
     };
 
-    fXStep *= splatf(twoOverWidth);
+    fXStep *= twoOverWidth;
 
     fYStep = {
         0, 0, 0, 0,
@@ -68,7 +68,7 @@ void Surface::initializeOffsetVectors()
         3, 3, 3, 3
     };
 
-    fYStep *= splatf(twoOverHeight);
+    fYStep *= twoOverHeight;
 
     f4x4AtOrigin = {
         0, 4, 8, 12,
@@ -84,13 +84,13 @@ void Surface::initializeOffsetVectors()
         12, 12, 12, 12
     };
 
-    f4x4AtOrigin += widthOffset * splati(fWidth) + splati(fBaseAddress);
+    f4x4AtOrigin += widthOffset * fWidth + fBaseAddress;
 }
 
 void Surface::clearTileSlow(int left, int top, unsigned int value)
 {
     veci16_t *ptr = reinterpret_cast<veci16_t*>(fBaseAddress + (left + top * fWidth) * kBytesPerPixel);
-    const veci16_t kClearColor = splati(value);
+    const veci16_t kClearColor = veci16_t(value);
     int right = min(kTileSize, fWidth - left);
     int bottom = min(kTileSize, fHeight - top);
     const int kStride = ((fWidth - right) * kBytesPerPixel / sizeof(veci16_t));

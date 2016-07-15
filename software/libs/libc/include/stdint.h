@@ -17,9 +17,9 @@
 
 #pragma once
 
-typedef int veci16_t __attribute__((__vector_size__(16 * sizeof(int))));
-typedef unsigned int vecu16_t __attribute__((__vector_size__(16 * sizeof(int))));
-typedef float vecf16_t __attribute__((__vector_size__(16 * sizeof(float))));
+typedef int veci16_t __attribute__((ext_vector_type(16)));
+typedef unsigned int vecu16_t __attribute__((ext_vector_type(16)));
+typedef float vecf16_t __attribute__((ext_vector_type(16)));
 
 typedef char int8_t;
 typedef unsigned char uint8_t;

@@ -45,26 +45,11 @@ inline T max(const T &a, const T &b)
         return b;
 }
 
-inline vecf16_t splatf(float f)
-{
-    return __builtin_nyuzi_makevectorf(f);
-}
-
-inline veci16_t splati(int i)
-{
-    return __builtin_nyuzi_makevectori(i);
-}
-
-inline vecu16_t splatu(unsigned int i)
-{
-    return static_cast<vecu16_t>(__builtin_nyuzi_makevectori(static_cast<int>(i)));
-}
-
 // Clamps an unsigned integer value to be below MAX.
 template<unsigned int MAX>
 inline vecu16_t saturateuv(vecu16_t in)
 {
-    return __builtin_nyuzi_vector_mixi(__builtin_nyuzi_mask_cmpi_ugt(in, splatu(MAX)), splatu(MAX), in);
+    return __builtin_nyuzi_vector_mixi(__builtin_nyuzi_mask_cmpi_ugt(in, vecu16_t(MAX)), vecu16_t(MAX), in);
 }
 
 inline vecf16_t minfv(vecf16_t a, vecf16_t b)
@@ -83,7 +68,7 @@ inline vecf16_t maxfv(vecf16_t a, vecf16_t b)
 // Ensure all values in this vector are between 0.0 and 1.0
 inline vecf16_t clampfv(vecf16_t in)
 {
-    return maxfv(minfv(in, splatf(1.0f)), splatf(0.0f));
+    return maxfv(minfv(in, vecf16_t(1.0f)), vecf16_t(0.0f));
 }
 
 inline vecf16_t floorfv(vecf16_t in)
@@ -100,7 +85,7 @@ inline vecf16_t fracfv(vecf16_t in)
 inline vecf16_t absfv(vecf16_t in)
 {
     // The cast does not perform a conversion.
-    return veci16_t(in) & splati(0x7fffffff);
+    return vecf16_t(veci16_t(in) & 0x7fffffff);
 }
 
 // Newton's method vector square root.
@@ -108,7 +93,7 @@ inline vecf16_t sqrtfv(vecf16_t value)
 {
     vecf16_t guess = value;
     for (int iteration = 0; iteration < 6; iteration++)
-        guess = ((value / guess) + guess) / splatf(2.0f);
+        guess = ((value / guess) + guess) / 2.0f;
 
     return guess;
 }
@@ -118,9 +103,9 @@ inline vecf16_t sqrtfv(vecf16_t value)
 // but just interpret the numbers directly as the opposite type.
 inline vecf16_t isqrtfv(vecf16_t number)
 {
-    vecf16_t x2 = number * splatf(0.5f);
-    vecf16_t y = vecf16_t(splati(0x5f3759df) - (veci16_t(number) >> splati(1)));
-    y = y * (splatf(1.5f) - (x2 * y * y));
+    vecf16_t x2 = number * 0.5f;
+    vecf16_t y = vecf16_t(0x5f3759df - (veci16_t(number) >> 1));
+    y = y * (1.5f - (x2 * y * y));
     return y;
 }
 

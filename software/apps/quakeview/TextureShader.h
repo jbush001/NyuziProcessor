@@ -69,7 +69,7 @@ inline vecf16_t wrappedAtlasCoord(vecf16_t value, vecf16_t low, vecf16_t span)
 
     // Make negative values wrap around properly
     wrappedCoord = __builtin_nyuzi_vector_mixf(__builtin_nyuzi_mask_cmpf_lt(wrappedCoord,
-                   splatf(0.0)), wrappedCoord + splatf(1.0), wrappedCoord);
+                   vecf16_t(0.0)), wrappedCoord + 1.0, wrappedCoord);
 
     // Compute atlas coordinate
     return low + wrappedCoord * span;
@@ -96,7 +96,7 @@ public:
         for (int i = 0; i < 3; i++)
             coord[i] = inAttribs[i];
 
-        coord[3] = splatf(1.0f);
+        coord[3] = 1.0f;
         uniforms->fMVPMatrix.mulVec(outParams, coord);
 
         // Copy other attributes
@@ -126,10 +126,10 @@ public:
         }
         else
         {
-            outColor[0] = splatf(1.0f);
-            outColor[1] = splatf(1.0f);
-            outColor[2] = splatf(1.0f);
-            outColor[3] = splatf(1.0f);
+            outColor[0] = 1.0f;
+            outColor[1] = 1.0f;
+            outColor[2] = 1.0f;
+            outColor[3] = 1.0f;
         }
 
         if (uniforms->enableLightmap)
@@ -139,7 +139,7 @@ public:
                                    lightmapValue);
 
             // We only use the lowest channel of lightmap value to represent intensity.
-            vecf16_t intensity = lightmapValue[0] + splatf(0.25);
+            vecf16_t intensity = lightmapValue[0] + 0.25;
             outColor[0] *= intensity;
             outColor[1] *= intensity;
             outColor[2] *= intensity;

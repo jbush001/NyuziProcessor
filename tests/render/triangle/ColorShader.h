@@ -36,7 +36,7 @@ public:
         outParams[kParamX] = inAttribs[0];
         outParams[kParamY] = inAttribs[1];
         outParams[kParamZ] = inAttribs[2];
-        outParams[kParamW] = splatf(1.0);
+        outParams[kParamW] = 1.0;
 
         // Color
         outParams[4] = inAttribs[3];

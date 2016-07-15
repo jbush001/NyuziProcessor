@@ -60,14 +60,14 @@ public:
     //  12 13 14 15
     void writeBlockMasked(int left, int top, int mask, veci16_t values)
     {
-        veci16_t ptrs = f4x4AtOrigin + splati(left * 4 + top * fStride);
+        vecu16_t ptrs = f4x4AtOrigin + left * 4 + top * fStride;
         __builtin_nyuzi_scatter_storei_masked(ptrs, values, mask);
     }
 
     // Read values from a 4x4 block, in same order as writeBlockMasked
     veci16_t readBlock(int left, int top) const
     {
-        veci16_t ptrs = f4x4AtOrigin + splati(left * 4 + top * fStride);
+        vecu16_t ptrs = f4x4AtOrigin + left * 4 + top * fStride;
         return __builtin_nyuzi_gather_loadi(ptrs);
     }
 
@@ -77,7 +77,7 @@ public:
         if (kTileSize == 64 && fWidth - left >= 64 && fHeight - top >= 64)
         {
             // Fast clear using block stores
-            veci16_t vval = splati(value);
+            veci16_t vval = value;
             veci16_t *ptr = reinterpret_cast<veci16_t*>(fBaseAddress + (left + top * fWidth) * kBytesPerPixel);
             const int kStride = fStride / kCacheLineSize;
             for (int y = 0; y < 64; y++)
@@ -98,8 +98,8 @@ public:
 
     veci16_t readPixels(veci16_t tx, veci16_t ty, unsigned short mask) const
     {
-        veci16_t pointers = (ty * splati(fStride) + tx * splati(kBytesPerPixel))
-                            + splati(fBaseAddress);
+        veci16_t pointers = (ty * fStride + tx * kBytesPerPixel)
+                            + fBaseAddress;
         return __builtin_nyuzi_gather_loadi_masked(pointers, mask);
     }
 

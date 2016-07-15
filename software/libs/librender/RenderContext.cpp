@@ -160,8 +160,8 @@ void RenderContext::shadeVertices(int index)
     int startIndex = index * 16;
     for (int attrib = 0; attrib < attribsPerVertex; attrib++)
     {
-        packedAttribs[attrib] = state.fVertexAttrBuffer->gatherElements(startIndex,
-                                attrib, mask);
+        packedAttribs[attrib] = vecf16_t(state.fVertexAttrBuffer->gatherElements(startIndex,
+                                attrib, mask));
     }
 
     int paramsPerVertex = state.fShader->getNumParams();
@@ -169,13 +169,13 @@ void RenderContext::shadeVertices(int index)
     state.fShader->shadeVertices(packedParams, packedAttribs, state.fUniforms, mask);
 
     const veci16_t kStepVector = { 0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60 };
-    const veci16_t paramStepVector = kStepVector * splati(paramsPerVertex);
+    const veci16_t paramStepVector = kStepVector * paramsPerVertex;
     float *outBuf = state.fVertexParams + paramsPerVertex * index * 16;
-    veci16_t paramPtr = paramStepVector + splati(reinterpret_cast<unsigned int>(outBuf));
+    veci16_t paramPtr = paramStepVector + reinterpret_cast<unsigned int>(outBuf);
     for (int param = 0; param < paramsPerVertex; param++)
     {
         __builtin_nyuzi_scatter_storef_masked(paramPtr, packedParams[param], mask);
-        paramPtr += splati(4);
+        paramPtr += 4;
     }
 }
 

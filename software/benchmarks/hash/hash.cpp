@@ -40,7 +40,7 @@ inline vecu16_t MA(vecu16_t x, vecu16_t y, vecu16_t z)
 
 inline vecu16_t ROTR(vecu16_t x, int y)
 {
-    return (x >> __builtin_nyuzi_makevectori(y)) | (x << (__builtin_nyuzi_makevectori(32 - y)));
+    return (x >> y) | (x << (32 - y));
 }
 
 inline vecu16_t SIG0(vecu16_t x)
@@ -76,14 +76,14 @@ static volatile int gActiveThreadCount = 0;
 void sha2Hash(vecu16_t pointers, int totalBlocks, vecu16_t outHashes)
 {
     // Initial H values
-    vecu16_t h0 = __builtin_nyuzi_makevectori(0x6A09E667);
-    vecu16_t h1 = __builtin_nyuzi_makevectori(0xBB67AE85);
-    vecu16_t h2 = __builtin_nyuzi_makevectori(0x3C6EF372);
-    vecu16_t h3 = __builtin_nyuzi_makevectori(0xA54FF53A);
-    vecu16_t h4 = __builtin_nyuzi_makevectori(0x510E527F);
-    vecu16_t h5 = __builtin_nyuzi_makevectori(0x9B05688C);
-    vecu16_t h6 = __builtin_nyuzi_makevectori(0x1F83D9AB);
-    vecu16_t h7 = __builtin_nyuzi_makevectori(0x5BE0CD19);
+    vecu16_t h0 = vecu16_t(0x6A09E667);
+    vecu16_t h1 = vecu16_t(0xBB67AE85);
+    vecu16_t h2 = vecu16_t(0x3C6EF372);
+    vecu16_t h3 = vecu16_t(0xA54FF53A);
+    vecu16_t h4 = vecu16_t(0x510E527F);
+    vecu16_t h5 = vecu16_t(0x9B05688C);
+    vecu16_t h6 = vecu16_t(0x1F83D9AB);
+    vecu16_t h7 = vecu16_t(0x5BE0CD19);
 
     for (int i = 0; i < totalBlocks; i++)
     {
@@ -91,7 +91,7 @@ void sha2Hash(vecu16_t pointers, int totalBlocks, vecu16_t outHashes)
         for (int index = 0; index < 16; index++)
         {
             w[index] = __builtin_nyuzi_gather_loadi(pointers);
-            pointers += __builtin_nyuzi_makevectori(4);
+            pointers += 4;
         }
 
         for (int index = 16; index < 64; index++)
@@ -108,7 +108,7 @@ void sha2Hash(vecu16_t pointers, int totalBlocks, vecu16_t outHashes)
 
         for (int round = 0; round < 64; round++)
         {
-            vecu16_t temp1 = h + SIG1(e) + CH(e, f, g) + __builtin_nyuzi_makevectori(K[round]) + w[round];
+            vecu16_t temp1 = h + SIG1(e) + CH(e, f, g) + K[round] + w[round];
             vecu16_t temp2 = SIG0(a) + MA(a, b, c);
             h = g;
             g = f;
@@ -133,13 +133,13 @@ void sha2Hash(vecu16_t pointers, int totalBlocks, vecu16_t outHashes)
     // doesn't add padding or length fields to end...
 
     __builtin_nyuzi_scatter_storei(outHashes, h0);
-    __builtin_nyuzi_scatter_storei(outHashes + __builtin_nyuzi_makevectori(4), h1);
-    __builtin_nyuzi_scatter_storei(outHashes + __builtin_nyuzi_makevectori(8), h2);
-    __builtin_nyuzi_scatter_storei(outHashes + __builtin_nyuzi_makevectori(12), h3);
-    __builtin_nyuzi_scatter_storei(outHashes + __builtin_nyuzi_makevectori(16), h4);
-    __builtin_nyuzi_scatter_storei(outHashes + __builtin_nyuzi_makevectori(20), h5);
-    __builtin_nyuzi_scatter_storei(outHashes + __builtin_nyuzi_makevectori(24), h6);
-    __builtin_nyuzi_scatter_storei(outHashes + __builtin_nyuzi_makevectori(28), h7);
+    __builtin_nyuzi_scatter_storei(outHashes + 4, h1);
+    __builtin_nyuzi_scatter_storei(outHashes + 8, h2);
+    __builtin_nyuzi_scatter_storei(outHashes + 12, h3);
+    __builtin_nyuzi_scatter_storei(outHashes + 16, h4);
+    __builtin_nyuzi_scatter_storei(outHashes + 20, h5);
+    __builtin_nyuzi_scatter_storei(outHashes + 24, h6);
+    __builtin_nyuzi_scatter_storei(outHashes + 28, h7);
 }
 
 // Each thread starts here and performs 16 hashes simultaneously. With four
@@ -157,9 +157,9 @@ int main()
     unsigned int basePtr = 0x100000 + get_current_thread_id() * (kHashSize * kNumLanes * kNumBuffers)
                            + (kSourceBlockSize * kNumLanes);
     const vecu16_t kStepVector = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
-    vecu16_t inputPtr = __builtin_nyuzi_makevectori(basePtr) + (kStepVector * __builtin_nyuzi_makevectori(kHashSize));
-    vecu16_t tmpPtr = inputPtr + __builtin_nyuzi_makevectori(kSourceBlockSize * kNumLanes);
-    vecu16_t outputPtr = tmpPtr + __builtin_nyuzi_makevectori(kHashSize * kNumLanes);
+    vecu16_t inputPtr = vecu16_t(basePtr) + (kStepVector * vecu16_t(kHashSize));
+    vecu16_t tmpPtr = inputPtr + kSourceBlockSize * kNumLanes;
+    vecu16_t outputPtr = tmpPtr + kHashSize * kNumLanes;
 
     __sync_fetch_and_add(&gActiveThreadCount, 1);
 

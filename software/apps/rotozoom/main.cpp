@@ -69,20 +69,15 @@ int main()
         {
             for (int x = myThreadId * kVectorLanes; x < kScreenWidth; x += kNumThreads * kVectorLanes)
             {
-                vecf16_t xv = kXOffsets + __builtin_nyuzi_makevectorf((float) x)
-                              - __builtin_nyuzi_makevectorf(kScreenWidth / 2);
-                vecf16_t yv = __builtin_nyuzi_makevectorf((float) y)
-                              - __builtin_nyuzi_makevectorf(kScreenHeight / 2);;
-                vecf16_t u = xv * __builtin_nyuzi_makevectorf(displayMatrix.a)
-                             + yv * __builtin_nyuzi_makevectorf(displayMatrix.b);
-                vecf16_t v = xv * __builtin_nyuzi_makevectorf(displayMatrix.c)
-                             + yv * __builtin_nyuzi_makevectorf(displayMatrix.d);
+                vecf16_t xv = kXOffsets + float(x) - (kScreenWidth / 2);
+                vecf16_t yv = float(y) - (kScreenHeight / 2);;
+                vecf16_t u = xv * displayMatrix.a + yv * displayMatrix.b;
+                vecf16_t v = xv * displayMatrix.c + yv * displayMatrix.d;
 
-                veci16_t tx = (__builtin_convertvector(u, veci16_t) & __builtin_nyuzi_makevectori(kImageWidth - 1));
-                veci16_t ty = (__builtin_convertvector(v, veci16_t) & __builtin_nyuzi_makevectori(kImageHeight - 1));
-                veci16_t pixelPtrs = (ty * __builtin_nyuzi_makevectori(kImageWidth * kBytesPerPixel))
-                                     + (tx * __builtin_nyuzi_makevectori(kBytesPerPixel))
-                                     + __builtin_nyuzi_makevectori(imageBase);
+                veci16_t tx = (__builtin_convertvector(u, veci16_t) & (kImageWidth - 1));
+                veci16_t ty = (__builtin_convertvector(v, veci16_t) & (kImageHeight - 1));
+                veci16_t pixelPtrs = (ty * (kImageWidth * kBytesPerPixel))
+                                     + (tx * kBytesPerPixel) + imageBase;
                 *outputPtr = __builtin_nyuzi_gather_loadi(pixelPtrs);
                 __asm("dflush %0" : : "r" (outputPtr));
                 outputPtr += kNumThreads;

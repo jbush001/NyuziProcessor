@@ -23,15 +23,14 @@
 vecf16_t sortedInsert(vecf16_t items, float value)
 {
 	const veci16_t kShiftMask = { 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 };
-	int isGreater = __builtin_nyuzi_mask_cmpf_gt(items, __builtin_nyuzi_makevectorf(value));
+	int isGreater = __builtin_nyuzi_mask_cmpf_gt(items, (vecf16_t) value);
 	items = __builtin_nyuzi_vector_mixf(isGreater, __builtin_nyuzi_shufflef(items, kShiftMask), items);
-	return __builtin_nyuzi_vector_mixf(isGreater ^ (isGreater >> 1), __builtin_nyuzi_makevectorf(value),
-		items);
+	return __builtin_nyuzi_vector_mixf(isGreater ^ (isGreater >> 1), vecf16_t(value), items);
 }
 
 int main()
 {
-	vecf16_t test = __builtin_nyuzi_makevectorf(1000000000.0);
+	vecf16_t test = 1000000000.0;
 
 	test = sortedInsert(test, 21);
 	test = sortedInsert(test, 7);

@@ -21,7 +21,7 @@ include $(TOPDIR)/build/target.mk
 LIBS=-lc -los-bare
 SRCS=hash.cpp
 
-OBJS=$(CRT0) $(SRCS_TO_OBJS)
+OBJS=$(CRT0_BARE) $(SRCS_TO_OBJS)
 DEPS=$(SRCS_TO_DEPS)
 
 $(OBJ_DIR)/hash.hex: $(OBJS)
