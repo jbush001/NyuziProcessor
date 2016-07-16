@@ -17,18 +17,13 @@
 #include "protocol.h"
 
 //
-// First stage serial bootloader. This is synthesized into ROM in high memory
-// on FPGA. It communicates with a loader program on the host (tools/serial_boot),
-// which loads a program into memory. Because this is running in ROM, it cannot
-// use global variables.
+// First stage serial bootloader. This communicates with a loader program on
+// the host (tools/serial_boot), which loads a program into memory. Because
+// this is running in ROM, it cannot use global variables.
 //
 
 #define CLOCK_RATE 50000000
 #define DEFAULT_UART_BAUD 921600
-
-void *memset(void *_dest, int value, unsigned int length);
-
-static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
 
 enum register_index
 {
@@ -38,6 +33,10 @@ enum register_index
     REG_UART_TX             = 0x48 / 4,
     REG_UART_DIVISOR        = 0x4c / 4
 };
+
+void *memset(void *_dest, int value, unsigned int length);
+
+static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
 
 unsigned int read_serial_byte(void)
 {
@@ -76,10 +75,13 @@ int main()
 {
     // Turn on red LED to indicate bootloader is waiting
     REGISTERS[REG_RED_LED] = 0x1;
+
+    // Initialize UART speed
     REGISTERS[REG_UART_DIVISOR] = (CLOCK_RATE / DEFAULT_UART_BAUD) - 1;
 
     for (;;)
     {
+        // Read command type and dispatch
         switch (read_serial_byte())
         {
             case LOAD_MEMORY_REQ:
@@ -125,6 +127,10 @@ int main()
     }
 }
 
+// Originally I write a simple zero-fill loop inline that didn't worry about
+// alignment or non-word size. Unfortunately, LLVM recognizes the fill loop
+// and converts it to a memset call. There doesn't seem to be any way to
+// override that behavior. Instead, I just created a proper memset call.
 void* memset(void *_dest, int value, unsigned int length)
 {
     char *dest = (char*) _dest;
