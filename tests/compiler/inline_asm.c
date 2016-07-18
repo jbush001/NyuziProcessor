@@ -16,6 +16,8 @@
 
 #include <stdio.h>
 
+unsigned int glob = 17;
+
 int main(void)
 {
     int result;
@@ -24,5 +26,9 @@ int main(void)
 
     asm("add_i %0, %1, %2" : "=s" (result) : "s" (a), "s" (b));
 
-    printf("result = %d\n", result);    // CHECK: result = 12
+    printf("result1 = %d\n", result);    // CHECK: result1 = 12
+
+    asm("load_32 %0, %1" : "=s" (result) : "m" (glob));
+
+    printf("result2 = %d\n", result);    // CHECK: result2 = 17
 }
