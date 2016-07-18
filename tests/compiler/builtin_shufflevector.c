@@ -69,4 +69,9 @@ int main(void)
     printf("\ntest 8: ");
     printVector(__builtin_shufflevector(VECA, VECB, 31, 14, 29, 12, 27, 10, 25, 8, 23, 6, 21, 4, 19, 2, 17, 0));
         // CHECK: test 8: 68 51 66 49 64 47 62 45 60 43 58 41 56 39 54 37
+
+    // Same vector is passed for both params
+    printf("\ntest 9: ");
+    printVector(__builtin_shufflevector(VECA, VECA, 31, 14, 29, 12, 27, 10, 25, 8, 23, 6, 21, 4, 19, 2, 17, 0));
+        // CHECK: test 9: 52 51 50 49 48 47 46 45 44 43 42 41 40 39 38 37
 }
