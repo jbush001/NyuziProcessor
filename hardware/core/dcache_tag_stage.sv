@@ -71,6 +71,7 @@ module dcache_tag_stage
     output                                      dt_invalidate_tlb_en,
     output                                      dt_invalidate_tlb_all_en,
     output page_index_t                         dt_itlb_vpage_idx,
+    output [`ASID_WIDTH - 1:0]                  dt_itlb_update_asid,
     output                                      dt_update_itlb_en,
     output page_index_t                         dt_update_itlb_ppage_idx,
     output                                      dt_update_itlb_present,
@@ -153,6 +154,7 @@ module dcache_tag_stage
     assign dt_itlb_vpage_idx = of_operand1[0][31-:`PAGE_NUM_BITS];
     assign dt_update_itlb_ppage_idx = new_tlb_value.ppage_idx;
     assign dt_update_itlb_executable = new_tlb_value.executable;
+    assign dt_itlb_update_asid = cr_current_asid[of_thread_idx];
 
     initial
     begin

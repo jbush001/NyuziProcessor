@@ -109,6 +109,7 @@ module core
     logic               dt_instruction_valid;   // From dcache_tag_stage of dcache_tag_stage.v
     logic               dt_invalidate_tlb_all_en;// From dcache_tag_stage of dcache_tag_stage.v
     logic               dt_invalidate_tlb_en;   // From dcache_tag_stage of dcache_tag_stage.v
+    logic [`ASID_WIDTH-1:0] dt_itlb_update_asid;// From dcache_tag_stage of dcache_tag_stage.v
     page_index_t        dt_itlb_vpage_idx;      // From dcache_tag_stage of dcache_tag_stage.v
     vector_lane_mask_t  dt_mask_value;          // From dcache_tag_stage of dcache_tag_stage.v
     l1d_addr_t          dt_request_paddr;       // From dcache_tag_stage of dcache_tag_stage.v
