@@ -14,6 +14,8 @@
 // limitations under the License.
 //
 
+#define ALLOC_SIZE 0x40000
+
 extern int __syscall(int n, int arg0, int arg1, int arg2, int arg3, int arg4);
 
 void exec(const char *path)
@@ -28,10 +30,30 @@ void printstr(const char *str, int length)
 
 int main()
 {
+    int i;
+    unsigned int rand_seed;
+    unsigned int chksum1;
+    unsigned int chksum2;
+    unsigned char *area_base;
+
     exec("program2.elf");
 
-    // XXX do work. Need to touch more heap data and make function calls so
-    // the stack is accessed.
-    while (1)
+    rand_seed = 1;
+    chksum1 = 2166136261;  // FNV-1 hash
+    chksum2 = 2166136261;
+    area_base = (unsigned char*) __syscall(6, 0, ALLOC_SIZE, 2, (int) "alloc_area", 2);
+    for (i = 0; i < ALLOC_SIZE; i++)
+    {
+        rand_seed = rand_seed * 1103515245 + 12345; // Note different generator than process 2
+        area_base[i] = rand_seed & 0xff;
+        chksum1 = (chksum1 ^ (rand_seed & 0xff)) * 16777619;
+    }
+
+    for (i = 0; i < ALLOC_SIZE; i++)
+        chksum2 = (chksum2 ^ area_base[i]) * 16777619;
+
+    if (chksum1 == chksum2)
         printstr("A", 1);
+    else
+        printstr("X", 1);
 }

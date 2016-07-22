@@ -18,6 +18,9 @@ TOPDIR=../../..
 
 include $(TOPDIR)/build/target.mk
 
+fsimage.bin: program.elf program2.elf
+	$(MKFS) fsimage.bin program.elf program2.elf
+
 #
 # To run, this uses the kernel built in software/kernel.
 # The compiled hello program is bundled into the filesystem
@@ -34,9 +37,6 @@ program.elf: FORCE
 
 program2.elf: FORCE
 	make -f process2.mk
-
-fsimage.bin: program.elf program2.elf
-	$(MKFS) fsimage.bin program.elf program2.elf
 
 clean:
 	rm -f program.elf fsimage.bin
