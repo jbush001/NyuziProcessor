@@ -18,7 +18,7 @@ TOPDIR=../../..
 
 include $(TOPDIR)/build/target.mk
 
-SRCS=process1.c start.s
+SRCS=init.c start.s
 
 OBJS=$(SRCS_TO_OBJS)
 DEPS=$(SRCS_TO_DEPS)

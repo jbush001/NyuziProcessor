@@ -17,6 +17,8 @@
 #include "libc.h"
 #include "registers.h"
 #include "sdmmc.h"
+#include "spinlock.h"
+#include "trap.h"
 
 #define MAX_RETRIES 100
 
@@ -27,6 +29,8 @@ enum sd_command
     SD_CMD_SET_BLOCK_LEN = 0x16,
     SD_CMD_READ_BLOCK = 0x17
 };
+
+static spinlock_t sd_lock;
 
 static void set_cs(int level)
 {
@@ -114,6 +118,10 @@ int init_sdmmc_device()
 int read_sdmmc_device(unsigned int block_address, void *ptr)
 {
     int result;
+    int old_flags;
+
+    old_flags = disable_interrupts();
+    acquire_spinlock(&sd_lock);
 
     result = send_sd_command(SD_CMD_READ_BLOCK, block_address);
     if (result != 0)
@@ -125,6 +133,9 @@ int read_sdmmc_device(unsigned int block_address, void *ptr)
     // checksum (ignored)
     spi_transfer(0xff);
     spi_transfer(0xff);
+
+    release_spinlock(&sd_lock);
+    restore_interrupts(old_flags);
 
     return BLOCK_SIZE;
 }

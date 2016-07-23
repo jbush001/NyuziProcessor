@@ -18,15 +18,15 @@ TOPDIR=../../..
 
 include $(TOPDIR)/build/target.mk
 
-SRCS=process2.c start.s
+SRCS=memtest.c start.s
 
 OBJS=$(SRCS_TO_OBJS)
 DEPS=$(SRCS_TO_DEPS)
 
-program2.elf: $(OBJS)
-	$(LD) -o program2.elf -Ttext=0x1000 $(OBJS)
+memtest.elf: $(OBJS)
+	$(LD) -o memtest.elf -Ttext=0x1000 $(OBJS)
 
 clean:
-	rm -f program2.elf
+	rm -f memtest.elf
 
 -include $(DEPS)

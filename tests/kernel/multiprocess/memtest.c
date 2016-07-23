@@ -23,21 +23,23 @@ void printstr(const char *str, int length)
     __syscall(0, (int) str, length, 0, 0, 0);
 }
 
+int getthid(void)
+{
+    return __syscall(2, 0, 0, 0, 0, 0);
+}
+
 int main()
 {
+    // Causes each process to generate a different sequence
+    unsigned int rand_seed = getthid();
+    unsigned int chksum1 = 2166136261;  // FNV-1 hash
+    unsigned int chksum2 = 2166136261;
+    unsigned char *area_base = (unsigned char*) __syscall(6, 0, ALLOC_SIZE, 2, (int) "alloc_area", 2);
     int i;
-    unsigned int rand_seed;
-    unsigned int chksum1;
-    unsigned int chksum2;
-    unsigned char *area_base;
 
-    rand_seed = 1;
-    chksum1 = 2166136261;  // FNV-1 hash
-    chksum2 = 2166136261;
-    area_base = (unsigned char*) __syscall(6, 0, ALLOC_SIZE, 2, (int) "alloc_area", 2);
     for (i = 0; i < ALLOC_SIZE; i++)
     {
-        rand_seed = rand_seed * 1664525 + 1013904223;  // Note different generator than process 1
+        rand_seed = rand_seed * 1664525 + 1013904223;
         area_base[i] = rand_seed & 0xff;
         chksum1 = (chksum1 ^ (rand_seed & 0xff)) * 16777619;
     }
@@ -46,7 +48,7 @@ int main()
         chksum2 = (chksum2 ^ area_base[i]) * 16777619;
 
     if (chksum1 == chksum2)
-        printstr("B", 1);
+        printstr("+", 1);
     else
-        printstr("Y", 1);
+        printstr("-", 1);
 }
