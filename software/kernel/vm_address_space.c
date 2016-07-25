@@ -152,8 +152,8 @@ struct vm_area *map_contiguous_memory(struct vm_address_space *space, unsigned i
 
     page_flags = PAGE_PRESENT;
 
-    // If the page is clean, we will mark it not writable. This will fault
-    // on the next write, allowing us to update the dirty flag.
+    // We do not do dirty page tracking on these areas, as this is expected to
+    // be device memory. Mark pages writable by default if the area is writable.
     if ((area_flags & AREA_WRITABLE) != 0)
         page_flags |= PAGE_WRITABLE;
 
