@@ -205,17 +205,16 @@ void destroy_area(struct vm_address_space *space, struct vm_area *area)
 
 int handle_page_fault(unsigned int address, int is_store)
 {
-    struct vm_address_space *space = current_thread()->proc->space;
+    struct vm_address_space *space;
     const struct vm_area *area;
     int result = 0;
-
-    rwlock_lock_read(&space->mut);
 
     if (address >= KERNEL_BASE)
         space = &kernel_address_space;
     else
         space = current_thread()->proc->space;
 
+    rwlock_lock_read(&space->mut);
     area = lookup_area(&space->area_map, address);
     if (area == 0)
     {
