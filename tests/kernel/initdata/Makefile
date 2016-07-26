@@ -18,29 +18,32 @@ TOPDIR=../../..
 
 include $(TOPDIR)/build/target.mk
 
-SRCS=initdata.c start.s
+LIBS=-lc
+SRCS=initdata.c
 
 OBJS=$(SRCS_TO_OBJS)
 DEPS=$(SRCS_TO_DEPS)
 
-program.elf: $(OBJS)
-	$(LD) -o program.elf -Ttext=0x1000 $(OBJS)
+all: fsimage.bin
+
+$(OBJ_DIR)/program.elf: $(OBJS)
+	$(LD) -o $(OBJ_DIR)/program.elf -Ttext=0x1000 $(LDFLAGS) $(CRT0_KERN) $(OBJS) $(LIBS) -los-kern $(LDFLAGS)
 
 #
 # To run, this uses the kernel built in software/kernel.
-# The compiled initdata program is bundled into the filesystem
+# The compiled program is bundled into the filesystem
 # and loaded by the kernel.
 #
-run: program.elf fsimage.bin
+run: $(OBJ_DIR)/program.elf fsimage.bin
 	$(EMULATOR) -b fsimage.bin $(TOPDIR)/software/kernel/kernel.hex
 
-verirun: program.elf fsimage.bin
+verirun: $(OBJ_DIR)/program.elf fsimage.bin
 	$(VERILATOR) +bin=$(TOPDIR)/software/kernel/kernel.hex +block=fsimage.bin
 
-fsimage.bin: program.elf
-	$(MKFS) fsimage.bin program.elf
+fsimage.bin: $(OBJ_DIR)/program.elf
+	$(MKFS) fsimage.bin $(OBJ_DIR)/program.elf
 
 clean:
-	rm -f program.elf fsimage.bin
+	rm -rf $(OBJ_DIR) fsimage.bin
 
 -include $(DEPS)

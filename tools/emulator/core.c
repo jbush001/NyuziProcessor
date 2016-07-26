@@ -1623,7 +1623,6 @@ static void execute_control_register_inst(struct thread *thread, uint32_t instru
 
             case CR_INTERRUPT_MASK:
                 thread->interrupt_mask = value;
-                printf("thread %d interrupt mask %08x\n", thread->id, value);
                 break;
 
             case CR_INTERRUPT_ACK:

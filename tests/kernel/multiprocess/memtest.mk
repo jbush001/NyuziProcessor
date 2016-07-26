@@ -18,13 +18,14 @@ TOPDIR=../../..
 
 include $(TOPDIR)/build/target.mk
 
-SRCS=memtest.c start.s
+LIBS=-lc
+SRCS=memtest.c
 
 OBJS=$(SRCS_TO_OBJS)
 DEPS=$(SRCS_TO_DEPS)
 
 memtest.elf: $(OBJS)
-	$(LD) -o memtest.elf -Ttext=0x1000 $(OBJS)
+	$(LD) -o memtest.elf -Ttext=0x1000 $(LDFLAGS) $(CRT0_KERN) $(OBJS) $(LIBS) -los-kern $(LDFLAGS)
 
 clean:
 	rm -f memtest.elf

@@ -14,15 +14,11 @@
 // limitations under the License.
 //
 
-extern int __syscall(int n, int arg0, int arg1, int arg2, int arg3, int arg4);
+#include <stdio.h>
 
-// This forces an initialized data region to ensure it is loaded properly
+// This forces an initialized data region to ensure it is loaded properly.
+// Writing to the region should cause a copy-on-write.
 char str[32] = "Uryyb Jbeyq\n";
-
-void printstr(const char *str, int length)
-{
-    __syscall(0, (int) str, length, 0, 0, 0);
-}
 
 void rot13(char *str)
 {
@@ -41,5 +37,5 @@ int main()
 {
     // Reverse the string
     rot13(str);
-    printstr(str, 12);
+    printf("%s\n", str);
 }

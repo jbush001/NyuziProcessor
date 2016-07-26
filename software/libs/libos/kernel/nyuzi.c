@@ -25,3 +25,9 @@ unsigned int get_cycle_count(void)
 {
     return 0;   // XXX not implemented
 }
+
+void *create_area(unsigned int address, unsigned int size, int placement,
+                  const char *name, int flags)
+{
+    return (void*) __syscall(6, 0, size, placement, (int) name, flags);
+}

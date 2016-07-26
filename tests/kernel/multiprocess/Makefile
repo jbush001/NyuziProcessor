@@ -39,9 +39,10 @@ program2.elf: FORCE
 	make -f memtest.mk
 
 clean:
-	rm -f program.elf fsimage.bin
 	make clean -f init.mk
 	make clean -f memtest.mk
+	rm -rf obj
+	rm -f program.elf fsimage.bin
 
 FORCE:
 

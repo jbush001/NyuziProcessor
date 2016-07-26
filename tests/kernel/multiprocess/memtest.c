@@ -14,6 +14,9 @@
 // limitations under the License.
 //
 
+#include <stdio.h>
+#include <nyuzi.h>
+
 #define ALLOC_SIZE 0x40000
 #define STRIDE 256
 #define FNV_OFFSET_BASIS 2166136261
@@ -30,27 +33,16 @@
 // it prints '+', otherwise it prints '-'.
 //
 
-extern int __syscall(int n, int arg0, int arg1, int arg2, int arg3, int arg4);
-
-void printstr(const char *str, int length)
-{
-    __syscall(0, (int) str, length, 0, 0, 0);
-}
-
-int getthid(void)
-{
-    return __syscall(2, 0, 0, 0, 0, 0);
-}
-
 int main()
 {
-    // Causes each process to generate a different sequence
-    unsigned int rand_seed = getthid();
+    unsigned int rand_seed = get_current_thread_id();
     unsigned int chksum1 = FNV_OFFSET_BASIS;    // FNV-1 hash
     unsigned int chksum2 = FNV_OFFSET_BASIS;
-    unsigned char *area_base = (unsigned char*) __syscall(6, 0, ALLOC_SIZE, 2, (int) "alloc_area", 2);
+    unsigned char *area_base;
     int i;
 
+    area_base = (unsigned char*) create_area(0, ALLOC_SIZE, AREA_PLACE_SEARCH_UP,
+                                             "alloc_area", AREA_WRITABLE);
     for (i = 0; i < ALLOC_SIZE; i += STRIDE)
     {
         rand_seed = rand_seed * RNG_MULTIPLIER + RNG_INCREMENT;
@@ -62,7 +54,7 @@ int main()
         chksum2 = (chksum2 ^ area_base[i]) * FNV_PRIME;
 
     if (chksum1 == chksum2)
-        printstr("+", 1);
+        printf("+");
     else
-        printstr("-", 1);
+        printf("-");
 }

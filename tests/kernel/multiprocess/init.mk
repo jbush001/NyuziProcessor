@@ -18,13 +18,14 @@ TOPDIR=../../..
 
 include $(TOPDIR)/build/target.mk
 
-SRCS=init.c start.s
+LIBS=-lc
+SRCS=init.c
 
 OBJS=$(SRCS_TO_OBJS)
 DEPS=$(SRCS_TO_DEPS)
 
 program.elf: $(OBJS)
-	$(LD) -o program.elf -Ttext=0x1000 $(OBJS)
+	$(LD) -o program.elf -Ttext=0x1000 $(LDFLAGS) $(CRT0_KERN) $(OBJS) $(LIBS) -los-kern $(LDFLAGS)
 
 clean:
 	rm -f program.elf

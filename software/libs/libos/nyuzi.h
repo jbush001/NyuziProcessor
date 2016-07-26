@@ -20,8 +20,18 @@
 extern "C" {
 #endif
 
+#define AREA_PLACE_EXACT 0
+#define AREA_PLACE_SEARCH_DOWN 1
+#define AREA_PLACE_SEARCH_UP 2
+
+#define AREA_WIRED 1
+#define AREA_WRITABLE 2
+#define AREA_EXECUTABLE 4
+
 int get_current_thread_id(void);
 unsigned int get_cycle_count(void);
+void *create_area(unsigned int address, unsigned int size, int placement,
+                  const char *name, int flags);
 
 #ifdef __cplusplus
 }

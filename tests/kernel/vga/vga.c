@@ -14,12 +14,7 @@
 // limitations under the License.
 //
 
-extern int __syscall(int n, int arg0, int arg1, int arg2, int arg3, int arg4);
-
-void *init_vga()
-{
-    return (void*) __syscall(5, 0, 0, 0, 0, 0);
-}
+#include <vga.h>
 
 int main()
 {
@@ -27,7 +22,7 @@ int main()
     unsigned int y;
     unsigned int *fb;
 
-    fb = (unsigned int*) init_vga();
+    fb = (unsigned int*) init_vga(VGA_MODE_640x480);
 
     for (y = 0; y < 480; y++)
     {
