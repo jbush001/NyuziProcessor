@@ -23,6 +23,9 @@ void exec(const char *path)
     __syscall(3, (int) path, 0, 0, 0, 0);
 }
 
+// Launch multiple instances of the memory tester in parallel. On success, this
+// should print "+++++"
+
 int main()
 {
     int i;
