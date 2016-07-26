@@ -82,7 +82,9 @@ void destroy_address_space(struct vm_address_space *space)
     while ((area = first_area(&space->area_map)) != 0)
     {
         VM_DEBUG("destroy area %s\n", area->name);
-        dec_cache_ref(area->cache);
+        if (area->cache)
+            dec_cache_ref(area->cache);
+
         destroy_vm_area(area);
     }
 
@@ -129,6 +131,9 @@ error1:
 }
 
 // This area is wired by default and does not take page faults.
+// The pages for this area should already have been allocated: this will not
+// mark them as such. The area created by this will not be backed by a
+// vm_cache or vm_backing_store.
 struct vm_area *map_contiguous_memory(struct vm_address_space *space, unsigned int address,
                                       unsigned int size, enum placement place,
                                       const char *name, unsigned int area_flags,
@@ -199,8 +204,8 @@ void destroy_area(struct vm_address_space *space, struct vm_area *area)
 
     destroy_vm_area(area);
     rwlock_unlock_write(&space->mut);
-
-    dec_cache_ref(cache);
+    if (cache)
+        dec_cache_ref(cache);
 }
 
 int handle_page_fault(unsigned int address, int is_store)
