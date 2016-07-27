@@ -16,8 +16,8 @@
 
                 .globl _start
 _start:         call main
-1:              goto 1b
-
+                move s0, 4      // exit
+                call __syscall
 
                 .globl __other_thread_start
 __other_thread_start:
