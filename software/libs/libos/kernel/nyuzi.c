@@ -14,6 +14,7 @@
 // limitations under the License.
 //
 
+#include <errno.h>
 #include "syscall.h"
 
 int get_current_thread_id(void)
@@ -29,10 +30,21 @@ unsigned int get_cycle_count(void)
 void *create_area(unsigned int address, unsigned int size, int placement,
                   const char *name, int flags)
 {
-    return (void*) __syscall(6, address, size, placement, (int) name, flags);
+    void *ptr = (void*) __syscall(6, address, size, placement, (int) name, flags);
+    if (ptr == 0)
+        errno = EINVAL;
+
+    return ptr;
 }
 
 int exec(const char *path)
 {
-    return __syscall(3, (int) path, 0, 0, 0, 0);
+    int retval = __syscall(3, (int) path, 0, 0, 0, 0);
+    if (retval < 0)
+    {
+        errno = -retval;
+        return -1;
+    }
+
+    return retval;
 }

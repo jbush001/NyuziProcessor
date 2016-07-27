@@ -16,8 +16,7 @@
 
                 .globl _start
 _start:         call main
-                move s0, 4      // exit
-                call __syscall
+                call exit
 
                 .globl __other_thread_start
 __other_thread_start:
