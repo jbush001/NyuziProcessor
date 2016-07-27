@@ -18,7 +18,7 @@
 
 // This forces an initialized data region to ensure it is loaded properly.
 // Writing to the region should cause a copy-on-write.
-char str[32] = "Uryyb Jbeyq\n";
+char str[32] = "Uryyb Jbeyq";
 
 void rot13(char *str)
 {
