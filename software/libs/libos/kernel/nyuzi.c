@@ -29,5 +29,10 @@ unsigned int get_cycle_count(void)
 void *create_area(unsigned int address, unsigned int size, int placement,
                   const char *name, int flags)
 {
-    return (void*) __syscall(6, 0, size, placement, (int) name, flags);
+    return (void*) __syscall(6, address, size, placement, (int) name, flags);
+}
+
+int exec(const char *path)
+{
+    return __syscall(3, (int) path, 0, 0, 0, 0);
 }

@@ -14,14 +14,7 @@
 // limitations under the License.
 //
 
-#define ALLOC_SIZE 0x40000
-
-extern int __syscall(int n, int arg0, int arg1, int arg2, int arg3, int arg4);
-
-void exec(const char *path)
-{
-    __syscall(3, (int) path, 0, 0, 0, 0);
-}
+#include <nyuzi.h>
 
 // Launch multiple instances of the memory tester in parallel. On success, this
 // should print "+++++"

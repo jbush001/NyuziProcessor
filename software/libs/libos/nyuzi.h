@@ -32,6 +32,7 @@ int get_current_thread_id(void);
 unsigned int get_cycle_count(void);
 void *create_area(unsigned int address, unsigned int size, int placement,
                   const char *name, int flags);
+int exec(const char *path);
 
 #ifdef __cplusplus
 }
