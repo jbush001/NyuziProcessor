@@ -33,24 +33,59 @@ user_copy:      load_32 s3, fault_handler_addr  // Base of fault handler array
                 shl s4, s4, 2           // Turn into array offset
                 add_i s4, s4, s3        // Now address of fault entry
 
-                lea s3, cfu_fault
+                lea s3, uc_fault
                 store_32 s3, (s4)
 
-copy_loop:      bfalse s2, copy_done
+1:              bfalse s2, 2f
                 load_s8 s3, (s1)
                 store_8 s3, (s0)
                 add_i s0, s0, 1
                 add_i s1, s1, 1
                 sub_i s2, s2, 1
-                goto copy_loop
+                goto 1b
 
-cfu_fault:      move s0, -1 // Failure
-                goto done
+uc_fault:       move s0, -1 // Failure
+                goto 3f
 
-copy_done:      move s0, 0  // Success
+2:              move s0, 0  // Success
 
                 // Reset fault handler
-done:           move s3, 0
+3:              move s3, 0
+                store_32 s3, (s4)
+                ret
+
+
+                .globl user_strlcpy
+                .type user_strlcpy,@function
+
+user_strlcpy:   load_32 s3, fault_handler_addr  // Base of fault handler array
+                getcr s4, CR_CURRENT_HW_THREAD
+                shl s4, s4, 2           // Turn into array offset
+                add_i s4, s4, s3        // Now address of fault entry
+
+                lea s3, usc_fault
+                store_32 s3, (s4)
+
+                bfalse s2, 2f
+
+1:              sub_i s2, s2, 1
+                bfalse s2, 2f
+                load_s8 s3, (s1)
+                bfalse s3, 2f       // Delimiter
+                store_8 s3, (s0)
+                add_i s0, s0, 1
+                add_i s1, s1, 1
+                goto 1b
+
+usc_fault:      move s0, -1 // Failure
+                goto 3f
+
+2:               move s3, 0
+                store_8 s3, (s0)            // Append null
+                move s0, 0  // Success
+
+                // Reset fault handler
+3:              move s3, 0
                 store_32 s3, (s4)
                 ret
 

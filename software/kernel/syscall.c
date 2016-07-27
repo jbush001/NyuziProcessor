@@ -22,6 +22,7 @@
 #define NUM_PERF_COUNTERS 4
 
 extern int user_copy(void *dest, const void *src, int count);
+extern int user_strlcpy(char *dest, const char *src, int count);
 
 int handle_syscall(int arg0, int arg1, int arg2, int arg3, int arg4,
                    int arg5)
@@ -77,11 +78,14 @@ int handle_syscall(int arg0, int arg1, int arg2, int arg3, int arg4,
         case 6: // void *create_area(unsigned int address, unsigned int size, int placement,
                 //                   const char *name, int flags);
         {
+            if (user_strlcpy(tmp, (const char*) arg4, sizeof(tmp)) < 0)
+                return 0;
+
             struct vm_area *area = create_area(current_thread()->proc->space,
                 (unsigned int) arg1, // Address
                 (unsigned int) arg2, // size
                 arg3, // Placement
-                arg4, // Name (XXX not safe)
+                tmp,
                 arg5, // flags,
                 0, 0);
 
