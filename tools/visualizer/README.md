@@ -4,6 +4,13 @@ called statetrace.txt, which the visualizer reads.
 
     bin/verilator_model +statetrace=1 +bin=<image name>
 
+If you are running on MacOS X, download and install a recent version of the 
+JDK:
+
+http://www.oracle.com/technetwork/java/javase/downloads/index.html
+
+To build, type 'make'.
+
 Launch the visualizer as follows:
 
     java -jar bin/visualizer.jar statetrace.txt

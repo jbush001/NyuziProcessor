@@ -37,13 +37,17 @@ The makefile executes this operation in batch mode*
 
 ### MacOS
 
-These instructions assume Mavericks or later. If you don't have XCode, install
-the command line compiler like this:
+These instruction assume OSX Mavericks or later.
+
+Open the AppStore application, search for XCode and install it.
+
+Install MacPorts (https://www.macports.org/install.php)
+
+Install the command line compiler tools:
 
     xcode-select --install
 
-The next command installs the remaining packages, assuming you've installed
-[MacPorts](https://www.macports.org/install.php):
+Installs the remaining packages using MacPorts.
 
     sudo port install cmake bison swig swig-python imagemagick libsdl2 curl emacs
 

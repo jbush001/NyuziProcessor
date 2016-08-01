@@ -34,7 +34,7 @@ ifneq (,$(findstring clang, $(shell $(CC) --version)))
 	# -Weverything is only supported on clang
 	WARNINGS =-Weverything -Wno-padded -Wno-float-equal -Wno-covered-switch-default \
 		-Wno-switch-enum -Wno-bad-function-cast -Wno-documentation -Wno-documentation-unknown-command \
-		-Wno-missing-prototypes -Werror
+		-Wno-missing-prototypes -Wno-reserved-id-macro -Werror 
 else
 	WARNINGS=-Wall -W -Werror
 endif

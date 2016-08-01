@@ -23,9 +23,6 @@ all:
 	cd tools/mkfs && make
 	cd hardware/ && make
 	cd software/ && make
-ifneq ($(JAVAC),)
-	cd tools/visualizer && make
-endif
 
 test: all
 	cd tests/ && make test
@@ -35,9 +32,6 @@ clean:
 	cd tools/emulator && make clean
 	cd tools/serial_boot && make clean
 	cd tools/mkfs && make clean
-ifneq ($(JAVAC),)
-	cd tools/visualizer && make clean
-endif
 	cd hardware/ && make clean
 	cd software/ && make clean
 	rm -rf bin/
