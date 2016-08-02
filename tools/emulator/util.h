@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-#ifndef __UTIL_H
-#define __UTIL_H
+#ifndef UTIL_H
+#define UTIL_H
 
 #include <errno.h>
 #include <stdbool.h>

@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-#ifndef __FBWINDOW_H
-#define __FBWINDOW_H
+#ifndef FBWINDOW_H
+#define FBWINDOW_H
 
 #include "core.h"
 

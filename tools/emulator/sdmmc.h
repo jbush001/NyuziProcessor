@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-#ifndef __SDMMC_H
-#define __SDMMC_H
+#ifndef SDMMC_H
+#define SDMMC_H
 
 int open_block_device(const char *filename);
 void close_block_device(void);

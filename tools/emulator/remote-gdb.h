@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-#ifndef __REMOTE_GDB_H
-#define __REMOTE_GDB_H
+#ifndef REMOTE_GDB_H
+#define REMOTE_GDB_H
 
 void remote_gdb_main_loop(struct core*, bool enable_fb_window);
 

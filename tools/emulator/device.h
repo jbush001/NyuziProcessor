@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-#ifndef __DEVICE_H
-#define __DEVICE_H
+#ifndef DEVICE_H
+#define DEVICE_H
 
 #include <stdint.h>
 

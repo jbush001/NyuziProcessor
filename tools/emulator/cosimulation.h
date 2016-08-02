@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-#ifndef __COSIMULATION_H
-#define __COSIMULATION_H
+#ifndef COSIMULATION_H
+#define COSIMULATION_H
 
 #include "core.h"
 

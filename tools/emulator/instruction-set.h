@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-#ifndef __INSTRUCTION_SET_H
-#define __INSTRUCTION_SET_H
+#ifndef INSTRUCTION_SET_H
+#define INSTRUCTION_SET_H
 
 #define LINK_REG 30
 #define PC_REG 31
