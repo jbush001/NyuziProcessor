@@ -170,7 +170,7 @@ module writeback_stage(
         wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
         wb_rollback_subcycle = 0;
         wb_trap = 0;
-        wb_trap_cause = { 2'b0, TT_RESET };
+        wb_trap_cause = {2'b0, TT_RESET};
         wb_trap_pc = 0;
 
         // XXX wb_trap_thread_idx seems to be the same as wb_rollback_thread_idx.
@@ -194,7 +194,7 @@ module writeback_stage(
             wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
             wb_trap = 1;
             if (ix_privileged_op_fault)
-                wb_trap_cause = { 2'b0, TT_PRIVILEGED_OP };
+                wb_trap_cause = {2'b0, TT_PRIVILEGED_OP};
             else
                 wb_trap_cause = ix_instruction.trap_cause;
 

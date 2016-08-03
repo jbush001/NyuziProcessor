@@ -505,17 +505,17 @@ module dcache_data_stage(
         // there is a TLB miss. The order of the remaining items should match
         // that in instruction_decode_stage for consistency.
         if (tlb_miss)
-            dd_fault_cause <= { 1'b1, is_store_fault, TT_TLB_MISS };
+            dd_fault_cause <= {1'b1, is_store_fault, TT_TLB_MISS};
         else if (page_fault)
-            dd_fault_cause <= { 1'b1, is_store_fault, TT_PAGE_FAULT };
+            dd_fault_cause <= {1'b1, is_store_fault, TT_PAGE_FAULT};
         else if (supervisor_fault)
-            dd_fault_cause <= { 1'b1, is_store_fault, TT_SUPERVISOR_ACCESS };
+            dd_fault_cause <= {1'b1, is_store_fault, TT_SUPERVISOR_ACCESS};
         else if (alignment_fault)
-            dd_fault_cause <= { 1'b1, is_store_fault, TT_UNALIGNED_ACCESS };
+            dd_fault_cause <= {1'b1, is_store_fault, TT_UNALIGNED_ACCESS};
         else if (privilege_op_fault)
-            dd_fault_cause <= { 2'b00, TT_PRIVILEGED_OP };
+            dd_fault_cause <= {2'b00, TT_PRIVILEGED_OP};
         else // write fault
-            dd_fault_cause <= {  2'b11, TT_ILLEGAL_STORE };
+            dd_fault_cause <= {2'b11, TT_ILLEGAL_STORE};
     end
 
     always_ff @(posedge clk, posedge reset)

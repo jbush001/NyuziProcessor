@@ -112,7 +112,7 @@ module ifetch_tag_stage
     // have a long combinational path that is a critical path for clock speed.
     // Instead, when the selected thread is rolled back in the same cycle,
     // invalidate the instruction by deasserting ift_instruction_requested. This
-    // wastes a cycle, but this should be infrequent.
+    // wastes a cycle, but should be infrequent.
     //
     assign can_fetch_thread_bitmap = ts_fetch_en & ~icache_wait_threads;
 
@@ -131,6 +131,9 @@ module ifetch_tag_stage
         .one_hot(selected_thread_oh),
         .index(selected_thread_idx));
 
+    //
+    // Program counter update logic
+    //
     genvar thread_idx;
     generate
         for (thread_idx = 0; thread_idx < `THREADS_PER_CORE; thread_idx++)

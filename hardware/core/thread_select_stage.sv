@@ -20,7 +20,7 @@
 // Instruction Pipeline Thread Select Stage
 // - Contains an instruction FIFO for each thread
 // - Each cycle, picks a thread to issue using a round robin scheduling
-//   algorithm, avoid various types of conflicts:
+//   algorithm, avoiding various types of conflicts:
 //   * inter-instruction register dependencies, tracked using a scoreboard
 //     for each thread.
 //   * writeback hazards between the pipelines of different lengths, tracked

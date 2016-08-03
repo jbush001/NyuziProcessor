@@ -97,7 +97,7 @@ module control_registers
             begin
                 for (int trap_level = 0; trap_level < 2; trap_level++)
                 begin
-                    trap_cause[trap_level][thread_idx] <= { 2'b00, TT_RESET };
+                    trap_cause[trap_level][thread_idx] <= {2'b00, TT_RESET};
                     trap_access_addr[trap_level][thread_idx] <= '0;
                     subcycle_saved[trap_level][thread_idx] <= '0;
                     interrupt_en_saved[trap_level][thread_idx] <= 0;

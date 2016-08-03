@@ -225,23 +225,23 @@ module instruction_decode_stage(
     always_comb
     begin
         if (raise_interrupt)
-            decoded_instr_nxt.trap_cause =  { 2'b00, TT_INTERRUPT };
+            decoded_instr_nxt.trap_cause = {2'b00, TT_INTERRUPT};
         else if (ifd_tlb_miss)
-            decoded_instr_nxt.trap_cause = { 2'b00, TT_TLB_MISS };
+            decoded_instr_nxt.trap_cause = {2'b00, TT_TLB_MISS};
         else if (ifd_page_fault)
-            decoded_instr_nxt.trap_cause = { 2'b00, TT_PAGE_FAULT };
+            decoded_instr_nxt.trap_cause = {2'b00, TT_PAGE_FAULT};
         else if (ifd_supervisor_fault)
-            decoded_instr_nxt.trap_cause = { 2'b00, TT_SUPERVISOR_ACCESS };
+            decoded_instr_nxt.trap_cause = {2'b00, TT_SUPERVISOR_ACCESS};
         else if (ifd_alignment_fault)
-            decoded_instr_nxt.trap_cause = { 2'b00, TT_UNALIGNED_ACCESS };
+            decoded_instr_nxt.trap_cause = {2'b00, TT_UNALIGNED_ACCESS};
         else if (ifd_executable_fault)
-            decoded_instr_nxt.trap_cause = { 2'b00, TT_NOT_EXECUTABLE };
+            decoded_instr_nxt.trap_cause = {2'b00, TT_NOT_EXECUTABLE};
         else if (dlut_out.illegal)
-            decoded_instr_nxt.trap_cause = { 2'b00, TT_ILLEGAL_INSTRUCTION };
+            decoded_instr_nxt.trap_cause = {2'b00, TT_ILLEGAL_INSTRUCTION};
         else if (is_syscall)
-            decoded_instr_nxt.trap_cause = { 2'b00, TT_SYSCALL };
+            decoded_instr_nxt.trap_cause = {2'b00, TT_SYSCALL};
         else
-            decoded_instr_nxt.trap_cause = { 2'b00, TT_RESET };
+            decoded_instr_nxt.trap_cause = {2'b00, TT_RESET};
     end
 
     // Subtle: Certain instructions need to be issued twice, including I/O
@@ -249,7 +249,8 @@ module instruction_decode_stage(
     // transaction and the second collects the result. Because the first
     // instruction updates internal state, bad things would happen if an
     // interrupt were dispatched between them. To avoid this, don't dispatch
-    // an interrupt if the first instruction has been issued.
+    // an interrupt if the first instruction has been issued (indicated by
+    // dd_sync_load_pending, ior_pending, or sq_sync_store_pending).
     assign masked_interrupt_flags = cr_interrupt_pending & cr_interrupt_en
         & ~ior_pending & ~dd_sync_load_pending & ~sq_sync_store_pending;
     assign raise_interrupt = masked_interrupt_flags[ifd_thread_idx];
@@ -260,8 +261,8 @@ module instruction_decode_stage(
     always_comb
     begin
         case (dlut_out.scalar1_loc)
-            SCLR1_14_10:  decoded_instr_nxt.scalar_sel1 = ifd_instruction[14:10];
-            default:      decoded_instr_nxt.scalar_sel1 = ifd_instruction[4:0]; //  src1
+            SCLR1_14_10: decoded_instr_nxt.scalar_sel1 = ifd_instruction[14:10];
+            default: decoded_instr_nxt.scalar_sel1 = ifd_instruction[4:0]; //  src1
         endcase
     end
 
@@ -358,7 +359,7 @@ module instruction_decode_stage(
                 decoded_instr_nxt.pipeline_sel = PIPE_SCYCLE_ARITH;
         end
         else if (ifd_instruction[31:28] == 4'b1111)
-            decoded_instr_nxt.pipeline_sel = PIPE_SCYCLE_ARITH;    // branches are evaluated in single cycle pipeline
+            decoded_instr_nxt.pipeline_sel = PIPE_SCYCLE_ARITH; // branches evaluated in single cycle pipeline
         else
             decoded_instr_nxt.pipeline_sel = PIPE_MEM;
     end
