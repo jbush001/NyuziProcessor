@@ -72,7 +72,6 @@ do_main:            move s0, 0    # Set argc to 0
                     bfalse s1, 1b
 
                     # Call atexit functions
-                    # XXX currently disabled
                     call call_atexit_functions
 
                     #  Halt all threads.

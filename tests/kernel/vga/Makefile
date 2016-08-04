@@ -1,5 +1,5 @@
 #
-# Copyright 2016 Jeff Bush
+# Copyright 2011-2015 Jeff Bush
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,15 +19,28 @@ TOPDIR=../../..
 include $(TOPDIR)/build/target.mk
 
 LIBS=-lc
-SRCS=memtest.c
+SRCS=vga.c
 
 OBJS=$(SRCS_TO_OBJS)
 DEPS=$(SRCS_TO_DEPS)
 
-memtest.elf: $(OBJS)
-	$(LD) -o memtest.elf -Ttext=0x1000 $(LDFLAGS) $(CRT0_KERN) $(OBJS) -los-kern $(LIBS) -los-kern $(LDFLAGS)
+all: fsimage.bin
+
+$(OBJ_DIR)/program.elf: $(OBJS)
+	$(LD) -o $(OBJ_DIR)/program.elf -Ttext=0x1000 $(LDFLAGS) $(CRT0_KERN) $(OBJS) $(LIBS) -los-kern $(LDFLAGS)
+
+#
+# To run, this uses the kernel built in software/kernel.
+# The compiled program is bundled into the filesystem
+# and loaded by the kernel.
+#
+run: $(OBJ_DIR)/program.elf fsimage.bin
+	$(EMULATOR) -f 640x480 -b fsimage.bin $(TOPDIR)/software/kernel/kernel.hex
+
+fsimage.bin: $(OBJ_DIR)/program.elf
+	$(MKFS) fsimage.bin $(OBJ_DIR)/program.elf
 
 clean:
-	rm -f memtest.elf
+	rm -rf $(OBJ_DIR) fsimage.bin
 
 -include $(DEPS)

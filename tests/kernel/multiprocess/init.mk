@@ -25,7 +25,7 @@ OBJS=$(SRCS_TO_OBJS)
 DEPS=$(SRCS_TO_DEPS)
 
 program.elf: $(OBJS)
-	$(LD) -o program.elf -Ttext=0x1000 $(LDFLAGS) $(CRT0_KERN) $(OBJS) $(LIBS) -los-kern $(LDFLAGS)
+	$(LD) -o program.elf -Ttext=0x1000 $(LDFLAGS) $(CRT0_KERN) $(OBJS) -los-kern $(LIBS) -los-kern $(LDFLAGS)
 
 clean:
 	rm -f program.elf
