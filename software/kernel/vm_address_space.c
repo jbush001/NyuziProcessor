@@ -247,6 +247,7 @@ static int soft_fault(struct vm_address_space *space, const struct vm_area *area
     unsigned int page_flags;
     struct vm_page *source_page;
     struct vm_page *dummy_page = 0;
+    unsigned int area_offset;
     unsigned int cache_offset;
     struct vm_cache *cache;
     int old_flags;
@@ -262,7 +263,8 @@ static int soft_fault(struct vm_address_space *space, const struct vm_area *area
         return 0;
     }
 
-    cache_offset = PAGE_ALIGN(address - area->low_address + area->cache_offset);
+    area_offset = PAGE_ALIGN(address - area->low_address);
+    cache_offset = PAGE_ALIGN(area_offset + area->cache_offset);
     old_flags = disable_interrupts();
     lock_vm_cache();
     assert(area->cache);
@@ -274,7 +276,7 @@ static int soft_fault(struct vm_address_space *space, const struct vm_area *area
         if (source_page)
             break;
 
-        if (cache->file && address - area->low_address < area->cache_length)
+        if (cache->file)
         {
             VM_DEBUG("reading page from file\n");
 
@@ -288,29 +290,34 @@ static int soft_fault(struct vm_address_space *space, const struct vm_area *area
             unlock_vm_cache();
             restore_interrupts(old_flags);
 
-            if (area->cache_length - cache_offset < PAGE_SIZE)
-                size_to_read = area->cache_length - cache_offset;
+            if (area->cache_length - area_offset < PAGE_SIZE)
+                size_to_read = area->cache_length - area_offset;
             else
                 size_to_read = PAGE_SIZE;
 
-            got = read_file(cache->file, cache_offset,
-                            (void*) PA_TO_VA(page_to_pa(source_page)), size_to_read);
-            if (got < 0)
+            if (size_to_read > 0)
             {
-                kprintf("failed to read from file\n");
-                dec_page_ref(source_page);
-                if (dummy_page != 0)
+                got = read_file(cache->file, cache_offset,
+                                (void*) PA_TO_VA(page_to_pa(source_page)), size_to_read);
+                if (got < 0)
                 {
-                    disable_interrupts();
-                    lock_vm_cache();
-                    remove_cache_page(dummy_page);
-                    unlock_vm_cache();
-                    restore_interrupts(old_flags);
-                    dec_page_ref(dummy_page);
-                }
+                    kprintf("failed to read from file\n");
+                    dec_page_ref(source_page);
+                    if (dummy_page != 0)
+                    {
+                        disable_interrupts();
+                        lock_vm_cache();
+                        remove_cache_page(dummy_page);
+                        unlock_vm_cache();
+                        restore_interrupts(old_flags);
+                        dec_page_ref(dummy_page);
+                    }
 
-                return 0;
+                    return 0;
+                }
             }
+            else
+                size_to_read = 0;
 
             // For BSS, clear out data past the end of the file
             if (size_to_read < PAGE_SIZE)
