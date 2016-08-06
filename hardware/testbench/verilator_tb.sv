@@ -25,6 +25,7 @@ module verilator_tb(
     input       reset);
 
     localparam MEM_SIZE = 'h1000000;
+    localparam NUM_PERIPHERALS = 6;
 
     int total_cycles;
     logic[1000:0] filename;
@@ -46,18 +47,16 @@ module verilator_tb(
     logic sd_cs_n;
     logic sd_di;
     logic sd_sclk;
-    io_bus_interface loopback_uart_io_bus();
-    io_bus_interface ps2_io_bus();
-    io_bus_interface sdcard_io_bus();
-    io_bus_interface vga_io_bus();
-    io_bus_interface timer_io_bus();
+    io_bus_interface peripheral_io_bus[NUM_PERIPHERALS - 1:0]();
     io_bus_interface nyuzi_io_bus();
-    enum logic[2:0] {
+    scalar_t peripheral_read_data[NUM_PERIPHERALS];
+    enum logic[$clog2(NUM_PERIPHERALS) - 1:0] {
+        IO_ONES,
         IO_LOOPBACK_UART,
         IO_PS2,
         IO_SDCARD,
-        IO_ONES,
-        IO_NONE
+        IO_TIMER,
+        IO_VGA
     } io_bus_source;
     scalar_t cosim_timer_interval;
     logic cosim_int;
@@ -134,19 +133,21 @@ module verilator_tb(
         .ROW_ADDR_WIDTH(SDRAM_ROW_ADDR_WIDTH),
         .COL_ADDR_WIDTH(SDRAM_COL_ADDR_WIDTH),
         .T_REFRESH(750),
-        .T_POWERUP(5)) sdram_controller(
-            .axi_bus(axi_bus_s[0]),
-            .*);
+        .T_POWERUP(5)
+    ) sdram_controller(
+        .axi_bus(axi_bus_s[0]),
+        .*);
 
     sim_sdram #(
         .DATA_WIDTH(SDRAM_DATA_WIDTH),
         .ROW_ADDR_WIDTH(SDRAM_ROW_ADDR_WIDTH),
         .COL_ADDR_WIDTH(SDRAM_COL_ADDR_WIDTH),
-        .MAX_REFRESH_INTERVAL(800)) memory(.*);
+        .MAX_REFRESH_INTERVAL(800)
+    ) memory(.*);
 
     assign loopback_uart_rx = loopback_uart_tx & loopback_uart_mask;
     uart #(.BASE_ADDRESS('h140)) loopback_uart(
-        .io_bus(loopback_uart_io_bus),
+        .io_bus(peripheral_io_bus[IO_LOOPBACK_UART]),
         .uart_tx(loopback_uart_tx),
         .uart_rx(loopback_uart_rx),
         .*);
@@ -161,7 +162,7 @@ module verilator_tb(
     sim_sdmmc sim_sdmmc(.*);
 
     spi_controller #(.BASE_ADDRESS('hc0)) spi_controller(
-        .io_bus(sdcard_io_bus),
+        .io_bus(peripheral_io_bus[IO_SDCARD]),
         .spi_clk(sd_sclk),
         .spi_cs_n(sd_cs_n),
         .spi_miso(sd_do),
@@ -171,11 +172,11 @@ module verilator_tb(
     sim_ps2 sim_ps2(.*);
 
     ps2_controller #(.BASE_ADDRESS('h80)) ps2_controller(
-        .io_bus(ps2_io_bus),
+        .io_bus(peripheral_io_bus[IO_PS2]),
         .*);
 
     timer #(.BASE_ADDRESS('h240)) timer(
-        .io_bus(timer_io_bus),
+        .io_bus(peripheral_io_bus[IO_TIMER]),
         .*);
 
 `ifdef SIMULATE_VGA
@@ -185,10 +186,26 @@ module verilator_tb(
     // - Run one of the apps (like mandelbrot) for maybe 20 seconds, ctrl-C to stop
     // - Look the resulting waveform in GtkWave to check that the timings are correct.
     vga_controller #(.BASE_ADDRESS('h180)) vga_controller(
-        .io_bus(vga_io_bus),
+        .io_bus(peripheral_io_bus[IO_VGA]),
         .axi_bus(axi_bus_m[1]),
         .*);
 `endif
+
+    assign peripheral_io_bus[IO_ONES].read_data = 32'hffffffff;
+
+    assign nyuzi_io_bus.read_data = peripheral_read_data[io_bus_source];
+
+    genvar io_idx;
+    generate
+        for (io_idx = 0; io_idx < NUM_PERIPHERALS; io_idx++)
+        begin : io_gen
+            assign peripheral_io_bus[io_idx].write_en = nyuzi_io_bus.write_en;
+            assign peripheral_io_bus[io_idx].read_en = nyuzi_io_bus.read_en;
+            assign peripheral_io_bus[io_idx].address = nyuzi_io_bus.address;
+            assign peripheral_io_bus[io_idx].write_data = nyuzi_io_bus.write_data;
+            assign peripheral_read_data[io_idx] = peripheral_io_bus[io_idx].read_data;
+        end
+    endgenerate
 
     trace_logger trace_logger(
         .wb_writeback_en(`CORE0.wb_writeback_en),
@@ -438,7 +455,7 @@ module verilator_tb(
                     // Loopback UART
                     'h14?: io_bus_source <= IO_LOOPBACK_UART;
 
-                    default: io_bus_source <= IO_NONE;
+                    default: io_bus_source <= IO_ONES;  // XXX Might want random source
                 endcase
             end
 
@@ -460,40 +477,4 @@ module verilator_tb(
                 $fwrite(profile_fd, "%x\n", `CORE0.ifetch_tag_stage.next_program_counter[$random() % `THREADS_PER_CORE]);
         end
     end
-
-    always_comb
-    begin
-        case (io_bus_source)
-            IO_LOOPBACK_UART: nyuzi_io_bus.read_data = loopback_uart_io_bus.read_data;
-            IO_PS2: nyuzi_io_bus.read_data = ps2_io_bus.read_data;
-            IO_SDCARD: nyuzi_io_bus.read_data = sdcard_io_bus.read_data;
-            IO_ONES:  nyuzi_io_bus.read_data = 32'hffffffff;
-            default:  nyuzi_io_bus.read_data = $random();
-        endcase
-    end
-
-    assign loopback_uart_io_bus.write_en = nyuzi_io_bus.write_en;
-    assign loopback_uart_io_bus.read_en = nyuzi_io_bus.read_en;
-    assign loopback_uart_io_bus.address = nyuzi_io_bus.address;
-    assign loopback_uart_io_bus.write_data = nyuzi_io_bus.write_data;
-
-    assign ps2_io_bus.write_en = nyuzi_io_bus.write_en;
-    assign ps2_io_bus.read_en = nyuzi_io_bus.read_en;
-    assign ps2_io_bus.address = nyuzi_io_bus.address;
-    assign ps2_io_bus.write_data = nyuzi_io_bus.write_data;
-
-    assign sdcard_io_bus.write_en = nyuzi_io_bus.write_en;
-    assign sdcard_io_bus.read_en = nyuzi_io_bus.read_en;
-    assign sdcard_io_bus.address = nyuzi_io_bus.address;
-    assign sdcard_io_bus.write_data = nyuzi_io_bus.write_data;
-
-    assign vga_io_bus.write_en = nyuzi_io_bus.write_en;
-    assign vga_io_bus.read_en = nyuzi_io_bus.read_en;
-    assign vga_io_bus.address = nyuzi_io_bus.address;
-    assign vga_io_bus.write_data = nyuzi_io_bus.write_data;
-
-    assign timer_io_bus.write_en = nyuzi_io_bus.write_en;
-    assign timer_io_bus.read_en = nyuzi_io_bus.read_en;
-    assign timer_io_bus.address = nyuzi_io_bus.address;
-    assign timer_io_bus.write_data = nyuzi_io_bus.write_data;
 endmodule
