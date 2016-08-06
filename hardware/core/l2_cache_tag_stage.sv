@@ -55,7 +55,10 @@ module l2_cache_tag_stage(
     output cache_line_data_t              l2t_data_from_memory,
     output logic                          l2t_is_restarted_flush);
 
-    cache_lru #(.NUM_SETS(`L2_SETS), .NUM_WAYS(`L2_WAYS)) cache_lru(
+    cache_lru #(
+        .NUM_SETS(`L2_SETS),
+        .NUM_WAYS(`L2_WAYS)
+    ) cache_lru(
         .fill_en(l2a_is_l2_fill),
         .fill_set(l2a_request.address.set_idx),
         .fill_way(l2t_fill_way),    // Output to next stage

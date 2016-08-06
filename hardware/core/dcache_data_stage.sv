@@ -289,11 +289,17 @@ module dcache_data_stage(
     //
     // Store alignment
     //
-    idx_to_oh #(.NUM_SIGNALS(`CACHE_LINE_WORDS), .DIRECTION("MSB0")) idx_to_oh_subcycle(
+    idx_to_oh #(
+        .NUM_SIGNALS(`CACHE_LINE_WORDS),
+        .DIRECTION("MSB0")
+    ) idx_to_oh_subcycle(
         .one_hot(subcycle_mask),
         .index(dt_subcycle));
 
-    idx_to_oh #(.NUM_SIGNALS(`CACHE_LINE_WORDS), .DIRECTION("MSB0")) idx_to_oh_cache_lane(
+    idx_to_oh #(
+        .NUM_SIGNALS(`CACHE_LINE_WORDS),
+        .DIRECTION("MSB0")
+    ) idx_to_oh_cache_lane(
         .one_hot(cache_lane_mask),
         .index(cache_lane_idx));
 

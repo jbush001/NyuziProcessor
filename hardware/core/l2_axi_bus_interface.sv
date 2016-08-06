@@ -123,9 +123,9 @@ module l2_axi_bus_interface(
     assign load_request_pending = !load_queue_empty;
 
     l2_cache_pending_miss_cam l2_cache_pending_miss_cam(
-                            .request_valid(l2r_request_valid),
-                            .request_addr({miss_addr.tag, miss_addr.set_idx}),
-                            .*);
+        .request_valid(l2r_request_valid),
+        .request_addr({miss_addr.tag, miss_addr.set_idx}),
+        .*);
 
     assign perf_l2_writeback = enqueue_writeback_request && !writeback_queue_almost_full;
 
@@ -135,9 +135,11 @@ module l2_axi_bus_interface(
     assign writeback_queue_in.core = l2r_request.core;
     assign writeback_queue_in.id = l2r_request.id;
 
-    sync_fifo #(.WIDTH($bits(writeback_queue_entry_t)),
+    sync_fifo #(
+        .WIDTH($bits(writeback_queue_entry_t)),
         .SIZE(REQUEST_QUEUE_LENGTH),
-        .ALMOST_FULL_THRESHOLD(REQUEST_QUEUE_LENGTH - L2REQ_LATENCY)) sync_fifo_pending_writeback(
+        .ALMOST_FULL_THRESHOLD(REQUEST_QUEUE_LENGTH - L2REQ_LATENCY)
+    ) sync_fifo_pending_writeback(
         .clk(clk),
         .reset(reset),
         .flush_en(1'b0),
@@ -153,25 +155,21 @@ module l2_axi_bus_interface(
     assign bif_writeback_address = writeback_queue_out.address;
     assign bif_writeback_data = writeback_queue_out.data;
 
-    sync_fifo #(.WIDTH($bits(l2req_packet_t) + 1),
+    sync_fifo #(
+        .WIDTH($bits(l2req_packet_t) + 1),
         .SIZE(REQUEST_QUEUE_LENGTH),
-        .ALMOST_FULL_THRESHOLD(REQUEST_QUEUE_LENGTH - L2REQ_LATENCY)) sync_fifo_pending_load(
+        .ALMOST_FULL_THRESHOLD(REQUEST_QUEUE_LENGTH - L2REQ_LATENCY)
+    ) sync_fifo_pending_load(
         .clk(clk),
         .reset(reset),
         .flush_en(1'b0),
         .almost_full(load_queue_almost_full),
         .enqueue_en(enqueue_load_request),
-        .value_i({
-            duplicate_request,
-            l2r_request
-        }),
+        .value_i({duplicate_request, l2r_request}),
         .empty(load_queue_empty),
         .almost_empty(),
         .dequeue_en(load_dequeue_en),
-        .value_o({
-            l2bi_collided_miss,
-            lmq_out_request
-        }),
+        .value_o({l2bi_collided_miss, lmq_out_request}),
         .full(/* ignore */));
 
     // Stop accepting new L2 packets until space is available in the queues

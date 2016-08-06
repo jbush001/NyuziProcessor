@@ -282,7 +282,10 @@ module dcache_tag_stage
     assign ppage_idx = fetched_addr[31-:`PAGE_NUM_BITS];
 `endif
 
-    cache_lru #(.NUM_WAYS(`L1D_WAYS), .NUM_SETS(`L1D_SETS)) lru(
+    cache_lru #(
+        .NUM_WAYS(`L1D_WAYS),
+        .NUM_SETS(`L1D_SETS)
+    ) lru(
         .fill_en(l2i_dcache_lru_fill_en),
         .fill_set(l2i_dcache_lru_fill_set),
         .fill_way(dt_fill_lru),

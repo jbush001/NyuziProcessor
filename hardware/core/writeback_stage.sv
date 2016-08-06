@@ -265,7 +265,10 @@ module writeback_stage(
         end
     end
 
-    idx_to_oh #(.NUM_SIGNALS(`THREADS_PER_CORE), .DIRECTION("LSB0")) idx_to_oh_thread(
+    idx_to_oh #(
+        .NUM_SIGNALS(`THREADS_PER_CORE),
+        .DIRECTION("LSB0")
+    ) idx_to_oh_thread(
         .one_hot(thread_dd_oh),
         .index(dd_thread_idx));
 
@@ -339,7 +342,10 @@ module writeback_stage(
         end
     endgenerate
 
-    idx_to_oh #(.NUM_SIGNALS(`VECTOR_LANES), .DIRECTION("MSB0")) convert_dd_lane(
+    idx_to_oh #(
+        .NUM_SIGNALS(`VECTOR_LANES),
+        .DIRECTION("MSB0")
+    ) convert_dd_lane(
         .one_hot(dd_vector_lane_oh),
         .index(dd_subcycle));
 

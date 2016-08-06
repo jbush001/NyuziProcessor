@@ -57,7 +57,10 @@ module l2_cache_pending_miss_cam
 
     assign duplicate_request = cam_hit;
 
-    cam #(.NUM_ENTRIES(QUEUE_SIZE), .KEY_WIDTH($bits(cache_line_index_t))) cam_pending_miss(
+    cam #(
+        .NUM_ENTRIES(QUEUE_SIZE),
+        .KEY_WIDTH($bits(cache_line_index_t))
+    ) cam_pending_miss(
         .clk(clk),
         .reset(reset),
         .lookup_key(request_addr),

@@ -257,7 +257,10 @@ module ifetch_tag_stage
     assign ppage_idx = last_selected_pc[31-:`PAGE_NUM_BITS];
 `endif
 
-    cache_lru #(.NUM_WAYS(`L1D_WAYS), .NUM_SETS(`L1I_SETS)) cache_lru(
+    cache_lru #(
+        .NUM_WAYS(`L1D_WAYS),
+        .NUM_SETS(`L1I_SETS)
+    ) cache_lru(
         .fill_en(l2i_icache_lru_fill_en),
         .fill_set(l2i_icache_lru_fill_set),
         .fill_way(ift_fill_lru),
