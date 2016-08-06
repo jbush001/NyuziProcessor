@@ -689,8 +689,9 @@ static void raise_trap(struct thread *thread, uint32_t trap_address, enum trap_t
     thread->enable_supervisor = true;
 }
 
-// Translate addresses using the translation lookaside buffer. Raise faults
-// if necessary.
+// Translate addresses using the translation lookaside buffer. Returns true
+// if there was a valid translation, false otherwise (in the latter case, it
+// will also raise a trap or print an error as a side effect).
 static bool translate_address(struct thread *thread, uint32_t virtual_address,
                               uint32_t *out_physical_address, bool is_store,
                               bool is_data_access)

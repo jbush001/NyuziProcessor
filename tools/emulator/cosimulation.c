@@ -37,8 +37,8 @@
 //
 
 static void print_cosim_expected(void);
-static int run_until_next_event(struct core*, uint32_t thread_id);
-static int compare_masked(uint32_t mask, const uint32_t *values1, const uint32_t *values2);
+static bool run_until_next_event(struct core*, uint32_t thread_id);
+static bool masked_vectors_equal(uint32_t mask, const uint32_t *values1, const uint32_t *values2);
 static int parse_hex_vector(const char *str, uint32_t *vector_values, bool endian_swap);
 
 static enum
@@ -192,7 +192,7 @@ void cosim_check_set_vector_reg(struct core *core, uint32_t pc, uint32_t reg, ui
     if (expected_event != EVENT_VECTOR_WRITEBACK
             || expected_pc != pc
             || expected_register != reg
-            || !compare_masked(mask, expected_values, values)
+            || !masked_vectors_equal(mask, expected_values, values)
             || expected_mask != (mask & 0xffff))
     {
         cosim_mismatch = true;
@@ -227,7 +227,7 @@ void cosim_check_vector_store(struct core *core, uint32_t pc, uint32_t address, 
             || expected_pc != pc
             || expected_address != (address & ~(NUM_VECTOR_LANES * 4u - 1))
             || expected_mask != byte_mask
-            || !compare_masked(mask, expected_values, values))
+            || !masked_vectors_equal(mask, expected_values, values))
     {
         cosim_mismatch = true;
         print_registers(core, expected_thread);
@@ -310,8 +310,8 @@ static void print_cosim_expected(void)
     }
 }
 
-// Returns 1 if the event matched, 0 if it did not.
-static int run_until_next_event(struct core *core, uint32_t thread_id)
+// Returns true if the event matched, false if it did not.
+static bool run_until_next_event(struct core *core, uint32_t thread_id)
 {
     int count = 0;
 
@@ -330,7 +330,7 @@ static int run_until_next_event(struct core *core, uint32_t thread_id)
 }
 
 // Returns 1 if the masked values match, 0 otherwise
-static int compare_masked(uint32_t mask, const uint32_t *values1, const uint32_t *values2)
+static bool masked_vectors_equal(uint32_t mask, const uint32_t *values1, const uint32_t *values2)
 {
     int lane;
 
@@ -339,11 +339,11 @@ static int compare_masked(uint32_t mask, const uint32_t *values1, const uint32_t
         if (mask & (1 << lane))
         {
             if (values1[lane] != values2[lane])
-                return 0;
+                return false;
         }
     }
 
-    return 1;
+    return true;
 }
 
 static int parse_hex_vector(const char *str, uint32_t *vector_values, bool endian_swap)
