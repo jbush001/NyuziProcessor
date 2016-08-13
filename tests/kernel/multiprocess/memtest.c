@@ -41,7 +41,7 @@ int main()
     unsigned char *area_base;
     int i;
 
-    area_base = (unsigned char*) create_area(0x100000, ALLOC_SIZE, AREA_PLACE_EXACT,
+    area_base = (unsigned char*) create_area(0x10000000, ALLOC_SIZE, AREA_PLACE_EXACT,
                                              "alloc_area", AREA_WRITABLE);
     for (i = 0; i < ALLOC_SIZE; i += STRIDE)
     {
