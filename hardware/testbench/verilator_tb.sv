@@ -28,7 +28,7 @@ module verilator_tb(
     localparam NUM_PERIPHERALS = 6;
 
     int total_cycles;
-    logic[1000:0] filename;
+    string filename;
     bit state_dump_en;
     int state_dump_fd;
     int finish_cycles;
