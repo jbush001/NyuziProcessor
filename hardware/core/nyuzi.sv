@@ -45,15 +45,13 @@ module nyuzi
     logic[`NUM_CORES - 1:0] ior_request_valid;
     logic[`TOTAL_THREADS - 1:0] thread_en;
 
-    // XXX AUTOLOGIC not generating these
-    l2rsp_packet_t l2_response;
-    iorsp_packet_t ii_response;
-
     /*AUTOLOGIC*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
     logic               ii_ready [`NUM_CORES];  // From io_interconnect of io_interconnect.v
+    iorsp_packet_t      ii_response;            // From io_interconnect of io_interconnect.v
     logic               ii_response_valid;      // From io_interconnect of io_interconnect.v
     logic               l2_ready [`NUM_CORES];  // From l2_cache of l2_cache.v
+    l2rsp_packet_t      l2_response;            // From l2_cache of l2_cache.v
     logic               l2_response_valid;      // From l2_cache of l2_cache.v
     // End of automatics
 

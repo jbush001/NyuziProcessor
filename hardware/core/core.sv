@@ -48,21 +48,18 @@ module core
     // Performance events
     output logic [`CORE_PERF_EVENTS - 1:0] core_perf_events);
 
-    // XXX for some reason, AUTOLOGIC doesn't generate these.
-    // Should figure out why.
-    scalar_t cr_creg_read_val;
-    thread_bitmap_t cr_interrupt_en;
-    scalar_t cr_eret_address[`THREADS_PER_CORE];
-    scalar_t cr_trap_handler;
-    scalar_t cr_tlb_miss_handler;
-    subcycle_t cr_eret_subcycle[`THREADS_PER_CORE];
-
     /*AUTOLOGIC*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
+    scalar_t            cr_creg_read_val;       // From control_registers of control_registers.v
     logic [`ASID_WIDTH-1:0] cr_current_asid [`THREADS_PER_CORE];// From control_registers of control_registers.v
+    scalar_t            cr_eret_address [`THREADS_PER_CORE];// From control_registers of control_registers.v
+    subcycle_t          cr_eret_subcycle [`THREADS_PER_CORE];// From control_registers of control_registers.v
+    thread_bitmap_t     cr_interrupt_en;        // From control_registers of control_registers.v
     logic [`TOTAL_THREADS-1:0] cr_interrupt_pending;// From control_registers of control_registers.v
     logic               cr_mmu_en [`THREADS_PER_CORE];// From control_registers of control_registers.v
     logic               cr_supervisor_en [`THREADS_PER_CORE];// From control_registers of control_registers.v
+    scalar_t            cr_tlb_miss_handler;    // From control_registers of control_registers.v
+    scalar_t            cr_trap_handler;        // From control_registers of control_registers.v
     logic               dd_cache_miss;          // From dcache_data_stage of dcache_data_stage.v
     cache_line_index_t  dd_cache_miss_addr;     // From dcache_data_stage of dcache_data_stage.v
     logic               dd_cache_miss_synchronized;// From dcache_data_stage of dcache_data_stage.v
