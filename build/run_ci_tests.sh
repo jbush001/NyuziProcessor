@@ -21,8 +21,7 @@
 #
 
 (cd tests/cosimulation
-./generate_random.py -m 3
-./generate_random.py -i -o random-interrupt.s)
+./generate_random.py -m 3)
 
 verilator --version
 make test
