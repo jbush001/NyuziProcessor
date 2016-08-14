@@ -34,10 +34,7 @@ module verilator_tb(
     int finish_cycles;
     bit profile_en;
     int profile_fd;
-    scalar_t io_read_data;
     int cosim_int_count;
-    scalar_t spi_read_data;
-    scalar_t ps2_read_data;
     axi4_interface axi_bus_s[1:0]();
     axi4_interface axi_bus_m[1:0]();
     scalar_t loopback_uart_read_data;
@@ -115,6 +112,10 @@ module verilator_tb(
         .interrupt_req({14'd0, timer_int, cosim_int}),
         .*);
 
+    //
+    // AXI buses/memory subsystem
+    //
+
     axi_interconnect axi_interconnect(
         .axi_bus_s(axi_bus_s),
         .axi_bus_m(axi_bus_m),
@@ -125,8 +126,6 @@ module verilator_tb(
     localparam SDRAM_ROW_ADDR_WIDTH = 12;
     localparam SDRAM_COL_ADDR_WIDTH = $clog2(MEM_SIZE / ((1 << SDRAM_ROW_ADDR_WIDTH)
         * SDRAM_NUM_BANKS * (SDRAM_DATA_WIDTH / 8)));
-
-    `define MEMORY memory.memory
 
     sdram_controller #(
         .DATA_WIDTH(SDRAM_DATA_WIDTH),
@@ -145,19 +144,23 @@ module verilator_tb(
         .MAX_REFRESH_INTERVAL(800)
     ) memory(.*);
 
-    assign loopback_uart_rx = loopback_uart_tx & loopback_uart_mask;
-    uart #(.BASE_ADDRESS('h140)) loopback_uart(
-        .io_bus(peripheral_io_bus[IO_LOOPBACK_UART]),
-        .uart_tx(loopback_uart_tx),
-        .uart_rx(loopback_uart_rx),
-        .*);
-
     // The s1 interface is not connected to anything in this configuration.
     assign axi_bus_m[1].m_awvalid = 0;
     assign axi_bus_m[1].m_wvalid = 0;
     assign axi_bus_m[1].m_arvalid = 0;
     assign axi_bus_m[1].m_rready = 0;
     assign axi_bus_m[1].m_bready = 0;
+
+    //
+    // Peripherals
+    //
+
+    assign loopback_uart_rx = loopback_uart_tx & loopback_uart_mask;
+    uart #(.BASE_ADDRESS('h140)) loopback_uart(
+        .io_bus(peripheral_io_bus[IO_LOOPBACK_UART]),
+        .uart_tx(loopback_uart_tx),
+        .uart_rx(loopback_uart_rx),
+        .*);
 
     sim_sdmmc sim_sdmmc(.*);
 
@@ -207,6 +210,81 @@ module verilator_tb(
         end
     endgenerate
 
+    always_ff @(posedge clk, posedge reset)
+    begin
+        if (reset)
+        begin
+            cosim_int_count <= 0;
+            cosim_int <= 0;
+        end
+        else if (cosim_int_count == 0)
+        begin
+            cosim_int_count <= cosim_timer_interval;
+            cosim_int <= 1;
+        end
+        else
+        begin
+            cosim_int_count <= cosim_int_count - 1;
+            cosim_int <= 0;
+        end
+    end
+
+    // Device registers
+    always_ff @(posedge clk, posedge reset)
+    begin
+        if (reset)
+        begin
+            loopback_uart_mask <= 1;
+            cosim_timer_interval <= 1000;
+        end
+        else
+        begin
+            if (nyuzi_io_bus.write_en)
+            begin
+                case (nyuzi_io_bus.address)
+                    // Serial output
+                    'h48:
+                    begin
+                        $write("%c", nyuzi_io_bus.write_data[7:0]);
+                        $fflush(1);
+                    end
+
+                    // Loopback UART: force framing error
+                    'h1c: loopback_uart_mask <= nyuzi_io_bus.write_data[0];
+
+                    // Set timer interval
+                    'h20: cosim_timer_interval <= nyuzi_io_bus.write_data;
+                endcase
+            end
+
+            if (nyuzi_io_bus.read_en)
+            begin
+                casez (nyuzi_io_bus.address[15:0])
+                    // Hack for cosimulation tests
+                    'h04,
+                    'h08,
+                    'h40: // Serial status
+                        io_bus_source <= IO_ONES;
+
+                    // PS2
+                    'h8?: io_bus_source <= IO_PS2;
+
+                    // SPI (SD card)
+                    'hc?: io_bus_source <= IO_SDCARD;
+
+                    // Loopback UART
+                    'h14?: io_bus_source <= IO_LOOPBACK_UART;
+
+                    default: io_bus_source <= IO_ONES;  // XXX Might want random source
+                endcase
+            end
+        end
+    end
+
+    //
+    // Simulator option/execution handling
+    //
+
     trace_logger trace_logger(
         .wb_writeback_en(`CORE0.wb_writeback_en),
         .wb_writeback_is_vector(`CORE0.wb_writeback_is_vector),
@@ -252,7 +330,7 @@ module verilator_tb(
     begin
         for (int line_offset = 0; line_offset < `CACHE_LINE_WORDS; line_offset++)
         begin
-            `MEMORY[(int'(tag) * `L2_SETS + int'(set)) * `CACHE_LINE_WORDS + line_offset] =
+            memory.sdram_data[(int'(tag) * `L2_SETS + int'(set)) * `CACHE_LINE_WORDS + line_offset] =
                 int'(nyuzi.l2_cache.l2_cache_read_stage.sram_l2_data.data[{way, set}]
                  >> ((`CACHE_LINE_WORDS - 1 - line_offset) * 32));
         end
@@ -323,10 +401,10 @@ module verilator_tb(
             profile_en = 0;
 
         for (int i = 0; i < MEM_SIZE; i++)
-            `MEMORY[i] = 0;
+            memory.sdram_data[i] = 0;
 
         if ($value$plusargs("bin=%s", filename) != 0)
-            $readmemh(filename, `MEMORY);
+            $readmemh(filename, memory.sdram_data);
         else
         begin
             $display("error opening file");
@@ -351,10 +429,10 @@ module verilator_tb(
             dump_fp = $fopen(filename, "wb");
             for (int i = 0; i < mem_dump_length; i += 4)
             begin
-                $c("fputc(", `MEMORY[(mem_dump_start + i) / 4][31:24], ", VL_CVT_I_FP(", dump_fp, "));");
-                $c("fputc(", `MEMORY[(mem_dump_start + i) / 4][23:16], ", VL_CVT_I_FP(", dump_fp, "));");
-                $c("fputc(", `MEMORY[(mem_dump_start + i) / 4][15:8], ", VL_CVT_I_FP(", dump_fp, "));");
-                $c("fputc(", `MEMORY[(mem_dump_start + i) / 4][7:0], ", VL_CVT_I_FP(", dump_fp, "));");
+                $c("fputc(", memory.sdram_data[(mem_dump_start + i) / 4][31:24], ", VL_CVT_I_FP(", dump_fp, "));");
+                $c("fputc(", memory.sdram_data[(mem_dump_start + i) / 4][23:16], ", VL_CVT_I_FP(", dump_fp, "));");
+                $c("fputc(", memory.sdram_data[(mem_dump_start + i) / 4][15:8], ", VL_CVT_I_FP(", dump_fp, "));");
+                $c("fputc(", memory.sdram_data[(mem_dump_start + i) / 4][7:0], ", VL_CVT_I_FP(", dump_fp, "));");
             end
 
             $fclose(dump_fp);
@@ -375,29 +453,8 @@ module verilator_tb(
     begin
         if (reset)
         begin
-            cosim_int_count <= 0;
-            cosim_int <= 0;
-        end
-        else if (cosim_int_count == 0)
-        begin
-            cosim_int_count <= cosim_timer_interval;
-            cosim_int <= 1;
-        end
-        else
-        begin
-            cosim_int_count <= cosim_int_count - 1;
-            cosim_int <= 0;
-        end
-    end
-
-    always_ff @(posedge clk, posedge reset)
-    begin : update
-        if (reset)
-        begin
-            loopback_uart_mask <= 1;
             finish_cycles <= '0;
             total_cycles <= '0;
-            cosim_timer_interval <= 1000;
         end
         else
         begin
@@ -414,50 +471,6 @@ module verilator_tb(
             end
             else
                 total_cycles <= total_cycles + 1;    // Don't count cycles after halt
-
-            //
-            // Device registers
-            //
-
-            if (nyuzi_io_bus.write_en)
-            begin
-                case (nyuzi_io_bus.address)
-                    // Serial output
-                    'h48:
-                    begin
-                        $write("%c", nyuzi_io_bus.write_data[7:0]);
-                        $fflush(1);
-                    end
-
-                    // Loopback UART: force framing error
-                    'h1c: loopback_uart_mask <= nyuzi_io_bus.write_data[0];
-
-                    // Set timer interval
-                    'h20: cosim_timer_interval <= nyuzi_io_bus.write_data;
-                endcase
-            end
-
-            if (nyuzi_io_bus.read_en)
-            begin
-                casez (nyuzi_io_bus.address[15:0])
-                    // Hack for cosimulation tests
-                    'h04,
-                    'h08,
-                    'h40: // Serial status
-                        io_bus_source <= IO_ONES;
-
-                    // PS2
-                    'h8?: io_bus_source <= IO_PS2;
-
-                    // SPI (SD card)
-                    'hc?: io_bus_source <= IO_SDCARD;
-
-                    // Loopback UART
-                    'h14?: io_bus_source <= IO_LOOPBACK_UART;
-
-                    default: io_bus_source <= IO_ONES;  // XXX Might want random source
-                endcase
-            end
 
             if (state_dump_en)
             begin

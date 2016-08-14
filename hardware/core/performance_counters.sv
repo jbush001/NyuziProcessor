@@ -37,7 +37,6 @@ module performance_counters
 
     logic[31:0] event_counter[NUM_COUNTERS];
     logic[EVENT_IDX_WIDTH - 1:0] event_select[NUM_COUNTERS];
-    logic[31:0] read_counter_value;
     logic[31:0] read_addr;
     logic[COUNTER_IDX_WIDTH - 1:0] read_idx;
 
