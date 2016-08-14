@@ -381,7 +381,7 @@ bool execute_instructions(struct core *core, uint32_t thread_id, uint64_t total_
     {
         if (core->thread_enable_mask == 0)
         {
-            printf("struct thread enable mask is now zero\n");
+            printf("thread enable mask is now zero\n");
             return false;
         }
 
