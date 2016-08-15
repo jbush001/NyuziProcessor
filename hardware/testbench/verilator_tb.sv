@@ -34,7 +34,6 @@ module verilator_tb(
     int finish_cycles;
     bit profile_en;
     int profile_fd;
-    int cosim_int_count;
     axi4_interface axi_bus_s[1:0]();
     axi4_interface axi_bus_m[1:0]();
     scalar_t loopback_uart_read_data;
@@ -55,7 +54,8 @@ module verilator_tb(
         IO_TIMER,
         IO_VGA
     } io_bus_source;
-    scalar_t cosim_timer_interval;
+    int cosim_timer_interval;
+    int cosim_int_delay;
     logic cosim_int;
     logic timer_int;
 
@@ -214,17 +214,17 @@ module verilator_tb(
     begin
         if (reset)
         begin
-            cosim_int_count <= 0;
+            cosim_int_delay <= 0;
             cosim_int <= 0;
         end
-        else if (cosim_int_count == 0)
+        else if (cosim_int_delay == 0)
         begin
-            cosim_int_count <= cosim_timer_interval;
+            cosim_int_delay <= cosim_timer_interval;
             cosim_int <= 1;
         end
         else
         begin
-            cosim_int_count <= cosim_int_count - 1;
+            cosim_int_delay <= cosim_int_delay - 1;
             cosim_int <= 0;
         end
     end
