@@ -23,7 +23,7 @@
 #include "vm_page.h"
 #include "vm_translation_map.h"
 
-#define MAX_SEGMENTS 4
+#define MAX_SEGMENTS 10
 
 int load_program(struct process *proc,
                  const char *filename,
@@ -61,6 +61,18 @@ int load_program(struct process *proc,
         return -1;
     }
 
+    if (image_header.e_phnum > MAX_SEGMENTS)
+    {
+        kprintf("load_program: image has too many segments\n");
+        return -1;
+    }
+
+    if (image_header.e_phnum == 0)
+    {
+        kprintf("load_program: image has too few segments\n");
+        return -1;
+    }
+
     if (read_file(file, image_header.e_phoff, &segments, image_header.e_phnum
                   * sizeof(struct Elf32_Phdr)) < 0)
     {
@@ -68,14 +80,9 @@ int load_program(struct process *proc,
         return -1;
     }
 
-    if (image_header.e_phnum > MAX_SEGMENTS)
-    {
-        kprintf("load_program: image has too many segments\n");
-        return -1;
-    }
-
     image_cache = create_vm_cache(0);
     image_cache->file = file;
+
     for (int segment_index = 0; segment_index < image_header.e_phnum; segment_index++)
     {
         const struct Elf32_Phdr *segment = &segments[segment_index];
@@ -122,6 +129,17 @@ int load_program(struct process *proc,
 
         area->cache_length = segment->p_filesz;
     }
+
+    // These were created with a ref held. The new areas/copy caches now hold
+    // references. Remove our references so these will go away when those are
+    // dead.
+    if (image_cache)
+        dec_cache_ref(image_cache);
+
+    if (cow_cache)
+        dec_cache_ref(cow_cache);
+
+    kprintf("entry point for program is %08x\n", image_header.e_entry);
 
     *out_entry = image_header.e_entry;
     return 0;

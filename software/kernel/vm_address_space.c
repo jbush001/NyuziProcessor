@@ -102,6 +102,8 @@ struct vm_area *create_area(struct vm_address_space *space, unsigned int address
     // Anonymous area, create a cache if non is specified.
     if (cache == 0)
         cache = create_vm_cache(0);
+    else
+        inc_cache_ref(cache);
 
     rwlock_lock_write(&space->mut);
     area = create_vm_area(&space->area_map, address, size, place, name, flags);
