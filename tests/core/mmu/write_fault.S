@@ -22,12 +22,12 @@
 //
 
                 .globl _start
-_start:         mmu_fault_test (TT_ILLEGAL_STORE | TRAP_CAUSE_DCACHE | TRAP_CAUSE_STORE), store_32, 0x1350, itlb_entries, dtlb_entries, FLAG_MMU_EN | FLAG_SUPERVISOR_EN
+_start:         mmu_fault_test (TT_ILLEGAL_STORE | TRAP_CAUSE_DCACHE | TRAP_CAUSE_STORE), store_32, 0x2350, itlb_entries, dtlb_entries, FLAG_MMU_EN | FLAG_SUPERVISOR_EN
 
-itlb_entries:   .long 0x00000000, TLB_PRESENT | TLB_EXECUTABLE
+itlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT | TLB_EXECUTABLE
                 .long 0xffffffff, 0xffffffff
 
-dtlb_entries:   .long 0x00000000, TLB_PRESENT
-                .long 0x00001000, 0x00001000 | TLB_PRESENT     // writable bit not set
+dtlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT
+                .long 0x00002000, 0x00002000 | TLB_PRESENT     // writable bit not set
                 .long 0xffff0000, 0xffff0000 | TLB_PRESENT | TLB_WRITABLE    // I/O area
                 .long 0xffffffff, 0xffffffff

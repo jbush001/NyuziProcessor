@@ -21,12 +21,12 @@
 // present and ensures it raises a page fault.
 //
                 .globl _start
-_start:         mmu_fault_test (TT_PAGE_FAULT | TRAP_CAUSE_DCACHE), load_32, 0x1350, itlb_entries, dtlb_entries, FLAG_MMU_EN | FLAG_SUPERVISOR_EN
+_start:         mmu_fault_test (TT_PAGE_FAULT | TRAP_CAUSE_DCACHE), load_32, 0x2350, itlb_entries, dtlb_entries, FLAG_MMU_EN | FLAG_SUPERVISOR_EN
 
-itlb_entries:   .long 0x00000000, TLB_PRESENT | TLB_EXECUTABLE
-                .long 0xffffffff, 0xfffffff
+itlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT | TLB_EXECUTABLE
+                .long 0xffffffff, 0xffffffff
 
-dtlb_entries:   .long 0x00000000, TLB_PRESENT
-                .long 0x00001000, 0x00001000        // present bit not set
+dtlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT
+                .long 0x00002000, 0x00002000        // present bit not set
                 .long 0xffff0000, 0xffff0000 | TLB_PRESENT | TLB_WRITABLE    // I/O area
                 .long 0xffffffff, 0xffffffff

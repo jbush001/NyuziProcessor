@@ -27,7 +27,7 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
 
                 // Store known value on data page
                 load_const s0, 0xdeadbeef
-                load_const s1, 0x1234
+                load_const s1, 0x2234
                 store_32 s0, (s1)
 
                 // Fail on TLB miss
@@ -55,15 +55,15 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
 check_fault:    getcr s0, CR_TRAP_CAUSE
                 assert_reg s0, TT_TLB_MISS | TRAP_CAUSE_DCACHE
                 getcr s0, CR_TRAP_ADDRESS
-                assert_reg s0, 0x1234
+                assert_reg s0, 0x2234
 
                 call pass_test
 
 
-itlb_entries:   .long 0x00000000, TLB_PRESENT | TLB_EXECUTABLE
+itlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT | TLB_EXECUTABLE
                 .long 0xffffffff, 0xffffffff
 
-dtlb_entries:   .long 0x00000000, TLB_PRESENT
-                .long 0x00001000, 0x00001000 | TLB_PRESENT | TLB_WRITABLE
+dtlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT
+                .long 0x00002000, 0x00002000 | TLB_PRESENT | TLB_WRITABLE
                 .long 0xffff0000, 0xffff0000 | TLB_PRESENT | TLB_WRITABLE    // I/O area
                 .long 0xffffffff, 0xffffffff

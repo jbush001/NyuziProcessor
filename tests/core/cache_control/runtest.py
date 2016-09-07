@@ -54,7 +54,7 @@ def dinvalidate_test(name):
     result = run_program(
         environment='verilator',
         dump_file='obj/vmem.bin',
-        dump_base=0x200,
+        dump_base=0x2000,
         dump_length=4,
         flush_l2=True,
         trace=True)

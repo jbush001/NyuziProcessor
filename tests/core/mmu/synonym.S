@@ -31,20 +31,20 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
                 flush_pipeline
 
                 load_const s0, 0xdeadbeef
-                load_const s1, 0x1234
+                load_const s1, 0x2234
                 store_32 s0, (s1)
-                load_const s2, 0x2234
+                load_const s2, 0x3234
                 load_32 s3, (s2)
                 assert_reg s3, 0xdeadbeef
 
                 call pass_test
 
 
-itlb_entries:   .long 0x00000000, TLB_PRESENT | TLB_EXECUTABLE
+itlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT | TLB_EXECUTABLE
                 .long 0xffffffff, 0xffffffff
 
-dtlb_entries:   .long 0x00000000, TLB_PRESENT
-                .long 0x00001000, 0x00001000 | TLB_PRESENT | TLB_WRITABLE
+dtlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT
                 .long 0x00002000, 0x00001000 | TLB_PRESENT | TLB_WRITABLE
+                .long 0x00003000, 0x00001000 | TLB_PRESENT | TLB_WRITABLE
                 .long 0xffff0000, 0xffff0000 | TLB_PRESENT | TLB_WRITABLE    // I/O area
                 .long 0xffffffff, 0xffffffff

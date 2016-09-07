@@ -28,7 +28,7 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
                 // Before enabling MMU, write a value that we will
                 // read back later to ensure the proper page is mapped.
                 load_const s0, 0xdeadbeef
-                load_const s1, 0x2000
+                load_const s1, 0x3000
                 store_32 s0, (s1)
 
                 // Enable MMU
@@ -37,22 +37,22 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
                 flush_pipeline
 
                 // Read from the mapped location and ensure it
-                // gets the value from physical page 0x2000
-                load_const s1, 0x1000
+                // gets the value from physical page 0x3000
+                load_const s1, 0x2000
                 load_32 s0, (s1)
                 assert_reg s0, 0xdeadbeef
 
                 call pass_test
 
-itlb_entries:   .long 0x00000000, TLB_PRESENT | TLB_EXECUTABLE
+itlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT | TLB_EXECUTABLE
                 .long 0xffffffff, 0xfffffff
 
-dtlb_entries:   .long 0x00000000, TLB_PRESENT
+dtlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT
 
                 // Note duplicate inserts for 0x1000
-                .long 0x00001000, 0x00009000 | TLB_PRESENT
-                .long 0x00001000, 0x00008000 | TLB_PRESENT
-                .long 0x00001000, 0x00007000 | TLB_PRESENT
-                .long 0x00001000, 0x00002000 | TLB_PRESENT
+                .long 0x00002000, 0x00009000 | TLB_PRESENT
+                .long 0x00002000, 0x00008000 | TLB_PRESENT
+                .long 0x00002000, 0x00007000 | TLB_PRESENT
+                .long 0x00002000, 0x00003000 | TLB_PRESENT
                 .long 0xffff0000, 0xffff0000 | TLB_PRESENT | TLB_WRITABLE    // I/O area
                 .long 0xffffffff, 0xffffffff

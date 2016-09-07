@@ -70,8 +70,8 @@ error:          load_32 s0, device_base
                 store_32 s1, 0(s0)          # Red LEDs
 done1:          goto done1
 
-base_addr:      .long 0x1000
-test_length:    .long 0x8000000 - 0x1000
+base_addr:      .long 0x2000
+test_length:    .long 0x8000000 - 0x2000
 seed:           .long 0xdeadbeef
 generator_a:    .long 1103515245
 generator_c:    .long 12345

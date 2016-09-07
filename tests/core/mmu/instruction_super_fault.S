@@ -45,15 +45,16 @@ fault_handler:  getcr s0, CR_TRAP_CAUSE
 
                 call pass_test
 
-itlb_entries:   .long 0x00000000, TLB_PRESENT | TLB_EXECUTABLE
+itlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT | TLB_EXECUTABLE
                 .long 0x00001000, 0x00001000 | TLB_PRESENT | TLB_EXECUTABLE // code is here
                 .long 0x00002000, 0x00002000 | TLB_PRESENT | TLB_EXECUTABLE | TLB_SUPERVISOR   // NOTE: supervisor bit set
                 .long 0xffffffff, 0xffffffff
 
-dtlb_entries:   .long 0x00000000, TLB_PRESENT
+dtlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT
                 .long 0x00001000, 0x00001000 | TLB_PRESENT
                 .long 0xffff0000, 0xffff0000 | TLB_PRESENT | TLB_WRITABLE    // I/O area
                 .long 0xffffffff, 0xffffffff
 
+                // Should be 0x2000
                 .align 0x1000, 0xff
 super_page:     should_not_get_here

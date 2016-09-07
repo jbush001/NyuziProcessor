@@ -20,12 +20,12 @@
 // Test writing to a supervisor page from user mode faults.
 //
                 .globl _start
-_start:         mmu_fault_test (TT_SUPERVISOR_ACCESS | TRAP_CAUSE_STORE | TRAP_CAUSE_DCACHE), store_32, 0x1350, itlb_entries, dtlb_entries, FLAG_MMU_EN
+_start:         mmu_fault_test (TT_SUPERVISOR_ACCESS | TRAP_CAUSE_STORE | TRAP_CAUSE_DCACHE), store_32, 0x2350, itlb_entries, dtlb_entries, FLAG_MMU_EN
 
-itlb_entries:   .long 0x00000000, TLB_PRESENT | TLB_EXECUTABLE
+itlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT | TLB_EXECUTABLE
                 .long 0xffffffff, 0xfffffff
 
-dtlb_entries:   .long 0x00000000, TLB_PRESENT
-                .long 0x00001000, 0x00001000 | TLB_PRESENT | TLB_SUPERVISOR
+dtlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT
+                .long 0x00002000, 0x00002000 | TLB_PRESENT | TLB_SUPERVISOR
                 .long 0xffff0000, 0xffff0000 | TLB_PRESENT | TLB_WRITABLE    // I/O area
                 .long 0xffffffff, 0xffffffff

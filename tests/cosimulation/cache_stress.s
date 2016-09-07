@@ -33,6 +33,7 @@ _start:         start_all_threads
                 load_32 s5, num_iterations
                 load_32 s2, generator_a
                 load_32 s3, generator_c
+                load_32 s6, write_region
                 getcr s8, CR_CURRENT_THREAD # get thread ID
                 shl s8, s8, 2        # Compute thread write offset (thread * 4)
                 move s0, 7           # Initialize value to write
@@ -43,7 +44,7 @@ main_loop:      mull_i s1, s1, s2    # Generate next random number
                 shr s4, s1, 17       # Chop high bits (0-32k)
                 shl s4, s4, 4        # Multiply by 16 (four threads times four bytes, 512k)
                 add_i s4, s4, s8     # Add thread offset (0, 4, 8, 12)
-                add_i s4, s4, 512    # Add to start of write region
+                add_i s4, s4, s6     # Add to start of write region
 
                 store_32 s0, (s4)    # Write the word
 
@@ -53,6 +54,7 @@ main_loop:      mull_i s1, s1, s2    # Generate next random number
 
                 halt_current_thread
 
+write_region:   .long 0x3000
 generator_a:    .long 1103515245
 generator_c:    .long 12345
 num_iterations: .long 10000

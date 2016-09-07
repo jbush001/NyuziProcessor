@@ -24,6 +24,7 @@
                 .globl _start
 _start:         load_tlb_entries itlb_entries, dtlb_entries
 
+                // Set up fault handlers
                 lea s0, handle_fault
                 setcr s0, CR_TRAP_HANDLER
                 lea s0, handle_tlb_miss
@@ -34,16 +35,14 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
                 setcr s0, CR_FLAGS
                 flush_pipeline
 
-
-                // Set up vector register
+                // Set up vector pointers
                 load_v v1, vecptr
 align_fault_loc: store_scat v0, (v1) // This will fault when it hits address 17 and call handle_fault
 
                 should_not_get_here
 
                 .align 64, 0xff
-vecptr:         .long foo, foo, foo, foo, foo, foo, foo, 17, foo, foo, foo, foo, foo, foo, foo, foo
-foo:            .long 0
+vecptr:         .long 0x3000, 0x3000, 0x3000, 0x3000, 0x3000, 0x3000, 0x3000, 0x1017, 0x3000, 0x3000, 0x3000, 0x3000, 0x3000, 0x3000, 0x3000, 0x3000
 
 
 //
@@ -54,15 +53,17 @@ handle_fault:   load_const s10, 0x88cf70b4
                 load_const s10, 0x78662516
                 setcr s10, CR_SCRATCHPAD1
 
-                load_const s10, 0x2000
-tlb_miss_loc:   store_32 s10, (s10)     // This will cause a TLB miss
+                // Note: use a register that won't be clobbered in the
+                // TLB miss handler.
+                load_const s11, 0x2000
+tlb_miss_loc:   store_32 s11, (s11)     // This will cause a TLB miss the first time
 
                 // We have returned from the TLB miss here. Ensure the
                 // fault control registers were restored
                 getcr s10, CR_TRAP_CAUSE
                 assert_reg s10, TT_UNALIGNED_ACCESS | TRAP_CAUSE_DCACHE | TRAP_CAUSE_STORE
                 getcr s10, CR_TRAP_ADDRESS
-                assert_reg s10, 17
+                assert_reg s10, 0x1017
                 getcr s10, CR_SCRATCHPAD0
                 assert_reg s10, 0x88cf70b4
                 getcr s10, CR_SCRATCHPAD1
@@ -112,9 +113,10 @@ handle_tlb_miss:
                 eret
 
 
-itlb_entries:   .long 0x00000000, TLB_PRESENT | TLB_EXECUTABLE
+itlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT | TLB_EXECUTABLE
                 .long 0xffffffff, 0xfffffff
 
-dtlb_entries:   .long 0x00000000, TLB_PRESENT | TLB_WRITABLE
+dtlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT
+                .long 0x00003000, 0x00003000 | TLB_PRESENT | TLB_WRITABLE   // writes to this page
                 .long 0xffff0000, 0xffff0000 | TLB_PRESENT | TLB_WRITABLE    // I/O area
                 .long 0xffffffff, 0xffffffff

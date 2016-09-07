@@ -33,5 +33,5 @@ _start:     lea s0, dataloc
 
 storedat:   .long    0x12345678
 
-            .align 256
-dataloc:    .long    0xdeadbeef // will be at address 512
+            .data
+dataloc:    .long    0xdeadbeef // will be at address 0x2000

@@ -21,13 +21,13 @@
 // we are using the physical address and not the virtual address to determine
 // if something is in the I/O range.
 // Map a chunk of normal memory at the virtual range 0xffff0000 where I/O
-// is physically located, and map the I/O range at 0x1000
+// is physically located, and map the I/O range at 0x2000
 //
 
                 .globl _start
 _start:         load_tlb_entries itlb_entries, dtlb_entries
 
-                load_const s0, 0x1000
+                load_const s0, 0x2000
                 load_const s1, 0xdeadbeef
                 store_32 s1, (s0)
 
@@ -42,7 +42,7 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
                 assert_reg s1, 0xdeadbeef
 
                 // Write success value to new I/O region
-                load_const s1, 0x1000
+                load_const s1, 0x2000
                 lea s0, message
 1:              load_u8 s2, (s0)        // Read a character
                 bfalse s2, 3f           // If delimeter, exit
@@ -63,10 +63,10 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
 message:        .asciz "PASS"
 
                 .align 4, 0xff
-itlb_entries:   .long 0x00000000, TLB_PRESENT | TLB_EXECUTABLE
+itlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT | TLB_EXECUTABLE
                 .long 0xffffffff, 0xffffffff
 
-dtlb_entries:   .long 0x00000000, TLB_PRESENT
-                .long 0x00001000, 0xffff0000 | TLB_PRESENT | TLB_WRITABLE
-                .long 0xffff0000, 0x1000 | TLB_PRESENT | TLB_WRITABLE
+dtlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT
+                .long 0x00002000, 0xffff0000 | TLB_PRESENT | TLB_WRITABLE
+                .long 0xffff0000, 0x2000 | TLB_PRESENT | TLB_WRITABLE
                 .long 0xffffffff, 0xffffffff

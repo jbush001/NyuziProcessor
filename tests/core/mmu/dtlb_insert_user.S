@@ -34,8 +34,8 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
                 setcr s0, CR_FLAGS
                 flush_pipeline
 
-                load_const s0, 0x1000
-                load_const s1, 0x1000 | TLB_PRESENT
+                load_const s0, 0x2000
+                load_const s1, 0x2000 | TLB_PRESENT
                 dtlbinsert s0, s1   // This should fault
 
                 should_not_get_here
@@ -45,7 +45,7 @@ handle_fault1:  getcr s0, CR_TRAP_CAUSE
 
                 // Try to read data from new address. This should cause
                 // a TLB miss because the dtlbinsert has have failed.
-                load_const s0, 0x1430
+                load_const s0, 0x2430
 fault_loc:      load_32 s0, (s0)    // This should fault
 
                 should_not_get_here
@@ -53,7 +53,7 @@ fault_loc:      load_32 s0, (s0)    // This should fault
 handle_fault2:  getcr s0, CR_TRAP_CAUSE
                 assert_reg s0, TT_TLB_MISS | TRAP_CAUSE_DCACHE
                 getcr s0, CR_TRAP_ADDRESS
-                assert_reg s0, 0x1430
+                assert_reg s0, 0x2430
 
                 // Check that fault PC is correct
                 getcr s0, CR_TRAP_PC
@@ -65,9 +65,9 @@ handle_fault2:  getcr s0, CR_TRAP_CAUSE
 
                 call pass_test
 
-itlb_entries:   .long 0x00000000, TLB_PRESENT | TLB_EXECUTABLE
+itlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT | TLB_EXECUTABLE
                 .long 0xffffffff, 0xfffffff
 
-dtlb_entries:   .long 0x00000000, TLB_PRESENT
+dtlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT
                 .long 0xffff0000, 0xffff0000 | TLB_PRESENT | TLB_WRITABLE    // I/O area
                 .long 0xffffffff, 0xffffffff

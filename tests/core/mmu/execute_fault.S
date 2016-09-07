@@ -19,8 +19,6 @@
 //
 // Ensure processor will raise a fault if it attempts to run code from a page
 // that doesn't have the execute bit set.
-// XXX for some reason, aligning noexec_page on 0x1000 also causes start to be
-// page aligned and start at 0x1000. This might break if the linker changed.
 //
 
                 .globl _start
@@ -42,15 +40,15 @@ fault_handler:  getcr s0, CR_TRAP_CAUSE
                 assert_reg s0, 0x2000
                 call pass_test
 
-itlb_entries:   .long 0x00000000, TLB_PRESENT | TLB_EXECUTABLE
-                .long 0x00001000, 0x00001000 | TLB_PRESENT | TLB_EXECUTABLE // code is here
+itlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT | TLB_EXECUTABLE
                 .long 0x00002000, 0x00002000 | TLB_PRESENT   // NOTE: no executable bit set
                 .long 0xffffffff, 0xffffffff
 
-dtlb_entries:   .long 0x00000000, TLB_PRESENT
+dtlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT
                 .long 0x00001000, 0x00001000 | TLB_PRESENT
                 .long 0xffff0000, 0xffff0000 | TLB_PRESENT | TLB_WRITABLE    // I/O area
                 .long 0xffffffff, 0xffffffff
 
+                // Should be at 0x2000
                 .align 0x1000, 0xff
 noexec_page:   should_not_get_here
