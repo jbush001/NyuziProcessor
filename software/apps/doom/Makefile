@@ -9,7 +9,7 @@ TOPDIR=../../../
 
 include $(TOPDIR)/build/target.mk
 
-CFLAGS+=-Wno-unused-const-variable
+CFLAGS+=-Wno-unused-const-variable -g
 LIBS=-lc -los-bare
 
 SRCS=	doomdef.c		\

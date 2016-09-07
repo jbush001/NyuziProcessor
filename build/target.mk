@@ -25,7 +25,7 @@ OBJ_DIR=obj
 
 CC=$(COMPILER_DIR)/clang
 CXX=$(COMPILER_DIR)/clang++
-LD=$(COMPILER_DIR)/ld.mcld
+LD=$(COMPILER_DIR)/ld.lld
 AR=$(COMPILER_DIR)/llvm-ar
 AS=$(COMPILER_DIR)/clang
 OBJDUMP=$(COMPILER_DIR)/llvm-objdump

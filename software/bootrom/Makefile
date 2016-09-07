@@ -27,7 +27,7 @@ OBJS=$(SRCS_TO_OBJS)
 DEPS=$(SRCS_TO_DEPS)
 
 boot.hex: $(OBJS) $(DEPS)
-	$(LD) -o $(OBJ_DIR)/boot.elf -Ttext=$(BASE_ADDRESS) $(OBJS) $(TOPDIR)/software/libs/compiler-rt/compiler-rt.a
+	$(LD) -o $(OBJ_DIR)/boot.elf --image-base=$(BASE_ADDRESS) $(OBJS) $(TOPDIR)/software/libs/compiler-rt/compiler-rt.a
 	$(ELF2HEX) -b $(BASE_ADDRESS) -o boot.hex $(OBJ_DIR)/boot.elf
 
 clean:

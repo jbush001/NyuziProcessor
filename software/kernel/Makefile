@@ -51,7 +51,7 @@ kernel.hex: kernel.elf
 	$(ELF2HEX) -b $(BASE_ADDRESS) -o kernel.hex $(OBJ_DIR)/kernel.elf
 
 kernel.elf: $(OBJS) $(DEPS)
-	$(LD) -o $(OBJ_DIR)/kernel.elf -Ttext=$(BASE_ADDRESS) $(OBJS) $(TOPDIR)/software/libs/compiler-rt/compiler-rt.a
+	$(LD) -o $(OBJ_DIR)/kernel.elf --image-base=$(BASE_ADDRESS) $(OBJS) $(TOPDIR)/software/libs/compiler-rt/compiler-rt.a
 	$(OBJDUMP) --disassemble $(OBJ_DIR)/kernel.elf > kernel.lst
 
 clean:

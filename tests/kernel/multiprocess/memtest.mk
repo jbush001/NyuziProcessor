@@ -25,7 +25,7 @@ OBJS=$(SRCS_TO_OBJS)
 DEPS=$(SRCS_TO_DEPS)
 
 memtest.elf: $(OBJS)
-	$(LD) -o memtest.elf -Ttext=0x1000 $(LDFLAGS) $(CRT0_KERN) $(OBJS) -los-kern $(LIBS) -los-kern $(LDFLAGS)
+	$(LD) -o memtest.elf --image-base=0x1000 $(LDFLAGS) $(CRT0_KERN) $(OBJS) -los-kern $(LIBS) -los-kern $(LDFLAGS)
 
 clean:
 	rm -f memtest.elf

@@ -40,7 +40,7 @@ fsimage.bin: $(OBJ_DIR)/program.elf
 
 # program.elf is the image that is executed by the kernel
 $(OBJ_DIR)/program.elf: $(OBJS)
-	$(LD) -o $(OBJ_DIR)/program.elf -Ttext=0x1000 $(LDFLAGS) $(CRT0_KERN) $(OBJS) $(LIBS) -los-kern $(LDFLAGS)
+	$(LD) -o $(OBJ_DIR)/program.elf --image-base=0x1000 $(LDFLAGS) $(CRT0_KERN) $(OBJS) $(LIBS) -los-kern $(LDFLAGS)
 
 fpgarun: $(OBJ_DIR)/plasma.hex
 	$(SERIAL_BOOT) $(SERIAL_PORT) $(OBJ_DIR)/plasma.hex
