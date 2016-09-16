@@ -26,7 +26,7 @@ which allow hardware and software development without an FPGA.
 
 This requires Ubuntu 16 (Xenial Xeres) or later to get the proper package
 versions. It should work for other distributions, but you will probably need
-to change some package names.
+to change some package names. From a terminal, execute the following:
 
     sudo apt-get -y install autoconf cmake make gcc g++ bison flex python \
         perl emacs openjdk-8-jdk swig zlib1g-dev python-dev libxml2-dev \
@@ -39,15 +39,13 @@ The makefile executes this operation in batch mode*
 
 These instruction assume OSX Mavericks or later.
 
-Open the AppStore application, search for XCode and install it.
-
-Install MacPorts (https://www.macports.org/install.php)
-
-Install the command line compiler tools:
+Open the AppStore application, search for XCode and install it. Install the
+command line compiler tools by typing the following in a terminal:
 
     xcode-select --install
 
-Installs the remaining packages using MacPorts.
+Install MacPorts (https://www.macports.org/install.php), and use it to install
+the remaining packages:
 
     sudo port install cmake bison swig swig-python imagemagick libsdl2 curl emacs
 
@@ -88,7 +86,6 @@ Occasionally a change will require a new version of the compiler. To rebuild:
 
     git submodule update
     cd tools/NyuziToolchain/build
-    sudo chown -R `whoami` .
     make
     sudo make install
 
@@ -106,4 +103,3 @@ For example, this will render a 3D model:
 # Running on FPGA
 
 See instructions in hardware/fpga/de2-115/README.md
-
