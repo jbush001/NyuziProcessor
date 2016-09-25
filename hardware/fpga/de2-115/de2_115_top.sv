@@ -69,6 +69,7 @@ module de2_115_top(
 
     localparam BOOT_ROM_BASE = 32'hfffee000;
     localparam CLOCK_RATE = 50000000;
+    localparam NUM_PERIPHERALS = 5;
 
     /*AUTOLOGIC*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -81,17 +82,16 @@ module de2_115_top(
     axi4_interface axi_bus_m[1:0]();
     logic reset;
     logic clk;
-    io_bus_interface uart_io_bus();
-    io_bus_interface sdcard_io_bus();
-    io_bus_interface ps2_io_bus();
-    io_bus_interface vga_io_bus();
-    io_bus_interface timer_io_bus();
+    scalar_t peripheral_read_data[NUM_PERIPHERALS];
+    io_bus_interface peripheral_io_bus[NUM_PERIPHERALS - 1:0]();
     io_bus_interface nyuzi_io_bus();
-    enum logic[1:0] {
+    enum logic[$clog2(NUM_PERIPHERALS) - 1:0] {
         IO_UART,
         IO_SDCARD,
-        IO_PS2
-    } io_read_source;
+        IO_PS2,
+        IO_VGA,
+        IO_TIMER
+    } io_bus_source;
     logic timer_int;
 
     assign clk = clk50;
@@ -142,7 +142,7 @@ module de2_115_top(
     assign dram_dqm = 4'b0000;
 
     vga_controller #(.BASE_ADDRESS('h180)) vga_controller(
-        .io_bus(vga_io_bus),
+        .io_bus(peripheral_io_bus[IO_VGA]),
         .axi_bus(axi_bus_m[1]),
         .*);
 
@@ -168,18 +168,18 @@ module de2_115_top(
     end
 `else
     uart #(.BASE_ADDRESS('h40)) uart(
-        .io_bus(uart_io_bus),
+        .io_bus(peripheral_io_bus[IO_UART]),
         .*);
 `endif
 
 `ifdef BITBANG_SDMMC
     gpio_controller #(.BASE_ADDRESS('hc0), .NUM_PINS(6)) gpio_controller(
-        .io_bus(sdcard_io_bus),
+        .io_bus(peripheral_io_bus[IO_SDCARD]),
         .gpio_value({sd_clk, sd_cmd, sd_dat}),
         .*);
 `else
     spi_controller #(.BASE_ADDRESS('hc0)) spi_controller(
-        .io_bus(sdcard_io_bus),
+        .io_bus(peripheral_io_bus[IO_SDCARD]),
         .spi_clk(sd_clk),
         .spi_cs_n(sd_dat[3]),
         .spi_miso(sd_dat[0]),
@@ -188,11 +188,11 @@ module de2_115_top(
 `endif
 
     ps2_controller #(.BASE_ADDRESS('h80)) ps2_controller(
-        .io_bus(ps2_io_bus),
+        .io_bus(peripheral_io_bus[IO_PS2]),
         .*);
 
     timer #(.BASE_ADDRESS('h240)) timer(
-        .io_bus(timer_io_bus),
+        .io_bus(peripheral_io_bus[IO_TIMER]),
         .*);
 
     always_ff @(posedge clk, posedge reset)
@@ -219,50 +219,32 @@ module de2_115_top(
                     'h14: hex3 <= nyuzi_io_bus.write_data[6:0];
                 endcase
             end
+
+            casez (nyuzi_io_bus.address)
+                'h4?: io_bus_source <= IO_UART;
+`ifdef BITBANG_SDMMC
+                'hc?: io_bus_source <= IO_SDCARD;
+`else
+                'hc?: io_bus_source <= IO_SDCARD;
+`endif
+                'h8?: io_bus_source <= IO_PS2;
+
+                default: io_bus_source <= IO_UART;
+            endcase
         end
     end
 
-    assign uart_io_bus.read_en = nyuzi_io_bus.read_en;
-    assign uart_io_bus.write_en = nyuzi_io_bus.write_en;
-    assign uart_io_bus.write_data = nyuzi_io_bus.write_data;
-    assign uart_io_bus.address = nyuzi_io_bus.address;
-    assign ps2_io_bus.read_en = nyuzi_io_bus.read_en;
-    assign ps2_io_bus.write_en = nyuzi_io_bus.write_en;
-    assign ps2_io_bus.write_data = nyuzi_io_bus.write_data;
-    assign ps2_io_bus.address = nyuzi_io_bus.address;
-    assign sdcard_io_bus.read_en = nyuzi_io_bus.read_en;
-    assign sdcard_io_bus.write_en = nyuzi_io_bus.write_en;
-    assign sdcard_io_bus.write_data = nyuzi_io_bus.write_data;
-    assign sdcard_io_bus.address = nyuzi_io_bus.address;
-    assign vga_io_bus.read_en = nyuzi_io_bus.read_en;
-    assign vga_io_bus.write_en = nyuzi_io_bus.write_en;
-    assign vga_io_bus.write_data = nyuzi_io_bus.write_data;
-    assign vga_io_bus.address = nyuzi_io_bus.address;
-    assign timer_io_bus.read_en = nyuzi_io_bus.read_en;
-    assign timer_io_bus.write_en = nyuzi_io_bus.write_en;
-    assign timer_io_bus.write_data = nyuzi_io_bus.write_data;
-    assign timer_io_bus.address = nyuzi_io_bus.address;
+    assign nyuzi_io_bus.read_data = peripheral_read_data[io_bus_source];
 
-    always_ff @(posedge clk)
-    begin
-        casez (nyuzi_io_bus.address)
-            'h4?: io_read_source <= IO_UART;
-`ifdef BITBANG_SDMMC
-            'hc?: io_read_source <= IO_SDCARD;
-`else
-            'hc?: io_read_source <= IO_SDCARD;
-`endif
-            'h8?: io_read_source <= IO_PS2;
-        endcase
-    end
-
-    always_comb
-    begin
-        case (io_read_source)
-            IO_UART: nyuzi_io_bus.read_data = uart_io_bus.read_data;
-            IO_SDCARD: nyuzi_io_bus.read_data = sdcard_io_bus.read_data;
-            IO_PS2: nyuzi_io_bus.read_data = ps2_io_bus.read_data;
-            default: nyuzi_io_bus.read_data = 0;
-        endcase
-    end
+    genvar io_idx;
+    generate
+        for (io_idx = 0; io_idx < NUM_PERIPHERALS; io_idx++)
+        begin : io_gen
+            assign peripheral_io_bus[io_idx].write_en = nyuzi_io_bus.write_en;
+            assign peripheral_io_bus[io_idx].read_en = nyuzi_io_bus.read_en;
+            assign peripheral_io_bus[io_idx].address = nyuzi_io_bus.address;
+            assign peripheral_io_bus[io_idx].write_data = nyuzi_io_bus.write_data;
+            assign peripheral_read_data[io_idx] = peripheral_io_bus[io_idx].read_data;
+        end
+    endgenerate
 endmodule

@@ -42,9 +42,13 @@ For a Prolific USB based dongle, for example, the path is.
 
 On some distributions of Linux, the Altera tools have trouble talking to USB if not
 run as root. You can remedy this by creating a file
-/etc/udev/rules.d/99-custom.rules and adding the following line:
+/etc/udev/rules.d/99-usbblaster.rules and adding the following line:
 
     ATTRS{idVendor}=="09fb" , MODE="0660" , GROUP="plugdev"
+
+Reboot or execute the following command:
+
+    sudo udevadm control --reload
 
 ## Synthesizing and Running Programs
 

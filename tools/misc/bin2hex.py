@@ -1,5 +1,6 @@
+#!/usr/bin/env python
 #
-# Copyright 2011-2015 Jeff Bush
+# Copyright 2016 Jeff Bush
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,23 +15,13 @@
 # limitations under the License.
 #
 
-TOPDIR=../../
+import sys
+import binascii
 
-include $(TOPDIR)/build/target.mk
+with open(sys.argv[1], 'rb') as f:
+	while True:
+		word = f.read(4)
+		if not word:
+			break
 
-CFLAGS=-O3  # Override default CFLAGS, since this builds standalone
-
-SRCS=start.s boot.c
-
-OBJS=$(SRCS_TO_OBJS)
-DEPS=$(SRCS_TO_DEPS)
-
-boot.bin: $(OBJS)
-	$(LD) -o $(OBJ_DIR)/boot.bin --script boot.ld --oformat binary $(OBJS) $(TOPDIR)/software/libs/compiler-rt/compiler-rt.a
-	$(TOPDIR)/tools/misc/bin2hex.py $(OBJ_DIR)/boot.bin > boot.hex
-
-clean:
-	rm -rf obj boot.hex
-
--include $(DEPS)
-
+		print(binascii.hexlify(word))
