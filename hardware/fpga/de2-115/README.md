@@ -33,6 +33,8 @@ For a Prolific USB based dongle, for example, the path is.
 
         sudo usermod -a -G dialout $USER
 
+    You may need to log out and back in for the change to take effect.
+
 4. Make sure the Quartus binary directory is in your PATH environment variable.
    The default install path is ~/altera/[version]/quartus/bin/
 
@@ -49,6 +51,7 @@ run as root. You can remedy this by creating a file
 Reboot or execute the following command:
 
     sudo udevadm control --reload
+    sudo killall -9 jtagd
 
 ## Synthesizing and Running Programs
 
@@ -61,6 +64,10 @@ The build system is command line based and does not use the Quartus GUI.
 2. Load the configuration bitstream onto the FPGA.
 
         make program
+
+    You may get an error when running this command. If so, this can usually be fixed by doing:
+
+        sudo killall -9 jtagd
 
 3. Press 'key 0' on the lower right hand of the board to reset the processor. LED 0
    will light up on the board to indicate the bootloader is waiting to receive a
