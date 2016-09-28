@@ -36,6 +36,7 @@ const void *get_memory_region_ptr(const struct core*, uint32_t address, uint32_t
 void print_registers(const struct core*, uint32_t thread_id);
 void enable_cosimulation(struct core*);
 void raise_interrupt(struct core*, uint32_t int_bitmap);
+void clear_interrupt(struct core*, uint32_t int_bitmap);
 void cosim_interrupt(struct core*, uint32_t thread_id, uint32_t pc);
 uint32_t get_total_threads(const struct core*);
 bool core_halted(const struct core*);

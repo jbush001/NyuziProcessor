@@ -36,7 +36,13 @@
 
 #define INT_COSIM 0x00000001
 #define INT_TIMER 0x00000002
+#define INT_UART_RX 0x00000004
+#define INT_PS2_RX 0x00000008
+#define INT_VGA_FRAME 0x00000010
 
+struct core;
+
+void init_device(struct core *core);
 void write_device_register(uint32_t address, uint32_t value);
 uint32_t read_device_register(uint32_t address);
 void enqueue_key(uint32_t scan_code);

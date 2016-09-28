@@ -308,6 +308,8 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    init_device(core);
+
     if (enable_fb_window)
     {
         if (init_frame_buffer(fb_width, fb_height) < 0)

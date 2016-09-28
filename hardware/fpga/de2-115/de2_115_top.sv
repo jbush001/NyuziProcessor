@@ -73,9 +73,11 @@ module de2_115_top(
 
     /*AUTOLOGIC*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
+    logic               frame_interrupt;        // From vga_controller of vga_controller.v
     logic               perf_dram_page_hit;     // From sdram_controller of sdram_controller.v
     logic               perf_dram_page_miss;    // From sdram_controller of sdram_controller.v
     logic               processor_halt;         // From nyuzi of nyuzi.v
+    logic               timer_interrupt;        // From timer of timer.v
     // End of automatics
 
     axi4_interface axi_bus_s[1:0]();
@@ -92,12 +94,18 @@ module de2_115_top(
         IO_VGA,
         IO_TIMER
     } io_bus_source;
-    logic timer_int;
+    logic uart_rx_interrupt;
+    logic ps2_rx_interrupt;
 
     assign clk = clk50;
 
     nyuzi #(.RESET_PC(BOOT_ROM_BASE)) nyuzi(
-        .interrupt_req({14'd0, timer_int, 1'b0}),
+        .interrupt_req({11'd0,
+            frame_interrupt,
+            ps2_rx_interrupt,
+            uart_rx_interrupt,
+            timer_interrupt,
+            1'b0}),
         .axi_bus(axi_bus_m[0]),
         .io_bus(nyuzi_io_bus),
         .*);
@@ -169,6 +177,7 @@ module de2_115_top(
 `else
     uart #(.BASE_ADDRESS('h40)) uart(
         .io_bus(peripheral_io_bus[IO_UART]),
+        .rx_interrupt(uart_rx_interrupt),
         .*);
 `endif
 
@@ -189,6 +198,7 @@ module de2_115_top(
 
     ps2_controller #(.BASE_ADDRESS('h80)) ps2_controller(
         .io_bus(peripheral_io_bus[IO_PS2]),
+        .rx_interrupt(ps2_rx_interrupt),
         .*);
 
     timer #(.BASE_ADDRESS('h240)) timer(

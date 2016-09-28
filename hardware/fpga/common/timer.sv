@@ -28,9 +28,11 @@ module timer
     io_bus_interface.slave    io_bus,
 
     // Interrupt
-    output logic              timer_int);
+    output logic              timer_interrupt);
 
     logic[31:0] counter;
+
+    assign io_bus.read_data = '0;
 
     always_ff @(posedge clk, posedge reset)
     begin
@@ -39,7 +41,7 @@ module timer
             /*AUTORESET*/
             // Beginning of autoreset for uninitialized flops
             counter <= '0;
-            timer_int <= '0;
+            timer_interrupt <= '0;
             // End of automatics
         end
         else
@@ -49,7 +51,7 @@ module timer
             else if (counter != 0)
                 counter <= counter - 1;
 
-            timer_int <= counter == 0;
+            timer_interrupt <= counter == 0;
         end
     end
 endmodule

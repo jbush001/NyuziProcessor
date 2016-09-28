@@ -55,9 +55,10 @@ module verilator_tb(
         IO_VGA
     } io_bus_source;
     int cosim_timer_interval;
-    int cosim_int_delay;
-    logic cosim_int;
-    logic timer_int;
+    int cosim_interrupt_delay;
+    logic cosim_interrupt;
+    logic uart_rx_interrupt;
+    logic ps2_rx_interrupt;
 
     /*AUTOLOGIC*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -70,12 +71,14 @@ module verilator_tb(
     logic [SDRAM_DATA_WIDTH-1:0] dram_dq;       // To/From sdram_controller of sdram_controller.v, ...
     logic               dram_ras_n;             // From sdram_controller of sdram_controller.v
     logic               dram_we_n;              // From sdram_controller of sdram_controller.v
+    logic               frame_interrupt;        // From vga_controller of vga_controller.v
     logic               perf_dram_page_hit;     // From sdram_controller of sdram_controller.v
     logic               perf_dram_page_miss;    // From sdram_controller of sdram_controller.v
     logic               processor_halt;         // From nyuzi of nyuzi.v
     logic               ps2_clk;                // From sim_ps2 of sim_ps2.v
     logic               ps2_data;               // From sim_ps2 of sim_ps2.v
     logic               sd_do;                  // From sim_sdmmc of sim_sdmmc.v
+    logic               timer_interrupt;        // From timer of timer.v
     logic [7:0]         vga_b;                  // From vga_controller of vga_controller.v
     logic               vga_blank_n;            // From vga_controller of vga_controller.v
     logic               vga_clk;                // From vga_controller of vga_controller.v
@@ -109,7 +112,12 @@ module verilator_tb(
     nyuzi #(.RESET_PC(RESET_PC)) nyuzi(
         .axi_bus(axi_bus_m[0]),
         .io_bus(nyuzi_io_bus),
-        .interrupt_req({14'd0, timer_int, cosim_int}),
+        .interrupt_req({11'd0,
+            frame_interrupt,
+            ps2_rx_interrupt,
+            uart_rx_interrupt,
+            timer_interrupt,
+            cosim_interrupt}),
         .*);
 
     //
@@ -158,6 +166,7 @@ module verilator_tb(
     assign loopback_uart_rx = loopback_uart_tx & loopback_uart_mask;
     uart #(.BASE_ADDRESS('h140)) loopback_uart(
         .io_bus(peripheral_io_bus[IO_LOOPBACK_UART]),
+        .rx_interrupt(uart_rx_interrupt),
         .uart_tx(loopback_uart_tx),
         .uart_rx(loopback_uart_rx),
         .*);
@@ -176,6 +185,7 @@ module verilator_tb(
 
     ps2_controller #(.BASE_ADDRESS('h80)) ps2_controller(
         .io_bus(peripheral_io_bus[IO_PS2]),
+        .rx_interrupt(ps2_rx_interrupt),
         .*);
 
     timer #(.BASE_ADDRESS('h240)) timer(
@@ -214,18 +224,18 @@ module verilator_tb(
     begin
         if (reset)
         begin
-            cosim_int_delay <= 0;
-            cosim_int <= 0;
+            cosim_interrupt_delay <= 0;
+            cosim_interrupt <= 0;
         end
-        else if (cosim_int_delay == 0)
+        else if (cosim_interrupt_delay == 0)
         begin
-            cosim_int_delay <= cosim_timer_interval;
-            cosim_int <= 1;
+            cosim_interrupt_delay <= cosim_timer_interval;
+            cosim_interrupt <= 1;
         end
         else
         begin
-            cosim_int_delay <= cosim_int_delay - 1;
-            cosim_int <= 0;
+            cosim_interrupt_delay <= cosim_interrupt_delay - 1;
+            cosim_interrupt <= 0;
         end
     end
 

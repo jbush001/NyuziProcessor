@@ -63,14 +63,13 @@ struct thread
     uint32_t asid;
     uint32_t page_dir;
     uint32_t interrupt_mask;
-    uint32_t pending_interrupts;
+    uint32_t latched_interrupts;
     bool enable_interrupt;
     bool enable_mmu;
     bool enable_supervisor;
     uint32_t subcycle;
     uint32_t scalar_reg[NUM_REGISTERS - 1];	// PC (31) not included here
     uint32_t vector_reg[NUM_REGISTERS][NUM_VECTOR_LANES];
-    bool interrupt_pending;
 
     // There are two levels of trap information, to handle a nested TLB
     // miss occurring in the middle of another trap.
@@ -106,6 +105,8 @@ struct core
     uint32_t trap_handler_pc;
     uint32_t tlb_miss_handler_pc;
     uint32_t phys_tlb_update_addr;
+    uint32_t interrupt_levels;
+    uint32_t is_level_triggered;    // Bitmap
     struct tlb_entry *itlb;
     uint32_t next_itlb_way;
     struct tlb_entry *dtlb;
@@ -143,6 +144,7 @@ static void set_vector_reg(struct thread*, uint32_t reg, uint32_t mask,
                            uint32_t *values);
 static void invalidate_sync_address(struct core*, uint32_t address);
 static void try_to_dispatch_interrupt(struct thread*);
+static uint32_t get_pending_interrupts(struct thread*);
 static void raise_trap(struct thread*, uint32_t address, enum trap_type type, bool is_store,
                        bool is_data_cache);
 static bool translate_address(struct thread*, uint32_t virtual_address, uint32_t
@@ -329,11 +331,17 @@ void raise_interrupt(struct core *core, uint32_t int_bitmap)
 {
     uint32_t thread_id;
 
+    core->interrupt_levels |= int_bitmap;
     for (thread_id = 0; thread_id < core->total_threads; thread_id++)
     {
-        core->threads[thread_id].pending_interrupts |= int_bitmap;
+        core->threads[thread_id].latched_interrupts |= int_bitmap;
         try_to_dispatch_interrupt(&core->threads[thread_id]);
     }
+}
+
+void clear_interrupt(struct core *core, uint32_t int_bitmap)
+{
+    core->interrupt_levels &= ~int_bitmap;
 }
 
 // Called when the verilog model in cosimulation indicates an interrupt.
@@ -352,7 +360,7 @@ void cosim_interrupt(struct core *core, uint32_t thread_id, uint32_t pc)
         thread->subcycle = 0;
 
     thread->pc = pc;
-    thread->pending_interrupts |= INT_COSIM;
+    thread->latched_interrupts |= INT_COSIM;
     try_to_dispatch_interrupt(thread);
 }
 
@@ -611,10 +619,11 @@ static void invalidate_sync_address(struct core *core, uint32_t address)
 
 static void try_to_dispatch_interrupt(struct thread *thread)
 {
+    uint32_t pending = get_pending_interrupts(thread);
     if (!thread->enable_interrupt)
         return;
 
-    if ((thread->pending_interrupts & thread->interrupt_mask) != 0)
+    if ((pending & thread->interrupt_mask) != 0)
     {
         // Unlike exceptions, an interrupt saves the PC of the *next* instruction,
         // rather than the current one, but only if a multicycle instruction is
@@ -624,6 +633,12 @@ static void try_to_dispatch_interrupt(struct thread *thread)
 
         raise_trap(thread, 0, TT_INTERRUPT, false, false);
     }
+}
+
+static uint32_t get_pending_interrupts(struct thread *thread)
+{
+    return (thread->core->is_level_triggered & thread->core->interrupt_levels)
+        | (~thread->core->is_level_triggered & thread->latched_interrupts);
 }
 
 static void raise_trap(struct thread *thread, uint32_t trap_address, enum trap_type type,
@@ -1553,7 +1568,7 @@ static void execute_control_register_inst(struct thread *thread, uint32_t instru
                 break;
 
             case CR_INTERRUPT_PENDING:
-                value = thread->pending_interrupts;
+                value = get_pending_interrupts(thread);
                 break;
         }
 
@@ -1627,7 +1642,11 @@ static void execute_control_register_inst(struct thread *thread, uint32_t instru
                 break;
 
             case CR_INTERRUPT_ACK:
-                thread->pending_interrupts &= ~value;
+                thread->latched_interrupts &= ~value;
+                break;
+
+            case CR_INTERRUPT_TRIGGER:
+                thread->core->is_level_triggered = value;
                 break;
         }
     }

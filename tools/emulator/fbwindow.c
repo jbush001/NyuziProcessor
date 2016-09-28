@@ -344,4 +344,6 @@ void update_frame_buffer(struct core *core)
     }
 
     SDL_RenderPresent(sdl_renderer);
+    raise_interrupt(core, INT_VGA_FRAME);
+    clear_interrupt(core, INT_VGA_FRAME);
 }

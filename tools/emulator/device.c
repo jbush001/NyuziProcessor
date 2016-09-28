@@ -32,6 +32,12 @@ extern void send_host_interrupt(uint32_t num);
 static uint32_t key_buffer[KEY_BUFFER_SIZE];
 static int key_buffer_head;
 static int key_buffer_tail;
+static struct core *core;
+
+void init_device(struct core *_core)
+{
+    core = _core;
+}
 
 void write_device_register(uint32_t address, uint32_t value)
 {
@@ -85,6 +91,9 @@ uint32_t read_device_register(uint32_t address)
             else
                 value = 0;
 
+            if (key_buffer_head == key_buffer_tail)
+                clear_interrupt(core, INT_PS2_RX);
+
             return value;
 
         case REG_SD_READ_DATA:
@@ -104,4 +113,6 @@ void enqueue_key(uint32_t scan_code)
     // If the buffer is full, discard the oldest character
     if (key_buffer_head == key_buffer_tail)
         key_buffer_tail = (key_buffer_tail + 1) % KEY_BUFFER_SIZE;
+
+    raise_interrupt(core, INT_PS2_RX);
 }

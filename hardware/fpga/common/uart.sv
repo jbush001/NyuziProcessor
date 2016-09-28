@@ -26,6 +26,7 @@ module uart
 
     // IO bus interface
     io_bus_interface.slave    io_bus,
+    output                    rx_interrupt,
 
     // UART interface
     output                    uart_tx,
@@ -54,6 +55,8 @@ module uart
     logic rx_frame_error;
     logic tx_en;
     logic[DIVISOR_WIDTH - 1:0] clocks_per_bit;
+
+    assign rx_interrupt = !rx_fifo_empty;
 
     assign tx_en = io_bus.write_en && io_bus.address == TX_REG;
 

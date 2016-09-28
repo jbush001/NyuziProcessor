@@ -24,6 +24,7 @@ module ps2_controller
     (input                      clk,
     input                       reset,
     io_bus_interface.slave      io_bus,
+    output                      rx_interrupt,
 
     // PS/2 Interface
     input                       ps2_clk,
@@ -50,6 +51,8 @@ module ps2_controller
     logic read_fifo_empty;
     logic fifo_almost_full;
     logic enqueue_en;
+
+    assign rx_interrupt = !read_fifo_empty;
 
     synchronizer #(.WIDTH(2), .RESET_STATE(2'b11)) input_synchronizer(
         .data_i({ps2_clk, ps2_data}),
