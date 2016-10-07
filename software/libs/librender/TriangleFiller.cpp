@@ -154,7 +154,7 @@ void TriangleFiller::fillMasked(int left, int top, unsigned short mask)
         if (!mask)
             return;	// All pixels are occluded
 
-        fTarget->getDepthBuffer()->writeBlockMasked(left, top, mask, veci16_t(zValues));
+        fTarget->getDepthBuffer()->writeBlockMasked(left, top, mask, vecu16_t(zValues));
     }
 
     // Interpolate parameters
@@ -209,6 +209,6 @@ void TriangleFiller::fillMasked(int left, int top, unsigned short mask)
     else
         pixelValues = 0xff000000 | rS | (gS << 8) | (bS << 16);
 
-    fTarget->getColorBuffer()->writeBlockMasked(left, top, mask, veci16_t(pixelValues));
+    fTarget->getColorBuffer()->writeBlockMasked(left, top, mask, vecu16_t(pixelValues));
 }
 

@@ -25,7 +25,7 @@ Surface::Surface(int width, int height, void *base)
     :	fWidth(width),
         fHeight(height),
         fStride(width * kBytesPerPixel),
-        fBaseAddress(reinterpret_cast<unsigned int>(base)),
+        fBaseAddress(reinterpret_cast<int>(base)),
         fOwnedPointer(false)
 {
     initializeOffsetVectors();
@@ -37,7 +37,8 @@ Surface::Surface(int width, int height)
         fStride(width * kBytesPerPixel),
         fOwnedPointer(true)
 {
-    fBaseAddress = reinterpret_cast<unsigned int>(memalign(kCacheLineSize, width * height * kBytesPerPixel));
+    fBaseAddress = reinterpret_cast<int>(memalign(kCacheLineSize,
+        static_cast<size_t>(width * height * kBytesPerPixel)));
     initializeOffsetVectors();
 }
 
@@ -89,11 +90,12 @@ void Surface::initializeOffsetVectors()
 
 void Surface::clearTileSlow(int left, int top, unsigned int value)
 {
-    veci16_t *ptr = reinterpret_cast<veci16_t*>(fBaseAddress + (left + top * fWidth) * kBytesPerPixel);
+    veci16_t *ptr = reinterpret_cast<veci16_t*>(fBaseAddress + (left + top * fWidth)
+        * kBytesPerPixel);
     const veci16_t kClearColor = veci16_t(value);
     int right = min(kTileSize, fWidth - left);
     int bottom = min(kTileSize, fHeight - top);
-    const int kStride = ((fWidth - right) * kBytesPerPixel / sizeof(veci16_t));
+    const int kStride = ((fWidth - right) * kBytesPerPixel / kVectorSize);
 
     for (int y = 0; y < bottom; y++)
     {
@@ -108,7 +110,7 @@ void Surface::clearTileSlow(int left, int top, unsigned int value)
 // Push a NxN tile from the L2 cache back to system memory
 void Surface::flushTile(int left, int top)
 {
-    unsigned int ptr = fBaseAddress + (left + top * fWidth) * kBytesPerPixel;
+    int ptr = fBaseAddress + (left + top * fWidth) * kBytesPerPixel;
     int right = min(kTileSize, fWidth - left);
     int bottom = min(kTileSize, fHeight - top);
     const int kStride = (fWidth - right) * kBytesPerPixel;

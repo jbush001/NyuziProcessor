@@ -37,7 +37,8 @@ void RenderContext::setClearColor(float r, float g, float b)
     g = max(min(g, 1.0f), 0.0f);
     b = max(min(b, 1.0f), 0.0f);
 
-    fClearColor = 0xff000000 | (int(b * 255.0) << 16) | (int(g * 255.0) << 8) | int(r * 255.0);
+    fClearColor = 0xff000000 | (unsigned(b * 255.0) << 16) | (unsigned(g * 255.0) << 8)
+        | unsigned(r * 255.0);
 }
 
 void RenderContext::bindVertexAttrs(const RenderBuffer *vertexAttrs)
@@ -111,8 +112,10 @@ void RenderContext::finish()
         RenderState &state = *fRenderCommandIterator;
         int numVertices = state.fVertexAttrBuffer->getNumElements();
         int numTriangles = state.fIndexBuffer->getNumElements() / 3;
-        state.fVertexParams = static_cast<float*>(fAllocator.alloc(numVertices
-                              * state.fShader->getNumParams() * sizeof(float)));
+        state.fVertexParams = static_cast<float*>(fAllocator.alloc(
+                              static_cast<unsigned int>(numVertices)
+                              * static_cast<unsigned int>(state.fShader->getNumParams())
+                              * sizeof(int)));
         parallel_execute(_shadeVertices, this, (numVertices + 15) / 16);
         parallel_execute(_setUpTriangle, this, numTriangles);
         fBaseSequenceNumber += numTriangles;
@@ -171,7 +174,7 @@ void RenderContext::shadeVertices(int index)
     const veci16_t kStepVector = { 0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60 };
     const veci16_t paramStepVector = kStepVector * paramsPerVertex;
     float *outBuf = state.fVertexParams + paramsPerVertex * index * 16;
-    veci16_t paramPtr = paramStepVector + reinterpret_cast<unsigned int>(outBuf);
+    veci16_t paramPtr = paramStepVector + reinterpret_cast<int>(outBuf);
     for (int param = 0; param < paramsPerVertex; param++)
     {
         __builtin_nyuzi_scatter_storef_masked(paramPtr, packedParams[param], mask);
@@ -373,7 +376,7 @@ void RenderContext::enqueueTriangle(int sequence, const RenderState &state, cons
 
     // Copy parameters into triangle structure, skipping position which is already
     // in x0/y0/z0/x1...
-    int paramSize = sizeof(float) * (state.fParamsPerVertex - 4);
+    unsigned int paramSize = sizeof(float) * static_cast<unsigned int>(state.fParamsPerVertex - 4);
     float *params = static_cast<float*>(fAllocator.alloc(paramSize * 3));
     memcpy(params, params0 + 4, paramSize);
     memcpy(params + state.fParamsPerVertex - 4, params1 + 4, paramSize);

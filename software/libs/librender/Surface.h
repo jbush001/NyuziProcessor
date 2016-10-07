@@ -28,6 +28,7 @@ namespace librender
 const int kCacheLineSize = 64;
 const int kBytesPerPixel = 4;
 const int kTileSize = 64;
+const int kVectorSize = 64;
 
 static_assert(__builtin_clz(kTileSize) & 1, "Tile size must be power of four");
 
@@ -58,16 +59,16 @@ public:
     //   4  5  6  7
     //   8  9 10 11
     //  12 13 14 15
-    void writeBlockMasked(int left, int top, int mask, veci16_t values)
+    void writeBlockMasked(int left, int top, int mask, vecu16_t values)
     {
-        vecu16_t ptrs = f4x4AtOrigin + left * 4 + top * fStride;
+        veci16_t ptrs = f4x4AtOrigin + left * 4 + top * fStride;
         __builtin_nyuzi_scatter_storei_masked(ptrs, values, mask);
     }
 
     // Read values from a 4x4 block, in same order as writeBlockMasked
-    veci16_t readBlock(int left, int top) const
+    vecu16_t readBlock(int left, int top) const
     {
-        vecu16_t ptrs = f4x4AtOrigin + left * 4 + top * fStride;
+        veci16_t ptrs = f4x4AtOrigin + left * 4 + top * fStride;
         return __builtin_nyuzi_gather_loadi(ptrs);
     }
 
@@ -77,8 +78,8 @@ public:
         if (kTileSize == 64 && fWidth - left >= 64 && fHeight - top >= 64)
         {
             // Fast clear using block stores
-            veci16_t vval = value;
-            veci16_t *ptr = reinterpret_cast<veci16_t*>(fBaseAddress + (left + top * fWidth) * kBytesPerPixel);
+            vecu16_t vval = value;
+            vecu16_t *ptr = reinterpret_cast<vecu16_t*>(fBaseAddress + (left + top * fWidth) * kBytesPerPixel);
             const int kStride = fStride / kCacheLineSize;
             for (int y = 0; y < 64; y++)
             {
@@ -143,7 +144,7 @@ private:
     void initializeOffsetVectors();
     void clearTileSlow(int left, int top, unsigned int value);
 
-    vecu16_t f4x4AtOrigin;
+    veci16_t f4x4AtOrigin;
 
     // For each pixel in a 4x4 grid, these represent the distance in
     // screen coordinates (-1.0 to 1.0) from the upper left pixel.
@@ -153,7 +154,7 @@ private:
     int fWidth;
     int fHeight;
     int fStride;
-    unsigned int fBaseAddress;
+    int fBaseAddress;
     bool fOwnedPointer;
 
 };

@@ -31,7 +31,7 @@ namespace librender
 class RegionAllocator
 {
 public:
-    RegionAllocator(int arenaSize)
+    RegionAllocator(unsigned int arenaSize)
         :	fArenaBase(new char[arenaSize]),
             fTotalSize(arenaSize),
             fNextAlloc(fArenaBase)
@@ -73,7 +73,7 @@ public:
 
     size_t bytesUsed() const
     {
-        return fNextAlloc - fArenaBase;
+        return static_cast<size_t>(fNextAlloc - fArenaBase);
     }
 
 private:

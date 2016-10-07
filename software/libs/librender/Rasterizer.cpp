@@ -121,9 +121,10 @@ void subdivideTile(
     const veci16_t acceptEdgeValue1 = acceptStep1 + acceptCornerValue1;
     const veci16_t acceptEdgeValue2 = acceptStep2 + acceptCornerValue2;
     const veci16_t acceptEdgeValue3 = acceptStep3 + acceptCornerValue3;
-    const int trivialAcceptMask = __builtin_nyuzi_mask_cmpi_sle(acceptEdgeValue1, veci16_t(0))
-                                  & __builtin_nyuzi_mask_cmpi_sle(acceptEdgeValue2, veci16_t(0))
-                                  & __builtin_nyuzi_mask_cmpi_sle(acceptEdgeValue3, veci16_t(0));
+    const unsigned int trivialAcceptMask = static_cast<unsigned int>(
+        __builtin_nyuzi_mask_cmpi_sle(acceptEdgeValue1, veci16_t(0))
+        & __builtin_nyuzi_mask_cmpi_sle(acceptEdgeValue2, veci16_t(0))
+        & __builtin_nyuzi_mask_cmpi_sle(acceptEdgeValue3, veci16_t(0)));
 
     if (tileSizeBits == 2)
     {
@@ -139,7 +140,7 @@ void subdivideTile(
     // Process all trivially accepted blocks
     if (trivialAcceptMask != 0)
     {
-        int currentMask = trivialAcceptMask;
+        unsigned int currentMask = trivialAcceptMask;
 
         while (currentMask)
         {
@@ -162,13 +163,14 @@ void subdivideTile(
     const veci16_t rejectEdgeValue1 = rejectStep1 + rejectCornerValue1;
     const veci16_t rejectEdgeValue2 = rejectStep2 + rejectCornerValue2;
     const veci16_t rejectEdgeValue3 = rejectStep3 + rejectCornerValue3;
-    const int trivialRejectMask = __builtin_nyuzi_mask_cmpi_sgt(rejectEdgeValue1, veci16_t(0))
-                                  | __builtin_nyuzi_mask_cmpi_sgt(rejectEdgeValue2, veci16_t(0))
-                                  | __builtin_nyuzi_mask_cmpi_sgt(rejectEdgeValue3, veci16_t(0));
+    const unsigned int trivialRejectMask = static_cast<unsigned int>(
+        __builtin_nyuzi_mask_cmpi_sgt(rejectEdgeValue1, veci16_t(0))
+        | __builtin_nyuzi_mask_cmpi_sgt(rejectEdgeValue2, veci16_t(0))
+        | __builtin_nyuzi_mask_cmpi_sgt(rejectEdgeValue3, veci16_t(0)));
 
     // Recurse into blocks that are neither trivially rejected or accepted.
     // They are partially overlapped and need to be further subdivided.
-    int recurseMask = (trivialAcceptMask | trivialRejectMask) ^ 0xffff;
+    unsigned int recurseMask = (trivialAcceptMask | trivialRejectMask) ^ 0xffff;
     if (recurseMask)
     {
         // Divide each step matrix by 4

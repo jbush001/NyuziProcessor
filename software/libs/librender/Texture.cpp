@@ -59,7 +59,7 @@ void Texture::setMipSurface(int mipLevel, const Surface *surface)
 
     if (mipLevel == 0)
     {
-        fBaseMipBits = __builtin_clz(surface->getWidth()) + 1;
+        fBaseMipBits = __builtin_clz(static_cast<unsigned int>(surface->getWidth())) + 1;
 
         // Clear out lower mip levels
         for (int i = 1; i < fMaxMipLevel; i++)
@@ -98,7 +98,7 @@ void Texture::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
     // is the mip level.
     // XXX this is a hack because it only looks at one direction. Should do
     // something better here.
-    int mipLevel = __builtin_clz(int(1.0f / __builtin_fabsf(u[1] - u[0]))) - fBaseMipBits;
+    int mipLevel = __builtin_clz(static_cast<unsigned int>(1.0f / __builtin_fabsf(u[1] - u[0]))) - fBaseMipBits;
     if (mipLevel > fMaxMipLevel)
         mipLevel = fMaxMipLevel;
     else if (mipLevel < 0)

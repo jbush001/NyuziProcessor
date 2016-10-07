@@ -35,14 +35,14 @@ public:
         :	fData(0),
             fNumElements(0),
             fStride(0),
-            fBaseStepPointers(static_cast<vecu16_t*>(memalign(sizeof(vecu16_t), sizeof(vecu16_t))))
+            fBaseStepPointers(static_cast<veci16_t*>(memalign(sizeof(vecu16_t), sizeof(vecu16_t))))
     {
     }
 
     RenderBuffer(const RenderBuffer &) = delete;
 
     RenderBuffer(const void *data, int numElements, int stride)
-        :	fBaseStepPointers(static_cast<vecu16_t*>(memalign(sizeof(vecu16_t), sizeof(vecu16_t))))
+        :	fBaseStepPointers(static_cast<veci16_t*>(memalign(sizeof(vecu16_t), sizeof(vecu16_t))))
     {
         setData(data, numElements, stride);
     }
@@ -64,9 +64,9 @@ public:
         fNumElements = numElements;
         fStride = stride;
 
-        const vecu16_t kStepVector = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+        const veci16_t kStepVector = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
         *fBaseStepPointers = kStepVector * fStride
-                             + reinterpret_cast<unsigned int>(fData);
+                             + reinterpret_cast<int>(fData);
     }
 
     int getNumElements() const
@@ -94,26 +94,28 @@ public:
     // Return up to 16 elements packed in a vector: a_mb_n, a_mb_(n+1)...
     vecu16_t gatherElements(int baseIndex, int paramNum, int mask) const
     {
-        const vecu16_t ptrVec = *fBaseStepPointers + baseIndex * fStride + paramNum
-                                * sizeof(unsigned int);
+        const veci16_t ptrVec = *fBaseStepPointers + baseIndex * fStride
+                                + paramNum * kElementSize;
         return __builtin_nyuzi_gather_loadf_masked(ptrVec, mask);
     }
 
     // Load up to 16 parameters with arbitrary indices.
-    vecu16_t gatherElements(vecu16_t indices, int paramNum, int mask) const
+    vecu16_t gatherElements(veci16_t indices, int paramNum, int mask) const
     {
-        const vecu16_t ptrVec = indices * fStride + paramNum * sizeof(unsigned int)
-            + reinterpret_cast<unsigned int>(fData);
+        const veci16_t ptrVec = indices * fStride + paramNum * kElementSize
+            + reinterpret_cast<int>(fData);
 
         return __builtin_nyuzi_gather_loadf_masked(ptrVec, mask);
     }
 
 private:
+    const int kElementSize = 4;
+
     const void *fData;
     int fNumElements;
     int fStride;
 
-    vecu16_t *fBaseStepPointers;
+    veci16_t *fBaseStepPointers;
 };
 
 }
