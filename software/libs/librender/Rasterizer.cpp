@@ -313,6 +313,7 @@ void rasterizeSweep(TriangleFiller &filler,
     int col = bbLeft;
     int row = bbTop;
     int stepDir = 4;
+    int numCols = (bbRight - bbLeft) / 4;
     do
     {
         for (int colCount = 0; ; colCount++)
@@ -323,7 +324,7 @@ void rasterizeSweep(TriangleFiller &filler,
             if (mask)
                 filler.fillMasked(col, row, mask);
 
-            if (colCount == kTileSize / 4)
+            if (colCount == numCols)
                 break;
 
             // Step left/right
