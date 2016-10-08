@@ -19,7 +19,7 @@ TOPDIR=../../
 include $(TOPDIR)/build/target.mk
 
 
-LIBS=-lc -los
+LIBS=-lc -los-bare
 
 SRCS=test_float.c
 
