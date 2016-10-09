@@ -61,4 +61,4 @@ Is is easier to debug is only one hardware thread is running instead of the
 default 4. This can also rule out race conditions as a cause. To do this,
 comment out the following line in main.cpp:
 
-    startAllThreads();
+    start_all_threads();

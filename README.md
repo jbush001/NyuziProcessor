@@ -3,11 +3,9 @@
 [![Chat at https://gitter.im/jbush001/NyuziProcessor](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jbush001/NyuziProcessor?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Nyuzi is an experimental multicore GPGPU processor. It supports vector floating
-point, hardware multithreading, and cache coherence. The SystemVerilog-based
-hardware implementation is synthesizable and runs on FPGA. This project also
-includes an LLVM-based C++ toolchain, tests, and other tools. It is useful
-for microarchitecture experimentation, performance modeling, and parallel
-software development.
+point, hardware multithreading, virtual memory, and cache coherence. The
+SystemVerilog-based hardware implementation is synthesizable and runs on FPGA.
+This project also includes an LLVM-based C++ toolchain.
 
 **Documentation:** https://github.com/jbush001/NyuziProcessor/wiki<br/>
 **Mailing list:** https://groups.google.com/forum/#!forum/nyuzi-processor-dev<br/>
@@ -40,7 +38,7 @@ The makefile executes this operation in batch mode*
 These instruction assume OSX Mavericks or later.
 
 Open the AppStore application, search for XCode and install it. Install the
-command line compiler tools by typing the following in a terminal:
+command line compiler tools by opening Terminal and typing the following:
 
     xcode-select --install
 
@@ -63,7 +61,7 @@ Linux under a virtual machine like [VirtualBox](https://www.virtualbox.org/wiki/
 The following script will download and install the
 [Nyuzi toolchain](https://github.com/jbush001/NyuziToolchain) and
 [Verilator](http://www.veripool.org/wiki/verilator) Verilog simulator.
-(Although some Linux package managers have Verilator, they have old versions).
+Although some Linux package managers have Verilator, they have old versions.
 It will ask for your root password a few times to install stuff.
 
     build/setup_tools.sh
@@ -78,7 +76,7 @@ Run tests:
 
 _If you are on a Linux distribution that defaults to python3, you may run into build
 problems with the compiler. In tools/NyuziToolchain/tools/CMakeLists.txt, comment
-out the following line:_
+out the following line:
 
     add_llvm_external_project(lldb)
 
@@ -95,7 +93,7 @@ Sample applications are available in [software/apps](software/apps). You can
 run these in the emulator by typing 'make run' (some need 3rd party data
 files, details are in the READMEs in those directories).
 
-For example, this will render a 3D model:
+For example, this will render a 3D model in the emulator:
 
     cd software/apps/sceneview
     make run
