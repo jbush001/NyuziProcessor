@@ -30,8 +30,8 @@ __lshrdi3:          bfalse s2, do_nothing   # if shift amount is 0, skip
                     move s3, 32
                     sub_i s3, s3, s2
                     shl s3, s1, s3      # Align bits that will be shifted in
-                    shr s0, s0, s2      # Shift upper word
-                    shr s1, s1, s2      # Shift lower word
+                    shr s0, s0, s2      # Shift lower word
+                    shr s1, s1, s2      # Shift upper word
                     or s0, s0, s3       # Fill in top bits in lower word
                     move pc, ra
 

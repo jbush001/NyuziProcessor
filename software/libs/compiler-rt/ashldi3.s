@@ -30,9 +30,9 @@ __ashldi3:          bfalse s2, do_nothing   # if shift amount is 0, skip
                     move s3, 32
                     sub_i s3, s3, s2
                     shr s3, s0, s3      # Align bits that will be shifted in
-                    shl s0, s0, s2      # Shift lower word
+                    shl s0, s0, s2      # Shift low word
+                    shl s1, s1, s2      # Shift high word
                     or s1, s1, s3       # Fill in bits in upper word
-                    shl s1, s1, s2      # Shift lower word
                     move pc, ra
 
                     # Shift is greater than 32

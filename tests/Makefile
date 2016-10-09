@@ -25,6 +25,7 @@ test:
 	cd device/ps2/ && ./runtest.py
 	cd device/uart && ./runtest.py
 	cd libc && ./runtest.py
+	cd compiler-rt && ./runtest.py
 	cd compiler && USE_VERILATOR=1 ./runtest.py
 	cd cosimulation && ./runtest.py
 	cd render && make test

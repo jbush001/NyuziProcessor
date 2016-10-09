@@ -17,7 +17,7 @@
 extern unsigned long long int __udivdi3(unsigned long long int dividend,
                                         unsigned long long int divisor);
 
-// Signed 32-bit integer division
+// Signed 64-bit integer division
 long long int __divdi3(long long int value1, long long int value2)
 {
     int sign1 = value1 >> 63;
