@@ -14,8 +14,6 @@
 // limitations under the License.
 //
 
-
-// XXX untested, probably wrong
 float __floatundisf(long long int a)
 {
     int leadingZeroes = __builtin_clzll(a);

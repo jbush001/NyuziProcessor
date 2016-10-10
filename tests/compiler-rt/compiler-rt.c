@@ -29,6 +29,11 @@ void print64bit(long long int value)
     printf("\n");
 }
 
+void printfloathex(float value)
+{
+    printf("0x%08x\n", *((int*) &value));
+}
+
 long long int __ashldi3(long long int value, int shamt);
 long long int __lshrdi3(long long int value, int shamt);
 unsigned long long int __udivdi3(unsigned long long int dividend,
@@ -37,6 +42,7 @@ long long int __divdi3(long long int value1, long long int value2);
 unsigned long long int __umoddi3(unsigned long long int dividend,
                                  unsigned long long int divisor);
 long long int __moddi3(long long int value1, long long int value2);
+float __floatundisf(long long int a);
 
 int main()
 {
@@ -127,4 +133,12 @@ int main()
     // Unsigned value
     print64bit(__moddi3(0x53c367523e29230aLL, 495));
     // CHECK: 0x0000000000000191
+
+    // Convert 64 bit value to float, greater than > 32 bits
+    printfloathex(__floatundisf(1674874919848732277LL));
+    // CHECK: 0x5db9f2cf
+
+    // < 32 bits
+    printfloathex(__floatundisf(1674877LL));
+    // CHECK: 0x49cc73e8
 }
