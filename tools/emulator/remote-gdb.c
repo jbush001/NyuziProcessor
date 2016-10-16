@@ -177,7 +177,7 @@ void remote_gdb_main_loop(struct core *core, bool enable_fb_window)
     uint32_t i;
     bool no_ack_mode = false;
     int optval;
-    char response[256];
+    char response[1024];
     uint32_t current_thread = 0;
 
     last_signals = calloc(sizeof(int), get_total_threads(core));
@@ -291,6 +291,13 @@ void remote_gdb_main_loop(struct core *core, bool enable_fb_window)
                     length = (uint32_t) strtoul(len_ptr + 1, &data_ptr, 16);
                     if (request[0] == 'm')
                     {
+                        // XXX May need dynamic allocation. At very least, buffer is too small.
+                        if (length > sizeof(response) / 2)
+                        {
+                            printf("memory read of %d requested\n", length);
+                            assert(0);
+                        }
+
                         // Read memory
                         for (offset = 0; offset < length; offset++)
                             sprintf(response + offset * 2, "%02x", debug_read_memory_byte(core, start + offset));
