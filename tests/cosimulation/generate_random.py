@@ -112,7 +112,7 @@ def generate_binary_arith(file):
 
     opstr += typea + str(rega) + ', '
     if typeb == 'i':
-        opstr += str(random.randint(-0x1ff, 0x1ff))  # Immediate value
+        opstr += str(random.randint(-0x7f, 0x7f))  # Immediate value
     else:
         opstr += typeb + str(regb)
 

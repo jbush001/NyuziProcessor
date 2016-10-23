@@ -67,10 +67,10 @@
 .set REG_TIMER_COUNT, 0xffff0240
 
 .macro start_all_threads
-	move s0, 0xffffffff
+	move s0, -1
 	shl s0, s0, 16
 	or s0, s0, 0x100
-	move s1, 0xffffffff
+	move s1, -1
 	store_32 s1, (s0)
 .endm
 
@@ -78,7 +78,7 @@
 	getcr s0, CR_CURRENT_THREAD
 	move s1, 1
 	shl s1, s1, s0
-	move s0, 0xffffffff
+	move s0, -1
 	shl s0, s0, 16
 	or s0, s0, 0x104
 	store_32 s1, (s0)
@@ -86,10 +86,10 @@
 .endm
 
 .macro halt_all_threads
-    move s0, 0xffffffff
+    move s0, -1
     shl s0, s0, 16
     or s0, s0, 0x104
-    move s1, 0xffffffff
+    move s1, -1
 	store_32 s1, (s0)
 1:	goto 1b
 .endm

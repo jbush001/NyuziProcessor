@@ -86,7 +86,7 @@ for td, ta, tb, suffix in forms:
 
         opstr += ta + str(rega) + ', '
         if tb == 'i':
-            opstr += str(random.randint(0, 0x1ff))
+            opstr += str(random.randint(0, 0x7f))
         else:
             opstr += tb + str(regb)
         print(opstr)
@@ -114,4 +114,4 @@ for td, ta, tb, suffix in forms:
         rega = dest
         dest = tmp
 
-print('\t\tHALT_CURRENT_THREAD\n')
+print('\t\thalt_current_thread\n')

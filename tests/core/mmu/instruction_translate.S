@@ -66,10 +66,10 @@ dtlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT | TLB_SUPERVISOR
                 goto 1b                     // Loop for next char
 3:
                 // Exit simulation
-                move s0, 0xffffffff
+                move s0, -1
                 shl s0, s0, 16
                 or s0, s0, 0x104
-                move s1, 0xffffffff
+                move s1, -1
 	            store_32 s1, (s0)
 1:	            goto 1b
 
