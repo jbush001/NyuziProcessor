@@ -17,6 +17,6 @@
 #ifndef REMOTE_GDB_H
 #define REMOTE_GDB_H
 
-void remote_gdb_main_loop(struct core*, bool enable_fb_window);
+void remote_gdb_main_loop(struct processor*, bool enable_fb_window);
 
 #endif

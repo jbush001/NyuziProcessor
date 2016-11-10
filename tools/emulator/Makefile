@@ -23,7 +23,7 @@ CFLAGS+=$(shell sdl2-config --cflags)
 #CFLAGS+=-DDUMP_INSTRUCTION_STATS
 
 SRCS=main.c \
-	core.c \
+	processor.c \
 	cosimulation.c \
 	remote-gdb.c \
 	device.c \

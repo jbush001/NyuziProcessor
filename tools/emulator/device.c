@@ -20,7 +20,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include "core.h"
+#include "processor.h"
 #include "device.h"
 #include "fbwindow.h"
 #include "sdmmc.h"
@@ -32,11 +32,11 @@ extern void send_host_interrupt(uint32_t num);
 static uint32_t key_buffer[KEY_BUFFER_SIZE];
 static int key_buffer_head;
 static int key_buffer_tail;
-static struct core *core;
+static struct processor *proc;
 
-void init_device(struct core *_core)
+void init_device(struct processor *_proc)
 {
-    core = _core;
+    proc = _proc;
 }
 
 void write_device_register(uint32_t address, uint32_t value)
@@ -92,7 +92,7 @@ uint32_t read_device_register(uint32_t address)
                 value = 0;
 
             if (key_buffer_head == key_buffer_tail)
-                clear_interrupt(core, INT_PS2_RX);
+                clear_interrupt(proc, INT_PS2_RX);
 
             return value;
 
@@ -114,5 +114,5 @@ void enqueue_key(uint32_t scan_code)
     if (key_buffer_head == key_buffer_tail)
         key_buffer_tail = (key_buffer_tail + 1) % KEY_BUFFER_SIZE;
 
-    raise_interrupt(core, INT_PS2_RX);
+    raise_interrupt(proc, INT_PS2_RX);
 }

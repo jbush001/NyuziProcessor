@@ -28,7 +28,8 @@ output and a mass storage device.
 | -f   |  widthxheight             | Display framebuffer output in window             |
 | -d   |  filename,start,length    | Dump memory                                      |
 | -b   |  filename                 | Load file into virtual block device              |
-| -t   |  num                      | Total threads (default 4)                        |
+| -t   |  num                      | Threads per core (default 4)                     |
+| -p   |  num                      | Number of cores (default 1)                      |
 | -c   |  size                     | Total amount of memory                           |
 | -r   |  instructions             | Screen refresh rate, number of instructions to execute between screen updates |
 | -s   |  filename                 | Create the file and map emulated system memory onto it as a shared memory object |

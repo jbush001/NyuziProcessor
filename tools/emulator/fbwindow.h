@@ -17,10 +17,10 @@
 #ifndef FBWINDOW_H
 #define FBWINDOW_H
 
-#include "core.h"
+#include "processor.h"
 
 int init_frame_buffer(uint32_t width, uint32_t height);
-void update_frame_buffer(struct core*);
+void update_frame_buffer(struct processor*);
 void poll_fb_window_event(void);
 void enable_frame_buffer(bool enable);
 void set_frame_buffer_address(uint32_t address);

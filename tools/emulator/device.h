@@ -40,9 +40,9 @@
 #define INT_PS2_RX 0x00000008
 #define INT_VGA_FRAME 0x00000010
 
-struct core;
+struct processor;
 
-void init_device(struct core *core);
+void init_device(struct processor *proc);
 void write_device_register(uint32_t address, uint32_t value);
 uint32_t read_device_register(uint32_t address);
 void enqueue_key(uint32_t scan_code);

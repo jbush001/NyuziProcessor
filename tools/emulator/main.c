@@ -25,7 +25,7 @@
 #include <sys/resource.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include "core.h"
+#include "processor.h"
 #include "cosimulation.h"
 #include "device.h"
 #include "fbwindow.h"
@@ -34,7 +34,7 @@
 #include "sdmmc.h"
 #include "util.h"
 
-extern void check_interrupt_pipe(struct core*);
+extern void check_interrupt_pipe(struct processor*);
 
 static int recv_interrupt_fd = -1;
 static int send_interrupt_fd = -1;
@@ -51,7 +51,8 @@ static void usage(void)
     fprintf(stderr, "  -f <width>x<height> Display frame buffer output in window\n");
     fprintf(stderr, "  -d <filename>,<start>,<length>  Dump memory\n");
     fprintf(stderr, "  -b <filename> Load file into a virtual block device\n");
-    fprintf(stderr, "  -t <num> Total threads (default 4)\n");
+    fprintf(stderr, "  -t <num> Threads per core (default 4)\n");
+    fprintf(stderr, "  -p <num> Number of cores (default 1)\n");
     fprintf(stderr, "  -c <size> Total amount of memory\n");
     fprintf(stderr, "  -r <cycles> Refresh rate, cycles between each screen update\n");
     fprintf(stderr, "  -s <file> Memory map file as shared memory\n");
@@ -69,8 +70,8 @@ static uint32_t parse_num_arg(const char *argval)
 
 // An external process can send interrupts to the emulator by writing to a
 // named pipe. Poll the pipe to determine if any messages are pending. If
-// so, call into the core to dispatch.
-void check_interrupt_pipe(struct core *core)
+// so, call into the proc to dispatch.
+void check_interrupt_pipe(struct processor *proc)
 {
     int result;
     char interrupt_id;
@@ -100,7 +101,7 @@ void check_interrupt_pipe(struct core *core)
         return; // Ignore invalid interrupt IDs
     }
 
-    raise_interrupt(core, 1 << interrupt_id);
+    raise_interrupt(proc, 1 << interrupt_id);
 }
 
 void send_host_interrupt(uint32_t num)
@@ -119,7 +120,7 @@ void send_host_interrupt(uint32_t num)
 
 int main(int argc, char *argv[])
 {
-    struct core *core;
+    struct processor *proc;
     int option;
     bool enable_memory_dump = false;
     uint32_t mem_dump_base = 0;
@@ -131,7 +132,8 @@ int main(int argc, char *argv[])
     uint32_t fb_height = 480;
     bool block_device_open = false;
     bool enable_fb_window = false;
-    uint32_t total_threads = 4;
+    uint32_t threads_per_core = 4;
+    uint32_t num_cores = 1;
     char *separator;
     uint32_t memory_size = 0x1000000;
     const char *shared_memory_file = NULL;
@@ -144,7 +146,7 @@ int main(int argc, char *argv[])
         MODE_GDB_REMOTE_DEBUG
     } mode = MODE_NORMAL;
 
-    while ((option = getopt(argc, argv, "f:d:vm:b:t:c:r:s:i:o:")) != -1)
+    while ((option = getopt(argc, argv, "f:d:vm:b:t:p:c:r:s:i:o:")) != -1)
     {
         switch (option)
         {
@@ -224,10 +226,21 @@ int main(int argc, char *argv[])
                 break;
 
             case 't':
-                total_threads = parse_num_arg(optarg);
-                if (total_threads < 1 || total_threads > 32)
+                threads_per_core = parse_num_arg(optarg);
+                if (threads_per_core < 1 || threads_per_core > 32)
                 {
                     fprintf(stderr, "Total threads must be between 1 and 32\n");
+                    return 1;
+                }
+
+                break;
+
+            case 'p':
+                num_cores = parse_num_arg(optarg);
+                if (num_cores < 1)
+                {
+                    // XXX Should there be a maximum?
+                    fprintf(stderr, "Total cores must be greater than 1\n");
                     return 1;
                 }
 
@@ -297,18 +310,18 @@ int main(int argc, char *argv[])
     // Don't randomize memory for cosimulation mode, because
     // memory is checked against the hardware model to ensure a match
 
-    core = init_core(memory_size, total_threads, mode != MODE_COSIMULATION,
-                     shared_memory_file);
-    if (core == NULL)
+    proc = init_processor(memory_size, num_cores, threads_per_core,
+                          mode != MODE_COSIMULATION, shared_memory_file);
+    if (proc == NULL)
         return 1;
 
-    if (load_hex_file(core, argv[optind]) < 0)
+    if (load_hex_file(proc, argv[optind]) < 0)
     {
         fprintf(stderr, "Error reading image %s\n", argv[optind]);
         return 1;
     }
 
-    init_device(core);
+    init_device(proc);
 
     if (enable_fb_window)
     {
@@ -320,47 +333,47 @@ int main(int argc, char *argv[])
     {
         case MODE_NORMAL:
             if (verbose)
-                enable_tracing(core);
+                enable_tracing(proc);
 
-            set_stop_on_fault(core, false);
+            set_stop_on_fault(proc, false);
             if (enable_fb_window)
             {
-                while (execute_instructions(core, ALL_THREADS, screen_refresh_rate))
+                while (execute_instructions(proc, ALL_THREADS, screen_refresh_rate))
                 {
-                    update_frame_buffer(core);
+                    update_frame_buffer(proc);
                     poll_fb_window_event();
-                    check_interrupt_pipe(core);
+                    check_interrupt_pipe(proc);
                 }
             }
             else
             {
-                while (execute_instructions(core, ALL_THREADS, 1000000))
-                    check_interrupt_pipe(core);
+                while (execute_instructions(proc, ALL_THREADS, 1000000))
+                    check_interrupt_pipe(proc);
             }
 
             break;
 
         case MODE_COSIMULATION:
-            set_stop_on_fault(core, false);
-            if (run_cosimulation(core, verbose) < 0)
+            set_stop_on_fault(proc, false);
+            if (run_cosimulation(proc, verbose) < 0)
                 return 1;	// Failed
 
             break;
 
         case MODE_GDB_REMOTE_DEBUG:
-            set_stop_on_fault(core, true);
-            remote_gdb_main_loop(core, enable_fb_window);
+            set_stop_on_fault(proc, true);
+            remote_gdb_main_loop(proc, enable_fb_window);
             break;
     }
 
     if (enable_memory_dump)
-        write_memory_to_file(core, mem_dump_filename, mem_dump_base, mem_dump_length);
+        write_memory_to_file(proc, mem_dump_filename, mem_dump_base, mem_dump_length);
 
-    dump_instruction_stats(core);
+    dump_instruction_stats(proc);
     if (block_device_open)
         close_block_device();
 
-    if (stopped_on_fault(core))
+    if (stopped_on_fault(proc))
         return 1;
 
     return 0;

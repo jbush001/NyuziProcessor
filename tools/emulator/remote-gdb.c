@@ -25,14 +25,14 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include "core.h"
+#include "processor.h"
 #include "fbwindow.h"
 #include "remote-gdb.h"
 #include "util.h"
 
 #define TRAP_SIGNAL 5 // SIGTRAP
 
-extern void check_interrupt_pipe(struct core*);
+extern void check_interrupt_pipe(struct processor*);
 static void __attribute__ ((format (printf, 1, 2))) send_formatted_response(const char *format, ...);
 
 static int client_socket = -1;
@@ -127,18 +127,18 @@ static void send_formatted_response(const char *format, ...)
 
 // thread_id of ALL_THREADS means run all threads.  Otherwise, run just the
 // indicated thread.
-static void run_until_interrupt(struct core *core, uint32_t thread_id, bool enable_fb_window)
+static void run_until_interrupt(struct processor *proc, uint32_t thread_id, bool enable_fb_window)
 {
     while (true)
     {
-        if (!execute_instructions(core, thread_id, screen_refresh_rate))
+        if (!execute_instructions(proc, thread_id, screen_refresh_rate))
             break;
 
         if (enable_fb_window)
         {
-            update_frame_buffer(core);
+            update_frame_buffer(proc);
             poll_fb_window_event();
-            check_interrupt_pipe(core);
+            check_interrupt_pipe(proc);
         }
 
         // Break on error or if data is ready
@@ -167,7 +167,7 @@ static uint8_t decode_hex_byte(const char *ptr)
     return (uint8_t) retval;
 }
 
-void remote_gdb_main_loop(struct core *core, bool enable_fb_window)
+void remote_gdb_main_loop(struct processor *proc, bool enable_fb_window)
 {
     int listen_socket;
     struct sockaddr_in address;
@@ -180,8 +180,8 @@ void remote_gdb_main_loop(struct core *core, bool enable_fb_window)
     char response[1024];
     uint32_t current_thread = 0;
 
-    last_signals = calloc(sizeof(int), get_total_threads(core));
-    for (i = 0; i < get_total_threads(core); i++)
+    last_signals = calloc(sizeof(int), get_total_threads(proc));
+    for (i = 0; i < get_total_threads(proc); i++)
         last_signals[i] = 0;
 
     listen_socket = socket(PF_INET, SOCK_STREAM, 0);
@@ -254,7 +254,7 @@ void remote_gdb_main_loop(struct core *core, bool enable_fb_window)
                 // Continue
                 case 'c':
                 case 'C':
-                    run_until_interrupt(core, ALL_THREADS, enable_fb_window);
+                    run_until_interrupt(proc, ALL_THREADS, enable_fb_window);
                     last_signals[current_thread] = TRAP_SIGNAL;
                     send_formatted_response("S%02x", last_signals[current_thread]);
                     break;
@@ -300,7 +300,7 @@ void remote_gdb_main_loop(struct core *core, bool enable_fb_window)
 
                         // Read memory
                         for (offset = 0; offset < length; offset++)
-                            sprintf(response + offset * 2, "%02x", debug_read_memory_byte(core, start + offset));
+                            sprintf(response + offset * 2, "%02x", debug_read_memory_byte(proc, start + offset));
 
                         send_response_packet(response);
                     }
@@ -309,7 +309,7 @@ void remote_gdb_main_loop(struct core *core, bool enable_fb_window)
                         // Write memory
                         data_ptr += 1;	// Skip colon
                         for (offset = 0; offset < length; offset++)
-                            debug_write_memory_byte(core, start + offset, decode_hex_byte(data_ptr + offset * 2));
+                            debug_write_memory_byte(proc, start + offset, decode_hex_byte(data_ptr + offset * 2));
 
                         send_response_packet("OK");
                     }
@@ -325,7 +325,7 @@ void remote_gdb_main_loop(struct core *core, bool enable_fb_window)
                     uint32_t value;
                     if (reg_id < 32)
                     {
-                        value = get_scalar_register(core, current_thread, reg_id);
+                        value = get_scalar_register(proc, current_thread, reg_id);
                         send_formatted_response("%08x", endian_swap32(value));
                     }
                     else if (reg_id < 64)
@@ -334,7 +334,7 @@ void remote_gdb_main_loop(struct core *core, bool enable_fb_window)
 
                         for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
                         {
-                            value = get_vector_register(core, current_thread, reg_id, lane);
+                            value = get_vector_register(proc, current_thread, reg_id, lane);
                             sprintf(response + lane * 8, "%08x", endian_swap32(value));
                         }
 
@@ -378,7 +378,7 @@ void remote_gdb_main_loop(struct core *core, bool enable_fb_window)
                         else if (reg_id < 64)
                         {
                             send_formatted_response("name:v%d;bitsize:512;encoding:uint;format:vector-uint32;set:General Purpose Vector Registers;gcc:%d;dwarf:%d;",
-                                    reg_id - 32, reg_id, reg_id);
+                                                    reg_id - 32, reg_id, reg_id);
                         }
                         else
                             send_response_packet("");
@@ -406,7 +406,7 @@ void remote_gdb_main_loop(struct core *core, bool enable_fb_window)
                 // Single step
                 case 's':
                 case 'S':
-                    single_step(core, current_thread);
+                    single_step(proc, current_thread);
                     last_signals[current_thread] = TRAP_SIGNAL;
                     send_formatted_response("S%02x", last_signals[current_thread]);
                     break;
@@ -426,13 +426,13 @@ void remote_gdb_main_loop(struct core *core, bool enable_fb_window)
                         {
                             // s:0001
                             current_thread = (uint32_t) strtoul(sreq + 2, NULL, 16) - 1;
-                            single_step(core, current_thread);
+                            single_step(proc, current_thread);
                             last_signals[current_thread] = TRAP_SIGNAL;
                             send_formatted_response("S%02x", last_signals[current_thread]);
                         }
                         else
                         {
-                            run_until_interrupt(core, ALL_THREADS, enable_fb_window);
+                            run_until_interrupt(proc, ALL_THREADS, enable_fb_window);
                             last_signals[current_thread] = TRAP_SIGNAL;
                             send_formatted_response("S%02x", last_signals[current_thread]);
                         }
@@ -444,7 +444,7 @@ void remote_gdb_main_loop(struct core *core, bool enable_fb_window)
 
                 // Clear breakpoint
                 case 'z':
-                    if (clear_breakpoint(core, (uint32_t) strtoul(request + 3, NULL, 16)) < 0)
+                    if (clear_breakpoint(proc, (uint32_t) strtoul(request + 3, NULL, 16)) < 0)
                         send_response_packet(""); // Error
                     else
                         send_response_packet("OK");
@@ -453,7 +453,7 @@ void remote_gdb_main_loop(struct core *core, bool enable_fb_window)
 
                 // Set breakpoint
                 case 'Z':
-                    if (set_breakpoint(core, (uint32_t) strtoul(request + 3, NULL, 16)) < 0)
+                    if (set_breakpoint(proc, (uint32_t) strtoul(request + 3, NULL, 16)) < 0)
                         send_response_packet(""); // Error
                     else
                         send_response_packet("OK");

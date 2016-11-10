@@ -325,12 +325,12 @@ void set_frame_buffer_address(uint32_t address)
     fb_address = address;
 }
 
-void update_frame_buffer(struct core *core)
+void update_frame_buffer(struct processor *proc)
 {
     if (!fb_enabled)
         return;
 
-    if (SDL_UpdateTexture(sdl_frame_buffer, NULL, get_memory_region_ptr(core, fb_address,
+    if (SDL_UpdateTexture(sdl_frame_buffer, NULL, get_memory_region_ptr(proc, fb_address,
                           fb_width * fb_height * 4), (int)(fb_width * 4)) != 0)
     {
         printf("SDL_Update_texture failed: %s\n", SDL_GetError());
@@ -344,6 +344,6 @@ void update_frame_buffer(struct core *core)
     }
 
     SDL_RenderPresent(sdl_renderer);
-    raise_interrupt(core, INT_VGA_FRAME);
-    clear_interrupt(core, INT_VGA_FRAME);
+    raise_interrupt(proc, INT_VGA_FRAME);
+    clear_interrupt(proc, INT_VGA_FRAME);
 }
