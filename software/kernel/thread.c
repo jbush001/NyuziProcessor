@@ -29,10 +29,13 @@ extern __attribute__((noreturn)) void  jump_to_user_mode(
     void *argv,
     unsigned int inital_pc,
     unsigned int user_stack_ptr);
+extern void start_timer(void);
 extern void context_switch(unsigned int **old_stack_ptr_ptr,
                            unsigned int *new_stack_ptr);
+static void timer_tick(void);
 
 struct thread *cur_thread[MAX_HW_THREADS];
+static int disable_preempt_count[MAX_HW_THREADS];
 static spinlock_t thread_q_lock;
 static struct list_node ready_q;
 static struct list_node dead_q;
@@ -80,6 +83,9 @@ void boot_init_thread(void)
     list_add_tail(&kernel_proc->thread_list, &th->process_entry);
     release_spinlock(&kernel_proc->lock);
     restore_interrupts(old_flags);
+
+    register_interrupt_handler(1, timer_tick);
+    start_timer();
 }
 
 struct thread *current_thread(void)
@@ -134,6 +140,14 @@ struct thread *spawn_thread_internal(const char *name,
     restore_interrupts(old_flags);
 
     return th;
+}
+
+static void timer_tick(void)
+{
+    start_timer();
+    ack_interrupt(1);
+    if (disable_preempt_count[current_hw_thread()] == 0)
+        reschedule();
 }
 
 static void destroy_thread(struct thread *th)
@@ -263,6 +277,8 @@ void reschedule(void)
     struct thread *next_thread;
     int old_flags;
 
+    assert(!disable_preempt_count[hwthread]);
+
     // Put current thread back on ready queue
 
     old_flags = disable_interrupts();
@@ -290,6 +306,16 @@ void reschedule(void)
 
     release_spinlock(&thread_q_lock);
     restore_interrupts(old_flags);
+}
+
+void disable_preempt(void)
+{
+    __sync_fetch_and_add(&disable_preempt_count[current_hw_thread()], 1);
+}
+
+void enable_preempt(void)
+{
+    __sync_fetch_and_add(&disable_preempt_count[current_hw_thread()], -1);
 }
 
 static void __attribute__((noreturn)) new_process_start(void)

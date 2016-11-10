@@ -35,16 +35,6 @@ void start_timer(void)
     REGISTERS[REG_TIMER_INTERVAL] = TIMER_INTERVAL;
 }
 
-void timer_tick(void)
-{
-    REGISTERS[REG_TIMER_INTERVAL] = TIMER_INTERVAL;
-
-    // XXX will this prevent the interrupt in some cases from being
-    // delivered to other processes?
-    ack_interrupt(1);
-    reschedule();
-}
-
 void __attribute__((noreturn)) kernel_main(unsigned int _memory_size)
 {
     struct vm_translation_map *init_map;
@@ -56,9 +46,6 @@ void __attribute__((noreturn)) kernel_main(unsigned int _memory_size)
     bootstrap_vm_cache();
     bool_init_kernel_process();
     boot_init_thread();
-
-    register_interrupt_handler(1, timer_tick);
-    start_timer();
 
     // Start other threads
     REGISTERS[REG_THREAD_RESUME] = 0xffffffff;

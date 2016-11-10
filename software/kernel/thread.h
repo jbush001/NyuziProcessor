@@ -82,7 +82,8 @@ struct process *exec_program(const char *filename);
 void __attribute__((noreturn)) thread_exit(int retcode);
 void make_thread_ready(struct thread*);
 int grim_reaper(void *ignore);
-
+void disable_preempt(void);
+void enable_preempt(void);
 void dump_process_list(void);
 
 static inline int current_hw_thread(void)
