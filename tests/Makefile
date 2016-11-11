@@ -15,6 +15,7 @@
 #
 
 test:
+	cd remote-gdb && ./runtest.py
 	cd core/atomic/ && ./runtest.py
 	cd core/cache_control/ && ./runtest.py
 	cd core/mmu && ./runtest.py
