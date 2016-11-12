@@ -96,14 +96,17 @@ class DebugConnection:
 
 class EmulatorTarget:
 
-    def __init__(self, hexfile):
+    def __init__(self, hexfile, num_cores=1):
         self.hexfile = hexfile
+        self.num_cores = num_cores
 
     def __enter__(self):
         emulator_args = [
             BIN_DIR + 'emulator',
             '-m',
             'gdb',
+            '-p',
+            str(self.num_cores),
             self.hexfile
         ]
 
@@ -264,10 +267,19 @@ def test_select_thread(name):
         d.sendPacket('g00')
         d.expect('01000000')
 
+def test_thread_info(name):
+    with EmulatorTarget('count.hex') as p, DebugConnection() as d:
+        d.sendPacket('qfThreadInfo')
+        d.expect('m1,2,3,4')
+
+    with EmulatorTarget('count.hex', num_cores=2) as p, DebugConnection() as d:
+        d.sendPacket('qfThreadInfo')
+        d.expect('m1,2,3,4,5,6,7,8')
 
 register_tests(test_breakpoint, ['gdb_breakpoint'])
 register_tests(test_single_step, ['gdb_single_step'])
 register_tests(test_read_write_memory, ['gdb_read_write_memory'])
 register_tests(test_register_info, ['gdb_register_info'])
 register_tests(test_select_thread, ['gdb_select_thread'])
+register_tests(test_thread_info, ['gdb_thread_info'])
 execute_tests()

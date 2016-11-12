@@ -357,7 +357,19 @@ void remote_gdb_main_loop(struct processor *proc, bool enable_fb_window)
                     else if (strcmp(request + 1, "ProcessInfo") == 0)
                         send_response_packet("pid:1");
                     else if (strcmp(request + 1, "fThreadInfo") == 0)
-                        send_response_packet("m1,2,3,4");	// XXX need to query number of threads
+                    {
+                        uint32_t num_threads = get_total_threads(proc);
+                        int offset = 2;
+
+                        strcpy(response, "m1");
+                        for (i = 2; i <= num_threads && offset < (int) sizeof(response); i++)
+                        {
+                            offset += snprintf(response + offset, sizeof(response)
+                                - (size_t) offset, ",%d", i);
+                        }
+
+                        send_response_packet(response);
+                    }
                     else if (strcmp(request + 1, "sThreadInfo") == 0)
                         send_response_packet("l");
                     else if (memcmp(request + 1, "ThreadStopInfo", 14) == 0)
