@@ -300,7 +300,7 @@ void remote_gdb_main_loop(struct processor *proc, bool enable_fb_window)
 
                         // Read memory
                         for (offset = 0; offset < length; offset++)
-                            sprintf(response + offset * 2, "%02x", debug_read_memory_byte(proc, start + offset));
+                            sprintf(response + offset * 2, "%02x", dbg_read_memory_byte(proc, start + offset));
 
                         send_response_packet(response);
                     }
@@ -309,7 +309,7 @@ void remote_gdb_main_loop(struct processor *proc, bool enable_fb_window)
                         // Write memory
                         data_ptr += 1;	// Skip colon
                         for (offset = 0; offset < length; offset++)
-                            debug_write_memory_byte(proc, start + offset, decode_hex_byte(data_ptr + offset * 2));
+                            dbg_write_memory_byte(proc, start + offset, decode_hex_byte(data_ptr + offset * 2));
 
                         send_response_packet("OK");
                     }
@@ -326,7 +326,7 @@ void remote_gdb_main_loop(struct processor *proc, bool enable_fb_window)
                     if (reg_id < 32)
                     {
                         // Scalar register
-                        value = get_scalar_reg(proc, current_thread, reg_id);
+                        value = dbg_get_scalar_reg(proc, current_thread, reg_id);
                         send_formatted_response("%08x", endian_swap32(value));
                     }
                     else if (reg_id < 64)
@@ -335,7 +335,7 @@ void remote_gdb_main_loop(struct processor *proc, bool enable_fb_window)
                         uint32_t lane_idx;
                         uint32_t values[NUM_VECTOR_LANES];
 
-                        get_vector_reg(proc, current_thread, reg_id, values);
+                        dbg_get_vector_reg(proc, current_thread, reg_id, values);
                         for (lane_idx = 0; lane_idx < NUM_VECTOR_LANES; lane_idx++)
                         {
                             sprintf(response + lane_idx * 8, "%08x",
@@ -360,7 +360,7 @@ void remote_gdb_main_loop(struct processor *proc, bool enable_fb_window)
                     {
                         // Scalar register
                         uint32_t reg_value = (uint32_t) strtoul(data_ptr + 1, NULL, 16);
-                        set_scalar_reg(proc, current_thread, reg_id, endian_swap32(reg_value));
+                        dbg_set_scalar_reg(proc, current_thread, reg_id, endian_swap32(reg_value));
                         send_response_packet("OK");
                     }
                     else if (reg_id < 64)
@@ -379,7 +379,7 @@ void remote_gdb_main_loop(struct processor *proc, bool enable_fb_window)
                             data_ptr += 8;
                         }
 
-                        set_vector_reg(proc, current_thread, reg_id, reg_value);
+                        dbg_set_vector_reg(proc, current_thread, reg_id, reg_value);
                         send_response_packet("OK");
                     }
                     else
@@ -458,7 +458,7 @@ void remote_gdb_main_loop(struct processor *proc, bool enable_fb_window)
                 // Single step
                 case 's':
                 case 'S':
-                    single_step(proc, current_thread);
+                    dbg_single_step(proc, current_thread);
                     last_signals[current_thread] = TRAP_SIGNAL;
                     send_formatted_response("S%02x", last_signals[current_thread]);
                     break;
@@ -478,7 +478,7 @@ void remote_gdb_main_loop(struct processor *proc, bool enable_fb_window)
                         {
                             // s:0001
                             current_thread = (uint32_t) strtoul(sreq + 2, NULL, 16) - 1;
-                            single_step(proc, current_thread);
+                            dbg_single_step(proc, current_thread);
                             last_signals[current_thread] = TRAP_SIGNAL;
                             send_formatted_response("S%02x", last_signals[current_thread]);
                         }
@@ -496,7 +496,7 @@ void remote_gdb_main_loop(struct processor *proc, bool enable_fb_window)
 
                 // Clear breakpoint
                 case 'z':
-                    if (clear_breakpoint(proc, (uint32_t) strtoul(request + 3, NULL, 16)) < 0)
+                    if (dbg_clear_breakpoint(proc, (uint32_t) strtoul(request + 3, NULL, 16)) < 0)
                         send_response_packet(""); // Error
                     else
                         send_response_packet("OK");
@@ -505,7 +505,7 @@ void remote_gdb_main_loop(struct processor *proc, bool enable_fb_window)
 
                 // Set breakpoint
                 case 'Z':
-                    if (set_breakpoint(proc, (uint32_t) strtoul(request + 3, NULL, 16)) < 0)
+                    if (dbg_set_breakpoint(proc, (uint32_t) strtoul(request + 3, NULL, 16)) < 0)
                         send_response_packet(""); // Error
                     else
                         send_response_packet("OK");

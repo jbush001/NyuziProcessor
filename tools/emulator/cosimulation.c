@@ -155,7 +155,7 @@ int run_cosimulation(struct processor *proc, bool verbose)
     // cosim_mismatch will be flagged.
     cosim_event_triggered = false;
     expected_event = EVENT_NONE;
-    while (!proc_halted(proc))
+    while (!is_proc_halted(proc))
     {
         execute_instructions(proc, ALL_THREADS, 1);
         if (cosim_mismatch)
@@ -318,7 +318,7 @@ static bool run_until_next_event(struct processor *proc, uint32_t thread_id)
     cosim_mismatch = false;
     cosim_event_triggered = false;
     for (count = 0; count < 500 && !cosim_event_triggered; count++)
-        single_step(proc, thread_id);
+        dbg_single_step(proc, thread_id);
 
     if (!cosim_event_triggered)
     {

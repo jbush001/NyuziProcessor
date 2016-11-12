@@ -335,7 +335,7 @@ int main(int argc, char *argv[])
             if (verbose)
                 enable_tracing(proc);
 
-            set_stop_on_fault(proc, false);
+            dbg_set_stop_on_fault(proc, false);
             if (enable_fb_window)
             {
                 while (execute_instructions(proc, ALL_THREADS, screen_refresh_rate))
@@ -354,14 +354,14 @@ int main(int argc, char *argv[])
             break;
 
         case MODE_COSIMULATION:
-            set_stop_on_fault(proc, false);
+            dbg_set_stop_on_fault(proc, false);
             if (run_cosimulation(proc, verbose) < 0)
                 return 1;	// Failed
 
             break;
 
         case MODE_GDB_REMOTE_DEBUG:
-            set_stop_on_fault(proc, true);
+            dbg_set_stop_on_fault(proc, true);
             remote_gdb_main_loop(proc, enable_fb_window);
             break;
     }
@@ -373,7 +373,7 @@ int main(int argc, char *argv[])
     if (block_device_open)
         close_block_device();
 
-    if (stopped_on_fault(proc))
+    if (is_stopped_on_fault(proc))
         return 1;
 
     return 0;

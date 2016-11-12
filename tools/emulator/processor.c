@@ -148,10 +148,10 @@ struct breakpoint
 static inline const struct thread *get_const_thread(const struct processor *proc, uint32_t thread_id);
 static inline struct thread *get_thread(struct processor *proc, uint32_t thread_id);
 static void print_thread_registers(const struct thread*);
-static uint32_t get_thread_scalar_reg(const struct thread*, uint32_t reg);
-static void set_thread_scalar_reg(struct thread*, uint32_t reg, uint32_t value);
-static void set_thread_vector_reg(struct thread*, uint32_t reg, uint32_t mask,
-                                  uint32_t *values);
+static uint32_t get_scalar_reg(const struct thread*, uint32_t reg);
+static void set_scalar_reg(struct thread*, uint32_t reg, uint32_t value);
+static void set_vector_reg(struct thread*, uint32_t reg, uint32_t mask,
+                           uint32_t *values);
 static void invalidate_sync_address(struct core*, uint32_t address);
 static void try_to_dispatch_interrupt(struct thread*);
 static uint32_t get_pending_interrupts(struct thread*);
@@ -398,12 +398,12 @@ uint32_t get_total_threads(const struct processor *proc)
     return proc->total_threads;
 }
 
-bool proc_halted(const struct processor *proc)
+bool is_proc_halted(const struct processor *proc)
 {
     return proc->thread_enable_mask == 0 || proc->crashed;
 }
 
-bool stopped_on_fault(const struct processor *proc)
+bool is_stopped_on_fault(const struct processor *proc)
 {
     return proc->crashed;
 }
@@ -457,54 +457,50 @@ bool execute_instructions(struct processor *proc, uint32_t thread_id,
     return true;
 }
 
-void single_step(struct processor *proc, uint32_t thread_id)
+void dbg_single_step(struct processor *proc, uint32_t thread_id)
 {
     proc->single_stepping = true;
     execute_instruction(get_thread(proc, thread_id));
     timer_tick(proc);
 }
 
-uint32_t get_pc(const struct processor *proc, uint32_t thread_id)
+uint32_t dbg_get_scalar_reg(const struct processor *proc, uint32_t thread_id,
+                            uint32_t reg_id)
 {
-    return get_const_thread(proc, thread_id)->pc;
+    return get_scalar_reg(get_const_thread(proc, thread_id), reg_id);
 }
 
-uint32_t get_scalar_reg(const struct processor *proc, uint32_t thread_id,
-                        uint32_t reg_id)
+void dbg_set_scalar_reg(struct processor *proc, uint32_t thread_id,
+                        uint32_t reg_id, uint32_t value)
 {
-    return get_thread_scalar_reg(get_const_thread(proc, thread_id), reg_id);
+    set_scalar_reg(get_thread(proc, thread_id), reg_id, value);
 }
 
-void set_scalar_reg(struct processor *proc, uint32_t thread_id,
-                    uint32_t reg_id, uint32_t value)
-{
-    set_thread_scalar_reg(get_thread(proc, thread_id), reg_id, value);
-}
-
-void get_vector_reg(const struct processor *proc, uint32_t thread_id,
-                    uint32_t reg_id, uint32_t *values)
+void dbg_get_vector_reg(const struct processor *proc, uint32_t thread_id,
+                        uint32_t reg_id, uint32_t *values)
 {
     memcpy(values, get_const_thread(proc, thread_id)->vector_reg[reg_id],
            NUM_VECTOR_LANES * sizeof(int));
 }
 
-void set_vector_reg(struct processor *proc, uint32_t thread_id,
-                    uint32_t reg_id, uint32_t *values)
+void dbg_set_vector_reg(struct processor *proc, uint32_t thread_id,
+                        uint32_t reg_id, uint32_t *values)
 {
-    set_thread_vector_reg(get_thread(proc, thread_id), reg_id, 0xffff, values);
+    memcpy(get_thread(proc, thread_id)->vector_reg[reg_id], values,
+           NUM_VECTOR_LANES * sizeof(int));
 }
 
-uint32_t debug_read_memory_byte(const struct processor *proc, uint32_t address)
+uint32_t dbg_read_memory_byte(const struct processor *proc, uint32_t address)
 {
     return ((uint8_t*)proc->memory)[address];
 }
 
-void debug_write_memory_byte(const struct processor *proc, uint32_t address, uint8_t byte)
+void dbg_write_memory_byte(const struct processor *proc, uint32_t address, uint8_t byte)
 {
     ((uint8_t*)proc->memory)[address] = byte;
 }
 
-int set_breakpoint(struct processor *proc, uint32_t pc)
+int dbg_set_breakpoint(struct processor *proc, uint32_t pc)
 {
     struct breakpoint *breakpoint = lookup_breakpoint(proc, pc);
     if (breakpoint != NULL)
@@ -531,7 +527,7 @@ int set_breakpoint(struct processor *proc, uint32_t pc)
     return 0;
 }
 
-int clear_breakpoint(struct processor *proc, uint32_t pc)
+int dbg_clear_breakpoint(struct processor *proc, uint32_t pc)
 {
     struct breakpoint **link;
 
@@ -549,7 +545,7 @@ int clear_breakpoint(struct processor *proc, uint32_t pc)
     return -1; // Not found
 }
 
-void set_stop_on_fault(struct processor *proc, bool stop_on_fault)
+void dbg_set_stop_on_fault(struct processor *proc, bool stop_on_fault)
 {
     proc->stop_on_fault = stop_on_fault;
 }
@@ -626,7 +622,7 @@ static void print_thread_registers(const struct thread *thread)
     }
 }
 
-static uint32_t get_thread_scalar_reg(const struct thread *thread, uint32_t reg)
+static uint32_t get_scalar_reg(const struct thread *thread, uint32_t reg)
 {
     if (reg == PC_REG)
         return thread->pc;
@@ -634,13 +630,16 @@ static uint32_t get_thread_scalar_reg(const struct thread *thread, uint32_t reg)
         return thread->scalar_reg[reg];
 }
 
-static void set_thread_scalar_reg(struct thread *thread, uint32_t reg, uint32_t value)
+static void set_scalar_reg(struct thread *thread, uint32_t reg, uint32_t value)
 {
     if (thread->core->proc->enable_tracing)
         printf("%08x [th %d] s%d <= %08x\n", thread->pc - 4, thread->id, reg, value);
 
     if (thread->core->proc->enable_cosim)
-        cosim_check_set_scalar_reg(thread->core->proc, thread->pc - 4, reg, value);
+    {
+        cosim_check_set_scalar_reg(thread->core->proc, thread->pc - 4,
+                                   reg, value);
+    }
 
     if (reg == PC_REG)
         thread->pc = value;
@@ -648,8 +647,8 @@ static void set_thread_scalar_reg(struct thread *thread, uint32_t reg, uint32_t 
         thread->scalar_reg[reg] = value;
 }
 
-static void set_thread_vector_reg(struct thread *thread, uint32_t reg, uint32_t mask,
-                                  uint32_t *values)
+static void set_vector_reg(struct thread *thread, uint32_t reg, uint32_t mask,
+                           uint32_t *values)
 {
     int lane;
 
@@ -992,8 +991,8 @@ static void execute_register_arith_inst(struct thread *thread, uint32_t instruct
     TALLY_INSTRUCTION(reg_arith_inst);
     if (op == OP_GETLANE)
     {
-        set_thread_scalar_reg(thread, destreg, thread->vector_reg[op1reg][NUM_VECTOR_LANES - 1
-                              - (get_thread_scalar_reg(thread, op2reg) & 0xf)]);
+        set_scalar_reg(thread, destreg, thread->vector_reg[op1reg][NUM_VECTOR_LANES - 1
+                       - (get_scalar_reg(thread, op2reg) & 0xf)]);
     }
     else if (is_compare_op(op))
     {
@@ -1001,8 +1000,8 @@ static void execute_register_arith_inst(struct thread *thread, uint32_t instruct
         switch (fmt)
         {
             case FMT_RA_SS:
-                result = scalar_arithmetic_op(op, get_thread_scalar_reg(thread, op1reg),
-                                              get_thread_scalar_reg(thread, op2reg)) ? 0xffff : 0;
+                result = scalar_arithmetic_op(op, get_scalar_reg(thread, op1reg),
+                                              get_scalar_reg(thread, op2reg)) ? 0xffff : 0;
                 break;
 
             case FMT_RA_VS:
@@ -1011,7 +1010,7 @@ static void execute_register_arith_inst(struct thread *thread, uint32_t instruct
 
                 // Vector/Scalar operation
                 // Pack compare results in low 16 bits of scalar register
-                uint32_t scalar_value = get_thread_scalar_reg(thread, op2reg);
+                uint32_t scalar_value = get_scalar_reg(thread, op2reg);
                 for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
                 {
                     result >>= 1;
@@ -1041,13 +1040,13 @@ static void execute_register_arith_inst(struct thread *thread, uint32_t instruct
                 return;
         }
 
-        set_thread_scalar_reg(thread, destreg, result);
+        set_scalar_reg(thread, destreg, result);
     }
     else if (fmt == FMT_RA_SS)
     {
-        uint32_t result = scalar_arithmetic_op(op, get_thread_scalar_reg(thread, op1reg),
-                                               get_thread_scalar_reg(thread, op2reg));
-        set_thread_scalar_reg(thread, destreg, result);
+        uint32_t result = scalar_arithmetic_op(op, get_scalar_reg(thread, op1reg),
+                                               get_scalar_reg(thread, op2reg));
+        set_scalar_reg(thread, destreg, result);
     }
     else
     {
@@ -1060,7 +1059,7 @@ static void execute_register_arith_inst(struct thread *thread, uint32_t instruct
         {
             case FMT_RA_VS_M:
             case FMT_RA_VV_M:
-                mask = get_thread_scalar_reg(thread, maskreg);
+                mask = get_scalar_reg(thread, maskreg);
                 break;
 
             case FMT_RA_VS:
@@ -1084,7 +1083,7 @@ static void execute_register_arith_inst(struct thread *thread, uint32_t instruct
         else if (fmt == FMT_RA_VS || fmt == FMT_RA_VS_M)
         {
             // Vector/Scalar operands
-            uint32_t scalar_value = get_thread_scalar_reg(thread, op2reg);
+            uint32_t scalar_value = get_scalar_reg(thread, op2reg);
             for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
             {
                 result[lane] = scalar_arithmetic_op(op, thread->vector_reg[op1reg][lane],
@@ -1101,7 +1100,7 @@ static void execute_register_arith_inst(struct thread *thread, uint32_t instruct
             }
         }
 
-        set_thread_vector_reg(thread, destreg, mask, result);
+        set_vector_reg(thread, destreg, mask, result);
     }
 }
 
@@ -1126,7 +1125,7 @@ static void execute_immediate_arith_inst(struct thread *thread, uint32_t instruc
     if (op == OP_GETLANE)
     {
         TALLY_INSTRUCTION(vector_inst);
-        set_thread_scalar_reg(thread, destreg, thread->vector_reg[op1reg][NUM_VECTOR_LANES - 1 - (imm_value & 0xf)]);
+        set_scalar_reg(thread, destreg, thread->vector_reg[op1reg][NUM_VECTOR_LANES - 1 - (imm_value & 0xf)]);
     }
     else if (is_compare_op(op))
     {
@@ -1150,7 +1149,7 @@ static void execute_immediate_arith_inst(struct thread *thread, uint32_t instruc
             case FMT_IMM_SS:
             case FMT_IMM_VS:
             case FMT_IMM_VS_M:
-                result = scalar_arithmetic_op(op, get_thread_scalar_reg(thread, op1reg),
+                result = scalar_arithmetic_op(op, get_scalar_reg(thread, op1reg),
                                               imm_value) ? 0xffff : 0;
                 break;
 
@@ -1159,13 +1158,13 @@ static void execute_immediate_arith_inst(struct thread *thread, uint32_t instruc
                 return;
         }
 
-        set_thread_scalar_reg(thread, destreg, result);
+        set_scalar_reg(thread, destreg, result);
     }
     else if (fmt == FMT_IMM_SS)
     {
-        uint32_t result = scalar_arithmetic_op(op, get_thread_scalar_reg(thread, op1reg),
+        uint32_t result = scalar_arithmetic_op(op, get_scalar_reg(thread, op1reg),
                                                imm_value);
-        set_thread_scalar_reg(thread, destreg, result);
+        set_scalar_reg(thread, destreg, result);
     }
     else
     {
@@ -1178,7 +1177,7 @@ static void execute_immediate_arith_inst(struct thread *thread, uint32_t instruc
         {
             case FMT_IMM_VV_M:
             case FMT_IMM_VS_M:
-                mask = get_thread_scalar_reg(thread, maskreg);
+                mask = get_scalar_reg(thread, maskreg);
                 break;
 
             case FMT_IMM_VV:
@@ -1201,12 +1200,12 @@ static void execute_immediate_arith_inst(struct thread *thread, uint32_t instruc
         }
         else
         {
-            operand1 = get_thread_scalar_reg(thread, op1reg);
+            operand1 = get_scalar_reg(thread, op1reg);
             for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
                 result[lane] = scalar_arithmetic_op(op, operand1, imm_value);
         }
 
-        set_thread_vector_reg(thread, destreg, mask, result);
+        set_vector_reg(thread, destreg, mask, result);
     }
 }
 
@@ -1223,7 +1222,7 @@ static void execute_scalar_load_store_inst(struct thread *thread, uint32_t instr
     uint32_t value;
     uint32_t access_size;
 
-    virtual_address = get_thread_scalar_reg(thread, ptrreg) + offset;
+    virtual_address = get_scalar_reg(thread, ptrreg) + offset;
 
     switch (op)
     {
@@ -1304,12 +1303,12 @@ static void execute_scalar_load_store_inst(struct thread *thread, uint32_t instr
                 return;
         }
 
-        set_thread_scalar_reg(thread, destsrcreg, value);
+        set_scalar_reg(thread, destsrcreg, value);
     }
     else
     {
         // Store
-        uint32_t value_to_store = get_thread_scalar_reg(thread, destsrcreg);
+        uint32_t value_to_store = get_scalar_reg(thread, destsrcreg);
 
         // Some instruction don't update memory, for example: a synchronized store
         // that fails or writes to device memory. This tracks whether they
@@ -1359,7 +1358,7 @@ static void execute_scalar_load_store_inst(struct thread *thread, uint32_t instr
                     // HACK: cosim can only track one side effect per instruction, but sync
                     // store has two: setting the register to indicate success and updating
                     // memory. This only logs the memory transaction. Instead of
-                    // calling set_thread_scalar_reg (which would log the register transfer as
+                    // calling set_scalar_reg (which would log the register transfer as
                     // a side effect), set the value explicitly here.
                     thread->scalar_reg[destsrcreg] = 1;
 
@@ -1423,7 +1422,7 @@ static void execute_block_load_store_inst(struct thread *thread, uint32_t instru
             break;
 
         case MEM_BLOCK_VECTOR_MASK:
-            mask = get_thread_scalar_reg(thread, maskreg);
+            mask = get_scalar_reg(thread, maskreg);
             offset = extract_signed_bits(instruction, 15, 10);
             break;
 
@@ -1431,7 +1430,7 @@ static void execute_block_load_store_inst(struct thread *thread, uint32_t instru
             assert(0);
     }
 
-    virtual_address = get_thread_scalar_reg(thread, ptrreg) + offset;
+    virtual_address = get_scalar_reg(thread, ptrreg) + offset;
 
     // Check alignment
     if ((virtual_address & (NUM_VECTOR_LANES * 4 - 1)) != 0)
@@ -1451,7 +1450,7 @@ static void execute_block_load_store_inst(struct thread *thread, uint32_t instru
         for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
             load_value[lane] = block_ptr[NUM_VECTOR_LANES - lane - 1];
 
-        set_thread_vector_reg(thread, destsrcreg, mask, load_value);
+        set_vector_reg(thread, destsrcreg, mask, load_value);
     }
     else
     {
@@ -1504,7 +1503,7 @@ static void execute_scatter_gather_inst(struct thread *thread, uint32_t instruct
             break;
 
         case MEM_SCGATH_MASK:
-            mask = get_thread_scalar_reg(thread, maskreg);
+            mask = get_scalar_reg(thread, maskreg);
             offset = extract_signed_bits(instruction, 15, 10);
             break;
 
@@ -1530,7 +1529,7 @@ static void execute_scatter_gather_inst(struct thread *thread, uint32_t instruct
         if (mask & (1 << lane))
             load_value[lane] = *UINT32_PTR(thread->core->proc->memory, physical_address);
 
-        set_thread_vector_reg(thread, destsrcreg, mask & (1 << lane), load_value);
+        set_vector_reg(thread, destsrcreg, mask & (1 << lane), load_value);
     }
     else if (mask & (1 << lane))
     {
@@ -1639,7 +1638,7 @@ static void execute_control_register_inst(struct thread *thread, uint32_t instru
                 break;
         }
 
-        set_thread_scalar_reg(thread, dst_src_reg, value);
+        set_scalar_reg(thread, dst_src_reg, value);
     }
     else
     {
@@ -1651,7 +1650,7 @@ static void execute_control_register_inst(struct thread *thread, uint32_t instru
         }
 
         // Store
-        uint32_t value = get_thread_scalar_reg(thread, dst_src_reg);
+        uint32_t value = get_scalar_reg(thread, dst_src_reg);
         switch (cr_index)
         {
             case CR_TRAP_HANDLER:
@@ -1769,15 +1768,15 @@ static void execute_branch_inst(struct thread *thread, uint32_t instruction)
     switch (extract_unsigned_bits(instruction, 25, 3))
     {
         case BRANCH_ALL:
-            branch_taken = (get_thread_scalar_reg(thread, src_reg) & 0xffff) == 0xffff;
+            branch_taken = (get_scalar_reg(thread, src_reg) & 0xffff) == 0xffff;
             break;
 
         case BRANCH_ZERO:
-            branch_taken = get_thread_scalar_reg(thread, src_reg) == 0;
+            branch_taken = get_scalar_reg(thread, src_reg) == 0;
             break;
 
         case BRANCH_NOT_ZERO:
-            branch_taken = get_thread_scalar_reg(thread, src_reg) != 0;
+            branch_taken = get_scalar_reg(thread, src_reg) != 0;
             break;
 
         case BRANCH_ALWAYS:
@@ -1786,16 +1785,16 @@ static void execute_branch_inst(struct thread *thread, uint32_t instruction)
 
         case BRANCH_CALL_OFFSET:
             branch_taken = true;
-            set_thread_scalar_reg(thread, LINK_REG, thread->pc);
+            set_scalar_reg(thread, LINK_REG, thread->pc);
             break;
 
         case BRANCH_NOT_ALL:
-            branch_taken = (get_thread_scalar_reg(thread, src_reg) & 0xffff) != 0xffff;
+            branch_taken = (get_scalar_reg(thread, src_reg) & 0xffff) != 0xffff;
             break;
 
         case BRANCH_CALL_REGISTER:
-            set_thread_scalar_reg(thread, LINK_REG, thread->pc);
-            thread->pc = get_thread_scalar_reg(thread, src_reg);
+            set_scalar_reg(thread, LINK_REG, thread->pc);
+            thread->pc = get_scalar_reg(thread, src_reg);
             return; // Short circuit, since the source register is the dest
 
         case BRANCH_ERET:
@@ -1849,7 +1848,7 @@ static void execute_cache_control_inst(struct thread *thread, uint32_t instructi
             // will do that as a side effect.
             uint32_t offset = extract_signed_bits(instruction, 15, 10);
             uint32_t physical_address;
-            translate_address(thread, get_thread_scalar_reg(thread, ptr_reg) + offset,
+            translate_address(thread, get_scalar_reg(thread, ptr_reg) + offset,
                               &physical_address, false, true);
             break;
         }
@@ -1857,9 +1856,9 @@ static void execute_cache_control_inst(struct thread *thread, uint32_t instructi
         case CC_DTLB_INSERT:
         case CC_ITLB_INSERT:
         {
-            uint32_t virtual_address = ROUND_TO_PAGE(get_thread_scalar_reg(thread, ptr_reg));
+            uint32_t virtual_address = ROUND_TO_PAGE(get_scalar_reg(thread, ptr_reg));
             uint32_t phys_addr_reg = extract_unsigned_bits(instruction, 5, 5);
-            uint32_t phys_addr_and_flags = get_thread_scalar_reg(thread, phys_addr_reg);
+            uint32_t phys_addr_and_flags = get_scalar_reg(thread, phys_addr_reg);
             uint32_t *way_ptr;
             struct tlb_entry *tlb;
 
@@ -1910,7 +1909,7 @@ static void execute_cache_control_inst(struct thread *thread, uint32_t instructi
         case CC_INVALIDATE_TLB:
         {
             uint32_t offset = extract_signed_bits(instruction, 15, 10);
-            uint32_t virtual_address = ROUND_TO_PAGE(get_thread_scalar_reg(thread, ptr_reg) + offset);
+            uint32_t virtual_address = ROUND_TO_PAGE(get_scalar_reg(thread, ptr_reg) + offset);
             uint32_t tlb_index = ((virtual_address / PAGE_SIZE) % TLB_SETS) * TLB_WAYS;
 
             for (way = 0; way < TLB_WAYS; way++)
