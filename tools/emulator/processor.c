@@ -1961,14 +1961,16 @@ restart:
             struct breakpoint *breakpoint = lookup_breakpoint(thread->core->proc, thread->pc - 4);
             if (breakpoint == NULL)
             {
-                // We use a special instruction to trigger breakpoint lookup
-                // as an optimization to avoid doing a lookup on every
-                // instruction. In this case, the special instruction was
-                // already in the program, so raise a fault.
+                // We use a special instruction (which is invalid) to trigger
+                // breakpoint lookup. This is an optimization to avoid doing
+                // a lookup on every instruction. In this case, the special
+                // instruction was already in the program, so raise a fault.
                 raise_trap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false);
                 return true;
             }
 
+            // The restart flag indicates we must step past a breakpoint we
+            // just hit. Substitute the original instruction.
             if (breakpoint->restart || thread->core->proc->single_stepping)
             {
                 breakpoint->restart = false;
@@ -1980,6 +1982,7 @@ restart:
             {
                 // Hit a breakpoint
                 breakpoint->restart = true;
+                thread->pc -= 4;    // Reset PC to instruction that trapped.
                 return false;
             }
         }
