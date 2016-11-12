@@ -33,7 +33,7 @@ from test_harness import *
 class DebugConnection:
 
     def __init__(self):
-        pass
+        self.DEBUG = False
 
     def __enter__(self):
         for retry in range(10):
@@ -52,6 +52,9 @@ class DebugConnection:
         self.sock.close()
 
     def sendPacket(self, body):
+        if self.DEBUG:
+            print('SEND: ' + body)
+
         self.sock.send('$')
         self.sock.send(body)
         self.sock.send('#')
@@ -69,18 +72,21 @@ class DebugConnection:
             if leader != '+':
                 raise Exception('unexpected character ' + leader);
 
-        contents = ''
+        body = ''
         while True:
             c = self.sock.recv(1)
             if c == '#':
                 break
 
-            contents += c
+            body += c
 
         # Checksum
         self.sock.recv(2)
 
-        return contents
+        if self.DEBUG:
+            print('RECV: ' + body)
+
+        return body
 
     def expect(self, value):
         response = self.receivePacket()
@@ -140,21 +146,31 @@ def test_breakpoint(name):
 
 def test_single_step(name):
     with EmulatorTarget('count.hex') as p, DebugConnection() as d:
+        # Read PC register
+        d.sendPacket('g1f')
+        d.expect('00000000')
+
+        # Single step
         d.sendPacket('S')
         d.expect('S05')
 
+        # Read PC register
         d.sendPacket('g1f')
         d.expect('04000000')
 
+        # Read s0
         d.sendPacket('g00')
         d.expect('01000000')
 
+        # Single step
         d.sendPacket('S')
         d.expect('S05')
 
+        # Read PC register
         d.sendPacket('g1f')
         d.expect('08000000')
 
+        # Read s0
         d.sendPacket('g00')
         d.expect('02000000')
 
@@ -163,19 +179,94 @@ def test_single_step(name):
 
 def test_read_write_memory(name):
     with EmulatorTarget('count.hex') as p, DebugConnection() as d:
+        # Write memory at 1M
         d.sendPacket('M00100000,0c:55483c091aac1e8c6db4bed1')
         d.expect('OK')
 
+        # Write memory at 2M
         d.sendPacket('M00200000,8:b8d30e6f7cec41b1')
         d.expect('OK')
 
+        # Read memory at 1M
         d.sendPacket('m00100000,0c')
         d.expect('55483c091aac1e8c6db4bed1')
 
+        # Read memory at 2M
         d.sendPacket('m00200000,8')
         d.expect('b8d30e6f7cec41b1')
+
+def test_register_info(name):
+    with EmulatorTarget('count.hex') as p, DebugConnection() as d:
+        for x in range(27):
+            regid = str(x + 1)
+            d.sendPacket('qRegisterInfo' + hex(x + 1)[2:])
+            d.expect('name:s' + regid + ';bitsize:32;encoding:uint;format:hex;set:General Purpose Scalar Registers;gcc:'
+                + regid + ';dwarf:' + regid + ';')
+
+        # XXX skipped fp, sp, ra, pc, which have additional crud at the end.
+
+        for x in range(32, 63):
+            regid = str(x + 1)
+            d.sendPacket('qRegisterInfo' + hex(x + 1)[2:])
+            d.expect('name:v' + str(x - 31) + ';bitsize:512;encoding:uint;format:vector-uint32;set:General Purpose Vector Registers;gcc:'
+                + regid + ';dwarf:' + regid + ';')
+
+        d.sendPacket('qRegisterInfo64')
+        d.expect('')
+
+def test_select_thread(name):
+    with EmulatorTarget('count.hex') as p, DebugConnection() as d:
+        # Read thread ID
+        d.sendPacket('qC')
+        d.expect('QC01')
+
+        # Step thread 1
+        d.sendPacket('S')
+        d.expect('S05')
+
+        # Read PC register
+        d.sendPacket('g1f')
+        d.expect('04000000')
+
+        # Read s0
+        d.sendPacket('g00')
+        d.expect('01000000')
+
+        # Switch to thread 2. This is not enabled, so we can't step it, but
+        # Make sure registers are different.
+        d.sendPacket('H2')
+        d.expect('OK')
+
+        # Read thread ID
+        d.sendPacket('qC')
+        d.expect('QC02')
+
+        # Read PC. Should be 0.
+        d.sendPacket('g1f')
+        d.expect('00000000')
+
+        # XXX If set register were implemented, could check for known
+        # value in s0.
+
+        # Switch back to thread 1. Ensure state is correct.
+        d.sendPacket('H1')
+        d.expect('OK')
+
+        # Read thread ID
+        d.sendPacket('qC')
+        d.expect('QC01')
+
+        # Read PC register. Should be 4 again
+        d.sendPacket('g1f')
+        d.expect('04000000')
+
+        # Read s0.
+        d.sendPacket('g00')
+        d.expect('01000000')
+
 
 register_tests(test_breakpoint, ['gdb_breakpoint'])
 register_tests(test_single_step, ['gdb_single_step'])
 register_tests(test_read_write_memory, ['gdb_read_write_memory'])
+register_tests(test_register_info, ['gdb_register_info'])
 execute_tests()
