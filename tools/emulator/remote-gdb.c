@@ -388,9 +388,6 @@ void remote_gdb_main_loop(struct processor *proc, bool enable_fb_window)
                     break;
                 }
 
-
-                // XXX need to implement write register
-
                 // Query
                 case 'q':
                     if (strcmp(request + 1, "LaunchSuccess") == 0)

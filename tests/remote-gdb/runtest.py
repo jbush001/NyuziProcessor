@@ -140,8 +140,6 @@ class EmulatorTarget:
 
 # Validate stopping at a breakpoint and continuing after stopping.
 # This sets two breakpoints
-
-
 def test_breakpoint(name):
     with EmulatorTarget('count.hex') as p, DebugConnection() as d:
         # Set breakpoint
@@ -181,9 +179,6 @@ def test_breakpoint(name):
         d.sendPacket('g00')
         d.expect('04000000')
 
-        # Kill
-        d.sendPacket('k')
-
 
 def test_remove_breakpoint(name):
     with EmulatorTarget('count.hex') as p, DebugConnection() as d:
@@ -211,8 +206,9 @@ def test_remove_breakpoint(name):
         d.sendPacket('g00')
         d.expect('05000000')
 
-        # Kill
-        d.sendPacket('k')
+        # Try to remove an invalid breakpoint
+        d.sendPacket('z0,00000004')
+        d.expect('')
 
 
 def test_single_step(name):
@@ -245,9 +241,6 @@ def test_single_step(name):
         d.sendPacket('g00')
         d.expect('02000000')
 
-        # Kill
-        d.sendPacket('k')
-
 
 # Ensure that if you single step through a breakpoint, it doesn't
 # trigger and get stuck
@@ -273,9 +266,6 @@ def test_single_step_breakpoint(name):
         # Read s0
         d.sendPacket('g00')
         d.expect('02000000')
-
-        # Kill
-        d.sendPacket('k')
 
 
 def test_read_write_memory(name):
@@ -320,6 +310,14 @@ def test_read_write_register(name):
         d.expect('aef331bc7dbd6f1d042be4d6f1e1649855d864387eb8f0fd49c205c37790d1874078516c1a05c74f67678456679ba7e05bb5aed7303c5aeeeba6e619accf702a')
         d.sendPacket('g24')
         d.expect('cb7e3668a97ef8ea55902658b62a682406f7206f75e5438ff95b4519fed1e73e16ce5a29b4385fa2560820f0c8f42227709387dbad3a8208b57c381e268ffe38')
+
+        # Read invalid register index
+        d.sendPacket('g40')
+        d.expect('')
+
+        # Write invalid register index
+        d.sendPacket('G40,12345678')
+        d.expect('')
 
 
 def test_register_info(name):
@@ -441,6 +439,25 @@ def test_queries(name):
         d.sendPacket('qZ')
         d.expect('')
 
+# Test vCont command
+def test_vcont(name):
+    with EmulatorTarget('count.hex') as p, DebugConnection() as d:
+        # Set breakpoint
+        d.sendPacket('Z0,00000010')
+        d.expect('OK')
+
+        # Step
+        d.sendPacket('vCont;s:0001')
+        d.expect('S05')
+        d.sendPacket('g1f')
+        d.expect('04000000')
+
+        # Continue
+        d.sendPacket('vCont;c')
+        d.expect('S05')
+        d.sendPacket('g1f')
+        d.expect('10000000')
+
 register_tests(test_breakpoint, ['gdb_breakpoint'])
 register_tests(test_remove_breakpoint, ['gdb_remove_breakpoint'])
 register_tests(test_single_step, ['gdb_single_step'])
@@ -452,4 +469,5 @@ register_tests(test_select_thread, ['gdb_select_thread'])
 register_tests(test_thread_info, ['gdb_thread_info'])
 register_tests(test_invalid_command, ['gdb_invalid_command'])
 register_tests(test_queries, ['gdb_queries'])
+register_tests(test_vcont, ['gdb_vcont'])
 execute_tests()
