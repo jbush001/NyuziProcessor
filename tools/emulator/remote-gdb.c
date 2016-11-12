@@ -325,17 +325,21 @@ void remote_gdb_main_loop(struct processor *proc, bool enable_fb_window)
                     uint32_t value;
                     if (reg_id < 32)
                     {
-                        value = get_scalar_register(proc, current_thread, reg_id);
+                        // Scalar register
+                        value = get_scalar_reg(proc, current_thread, reg_id);
                         send_formatted_response("%08x", endian_swap32(value));
                     }
                     else if (reg_id < 64)
                     {
-                        uint32_t lane;
+                        // Vector register
+                        uint32_t lane_idx;
+                        uint32_t values[NUM_VECTOR_LANES];
 
-                        for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
+                        get_vector_reg(proc, current_thread, reg_id, values);
+                        for (lane_idx = 0; lane_idx < NUM_VECTOR_LANES; lane_idx++)
                         {
-                            value = get_vector_register(proc, current_thread, reg_id, lane);
-                            sprintf(response + lane * 8, "%08x", endian_swap32(value));
+                            sprintf(response + lane_idx * 8, "%08x",
+                                    endian_swap32(values[lane_idx]));
                         }
 
                         send_response_packet(response);
@@ -345,6 +349,45 @@ void remote_gdb_main_loop(struct processor *proc, bool enable_fb_window)
 
                     break;
                 }
+
+                // Write register
+                case 'G':
+                {
+                    char *data_ptr;
+                    uint32_t reg_id = (uint32_t) strtoul(request + 1, &data_ptr, 16);
+
+                    if (reg_id < 32)
+                    {
+                        // Scalar register
+                        uint32_t reg_value = (uint32_t) strtoul(data_ptr + 1, NULL, 16);
+                        set_scalar_reg(proc, current_thread, reg_id, endian_swap32(reg_value));
+                        send_response_packet("OK");
+                    }
+                    else if (reg_id < 64)
+                    {
+                        // Vector register
+                        uint32_t reg_value[NUM_VECTOR_LANES];
+                        uint32_t lane_idx;
+
+                        data_ptr++; // Skip comma
+                        for (lane_idx = 0; lane_idx < NUM_VECTOR_LANES; lane_idx++)
+                        {
+                            reg_value[lane_idx] = decode_hex_byte(data_ptr)
+                                                  | (uint32_t) (decode_hex_byte(data_ptr + 2) << 8)
+                                                  | (uint32_t) (decode_hex_byte(data_ptr + 4) << 16)
+                                                  | (uint32_t) (decode_hex_byte(data_ptr + 6) << 24);
+                            data_ptr += 8;
+                        }
+
+                        set_vector_reg(proc, current_thread, reg_id, reg_value);
+                        send_response_packet("OK");
+                    }
+                    else
+                        send_response_packet("");
+
+                    break;
+                }
+
 
                 // XXX need to implement write register
 
@@ -365,7 +408,7 @@ void remote_gdb_main_loop(struct processor *proc, bool enable_fb_window)
                         for (i = 2; i <= num_threads && offset < (int) sizeof(response); i++)
                         {
                             offset += snprintf(response + offset, sizeof(response)
-                                - (size_t) offset, ",%d", i);
+                                               - (size_t) offset, ",%d", i);
                         }
 
                         send_response_packet(response);

@@ -53,10 +53,14 @@ bool execute_instructions(struct processor*, uint32_t thread_id,
 
 void single_step(struct processor*, uint32_t thread_id);
 uint32_t get_pc(const struct processor*, uint32_t thread_id);
-uint32_t get_scalar_register(const struct processor*, uint32_t thread_id,
-                             uint32_t reg_id);
-uint32_t get_vector_register(const struct processor*, uint32_t thread_id,
-                             uint32_t reg_id, uint32_t lane);
+uint32_t get_scalar_reg(const struct processor*, uint32_t thread_id,
+                        uint32_t reg_id);
+void set_scalar_reg(struct processor*, uint32_t thread_id,
+                    uint32_t reg_id, uint32_t value);
+void get_vector_reg(const struct processor*, uint32_t thread_id,
+                    uint32_t reg_id, uint32_t *values);
+void set_vector_reg(struct processor*, uint32_t thread_id,
+                    uint32_t reg_id, uint32_t *values);
 uint32_t debug_read_memory_byte(const struct processor*, uint32_t addr);
 void debug_write_memory_byte(const struct processor*, uint32_t addr, uint8_t byte);
 int set_breakpoint(struct processor*, uint32_t pc);

@@ -297,6 +297,31 @@ def test_read_write_memory(name):
         d.expect('b8d30e6f7cec41b1')
 
 
+def test_read_write_register(name):
+    with EmulatorTarget('count.hex') as p, DebugConnection() as d:
+        # Write registers
+        d.sendPacket('G01,7b53cc78')
+        d.expect('OK')
+        d.sendPacket('G14,0904c47d')
+        d.expect('OK')
+        d.sendPacket(
+            'G20,aef331bc7dbd6f1d042be4d6f1e1649855d864387eb8f0fd49c205c37790d1874078516c1a05c74f67678456679ba7e05bb5aed7303c5aeeeba6e619accf702a')
+        d.expect('OK')
+        d.sendPacket(
+            'G24,cb7e3668a97ef8ea55902658b62a682406f7206f75e5438ff95b4519fed1e73e16ce5a29b4385fa2560820f0c8f42227709387dbad3a8208b57c381e268ffe38')
+        d.expect('OK')
+
+        # Read registers
+        d.sendPacket('g01')
+        d.expect('7b53cc78')
+        d.sendPacket('g14')
+        d.expect('0904c47d')
+        d.sendPacket('g20')
+        d.expect('aef331bc7dbd6f1d042be4d6f1e1649855d864387eb8f0fd49c205c37790d1874078516c1a05c74f67678456679ba7e05bb5aed7303c5aeeeba6e619accf702a')
+        d.sendPacket('g24')
+        d.expect('cb7e3668a97ef8ea55902658b62a682406f7206f75e5438ff95b4519fed1e73e16ce5a29b4385fa2560820f0c8f42227709387dbad3a8208b57c381e268ffe38')
+
+
 def test_register_info(name):
     with EmulatorTarget('count.hex') as p, DebugConnection() as d:
         for x in range(27):
@@ -421,6 +446,7 @@ register_tests(test_remove_breakpoint, ['gdb_remove_breakpoint'])
 register_tests(test_single_step, ['gdb_single_step'])
 register_tests(test_single_step_breakpoint, ['gdb_single_step_breakpoint'])
 register_tests(test_read_write_memory, ['gdb_read_write_memory'])
+register_tests(test_read_write_register, ['gdb_read_write_register'])
 register_tests(test_register_info, ['gdb_register_info'])
 register_tests(test_select_thread, ['gdb_select_thread'])
 register_tests(test_thread_info, ['gdb_thread_info'])
