@@ -234,7 +234,7 @@ def test_select_thread(name):
 
         # Switch to thread 2. This is not enabled, so we can't step it, but
         # Make sure registers are different.
-        d.sendPacket('H2')
+        d.sendPacket('Hg2')
         d.expect('OK')
 
         # Read thread ID
@@ -249,7 +249,7 @@ def test_select_thread(name):
         # value in s0.
 
         # Switch back to thread 1. Ensure state is correct.
-        d.sendPacket('H1')
+        d.sendPacket('Hg1')
         d.expect('OK')
 
         # Read thread ID
@@ -269,4 +269,5 @@ register_tests(test_breakpoint, ['gdb_breakpoint'])
 register_tests(test_single_step, ['gdb_single_step'])
 register_tests(test_read_write_memory, ['gdb_read_write_memory'])
 register_tests(test_register_info, ['gdb_register_info'])
+register_tests(test_select_thread, ['gdb_select_thread'])
 execute_tests()
