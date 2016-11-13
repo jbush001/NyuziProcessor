@@ -37,6 +37,8 @@ sys.path.insert(0, '..')
 from test_harness import *
 
 
+# Setting this to true will print all GDB commands and responses
+# to the console and will also print all output from the emulator.
 DEBUG = False
 
 
@@ -141,9 +143,13 @@ class EmulatorTarget:
         if self.output:
             self.output.close()
 
-# Validate stopping at a breakpoint and continuing after stopping.
-# This sets two breakpoints
+
 def test_breakpoint(name):
+    """
+    Validate stopping at a breakpoint and continuing after stopping.
+    This sets two breakpoints
+    """
+
     with EmulatorTarget('count.hex') as p, DebugConnection() as d:
         # Set breakpoint
         d.sendPacket('Z0,0000000c')
@@ -209,7 +215,24 @@ def test_remove_breakpoint(name):
         d.sendPacket('g00')
         d.expect('05000000')
 
-        # Try to remove an invalid breakpoint
+
+def test_breakpoint_errors(name):
+    with EmulatorTarget('count.hex') as p, DebugConnection() as d:
+        # Set invalid breakpoint (memory out of range)
+        d.sendPacket('Z0,20000000')
+        d.expect('')
+
+        # Set invalid breakpoint (unaligned)
+        d.sendPacket('Z0,00000003')
+        d.expect('')
+
+        # Set a valid breakpoint, then try to set the same address again
+        d.sendPacket('Z0,00000008')
+        d.expect('OK')
+        d.sendPacket('Z0,00000008')
+        d.expect('')
+
+        # Remove invalid breakpoint (doesn't exist)
         d.sendPacket('z0,00000004')
         d.expect('')
 
@@ -245,9 +268,11 @@ def test_single_step(name):
         d.expect('02000000')
 
 
-# Ensure that if you single step through a breakpoint, it doesn't
-# trigger and get stuck
 def test_single_step_breakpoint(name):
+    """
+    Ensure that if you single step through a breakpoint, it doesn't
+    trigger and get stuck
+    """
     with EmulatorTarget('count.hex') as p, DebugConnection() as d:
         # Set breakpoint at second instruction (address 0x8)
         d.sendPacket('Z0,00000004')
@@ -300,6 +325,7 @@ def test_read_write_memory(name):
         # but ensure it doesn't crash.
         d.sendPacket('m10000000,4')
         d.expect('ffffffff')
+
 
 def test_read_write_register(name):
     with EmulatorTarget('count.hex') as p, DebugConnection() as d:
@@ -386,8 +412,12 @@ def test_select_thread(name):
         d.sendPacket('g1f')
         d.expect('00000000')
 
-        # XXX If set register were implemented, could check for known
-        # value in s0.
+        # Set register 0 to a different value. Read it to make sure
+        # the value took.
+        d.sendPacket('G00,9d676431')
+        d.expect('OK')
+        d.sendPacket('g00')
+        d.expect('9d676431')
 
         # Switch back to thread 1. Ensure state is correct.
         d.sendPacket('Hg1')
@@ -401,7 +431,7 @@ def test_select_thread(name):
         d.sendPacket('g1f')
         d.expect('04000000')
 
-        # Read s0.
+        # Read s0. Ensure our write on thread 2 didn't affect it.
         d.sendPacket('g00')
         d.expect('01000000')
 
@@ -413,13 +443,14 @@ def test_select_thread(name):
         d.sendPacket('qC')
         d.expect('QC01')
 
-        # Use invalid switch type
+        # Use invalid switch command
         d.sendPacket('Hz1')
         d.expect('')
 
         # Ensure still on thread 1
         d.sendPacket('qC')
         d.expect('QC01')
+
 
 def test_thread_info(name):
     # Run with one core, four threads
@@ -442,8 +473,9 @@ def test_invalid_command(name):
         d.expect('')
 
 
-# Miscellaneous query commands not covered in other tests
 def test_queries(name):
+    """Miscellaneous query commands not covered in other tests"""
+
     with EmulatorTarget('count.hex') as p, DebugConnection() as d:
         d.sendPacket('qLaunchSuccess')
         d.expect('OK')
@@ -467,7 +499,7 @@ def test_queries(name):
         d.sendPacket('qZ')
         d.expect('')
 
-# Test vCont command
+
 def test_vcont(name):
     with EmulatorTarget('count.hex') as p, DebugConnection() as d:
         # Set breakpoint
@@ -488,6 +520,7 @@ def test_vcont(name):
 
 register_tests(test_breakpoint, ['gdb_breakpoint'])
 register_tests(test_remove_breakpoint, ['gdb_remove_breakpoint'])
+register_tests(test_breakpoint_errors, ['gdb_breakpoint_errors'])
 register_tests(test_single_step, ['gdb_single_step'])
 register_tests(test_single_step_breakpoint, ['gdb_single_step_breakpoint'])
 register_tests(test_read_write_memory, ['gdb_read_write_memory'])
