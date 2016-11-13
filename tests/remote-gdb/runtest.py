@@ -77,11 +77,14 @@ class DebugConnection:
 
         while True:
             leader = self.sock.recv(1)
+            if leader == '':
+                raise TestException('unexpected socket close')
+
             if leader == '$':
                 break
 
             if leader != '+':
-                raise Exception('unexpected character ' + leader)
+                raise TestException('unexpected character ' + leader)
 
         body = ''
         while True:
@@ -286,6 +289,17 @@ def test_read_write_memory(name):
         d.sendPacket('m00200000,8')
         d.expect('b8d30e6f7cec41b1')
 
+        # Try to write a bad address (out of range)
+        # Doesn't return an error, test just ensures it
+        # doesn't crash
+        d.sendPacket('M10000000,4,12345678')
+        d.expect('OK')
+
+        # Try to read a bad address (out of range)
+        # As above, doesn't return error (returns 0xff...),
+        # but ensure it doesn't crash.
+        d.sendPacket('m10000000,4')
+        d.expect('ffffffff')
 
 def test_read_write_register(name):
     with EmulatorTarget('count.hex') as p, DebugConnection() as d:

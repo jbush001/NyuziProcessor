@@ -492,12 +492,16 @@ void dbg_set_vector_reg(struct processor *proc, uint32_t thread_id,
 
 uint32_t dbg_read_memory_byte(const struct processor *proc, uint32_t address)
 {
+    if (address >= proc->memory_size)
+        return 0xff;
+
     return ((uint8_t*)proc->memory)[address];
 }
 
 void dbg_write_memory_byte(const struct processor *proc, uint32_t address, uint8_t byte)
 {
-    ((uint8_t*)proc->memory)[address] = byte;
+    if (address < proc->memory_size)
+        ((uint8_t*)proc->memory)[address] = byte;
 }
 
 int dbg_set_breakpoint(struct processor *proc, uint32_t pc)
