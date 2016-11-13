@@ -261,17 +261,28 @@ void remote_gdb_main_loop(struct processor *proc, bool enable_fb_window)
 
                 // Pick thread
                 case 'H':
-                    if (request[1] == 'g' || request[1] == 'c')
-                    {
-                        // XXX hack: the request type controls which operations this
-                        // applies for.
-                        current_thread = (uint32_t)(request[2] - '1');
-                        send_response_packet("OK");
-                    }
-                    else
-                        send_response_packet("");
+                {
+                    uint32_t thid;
 
+                    // XXX hack: the request type controls which operations this
+                    // applies for.
+                    if (request[1] != 'g' && request[1] != 'c')
+                    {
+                        send_response_packet("");
+                        break;
+                    }
+
+                    thid = (uint32_t) strtoul(request + 2, NULL, 16);
+                    if (thid >= get_total_threads(proc) || thid == 0)
+                    {
+                        send_response_packet("");
+                        break;
+                    }
+
+                    current_thread = thid - 1;
+                    send_response_packet("OK");
                     break;
+                }
 
                 // Kill
                 case 'k':

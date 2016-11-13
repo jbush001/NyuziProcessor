@@ -289,7 +289,7 @@ def test_read_write_memory(name):
 
 def test_read_write_register(name):
     with EmulatorTarget('count.hex') as p, DebugConnection() as d:
-        # Write registers
+        # Write registers: scalar s0, s14 and vector v0, v4
         d.sendPacket('G01,7b53cc78')
         d.expect('OK')
         d.sendPacket('G14,0904c47d')
@@ -301,7 +301,7 @@ def test_read_write_register(name):
             'G24,cb7e3668a97ef8ea55902658b62a682406f7206f75e5438ff95b4519fed1e73e16ce5a29b4385fa2560820f0c8f42227709387dbad3a8208b57c381e268ffe38')
         d.expect('OK')
 
-        # Read registers
+        # Read registers just written and ensure the values are the same
         d.sendPacket('g01')
         d.expect('7b53cc78')
         d.sendPacket('g14')
@@ -391,6 +391,21 @@ def test_select_thread(name):
         d.sendPacket('g00')
         d.expect('01000000')
 
+        # Try to switch to an invalid thread ID
+        d.sendPacket('Hgfe')
+        d.expect('')
+
+        # Ensure still on thread 1
+        d.sendPacket('qC')
+        d.expect('QC01')
+
+        # Use invalid switch type
+        d.sendPacket('Hz1')
+        d.expect('')
+
+        # Ensure still on thread 1
+        d.sendPacket('qC')
+        d.expect('QC01')
 
 def test_thread_info(name):
     # Run with one core, four threads
@@ -412,9 +427,8 @@ def test_invalid_command(name):
         # An error response returns nothing in the body
         d.expect('')
 
+
 # Miscellaneous query commands not covered in other tests
-
-
 def test_queries(name):
     with EmulatorTarget('count.hex') as p, DebugConnection() as d:
         d.sendPacket('qLaunchSuccess')
