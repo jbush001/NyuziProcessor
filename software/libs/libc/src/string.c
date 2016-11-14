@@ -93,10 +93,15 @@ char* strcpy(char *dest, const char *src)
 char* strncpy(char *dest, const char *src, size_t length)
 {
     char *d = dest;
-    while (*src && length-- > 0)
+    while (*src && length > 0)
+    {
         *d++ = *src++;
+        length--;
+    }
 
-    *d = 0;
+    if (length > 0)
+        *d = 0;
+
     return dest;
 }
 

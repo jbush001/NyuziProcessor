@@ -62,8 +62,8 @@ void* bsearch(const void *searchKey, const void *base, size_t num,
               size_t size, int (*compare)(const void*,const void*))
 {
     int low = 0;
-    int high = num;
-    while (high - low > 1)
+    int high = num - 1;
+    while (low <= high)
     {
         int mid = (low + high) / 2;
         void *midKey = (char*) base + mid * size;
@@ -71,9 +71,9 @@ void* bsearch(const void *searchKey, const void *base, size_t num,
         if (compVal == 0)
             return midKey;
         else if (compVal < 0)
-            high = mid;
+            high = mid - 1;
         else
-            low = mid;
+            low = mid + 1;
     }
 
     return NULL;
