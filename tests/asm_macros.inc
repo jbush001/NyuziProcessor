@@ -67,57 +67,57 @@
 .set REG_TIMER_COUNT, 0xffff0240
 
 .macro start_all_threads
-	move s0, -1
-	shl s0, s0, 16
-	or s0, s0, 0x100
-	move s1, -1
-	store_32 s1, (s0)
+                move s0, -1
+                shl s0, s0, 16
+                or s0, s0, 0x100
+                move s1, -1
+                store_32 s1, (s0)
 .endm
 
 .macro halt_current_thread
-	getcr s0, CR_CURRENT_THREAD
-	move s1, 1
-	shl s1, s1, s0
-	move s0, -1
-	shl s0, s0, 16
-	or s0, s0, 0x104
-	store_32 s1, (s0)
-1:	goto 1b
+                getcr s0, CR_CURRENT_THREAD
+                move s1, 1
+                shl s1, s1, s0
+                move s0, -1
+                shl s0, s0, 16
+                or s0, s0, 0x104
+                store_32 s1, (s0)
+1:              goto 1b
 .endm
 
 .macro halt_all_threads
-    move s0, -1
-    shl s0, s0, 16
-    or s0, s0, 0x104
-    move s1, -1
-	store_32 s1, (s0)
-1:	goto 1b
+                move s0, -1
+                shl s0, s0, 16
+                or s0, s0, 0x104
+                move s1, -1
+                store_32 s1, (s0)
+1:              goto 1b
 .endm
 
 // Print a null terminated string pointer to by s0 to the serial
 // port. Clobbers s0-s3.
-                    .align 4, 0xff
+                .align 4, 0xff
 .macro print_string
-                    load_32 s1, _seraddr    // Load address of serial registers
-1:                  load_u8 s2, (s0)        // Read a character
-                    bfalse s2, 3f           // If delimeter, exit
-2:                  load_32 s3, (s1)        // Read STATUS
-                    and s3, s3, 1           // Check write available bit
-                    bfalse s3, 2b           // If this is clear, busy wait
-                    store_32 s2, 8(s1)      // Write space available, send char
-                    add_i s0, s0, 1         // Increment pointer
-                    goto 1b                 // Loop for next char
+                load_32 s1, _seraddr    // Load address of serial registers
+1:              load_u8 s2, (s0)        // Read a character
+                bfalse s2, 3f           // If delimeter, exit
+2:              load_32 s3, (s1)        // Read STATUS
+                and s3, s3, 1           // Check write available bit
+                bfalse s3, 2b           // If this is clear, busy wait
+                store_32 s2, 8(s1)      // Write space available, send char
+                add_i s0, s0, 1         // Increment pointer
+                goto 1b                 // Loop for next char
 3:
 .endm
-_seraddr:          .long 0xffff0040
+_seraddr:       .long 0xffff0040
 
 // If register is not equal to testval, print failure message.
 // Otherwise continue. Clobbers s25
 .macro assert_reg reg, testval
-                    load_const s25, \testval
-                    cmpeq_i s25, s25, \reg
-                    btrue s25, 1f
-                    call fail_test
+                load_const s25, \testval
+                cmpeq_i s25, s25, \reg
+                btrue s25, 1f
+                call fail_test
 1:
 .endm
 
@@ -127,32 +127,32 @@ _seraddr:          .long 0xffff0040
 .endm
 
 .macro should_not_get_here
-                    call fail_test
+                call fail_test
 .endm
 
 // Load a constant value into a register
 .macro load_const oreg, value
-                    move \oreg, (((\value ) >> 20) & 0xfff)     // Bits 31-20
-                    shl \oreg, \oreg, 12
-                    or \oreg, \oreg, (((\value ) >> 8) & 0xfff) // Bits 19-8
-                    shl \oreg, \oreg, 8
-                    or \oreg, \oreg,    ((\value ) & 0xff)
+                move \oreg, (((\value ) >> 20) & 0xfff)     // Bits 31-20
+                shl \oreg, \oreg, 12
+                or \oreg, \oreg, (((\value ) >> 8) & 0xfff) // Bits 19-8
+                shl \oreg, \oreg, 8
+                or \oreg, \oreg,    ((\value ) & 0xff)
 .endm
 
 // Print failure message and halt
-                    .align 4, 0xff
-fail_test:          lea s0, failstr
-                    print_string
-                    halt_all_threads
-failstr:            .asciz "FAIL"
+                .align 4, 0xff
+fail_test:      lea s0, failstr
+                print_string
+                halt_all_threads
+failstr:        .asciz "FAIL"
 
 // Print success message and halt
-                    .align 4, 0xff
-pass_test:          lea s0, passstr
-                    print_string
-                    halt_all_threads
-passstr:            .asciz "PASS"
+                .align 4, 0xff
+pass_test:      lea s0, passstr
+                print_string
+                halt_all_threads
+passstr:        .asciz "PASS"
 
-                    .align 4, 0xff
+                .align 4, 0xff
 
 
