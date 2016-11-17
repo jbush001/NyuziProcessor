@@ -534,14 +534,16 @@ int dbg_set_breakpoint(struct processor *proc, uint32_t pc)
 int dbg_clear_breakpoint(struct processor *proc, uint32_t pc)
 {
     struct breakpoint **link;
+    struct breakpoint *breakpoint;
 
     for (link = &proc->breakpoints; *link; link = &(*link)->next)
     {
-        if ((*link)->address == pc)
+        breakpoint = *link;
+        if (breakpoint->address == pc)
         {
-            proc->memory[pc / 4] = (*link)->original_instruction;
-            *link = (*link)->next;
-            // XXX leak
+            proc->memory[pc / 4] = breakpoint->original_instruction;
+            *link = breakpoint->next;
+            free(breakpoint);
             return 0;
         }
     }
