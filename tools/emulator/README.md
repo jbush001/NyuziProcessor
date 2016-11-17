@@ -77,7 +77,6 @@ The steps to run the debugger manually are:
 
 Other notes:
 - This is new and still has bugs and missing functionality.
-- Does not support writing memory (or operations that require it)
 - The emulator does not support the debugger in cosimulation mode.
 - Debugging works better if you compile the program with optimizations disabled.
   For example, at -O3, lldb cannot read variables if they are not live at the
