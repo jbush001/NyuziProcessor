@@ -147,26 +147,6 @@ static void run_until_interrupt(struct processor *proc, uint32_t thread_id, bool
     }
 }
 
-static uint8_t decode_hex_byte(const char *ptr)
-{
-    int i;
-    int retval = 0;
-
-    for (i = 0; i < 2; i++)
-    {
-        if (ptr[i] >= '0' && ptr[i] <= '9')
-            retval = (retval << 4) | (ptr[i] - '0');
-        else if (ptr[i] >= 'a' && ptr[i] <= 'f')
-            retval = (retval << 4) | (ptr[i] - 'a' + 10);
-        else if (ptr[i] >= 'A' && ptr[i] <= 'F')
-            retval = (retval << 4) | (ptr[i] - 'A' + 10);
-        else
-            assert(0);	// Bad character
-    }
-
-    return (uint8_t) retval;
-}
-
 void remote_gdb_main_loop(struct processor *proc, bool enable_fb_window)
 {
     int listen_socket;
@@ -378,20 +358,13 @@ void remote_gdb_main_loop(struct processor *proc, bool enable_fb_window)
                     {
                         // Vector register
                         uint32_t reg_value[NUM_VECTOR_LANES];
-                        uint32_t lane_idx;
-
-                        data_ptr++; // Skip comma
-                        for (lane_idx = 0; lane_idx < NUM_VECTOR_LANES; lane_idx++)
+                        if (parse_hex_vector(data_ptr + 1, reg_value, true) < 0)
+                            send_response_packet("");
+                        else
                         {
-                            reg_value[lane_idx] = decode_hex_byte(data_ptr)
-                                                  | (uint32_t) (decode_hex_byte(data_ptr + 2) << 8)
-                                                  | (uint32_t) (decode_hex_byte(data_ptr + 4) << 16)
-                                                  | (uint32_t) (decode_hex_byte(data_ptr + 6) << 24);
-                            data_ptr += 8;
+                            dbg_set_vector_reg(proc, current_thread, reg_id, reg_value);
+                            send_response_packet("OK");
                         }
-
-                        dbg_set_vector_reg(proc, current_thread, reg_id, reg_value);
-                        send_response_packet("OK");
                     }
                     else
                         send_response_packet("");
