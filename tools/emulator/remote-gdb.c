@@ -343,14 +343,14 @@ void remote_gdb_main_loop(struct processor *proc, bool enable_fb_window)
                     else if (reg_id < 64)
                     {
                         // Vector register
-                        uint32_t lane_idx;
+                        int lane_idx;
                         uint32_t values[NUM_VECTOR_LANES];
 
-                        dbg_get_vector_reg(proc, current_thread, reg_id, values);
-                        for (lane_idx = 0; lane_idx < NUM_VECTOR_LANES; lane_idx++)
+                        dbg_get_vector_reg(proc, current_thread, reg_id - 32, values);
+                        for (lane_idx = NUM_VECTOR_LANES - 1; lane_idx >= 0; lane_idx--)
                         {
-                            sprintf(response + lane_idx * 8, "%08x",
-                                    endian_swap32(values[lane_idx]));
+                            sprintf(response + (NUM_VECTOR_LANES - lane_idx - 1)
+                                    * 8, "%08x", endian_swap32(values[lane_idx]));
                         }
 
                         send_response_packet(response);
@@ -378,20 +378,14 @@ void remote_gdb_main_loop(struct processor *proc, bool enable_fb_window)
                     {
                         // Vector register
                         uint32_t reg_value[NUM_VECTOR_LANES];
-                        uint32_t lane_idx;
 
-                        data_ptr++; // Skip comma
-                        for (lane_idx = 0; lane_idx < NUM_VECTOR_LANES; lane_idx++)
+                        if (parse_hex_vector(data_ptr + 1, reg_value, true) < 0)
+                            send_response_packet("");
+                        else
                         {
-                            reg_value[lane_idx] = decode_hex_byte(data_ptr)
-                                                  | (uint32_t) (decode_hex_byte(data_ptr + 2) << 8)
-                                                  | (uint32_t) (decode_hex_byte(data_ptr + 4) << 16)
-                                                  | (uint32_t) (decode_hex_byte(data_ptr + 6) << 24);
-                            data_ptr += 8;
+                            dbg_set_vector_reg(proc, current_thread, reg_id - 32, reg_value);
+                            send_response_packet("OK");
                         }
-
-                        dbg_set_vector_reg(proc, current_thread, reg_id, reg_value);
-                        send_response_packet("OK");
                     }
                     else
                         send_response_packet("");

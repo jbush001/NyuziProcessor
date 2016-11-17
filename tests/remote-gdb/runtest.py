@@ -328,8 +328,20 @@ def test_read_write_memory(name):
 
 
 def test_read_write_register(name):
-    with EmulatorTarget('count.hex') as p, DebugConnection() as d:
-        # Write registers: scalar s0, s14 and vector v0, v4
+    hexfile = build_program(['register_values.S'])
+    with EmulatorTarget(hexfile) as p, DebugConnection() as d:
+        # Run code to load registers
+        d.sendPacket('C')
+        d.expect('S05')
+
+        # Check values set by program (remote GDB returns in swapped byte
+        # order...)
+        d.sendPacket('g1')
+        d.expect('7d7f3e85')
+        d.sendPacket('g20')
+        d.expect('f13403ef9d08309993f7819954ae4b3f7aeaa28f538fecbd9536f59c6d7251269525ee70d26e8d34f48912639c86ae5dba426c83aa8455e1e2dbba4b41a4f321')
+
+        # Write registers: scalar s1, s14 and vector v0, v4
         d.sendPacket('G01,7b53cc78')
         d.expect('OK')
         d.sendPacket('G14,0904c47d')

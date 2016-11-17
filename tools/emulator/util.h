@@ -20,6 +20,7 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <sys/select.h>
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -103,4 +104,7 @@ static inline int can_read_file_descriptor(int fd)
     return result;
 }
 
+int parse_hex_vector(const char *str, uint32_t *vector_values, bool endian_swap);
+
 #endif
+
