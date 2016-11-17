@@ -28,8 +28,7 @@ SRCS=main.c \
 	remote-gdb.c \
 	device.c \
 	fbwindow.c \
-	sdmmc.c \
-	util.c
+	sdmmc.c
 
 LIBS=-lm $(shell sdl2-config --libs)
 

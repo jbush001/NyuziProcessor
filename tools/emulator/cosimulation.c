@@ -39,6 +39,7 @@
 static void print_cosim_expected(void);
 static bool run_until_next_event(struct processor*, uint32_t thread_id);
 static bool masked_vectors_equal(uint32_t mask, const uint32_t *values1, const uint32_t *values2);
+static int parse_hex_vector(const char *str, uint32_t *vector_values, bool endian_swap);
 
 static enum
 {
@@ -344,3 +345,43 @@ static bool masked_vectors_equal(uint32_t mask, const uint32_t *values1, const u
 
     return true;
 }
+
+static int parse_hex_vector(const char *str, uint32_t *vector_values, bool endian_swap)
+{
+    const char *c = str;
+    int lane;
+    int digit;
+    uint32_t lane_value;
+
+    for (lane = NUM_VECTOR_LANES - 1; lane >= 0 && *c; lane--)
+    {
+        lane_value = 0;
+        for (digit = 0; digit < 8; digit++)
+        {
+            if (*c >= '0' && *c <= '9')
+                lane_value = (lane_value << 4) | (uint32_t) (*c - '0');
+            else if (*c >= 'a' && *c <= 'f')
+                lane_value = (lane_value << 4) | (uint32_t) (*c - 'a' + 10);
+            else if (*c >= 'A' && *c <= 'F')
+                lane_value = (lane_value << 4) | (uint32_t) (*c - 'A' + 10);
+            else
+            {
+                printf("bad character %c in hex vector\n", *c);
+                return -1;
+            }
+
+            if (*c == '\0')
+            {
+                printf("Error parsing hex vector\n");
+                break;
+            }
+            else
+                c++;
+        }
+
+        vector_values[lane] = endian_swap ? endian_swap32(lane_value) : lane_value;
+    }
+
+    return 0;
+}
+

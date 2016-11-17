@@ -20,7 +20,6 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdlib.h>
 #include <sys/select.h>
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -76,7 +75,7 @@ static inline uint32_t value_as_int(float value)
         uint32_t i;
     } u = { .f = value };
 
-    // The contents of the significand of a NaN result is not fully determined
+    // The contents of the significand of a Na_n result is not fully determined
     // in the spec.  For consistency in cosimulation, convert to a common form
     // when it is detected.
     if (((u.i >> 23) & 0xff) == 0xff && (u.i & 0x7fffff) != 0)
@@ -85,7 +84,6 @@ static inline uint32_t value_as_int(float value)
     return u.i;
 }
 
-// Poll file descriptor, return 1 if it can be read, otherwise 0.
 static inline int can_read_file_descriptor(int fd)
 {
     fd_set read_fds;
@@ -104,8 +102,5 @@ static inline int can_read_file_descriptor(int fd)
 
     return result;
 }
-
-int parse_hex_vector(const char *str, uint32_t *vector_values, bool endian_swap);
-uint8_t decode_hex_byte(const char *ptr);
 
 #endif
