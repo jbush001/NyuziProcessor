@@ -490,6 +490,10 @@ void dbg_set_vector_reg(struct processor *proc, uint32_t thread_id,
            NUM_VECTOR_LANES * sizeof(int));
 }
 
+// XXX This does not perform address translation.
+// We can't handle TLB misses properly when the fault is caued by debugger.
+// Should either do a best effort, returning nothing if the TLB entry is missing,
+// or return an error if memory translation is enabled.
 uint32_t dbg_read_memory_byte(const struct processor *proc, uint32_t address)
 {
     if (address >= proc->memory_size)

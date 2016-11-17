@@ -298,6 +298,11 @@ def test_single_step_breakpoint(name):
 
 def test_read_write_memory(name):
     with EmulatorTarget('count.hex') as p, DebugConnection() as d:
+        # Read program code at address 0. This should match values
+        # in count.hex
+        d.sendPacket('m0,10')
+        d.expect('0004800700088007000c800700108007')
+
         # Write memory at 1M
         d.sendPacket('M00100000,0c:55483c091aac1e8c6db4bed1')
         d.expect('OK')
