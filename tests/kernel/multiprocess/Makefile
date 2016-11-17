@@ -23,7 +23,7 @@ fsimage.bin: program.elf program2.elf
 
 #
 # To run, this uses the kernel built in software/kernel.
-# The compiled hello program is bundled into the filesystem
+# The compiled user program is bundled into the filesystem
 # and loaded by the kernel.
 #
 run: program.elf fsimage.bin
