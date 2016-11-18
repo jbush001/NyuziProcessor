@@ -17,13 +17,6 @@
 
 #
 # Validates remote GDB debugger interface in emulator
-# The file count.hex consists of instructions:
-# 00000000 move s0, 1
-# 00000004 move s0, 2
-# 00000008 move s0, 3
-# 0000000c move s0, 4
-# 00000010 move s0, 5
-# ...
 #
 
 import sys
@@ -150,7 +143,8 @@ def test_breakpoint(name):
     This sets two breakpoints
     """
 
-    with EmulatorTarget('count.hex') as p, DebugConnection() as d:
+    hexfile = build_program(['count.S'], no_header=True)
+    with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # Set breakpoint
         d.sendPacket('Z0,0000000c')
         d.expect('OK')
@@ -190,7 +184,8 @@ def test_breakpoint(name):
 
 
 def test_remove_breakpoint(name):
-    with EmulatorTarget('count.hex') as p, DebugConnection() as d:
+    hexfile = build_program(['count.S'], no_header=True)
+    with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # Set breakpoint
         d.sendPacket('Z0,0000000c')
         d.expect('OK')
@@ -217,7 +212,8 @@ def test_remove_breakpoint(name):
 
 
 def test_breakpoint_errors(name):
-    with EmulatorTarget('count.hex') as p, DebugConnection() as d:
+    hexfile = build_program(['count.S'], no_header=True)
+    with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # Set invalid breakpoint (memory out of range)
         d.sendPacket('Z0,20000000')
         d.expect('')
@@ -238,7 +234,8 @@ def test_breakpoint_errors(name):
 
 
 def test_single_step(name):
-    with EmulatorTarget('count.hex') as p, DebugConnection() as d:
+    hexfile = build_program(['count.S'], no_header=True)
+    with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # Read PC register
         d.sendPacket('g1f')
         d.expect('00000000')
@@ -273,7 +270,8 @@ def test_single_step_breakpoint(name):
     Ensure that if you single step through a breakpoint, it doesn't
     trigger and get stuck
     """
-    with EmulatorTarget('count.hex') as p, DebugConnection() as d:
+    hexfile = build_program(['count.S'], no_header=True)
+    with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # Set breakpoint at second instruction (address 0x8)
         d.sendPacket('Z0,00000004')
         d.expect('OK')
@@ -297,7 +295,8 @@ def test_single_step_breakpoint(name):
 
 
 def test_read_write_memory(name):
-    with EmulatorTarget('count.hex') as p, DebugConnection() as d:
+    hexfile = build_program(['count.S'], no_header=True)
+    with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # Read program code at address 0. This should match values
         # in count.hex
         d.sendPacket('m0,10')
@@ -378,7 +377,8 @@ def test_read_write_register(name):
 
 
 def test_register_info(name):
-    with EmulatorTarget('count.hex') as p, DebugConnection() as d:
+    hexfile = build_program(['count.S'], no_header=True)
+    with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         for x in range(27):
             regid = str(x + 1)
             d.sendPacket('qRegisterInfo' + hex(x + 1)[2:])
@@ -399,7 +399,8 @@ def test_register_info(name):
 
 
 def test_select_thread(name):
-    with EmulatorTarget('count.hex') as p, DebugConnection() as d:
+    hexfile = build_program(['count.S'], no_header=True)
+    with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # Read thread ID
         d.sendPacket('qC')
         d.expect('QC01')
@@ -471,18 +472,20 @@ def test_select_thread(name):
 
 def test_thread_info(name):
     # Run with one core, four threads
-    with EmulatorTarget('count.hex') as p, DebugConnection() as d:
+    hexfile = build_program(['count.S'], no_header=True)
+    with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         d.sendPacket('qfThreadInfo')
         d.expect('m1,2,3,4')
 
     # Run with two cores, eight threads
-    with EmulatorTarget('count.hex', num_cores=2) as p, DebugConnection() as d:
+    with EmulatorTarget(hexfile, num_cores=2) as p, DebugConnection() as d:
         d.sendPacket('qfThreadInfo')
         d.expect('m1,2,3,4,5,6,7,8')
 
 
 def test_invalid_command(name):
-    with EmulatorTarget('count.hex') as p, DebugConnection() as d:
+    hexfile = build_program(['count.S'], no_header=True)
+    with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # As far as I know, this is not a valid command...
         d.sendPacket('@')
 
@@ -493,7 +496,8 @@ def test_invalid_command(name):
 def test_queries(name):
     """Miscellaneous query commands not covered in other tests"""
 
-    with EmulatorTarget('count.hex') as p, DebugConnection() as d:
+    hexfile = build_program(['count.S'], no_header=True)
+    with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         d.sendPacket('qLaunchSuccess')
         d.expect('OK')
 
@@ -518,7 +522,8 @@ def test_queries(name):
 
 
 def test_vcont(name):
-    with EmulatorTarget('count.hex') as p, DebugConnection() as d:
+    hexfile = build_program(['count.S'], no_header=True)
+    with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # Set breakpoint
         d.sendPacket('Z0,00000010')
         d.expect('OK')
@@ -537,15 +542,8 @@ def test_vcont(name):
 
 
 def test_crash(name):
-    # The crash program is:
-    # 00000000 nop
-    # 00000004 nop
-    # 00000008 nop
-    # 0000000c nop
-    # 00000010 goto +1
-    # Since the PC will be 00000014 when the goto is executed, it will
-    # jump to 15 and crash there.
-    with EmulatorTarget('crash.hex') as p, DebugConnection() as d:
+    hexfile = build_program(['crash.S'], no_header=True)
+    with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         d.sendPacket('c')
         d.expect('S05')
         d.sendPacket('g1f')

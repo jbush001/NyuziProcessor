@@ -20,6 +20,7 @@
 #
 
 from __future__ import print_function
+import binascii
 import subprocess
 import os
 import sys
@@ -42,7 +43,11 @@ class TestException(Exception):
     def __init__(self, output):
         self.output = output
 
-def build_program(source_files):
+# XXX should this cache built programs if there are multiple runs with the same one?
+# Might speed up tests.
+
+
+def build_program(source_files, no_header=False):
     """Compile/assemble one or more files.
 
     If there are .c files in the list, this will link in crt0, libc,
@@ -52,6 +57,8 @@ def build_program(source_files):
     Args:
             source_files: List of files, which can be C/C++ or assembly
               files.
+            no_header: If set, the program will start at address 0 and
+              all segments will be mashed together rather than page aligned.
 
     Returns:
             Name of hex file created
@@ -68,6 +75,9 @@ def build_program(source_files):
                      '-o', ELF_FILE,
                      '-w',
                      '-O3']
+
+    if no_header:
+        compiler_args += ['-Wl,--script,../one-segment.ld,--oformat,binary']
 
     compiler_args += source_files
 
@@ -87,12 +97,16 @@ def build_program(source_files):
 
     try:
         subprocess.check_output(compiler_args, stderr=subprocess.STDOUT)
-        subprocess.check_output([COMPILER_DIR + 'elf2hex', '-o', HEX_FILE, ELF_FILE],
-                                stderr=subprocess.STDOUT)
+        if no_header:
+            dump_hex(input_file=ELF_FILE, output_file=HEX_FILE)
+        else:
+            subprocess.check_output([COMPILER_DIR + 'elf2hex', '-o', HEX_FILE, ELF_FILE],
+                                    stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as exc:
         raise TestException('Compilation failed:\n' + exc.output)
 
     return HEX_FILE
+
 
 class TimedProcessRunner(threading.Thread):
 
@@ -432,6 +446,16 @@ def check_result(source_file, program_output):
 
     return True
 
+
+def dump_hex(output_file, input_file):
+    with open(input_file, 'rb') as ifile, open(output_file, 'w') as ofile:
+        while True:
+            word = ifile.read(4)
+            if not word:
+                break
+
+            ofile.write(binascii.hexlify(word))
+            ofile.write('\n')
 
 def _run_generic_test(name):
     underscore = name.rfind('_')
