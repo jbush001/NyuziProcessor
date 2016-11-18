@@ -732,9 +732,9 @@ static void raise_trap(struct thread *thread, uint32_t trap_address, enum trap_t
             && type != TT_INTERRUPT
             && type != TT_SYSCALL)
     {
-        printf("Thread %d caught fault %d @%08x\n", thread->id, type, thread->pc - 4);
-        print_thread_registers(thread);
         thread->pc -= 4;    // reset PC to faulting instruction
+        printf("Thread %d caught fault %d @%08x\n", thread->id, type, thread->pc);
+        print_thread_registers(thread);
         thread->core->proc->crashed = true;
         return;
     }
