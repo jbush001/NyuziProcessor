@@ -535,6 +535,22 @@ def test_vcont(name):
         d.sendPacket('g1f')
         d.expect('10000000')
 
+
+def test_crash(name):
+    # The crash program is:
+    # 00000000 nop
+    # 00000004 nop
+    # 00000008 nop
+    # 0000000c nop
+    # 00000010 goto +1
+    # Since the PC will be 00000014 when the goto is executed, it will
+    # jump to 15 and crash there.
+    with EmulatorTarget('crash.hex') as p, DebugConnection() as d:
+        d.sendPacket('c')
+        d.expect('S05')
+        d.sendPacket('g1f')
+        d.expect('15000000')
+
 register_tests(test_breakpoint, ['gdb_breakpoint'])
 register_tests(test_remove_breakpoint, ['gdb_remove_breakpoint'])
 register_tests(test_breakpoint_errors, ['gdb_breakpoint_errors'])
@@ -548,4 +564,5 @@ register_tests(test_thread_info, ['gdb_thread_info'])
 register_tests(test_invalid_command, ['gdb_invalid_command'])
 register_tests(test_queries, ['gdb_queries'])
 register_tests(test_vcont, ['gdb_vcont'])
+register_tests(test_crash, ['gdb_crash'])
 execute_tests()
