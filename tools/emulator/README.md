@@ -76,13 +76,10 @@ The steps to run the debugger manually are:
         /usr/local/llvm-nyuzi/bin/lldb --arch nyuzi <program>.elf -o "gdb-remote 8000"
 
 Other notes:
-- This is new and still has bugs and missing functionality.
 - The emulator does not support the debugger in cosimulation mode.
 - Debugging works better if you compile the program with optimizations disabled.
   For example, at -O3, lldb cannot read variables if they are not live at the
   execution point.
-- Debugger only currently works with four threads enabled. There are a few hardcoded assumptions
-  of four threads in remote-gdb.c.
 - The debugger does not work with virtual memory enabled.
 
 ### Tracing
