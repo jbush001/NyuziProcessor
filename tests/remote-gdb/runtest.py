@@ -348,27 +348,22 @@ def test_read_write_register(name):
         d.sendPacket('g20')
         d.expect('f13403ef9d08309993f7819954ae4b3f7aeaa28f538fecbd9536f59c6d7251269525ee70d26e8d34f48912639c86ae5dba426c83aa8455e1e2dbba4b41a4f321')
 
-        # Write registers: scalar s1, s14 and vector v0, v4
-        d.sendPacket('G01,7b53cc78')
-        d.expect('OK')
-        d.sendPacket('G14,0904c47d')
-        d.expect('OK')
-        d.sendPacket(
-            'G20,aef331bc7dbd6f1d042be4d6f1e1649855d864387eb8f0fd49c205c37790d1874078516c1a05c74f67678456679ba7e05bb5aed7303c5aeeeba6e619accf702a')
-        d.expect('OK')
-        d.sendPacket(
-            'G24,cb7e3668a97ef8ea55902658b62a682406f7206f75e5438ff95b4519fed1e73e16ce5a29b4385fa2560820f0c8f42227709387dbad3a8208b57c381e268ffe38')
-        d.expect('OK')
+        tests = [
+            (0, 'd3839b18'),
+            (1, '7b53cc78'),
+            (30, '0904c47d'),
+            (32, 'aef331bc7dbd6f1d042be4d6f1e1649855d864387eb8f0fd49c205c37790d1874078516c1a05c74f67678456679ba7e05bb5aed7303c5aeeeba6e619accf702a'),
+            (36, 'cb7e3668a97ef8ea55902658b62a682406f7206f75e5438ff95b4519fed1e73e16ce5a29b4385fa2560820f0c8f42227709387dbad3a8208b57c381e268ffe38'),
+            (63, '9e2d89afb0633c2f64b2eb4fdbba4663401ee673753a66d6d899e4a4101ae4920b0b16f0e716e4f7d62d83b5784740c138ac6ab94fa14256ebb468e25f20e02f')
+        ]
 
-        # Read registers just written and ensure the values are the same
-        d.sendPacket('g01')
-        d.expect('7b53cc78')
-        d.sendPacket('g14')
-        d.expect('0904c47d')
-        d.sendPacket('g20')
-        d.expect('aef331bc7dbd6f1d042be4d6f1e1649855d864387eb8f0fd49c205c37790d1874078516c1a05c74f67678456679ba7e05bb5aed7303c5aeeeba6e619accf702a')
-        d.sendPacket('g24')
-        d.expect('cb7e3668a97ef8ea55902658b62a682406f7206f75e5438ff95b4519fed1e73e16ce5a29b4385fa2560820f0c8f42227709387dbad3a8208b57c381e268ffe38')
+        for reg, value in tests:
+            d.sendPacket('G' + hex(reg)[2:] + ',' + value)
+            d.expect('OK')
+
+        for reg, value in tests:
+            d.sendPacket('g' + hex(reg)[2:])
+            d.expect(value)
 
         # Read invalid register index
         d.sendPacket('g40')
