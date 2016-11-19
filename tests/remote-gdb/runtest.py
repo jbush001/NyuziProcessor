@@ -400,13 +400,25 @@ def test_register_info(name):
 
 def test_select_thread(name):
     hexfile = build_program(['multithreaded.S'], no_header=True)
-    with EmulatorTarget(hexfile) as p, DebugConnection() as d:
+    with EmulatorTarget(hexfile, num_cores=2) as p, DebugConnection() as d:
         # Read thread ID
         d.sendPacket('qC')
         d.expect('QC01')
 
+        # Each line is one thread
+        tests = [
+            (7, 0xc7733c56),
+            (5, 0xf54adec3),
+            (1, 0x5afaf01e),
+            (2, 0x1964682e),
+            (3, 0x16cc6be1),
+            (8, 0xcbff923),
+            (4, 0x4596de2),
+            (6, 0xcd920ca6),
+        ]
+
         # Step all threads through initialization code (5 instructions)
-        for thid in range(4):
+        for thid in range(len(tests)):
             # Switch to thread
             d.sendPacket('Hg' + str(thid + 1))
             d.expect('OK')
@@ -426,87 +438,35 @@ def test_select_thread(name):
         # Now all threads are at the same instruction:
         # 00000014 move s0, 1
 
-        # Step 2 instructions and write register for thread 1
-        d.sendPacket('Hg1') # Switch to thread
-        d.expect('OK')
-        d.sendPacket('S')
-        d.expect('S05')
-        d.sendPacket('S')
-        d.expect('S05')
-        d.sendPacket('G01,9d676431')    # set register 0 to a different value
-        d.expect('OK')
+        # Step each thread independently some number of steps and
+        # write a value to register 1
+        for index, (num_steps, regval) in enumerate(tests):
+            d.sendPacket('Hg' + str(index + 1)) # Switch to thread
+            d.expect('OK')
+            for i in range(num_steps):
+                d.sendPacket('S')
+                d.expect('S05')
 
-        # Step 1 instruction and write register for thread 2
-        d.sendPacket('Hg2')
-        d.expect('OK')
-        d.sendPacket('S')
-        d.expect('S05')
-        d.sendPacket('G01,8acb36a0')    # set register 0 to a different value
-        d.expect('OK')
+            d.sendPacket('G01,%08x' % regval)
+            d.expect('OK')
 
-        # Step 3 instructions and write register for thread 3
-        d.sendPacket('Hg3')
-        d.expect('OK')
-        d.sendPacket('S')
-        d.expect('S05')
-        d.sendPacket('S')
-        d.expect('S05')
-        d.sendPacket('S')
-        d.expect('S05')
-        d.sendPacket('G01,2481a96c')    # set register 0 to a different value
-        d.expect('OK')
+        # Read back PC and register values
+        for index, (num_steps, regval) in enumerate(tests):
+            d.sendPacket('Hg' + str(index + 1)) # Switch to thread
+            d.expect('OK')
 
-        # Write register for thread 4
-        d.sendPacket('Hg4')
-        d.expect('OK')
-        d.sendPacket('G01,6a293ef7')    # set register 0 to a different value
-        d.expect('OK')
-
-        # Read values for thread 1
-        d.sendPacket('Hg1')
-        d.expect('OK')
-        d.sendPacket('g1f')
-        d.expect('1c000000')
-        d.sendPacket('g00')
-        d.expect('02000000')
-        d.sendPacket('g01')
-        d.expect('9d676431')
-
-        # Read values for thread 2
-        d.sendPacket('Hg2')
-        d.expect('OK')
-        d.sendPacket('g1f')
-        d.expect('18000000')
-        d.sendPacket('g00')
-        d.expect('01000000')
-        d.sendPacket('g01')
-        d.expect('8acb36a0')
-
-        # Read values for thread 3
-        d.sendPacket('Hg3')
-        d.expect('OK')
-        d.sendPacket('g1f')
-        d.expect('20000000')
-        d.sendPacket('g00')
-        d.expect('03000000')
-        d.sendPacket('g01')
-        d.expect('2481a96c')
-
-        # Read values for thread 4
-        d.sendPacket('Hg4')
-        d.expect('OK')
-        d.sendPacket('g1f')
-        d.expect('14000000')
-        d.sendPacket('g01')
-        d.expect('6a293ef7')
+            d.sendPacket('g1f')
+            d.expect('%08x' % endian_swap(0x14 + num_steps * 4))
+            d.sendPacket('g01')
+            d.expect('%08x' % regval)
 
         # Try to switch to an invalid thread ID
         d.sendPacket('Hgfe')
         d.expect('')
 
-        # Ensure still on thread 4
+        # Ensure still on thread 8
         d.sendPacket('qC')
-        d.expect('QC04')
+        d.expect('QC08')
 
 
 def test_thread_info(name):
