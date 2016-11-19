@@ -16,7 +16,7 @@
 
 int globalvar;
 
-int sub_func2(int value)
+int func2(int value)
 {
     int i;
     int result = 0;
@@ -29,15 +29,15 @@ int sub_func2(int value)
     return result;
 }
 
-int sub_func1(int a, int b)
+int func1(int a, int b)
 {
     b += a * globalvar;
-    return sub_func2(b);
+    return func2(b);
 }
 
 int main()
 {
     globalvar = 5;
-    sub_func1(12, 7);
+    func1(12, 7);
 }
 

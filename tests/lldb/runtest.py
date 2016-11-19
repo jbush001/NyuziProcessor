@@ -118,7 +118,7 @@ def test_lldb(name):
         lldb.send_command('file "obj/test.elf"')
         lldb.send_command('gdb-remote 8000\n')
         response = lldb.send_command('breakpoint set --file test_program.c --line 27')
-        if response.find('Breakpoint 1: where = test.elf`sub_func2 + 96 at test_program.c:27') == -1:
+        if response.find('Breakpoint 1: where = test.elf`func2 + 96 at test_program.c:27') == -1:
             raise TestException('breakpoint: did not find expected value ' + response)
 
         lldb.send_command('c')
@@ -128,8 +128,8 @@ def test_lldb(name):
         time.sleep(0.5)
 
         expected_stack = [
-            ('sub_func2', 'test_program.c', 27),
-            ('sub_func1', 'test_program.c', 35),
+            ('func2', 'test_program.c', 27),
+            ('func1', 'test_program.c', 35),
             ('main', 'test_program.c', 41),
             ('do_main', '', 0)
         ]
