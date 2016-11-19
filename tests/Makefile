@@ -21,7 +21,7 @@ test:
 	cd core/mmu && ./runtest.py
 	cd core/trap && ./runtest.py
 	cd core/perf_counters && ./runtest.py
-	cd core/shared_memory && ./runtest.py
+	cd shared_memory && ./runtest.py
 	cd device/sdmmc/ && ./runtest.py
 	cd device/ps2/ && ./runtest.py
 	cd device/uart && ./runtest.py

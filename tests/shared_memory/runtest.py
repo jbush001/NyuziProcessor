@@ -23,7 +23,7 @@ import time
 import struct
 import random
 
-sys.path.insert(0, '../..')
+sys.path.insert(0, '..')
 from test_harness import *
 
 
