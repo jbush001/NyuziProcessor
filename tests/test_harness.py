@@ -47,7 +47,7 @@ class TestException(Exception):
 # Might speed up tests.
 
 
-def build_program(source_files, no_header=False):
+def build_program(source_files, no_header=False, opt_level='-O3', cflags=['']):
     """Compile/assemble one or more files.
 
     If there are .c files in the list, this will link in crt0, libc,
@@ -74,7 +74,8 @@ def build_program(source_files, no_header=False):
     compiler_args = [COMPILER_DIR + 'clang',
                      '-o', ELF_FILE,
                      '-w',
-                     '-O3']
+                     opt_level]
+    compiler_args += cflags
 
     if no_header:
         compiler_args += ['-Wl,--script,../one-segment.ld,--oformat,binary']
