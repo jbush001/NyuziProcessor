@@ -15,6 +15,7 @@
 # limitations under the License.
 #
 
+import re
 import sys
 import subprocess
 import os
@@ -53,6 +54,9 @@ class LLDBHarness:
             COMPILER_DIR + 'lldb-mi'
         ]
 
+        # XXX race condition: the emulator needs to be ready before
+        # lldb tries to connect to it.
+
         try:
             self.lldb_proc = subprocess.Popen(lldb_args, stdout=subprocess.PIPE,
                                               stdin=subprocess.PIPE)
@@ -69,9 +73,10 @@ class LLDBHarness:
         self.emulator_proc.kill()
         self.lldb_proc.kill()
 
+
     def send_command(self, cmd):
         if DEBUG:
-            print('SEND: ' + cmd)
+            print('LLDB send: ' + cmd)
 
         self.outstr.write(cmd + '\n')
         return self.wait_response()
@@ -84,32 +89,87 @@ class LLDBHarness:
                 break
 
         if DEBUG:
-            print('RECV: ' + response)
+            print('LLDB recv: ' + response)
 
         return response
 
-def test_breakpoint(name):
+frame_re = re.compile('frame #[0-9]+: 0x[0-9a-f]+ [a-zA-Z_\.0-9]+`(?P<function>[a-zA-Z_0-9][a-zA-Z_0-9]+)')
+at_re = re.compile(' at (?P<filename>[a-z_A-Z][a-z\._A-Z]+):(?P<line>[0-9]+)')
+
+def parse_stack_crawl(blob):
+    lines = blob.split('\n')
+    stack_info = []
+    for line in lines:
+        frame_match = frame_re.search(line)
+        if frame_match:
+            func = frame_match.group('function')
+            at_match = at_re.search(line)
+            if at_match:
+                stack_info += [(func, at_match.group('filename'), int(at_match.group('line')))]
+            else:
+                stack_info += [(func, '', 0)]
+
+    return stack_info
+
+
+def test_lldb(name):
     hexfile = build_program(['test_program.c'], opt_level='-O0', cflags=['-g'])
     with LLDBHarness(hexfile) as lldb:
         lldb.send_command('file "obj/test.elf"')
         lldb.send_command('gdb-remote 8000\n')
-        response = lldb.send_command('breakpoint set --file test_program.c --line 7')
-        if response.find('Breakpoint 1: where = test.elf`sub_func + 20 at test_program.c:7') == -1:
-            raise TestException('Did not find expected value ' + response)
+        response = lldb.send_command('breakpoint set --file test_program.c --line 27')
+        if response.find('Breakpoint 1: where = test.elf`sub_func2 + 96 at test_program.c:27') == -1:
+            raise TestException('breakpoint: did not find expected value ' + response)
 
         lldb.send_command('c')
 
-        # XXX why is this required?
-        lldb.send_command('process interrupt')
+        # XXX race condition. If the print command is sent immediately, it thinks
+        # the process is still running.
+        time.sleep(0.5)
+
+        expected_stack = [
+            ('sub_func2', 'test_program.c', 27),
+            ('sub_func1', 'test_program.c', 35),
+            ('main', 'test_program.c', 41),
+            ('do_main', '', 0)
+        ]
+
+        response = lldb.send_command('bt')
+        crawl = parse_stack_crawl(response)
+        if crawl != expected_stack:
+            raise TestException('stack crawl mismatch ' + str(crawl))
+
+        response = lldb.send_command('print value')
+        if response.find('= 67') == -1:
+            raise TestException('print value: Did not find expected value ' + response)
+
+        response = lldb.send_command('print result')
+        if response.find('= 128') == -1:
+            raise TestException('print result: Did not find expected value ' + response)
+
+        # Up to previous frame
+        lldb.send_command('frame select --relative=1')
 
         response = lldb.send_command('print a')
         if response.find('= 12') == -1:
-            raise TestException('Did not find expected value ' + response)
+            raise TestException('print a: Did not find expected value ' + response)
 
         response = lldb.send_command('print b')
-        if response.find('= 7') == -1:
-            raise TestException('Did not find expected value ' + response)
+        if response.find('= 67') == -1:
+            raise TestException('print b: Did not find expected value ' + response)
+
+        lldb.send_command('step')
+
+        # XXX race condition. If the print command is sent immediately, it thinks
+        # the process is still running.
+        time.sleep(0.5)
+
+        response = lldb.send_command('print result')
+        if response.find('= 64') == -1:
+            raise TestException('print b: Did not find expected value ' + response)
 
 
-register_tests(test_breakpoint, ['lldb_breakpoint'])
+
+
+register_tests(test_lldb, ['lldb'])
 execute_tests()
