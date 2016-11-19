@@ -21,7 +21,6 @@
 
 import sys
 import subprocess
-import re
 import os
 import socket
 import time
@@ -53,7 +52,7 @@ class DebugConnection:
     def __exit__(self, type, value, traceback):
         self.sock.close()
 
-    def sendPacket(self, body):
+    def _sendPacket(self, body):
         global DEBUG
 
         if DEBUG:
@@ -67,7 +66,7 @@ class DebugConnection:
         self.sock.send('\x00')
         self.sock.send('\x00')
 
-    def receivePacket(self):
+    def _receivePacket(self):
         global DEBUG
 
         while True:
@@ -97,8 +96,9 @@ class DebugConnection:
 
         return body
 
-    def expect(self, value):
-        response = self.receivePacket()
+    def expect(self, command, value):
+        self._sendPacket(command)
+        response = self._receivePacket()
         if response != value:
             raise TestException(
                 'unexpected response. Wanted ' + value + ' got ' + response)
@@ -146,123 +146,96 @@ def test_breakpoint(name):
     hexfile = build_program(['count.S'], no_header=True)
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # Set breakpoint
-        d.sendPacket('Z0,0000000c')
-        d.expect('OK')
+        d.expect('Z0,0000000c', 'OK')
 
         # Set second breakpoint at next instruction
-        d.sendPacket('Z0,00000010')
-        d.expect('OK')
+        d.expect('Z0,00000010', 'OK')
 
         # Continue
-        d.sendPacket('C')
-        d.expect('S05')
+        d.expect('C', 'S05')
 
         # Read last signal
-        d.sendPacket('?')
-        d.expect('S05')
+        d.expect('?', 'S05')
 
         # Read PC register. Should be 0x000000c, but endian swapped
-        d.sendPacket('g1f')
-        d.expect('0c000000')
+        d.expect('g1f', '0c000000')
 
         # Read s0, which should be 3
-        d.sendPacket('g00')
-        d.expect('03000000')
+        d.expect('g00', '03000000')
 
         # Continue again.
-        d.sendPacket('C')
-        d.expect('S05')
+        d.expect('C', 'S05')
 
         # Ensure the instruction it stopped at is
         # executed and it breaks on the next instruction
-        d.sendPacket('g1f')
-        d.expect('10000000')
+        d.expect('g1f', '10000000')
 
         # Read s0, which should be 4
-        d.sendPacket('g00')
-        d.expect('04000000')
+        d.expect('g00', '04000000')
 
 
 def test_remove_breakpoint(name):
     hexfile = build_program(['count.S'], no_header=True)
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # Set breakpoint
-        d.sendPacket('Z0,0000000c')
-        d.expect('OK')
+        d.expect('Z0,0000000c', 'OK')
 
         # Set second breakpoint
-        d.sendPacket('Z0,00000014')
-        d.expect('OK')
+        d.expect('Z0,00000014', 'OK')
 
         # Clear first breakpoint
-        d.sendPacket('z0,0000000c')
-        d.expect('OK')
+        d.expect('z0,0000000c', 'OK')
 
         # Continue
-        d.sendPacket('C')
-        d.expect('S05')
+        d.expect('C', 'S05')
 
         # Read PC register. Should be at second breakpoint
-        d.sendPacket('g1f')
-        d.expect('14000000')
+        d.expect('g1f', '14000000')
 
         # Read s0, which should be 5
-        d.sendPacket('g00')
-        d.expect('05000000')
+        d.expect('g00', '05000000')
 
 
 def test_breakpoint_errors(name):
     hexfile = build_program(['count.S'], no_header=True)
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # Set invalid breakpoint (memory out of range)
-        d.sendPacket('Z0,20000000')
-        d.expect('')
+        d.expect('Z0,20000000', '')
 
         # Set invalid breakpoint (unaligned)
-        d.sendPacket('Z0,00000003')
-        d.expect('')
+        d.expect('Z0,00000003', '')
 
         # Set a valid breakpoint, then try to set the same address again
-        d.sendPacket('Z0,00000008')
-        d.expect('OK')
-        d.sendPacket('Z0,00000008')
-        d.expect('')
+        d.expect('Z0,00000008', 'OK')
+        d.expect('Z0,00000008', '')
 
         # Remove invalid breakpoint (doesn't exist)
-        d.sendPacket('z0,00000004')
-        d.expect('')
+        d.expect('z0,00000004', '')
 
 
 def test_single_step(name):
     hexfile = build_program(['count.S'], no_header=True)
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # Read PC register
-        d.sendPacket('g1f')
-        d.expect('00000000')
+        d.expect('g1f', '00000000')
 
         # Single step
-        d.sendPacket('S')
-        d.expect('S05')
+        d.expect('S', 'S05')
 
         # Read PC register
-        d.sendPacket('g1f')
-        d.expect('04000000')
+        d.expect('g1f', '04000000')
 
         # Read s0
-        d.sendPacket('g00')
-        d.expect('01000000')
+        d.expect('g00', '01000000')
 
         # Single step (note here I use the lowercase version)
-        d.sendPacket('s')
-        d.expect('S05')
+        d.expect('s', 'S05')
 
         # Read PC register
-        d.sendPacket('g1f')
-        d.expect('08000000')
+        d.expect('g1f', '08000000')
 
         # Read s0
-        d.sendPacket('g00')
-        d.expect('02000000')
+        d.expect('g00', '02000000')
 
 
 def test_single_step_breakpoint(name):
@@ -273,25 +246,20 @@ def test_single_step_breakpoint(name):
     hexfile = build_program(['count.S'], no_header=True)
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # Set breakpoint at second instruction (address 0x8)
-        d.sendPacket('Z0,00000004')
-        d.expect('OK')
+        d.expect('Z0,00000004', 'OK')
 
         # Single step over first instruction
-        d.sendPacket('S')
-        d.expect('S05')
+        d.expect('S', 'S05')
 
         # Single step. This one has a breakpoint, but we won't
         # stop at it.
-        d.sendPacket('S')
-        d.expect('S05')
+        d.expect('S', 'S05')
 
         # Read PC register
-        d.sendPacket('g1f')
-        d.expect('08000000')
+        d.expect('g1f', '08000000')
 
         # Read s0
-        d.sendPacket('g00')
-        d.expect('02000000')
+        d.expect('g00', '02000000')
 
 
 def test_read_write_memory(name):
@@ -299,8 +267,7 @@ def test_read_write_memory(name):
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # Read program code at address 0. This should match values
         # in count.hex
-        d.sendPacket('m0,10')
-        d.expect('0004800700088007000c800700108007')
+        d.expect('m0,10', '0004800700088007000c800700108007')
 
         # (address, data)
         tests = [
@@ -313,40 +280,34 @@ def test_read_write_memory(name):
 
         # Write memory
         for addr, data in tests:
-            d.sendPacket('M' + hex(addr)[2:] + ',' + hex(len(data) / 2)[2:] + ':' + data)
-            d.expect('OK')
+            d.expect('M' + hex(addr)[2:] + ',' +
+                     hex(len(data) / 2)[2:] + ':' + data, 'OK')
 
         # Read and verify
         for addr, data in tests:
-            d.sendPacket('m' + hex(addr)[2:] + ',' + hex(len(data) / 2)[2:])
-            d.expect(data)
+            d.expect('m' + hex(addr)[2:] + ',' + hex(len(data) / 2)[2:], data)
 
         # Try to write a bad address (out of range)
         # Doesn't return an error, test just ensures it
         # doesn't crash
-        d.sendPacket('M10000000,4,12345678')
-        d.expect('OK')
+        d.expect('M10000000,4,12345678', 'OK')
 
         # Try to read a bad address (out of range)
         # As above, doesn't return error (returns 0xff...),
         # but ensure it doesn't crash.
-        d.sendPacket('m10000000,4')
-        d.expect('ffffffff')
+        d.expect('m10000000,4', 'ffffffff')
 
 
 def test_read_write_register(name):
     hexfile = build_program(['register_values.S'])
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # Run code to load registers
-        d.sendPacket('C')
-        d.expect('S05')
+        d.expect('C', 'S05')
 
         # Check values set by program (remote GDB returns in swapped byte
         # order...)
-        d.sendPacket('g1')
-        d.expect('7d7f3e85')
-        d.sendPacket('g20')
-        d.expect('f13403ef9d08309993f7819954ae4b3f7aeaa28f538fecbd9536f59c6d7251269525ee70d26e8d34f48912639c86ae5dba426c83aa8455e1e2dbba4b41a4f321')
+        d.expect('g1', '7d7f3e85')
+        d.expect('g20', 'f13403ef9d08309993f7819954ae4b3f7aeaa28f538fecbd9536f59c6d7251269525ee70d26e8d34f48912639c86ae5dba426c83aa8455e1e2dbba4b41a4f321')
 
         tests = [
             (0, 'd3839b18'),
@@ -358,20 +319,16 @@ def test_read_write_register(name):
         ]
 
         for reg, value in tests:
-            d.sendPacket('G' + hex(reg)[2:] + ',' + value)
-            d.expect('OK')
+            d.expect('G' + hex(reg)[2:] + ',' + value, 'OK')
 
         for reg, value in tests:
-            d.sendPacket('g' + hex(reg)[2:])
-            d.expect(value)
+            d.expect('g' + hex(reg)[2:], value)
 
         # Read invalid register index
-        d.sendPacket('g40')
-        d.expect('')
+        d.expect('g40', '')
 
         # Write invalid register index
-        d.sendPacket('G40,12345678')
-        d.expect('')
+        d.expect('G40,12345678', '')
 
 
 def test_register_info(name):
@@ -379,8 +336,7 @@ def test_register_info(name):
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         for x in range(27):
             regid = str(x + 1)
-            d.sendPacket('qRegisterInfo' + hex(x + 1)[2:])
-            d.expect('name:s' + regid + ';bitsize:32;encoding:uint;format:hex;set:General Purpose Scalar Registers;gcc:'
+            d.expect('qRegisterInfo' + hex(x + 1)[2:], 'name:s' + regid + ';bitsize:32;encoding:uint;format:hex;set:General Purpose Scalar Registers;gcc:'
                      + regid + ';dwarf:' + regid + ';')
 
         # XXX skipped fp, sp, ra, pc, which (correctly) have additional
@@ -388,20 +344,17 @@ def test_register_info(name):
 
         for x in range(32, 63):
             regid = str(x + 1)
-            d.sendPacket('qRegisterInfo' + hex(x + 1)[2:])
-            d.expect('name:v' + str(x - 31) + ';bitsize:512;encoding:uint;format:vector-uint32;set:General Purpose Vector Registers;gcc:'
+            d.expect('qRegisterInfo' + hex(x + 1)[2:], 'name:v' + str(x - 31) + ';bitsize:512;encoding:uint;format:vector-uint32;set:General Purpose Vector Registers;gcc:'
                      + regid + ';dwarf:' + regid + ';')
 
-        d.sendPacket('qRegisterInfo64')
-        d.expect('')
+        d.expect('qRegisterInfo64', '')
 
 
 def test_select_thread(name):
     hexfile = build_program(['multithreaded.S'], no_header=True)
     with EmulatorTarget(hexfile, num_cores=2) as p, DebugConnection() as d:
         # Read thread ID
-        d.sendPacket('qC')
-        d.expect('QC01')
+        d.expect('qC', 'QC01')
 
         # Each line is one thread
         tests = [
@@ -418,20 +371,16 @@ def test_select_thread(name):
         # Step all threads through initialization code (5 instructions)
         for thid in range(len(tests)):
             # Switch to thread
-            d.sendPacket('Hg' + str(thid + 1))
-            d.expect('OK')
+            d.expect('Hg' + str(thid + 1), 'OK')
 
             # Read thread ID
-            d.sendPacket('qC')
-            d.expect('QC0' + str(thid + 1))
+            d.expect('qC', 'QC0' + str(thid + 1))
 
             for index in range(5):
-                d.sendPacket('S')
-                d.expect('S05')
+                d.expect('S', 'S05')
 
                 # Read PC register
-                d.sendPacket('g1f')
-                d.expect('%08x' % endian_swap((index + 1) * 4))
+                d.expect('g1f', '%08x' % endian_swap((index + 1) * 4))
 
         # Now all threads are at the same instruction:
         # 00000014 move s0, 1
@@ -439,55 +388,42 @@ def test_select_thread(name):
         # Step each thread independently some number of steps and
         # write a value to register 1
         for index, (num_steps, regval) in enumerate(tests):
-            d.sendPacket('Hg' + str(index + 1)) # Switch to thread
-            d.expect('OK')
+            d.expect('Hg' + str(index + 1), 'OK')  # Switch to thread
             for i in range(num_steps):
-                d.sendPacket('S')
-                d.expect('S05')
+                d.expect('S', 'S05')
 
-            d.sendPacket('G01,%08x' % regval)
-            d.expect('OK')
+            d.expect('G01,%08x' % regval, 'OK')
 
         # Read back PC and register values
         for index, (num_steps, regval) in enumerate(tests):
-            d.sendPacket('Hg' + str(index + 1)) # Switch to thread
-            d.expect('OK')
-
-            d.sendPacket('g1f')
-            d.expect('%08x' % endian_swap(0x14 + num_steps * 4))
-            d.sendPacket('g01')
-            d.expect('%08x' % regval)
+            d.expect('Hg' + str(index + 1), 'OK')   # Switch to thread
+            d.expect('g1f', '%08x' % endian_swap(0x14 + num_steps * 4))
+            d.expect('g01', '%08x' % regval)
 
         # Try to switch to an invalid thread ID
-        d.sendPacket('Hgfe')
-        d.expect('')
+        d.expect('Hgfe', '')
 
         # Ensure still on thread 8
-        d.sendPacket('qC')
-        d.expect('QC08')
+        d.expect('qC', 'QC08')
 
 
 def test_thread_info(name):
     # Run with one core, four threads
     hexfile = build_program(['count.S'], no_header=True)
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
-        d.sendPacket('qfThreadInfo')
-        d.expect('m1,2,3,4')
+        d.expect('qfThreadInfo', 'm1,2,3,4')
 
     # Run with two cores, eight threads
     with EmulatorTarget(hexfile, num_cores=2) as p, DebugConnection() as d:
-        d.sendPacket('qfThreadInfo')
-        d.expect('m1,2,3,4,5,6,7,8')
+        d.expect('qfThreadInfo', 'm1,2,3,4,5,6,7,8')
 
 
 def test_invalid_command(name):
     hexfile = build_program(['count.S'], no_header=True)
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # As far as I know, this is not a valid command...
-        d.sendPacket('@')
-
         # An error response returns nothing in the body
-        d.expect('')
+        d.expect('@', '')
 
 
 def test_queries(name):
@@ -495,56 +431,37 @@ def test_queries(name):
 
     hexfile = build_program(['count.S'], no_header=True)
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
-        d.sendPacket('qLaunchSuccess')
-        d.expect('OK')
-
-        d.sendPacket('qHostInfo')
-        d.expect('triple:nyuzi;endian:little;ptrsize:4')
-
-        d.sendPacket('qProcessInfo')
-        d.expect('pid:1')
-
-        d.sendPacket('qsThreadInfo')
-        d.expect('l')   # No active threads
-
-        d.sendPacket('qThreadStopInfo')
-        d.expect('S00')
-
-        d.sendPacket('qC')
-        d.expect('QC01')
+        d.expect('qLaunchSuccess', 'OK')
+        d.expect('qHostInfo', 'triple:nyuzi;endian:little;ptrsize:4')
+        d.expect('qProcessInfo', 'pid:1')
+        d.expect('qsThreadInfo', 'l')   # No active threads
+        d.expect('qThreadStopInfo', 'S00')
+        d.expect('qC', 'QC01')
 
         # Should be invalid
-        d.sendPacket('qZ')
-        d.expect('')
+        d.expect('qZ', '')
 
 
 def test_vcont(name):
     hexfile = build_program(['count.S'], no_header=True)
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # Set breakpoint
-        d.sendPacket('Z0,00000010')
-        d.expect('OK')
+        d.expect('Z0,00000010', 'OK')
 
         # Step
-        d.sendPacket('vCont;s:0001')
-        d.expect('S05')
-        d.sendPacket('g1f')
-        d.expect('04000000')
+        d.expect('vCont;s:0001', 'S05')
+        d.expect('g1f', '04000000')
 
         # Continue
-        d.sendPacket('vCont;c')
-        d.expect('S05')
-        d.sendPacket('g1f')
-        d.expect('10000000')
+        d.expect('vCont;c', 'S05')
+        d.expect('g1f', '10000000')
 
 
 def test_crash(name):
     hexfile = build_program(['crash.S'], no_header=True)
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
-        d.sendPacket('c')
-        d.expect('S05')
-        d.sendPacket('g1f')
-        d.expect('15000000')
+        d.expect('c', 'S05')
+        d.expect('g1f', '15000000')
 
 register_tests(test_breakpoint, ['gdb_breakpoint'])
 register_tests(test_remove_breakpoint, ['gdb_remove_breakpoint'])
