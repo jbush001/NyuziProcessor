@@ -30,6 +30,8 @@
 #include "remote-gdb.h"
 #include "util.h"
 
+#define LOG_COMMANDS 0
+
 #define TRAP_SIGNAL 5 // SIGTRAP
 
 extern void check_interrupt_pipe(struct processor*);
@@ -85,18 +87,27 @@ static int read_packet(char *request, int max_length)
     read_byte();
 
     request[packet_len] = '\0';
+
+#if LOG_COMMANDS
+    printf("GDB recv: %s\n", request);
+#endif
+
     return packet_len;
 }
 
-static void send_response_packet(const char *request)
+static void send_response_packet(const char *response)
 {
     uint8_t checksum;
     char checksum_chars[16];
     int i;
-    size_t request_length = strlen(request);
+    size_t response_length = strlen(response);
+
+#if LOG_COMMANDS
+    printf("GDB send: %s\n", response);
+#endif
 
     if (write(client_socket, "$", 1) < 1
-            || write(client_socket, request, request_length) < (ssize_t) request_length
+            || write(client_socket, response, response_length) < (ssize_t) response_length
             || write(client_socket, "#", 1) < 1)
     {
         perror("send_response_packet: Error writing to debugger socket");
@@ -104,8 +115,8 @@ static void send_response_packet(const char *request)
     }
 
     checksum = 0;
-    for (i = 0; request[i]; i++)
-        checksum += request[i];
+    for (i = 0; response[i]; i++)
+        checksum += response[i];
 
     sprintf(checksum_chars, "%02x", checksum);
     if (write(client_socket, checksum_chars, 2) < 2)
