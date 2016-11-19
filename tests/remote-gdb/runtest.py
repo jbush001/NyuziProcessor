@@ -399,75 +399,114 @@ def test_register_info(name):
 
 
 def test_select_thread(name):
-    hexfile = build_program(['count.S'], no_header=True)
+    hexfile = build_program(['multithreaded.S'], no_header=True)
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # Read thread ID
         d.sendPacket('qC')
         d.expect('QC01')
 
-        # Step thread 1
+        # Step all threads through initialization code (5 instructions)
+        for thid in range(4):
+            # Switch to thread
+            d.sendPacket('Hg' + str(thid + 1))
+            d.expect('OK')
+
+            # Read thread ID
+            d.sendPacket('qC')
+            d.expect('QC0' + str(thid + 1))
+
+            for index in range(5):
+                d.sendPacket('S')
+                d.expect('S05')
+
+                # Read PC register
+                d.sendPacket('g1f')
+                d.expect('%08x' % endian_swap((index + 1) * 4))
+
+        # Now all threads are at the same instruction:
+        # 00000014 move s0, 1
+
+        # Step 2 instructions and write register for thread 1
+        d.sendPacket('Hg1') # Switch to thread
+        d.expect('OK')
         d.sendPacket('S')
         d.expect('S05')
+        d.sendPacket('S')
+        d.expect('S05')
+        d.sendPacket('G01,9d676431')    # set register 0 to a different value
+        d.expect('OK')
 
-        # Read PC register
-        d.sendPacket('g1f')
-        d.expect('04000000')
-
-        # Read s0
-        d.sendPacket('g00')
-        d.expect('01000000')
-
-        # Switch to thread 2. This is not enabled, so we can't step it, but
-        # Make sure registers are different.
+        # Step 1 instruction and write register for thread 2
         d.sendPacket('Hg2')
         d.expect('OK')
-
-        # Read thread ID
-        d.sendPacket('qC')
-        d.expect('QC02')
-
-        # Read PC. Should be 0.
-        d.sendPacket('g1f')
-        d.expect('00000000')
-
-        # Set register 0 to a different value. Read it to make sure
-        # the value took.
-        d.sendPacket('G00,9d676431')
+        d.sendPacket('S')
+        d.expect('S05')
+        d.sendPacket('G01,8acb36a0')    # set register 0 to a different value
         d.expect('OK')
-        d.sendPacket('g00')
-        d.expect('9d676431')
 
-        # Switch back to thread 1. Ensure state is correct.
+        # Step 3 instructions and write register for thread 3
+        d.sendPacket('Hg3')
+        d.expect('OK')
+        d.sendPacket('S')
+        d.expect('S05')
+        d.sendPacket('S')
+        d.expect('S05')
+        d.sendPacket('S')
+        d.expect('S05')
+        d.sendPacket('G01,2481a96c')    # set register 0 to a different value
+        d.expect('OK')
+
+        # Write register for thread 4
+        d.sendPacket('Hg4')
+        d.expect('OK')
+        d.sendPacket('G01,6a293ef7')    # set register 0 to a different value
+        d.expect('OK')
+
+        # Read values for thread 1
         d.sendPacket('Hg1')
         d.expect('OK')
-
-        # Read thread ID
-        d.sendPacket('qC')
-        d.expect('QC01')
-
-        # Read PC register. Should be 4 again
         d.sendPacket('g1f')
-        d.expect('04000000')
+        d.expect('1c000000')
+        d.sendPacket('g00')
+        d.expect('02000000')
+        d.sendPacket('g01')
+        d.expect('9d676431')
 
-        # Read s0. Ensure our write on thread 2 didn't affect it.
+        # Read values for thread 2
+        d.sendPacket('Hg2')
+        d.expect('OK')
+        d.sendPacket('g1f')
+        d.expect('18000000')
         d.sendPacket('g00')
         d.expect('01000000')
+        d.sendPacket('g01')
+        d.expect('8acb36a0')
+
+        # Read values for thread 3
+        d.sendPacket('Hg3')
+        d.expect('OK')
+        d.sendPacket('g1f')
+        d.expect('20000000')
+        d.sendPacket('g00')
+        d.expect('03000000')
+        d.sendPacket('g01')
+        d.expect('2481a96c')
+
+        # Read values for thread 4
+        d.sendPacket('Hg4')
+        d.expect('OK')
+        d.sendPacket('g1f')
+        d.expect('14000000')
+        d.sendPacket('g01')
+        d.expect('6a293ef7')
 
         # Try to switch to an invalid thread ID
         d.sendPacket('Hgfe')
         d.expect('')
 
-        # Ensure still on thread 1
+        # Ensure still on thread 4
         d.sendPacket('qC')
-        d.expect('QC01')
-
-        # Use invalid switch command
-        d.sendPacket('Hz1')
-        d.expect('')
-
-        # Ensure still on thread 1
-        d.sendPacket('qC')
-        d.expect('QC01')
+        d.expect('QC04')
 
 
 def test_thread_info(name):

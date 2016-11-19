@@ -457,6 +457,11 @@ def dump_hex(output_file, input_file):
             ofile.write(binascii.hexlify(word))
             ofile.write('\n')
 
+
+def endian_swap(value):
+    return ((value >> 24) & 0xff) | ((value >> 8) & 0xff00) | ((value << 8) & 0xff0000) | (value << 24)
+
+
 def _run_generic_test(name):
     underscore = name.rfind('_')
     if underscore == -1:

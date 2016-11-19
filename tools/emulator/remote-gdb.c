@@ -264,16 +264,13 @@ void remote_gdb_main_loop(struct processor *proc, bool enable_fb_window)
                 {
                     uint32_t thid;
 
-                    // XXX hack: the request type controls which operations this
-                    // applies for.
-                    if (request[1] != 'g' && request[1] != 'c')
-                    {
-                        send_response_packet("");
-                        break;
-                    }
+                    // XXX hack: the request type (request[1] controls which
+                    // operations this applies for. I ignore it.
 
+                    // Thread indices in GDB start at 1, but current_thread
+                    // is zero based.
                     thid = (uint32_t) strtoul(request + 2, NULL, 16);
-                    if (thid >= get_total_threads(proc) || thid == 0)
+                    if (thid > get_total_threads(proc) || thid == 0)
                     {
                         send_response_packet("");
                         break;
