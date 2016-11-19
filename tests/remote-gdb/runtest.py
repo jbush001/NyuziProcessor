@@ -302,21 +302,24 @@ def test_read_write_memory(name):
         d.sendPacket('m0,10')
         d.expect('0004800700088007000c800700108007')
 
-        # Write memory at 1M
-        d.sendPacket('M00100000,0c:55483c091aac1e8c6db4bed1')
-        d.expect('OK')
+        # (address, data)
+        tests = [
+            (0x1000, '523c66b3'),
+            (0x1234, '22'),
+            (0x2242, '45f280397a5a3255fa19238693ff13c729'),
+            (0x100000, '55483c091aac1e8c6db4bed1'),
+            (0x200000, '16e1d56029e912a04121ce41a635155f3442355533703fafcb57f8295dd6330f82f9ffc40edb589fac1523665dc2f6e80c1e2de9718d253fcbce1c8a52c9dc21'),
+        ]
 
-        # Write memory at 2M
-        d.sendPacket('M00200000,8:b8d30e6f7cec41b1')
-        d.expect('OK')
+        # Write memory
+        for addr, data in tests:
+            d.sendPacket('M' + hex(addr)[2:] + ',' + hex(len(data) / 2)[2:] + ':' + data)
+            d.expect('OK')
 
-        # Read memory at 1M
-        d.sendPacket('m00100000,0c')
-        d.expect('55483c091aac1e8c6db4bed1')
-
-        # Read memory at 2M
-        d.sendPacket('m00200000,8')
-        d.expect('b8d30e6f7cec41b1')
+        # Read and verify
+        for addr, data in tests:
+            d.sendPacket('m' + hex(addr)[2:] + ',' + hex(len(data) / 2)[2:])
+            d.expect(data)
 
         # Try to write a bad address (out of range)
         # Doesn't return an error, test just ensures it
