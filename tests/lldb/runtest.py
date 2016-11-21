@@ -93,11 +93,25 @@ class LLDBHarness:
 
         return response
 
+    def wait_stop(self):
+        current_line = ''
+        while True:
+            ch = self.instr.read(1)
+            current_line += ch
+            if ch == '\n':
+                if DEBUG:
+                    print('LLDB recv: ' + current_line[:-1])
+
+                if current_line.startswith('*stopped'):
+                    break
+
+                current_line = ''
+
 frame_re = re.compile('frame #[0-9]+: 0x[0-9a-f]+ [a-zA-Z_\.0-9]+`(?P<function>[a-zA-Z_0-9][a-zA-Z_0-9]+)')
 at_re = re.compile(' at (?P<filename>[a-z_A-Z][a-z\._A-Z]+):(?P<line>[0-9]+)')
 
-def parse_stack_crawl(blob):
-    lines = blob.split('\n')
+def parse_stack_crawl(response):
+    lines = response.split('\n')
     stack_info = []
     for line in lines:
         frame_match = frame_re.search(line)
@@ -122,10 +136,7 @@ def test_lldb(name):
             raise TestException('breakpoint: did not find expected value ' + response)
 
         lldb.send_command('c')
-
-        # XXX race condition. If the print command is sent immediately, it thinks
-        # the process is still running.
-        time.sleep(0.5)
+        lldb.wait_stop()
 
         expected_stack = [
             ('func2', 'test_program.c', 27),
@@ -159,10 +170,7 @@ def test_lldb(name):
             raise TestException('print b: Did not find expected value ' + response)
 
         lldb.send_command('step')
-
-        # XXX race condition. If the print command is sent immediately, it thinks
-        # the process is still running.
-        time.sleep(0.5)
+        lldb.wait_stop()
 
         response = lldb.send_command('print result')
         if response.find('= 64') == -1:
