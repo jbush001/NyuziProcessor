@@ -59,6 +59,17 @@ module io_interconnect(
                 .one_hot(grant_oh),
                 .index(grant_idx[`CORE_ID_WIDTH - 1:0]));
 
+            // XXX hack. Ensure high bits are initialized. Notes in defines.sv
+            // describe why the core ID width needs to be hardcoded.
+            if (`NUM_CORES <= 8)
+                assign grant_idx[3] = 0;
+
+            if (`NUM_CORES <= 4)
+                assign grant_idx[2] = 0;
+
+            if (`NUM_CORES <= 2)
+                assign grant_idx[1] = 0;
+
             assign grant_request = ior_request[grant_idx[`CORE_ID_WIDTH - 1:0]];
         end
         else

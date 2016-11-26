@@ -37,7 +37,7 @@ module control_registers
     output logic[`ASID_WIDTH - 1:0]         cr_current_asid[`THREADS_PER_CORE],
 
     // To instruction_decode_stage
-    output logic[`TOTAL_THREADS - 1:0]      cr_interrupt_pending,
+    output logic[`THREADS_PER_CORE - 1:0]   cr_interrupt_pending,
 
     // From int_execute_stage
     input                                   ix_is_eret,

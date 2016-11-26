@@ -55,7 +55,7 @@ module core
     scalar_t            cr_eret_address [`THREADS_PER_CORE];// From control_registers of control_registers.v
     subcycle_t          cr_eret_subcycle [`THREADS_PER_CORE];// From control_registers of control_registers.v
     thread_bitmap_t     cr_interrupt_en;        // From control_registers of control_registers.v
-    logic [`TOTAL_THREADS-1:0] cr_interrupt_pending;// From control_registers of control_registers.v
+    logic [`THREADS_PER_CORE-1:0] cr_interrupt_pending;// From control_registers of control_registers.v
     logic               cr_mmu_en [`THREADS_PER_CORE];// From control_registers of control_registers.v
     logic               cr_supervisor_en [`THREADS_PER_CORE];// From control_registers of control_registers.v
     scalar_t            cr_tlb_miss_handler;    // From control_registers of control_registers.v
