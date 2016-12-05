@@ -107,7 +107,7 @@ class LLDBHarness:
 
                 current_line = ''
 
-frame_re = re.compile('frame #[0-9]+: 0x[0-9a-f]+ [a-zA-Z_\.0-9]+`(?P<function>[a-zA-Z_0-9][a-zA-Z_0-9]+)')
+frame_re = re.compile('frame #[0-9]+:( 0x[0-9a-f]+)? [a-zA-Z_\.0-9]+`(?P<function>[a-zA-Z_0-9][a-zA-Z_0-9]+)')
 at_re = re.compile(' at (?P<filename>[a-z_A-Z][a-z\._A-Z]+):(?P<line>[0-9]+)')
 
 def parse_stack_crawl(response):
