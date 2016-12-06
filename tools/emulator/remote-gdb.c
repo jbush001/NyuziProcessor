@@ -153,7 +153,7 @@ static void run_until_interrupt(struct processor *proc, uint32_t thread_id, bool
         }
 
         // Break on error or if data is ready
-        if (can_read_file_descriptor(client_socket) != 0)
+        if (can_read_file_descriptor(client_socket))
             break;
     }
 }

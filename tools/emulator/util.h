@@ -76,7 +76,7 @@ static inline uint32_t value_as_int(float value)
         uint32_t i;
     } u = { .f = value };
 
-    // The contents of the significand of a Na_n result is not fully determined
+    // The contents of the significand of a NaN result is not fully determined
     // in the spec.  For consistency in cosimulation, convert to a common form
     // when it is detected.
     if (((u.i >> 23) & 0xff) == 0xff && (u.i & 0x7fffff) != 0)
@@ -85,7 +85,9 @@ static inline uint32_t value_as_int(float value)
     return u.i;
 }
 
-static inline int can_read_file_descriptor(int fd)
+// This returns true if there are bytes available for reading *or*
+// reading it would return an error.
+static inline bool can_read_file_descriptor(int fd)
 {
     fd_set read_fds;
     int result;
@@ -101,7 +103,7 @@ static inline int can_read_file_descriptor(int fd)
     }
     while (result < 0 && errno == EINTR);
 
-    return result;
+    return result != 0;
 }
 
 int parse_hex_vector(const char *str, uint32_t *vector_values, bool endian_swap);
