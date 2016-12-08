@@ -14,27 +14,18 @@
 # limitations under the License.
 #
 
-
-JAVAC := $(shell which javac)
-
 all:
-	cd tools/emulator && make
-	cd tools/serial_boot && make
-	cd tools/mkfs && make
-	cd hardware/ && make
-	cd software/ && make
+	cd tools && make
+	cd hardware && make
+	cd software && make
 
 test: all
-	cd tests/ && make test
+	cd tests && make test
 	cd hardware && make fpgalint
 
 clean:
-	cd tools/emulator && make clean
-	cd tools/serial_boot && make clean
-	cd tools/mkfs && make clean
-	cd hardware/ && make clean
-	cd software/ && make clean
+	cd tools && make clean
+	cd hardware && make clean
+	cd software && make clean
 	rm -rf bin/
-
-FORCE:
 

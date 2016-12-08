@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2015 Jeff Bush
+# Copyright 2016 Jeff Bush
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,16 +15,14 @@
 #
 
 all:
-	cd libs && make
-	cd apps && make
-	cd benchmarks && make
-	cd bootrom && make
-	cd kernel && make
+	cd libc && make
+	cd librender && make
+	cd libos && make
+	cd compiler-rt && make
 
 clean:
-	cd libs && make clean
-	cd apps && make clean
-	cd benchmarks && make clean
-	cd bootrom && make clean
-	cd kernel && make clean
+	cd libc && make clean
+	cd librender && make clean
+	cd libos && make clean
+	cd compiler-rt && make clean
 
