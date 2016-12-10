@@ -19,7 +19,7 @@
 
 int get_current_thread_id(void)
 {
-    return __syscall(2, 0, 0, 0, 0, 0);
+    return __syscall(SYS_get_thread_id, 0, 0, 0, 0, 0);
 }
 
 unsigned int get_cycle_count(void)
@@ -30,7 +30,7 @@ unsigned int get_cycle_count(void)
 void *create_area(unsigned int address, unsigned int size, int placement,
                   const char *name, int flags)
 {
-    void *ptr = (void*) __syscall(6, address, size, placement, (int) name, flags);
+    void *ptr = (void*) __syscall(SYS_create_area, address, size, placement, (int) name, flags);
     if (ptr == 0)
         errno = EINVAL;
 
@@ -39,7 +39,7 @@ void *create_area(unsigned int address, unsigned int size, int placement,
 
 int exec(const char *path)
 {
-    int retval = __syscall(3, (int) path, 0, 0, 0, 0);
+    int retval = __syscall(SYS_exec, (int) path, 0, 0, 0, 0);
     if (retval < 0)
     {
         errno = -retval;

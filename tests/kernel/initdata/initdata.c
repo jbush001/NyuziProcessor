@@ -38,4 +38,6 @@ int main()
     // Reverse the string
     rot13(str);
     printf("%s\n", str);
+    // CHECK: Hello World
 }
+

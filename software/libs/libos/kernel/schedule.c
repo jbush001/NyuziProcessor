@@ -73,13 +73,12 @@ extern int __other_thread_start();
 void start_all_threads(void)
 {
     for (int i = 0; i < 3; i++)
-        __syscall(1, (int) "thread", (int) __other_thread_start, (int) 0, 0, 0);
+        __syscall(SYS_spawn_thread, (int) "thread", (int) __other_thread_start, (int) 0, 0, 0);
 }
 
 void __attribute__((noreturn)) thread_exit(int code)
 {
     (void) code;
-    __syscall(4, code, 0, 0, 0, 0);
+    __syscall(SYS_thread_exit, code, 0, 0, 0, 0);
     for (;;);
 }
-

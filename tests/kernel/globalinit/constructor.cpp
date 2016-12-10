@@ -38,6 +38,11 @@ Foo f;
 
 int main()
 {
+    // CHECK: Foo::Foo
     printf("main\n");
+    // CHECK: main
+    // CHECK: Foo::~Foo
     return 0;
 }
+
+// CHECK: init process has exited, shutting down

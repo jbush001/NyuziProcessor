@@ -143,7 +143,7 @@ def test_breakpoint(name):
     This sets two breakpoints
     """
 
-    hexfile = build_program(['count.S'], no_header=True)
+    hexfile = build_program(['count.S'], image_type='raw')
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # Set breakpoint
         d.expect('Z0,0000000c', 'OK')
@@ -175,7 +175,7 @@ def test_breakpoint(name):
 
 
 def test_remove_breakpoint(name):
-    hexfile = build_program(['count.S'], no_header=True)
+    hexfile = build_program(['count.S'], image_type='raw')
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # Set breakpoint
         d.expect('Z0,0000000c', 'OK')
@@ -197,7 +197,7 @@ def test_remove_breakpoint(name):
 
 
 def test_breakpoint_errors(name):
-    hexfile = build_program(['count.S'], no_header=True)
+    hexfile = build_program(['count.S'], image_type='raw')
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # Set invalid breakpoint (memory out of range)
         d.expect('Z0,20000000', '')
@@ -214,7 +214,7 @@ def test_breakpoint_errors(name):
 
 
 def test_single_step(name):
-    hexfile = build_program(['count.S'], no_header=True)
+    hexfile = build_program(['count.S'], image_type='raw')
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # Read PC register
         d.expect('g1f', '00000000')
@@ -243,7 +243,7 @@ def test_single_step_breakpoint(name):
     Ensure that if you single step through a breakpoint, it doesn't
     trigger and get stuck
     """
-    hexfile = build_program(['count.S'], no_header=True)
+    hexfile = build_program(['count.S'], image_type='raw')
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # Set breakpoint at second instruction (address 0x8)
         d.expect('Z0,00000004', 'OK')
@@ -263,7 +263,7 @@ def test_single_step_breakpoint(name):
 
 
 def test_read_write_memory(name):
-    hexfile = build_program(['count.S'], no_header=True)
+    hexfile = build_program(['count.S'], image_type='raw')
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # Read program code at address 0. This should match values
         # in count.hex
@@ -332,7 +332,7 @@ def test_read_write_register(name):
 
 
 def test_register_info(name):
-    hexfile = build_program(['count.S'], no_header=True)
+    hexfile = build_program(['count.S'], image_type='raw')
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         for x in range(27):
             regid = str(x + 1)
@@ -351,7 +351,7 @@ def test_register_info(name):
 
 
 def test_select_thread(name):
-    hexfile = build_program(['multithreaded.S'], no_header=True)
+    hexfile = build_program(['multithreaded.S'], image_type='raw')
     with EmulatorTarget(hexfile, num_cores=2) as p, DebugConnection() as d:
         # Read thread ID
         d.expect('qC', 'QC01')
@@ -409,7 +409,7 @@ def test_select_thread(name):
 
 def test_thread_info(name):
     # Run with one core, four threads
-    hexfile = build_program(['count.S'], no_header=True)
+    hexfile = build_program(['count.S'], image_type='raw')
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         d.expect('qfThreadInfo', 'm1,2,3,4')
 
@@ -419,7 +419,7 @@ def test_thread_info(name):
 
 
 def test_invalid_command(name):
-    hexfile = build_program(['count.S'], no_header=True)
+    hexfile = build_program(['count.S'], image_type='raw')
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # As far as I know, this is not a valid command...
         # An error response returns nothing in the body
@@ -429,7 +429,7 @@ def test_invalid_command(name):
 def test_queries(name):
     """Miscellaneous query commands not covered in other tests"""
 
-    hexfile = build_program(['count.S'], no_header=True)
+    hexfile = build_program(['count.S'], image_type='raw')
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         d.expect('qLaunchSuccess', 'OK')
         d.expect('qHostInfo', 'triple:nyuzi;endian:little;ptrsize:4')
@@ -443,7 +443,7 @@ def test_queries(name):
 
 
 def test_vcont(name):
-    hexfile = build_program(['count.S'], no_header=True)
+    hexfile = build_program(['count.S'], image_type='raw')
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # Set breakpoint
         d.expect('Z0,00000010', 'OK')
@@ -458,7 +458,7 @@ def test_vcont(name):
 
 
 def test_crash(name):
-    hexfile = build_program(['crash.S'], no_header=True)
+    hexfile = build_program(['crash.S'], image_type='raw')
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         d.expect('c', 'S05')
         d.expect('g1f', '15000000')

@@ -38,6 +38,7 @@ void start_timer(void)
 void __attribute__((noreturn)) kernel_main(unsigned int _memory_size)
 {
     struct vm_translation_map *init_map;
+    struct process *init_proc;
 
     vm_page_init(_memory_size);
     init_map = vm_translation_map_init();
@@ -52,11 +53,19 @@ void __attribute__((noreturn)) kernel_main(unsigned int _memory_size)
 
     spawn_kernel_thread("Grim Reaper", grim_reaper, 0);
 
-    exec_program("program.elf");
+    init_proc = exec_program("program.elf");
 
     // Idle task
     for (;;)
+    {
+        if (list_is_empty(&init_proc->thread_list))
+        {
+            kprintf("init process has exited, shutting down\n");
+            REGISTERS[REG_THREAD_HALT] = 0xffffffff;
+        }
+
         reschedule();
+    }
 }
 
 void __attribute__((noreturn)) thread_n_main(void)

@@ -178,12 +178,20 @@ static void destroy_thread(struct thread *th)
     VM_DEBUG("free kernel stack\n");
     destroy_area(th->proc->space, th->kernel_stack_area);
     slab_free(&thread_slab, th);
+    dec_proc_ref(proc);
+}
 
-    if (list_is_empty(&proc->thread_list))
+void dec_proc_ref(struct process *proc)
+{
+    int old_flags;
+
+    assert(current_thread()->proc != proc);
+
+    if (__sync_add_and_fetch(&proc->ref_count, -1) == 0)
     {
         VM_DEBUG("destroying process %d\n", proc->id);
+        assert(list_is_empty(&proc->thread_list));
 
-        // Need to clean up the process
         old_flags = disable_interrupts();
         acquire_spinlock(&process_list_lock);
         list_remove_node(proc);
@@ -342,6 +350,7 @@ struct process *exec_program(const char *filename)
     proc->id = __sync_fetch_and_add(&next_process_id, 1);
     proc->space = create_address_space();
     proc->lock = 0;
+    proc->ref_count = 2; // one ref for thread, one for returned pointer
     list_init(&proc->thread_list);
 
     old_flags = disable_interrupts();

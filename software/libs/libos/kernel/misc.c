@@ -16,6 +16,7 @@
 
 #include <time.h>
 #include "unistd.h"
+#include "syscall.h"
 
 #define CLOCKS_PER_US 50
 
@@ -26,5 +27,5 @@ int usleep(useconds_t delay)
 
 void exit(int status)
 {
-    __syscall(4, 0, 0, 0, 0, 0);
+    __syscall(SYS_thread_exit, 0, 0, 0, 0, 0);
 }

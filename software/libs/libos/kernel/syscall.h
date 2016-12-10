@@ -16,4 +16,6 @@
 
 #pragma once
 
+#include "syscalls.h"
+
 extern int __syscall(int n, int arg0, int arg1, int arg2, int arg3, int arg4);

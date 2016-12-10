@@ -29,4 +29,6 @@ test:
 	cd compiler-rt && ./runtest.py
 	cd compiler && USE_VERILATOR=1 ./runtest.py
 	cd cosimulation && ./runtest.py
+	cd kernel/initdata && ./runtest.py
 	cd render && make test
+

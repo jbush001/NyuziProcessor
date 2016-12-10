@@ -38,8 +38,12 @@ int main()
     // return an error. This should print a negative number.
     retval = printstr((char*) 0, 5);
     printf("printstr returned %d\n", retval);
+    // CHECK: printstr returned -1
 
     // The name is invalid and will fail to copy. Ensure it returns 0.
     ptr = create_area(0, 0x1000, AREA_PLACE_SEARCH_UP, (char*) 1, AREA_WRITABLE);
     printf("create area returned %d\n", ptr);
+    // CHECK: create area returned 0
 }
+
+// CHECK: init process has exited, shutting down

@@ -14,18 +14,14 @@
 // limitations under the License.
 //
 
-#include <nyuzi.h>
+#pragma once
 
-// Launch multiple instances of the memory tester in parallel. On success, this
-// should print "+++++"
-
-int main()
-{
-    int i;
-
-    for (i = 0; i < 5; i++)
-        exec("memtest.elf");
-
-    // XXX need to wait for processes
-    while (1);
-}
+#define SYS_write_serial 0
+#define SYS_spawn_thread 1
+#define SYS_get_thread_id 2
+#define SYS_exec 3
+#define SYS_thread_exit 4
+#define SYS_init_vga 5
+#define SYS_create_area 6
+#define SYS_set_perf_counter 7
+#define SYS_read_perf_counter 8

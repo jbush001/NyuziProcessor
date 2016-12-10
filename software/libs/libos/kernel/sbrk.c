@@ -32,7 +32,7 @@ void *sbrk(ptrdiff_t size)
         ;
 
     if (next_alloc == 0)
-        heap_base = next_alloc = __syscall(6, 0, HEAP_SIZE, 2, (int) "heap", 2);
+        heap_base = next_alloc = __syscall(SYS_create_area, 0, HEAP_SIZE, 2, (int) "heap", 2);
 
     if (next_alloc + size - heap_base > HEAP_SIZE)
     {

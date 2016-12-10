@@ -15,6 +15,7 @@
 //
 
 #include <stdio.h>
+#include "registers.h"
 #include "schedule.h"
 
 static parallel_func_t current_func;
@@ -69,5 +70,5 @@ void worker_thread(void)
 
 void start_all_threads(void)
 {
-    *((unsigned int*) 0xffff0100) = 0xffffffff;
+    REGISTERS[REG_THREAD_RESUME] = 0xffffffff;
 }

@@ -19,4 +19,5 @@
 int main()
 {
     printf("Hello World\n");
+    // CHECK: Hello World
 }

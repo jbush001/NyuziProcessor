@@ -34,8 +34,8 @@ PROJECT_TOP = os.path.normpath(
 LIB_DIR = PROJECT_TOP + '/software/libs/'
 BIN_DIR = PROJECT_TOP + '/bin/'
 OBJ_DIR = 'obj/'
-ELF_FILE = OBJ_DIR + 'test.elf'
-HEX_FILE = OBJ_DIR + 'test.hex'
+ELF_FILE = OBJ_DIR + 'program.elf'
+HEX_FILE = OBJ_DIR + 'program.hex'
 
 
 class TestException(Exception):
@@ -47,7 +47,7 @@ class TestException(Exception):
 # Might speed up tests.
 
 
-def build_program(source_files, no_header=False, opt_level='-O3', cflags=['']):
+def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags=['']):
     """Compile/assemble one or more files.
 
     If there are .c files in the list, this will link in crt0, libc,
@@ -57,8 +57,12 @@ def build_program(source_files, no_header=False, opt_level='-O3', cflags=['']):
     Args:
             source_files: List of files, which can be C/C++ or assembly
               files.
-            no_header: If set, the program will start at address 0 and
-              all segments will be mashed together rather than page aligned.
+            image_type: Can be:
+                - 'bare-metal', Runs standalone, but with elf linkage
+                - 'raw', Has no header and is linked at address 0
+                - 'user', ELF binary linked at 0x1000, linked against kernel libs
+            opt_level: Optimization level (-O0-3)
+            cflags: Additional command line flags to pass to C compiler.
 
     Returns:
             Name of hex file created
@@ -77,8 +81,10 @@ def build_program(source_files, no_header=False, opt_level='-O3', cflags=['']):
                      opt_level]
     compiler_args += cflags
 
-    if no_header:
+    if image_type == 'raw':
         compiler_args += ['-Wl,--script,../one-segment.ld,--oformat,binary']
+    elif image_type == 'user':
+        compiler_args += ['-Wl,--image-base=0x1000']
 
     compiler_args += source_files
 
@@ -91,22 +97,28 @@ def build_program(source_files, no_header=False, opt_level='-O3', cflags=['']):
     if needs_stdlib:
         compiler_args += ['-I' + LIB_DIR + 'libc/include',
                          '-I' + LIB_DIR + 'libos',
-                         LIB_DIR + 'libos/crt0-bare.o',
                          LIB_DIR + 'libc/libc.a',
-                         LIB_DIR + 'libos/libos-bare.a',
                          LIB_DIR + 'compiler-rt/compiler-rt.a']
+        if image_type == 'user':
+            compiler_args += [LIB_DIR + 'libos/crt0-kern.o',
+                             LIB_DIR + 'libos/libos-kern.a']
+        else:
+            compiler_args += [LIB_DIR + 'libos/crt0-bare.o',
+                             LIB_DIR + 'libos/libos-bare.a']
 
     try:
         subprocess.check_output(compiler_args, stderr=subprocess.STDOUT)
-        if no_header:
+        if image_type == 'raw':
             dump_hex(input_file=ELF_FILE, output_file=HEX_FILE)
-        else:
+            return HEX_FILE
+        elif image_type == 'bare-metal':
             subprocess.check_output([COMPILER_DIR + 'elf2hex', '-o', HEX_FILE, ELF_FILE],
                                     stderr=subprocess.STDOUT)
+            return HEX_FILE
+        else:
+            return ELF_FILE
     except subprocess.CalledProcessError as exc:
         raise TestException('Compilation failed:\n' + exc.output)
-
-    return HEX_FILE
 
 
 class TimedProcessRunner(threading.Thread):
@@ -216,6 +228,54 @@ def run_program(
         return output
     else:
         raise TestException('Unknown execution environment')
+
+
+def run_kernel(
+        environment='emulator',
+        block_device=None,
+        timeout=60):
+
+    """Run test program as a user space program under the kernel.
+
+    This uses the elf file produced by build_program. The kernel reads
+    the file 'program.elf' from the filesystem. This will build a filesystem
+    with that image automatically.
+
+    Args:
+            environment: Which environment to execute in. Can be 'verilator'
+               or 'emulator'.
+
+    Returns:
+            Output from program, anything written to virtual serial device
+
+    Raises:
+            TestException if emulated program crashes or the program cannot
+              execute for some other reason.
+    """
+    block_file = OBJ_DIR + 'fsimage.bin'
+    subprocess.check_output([BIN_DIR + 'mkfs', block_file, ELF_FILE],
+                            stderr=subprocess.STDOUT)
+
+    if environment == 'emulator':
+        args = [
+            BIN_DIR + 'emulator',
+            '-b', block_file,
+            PROJECT_TOP + '/software/kernel/kernel.hex']
+        return _run_test_with_timeout(args, timeout)
+    elif environment == 'verilator':
+        args = [
+            BIN_DIR + 'verilator_model',
+            '+block=' + block_file,
+            '+bin=' + PROJECT_TOP + '/software/kernel/kernel.hex']
+
+        output = _run_test_with_timeout(args, timeout)
+        if output.find('***HALTED***') == -1:
+            raise TestException(output + '\nProgram did not halt normally')
+
+        return output
+    else:
+        raise TestException('Unknown execution environment')
+
 
 
 def assert_files_equal(file1, file2, error_msg='file mismatch'):

@@ -18,7 +18,7 @@
 
 void write_uart(char ch)
 {
-    __syscall(0, (int) &ch, 1, 0, 0, 0);
+    __syscall(SYS_write_serial, (int) &ch, 1, 0, 0, 0);
 }
 
 unsigned char read_uart(void)

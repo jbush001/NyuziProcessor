@@ -17,6 +17,7 @@
 #include "thread.h"
 #include "libc.h"
 #include "registers.h"
+#include "syscalls.h"
 #include "vga.h"
 
 #define NUM_PERF_COUNTERS 4
@@ -34,7 +35,8 @@ int handle_syscall(int arg0, int arg1, int arg2, int arg3, int arg4,
 
     switch (arg0)
     {
-        case 0: // int write_serial(const char *data, int length);
+        // int write_serial(const char *data, int length);
+        case SYS_write_serial:
             if ((unsigned int) arg2 >= sizeof(tmp) - 2)
             {
                 kprintf("size out of range\n");
@@ -51,32 +53,42 @@ int handle_syscall(int arg0, int arg1, int arg2, int arg3, int arg4,
             kprintf("%s", tmp);
             return 0;
 
-        case 1: // int spawn_user_thread(const char *name, function, void *arg);
+        // int spawn_user_thread(const char *name, function, void *arg);
+        case SYS_spawn_thread:
             spawn_user_thread((const char*) arg1, current_thread()->proc, arg2,
                               (void*) arg3);
             return 0;
 
-        case 2: // int get_thread_id();
+        // int get_thread_id();
+        case SYS_get_thread_id:
             return current_thread()->id;
 
-        case 3: // int exec(const char *path);
+        // int exec(const char *path);
+        case SYS_exec:
         {
             // XXX unsafe user copy. Need copy_from_user
             struct process *proc = exec_program((const char*) arg1);
             if (proc)
-                return proc->id;
+            {
+                int id = proc->id;
+                dec_proc_ref(proc);
+                return id;
+            }
             else
                 return -1;
         }
 
-        case 4: // void thread_exit(int code)
+        // void thread_exit(int code)
+        case SYS_thread_exit:
             thread_exit(arg1);  // This will not return
 
-        case 5: // void *init_vga(int mode);
+        // void *init_vga(int mode);
+        case SYS_init_vga:
             return (int) init_vga(arg1);
 
-        case 6: // void *create_area(unsigned int address, unsigned int size, int placement,
-                //                   const char *name, int flags);
+        // void *create_area(unsigned int address, unsigned int size, int placement,
+        //                   const char *name, int flags);
+        case SYS_create_area:
         {
             if (user_strlcpy(tmp, (const char*) arg4, sizeof(tmp)) < 0)
                 return 0;
@@ -95,13 +107,15 @@ int handle_syscall(int arg0, int arg1, int arg2, int arg3, int arg4,
             return area->low_address;
         }
 
-        case 7: // void set_perf_counter_event(int counter, enum performance_event event)
+        // void set_perf_counter_event(int counter, enum performance_event event)
+        case SYS_set_perf_counter:
             if (arg1 >= 0 && arg1 < NUM_PERF_COUNTERS)
                 REGISTERS[REG_PERF0_SEL + arg1] = arg2;
 
             return 0;
 
-        case 8: // unsigned int read_perf_counter(int counter)
+        // unsigned int read_perf_counter(int counter)
+        case SYS_read_perf_counter:
             if (arg1 >= 0 && arg1 < NUM_PERF_COUNTERS)
                 return REGISTERS[REG_PERF0_VAL + arg1];
             else

@@ -20,5 +20,5 @@
 
 void *init_vga(enum vga_mode mode)
 {
-    return (void*) __syscall(5, (int) mode, 0, 0, 0, 0);
+    return (void*) __syscall(SYS_init_vga, (int) mode, 0, 0, 0, 0);
 }

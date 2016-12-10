@@ -21,3 +21,7 @@ int main()
     // program.
     *((unsigned int*) 4) = 1;
 }
+
+// CHECK: user space thread 5 crashed
+// CHECK: Page Fault @00000004 dcache store
+// CHECK: init process has exited, shutting down

@@ -53,4 +53,7 @@ int main()
 
     for (i = 0; i < 10; i++)
         spawn_thread("spinner thread", thread_start, 0);
+
+    while (1)
+        ;
 }

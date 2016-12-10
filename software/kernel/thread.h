@@ -27,6 +27,7 @@ typedef int (*thread_start_func_t)(void*);
 
 struct process
 {
+    volatile int ref_count;
     struct list_node list_entry;
     int id;
     spinlock_t lock;
@@ -79,6 +80,7 @@ struct thread *spawn_kernel_thread(const char *name,
                                    void *param);
 void reschedule(void);
 struct process *exec_program(const char *filename);
+void dec_proc_ref(struct process*);
 void __attribute__((noreturn)) thread_exit(int retcode);
 void make_thread_ready(struct thread*);
 int grim_reaper(void *ignore);

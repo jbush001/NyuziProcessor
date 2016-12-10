@@ -19,11 +19,11 @@
 
 void set_perf_counter_event(int counter, enum performance_event event)
 {
-    __syscall(7, counter, event, 0, 0, 0);
+    __syscall(SYS_set_perf_counter, counter, event, 0, 0, 0);
 }
 
 unsigned int read_perf_counter(int counter)
 {
-    return __syscall(8, counter, 0, 0, 0, 0);
+    return __syscall(SYS_read_perf_counter, counter, 0, 0, 0, 0);
 }
 
