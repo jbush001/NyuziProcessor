@@ -96,15 +96,15 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
 
     if needs_stdlib:
         compiler_args += ['-I' + LIB_DIR + 'libc/include',
-                         '-I' + LIB_DIR + 'libos',
-                         LIB_DIR + 'libc/libc.a',
-                         LIB_DIR + 'compiler-rt/compiler-rt.a']
+                          '-I' + LIB_DIR + 'libos',
+                          LIB_DIR + 'libc/libc.a',
+                          LIB_DIR + 'compiler-rt/compiler-rt.a']
         if image_type == 'user':
             compiler_args += [LIB_DIR + 'libos/crt0-kern.o',
-                             LIB_DIR + 'libos/libos-kern.a']
+                              LIB_DIR + 'libos/libos-kern.a']
         else:
             compiler_args += [LIB_DIR + 'libos/crt0-bare.o',
-                             LIB_DIR + 'libos/libos-bare.a']
+                              LIB_DIR + 'libos/libos-bare.a']
 
     try:
         subprocess.check_output(compiler_args, stderr=subprocess.STDOUT)
@@ -234,7 +234,6 @@ def run_kernel(
         environment='emulator',
         block_device=None,
         timeout=60):
-
     """Run test program as a user space program under the kernel.
 
     This uses the elf file produced by build_program. The kernel reads
@@ -275,7 +274,6 @@ def run_kernel(
         return output
     else:
         raise TestException('Unknown execution environment')
-
 
 
 def assert_files_equal(file1, file2, error_msg='file mismatch'):

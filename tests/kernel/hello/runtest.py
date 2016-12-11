@@ -20,7 +20,8 @@ import sys
 sys.path.insert(0, '../..')
 from test_harness import *
 
-def test_crash(name):
+
+def test_hello(name):
     underscore = name.rfind('_')
     if underscore == -1:
         raise TestException(
@@ -33,7 +34,5 @@ def test_crash(name):
     result = run_kernel(environment=environment, timeout=120)
     check_result('hello.c', result)
 
-register_tests(test_crash, ['kernel_hello_emulator', 'kernel_hello_verilator'])
+register_tests(test_hello, ['kernel_hello_emulator', 'kernel_hello_verilator'])
 execute_tests()
-
-

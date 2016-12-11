@@ -20,6 +20,7 @@ import sys
 sys.path.insert(0, '../..')
 from test_harness import *
 
+
 def test_crash(name):
     underscore = name.rfind('_')
     if underscore == -1:
@@ -35,5 +36,3 @@ def test_crash(name):
 
 register_tests(test_crash, ['kernel_crash_emulator', 'kernel_crash_verilator'])
 execute_tests()
-
-
