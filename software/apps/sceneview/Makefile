@@ -39,8 +39,9 @@ $(OBJ_DIR)/program.hex: $(OBJ_DIR)/program.elf
 $(OBJ_DIR)/program.elf: $(DEPS) $(OBJS)
 	$(LD) -o $@ $(OBJS) $(LIBS) $(LDFLAGS)
 
+# Make disassembly file
 program.lst: $(OBJ_DIR)/program.elf FORCE
-	$(OBJDUMP) --disassemble WORK/program.elf > program.lst 2> /dev/null	# Make disassembly file
+	$(OBJDUMP) --disassemble $(OBJ_DIR)/program.elf > program.lst 2> /dev/null
 
 clean:
 	rm -rf $(OBJ_DIR)

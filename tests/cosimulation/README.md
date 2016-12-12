@@ -26,7 +26,7 @@ These tests only work in single-core configurations.
 To debug problems, it is often desirable to see the instructions. llvm-objdump
 can generate a listing file like this:
 
-    usr/local/llvm-nyuzi/bin/llvm-objdump --disassemble WORK/test.elf > test.dis
+    usr/local/llvm-nyuzi/bin/llvm-objdump --disassemble obj/test.elf > test.dis
 
 The program will print all events if you set the VERBOSE environment variable:
 
