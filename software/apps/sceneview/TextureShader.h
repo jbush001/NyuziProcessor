@@ -78,7 +78,7 @@ public:
                        + -inParams[3] * uniforms->fLightDirection[1]
                        + -inParams[4] * uniforms->fLightDirection[2];
         dot *= uniforms->fDirectional;
-        vecf16_t illumination = librender::clampfv(dot) + uniforms->fAmbient;
+        vecf16_t illumination = librender::clamp(dot, 0.0, 1.0) + uniforms->fAmbient;
 
         if (uniforms->fHasTexture)
         {

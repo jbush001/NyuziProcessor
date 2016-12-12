@@ -28,7 +28,7 @@ namespace librender
 {
 
 template <typename T>
-inline T min(const T &a, const T &b)
+inline const T& min(const T &a, const T &b)
 {
     if (a < b)
         return a;
@@ -37,12 +37,25 @@ inline T min(const T &a, const T &b)
 }
 
 template <typename T>
-inline T max(const T &a, const T &b)
+inline const T& max(const T &a, const T &b)
 {
     if (a > b)
         return a;
     else
         return b;
+}
+
+inline vecf16_t min(vecf16_t a, vecf16_t b)
+{
+    // This function follows the convention that, if a scalar is used, it is
+    // the second parameter. Structuring the comparison as below uses two
+    // instructions instead of three.
+    return __builtin_nyuzi_vector_mixf(__builtin_nyuzi_mask_cmpf_gt(a, b), b, a);
+}
+
+inline vecf16_t max(vecf16_t a, vecf16_t b)
+{
+    return __builtin_nyuzi_vector_mixf(__builtin_nyuzi_mask_cmpf_lt(a, b), b, a);
 }
 
 // Clamps an unsigned integer value to be below MAX.
@@ -52,23 +65,10 @@ inline vecu16_t saturateuv(vecu16_t in)
     return __builtin_nyuzi_vector_mixi(__builtin_nyuzi_mask_cmpi_ugt(in, vecu16_t(MAX)), vecu16_t(MAX), in);
 }
 
-inline vecf16_t minfv(vecf16_t a, vecf16_t b)
+// Ensure all values in this vector are between low and high
+inline vecf16_t clamp(vecf16_t in, float low, float high)
 {
-    // This function follows the convention that, if a scalar is used, it is
-    // the second parameter. Structuring the comparison as below uses two
-    // instructions instead of three.
-    return __builtin_nyuzi_vector_mixf(__builtin_nyuzi_mask_cmpf_gt(a, b), b, a);
-}
-
-inline vecf16_t maxfv(vecf16_t a, vecf16_t b)
-{
-    return __builtin_nyuzi_vector_mixf(__builtin_nyuzi_mask_cmpf_lt(a, b), b, a);
-}
-
-// Ensure all values in this vector are between 0.0 and 1.0
-inline vecf16_t clampfv(vecf16_t in)
-{
-    return maxfv(minfv(in, vecf16_t(1.0f)), vecf16_t(0.0f));
+    return max(min(in, vecf16_t(high)), vecf16_t(low));
 }
 
 inline vecf16_t floorfv(vecf16_t in)

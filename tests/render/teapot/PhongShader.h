@@ -107,7 +107,7 @@ public:
         outColor[kColorG] = __builtin_nyuzi_vector_mixf(cmp, 0.5f, outColor[kColorG]);
         outColor[kColorB] = __builtin_nyuzi_vector_mixf(cmp, 0.5f, outColor[kColorB]);
 #else
-        outColor[kColorR] = librender::clampfv(dot) + uniforms->fAmbient;
+        outColor[kColorR] = librender::clamp(dot, 0.0, 1.0) + uniforms->fAmbient;
         outColor[kColorG] = outColor[kColorB] = 0.0f;
 #endif
         outColor[3] = 1.0f;	// Alpha
