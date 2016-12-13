@@ -58,11 +58,19 @@ inline vecf16_t max(vecf16_t a, vecf16_t b)
     return __builtin_nyuzi_vector_mixf(__builtin_nyuzi_mask_cmpf_lt(a, b), b, a);
 }
 
-// Clamps an unsigned integer value to be below MAX.
-template<unsigned int MAX>
-inline vecu16_t saturateuv(vecu16_t in)
+inline vecu16_t min(vecu16_t a, vecu16_t b)
 {
-    return __builtin_nyuzi_vector_mixi(__builtin_nyuzi_mask_cmpi_ugt(in, vecu16_t(MAX)), vecu16_t(MAX), in);
+    return __builtin_nyuzi_vector_mixf(__builtin_nyuzi_mask_cmpi_ugt(a, b), b, a);
+}
+
+inline vecu16_t max(vecu16_t a, vecu16_t b)
+{
+    return __builtin_nyuzi_vector_mixf(__builtin_nyuzi_mask_cmpi_ult(a, b), b, a);
+}
+
+inline vecu16_t saturate(vecu16_t in, int max)
+{
+    return min(in, vecu16_t(max));
 }
 
 // Ensure all values in this vector are between low and high
@@ -86,16 +94,6 @@ inline vecf16_t absfv(vecf16_t in)
 {
     // The cast does not perform a conversion.
     return vecf16_t(veci16_t(in) & 0x7fffffff);
-}
-
-// Newton's method vector square root.
-inline vecf16_t sqrtfv(vecf16_t value)
-{
-    vecf16_t guess = value;
-    for (int iteration = 0; iteration < 6; iteration++)
-        guess = ((value / guess) + guess) / 2.0f;
-
-    return guess;
 }
 
 // "Quake" fast inverse square root

@@ -201,9 +201,9 @@ void TriangleFiller::fillMasked(int left, int top, unsigned short mask)
         vecu16_t bD = (destColors >> 16) & 0xff;
 
         // Premultiplied alpha
-        vecu16_t newR = saturateuv<255>(((rS << 8) + (rD * oneMinusAS)) >> 8);
-        vecu16_t newG = saturateuv<255>(((gS << 8) + (gD * oneMinusAS)) >> 8);
-        vecu16_t newB = saturateuv<255>(((bS << 8) + (bD * oneMinusAS)) >> 8);
+        vecu16_t newR = saturate(((rS << 8) + (rD * oneMinusAS)) >> 8, 255);
+        vecu16_t newG = saturate(((gS << 8) + (gD * oneMinusAS)) >> 8, 255);
+        vecu16_t newB = saturate(((bS << 8) + (bD * oneMinusAS)) >> 8, 255);
         pixelValues = 0xff000000 | newR | (newG << 8) | (newB << 16);
     }
     else
