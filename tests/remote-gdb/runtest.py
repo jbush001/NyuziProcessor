@@ -44,7 +44,7 @@ class DebugConnection:
                 self.sock.connect(('localhost', 8000))
                 self.sock.settimeout(5)
                 break
-            except Exception, e:
+            except Exception as e:
                 pass
 
         return self
