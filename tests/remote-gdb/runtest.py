@@ -278,11 +278,11 @@ def test_read_write_memory(name):
         # Write memory
         for addr, data in tests:
             d.expect('M' + hex(addr)[2:] + ',' +
-                     hex(len(data) / 2)[2:] + ':' + data, 'OK')
+                     hex(int(len(data) / 2))[2:] + ':' + data, 'OK')
 
         # Read and verify
         for addr, data in tests:
-            d.expect('m' + hex(addr)[2:] + ',' + hex(len(data) / 2)[2:], data)
+            d.expect('m' + hex(addr)[2:] + ',' + hex(int(len(data) / 2))[2:], data)
 
         # Try to write a bad address (out of range)
         # Doesn't return an error, test just ensures it

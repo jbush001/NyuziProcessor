@@ -14,21 +14,24 @@
 # limitations under the License.
 #
 
+# Can change this to python3 to test with that version
+PYTHON=python
+
 test:
-	cd remote-gdb && ./runtest.py
-	cd core/atomic/ && ./runtest.py
-	cd core/cache_control/ && ./runtest.py
-	cd core/mmu && ./runtest.py
-	cd core/trap && ./runtest.py
-	cd core/perf_counters && ./runtest.py
-	cd shared_memory && ./runtest.py
-	cd device/sdmmc/ && ./runtest.py
-	cd device/ps2/ && ./runtest.py
-	cd device/uart && ./runtest.py
-	cd libc && ./runtest.py
-	cd compiler-rt && ./runtest.py
-	cd compiler && USE_VERILATOR=1 ./runtest.py
-	cd cosimulation && ./runtest.py
-	cd kernel/initdata && ./runtest.py
+	cd remote-gdb && $(PYTHON) ./runtest.py
+	cd core/atomic/ && $(PYTHON) ./runtest.py
+	cd core/cache_control/ && $(PYTHON) ./runtest.py
+	cd core/mmu && $(PYTHON) ./runtest.py
+	cd core/trap && $(PYTHON) ./runtest.py
+	cd core/perf_counters && $(PYTHON) ./runtest.py
+	cd shared_memory && $(PYTHON) ./runtest.py
+	cd device/sdmmc/ && $(PYTHON) ./runtest.py
+	cd device/ps2/ && $(PYTHON) ./runtest.py
+	cd device/uart && $(PYTHON) ./runtest.py
+	cd libc && $(PYTHON) ./runtest.py
+	cd compiler-rt && $(PYTHON) ./runtest.py
+	cd compiler && USE_VERILATOR=1 $(PYTHON) ./runtest.py
+	cd cosimulation && $(PYTHON) ./runtest.py
+	cd kernel/initdata && $(PYTHON) ./runtest.py
 	cd render && make test
 
