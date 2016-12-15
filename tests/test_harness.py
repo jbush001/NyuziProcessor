@@ -507,14 +507,14 @@ def check_result(source_file, program_output):
 
 
 def dump_hex(output_file, input_file):
-    with open(input_file, 'rb') as ifile, open(output_file, 'w') as ofile:
+    with open(input_file, 'rb') as ifile, open(output_file, 'wb') as ofile:
         while True:
             word = ifile.read(4)
             if not word:
                 break
 
             ofile.write(binascii.hexlify(word))
-            ofile.write('\n')
+            ofile.write(b'\n')
 
 
 def endian_swap(value):

@@ -58,13 +58,10 @@ class DebugConnection:
         if DEBUG:
             print('SEND: ' + body)
 
-        self.sock.send('$')
-        self.sock.send(body)
-        self.sock.send('#')
+        self.sock.send(str.encode('$' + body + '#'))
 
         # Checksum
-        self.sock.send('\x00')
-        self.sock.send('\x00')
+        self.sock.send(str.encode('\x00\x00'))
 
     def _receivePacket(self):
         global DEBUG
@@ -74,16 +71,16 @@ class DebugConnection:
             if leader == '':
                 raise TestException('unexpected socket close')
 
-            if leader == '$':
+            if leader == b'$':
                 break
 
-            if leader != '+':
-                raise TestException('unexpected character ' + leader)
+            if leader != b'+':
+                raise TestException('unexpected character ' + str(leader))
 
-        body = ''
+        body = b''
         while True:
             c = self.sock.recv(1)
-            if c == '#':
+            if c == b'#':
                 break
 
             body += c
@@ -99,9 +96,9 @@ class DebugConnection:
     def expect(self, command, value):
         self._sendPacket(command)
         response = self._receivePacket()
-        if response != value:
+        if response != str.encode(value):
             raise TestException(
-                'unexpected response. Wanted ' + value + ' got ' + response)
+                'unexpected response. Wanted ' + value + ' got ' + str(response))
 
 
 class EmulatorTarget:
