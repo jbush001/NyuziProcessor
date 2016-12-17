@@ -340,18 +340,31 @@ def gdb_read_write_register(name):
 def gdb_register_info(name):
     hexfile = build_program(['count.S'], image_type='raw')
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
-        for x in range(27):
-            regid = str(x + 1)
-            d.expect('qRegisterInfo' + hex(x + 1)[2:], 'name:s' + regid + ';bitsize:32;encoding:uint;format:hex;set:General Purpose Scalar Registers;gcc:'
-                     + regid + ';dwarf:' + regid + ';')
+        # Scalar registers
+        for idx in range(27):
+            regid = str(idx + 1)
+            d.expect('qRegisterInfo' + hex(idx + 1)[2:], 'name:s' + regid +
+                     ';bitsize:32;encoding:uint;format:hex;' +
+                     'set:General Purpose Scalar Registers;gcc:' + regid +
+                     ';dwarf:' + regid + ';')
 
-        # XXX skipped fp, sp, ra, pc, which (correctly) have additional
-        # info at the end.
+        # These registers (sp, fp, ra, pc) are special and have additional
+        # information.
+        names = ['fp', 'sp', 'ra', 'pc']
+        for idx, name in zip(range(27, 32), names):
+            regid = str(idx + 1)
+            d.expect('qRegisterInfo' + hex(idx + 1)[2:], 'name:s' + regid +
+                     ';bitsize:32;encoding:uint;format:hex;' +
+                     'set:General Purpose Scalar Registers;gcc:' + regid +
+                     ';dwarf:' + regid + ';generic:' + name + ';')
 
-        for x in range(32, 63):
-            regid = str(x + 1)
-            d.expect('qRegisterInfo' + hex(x + 1)[2:], 'name:v' + str(x - 31) + ';bitsize:512;encoding:uint;format:vector-uint32;set:General Purpose Vector Registers;gcc:'
-                     + regid + ';dwarf:' + regid + ';')
+        # Vector registers
+        for idx in range(32, 63):
+            regid = str(idx + 1)
+            d.expect('qRegisterInfo' + hex(idx + 1)[2:], 'name:v' + str(idx - 31) +
+                      ';bitsize:512;encoding:uint;format:vector-uint32;' +
+                      'set:General Purpose Vector Registers;gcc:' + regid +
+                      ';dwarf:' + regid + ';')
 
         d.expect('qRegisterInfo64', '')
 
