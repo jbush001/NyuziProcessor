@@ -25,11 +25,11 @@ sys.path.insert(0, '../..')
 from test_harness import *
 
 
-def multicore_test(name):
+@test
+def multicore(name):
     build_program(['multicore.c'])
     result = run_program(environment='verilator')
     if '012345678910111213141516171819202122232425262728293031' not in result.replace('\n', ''):
         raise TestException('Output mismatch:\n' + result)
 
-register_tests(multicore_test, ['multicore'])
 execute_tests()

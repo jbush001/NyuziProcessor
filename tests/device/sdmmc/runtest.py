@@ -30,7 +30,8 @@ SOURCE_BLOCK_DEV = 'bdevimage.bin'
 MEMDUMP = 'memory.bin'
 
 
-def test_read(name):
+@test_all_envs
+def sdmmc_read(name):
     # Create random file
     with open(SOURCE_BLOCK_DEV, 'wb') as f:
         f.write(os.urandom(FILE_SIZE))
@@ -46,5 +47,4 @@ def test_read(name):
 
     assert_files_equal(SOURCE_BLOCK_DEV, MEMDUMP, 'file mismatch')
 
-register_tests(test_read, ['sdmmc_read_emulator', 'sdmmc_read_verilator'])
 execute_tests()

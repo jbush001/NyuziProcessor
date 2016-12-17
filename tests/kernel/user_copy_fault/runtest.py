@@ -21,7 +21,8 @@ sys.path.insert(0, '../..')
 from test_harness import *
 
 
-def test_ucf(name):
+@test_all_envs
+def kernel_ucf(name):
     underscore = name.rfind('_')
     if underscore == -1:
         raise TestException(
@@ -34,5 +35,4 @@ def test_ucf(name):
     result = run_kernel(environment=environment, timeout=120)
     check_result('user_copy_fault.c', result)
 
-register_tests(test_ucf, ['kernel_ucf_emulator', 'kernel_ucf_verilator'])
 execute_tests()

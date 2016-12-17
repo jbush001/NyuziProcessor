@@ -362,6 +362,21 @@ def register_tests(func, names):
     registered_tests += [(func, name) for name in names]
 
 
+def test(func):
+    """decorator @test automatically registers test to be run
+    This will call the function, with its name as a parameter
+    """
+    register_tests(func, [func.__name__])
+
+
+def test_all_envs(func):
+    """decorator @test_both registers this test to be run twice,
+    Once with _emulator appended and once with _verilator appended
+    """
+    register_tests(func, [func.__name__ + '_emulator',
+                          func.__name__ + '_verilator'])
+
+
 def find_files(extensions):
     """Find files in the current directory that have certain extensions
 
@@ -537,7 +552,7 @@ def _run_generic_test(name):
 # XXX make this take a list of names
 def register_generic_test(name):
     """Allows registering a test without having to create a test handler
-    function. This will compile the passed program, then use
+    function. This will compile the passed filename, then use
     check_result to validate it against comment strings embedded in the file.
     It runs it both in verilator and emulator configurations.
 

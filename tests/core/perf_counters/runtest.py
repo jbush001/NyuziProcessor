@@ -22,12 +22,12 @@ sys.path.insert(0, '../..')
 from test_harness import *
 
 
-def perf_counters_test(name):
+@test
+def perf_counters(name):
     build_program(['perf_counters.c'])
     result = run_program(environment='verilator')
     if 'PASS' not in result:
         raise TestException(
             'test program did not indicate pass\n' + result)
 
-register_tests(perf_counters_test, ['perf_counters'])
 execute_tests()

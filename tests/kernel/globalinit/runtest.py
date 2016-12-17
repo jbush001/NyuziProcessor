@@ -21,7 +21,8 @@ sys.path.insert(0, '../..')
 from test_harness import *
 
 
-def test_globalinit(name):
+@test_all_envs
+def kernel_globalinit(name):
     underscore = name.rfind('_')
     if underscore == -1:
         raise TestException(
@@ -34,6 +35,4 @@ def test_globalinit(name):
     result = run_kernel(environment=environment, timeout=120)
     check_result('constructor.cpp', result)
 
-register_tests(test_globalinit, [
-               'kernel_globalinit_emulator', 'kernel_globalinit_verilator'])
 execute_tests()

@@ -58,7 +58,8 @@ def sharedmem_transact(memory, value):
 #
 
 
-def sharedmem_test(name):
+@test
+def shared_memory(name):
     build_program(['coprocessor.c'])
 
     # Start the emulator
@@ -83,5 +84,4 @@ def sharedmem_test(name):
     finally:
         process.kill()
 
-register_tests(sharedmem_test, ['shared_memory'])
 execute_tests()

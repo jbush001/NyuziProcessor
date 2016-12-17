@@ -23,12 +23,12 @@ sys.path.insert(0, '../..')
 from test_harness import *
 
 
-def ps2_test(name):
+@test
+def ps2(name):
     build_program(['ps2.c'])
     result = run_program(environment='verilator')
     if 'PASS' not in result:
         raise TestException(
             'program did not indicate pass\n' + result)
 
-register_tests(ps2_test, ['ps2'])
 execute_tests()

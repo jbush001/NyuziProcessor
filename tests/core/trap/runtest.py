@@ -24,6 +24,7 @@ sys.path.insert(0, '../..')
 from test_harness import *
 
 
+@test_all_envs
 def run_io_interrupt(name):
     underscore = name.rfind('_')
     if underscore == -1:
@@ -66,7 +67,8 @@ def run_io_interrupt(name):
 # XXX A number of error cases do not clean up resources
 
 
-def run_recv_host_interrupt(name):
+@test
+def recv_host_interrupt(name):
     PIPE_NAME = '/tmp/nyuzi_emulator_recvint'
     try:
         os.remove(PIPE_NAME)
@@ -106,7 +108,8 @@ def run_recv_host_interrupt(name):
 # XXX A number of error cases do not clean up resources
 
 
-def run_send_host_interrupt(name):
+@test
+def send_host_interrupt(name):
     PIPE_NAME = '/tmp/nyuzi_emulator_sendint'
     try:
         os.remove(PIPE_NAME)
@@ -133,10 +136,6 @@ def run_send_host_interrupt(name):
         os.close(interrupt_pipe)
         os.unlink(PIPE_NAME)
 
-register_tests(run_io_interrupt, [
-               'io_interrupt_emulator', 'io_interrupt_verilator'])
-register_tests(run_recv_host_interrupt, ['recv_host_interrupt'])
-register_tests(run_send_host_interrupt, ['send_host_interrupt'])
 register_generic_assembly_tests([
     'setcr_non_super',
     'eret_non_super',

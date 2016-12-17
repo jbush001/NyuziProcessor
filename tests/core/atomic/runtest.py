@@ -25,7 +25,8 @@ sys.path.insert(0, '../..')
 from test_harness import *
 
 
-def atomic_test(name):
+@test
+def atomic(name):
     build_program(['atomic.S'])
     run_program(
         environment='verilator',
@@ -40,9 +41,8 @@ def atomic_test(name):
             if len(val) < 4:
                 raise TestException('output file is truncated')
 
-            num_val = struct.unpack('<L', val)[0]
+            num_val, = struct.unpack('<L', val)
             if num_val != 10:
                 raise TestException('FAIL: mismatch: ' + str(num_val))
 
-register_tests(atomic_test, ['atomic'])
 execute_tests()

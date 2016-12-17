@@ -24,7 +24,8 @@ sys.path.insert(0, '..')
 from test_harness import *
 
 
-def fs_test(name):
+@test
+def fs(name):
     build_program(['fs.c'])
     subprocess.check_output(
         ['../../bin/mkfs', 'obj/fsimage.bin', 'fstest.txt'], stderr=subprocess.STDOUT)
@@ -46,5 +47,4 @@ test_list = [fname for fname in find_files(
     ('.c', '.cpp')) if not fname.startswith('_')]
 test_list.remove('fs.c')
 register_tests(run_emulator_test, test_list)
-register_tests(fs_test, ['fs'])
 execute_tests()

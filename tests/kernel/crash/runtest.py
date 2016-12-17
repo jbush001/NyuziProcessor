@@ -21,7 +21,8 @@ sys.path.insert(0, '../..')
 from test_harness import *
 
 
-def test_crash(name):
+@test_all_envs
+def kernel_crash(name):
     underscore = name.rfind('_')
     if underscore == -1:
         raise TestException(
@@ -34,5 +35,4 @@ def test_crash(name):
     result = run_kernel(environment=environment, timeout=120)
     check_result('crash.c', result)
 
-register_tests(test_crash, ['kernel_crash_emulator', 'kernel_crash_verilator'])
 execute_tests()

@@ -129,7 +129,8 @@ def parse_stack_crawl(response):
     return stack_info
 
 
-def test_lldb(name):
+@test
+def lldb(name):
     hexfile = build_program(['test_program.c'], opt_level='-O0', cflags=['-g'])
     with LLDBHarness(hexfile) as lldb:
         lldb.send_command('file "obj/test.elf"')
@@ -187,5 +188,4 @@ def test_lldb(name):
                 'print b: Did not find expected value ' + response)
 
 
-register_tests(test_lldb, ['lldb'])
 execute_tests()

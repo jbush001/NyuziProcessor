@@ -21,7 +21,8 @@ sys.path.insert(0, '../..')
 from test_harness import *
 
 
-def test_initdata(name):
+@test_all_envs
+def kernel_initdata(name):
     underscore = name.rfind('_')
     if underscore == -1:
         raise TestException(
@@ -34,6 +35,4 @@ def test_initdata(name):
     result = run_kernel(environment=environment, timeout=120)
     check_result('initdata.c', result)
 
-register_tests(test_initdata, [
-               'kernel_initdata_emulator', 'kernel_initdata_verilator'])
 execute_tests()

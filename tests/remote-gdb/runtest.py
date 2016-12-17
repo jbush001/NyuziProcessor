@@ -134,7 +134,8 @@ class EmulatorTarget:
             self.output.close()
 
 
-def test_breakpoint(name):
+@test
+def gdb_breakpoint(name):
     """
     Validate stopping at a breakpoint and continuing after stopping.
     This sets two breakpoints
@@ -171,7 +172,8 @@ def test_breakpoint(name):
         d.expect('g00', '04000000')
 
 
-def test_remove_breakpoint(name):
+@test
+def gdb_remove_breakpoint(name):
     hexfile = build_program(['count.S'], image_type='raw')
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # Set breakpoint
@@ -193,7 +195,8 @@ def test_remove_breakpoint(name):
         d.expect('g00', '05000000')
 
 
-def test_breakpoint_errors(name):
+@test
+def gdb_breakpoint_errors(name):
     hexfile = build_program(['count.S'], image_type='raw')
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # Set invalid breakpoint (memory out of range)
@@ -210,7 +213,8 @@ def test_breakpoint_errors(name):
         d.expect('z0,00000004', '')
 
 
-def test_single_step(name):
+@test
+def gdb_single_step(name):
     hexfile = build_program(['count.S'], image_type='raw')
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # Read PC register
@@ -235,7 +239,8 @@ def test_single_step(name):
         d.expect('g00', '02000000')
 
 
-def test_single_step_breakpoint(name):
+@test
+def gdb_single_step_breakpoint(name):
     """
     Ensure that if you single step through a breakpoint, it doesn't
     trigger and get stuck
@@ -259,7 +264,8 @@ def test_single_step_breakpoint(name):
         d.expect('g00', '02000000')
 
 
-def test_read_write_memory(name):
+@test
+def gdb_read_write_memory(name):
     hexfile = build_program(['count.S'], image_type='raw')
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # Read program code at address 0. This should match values
@@ -296,7 +302,8 @@ def test_read_write_memory(name):
         d.expect('m10000000,4', 'ffffffff')
 
 
-def test_read_write_register(name):
+@test
+def gdb_read_write_register(name):
     hexfile = build_program(['register_values.S'])
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # Run code to load registers
@@ -329,7 +336,8 @@ def test_read_write_register(name):
         d.expect('G40,12345678', '')
 
 
-def test_register_info(name):
+@test
+def gdb_register_info(name):
     hexfile = build_program(['count.S'], image_type='raw')
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         for x in range(27):
@@ -348,7 +356,8 @@ def test_register_info(name):
         d.expect('qRegisterInfo64', '')
 
 
-def test_select_thread(name):
+@test
+def gdb_select_thread(name):
     hexfile = build_program(['multithreaded.S'], image_type='raw')
     with EmulatorTarget(hexfile, num_cores=2) as p, DebugConnection() as d:
         # Read thread ID
@@ -405,7 +414,8 @@ def test_select_thread(name):
         d.expect('qC', 'QC08')
 
 
-def test_thread_info(name):
+@test
+def gdb_thread_info(name):
     # Run with one core, four threads
     hexfile = build_program(['count.S'], image_type='raw')
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
@@ -416,7 +426,8 @@ def test_thread_info(name):
         d.expect('qfThreadInfo', 'm1,2,3,4,5,6,7,8')
 
 
-def test_invalid_command(name):
+@test
+def gdb_invalid_command(name):
     hexfile = build_program(['count.S'], image_type='raw')
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # As far as I know, this is not a valid command...
@@ -424,7 +435,8 @@ def test_invalid_command(name):
         d.expect('@', '')
 
 
-def test_queries(name):
+@test
+def gdb_queries(name):
     """Miscellaneous query commands not covered in other tests"""
 
     hexfile = build_program(['count.S'], image_type='raw')
@@ -440,7 +452,8 @@ def test_queries(name):
         d.expect('qZ', '')
 
 
-def test_vcont(name):
+@test
+def gdb_vcont(name):
     hexfile = build_program(['count.S'], image_type='raw')
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         # Set breakpoint
@@ -455,24 +468,11 @@ def test_vcont(name):
         d.expect('g1f', '10000000')
 
 
-def test_crash(name):
+@test
+def gdb_crash(name):
     hexfile = build_program(['crash.S'], image_type='raw')
     with EmulatorTarget(hexfile) as p, DebugConnection() as d:
         d.expect('c', 'S05')
         d.expect('g1f', '15000000')
 
-register_tests(test_breakpoint, ['gdb_breakpoint'])
-register_tests(test_remove_breakpoint, ['gdb_remove_breakpoint'])
-register_tests(test_breakpoint_errors, ['gdb_breakpoint_errors'])
-register_tests(test_single_step, ['gdb_single_step'])
-register_tests(test_single_step_breakpoint, ['gdb_single_step_breakpoint'])
-register_tests(test_read_write_memory, ['gdb_read_write_memory'])
-register_tests(test_read_write_register, ['gdb_read_write_register'])
-register_tests(test_register_info, ['gdb_register_info'])
-register_tests(test_select_thread, ['gdb_select_thread'])
-register_tests(test_thread_info, ['gdb_thread_info'])
-register_tests(test_invalid_command, ['gdb_invalid_command'])
-register_tests(test_queries, ['gdb_queries'])
-register_tests(test_vcont, ['gdb_vcont'])
-register_tests(test_crash, ['gdb_crash'])
 execute_tests()

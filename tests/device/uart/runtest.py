@@ -21,12 +21,12 @@ sys.path.insert(0, '../..')
 from test_harness import *
 
 
-def test_uart(name):
+@test
+def uart(name):
     build_program(['uart.c'])
     result = run_program(environment='verilator')
     if 'PASS' not in result:
         raise TestException(
             'test did not indicate pass\n' + result)
 
-register_tests(test_uart, ['uart'])
 execute_tests()
