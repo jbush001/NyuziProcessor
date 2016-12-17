@@ -40,9 +40,9 @@ def atomic_test(name):
             if len(val) < 4:
                 raise TestException('output file is truncated')
 
-            numVal = struct.unpack('<L', val)[0]
-            if numVal != 10:
-                raise TestException('FAIL: mismatch: ' + str(numVal))
+            num_val = struct.unpack('<L', val)[0]
+            if num_val != 10:
+                raise TestException('FAIL: mismatch: ' + str(num_val))
 
 register_tests(atomic_test, ['atomic'])
 execute_tests()

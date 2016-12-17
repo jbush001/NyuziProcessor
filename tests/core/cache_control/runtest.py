@@ -42,11 +42,11 @@ def dflush_test(name):
             if len(val) < 4:
                 raise TestException('output file is truncated')
 
-            numVal = struct.unpack('<L', val)[0]
+            num_val = struct.unpack('<L', val)[0]
             expected = 0x1f0e6231 + (index // 16)
-            if numVal != expected:
+            if num_val != expected:
                 raise TestException('FAIL: mismatch at ' + hex(
-                    BASE_ADDRESS + (index * 4)) + ' want ' + str(expected) + ' got ' + str(numVal))
+                    BASE_ADDRESS + (index * 4)) + ' want ' + str(expected) + ' got ' + str(num_val))
 
 
 def dinvalidate_test(name):
@@ -60,30 +60,30 @@ def dinvalidate_test(name):
         trace=True)
 
     # 1. Check that the proper value was read into s2
-    if result.find('02 deadbeef') == -1:
+    if '02 deadbeef' not in result:
         raise TestException(
             'incorrect value was written back ' + result)
 
     # 2. Read the memory dump to ensure the proper value is flushed from the
     # L2 cache
     with open('obj/vmem.bin', 'rb') as f:
-        numVal = struct.unpack('<L', f.read(4))[0]
-        if numVal != 0xdeadbeef:
+        num_val = struct.unpack('<L', f.read(4))[0]
+        if num_val != 0xdeadbeef:
             raise TestException(
-                'memory contents were incorrect: ' + hex(numVal))
+                'memory contents were incorrect: ' + hex(num_val))
 
 
 def dflush_wait_test(name):
     build_program(['dflush_wait.S'])
     output = run_program(environment='verilator')
-    if output.find('PASS') == -1:
+    if 'PASS' not in output:
         raise TestException('Test did not signal pass: ' + output)
 
 
 def iinvalidate_test(name):
     build_program(['iinvalidate.S'])
     output = run_program(environment='verilator')
-    if output.find('PASS') == -1:
+    if 'PASS' not in output:
         raise TestException('Test did not signal pass: ' + output)
 
 

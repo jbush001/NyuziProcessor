@@ -30,7 +30,7 @@ def fs_test(name):
         ['../../bin/mkfs', 'obj/fsimage.bin', 'fstest.txt'], stderr=subprocess.STDOUT)
     result = run_program(environment='emulator',
                          block_device='obj/fsimage.bin')
-    if result.find('PASS') == -1:
+    if 'PASS' not in result:
         raise TestException(
             'test program did not indicate pass\n' + result)
 

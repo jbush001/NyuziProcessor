@@ -78,7 +78,7 @@ def run_cosimulation_test(source_file):
     p2.wait()
     time.sleep(1)  # Give verilator a chance to clean up
     p1.kill() 	# Make sure verilator has exited
-    if p2.returncode != 0:
+    if p2.returncode:
         raise TestException(
             'FAIL: cosimulation mismatch\n' + output)
 

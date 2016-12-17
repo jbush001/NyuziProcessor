@@ -25,7 +25,7 @@ from test_harness import *
 def perf_counters_test(name):
     build_program(['perf_counters.c'])
     result = run_program(environment='verilator')
-    if result.find('PASS') == -1:
+    if 'PASS' not in result:
         raise TestException(
             'test program did not indicate pass\n' + result)
 

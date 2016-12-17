@@ -45,8 +45,7 @@ test_list = [fname for fname in find_files(
     ('.c', '.cpp')) if not fname.startswith('_')]
 
 if 'USE_VERILATOR' in os.environ:
-    test_list = [fname for fname in test_list if fname.find(
-        'noverilator') == -1]
+    test_list = [fname for fname in test_list if 'noverilator' not in fname]
     register_tests(run_verilator_test, test_list)
 elif 'USE_HOSTCC' in os.environ:
     register_tests(run_host_test, test_list)

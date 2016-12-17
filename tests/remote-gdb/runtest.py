@@ -52,7 +52,7 @@ class DebugConnection:
     def __exit__(self, type, value, traceback):
         self.sock.close()
 
-    def _sendPacket(self, body):
+    def _send_packet(self, body):
         global DEBUG
 
         if DEBUG:
@@ -63,7 +63,7 @@ class DebugConnection:
         # Checksum
         self.sock.send(str.encode('\x00\x00'))
 
-    def _receivePacket(self):
+    def _receive_packet(self):
         global DEBUG
 
         while True:
@@ -94,8 +94,8 @@ class DebugConnection:
         return body
 
     def expect(self, command, value):
-        self._sendPacket(command)
-        response = self._receivePacket()
+        self._send_packet(command)
+        response = self._receive_packet()
         if response != str.encode(value):
             raise TestException(
                 'unexpected response. Wanted ' + value + ' got ' + str(response))
@@ -282,7 +282,8 @@ def test_read_write_memory(name):
 
         # Read and verify
         for addr, data in tests:
-            d.expect('m' + hex(addr)[2:] + ',' + hex(int(len(data) / 2))[2:], data)
+            d.expect('m' + hex(addr)[2:] + ',' +
+                     hex(int(len(data) / 2))[2:], data)
 
         # Try to write a bad address (out of range)
         # Doesn't return an error, test just ensures it

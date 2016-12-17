@@ -23,12 +23,12 @@ from os import path
 sys.path.insert(0, '..')
 from test_harness import *
 
+
 def run_emulator_test(source_file):
     build_program([source_file])
     result = run_program(environment='emulator')
     check_result(source_file, result)
 
-test_list = [fname for fname in find_files(
-    ('.c', '.cpp'))]
+test_list = [fname for fname in find_files(('.c', '.cpp'))]
 register_tests(run_emulator_test, test_list)
 execute_tests()

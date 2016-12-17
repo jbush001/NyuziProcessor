@@ -26,10 +26,12 @@ from test_harness import *
 
 DEBUG = False
 
+
 class LLDBHarness:
+
     def __init__(self, hexfile):
         self.hexfile = hexfile
-        self.elf_file = os.path.splitext(hexfile)[0]+'.elf'
+        self.elf_file = os.path.splitext(hexfile)[0] + '.elf'
 
     def __enter__(self):
         global DEBUG
@@ -68,11 +70,9 @@ class LLDBHarness:
 
         return self
 
-
     def __exit__(self, type, value, traceback):
         self.emulator_proc.kill()
         self.lldb_proc.kill()
-
 
     def send_command(self, cmd):
         if DEBUG:
@@ -107,8 +107,10 @@ class LLDBHarness:
 
                 current_line = ''
 
-frame_re = re.compile('frame #[0-9]+:( 0x[0-9a-f]+)? [a-zA-Z_\.0-9]+`(?P<function>[a-zA-Z_0-9][a-zA-Z_0-9]+)')
+frame_re = re.compile(
+    'frame #[0-9]+:( 0x[0-9a-f]+)? [a-zA-Z_\.0-9]+`(?P<function>[a-zA-Z_0-9][a-zA-Z_0-9]+)')
 at_re = re.compile(' at (?P<filename>[a-z_A-Z][a-z\._A-Z]+):(?P<line>[0-9]+)')
+
 
 def parse_stack_crawl(response):
     lines = response.split('\n')
@@ -119,7 +121,8 @@ def parse_stack_crawl(response):
             func = frame_match.group('function')
             at_match = at_re.search(line)
             if at_match:
-                stack_info += [(func, at_match.group('filename'), int(at_match.group('line')))]
+                stack_info += [(func, at_match.group('filename'),
+                                int(at_match.group('line')))]
             else:
                 stack_info += [(func, '', 0)]
 
@@ -131,9 +134,11 @@ def test_lldb(name):
     with LLDBHarness(hexfile) as lldb:
         lldb.send_command('file "obj/test.elf"')
         lldb.send_command('gdb-remote 8000\n')
-        response = lldb.send_command('breakpoint set --file test_program.c --line 27')
-        if response.find('Breakpoint 1: where = test.elf`func2 + 96 at test_program.c:27') == -1:
-            raise TestException('breakpoint: did not find expected value ' + response)
+        response = lldb.send_command(
+            'breakpoint set --file test_program.c --line 27')
+        if 'Breakpoint 1: where = test.elf`func2 + 96 at test_program.c:27' not in response:
+            raise TestException(
+                'breakpoint: did not find expected value ' + response)
 
         lldb.send_command('c')
         lldb.wait_stop()
@@ -151,32 +156,35 @@ def test_lldb(name):
             raise TestException('stack crawl mismatch ' + str(crawl))
 
         response = lldb.send_command('print value')
-        if response.find('= 67') == -1:
-            raise TestException('print value: Did not find expected value ' + response)
+        if '= 67' not in response:
+            raise TestException(
+                'print value: Did not find expected value ' + response)
 
         response = lldb.send_command('print result')
-        if response.find('= 128') == -1:
-            raise TestException('print result: Did not find expected value ' + response)
+        if '= 128' not in response:
+            raise TestException(
+                'print result: Did not find expected value ' + response)
 
         # Up to previous frame
         lldb.send_command('frame select --relative=1')
 
         response = lldb.send_command('print a')
-        if response.find('= 12') == -1:
-            raise TestException('print a: Did not find expected value ' + response)
+        if '= 12' not in response:
+            raise TestException(
+                'print a: Did not find expected value ' + response)
 
         response = lldb.send_command('print b')
-        if response.find('= 67') == -1:
-            raise TestException('print b: Did not find expected value ' + response)
+        if '= 67' not in response:
+            raise TestException(
+                'print b: Did not find expected value ' + response)
 
         lldb.send_command('step')
         lldb.wait_stop()
 
         response = lldb.send_command('print result')
-        if response.find('= 64') == -1:
-            raise TestException('print b: Did not find expected value ' + response)
-
-
+        if '= 64' not in response:
+            raise TestException(
+                'print b: Did not find expected value ' + response)
 
 
 register_tests(test_lldb, ['lldb'])

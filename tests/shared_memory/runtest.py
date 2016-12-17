@@ -62,8 +62,8 @@ def sharedmem_test(name):
     build_program(['coprocessor.c'])
 
     # Start the emulator
-    memoryFile = tempfile.NamedTemporaryFile()
-    args = [BIN_DIR + 'emulator', '-s', memoryFile.name, HEX_FILE]
+    memory_file = tempfile.NamedTemporaryFile()
+    args = [BIN_DIR + 'emulator', '-s', memory_file.name, HEX_FILE]
     process = subprocess.Popen(args, stdout=subprocess.PIPE,
                                stderr=subprocess.STDOUT)
 
@@ -73,7 +73,7 @@ def sharedmem_test(name):
         # to signal that this has completed, so just sleep a bit and hope
         # it's done.
         time.sleep(1.0)
-        memory = mmap.mmap(memoryFile.fileno(), 0)
+        memory = mmap.mmap(memory_file.fileno(), 0)
         testvalues = [random.randint(0, 0xffffffff) for x in range(10)]
         for value in testvalues:
             computed = sharedmem_transact(memory, value)

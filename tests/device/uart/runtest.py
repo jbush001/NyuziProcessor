@@ -24,7 +24,7 @@ from test_harness import *
 def test_uart(name):
     build_program(['uart.c'])
     result = run_program(environment='verilator')
-    if result.find('PASS') == -1:
+    if 'PASS' not in result:
         raise TestException(
             'test did not indicate pass\n' + result)
 

@@ -78,30 +78,29 @@ def run_recv_host_interrupt(name):
     os.mknod(PIPE_NAME, stat.S_IFIFO | 0o666)
 
     args = [BIN_DIR + 'emulator', '-i', PIPE_NAME, HEX_FILE]
-    emulatorProcess = subprocess.Popen(args, stdout=subprocess.PIPE,
-                                       stderr=subprocess.STDOUT)
+    emulator_process = subprocess.Popen(args, stdout=subprocess.PIPE,
+                                        stderr=subprocess.STDOUT)
 
     try:
-        interruptPipe = os.open(PIPE_NAME, os.O_WRONLY)
+        interrupt_pipe = os.open(PIPE_NAME, os.O_WRONLY)
 
         # Send periodic interrupts to process'
         try:
             for x in range(5):
-                os.write(interruptPipe, str.encode(chr(x)))
+                os.write(interrupt_pipe, str.encode(chr(x)))
                 time.sleep(0.2)
         except OSError:
             # Broken pipe will occur if the emulator exits early.
             # We'll flag an error after communicate if we don't see a PASS.
-            print('5')
             pass
 
         # Wait for completion
-        result, unused_err = TimedProcessRunner().communicate(emulatorProcess, 60)
+        result, unused_err = TimedProcessRunner().communicate(emulator_process, 60)
         strresult = str(result)
-        if strresult.find('PASS') == -1 or strresult.find('FAIL') != -1:
+        if 'PASS' not in strresult or 'FAIL' in strresult:
             raise TestException('Test failed ' + strresult)
     finally:
-        os.close(interruptPipe)
+        os.close(interrupt_pipe)
         os.unlink(PIPE_NAME)
 
 # XXX A number of error cases do not clean up resources
@@ -119,22 +118,23 @@ def run_send_host_interrupt(name):
     os.mknod(PIPE_NAME, stat.S_IFIFO | 0o666)
 
     args = [BIN_DIR + 'emulator', '-o', PIPE_NAME, HEX_FILE]
-    emulatorProcess = subprocess.Popen(args, stdout=subprocess.PIPE,
-                                       stderr=subprocess.STDOUT)
+    emulator_process = subprocess.Popen(args, stdout=subprocess.PIPE,
+                                        stderr=subprocess.STDOUT)
 
     try:
-        interruptPipe = os.open(PIPE_NAME, os.O_RDONLY | os.O_NONBLOCK)
-        result, unused_err = TimedProcessRunner().communicate(emulatorProcess, 60)
+        interrupt_pipe = os.open(PIPE_NAME, os.O_RDONLY | os.O_NONBLOCK)
+        result, unused_err = TimedProcessRunner().communicate(emulator_process, 60)
 
         # Interrupts should be in pipe now
-        interrupts = os.read(interruptPipe, 5)
+        interrupts = os.read(interrupt_pipe, 5)
         if interrupts != b'\x05\x06\x07\x08\x09':
             raise TestException('Did not receive proper host interrupts')
     finally:
-        os.close(interruptPipe)
+        os.close(interrupt_pipe)
         os.unlink(PIPE_NAME)
 
-register_tests(run_io_interrupt, ['io_interrupt_emulator', 'io_interrupt_verilator'])
+register_tests(run_io_interrupt, [
+               'io_interrupt_emulator', 'io_interrupt_verilator'])
 register_tests(run_recv_host_interrupt, ['recv_host_interrupt'])
 register_tests(run_send_host_interrupt, ['send_host_interrupt'])
 register_generic_assembly_tests([

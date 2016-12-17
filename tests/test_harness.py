@@ -222,7 +222,7 @@ def run_program(
 
         args += ['+bin=' + HEX_FILE]
         output = _run_test_with_timeout(args, timeout)
-        if output.find('***HALTED***') == -1:
+        if '***HALTED***' not in output:
             raise TestException(output + '\nProgram did not halt normally')
 
         return output
@@ -268,7 +268,7 @@ def run_kernel(
             '+bin=' + PROJECT_TOP + '/software/kernel/kernel.hex']
 
         output = _run_test_with_timeout(args, timeout)
-        if output.find('***HALTED***') == -1:
+        if '***HALTED***' not in output:
             raise TestException(output + '\nProgram did not halt normally')
 
         return output
@@ -466,13 +466,13 @@ def check_result(source_file, program_output):
     CHECKN_PREFIX = 'CHECKN: '
 
     output_offset = 0
-    lineNo = 1
-    foundCheckLines = False
+    line_num = 1
+    found_check_lines = False
     with open(source_file, 'r') as f:
         for line in f:
             chkoffs = line.find(CHECK_PREFIX)
             if chkoffs != -1:
-                foundCheckLines = True
+                found_check_lines = True
                 expected = line[chkoffs + len(CHECK_PREFIX):].strip()
                 regexp = re.compile(expected)
                 got = regexp.search(program_output, output_offset)
@@ -480,27 +480,27 @@ def check_result(source_file, program_output):
                     output_offset = got.end()
                 else:
                     error = 'FAIL: line ' + \
-                        str(lineNo) + ' expected string ' + \
+                        str(line_num) + ' expected string ' + \
                         expected + ' was not found\n'
                     error += 'searching here:' + program_output[output_offset:]
                     raise TestException(error)
             else:
                 chkoffs = line.find(CHECKN_PREFIX)
                 if chkoffs != -1:
-                    foundCheckLines = True
+                    found_check_lines = True
                     nexpected = line[chkoffs + len(CHECKN_PREFIX):].strip()
                     regexp = re.compile(nexpected)
                     got = regexp.search(program_output, output_offset)
                     if got:
                         error = 'FAIL: line ' + \
-                            str(lineNo) + ' string ' + \
+                            str(line_num) + ' string ' + \
                             nexpected + ' should not be here:\n'
                         error += program_output
                         raise TestException(error)
 
-            lineNo += 1
+            line_num += 1
 
-    if not foundCheckLines:
+    if not found_check_lines:
         raise TestException('FAIL: no lines with CHECK: were found')
 
     return True
@@ -565,7 +565,7 @@ def _run_generic_assembly_test(name):
 
     build_program([basename + '.S'])
     result = run_program(environment=environment)
-    if result.find('PASS') == -1 or result.find('FAIL') != -1:
+    if 'PASS' not in result or 'FAIL' in result:
         raise TestException('Test failed ' + result)
 
 # XXX should this somehow be combined with register_generic_test?
