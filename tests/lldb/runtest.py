@@ -26,7 +26,7 @@ import test_harness
 DEBUG = False
 
 
-class LLDBHarness(object):
+class LLDBConnection(object):
 
     def __init__(self, hexfile):
         self.hexfile = hexfile
@@ -136,17 +136,17 @@ def parse_stack_crawl(response):
 def lldb(_):
     hexfile = test_harness.build_program(
         ['test_program.c'], opt_level='-O0', cflags=['-g'])
-    with LLDBHarness(hexfile) as harness:
-        harness.send_command('file "obj/test.elf"')
-        harness.send_command('gdb-remote 8000\n')
-        response = harness.send_command(
+    with LLDBConnection(hexfile) as conn:
+        conn.send_command('file "obj/test.elf"')
+        conn.send_command('gdb-remote 8000\n')
+        response = conn.send_command(
             'breakpoint set --file test_program.c --line 27')
         if 'Breakpoint 1: where = test.elf`func2 + 96 at test_program.c:27' not in response:
             raise test_harness.TestException(
                 'breakpoint: did not find expected value ' + response)
 
-        harness.send_command('c')
-        harness.wait_stop()
+        conn.send_command('c')
+        conn.wait_stop()
 
         expected_stack = [
             ('func2', 'test_program.c', 27),
@@ -155,39 +155,39 @@ def lldb(_):
             ('do_main', '', 0)
         ]
 
-        response = harness.send_command('bt')
+        response = conn.send_command('bt')
         crawl = parse_stack_crawl(response)
         if crawl != expected_stack:
             raise test_harness.TestException(
                 'stack crawl mismatch ' + str(crawl))
 
-        response = harness.send_command('print value')
+        response = conn.send_command('print value')
         if '= 67' not in response:
             raise test_harness.TestException(
                 'print value: Did not find expected value ' + response)
 
-        response = harness.send_command('print result')
+        response = conn.send_command('print result')
         if '= 128' not in response:
             raise test_harness.TestException(
                 'print result: Did not find expected value ' + response)
 
         # Up to previous frame
-        harness.send_command('frame select --relative=1')
+        conn.send_command('frame select --relative=1')
 
-        response = harness.send_command('print a')
+        response = conn.send_command('print a')
         if '= 12' not in response:
             raise test_harness.TestException(
                 'print a: Did not find expected value ' + response)
 
-        response = harness.send_command('print b')
+        response = conn.send_command('print b')
         if '= 67' not in response:
             raise test_harness.TestException(
                 'print b: Did not find expected value ' + response)
 
-        harness.send_command('step')
-        harness.wait_stop()
+        conn.send_command('step')
+        conn.wait_stop()
 
-        response = harness.send_command('print result')
+        response = conn.send_command('print result')
         if '= 64' not in response:
             raise test_harness.TestException(
                 'print b: Did not find expected value ' + response)

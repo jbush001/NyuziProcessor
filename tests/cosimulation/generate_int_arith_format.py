@@ -16,7 +16,7 @@
 #
 
 """
-Create an assembly test that verifies all major instruction FORMS and
+Create an assembly test that verifies all major instruction forms and
 single cycle integer operations
 """
 
