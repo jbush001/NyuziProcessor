@@ -16,15 +16,14 @@
 #
 
 import sys
-import subprocess
 
 sys.path.insert(0, '../..')
-from test_harness import *
+import test_harness
 
 # XXX need test to dump memory contents and ensure they are written out
 # properly
 
-register_generic_assembly_tests([
+test_harness.register_generic_assembly_tests([
     'data_page_fault_read',
     'data_page_fault_write',
     'data_supervisor_fault_read',
@@ -50,4 +49,4 @@ register_generic_assembly_tests([
     'instruction_translate'
 ])
 
-execute_tests()
+test_harness.execute_tests()

@@ -15,21 +15,22 @@
 # limitations under the License.
 #
 
-import sys
-import struct
+"""
+Test load_sync/store_sync instructions by having four threads update
+variables round-robin.
+"""
 
-# Test load_sync/store_sync instructions by having four threads update
-# variables round-robin.
+import sys
 
 sys.path.insert(0, '../..')
-from test_harness import *
+import test_harness
 
 
-@test
-def multicore(name):
-    build_program(['multicore.c'])
-    result = run_program(environment='verilator')
+@test_harness.test
+def multicore(_):
+    test_harness.build_program(['multicore.c'])
+    result = test_harness.run_program(environment='verilator')
     if '012345678910111213141516171819202122232425262728293031' not in result.replace('\n', ''):
-        raise TestException('Output mismatch:\n' + result)
+        raise test_harness.TestException('Output mismatch:\n' + result)
 
-execute_tests()
+test_harness.execute_tests()

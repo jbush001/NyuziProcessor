@@ -14,19 +14,19 @@
 # limitations under the License.
 #
 
-#
-# Utility functions for unit tests. This is imported into test runner scripts
-# in subdirectories under this one.
-#
+"""
+Utility functions for unit tests. This is imported into test runner scripts
+in subdirectories under this one.
+"""
 
 from __future__ import print_function
 import binascii
-import subprocess
 import os
-import sys
 import re
-import traceback
+import subprocess
+import sys
 import threading
+import traceback
 
 COMPILER_DIR = '/usr/local/llvm-nyuzi/bin/'
 PROJECT_TOP = os.path.normpath(
@@ -40,14 +40,14 @@ HEX_FILE = OBJ_DIR + 'program.hex'
 
 class TestException(Exception):
 
+    """This exception is raised for test failures"""
+
     def __init__(self, output):
+        Exception.__init__(self)
         self.output = output
 
-# XXX should this cache built programs if there are multiple runs with the same one?
-# Might speed up tests.
 
-
-def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags=['']):
+def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags=None):
     """Compile/assemble one or more files.
 
     If there are .c files in the list, this will link in crt0, libc,
@@ -70,7 +70,7 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
     Raises:
             TestException if compilation failed, will contain compiler output
     """
-    assert(isinstance(source_files, list))
+    assert isinstance(source_files, list)
 
     if not os.path.exists(OBJ_DIR):
         os.makedirs(OBJ_DIR)
@@ -79,7 +79,9 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
                      '-o', ELF_FILE,
                      '-w',
                      opt_level]
-    compiler_args += cflags
+
+    if cflags:
+        compiler_args += cflags
 
     if image_type == 'raw':
         compiler_args += ['-Wl,--script,../one-segment.ld,--oformat,binary']
@@ -123,13 +125,22 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
 
 class TimedProcessRunner(threading.Thread):
 
+    """
+    Wrapper calls communicate on a process, but throws exception if it
+    takes too long
+    """
+
     def __init__(self):
         threading.Thread.__init__(self)
         self.finished = threading.Event()
         self.daemon = True  # Kill watchdog if we exit
+        self.process = None
+        self.timeout = 0
 
-    # Call process.communicate(), but fail if it takes too long
     def communicate(self, process, timeout):
+        """Call process.communicate(), but throw exception if it has not completed
+        before 'timeout' seconds have elapsed"""
+
         self.timeout = timeout
         self.process = process
         self.start()  # Start watchdog
@@ -157,7 +168,7 @@ class TimedProcessRunner(threading.Thread):
 def _run_test_with_timeout(args, timeout):
     process = subprocess.Popen(args, stdout=subprocess.PIPE,
                                stderr=subprocess.STDOUT)
-    output, unused_err = TimedProcessRunner().communicate(process, timeout)
+    output, _ = TimedProcessRunner().communicate(process, timeout)
     return output.decode()
 
 
@@ -232,7 +243,6 @@ def run_program(
 
 def run_kernel(
         environment='emulator',
-        block_device=None,
         timeout=60):
     """Run test program as a user space program under the kernel.
 
@@ -292,39 +302,39 @@ def assert_files_equal(file1, file2, error_msg='file mismatch'):
             details about where the mismatch occurred.
     """
 
-    BUFSIZE = 0x1000
+    bufsize = 0x1000
     block_offset = 0
     with open(file1, 'rb') as fp1, open(file2, 'rb') as fp2:
         while True:
-            block1 = bytearray(fp1.read(BUFSIZE))
-            block2 = bytearray(fp2.read(BUFSIZE))
+            block1 = bytearray(fp1.read(bufsize))
+            block2 = bytearray(fp2.read(bufsize))
             if len(block1) < len(block2):
                 raise TestException(error_msg + ': file1 shorter than file2')
             elif len(block1) > len(block2):
                 raise TestException(error_msg + ': file1 longer than file2')
 
             if block1 != block2:
-                for i in range(len(block1)):
-                    if block1[i] != block2[i]:
+                for offset, (val1, val2) in enumerate(zip(block1, block2)):
+                    if val1 != val2:
                         # Show the difference
                         exception_text = error_msg + ':\n'
-                        rounded_offset = i & ~15
+                        rounded_offset = offset & ~15
                         exception_text += '{:08x} '.format(block_offset +
-                                                     rounded_offset)
-                        for x in range(16):
+                                                           rounded_offset)
+                        for lineoffs in range(16):
                             exception_text += '{:02x}'.format(
-                                block1[rounded_offset + x])
+                                block1[rounded_offset + lineoffs])
 
                         exception_text += '\n{:08x} '.format(
                             block_offset + rounded_offset)
-                        for x in range(16):
+                        for lineoffs in range(16):
                             exception_text += '{:02x}'.format(
-                                block2[rounded_offset + x])
+                                block2[rounded_offset + lineoffs])
 
                         exception_text += '\n         '
-                        for x in range(16):
-                            if block1[rounded_offset + x] \
-                                    != block2[rounded_offset + x]:
+                        for lineoffs in range(16):
+                            if block1[rounded_offset + lineoffs] \
+                                    != block2[rounded_offset + lineoffs]:
                                 exception_text += '^^'
                             else:
                                 exception_text += '  '
@@ -334,7 +344,7 @@ def assert_files_equal(file1, file2, error_msg='file mismatch'):
             if not block1:
                 return
 
-            block_offset += BUFSIZE
+            block_offset += len(block1)
 
 
 registered_tests = []
@@ -396,6 +406,7 @@ def find_files(extensions):
 COLOR_RED = '[\x1b[31m'
 COLOR_GREEN = '[\x1b[32m'
 COLOR_NONE = '\x1b[0m]'
+OUTPUT_ALIGN = 40
 
 
 def execute_tests():
@@ -428,10 +439,9 @@ def execute_tests():
 
         registered_tests = new_test_list
 
-    ALIGN = 40
     failing_tests = []
     for func, param in registered_tests:
-        print(param + (' ' * (ALIGN - len(param))), end='')
+        print(param + (' ' * (OUTPUT_ALIGN - len(param))), end='')
         sys.stdout.flush()
         try:
             func(param)
@@ -457,6 +467,9 @@ def execute_tests():
     if failing_tests != []:
         sys.exit(1)
 
+CHECK_PREFIX = 'CHECK: '
+CHECKN_PREFIX = 'CHECKN: '
+
 
 def check_result(source_file, program_output):
     """Check output of a program based on embedded comments in source code.
@@ -477,14 +490,11 @@ def check_result(source_file, program_output):
             TestException if a string is not found.
     """
 
-    CHECK_PREFIX = 'CHECK: '
-    CHECKN_PREFIX = 'CHECKN: '
-
     output_offset = 0
     line_num = 1
     found_check_lines = False
-    with open(source_file, 'r') as f:
-        for line in f:
+    with open(source_file, 'r') as infile:
+        for line in infile:
             chkoffs = line.find(CHECK_PREFIX)
             if chkoffs != -1:
                 found_check_lines = True
@@ -522,6 +532,11 @@ def check_result(source_file, program_output):
 
 
 def dump_hex(output_file, input_file):
+    """
+    Reads a binary input file and encodes it as a hexadecimal file, where
+    each line of the output file is 4 bytes.
+    """
+
     with open(input_file, 'rb') as ifile, open(output_file, 'wb') as ofile:
         while True:
             word = ifile.read(4)
@@ -533,10 +548,19 @@ def dump_hex(output_file, input_file):
 
 
 def endian_swap(value):
-    return ((value >> 24) & 0xff) | ((value >> 8) & 0xff00) | ((value << 8) & 0xff0000) | (value << 24)
+    """"Given a 32-bit integer value, swap it to the opposite endianness"""
+
+    return (((value >> 24) & 0xff) | ((value >> 8) & 0xff00)
+            | ((value << 8) & 0xff0000) | (value << 24))
 
 
 def _run_generic_test(name):
+    """
+    Name is the filename of a source file. This will compile it, run it,
+    and call check_result, which will match expected strings in the source
+    file with the programs output.
+    """
+
     underscore = name.rfind('_')
     if underscore == -1:
         raise TestException(
@@ -586,7 +610,7 @@ def _run_generic_assembly_test(name):
 # XXX should this somehow be combined with register_generic_test?
 
 
-def register_generic_assembly_tests(list):
+def register_generic_assembly_tests(tests):
     """Allows registering an assembly only test without having to
     create a test handler function. This will assemble the passed
     program, then look for PASS or FAIL strings.
@@ -601,6 +625,6 @@ def register_generic_assembly_tests(list):
     Raises:
             Nothing
     """
-    for name in list:
+    for name in tests:
         register_tests(_run_generic_assembly_test, [name + '_verilator'])
         register_tests(_run_generic_assembly_test, [name + '_emulator'])

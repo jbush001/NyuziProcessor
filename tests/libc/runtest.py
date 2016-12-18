@@ -15,36 +15,34 @@
 # limitations under the License.
 #
 
-import sys
 import subprocess
-import os
-from os import path
+import sys
 
 sys.path.insert(0, '..')
-from test_harness import *
+import test_harness
 
 
-@test
-def fs(name):
-    build_program(['fs.c'])
+@test_harness.test
+def filesystem(_):
+    test_harness.build_program(['fs.c'])
     subprocess.check_output(
         ['../../bin/mkfs', 'obj/fsimage.bin', 'fstest.txt'], stderr=subprocess.STDOUT)
-    result = run_program(environment='emulator',
-                         block_device='obj/fsimage.bin')
+    result = test_harness.run_program(environment='emulator',
+                                      block_device='obj/fsimage.bin')
     if 'PASS' not in result:
-        raise TestException(
+        raise test_harness.TestException(
             'test program did not indicate pass\n' + result)
 
 
 def run_emulator_test(source_file):
-    build_program([source_file])
-    result = run_program(environment='emulator')
-    check_result(source_file, result)
+    test_harness.build_program([source_file])
+    result = test_harness.run_program(environment='emulator')
+    test_harness.check_result(source_file, result)
 
 # XXX hack: register all source files in this directory except for fs test,
 # which has special handling.
-test_list = [fname for fname in find_files(
+test_list = [fname for fname in test_harness.find_files(
     ('.c', '.cpp')) if not fname.startswith('_')]
 test_list.remove('fs.c')
-register_tests(run_emulator_test, test_list)
-execute_tests()
+test_harness.register_tests(run_emulator_test, test_list)
+test_harness.execute_tests()

@@ -15,29 +15,33 @@
 # limitations under the License.
 #
 
-import re
-import sys
-import subprocess
 import os
-import time
+import re
+import subprocess
+import sys
 
 sys.path.insert(0, '..')
-from test_harness import *
+import test_harness
 
 DEBUG = False
 
 
-class LLDBHarness:
+class LLDBHarness(object):
 
     def __init__(self, hexfile):
         self.hexfile = hexfile
         self.elf_file = os.path.splitext(hexfile)[0] + '.elf'
+        self.output = None
+        self.emulator_proc = None
+        self.lldb_proc = None
+        self.outstr = None
+        self.instr = None
 
     def __enter__(self):
         global DEBUG
 
         emulator_args = [
-            BIN_DIR + 'emulator',
+            test_harness.BIN_DIR + 'emulator',
             '-m',
             'gdb',
             '-v',
@@ -53,7 +57,7 @@ class LLDBHarness:
                                               stderr=subprocess.STDOUT)
 
         lldb_args = [
-            COMPILER_DIR + 'lldb-mi'
+            test_harness.COMPILER_DIR + 'lldb-mi'
         ]
 
         # XXX race condition: the emulator needs to be ready before
@@ -70,7 +74,7 @@ class LLDBHarness:
 
         return self
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, *unused):
         self.emulator_proc.kill()
         self.lldb_proc.kill()
 
@@ -96,9 +100,9 @@ class LLDBHarness:
     def wait_stop(self):
         current_line = ''
         while True:
-            ch = self.instr.read(1)
-            current_line += ch
-            if ch == '\n':
+            inchar = self.instr.read(1)
+            current_line += inchar
+            if inchar == '\n':
                 if DEBUG:
                     print('LLDB recv: ' + current_line[:-1])
 
@@ -107,19 +111,18 @@ class LLDBHarness:
 
                 current_line = ''
 
-frame_re = re.compile(
-    'frame #[0-9]+:( 0x[0-9a-f]+)? [a-zA-Z_\.0-9]+`(?P<function>[a-zA-Z_0-9][a-zA-Z_0-9]+)')
-at_re = re.compile(' at (?P<filename>[a-z_A-Z][a-z\._A-Z]+):(?P<line>[0-9]+)')
+FRAME_RE = re.compile(
+    'frame #[0-9]+:( 0x[0-9a-f]+)? [a-zA-Z_\\.0-9]+`(?P<function>[a-zA-Z_0-9][a-zA-Z_0-9]+)')
+AT_RE = re.compile(' at (?P<filename>[a-z_A-Z][a-z\\._A-Z]+):(?P<line>[0-9]+)')
 
 
 def parse_stack_crawl(response):
-    lines = response.split('\n')
     stack_info = []
-    for line in lines:
-        frame_match = frame_re.search(line)
+    for line in response.split('\n'):
+        frame_match = FRAME_RE.search(line)
         if frame_match:
             func = frame_match.group('function')
-            at_match = at_re.search(line)
+            at_match = AT_RE.search(line)
             if at_match:
                 stack_info += [(func, at_match.group('filename'),
                                 int(at_match.group('line')))]
@@ -129,20 +132,21 @@ def parse_stack_crawl(response):
     return stack_info
 
 
-@test
-def lldb(name):
-    hexfile = build_program(['test_program.c'], opt_level='-O0', cflags=['-g'])
-    with LLDBHarness(hexfile) as lldb:
-        lldb.send_command('file "obj/test.elf"')
-        lldb.send_command('gdb-remote 8000\n')
-        response = lldb.send_command(
+@test_harness.test
+def lldb(_):
+    hexfile = test_harness.build_program(
+        ['test_program.c'], opt_level='-O0', cflags=['-g'])
+    with LLDBHarness(hexfile) as harness:
+        harness.send_command('file "obj/test.elf"')
+        harness.send_command('gdb-remote 8000\n')
+        response = harness.send_command(
             'breakpoint set --file test_program.c --line 27')
         if 'Breakpoint 1: where = test.elf`func2 + 96 at test_program.c:27' not in response:
-            raise TestException(
+            raise test_harness.TestException(
                 'breakpoint: did not find expected value ' + response)
 
-        lldb.send_command('c')
-        lldb.wait_stop()
+        harness.send_command('c')
+        harness.wait_stop()
 
         expected_stack = [
             ('func2', 'test_program.c', 27),
@@ -151,41 +155,42 @@ def lldb(name):
             ('do_main', '', 0)
         ]
 
-        response = lldb.send_command('bt')
+        response = harness.send_command('bt')
         crawl = parse_stack_crawl(response)
         if crawl != expected_stack:
-            raise TestException('stack crawl mismatch ' + str(crawl))
+            raise test_harness.TestException(
+                'stack crawl mismatch ' + str(crawl))
 
-        response = lldb.send_command('print value')
+        response = harness.send_command('print value')
         if '= 67' not in response:
-            raise TestException(
+            raise test_harness.TestException(
                 'print value: Did not find expected value ' + response)
 
-        response = lldb.send_command('print result')
+        response = harness.send_command('print result')
         if '= 128' not in response:
-            raise TestException(
+            raise test_harness.TestException(
                 'print result: Did not find expected value ' + response)
 
         # Up to previous frame
-        lldb.send_command('frame select --relative=1')
+        harness.send_command('frame select --relative=1')
 
-        response = lldb.send_command('print a')
+        response = harness.send_command('print a')
         if '= 12' not in response:
-            raise TestException(
+            raise test_harness.TestException(
                 'print a: Did not find expected value ' + response)
 
-        response = lldb.send_command('print b')
+        response = harness.send_command('print b')
         if '= 67' not in response:
-            raise TestException(
+            raise test_harness.TestException(
                 'print b: Did not find expected value ' + response)
 
-        lldb.send_command('step')
-        lldb.wait_stop()
+        harness.send_command('step')
+        harness.wait_stop()
 
-        response = lldb.send_command('print result')
+        response = harness.send_command('print result')
         if '= 64' not in response:
-            raise TestException(
+            raise test_harness.TestException(
                 'print b: Did not find expected value ' + response)
 
 
-execute_tests()
+test_harness.execute_tests()

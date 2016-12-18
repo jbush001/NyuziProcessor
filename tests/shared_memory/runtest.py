@@ -16,15 +16,15 @@
 #
 
 import mmap
+import random
+import struct
 import subprocess
 import sys
 import tempfile
 import time
-import struct
-import random
 
 sys.path.insert(0, '..')
-from test_harness import *
+import test_harness
 
 
 def write_shared_memory(memory, address, value):
@@ -46,7 +46,7 @@ def sharedmem_transact(memory, value):
     starttime = time.time()
     while read_shared_memory(memory, OWNER_ADDR) != OWNER_HOST:
         if (time.time() - starttime) > 10:
-            raise TestException(
+            raise test_harness.TestException(
                 'timed out waiting for response from coprocessor')
 
         time.sleep(0.1)
@@ -58,13 +58,14 @@ def sharedmem_transact(memory, value):
 #
 
 
-@test
-def shared_memory(name):
-    build_program(['coprocessor.c'])
+@test_harness.test
+def shared_memory(_):
+    test_harness.build_program(['coprocessor.c'])
 
     # Start the emulator
     memory_file = tempfile.NamedTemporaryFile()
-    args = [BIN_DIR + 'emulator', '-s', memory_file.name, HEX_FILE]
+    args = [test_harness.BIN_DIR + 'emulator', '-s',
+            memory_file.name, test_harness.HEX_FILE]
     process = subprocess.Popen(args, stdout=subprocess.PIPE,
                                stderr=subprocess.STDOUT)
 
@@ -75,13 +76,14 @@ def shared_memory(name):
         # it's done.
         time.sleep(1.0)
         memory = mmap.mmap(memory_file.fileno(), 0)
-        testvalues = [random.randint(0, 0xffffffff) for x in range(10)]
+        testvalues = [random.randint(0, 0xffffffff) for __ in range(10)]
         for value in testvalues:
             computed = sharedmem_transact(memory, value)
             if computed != (value ^ 0xffffffff):
-                raise TestException('Incorrect value from coprocessor expected ' + hex(value ^ 0xffffffff)
-                                    + ' got ' + hex(computed))
+                raise test_harness.TestException('Incorrect value from coprocessor expected ' +
+                                                 hex(value ^ 0xffffffff) +
+                                                 ' got ' + hex(computed))
     finally:
         process.kill()
 
-execute_tests()
+test_harness.execute_tests()

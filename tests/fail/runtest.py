@@ -15,44 +15,45 @@
 # limitations under the License.
 #
 
-# The purpose of this test is to ensure the test harness itself works
-# correctly by properly returning an error when the test program crashes
+"""
+The purpose of this test is to ensure the test harness itself works
+correctly by properly returning an error when the test program crashes
+"""
 
 import sys
-import os
 
 sys.path.insert(0, '..')
-from test_harness import *
+import test_harness
 
 
-@test
-def emulator_timeout(name):
-    build_program(['timeout.c'])
-    result = run_program(environment='emulator', timeout=3)
+@test_harness.test
+def emulator_timeout(_):
+    test_harness.build_program(['timeout.c'])
+    test_harness.run_program(environment='emulator', timeout=3)
 
 
-@test
-def verilator_timeout(name):
-    build_program(['timeout.c'])
-    result = run_program(environment='verilator', timeout=3)
+@test_harness.test
+def verilator_timeout(_):
+    test_harness.build_program(['timeout.c'])
+    test_harness.run_program(environment='verilator', timeout=3)
 
 
-@test
-def assemble_error(name):
-    build_program(['assemble_error.s'])
+@test_harness.test
+def assemble_error(_):
+    test_harness.build_program(['assemble_error.s'])
 
 
-@test
-def files_not_equal(name):
-    assert_files_equal('compare_file1', 'compare_file2')
+@test_harness.test
+def files_not_equal(_):
+    test_harness.assert_files_equal('compare_file1', 'compare_file2')
 
 
-@test
-def exception(name):
+@test_harness.test
+def exception(_):
     raise Exception('some exception')
 
-register_generic_test('crash')
-register_generic_test('check')
-register_generic_test('checkn')
-register_generic_test('compile_error')
-execute_tests()
+test_harness.register_generic_test('crash')
+test_harness.register_generic_test('check')
+test_harness.register_generic_test('checkn')
+test_harness.register_generic_test('compile_error')
+test_harness.execute_tests()

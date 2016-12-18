@@ -16,18 +16,15 @@
 #
 
 import sys
-import subprocess
-import os
-from os import path
 
 sys.path.insert(0, '..')
-from test_harness import *
+import test_harness
 
 
 def run_emulator_test(source_file):
-    build_program([source_file])
-    result = run_program(environment='emulator')
-    check_result(source_file, result)
+    test_harness.build_program([source_file])
+    result = test_harness.run_program(environment='emulator')
+    test_harness.check_result(source_file, result)
 
-register_tests(run_emulator_test, ['compiler-rt.c'])
-execute_tests()
+test_harness.register_tests(run_emulator_test, ['compiler-rt.c'])
+test_harness.execute_tests()

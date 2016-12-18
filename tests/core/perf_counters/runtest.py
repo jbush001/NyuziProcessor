@@ -16,18 +16,17 @@
 #
 
 import sys
-import subprocess
 
 sys.path.insert(0, '../..')
-from test_harness import *
+import test_harness
 
 
-@test
-def perf_counters(name):
-    build_program(['perf_counters.c'])
-    result = run_program(environment='verilator')
+@test_harness.test
+def perf_counters(_):
+    test_harness.build_program(['perf_counters.c'])
+    result = test_harness.run_program(environment='verilator')
     if 'PASS' not in result:
-        raise TestException(
+        raise test_harness.TestException(
             'test program did not indicate pass\n' + result)
 
-execute_tests()
+test_harness.execute_tests()

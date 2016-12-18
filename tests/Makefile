@@ -35,3 +35,14 @@ test:
 	cd kernel/initdata && $(PYTHON) ./runtest.py
 	cd render && make test
 
+# For this target to work, pylint must be installed (https://www.pylint.org/)
+pylint:
+	PYTHONPATH=$(CURDIR) find . -iname "*.py" -exec echo {} \; -exec pylint {} \;
+
+# For this target to work, pyflakes must be installed (https://pypi.python.org/pypi/pyflakes)
+pyflakes:
+	PYTHONPATH=$(CURDIR) find . -iname "*.py" -exec echo {} \; -exec pyflakes {} \;
+
+# For this target to work, autopep8 must be installed (https://pypi.python.org/pypi/autopep8)
+format:
+	find . -iname "*.py" | xargs autopep8 -i

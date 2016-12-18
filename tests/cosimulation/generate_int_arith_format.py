@@ -15,15 +15,15 @@
 # limitations under the License.
 #
 
-#
-# Create an assembly test that verifies all major instruction forms and
-# single cycle integer operations
-#
+"""
+Create an assembly test that verifies all major instruction FORMS and
+single cycle integer operations
+"""
 
 import random
 import sys
 
-forms = [
+FORMS = [
     ('s', 's', 's', ''),
     ('v', 'v', 's', ''),
     ('v', 'v', 's', '_mask'),
@@ -36,7 +36,7 @@ forms = [
     ('v', 's', 'i', '_mask'),
 ]
 
-binops = [
+BINOPS = [
     'or',
     'and',
     'xor',
@@ -50,7 +50,7 @@ binops = [
     'shl',
 ]
 
-unops = [
+UNOPS = [
     'clz',
     'ctz',
     'move'
@@ -78,8 +78,8 @@ _start:		move v0, 0
 dest = 1
 rega = 2
 regb = 3
-for td, ta, tb, suffix in forms:
-    for mnemonic in binops:
+for td, ta, tb, suffix in FORMS:
+    for mnemonic in BINOPS:
         opstr = '\t\t' + mnemonic + suffix + ' ' + td + str(dest) + ', '
         if suffix != '':
             opstr += 's10, '  # Mask register
@@ -97,11 +97,11 @@ for td, ta, tb, suffix in forms:
         rega = dest
         dest = tmp
 
-for td, ta, tb, suffix in forms:
+for td, ta, tb, suffix in FORMS:
     if tb == 'i':
         continue
 
-    for mnemonic in unops:
+    for mnemonic in UNOPS:
         opstr = '\t\t' + mnemonic + suffix + ' ' + td + str(dest) + ', '
         if suffix != '':
             opstr += 's10, '

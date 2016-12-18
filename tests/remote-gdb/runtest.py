@@ -10,23 +10,23 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implieconn.
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
 
-#
-# Validates remote GDB debugger interface in emulator
-#
+"""
+Validates remote GDB debugger interface in emulator
+"""
 
-import sys
-import subprocess
 import os
 import socket
+import subprocess
+import sys
 import time
 
 sys.path.insert(0, '..')
-from test_harness import *
+import test_harness
 
 
 # Setting this to true will print all GDB commands and responses
@@ -34,22 +34,26 @@ from test_harness import *
 DEBUG = False
 
 
-class DebugConnection:
+class DebugConnection(object):
+
+    def __init__(self):
+        self.sock = None
 
     def __enter__(self):
-        for retry in range(10):
+        # Retry loop
+        for _ in range(10):
             try:
                 time.sleep(0.3)
                 self.sock = socket.socket()
                 self.sock.connect(('localhost', 8000))
                 self.sock.settimeout(5)
                 break
-            except Exception as e:
+            except socket.error:
                 pass
 
         return self
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, *unused):
         self.sock.close()
 
     def _send_packet(self, body):
@@ -69,21 +73,22 @@ class DebugConnection:
         while True:
             leader = self.sock.recv(1)
             if leader == '':
-                raise TestException('unexpected socket close')
+                raise test_harness.TestException('unexpected socket close')
 
             if leader == b'$':
                 break
 
             if leader != b'+':
-                raise TestException('unexpected character ' + str(leader))
+                raise test_harness.TestException(
+                    'unexpected character ' + str(leader))
 
         body = b''
         while True:
-            c = self.sock.recv(1)
-            if c == b'#':
+            char = self.sock.recv(1)
+            if char == b'#':
                 break
 
-            body += c
+            body += char
 
         # Checksum
         self.sock.recv(2)
@@ -97,21 +102,23 @@ class DebugConnection:
         self._send_packet(command)
         response = self._receive_packet()
         if response != str.encode(value):
-            raise TestException(
+            raise test_harness.TestException(
                 'unexpected response. Wanted ' + value + ' got ' + str(response))
 
 
-class EmulatorTarget:
+class EmulatorTarget(object):
 
     def __init__(self, hexfile, num_cores=1):
         self.hexfile = hexfile
         self.num_cores = num_cores
+        self.process = None
+        self.output = None
 
     def __enter__(self):
         global DEBUG
 
         emulator_args = [
-            BIN_DIR + 'emulator',
+            test_harness.BIN_DIR + 'emulator',
             '-m',
             'gdb',
             '-p',
@@ -134,143 +141,143 @@ class EmulatorTarget:
             self.output.close()
 
 
-@test
-def gdb_breakpoint(name):
+@test_harness.test
+def gdb_breakpoint(_):
     """
     Validate stopping at a breakpoint and continuing after stopping.
     This sets two breakpoints
     """
 
-    hexfile = build_program(['count.S'], image_type='raw')
-    with EmulatorTarget(hexfile) as p, DebugConnection() as d:
+    hexfile = test_harness.build_program(['count.S'], image_type='raw')
+    with EmulatorTarget(hexfile), DebugConnection() as conn:
         # Set breakpoint
-        d.expect('Z0,0000000c', 'OK')
+        conn.expect('Z0,0000000c', 'OK')
 
         # Set second breakpoint at next instruction
-        d.expect('Z0,00000010', 'OK')
+        conn.expect('Z0,00000010', 'OK')
 
         # Continue
-        d.expect('C', 'S05')
+        conn.expect('C', 'S05')
 
         # Read last signal
-        d.expect('?', 'S05')
+        conn.expect('?', 'S05')
 
         # Read PC register. Should be 0x000000c, but endian swapped
-        d.expect('g1f', '0c000000')
+        conn.expect('g1f', '0c000000')
 
         # Read s0, which should be 3
-        d.expect('g00', '03000000')
+        conn.expect('g00', '03000000')
 
         # Continue again.
-        d.expect('C', 'S05')
+        conn.expect('C', 'S05')
 
         # Ensure the instruction it stopped at is
         # executed and it breaks on the next instruction
-        d.expect('g1f', '10000000')
+        conn.expect('g1f', '10000000')
 
         # Read s0, which should be 4
-        d.expect('g00', '04000000')
+        conn.expect('g00', '04000000')
 
 
-@test
-def gdb_remove_breakpoint(name):
-    hexfile = build_program(['count.S'], image_type='raw')
-    with EmulatorTarget(hexfile) as p, DebugConnection() as d:
+@test_harness.test
+def gdb_remove_breakpoint(_):
+    hexfile = test_harness.build_program(['count.S'], image_type='raw')
+    with EmulatorTarget(hexfile), DebugConnection() as conn:
         # Set breakpoint
-        d.expect('Z0,0000000c', 'OK')
+        conn.expect('Z0,0000000c', 'OK')
 
         # Set second breakpoint
-        d.expect('Z0,00000014', 'OK')
+        conn.expect('Z0,00000014', 'OK')
 
         # Clear first breakpoint
-        d.expect('z0,0000000c', 'OK')
+        conn.expect('z0,0000000c', 'OK')
 
         # Continue
-        d.expect('C', 'S05')
+        conn.expect('C', 'S05')
 
         # Read PC register. Should be at second breakpoint
-        d.expect('g1f', '14000000')
+        conn.expect('g1f', '14000000')
 
         # Read s0, which should be 5
-        d.expect('g00', '05000000')
+        conn.expect('g00', '05000000')
 
 
-@test
-def gdb_breakpoint_errors(name):
-    hexfile = build_program(['count.S'], image_type='raw')
-    with EmulatorTarget(hexfile) as p, DebugConnection() as d:
+@test_harness.test
+def gdb_breakpoint_errors(_):
+    hexfile = test_harness.build_program(['count.S'], image_type='raw')
+    with EmulatorTarget(hexfile), DebugConnection() as conn:
         # Set invalid breakpoint (memory out of range)
-        d.expect('Z0,20000000', '')
+        conn.expect('Z0,20000000', '')
 
         # Set invalid breakpoint (unaligned)
-        d.expect('Z0,00000003', '')
+        conn.expect('Z0,00000003', '')
 
         # Set a valid breakpoint, then try to set the same address again
-        d.expect('Z0,00000008', 'OK')
-        d.expect('Z0,00000008', '')
+        conn.expect('Z0,00000008', 'OK')
+        conn.expect('Z0,00000008', '')
 
         # Remove invalid breakpoint (doesn't exist)
-        d.expect('z0,00000004', '')
+        conn.expect('z0,00000004', '')
 
 
-@test
-def gdb_single_step(name):
-    hexfile = build_program(['count.S'], image_type='raw')
-    with EmulatorTarget(hexfile) as p, DebugConnection() as d:
+@test_harness.test
+def gdb_single_step(_):
+    hexfile = test_harness.build_program(['count.S'], image_type='raw')
+    with EmulatorTarget(hexfile), DebugConnection() as conn:
         # Read PC register
-        d.expect('g1f', '00000000')
+        conn.expect('g1f', '00000000')
 
         # Single step
-        d.expect('S', 'S05')
+        conn.expect('S', 'S05')
 
         # Read PC register
-        d.expect('g1f', '04000000')
+        conn.expect('g1f', '04000000')
 
         # Read s0
-        d.expect('g00', '01000000')
+        conn.expect('g00', '01000000')
 
         # Single step (note here I use the lowercase version)
-        d.expect('s', 'S05')
+        conn.expect('s', 'S05')
 
         # Read PC register
-        d.expect('g1f', '08000000')
+        conn.expect('g1f', '08000000')
 
         # Read s0
-        d.expect('g00', '02000000')
+        conn.expect('g00', '02000000')
 
 
-@test
-def gdb_single_step_breakpoint(name):
+@test_harness.test
+def gdb_single_step_breakpoint(_):
     """
     Ensure that if you single step through a breakpoint, it doesn't
     trigger and get stuck
     """
-    hexfile = build_program(['count.S'], image_type='raw')
-    with EmulatorTarget(hexfile) as p, DebugConnection() as d:
+    hexfile = test_harness.build_program(['count.S'], image_type='raw')
+    with EmulatorTarget(hexfile), DebugConnection() as conn:
         # Set breakpoint at second instruction (address 0x8)
-        d.expect('Z0,00000004', 'OK')
+        conn.expect('Z0,00000004', 'OK')
 
         # Single step over first instruction
-        d.expect('S', 'S05')
+        conn.expect('S', 'S05')
 
         # Single step. This one has a breakpoint, but we won't
         # stop at it.
-        d.expect('S', 'S05')
+        conn.expect('S', 'S05')
 
         # Read PC register
-        d.expect('g1f', '08000000')
+        conn.expect('g1f', '08000000')
 
         # Read s0
-        d.expect('g00', '02000000')
+        conn.expect('g00', '02000000')
 
 
-@test
-def gdb_read_write_memory(name):
-    hexfile = build_program(['count.S'], image_type='raw')
-    with EmulatorTarget(hexfile) as p, DebugConnection() as d:
+@test_harness.test
+def gdb_read_write_memory(_):
+    hexfile = test_harness.build_program(['count.S'], image_type='raw')
+    with EmulatorTarget(hexfile), DebugConnection() as conn:
         # Read program code at address 0. This should match values
         # in count.hex
-        d.expect('m0,10', '0004800700088007000c800700108007')
+        conn.expect('m0,10', '0004800700088007000c800700108007')
 
         # (address, data)
         tests = [
@@ -283,36 +290,36 @@ def gdb_read_write_memory(name):
 
         # Write memory
         for addr, data in tests:
-            d.expect('M' + hex(addr)[2:] + ',' +
-                     hex(int(len(data) / 2))[2:] + ':' + data, 'OK')
+            conn.expect('M' + hex(addr)[2:] + ',' +
+                        hex(int(len(data) / 2))[2:] + ':' + data, 'OK')
 
         # Read and verify
         for addr, data in tests:
-            d.expect('m' + hex(addr)[2:] + ',' +
-                     hex(int(len(data) / 2))[2:], data)
+            conn.expect('m' + hex(addr)[2:] + ',' +
+                        hex(int(len(data) / 2))[2:], data)
 
         # Try to write a bad address (out of range)
         # Doesn't return an error, test just ensures it
         # doesn't crash
-        d.expect('M10000000,4,12345678', 'OK')
+        conn.expect('M10000000,4,12345678', 'OK')
 
         # Try to read a bad address (out of range)
         # As above, doesn't return error (returns 0xff...),
         # but ensure it doesn't crash.
-        d.expect('m10000000,4', 'ffffffff')
+        conn.expect('m10000000,4', 'ffffffff')
 
 
-@test
-def gdb_read_write_register(name):
-    hexfile = build_program(['register_values.S'])
-    with EmulatorTarget(hexfile) as p, DebugConnection() as d:
+@test_harness.test
+def gdb_read_write_register(_):
+    hexfile = test_harness.build_program(['register_values.S'])
+    with EmulatorTarget(hexfile), DebugConnection() as conn:
         # Run code to load registers
-        d.expect('C', 'S05')
+        conn.expect('C', 'S05')
 
         # Check values set by program (remote GDB returns in swapped byte
         # order...)
-        d.expect('g1', '7d7f3e85')
-        d.expect('g20', 'f13403ef9d08309993f7819954ae4b3f7aeaa28f538fecbd9536f59c6d7251269525ee70d26e8d34f48912639c86ae5dba426c83aa8455e1e2dbba4b41a4f321')
+        conn.expect('g1', '7d7f3e85')
+        conn.expect('g20', 'f13403ef9d08309993f7819954ae4b3f7aeaa28f538fecbd9536f59c6d7251269525ee70d26e8d34f48912639c86ae5dba426c83aa8455e1e2dbba4b41a4f321')
 
         tests = [
             (0, 'd3839b18'),
@@ -324,57 +331,57 @@ def gdb_read_write_register(name):
         ]
 
         for reg, value in tests:
-            d.expect('G' + hex(reg)[2:] + ',' + value, 'OK')
+            conn.expect('G' + hex(reg)[2:] + ',' + value, 'OK')
 
         for reg, value in tests:
-            d.expect('g' + hex(reg)[2:], value)
+            conn.expect('g' + hex(reg)[2:], value)
 
         # Read invalid register index
-        d.expect('g40', '')
+        conn.expect('g40', '')
 
         # Write invalid register index
-        d.expect('G40,12345678', '')
+        conn.expect('G40,12345678', '')
 
 
-@test
-def gdb_register_info(name):
-    hexfile = build_program(['count.S'], image_type='raw')
-    with EmulatorTarget(hexfile) as p, DebugConnection() as d:
+@test_harness.test
+def gdb_register_info(_):
+    hexfile = test_harness.build_program(['count.S'], image_type='raw')
+    with EmulatorTarget(hexfile), DebugConnection() as conn:
         # Scalar registers
         for idx in range(27):
             regid = str(idx + 1)
-            d.expect('qRegisterInfo' + hex(idx + 1)[2:], 'name:s' + regid +
-                     ';bitsize:32;encoding:uint;format:hex;'
-                     'set:General Purpose Scalar Registers;gcc:' + regid +
-                     ';dwarf:' + regid + ';')
+            conn.expect('qRegisterInfo' + hex(idx + 1)[2:], 'name:s' + regid +
+                        ';bitsize:32;encoding:uint;format:hex;'
+                        'set:General Purpose Scalar Registers;gcc:' + regid +
+                        ';dwarf:' + regid + ';')
 
         # These registers (sp, fp, ra, pc) are special and have additional
         # information.
         names = ['fp', 'sp', 'ra', 'pc']
         for idx, name in zip(range(27, 32), names):
             regid = str(idx + 1)
-            d.expect('qRegisterInfo' + hex(idx + 1)[2:], 'name:s' + regid +
-                     ';bitsize:32;encoding:uint;format:hex;'
-                     'set:General Purpose Scalar Registers;gcc:' + regid +
-                     ';dwarf:' + regid + ';generic:' + name + ';')
+            conn.expect('qRegisterInfo' + hex(idx + 1)[2:], 'name:s' + regid +
+                        ';bitsize:32;encoding:uint;format:hex;'
+                        'set:General Purpose Scalar Registers;gcc:' + regid +
+                        ';dwarf:' + regid + ';generic:' + name + ';')
 
         # Vector registers
         for idx in range(32, 63):
             regid = str(idx + 1)
-            d.expect('qRegisterInfo' + hex(idx + 1)[2:], 'name:v' + str(idx - 31) +
-                      ';bitsize:512;encoding:uint;format:vector-uint32;'
-                      'set:General Purpose Vector Registers;gcc:' + regid +
-                      ';dwarf:' + regid + ';')
+            conn.expect('qRegisterInfo' + hex(idx + 1)[2:], 'name:v' + str(idx - 31) +
+                        ';bitsize:512;encoding:uint;format:vector-uint32;'
+                        'set:General Purpose Vector Registers;gcc:' + regid +
+                        ';dwarf:' + regid + ';')
 
-        d.expect('qRegisterInfo64', '')
+        conn.expect('qRegisterInfo64', '')
 
 
-@test
-def gdb_select_thread(name):
-    hexfile = build_program(['multithreaded.S'], image_type='raw')
-    with EmulatorTarget(hexfile, num_cores=2) as p, DebugConnection() as d:
+@test_harness.test
+def gdb_select_thread(_):
+    hexfile = test_harness.build_program(['multithreaded.S'], image_type='raw')
+    with EmulatorTarget(hexfile, num_cores=2), DebugConnection() as conn:
         # Read thread ID
-        d.expect('qC', 'QC01')
+        conn.expect('qC', 'QC01')
 
         # Each line is one thread
         tests = [
@@ -391,16 +398,17 @@ def gdb_select_thread(name):
         # Step all threads through initialization code (5 instructions)
         for thid in range(len(tests)):
             # Switch to thread
-            d.expect('Hg' + str(thid + 1), 'OK')
+            conn.expect('Hg' + str(thid + 1), 'OK')
 
             # Read thread ID
-            d.expect('qC', 'QC0' + str(thid + 1))
+            conn.expect('qC', 'QC0' + str(thid + 1))
 
             for index in range(5):
-                d.expect('S', 'S05')
+                conn.expect('S', 'S05')
 
                 # Read PC register
-                d.expect('g1f', '{:08x}'.format(endian_swap((index + 1) * 4)))
+                conn.expect('g1f', '{:08x}'.format(
+                    test_harness.endian_swap((index + 1) * 4)))
 
         # Now all threads are at the same instruction:
         # 00000014 move s0, 1
@@ -408,84 +416,86 @@ def gdb_select_thread(name):
         # Step each thread independently some number of steps and
         # write a value to register 1
         for index, (num_steps, regval) in enumerate(tests):
-            d.expect('Hg' + str(index + 1), 'OK')  # Switch to thread
-            for i in range(num_steps):
-                d.expect('S', 'S05')
+            conn.expect('Hg' + str(index + 1), 'OK')  # Switch to thread
+            for _ in range(num_steps):
+                conn.expect('S', 'S05')
 
-            d.expect('G01,{:08x}'.format(regval), 'OK')
+            conn.expect('G01,{:08x}'.format(regval), 'OK')
 
         # Read back PC and register values
         for index, (num_steps, regval) in enumerate(tests):
-            d.expect('Hg' + str(index + 1), 'OK')   # Switch to thread
-            d.expect('g1f', '{:08x}'.format(endian_swap(0x14 + num_steps * 4)))
-            d.expect('g01', '{:08x}'.format(regval))
+            conn.expect('Hg' + str(index + 1), 'OK')   # Switch to thread
+            conn.expect('g1f', '{:08x}'.format(
+                test_harness.endian_swap(0x14 + num_steps * 4)))
+            conn.expect('g01', '{:08x}'.format(regval))
 
         # Try to switch to an invalid thread ID
-        d.expect('Hgfe', '')
+        conn.expect('Hgfe', '')
 
         # Ensure still on thread 8
-        d.expect('qC', 'QC08')
+        conn.expect('qC', 'QC08')
 
 
-@test
-def gdb_thread_info(name):
+@test_harness.test
+def gdb_thread_info(_):
     # Run with one core, four threads
-    hexfile = build_program(['count.S'], image_type='raw')
-    with EmulatorTarget(hexfile) as p, DebugConnection() as d:
-        d.expect('qfThreadInfo', 'm1,2,3,4')
+    hexfile = test_harness.build_program(['count.S'], image_type='raw')
+    with EmulatorTarget(hexfile), DebugConnection() as conn:
+        conn.expect('qfThreadInfo', 'm1,2,3,4')
 
     # Run with two cores, eight threads
-    with EmulatorTarget(hexfile, num_cores=2) as p, DebugConnection() as d:
-        d.expect('qfThreadInfo', 'm1,2,3,4,5,6,7,8')
+    with EmulatorTarget(hexfile, num_cores=2), DebugConnection() as conn:
+        conn.expect('qfThreadInfo', 'm1,2,3,4,5,6,7,8')
 
 
-@test
-def gdb_invalid_command(name):
-    hexfile = build_program(['count.S'], image_type='raw')
-    with EmulatorTarget(hexfile) as p, DebugConnection() as d:
-        # As far as I know, this is not a valid command...
+@test_harness.test
+def gdb_invalid_command(_):
+    hexfile = test_harness.build_program(['count.S'], image_type='raw')
+    with EmulatorTarget(hexfile), DebugConnection() as conn:
+        # As far as I know, this is not a valid commanconn...
         # An error response returns nothing in the body
-        d.expect('@', '')
+        conn.expect('@', '')
 
 
-@test
-def gdb_queries(name):
+@test_harness.test
+def gdb_queries(_):
     """Miscellaneous query commands not covered in other tests"""
 
-    hexfile = build_program(['count.S'], image_type='raw')
-    with EmulatorTarget(hexfile) as p, DebugConnection() as d:
-        d.expect('qLaunchSuccess', 'OK')
-        d.expect('qHostInfo', 'triple:nyuzi;endian:little;ptrsize:4')
-        d.expect('qProcessInfo', 'pid:1')
-        d.expect('qsThreadInfo', 'l')   # No active threads
-        d.expect('qThreadStopInfo', 'S00')
-        d.expect('qC', 'QC01')
+    hexfile = test_harness.build_program(['count.S'], image_type='raw')
+    with EmulatorTarget(hexfile), DebugConnection() as conn:
+        conn.expect('qLaunchSuccess', 'OK')
+        conn.expect('qHostInfo', 'triple:nyuzi;endian:little;ptrsize:4')
+        conn.expect('qProcessInfo', 'pid:1')
+        conn.expect('qsThreadInfo', 'l')   # No active threads
+        conn.expect('qThreadStopInfo', 'S00')
+        conn.expect('qC', 'QC01')
 
         # Should be invalid
-        d.expect('qZ', '')
+        conn.expect('qZ', '')
 
 
-@test
-def gdb_vcont(name):
-    hexfile = build_program(['count.S'], image_type='raw')
-    with EmulatorTarget(hexfile) as p, DebugConnection() as d:
+@test_harness.test
+def gdb_vcont(_):
+    hexfile = test_harness.build_program(['count.S'], image_type='raw')
+    with EmulatorTarget(hexfile), DebugConnection() as conn:
         # Set breakpoint
-        d.expect('Z0,00000010', 'OK')
+        conn.expect('Z0,00000010', 'OK')
 
         # Step
-        d.expect('vCont;s:0001', 'S05')
-        d.expect('g1f', '04000000')
+        conn.expect('vCont;s:0001', 'S05')
+        conn.expect('g1f', '04000000')
 
         # Continue
-        d.expect('vCont;c', 'S05')
-        d.expect('g1f', '10000000')
+        conn.expect('vCont;c', 'S05')
+        conn.expect('g1f', '10000000')
 
 
-@test
-def gdb_crash(name):
-    hexfile = build_program(['crash.S'], image_type='raw')
-    with EmulatorTarget(hexfile) as p, DebugConnection() as d:
-        d.expect('c', 'S05')
-        d.expect('g1f', '15000000')
+@test_harness.test
+def gdb_crash(_):
+    hexfile = test_harness.build_program(['crash.S'], image_type='raw')
+    with EmulatorTarget(hexfile), DebugConnection() as conn:
+        conn.expect('c', 'S05')
+        conn.expect('g1f', '15000000')
 
-execute_tests()
+
+test_harness.execute_tests()

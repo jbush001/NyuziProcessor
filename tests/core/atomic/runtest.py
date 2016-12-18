@@ -15,34 +15,37 @@
 # limitations under the License.
 #
 
-import sys
-import struct
+"""
+Test load_sync/store_sync instructions by having four threads update
+variables round-robin.
+"""
 
-# Test load_sync/store_sync instructions by having four threads update
-# variables round-robin.
+import struct
+import sys
 
 sys.path.insert(0, '../..')
-from test_harness import *
+import test_harness
 
 
-@test
-def atomic(name):
-    build_program(['atomic.S'])
-    run_program(
+@test_harness.test
+def atomic(_):
+    test_harness.build_program(['atomic.S'])
+    test_harness.run_program(
         environment='verilator',
         dump_file='obj/vmem.bin',
         dump_base=0x100000,
         dump_length=0x800,
         flush_l2=True)
 
-    with open('obj/vmem.bin', 'rb') as f:
-        for index in range(512):
-            val = f.read(4)
+    with open('obj/vmem.bin', 'rb') as memfile:
+        for _ in range(512):
+            val = memfile.read(4)
             if len(val) < 4:
-                raise TestException('output file is truncated')
+                raise test_harness.TestException('output file is truncated')
 
             num_val, = struct.unpack('<L', val)
             if num_val != 10:
-                raise TestException('FAIL: mismatch: ' + str(num_val))
+                raise test_harness.TestException(
+                    'FAIL: mismatch: ' + str(num_val))
 
-execute_tests()
+test_harness.execute_tests()

@@ -15,15 +15,13 @@
 # limitations under the License.
 #
 
-import sys
-import subprocess
-import re
 import os
-from os import path
+import subprocess
+import sys
 import time
 
 sys.path.insert(0, '..')
-from test_harness import *
+import test_harness
 
 
 VERILATOR_MEM_DUMP = 'obj/vmem.bin'
@@ -59,7 +57,7 @@ def run_cosimulation_test(source_file):
     global emulator_args
     global verilator_args
 
-    hexfile = build_program([source_file])
+    hexfile = test_harness.build_program([source_file])
     p1 = subprocess.Popen(
         verilator_args + ['+bin=' + hexfile], stdout=subprocess.PIPE)
     p2 = subprocess.Popen(
@@ -79,13 +77,13 @@ def run_cosimulation_test(source_file):
     time.sleep(1)  # Give verilator a chance to clean up
     p1.kill() 	# Make sure verilator has exited
     if p2.returncode:
-        raise TestException(
+        raise test_harness.TestException(
             'FAIL: cosimulation mismatch\n' + output)
 
-    assert_files_equal(VERILATOR_MEM_DUMP, EMULATOR_MEM_DUMP,
-                       'final memory contents to not match')
+    test_harness.assert_files_equal(VERILATOR_MEM_DUMP, EMULATOR_MEM_DUMP,
+                                    'final memory contents to not match')
 
-register_tests(run_cosimulation_test,
-               find_files(('.s', '.S')))
+test_harness.register_tests(run_cosimulation_test,
+                            test_harness.find_files(('.s', '.S')))
 
-execute_tests()
+test_harness.execute_tests()

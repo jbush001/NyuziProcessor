@@ -18,21 +18,19 @@
 import sys
 
 sys.path.insert(0, '../..')
-from test_harness import *
+import test_harness
 
 
-@test_all_envs
+@test_harness.test_all_envs
 def kernel_ucf(name):
     underscore = name.rfind('_')
     if underscore == -1:
-        raise TestException(
+        raise test_harness.TestException(
             'Internal error: unknown environment')
 
     environment = name[underscore + 1:]
-    basename = name[0:underscore]
+    test_harness.build_program(['user_copy_fault.c'], image_type='user')
+    result = test_harness.run_kernel(environment=environment, timeout=120)
+    test_harness.check_result('user_copy_fault.c', result)
 
-    build_program(['user_copy_fault.c'], image_type='user')
-    result = run_kernel(environment=environment, timeout=120)
-    check_result('user_copy_fault.c', result)
-
-execute_tests()
+test_harness.execute_tests()

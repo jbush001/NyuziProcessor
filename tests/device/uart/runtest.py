@@ -18,15 +18,15 @@
 import sys
 
 sys.path.insert(0, '../..')
-from test_harness import *
+import test_harness
 
 
-@test
-def uart(name):
-    build_program(['uart.c'])
-    result = run_program(environment='verilator')
+@test_harness.test
+def uart(_):
+    test_harness.build_program(['uart.c'])
+    result = test_harness.run_program(environment='verilator')
     if 'PASS' not in result:
-        raise TestException(
+        raise test_harness.TestException(
             'test did not indicate pass\n' + result)
 
-execute_tests()
+test_harness.execute_tests()
