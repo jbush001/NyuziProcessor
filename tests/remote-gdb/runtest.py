@@ -344,7 +344,7 @@ def gdb_register_info(name):
         for idx in range(27):
             regid = str(idx + 1)
             d.expect('qRegisterInfo' + hex(idx + 1)[2:], 'name:s' + regid +
-                     ';bitsize:32;encoding:uint;format:hex;' +
+                     ';bitsize:32;encoding:uint;format:hex;'
                      'set:General Purpose Scalar Registers;gcc:' + regid +
                      ';dwarf:' + regid + ';')
 
@@ -354,7 +354,7 @@ def gdb_register_info(name):
         for idx, name in zip(range(27, 32), names):
             regid = str(idx + 1)
             d.expect('qRegisterInfo' + hex(idx + 1)[2:], 'name:s' + regid +
-                     ';bitsize:32;encoding:uint;format:hex;' +
+                     ';bitsize:32;encoding:uint;format:hex;'
                      'set:General Purpose Scalar Registers;gcc:' + regid +
                      ';dwarf:' + regid + ';generic:' + name + ';')
 
@@ -362,7 +362,7 @@ def gdb_register_info(name):
         for idx in range(32, 63):
             regid = str(idx + 1)
             d.expect('qRegisterInfo' + hex(idx + 1)[2:], 'name:v' + str(idx - 31) +
-                      ';bitsize:512;encoding:uint;format:vector-uint32;' +
+                      ';bitsize:512;encoding:uint;format:vector-uint32;'
                       'set:General Purpose Vector Registers;gcc:' + regid +
                       ';dwarf:' + regid + ';')
 
@@ -400,7 +400,7 @@ def gdb_select_thread(name):
                 d.expect('S', 'S05')
 
                 # Read PC register
-                d.expect('g1f', '%08x' % endian_swap((index + 1) * 4))
+                d.expect('g1f', '{:08x}'.format(endian_swap((index + 1) * 4)))
 
         # Now all threads are at the same instruction:
         # 00000014 move s0, 1
@@ -412,13 +412,13 @@ def gdb_select_thread(name):
             for i in range(num_steps):
                 d.expect('S', 'S05')
 
-            d.expect('G01,%08x' % regval, 'OK')
+            d.expect('G01,{:08x}'.format(regval), 'OK')
 
         # Read back PC and register values
         for index, (num_steps, regval) in enumerate(tests):
             d.expect('Hg' + str(index + 1), 'OK')   # Switch to thread
-            d.expect('g1f', '%08x' % endian_swap(0x14 + num_steps * 4))
-            d.expect('g01', '%08x' % regval)
+            d.expect('g1f', '{:08x}'.format(endian_swap(0x14 + num_steps * 4)))
+            d.expect('g01', '{:08x}'.format(regval))
 
         # Try to switch to an invalid thread ID
         d.expect('Hgfe', '')

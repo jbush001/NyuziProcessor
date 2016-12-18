@@ -29,6 +29,5 @@ def run_emulator_test(source_file):
     result = run_program(environment='emulator')
     check_result(source_file, result)
 
-test_list = [fname for fname in find_files(('.c', '.cpp'))]
-register_tests(run_emulator_test, test_list)
+register_tests(run_emulator_test, ['compiler-rt.c'])
 execute_tests()

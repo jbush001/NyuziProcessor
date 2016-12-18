@@ -106,15 +106,15 @@ def generate_binary_arith(file):
     rega = generate_arith_reg()
     regb = generate_arith_reg()
     maskreg = generate_arith_reg()
-    opstr = '\t\t%s%s %c%d, ' % (mnemonic, suffix, typed, dest)
+    opstr = '\t\t{}{} {}{}, '.format(mnemonic, suffix, typed, dest)
     if suffix != '':
-        opstr += 's%d, ' % maskreg  # Add mask register
+        opstr += 's{}, '.format(maskreg)  # Add mask register
 
-    opstr += typea + str(rega) + ', '
+    opstr += '{}{}, '.format(typea, rega)
     if typeb == 'i':
         opstr += str(random.randint(-0x7f, 0x7f))  # Immediate value
     else:
-        opstr += typeb + str(regb)
+        opstr += '{}{}'.format(typeb, regb)
 
     file.write(opstr + '\n')
 
@@ -132,12 +132,12 @@ def generate_unary_arith(file):
     fmt = random.randint(0, 3)
     if fmt == 0:
         maskreg = generate_arith_reg()
-        file.write('\t\t%s_mask  v%d, s%d, v%d\n' %
+        file.write('\t\t{}_mask  v{}, s{}, v{}\n'.format
                    (mnemonic, dest, maskreg, rega))
     elif fmt == 1:
-        file.write('\t\t%s v%d, v%d\n' % (mnemonic, dest, rega))
+        file.write('\t\t{} v{}, v{}\n'.format(mnemonic, dest, rega))
     else:
-        file.write('\t\t%s s%d, s%d\n' % (mnemonic, dest, rega))
+        file.write('\t\t{} s{}, s{}\n'.format(mnemonic, dest, rega))
 
 COMPARE_FORMS = [
     ('v', 'v'),
@@ -170,11 +170,11 @@ def generate_compare(file):
     rega = generate_arith_reg()
     regb = generate_arith_reg()
     opsuffix = random.choice(COMPARE_OPS)
-    opstr = '\t\tcmp%s s%d, %c%d, ' % (opsuffix, dest, typea, rega)
+    opstr = '\t\tcmp{} s{}, {}{}, '.format(opsuffix, dest, typea, rega)
     if random.randint(0, 1) == 0 and not opsuffix.endswith('_f'):
         opstr += str(random.randint(-0x1ff, 0x1ff))  # Immediate value
     else:
-        opstr += typeb + str(regb)
+        opstr += '{}{}'.format(typeb, regb)
 
     file.write(opstr + '\n')
 
@@ -204,7 +204,7 @@ def generate_memory_access(file):
     if op_type == 0:
         # Block vector
         offset = random.randint(0, 16) * 64
-        opstr += '_v v%d, %d(s%d)' % (generate_arith_reg(), offset, ptr_reg)
+        opstr += '_v v{}, {}(s{})'.format(generate_arith_reg(), offset, ptr_reg)
     elif op_type == 1:
         # Scatter/gather
         offset = random.randint(0, 16) * 4
@@ -217,11 +217,11 @@ def generate_memory_access(file):
         if mask_type == 1:
             opstr += '_mask'
 
-        opstr += ' v%d' % generate_arith_reg()
+        opstr += ' v{}'.format(generate_arith_reg())
         if mask_type:
-            opstr += ', s%d' % generate_arith_reg()
+            opstr += ', s{}'.format(generate_arith_reg())
 
-        opstr += ', %d(v%d)' % (offset, ptr_reg)
+        opstr += ', {}(v{})'.format(offset, ptr_reg)
     else:
         # Scalar
         if opstr == 'load':
@@ -236,7 +236,7 @@ def generate_memory_access(file):
             opstr = 'membar\n\t\t' + opstr
 
         offset = random.randint(0, 16) * align
-        opstr += '%s s%d, %d(s%d)' % (suffix,
+        opstr += '{} s{}, {}(s{})'.format(suffix,
                                       generate_arith_reg(), offset, ptr_reg)
 
     file.write('\t\t' + opstr + '\n')
@@ -244,10 +244,10 @@ def generate_memory_access(file):
 
 def generate_device_io(file):
     if random.randint(0, 1):
-        file.write('\t\tload_32 s%d, %d(s9)\n' %
-                   (generate_arith_reg(), random.randint(0, 1) * 4))
+        file.write('\t\tload_32 s{}, {}(s9)\n'.format(
+                   generate_arith_reg(), random.randint(0, 1) * 4))
     else:
-        file.write('\t\tstore_32 s%d, (s9)\n' % generate_arith_reg())
+        file.write('\t\tstore_32 s{}, (s9)\n'.format(generate_arith_reg()))
 
 BRANCH_TYPES = [
     ('bfalse', True),
@@ -263,17 +263,17 @@ def generate_branch(file):
     # Branch
     branch_type, is_cond = random.choice(BRANCH_TYPES)
     if is_cond:
-        file.write('\t\t%s s%d, %df\n' %
-                   (branch_type, generate_arith_reg(), random.randint(1, 6)))
+        file.write('\t\t{} s{}, {}f\n'.format(
+                   branch_type, generate_arith_reg(), random.randint(1, 6)))
     else:
-        file.write('\t\t%s %df\n' % (branch_type, random.randint(1, 6)))
+        file.write('\t\t{} {}f\n'.format(branch_type, random.randint(1, 6)))
 
 
 def generate_computed_pointer(file):
     if random.randint(0, 1) == 0:
-        file.write('\t\tadd_i s1, s2, %d\n' % (random.randint(0, 16) * 64))
+        file.write('\t\tadd_i s1, s2, {}\n'.format(random.randint(0, 16) * 64))
     else:
-        file.write('\t\tadd_i v1, v2, %d\n' % (random.randint(0, 16) * 64))
+        file.write('\t\tadd_i v1, v2, {}\n'.format(random.randint(0, 16) * 64))
 
 CACHE_CONTROL_INSTRS = [
     'dflush s1',
@@ -283,7 +283,7 @@ CACHE_CONTROL_INSTRS = [
 
 
 def generate_cache_control(file):
-    file.write('\t\t%s\n' % random.choice(CACHE_CONTROL_INSTRS))
+    file.write('\t\t{}\n'.format(random.choice(CACHE_CONTROL_INSTRS)))
 
 generate_funcs = [
     (0.1, generate_computed_pointer),
@@ -400,7 +400,7 @@ branch_addrs:   .long ''')
             if i:
                 file.write(', ')
 
-            file.write('start_thread' + str(i))
+            file.write('start_thread{}'.format(i))
 
         file.write('''
 fill_length:    .long 0x1000 / 4
@@ -410,10 +410,10 @@ device_ptr:     .long 0xffff0004
 ''')
 
         for thread in range(num_threads):
-            file.write('\nstart_thread%d:\n' % thread)
+            file.write('\nstart_thread{}:\n'.format(thread))
             label_idx = 1
             for x in range(num_instructions):
-                file.write(str(label_idx + 1) + ': ')
+                file.write('{}:'.format(label_idx + 1))
                 label_idx = (label_idx + 1) % 6
                 inst_type = random.random()
                 cumul_prob = 0.0
@@ -456,7 +456,7 @@ if (num_instructions + 120) * num_threads * 4 > 0x800000:
 
 if args['m']:
     for x in range(args['m']):
-        filename = 'random%04d.s' % x
+        filename = 'random{:04d}.s'.format(x)
         print('generating ' + filename)
         generate_test(filename, num_instructions,
                       num_threads, enable_interrupts)

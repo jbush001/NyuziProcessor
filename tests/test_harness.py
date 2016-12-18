@@ -296,8 +296,8 @@ def assert_files_equal(file1, file2, error_msg='file mismatch'):
     block_offset = 0
     with open(file1, 'rb') as fp1, open(file2, 'rb') as fp2:
         while True:
-            block1 = fp1.read(BUFSIZE)
-            block2 = fp2.read(BUFSIZE)
+            block1 = bytearray(fp1.read(BUFSIZE))
+            block2 = bytearray(fp2.read(BUFSIZE))
             if len(block1) < len(block2):
                 raise TestException(error_msg + ': file1 shorter than file2')
             elif len(block1) > len(block2):
@@ -309,16 +309,16 @@ def assert_files_equal(file1, file2, error_msg='file mismatch'):
                         # Show the difference
                         exception_text = error_msg + ':\n'
                         rounded_offset = i & ~15
-                        exception_text += '%08x ' % (block_offset +
+                        exception_text += '{:08x} '.format(block_offset +
                                                      rounded_offset)
                         for x in range(16):
-                            exception_text += '%02x' % ord(
+                            exception_text += '{:02x}'.format(
                                 block1[rounded_offset + x])
 
-                        exception_text += '\n%08x ' % (
+                        exception_text += '\n{:08x} '.format(
                             block_offset + rounded_offset)
                         for x in range(16):
-                            exception_text += '%02x' % ord(
+                            exception_text += '{:02x}'.format(
                                 block2[rounded_offset + x])
 
                         exception_text += '\n         '
