@@ -41,6 +41,11 @@ OWNER_COPROCESSOR = 1
 
 
 def sharedmem_transact(memory, value):
+    """
+    Send a request through shared memory to the emulated process and read
+    the response from it.
+    """
+
     write_shared_memory(memory, VALUE_ADDR, value)
     write_shared_memory(memory, OWNER_ADDR, OWNER_COPROCESSOR)
     starttime = time.time()
@@ -53,13 +58,10 @@ def sharedmem_transact(memory, value):
 
     return read_shared_memory(memory, VALUE_ADDR)
 
-#
-# This test is explained in coprocessor.c
-#
-
-
 @test_harness.test
 def shared_memory(_):
+    """See coprocessor.c for an explanation of this test"""
+
     test_harness.build_program(['coprocessor.c'])
 
     # Start the emulator

@@ -26,7 +26,14 @@ import test_harness
 DEBUG = False
 
 
-class LLDBConnection(object):
+class EmulatorProcess(object):
+
+    """
+    This handles spawning the emulator process and allows communication
+    with it via stdin and stdout. It has the __enter__ and __exit__ methods
+    allowing it to be used in the 'with' construct so it will automatically
+    be torn down when the test is done.
+    """
 
     def __init__(self, hexfile):
         self.hexfile = hexfile
@@ -117,6 +124,12 @@ AT_RE = re.compile(' at (?P<filename>[a-z_A-Z][a-z\\._A-Z]+):(?P<line>[0-9]+)')
 
 
 def parse_stack_crawl(response):
+    """
+    Given text response from the debugger containing a stack crawl, this will
+    return a list of tuples where each entry represents the function name,
+    filename, and line number of the call site.
+    """
+
     stack_info = []
     for line in response.split('\n'):
         frame_match = FRAME_RE.search(line)
@@ -134,9 +147,11 @@ def parse_stack_crawl(response):
 
 @test_harness.test
 def lldb(_):
+    """This mainly validates that LLDB is reading symbols correctly."""
+
     hexfile = test_harness.build_program(
         ['test_program.c'], opt_level='-O0', cflags=['-g'])
-    with LLDBConnection(hexfile) as conn:
+    with EmulatorProcess(hexfile) as conn:
         conn.send_command('file "obj/test.elf"')
         conn.send_command('gdb-remote 8000\n')
         response = conn.send_command(

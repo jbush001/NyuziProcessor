@@ -24,9 +24,15 @@ import test_harness
 
 @test_harness.test
 def filesystem(_):
+    '''
+    Filesystem tests. This creates a filesystem image with the test file fstest.txt
+    in it, the compiles the program fs.c to perform operations on it. The program
+    will print 'PASS' if it is successful.
+    '''
+
     test_harness.build_program(['fs.c'])
     subprocess.check_output(
-        ['../../bin/mkfs', 'obj/fsimage.bin', 'fstest.txt'], stderr=subprocess.STDOUT)
+        [test_harness.PROJECT_TOP + '/bin/mkfs', 'obj/fsimage.bin', 'fstest.txt'], stderr=subprocess.STDOUT)
     result = test_harness.run_program(environment='emulator',
                                       block_device='obj/fsimage.bin')
     if 'PASS' not in result:
