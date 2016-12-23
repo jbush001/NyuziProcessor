@@ -45,8 +45,6 @@ class EmulatorProcess(object):
         self.instr = None
 
     def __enter__(self):
-        global DEBUG
-
         emulator_args = [
             test_harness.BIN_DIR + 'emulator',
             '-m',

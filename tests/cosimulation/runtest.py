@@ -54,9 +54,6 @@ if verbose:
 
 
 def run_cosimulation_test(source_file):
-    global emulator_args
-    global verilator_args
-
     hexfile = test_harness.build_program([source_file])
     p1 = subprocess.Popen(
         verilator_args + ['+bin=' + hexfile], stdout=subprocess.PIPE)

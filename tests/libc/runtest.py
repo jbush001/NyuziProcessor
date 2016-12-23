@@ -32,7 +32,8 @@ def filesystem(_):
 
     test_harness.build_program(['fs.c'])
     subprocess.check_output(
-        [test_harness.PROJECT_TOP + '/bin/mkfs', 'obj/fsimage.bin', 'fstest.txt'], stderr=subprocess.STDOUT)
+        [test_harness.PROJECT_TOP + '/bin/mkfs', 'obj/fsimage.bin',
+         'fstest.txt'], stderr=subprocess.STDOUT)
     result = test_harness.run_program(environment='emulator',
                                       block_device='obj/fsimage.bin')
     if 'PASS' not in result:
@@ -45,7 +46,7 @@ def run_emulator_test(source_file):
     result = test_harness.run_program(environment='emulator')
     test_harness.check_result(source_file, result)
 
-# XXX hack: register all source files in this directory except for fs test,
+# hack: register all source files in this directory except for fs test,
 # which has special handling.
 test_list = [fname for fname in test_harness.find_files(
     ('.c', '.cpp')) if not fname.startswith('_')]

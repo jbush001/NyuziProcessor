@@ -423,24 +423,22 @@ def execute_tests():
             Nothing
     """
 
-    global registered_tests
-
     if len(sys.argv) > 1:
         # Filter test list based on command line requests
-        new_test_list = []
+        tests_to_run = []
         for requested in sys.argv[1:]:
             for func, param in registered_tests:
                 if param == requested:
-                    new_test_list += [(func, param)]
+                    tests_to_run += [(func, param)]
                     break
             else:
                 print('Unknown test ' + requested)
                 sys.exit(1)
-
-        registered_tests = new_test_list
+    else:
+        tests_to_run = registered_tests
 
     failing_tests = []
-    for func, param in registered_tests:
+    for func, param in tests_to_run:
         print(param + (' ' * (OUTPUT_ALIGN - len(param))), end='')
         sys.stdout.flush()
         try:
@@ -463,7 +461,7 @@ def execute_tests():
             print(output)
 
     print(str(len(failing_tests)) + '/' +
-          str(len(registered_tests)) + ' tests failed')
+          str(len(tests_to_run)) + ' tests failed')
     if failing_tests != []:
         sys.exit(1)
 

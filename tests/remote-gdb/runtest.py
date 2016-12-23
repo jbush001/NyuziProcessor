@@ -68,8 +68,6 @@ class DebugConnection(object):
         in a packet and add the checksum.
         """
 
-        global DEBUG
-
         if DEBUG:
             print('SEND: ' + body)
 
@@ -83,8 +81,6 @@ class DebugConnection(object):
         Wait for a full packet to be received from the peer and return
         just the body.
         """
-
-        global DEBUG
 
         while True:
             leader = self.sock.recv(1)
@@ -142,8 +138,6 @@ class EmulatorProcess(object):
         self.output = None
 
     def __enter__(self):
-        global DEBUG
-
         emulator_args = [
             test_harness.BIN_DIR + 'emulator',
             '-m',
@@ -162,7 +156,7 @@ class EmulatorProcess(object):
                                         stderr=subprocess.STDOUT)
         return self
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, *unused):
         self.process.kill()
         if self.output:
             self.output.close()
