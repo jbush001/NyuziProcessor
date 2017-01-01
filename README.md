@@ -10,7 +10,6 @@ This project also includes an LLVM-based C++ toolchain.
 **Documentation:** https://github.com/jbush001/NyuziProcessor/wiki<br/>
 **Mailing list:** https://groups.google.com/forum/#!forum/nyuzi-processor-dev<br/>
 **License:** Apache 2.0<br/>
-**Blog:** http://latchup.blogspot.com/<br/>
 
 # Getting Started
 
