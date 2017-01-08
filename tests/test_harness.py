@@ -39,12 +39,8 @@ HEX_FILE = OBJ_DIR + 'program.hex'
 
 
 class TestException(Exception):
-
     """This exception is raised for test failures"""
-
-    def __init__(self, output):
-        Exception.__init__(self)
-        self.output = output
+    pass
 
 
 def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags=None):
@@ -448,7 +444,7 @@ def execute_tests():
             sys.exit(1)
         except TestException as exc:
             print(COLOR_RED + 'FAIL' + COLOR_NONE)
-            failing_tests += [(param, exc.output)]
+            failing_tests += [(param, exc.args[0])]
         except Exception as exc:
             print(COLOR_RED + 'FAIL' + COLOR_NONE)
             failing_tests += [(param, 'Test threw exception:\n' +
