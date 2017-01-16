@@ -24,4 +24,4 @@ with open(sys.argv[1], 'rb') as f:
 		if not word:
 			break
 
-		print(binascii.hexlify(word))
+		print(binascii.hexlify(word).decode())
