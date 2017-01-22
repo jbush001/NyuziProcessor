@@ -45,14 +45,14 @@ module l1_l2_interface
     (input                                        clk,
     input                                         reset,
 
-    // To l2_cache
-    output logic                                  l2i_request_valid,
-    output l2req_packet_t                         l2i_request,
-
     // From l2_cache
     input                                         l2_ready,
     input                                         l2_response_valid,
     input l2rsp_packet_t                          l2_response,
+
+    // To l2_cache
+    output logic                                  l2i_request_valid,
+    output l2req_packet_t                         l2i_request,
 
     // To ifetch_tag_stage
     output                                        l2i_icache_lru_fill_en,
@@ -65,9 +65,13 @@ module l1_l2_interface
     // To instruction_decode_stage
     output thread_bitmap_t                        sq_sync_store_pending,
 
-
     // From ifetch_tag_stage
     input l1i_way_idx_t                           ift_fill_lru,
+
+    // From ifetch_data_stage
+    input logic                                   ifd_cache_miss,
+    input cache_line_index_t                      ifd_cache_miss_paddr,
+    input thread_idx_t                            ifd_cache_miss_thread_idx,
 
     // To ifetch_data_stage
     output logic                                  l2i_idata_update_en,
@@ -75,14 +79,14 @@ module l1_l2_interface
     output l1i_set_idx_t                          l2i_idata_update_set,
     output cache_line_data_t                      l2i_idata_update_data,
 
-    // From ifetch_data_stage
-    input logic                                   ifd_cache_miss,
-    input cache_line_index_t                      ifd_cache_miss_paddr,
-    input thread_idx_t                            ifd_cache_miss_thread_idx,
-
     // To thread_select_stage
     output thread_bitmap_t                        l2i_dcache_wake_bitmap,
     output thread_bitmap_t                        l2i_icache_wake_bitmap,
+
+    // From dcache_tag_stage
+    input logic                                   dt_snoop_valid[`L1D_WAYS],
+    input l1d_tag_t                               dt_snoop_tag[`L1D_WAYS],
+    input l1d_way_idx_t                           dt_fill_lru,
 
     // To dcache_tag_stage
     output logic                                  l2i_snoop_en,
@@ -93,17 +97,6 @@ module l1_l2_interface
     output logic                                  l2i_dtag_update_valid,
     output                                        l2i_dcache_lru_fill_en,
     output l1d_set_idx_t                          l2i_dcache_lru_fill_set,
-
-    // From dcache_tag_stage
-    input logic                                   dt_snoop_valid[`L1D_WAYS],
-    input l1d_tag_t                               dt_snoop_tag[`L1D_WAYS],
-    input l1d_way_idx_t                           dt_fill_lru,
-
-    // To dcache_data_stage
-    output logic                                  l2i_ddata_update_en,
-    output l1d_way_idx_t                          l2i_ddata_update_way,
-    output l1d_set_idx_t                          l2i_ddata_update_set,
-    output cache_line_data_t                      l2i_ddata_update_data,
 
     // From dcache_data_stage
     input                                         dd_cache_miss,
@@ -122,6 +115,12 @@ module l1_l2_interface
     input                                         dd_store_synchronized,
     input cache_line_index_t                      dd_store_bypass_addr,
     input thread_idx_t                            dd_store_bypass_thread_idx,
+
+    // To dcache_data_stage
+    output logic                                  l2i_ddata_update_en,
+    output l1d_way_idx_t                          l2i_ddata_update_way,
+    output l1d_set_idx_t                          l2i_ddata_update_set,
+    output cache_line_data_t                      l2i_ddata_update_data,
 
     // To writeback_stage
     output [`CACHE_LINE_BYTES - 1:0]              sq_store_bypass_mask,

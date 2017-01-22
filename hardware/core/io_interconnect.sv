@@ -24,8 +24,12 @@
 module io_interconnect(
     input                            clk,
     input                            reset,
+
+    // From core
     input [`NUM_CORES - 1:0]         ior_request_valid,
     input ioreq_packet_t             ior_request[`NUM_CORES],
+
+    // To core
     output logic                     ii_ready[`NUM_CORES],
     output logic                     ii_response_valid,
     output iorsp_packet_t            ii_response,

@@ -47,7 +47,11 @@ module dcache_tag_stage
     input thread_idx_t                          of_thread_idx,
     input subcycle_t                            of_subcycle,
 
-    // to dcache_data_stage
+    // From dcache_data_stage
+    input                                       dd_update_lru_en,
+    input l1d_way_idx_t                         dd_update_lru_way,
+
+    // To dcache_data_stage
     output logic                                dt_instruction_valid,
     output decoded_instruction_t                dt_instruction,
     output vector_lane_mask_t                   dt_mask_value,
@@ -62,10 +66,6 @@ module dcache_tag_stage
     output l1d_tag_t                            dt_tag[`L1D_WAYS],
     output logic                                dt_tlb_supervisor,
     output logic                                dt_tlb_present,
-
-    // from dcache_data_stage
-    input                                       dd_update_lru_en,
-    input l1d_way_idx_t                         dd_update_lru_way,
 
     // To ifetch_tag_stage
     output                                      dt_invalidate_tlb_en,
@@ -89,15 +89,15 @@ module dcache_tag_stage
     input                                       l2i_snoop_en,
     input l1d_set_idx_t                         l2i_snoop_set,
 
-    // From control_registers
-    input                                       cr_mmu_en[`THREADS_PER_CORE],
-    input logic                                 cr_supervisor_en[`THREADS_PER_CORE],
-    input [`ASID_WIDTH - 1:0]                   cr_current_asid[`THREADS_PER_CORE],
-
     // To l1_l2_interface
     output logic                                dt_snoop_valid[`L1D_WAYS],
     output l1d_tag_t                            dt_snoop_tag[`L1D_WAYS],
     output l1d_way_idx_t                        dt_fill_lru,
+
+    // From control_registers
+    input                                       cr_mmu_en[`THREADS_PER_CORE],
+    input logic                                 cr_supervisor_en[`THREADS_PER_CORE],
+    input [`ASID_WIDTH - 1:0]                   cr_current_asid[`THREADS_PER_CORE],
 
     // From writeback_stage
     input logic                                 wb_rollback_en,

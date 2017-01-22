@@ -39,7 +39,7 @@ module l2_axi_bus_interface(
 
     axi4_interface.master                  axi_bus,
 
-    // to l2_cache_arb_stage
+    // To l2_cache_arb_stage
     output logic                           l2bi_request_valid,
     output l2req_packet_t                  l2bi_request,
     output cache_line_data_t               l2bi_data_from_memory,

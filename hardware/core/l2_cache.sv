@@ -37,12 +37,20 @@
 module l2_cache(
     input                                 clk,
     input                                 reset,
+
+    // From l1_l2_interface
     input [`NUM_CORES - 1:0]              l2i_request_valid,
     input l2req_packet_t                  l2i_request[`NUM_CORES],
+
+    // To l1_l2_interface
     output                                l2_ready[`NUM_CORES],
     output logic                          l2_response_valid,
     output l2rsp_packet_t                 l2_response,
+
+    // External bus interface
     axi4_interface.master                 axi_bus,
+
+    // Performance events
     output logic[`L2_PERF_EVENTS - 1:0]   l2_perf_events);
 
     /*AUTOLOGIC*/

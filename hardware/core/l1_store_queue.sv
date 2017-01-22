@@ -51,6 +51,12 @@ module l1_store_queue(
     output cache_line_data_t               sq_store_bypass_data,
     output logic                           sq_store_sync_success,
 
+    // From l1_l2_interface
+    input                                  sq_dequeue_ack,
+    input                                  storebuf_l2_response_valid,
+    input l1_miss_entry_idx_t              storebuf_l2_response_idx,
+    input                                  storebuf_l2_sync_success,
+
     // To l1_l2_interface
     output logic                           sq_dequeue_ready,
     output cache_line_index_t              sq_dequeue_addr,
@@ -62,13 +68,7 @@ module l1_store_queue(
     output logic                           sq_dequeue_iinvalidate,
     output logic                           sq_dequeue_dinvalidate,
     output logic                           sq_rollback_en,
-    output thread_bitmap_t                 sq_wake_bitmap,
-
-    // From l1_l2_interface
-    input                                  sq_dequeue_ack,
-    input                                  storebuf_l2_response_valid,
-    input l1_miss_entry_idx_t              storebuf_l2_response_idx,
-    input                                  storebuf_l2_sync_success);
+    output thread_bitmap_t                 sq_wake_bitmap);
 
     struct packed {
         logic synchronized;

@@ -31,19 +31,23 @@ module core
     input thread_bitmap_t                  thread_en,
     input [NUM_INTERRUPTS - 1:0]           interrupt_req,
 
-    // L2 interface
+    // From l1_l2_interface
     input                                  l2_ready,
-    output                                 l2i_request_valid,
-    output l2req_packet_t                  l2i_request,
     input                                  l2_response_valid,
     input l2rsp_packet_t                   l2_response,
 
-    // Non-cacheable IO interface
-    output                                 ior_request_valid,
-    output ioreq_packet_t                  ior_request,
+    // To l1_l2_interface
+    output                                 l2i_request_valid,
+    output l2req_packet_t                  l2i_request,
+
+    // From io_request_queue
     input                                  ii_ready,
     input                                  ii_response_valid,
     input iorsp_packet_t                   ii_response,
+
+    // To io_request_queue
+    output                                 ior_request_valid,
+    output ioreq_packet_t                  ior_request,
 
     // Performance events
     output logic [`CORE_PERF_EVENTS - 1:0] core_perf_events);

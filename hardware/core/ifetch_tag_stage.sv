@@ -33,6 +33,13 @@ module ifetch_tag_stage
     (input                              clk,
     input                               reset,
 
+    // From ifetch_data_stage
+    input                               ifd_update_lru_en,
+    input l1i_way_idx_t                 ifd_update_lru_way,
+    input                               ifd_cache_miss,
+    input                               ifd_near_miss,
+    input thread_idx_t                  ifd_cache_miss_thread_idx,
+
     // To ifetch_data_stage
     output logic                        ift_instruction_requested,
     output l1i_addr_t                   ift_pc_paddr,
@@ -44,13 +51,6 @@ module ifetch_tag_stage
     output                              ift_tlb_supervisor,
     output l1i_tag_t                    ift_tag[`L1I_WAYS],
     output logic                        ift_valid[`L1I_WAYS],
-
-    // From ifetch_data_stage
-    input                               ifd_update_lru_en,
-    input l1i_way_idx_t                 ifd_update_lru_way,
-    input                               ifd_cache_miss,
-    input                               ifd_near_miss,
-    input thread_idx_t                  ifd_cache_miss_thread_idx,
 
     // From l1_l2_interface
     input                               l2i_icache_lru_fill_en,

@@ -44,14 +44,14 @@ module io_request_queue
     // To thread_select_stage
     output thread_bitmap_t                 ior_wake_bitmap,
 
-    // To io_interconnect
-    output logic                           ior_request_valid,
-    output ioreq_packet_t                  ior_request,
-
     // From io_interconnect
     input                                  ii_ready,
     input                                  ii_response_valid,
-    input iorsp_packet_t                   ii_response);
+    input iorsp_packet_t                   ii_response,
+
+    // To io_interconnect
+    output logic                           ior_request_valid,
+    output ioreq_packet_t                  ior_request);
 
     struct packed {
         logic valid;

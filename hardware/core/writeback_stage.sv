@@ -41,7 +41,7 @@ module writeback_stage(
     input                                 clk,
     input                                 reset,
 
-    // From fp_execute_stage5
+    // From fp_execute_stage5 (floating point pipline)
     input                                 fx5_instruction_valid,
     input decoded_instruction_t           fx5_instruction,
     input vector_t                        fx5_result,
@@ -49,7 +49,7 @@ module writeback_stage(
     input thread_idx_t                    fx5_thread_idx,
     input subcycle_t                      fx5_subcycle,
 
-    // From int_execute_stage
+    // From int_execute_stage (integer pipeline)
     input                                 ix_instruction_valid,
     input decoded_instruction_t           ix_instruction,
     input vector_t                        ix_result,
@@ -60,7 +60,7 @@ module writeback_stage(
     input subcycle_t                      ix_subcycle,
     input                                 ix_privileged_op_fault,
 
-    // From dcache_data_stage
+    // From dcache_data_stage (memory pipeline)
     input                                 dd_instruction_valid,
     input decoded_instruction_t           dd_instruction,
     input vector_lane_mask_t              dd_lane_mask,
@@ -85,6 +85,12 @@ module writeback_stage(
     input scalar_t                        ior_read_value,
     input logic                           ior_rollback_en,
 
+    // From control_registers
+    input scalar_t                        cr_creg_read_val,
+    input scalar_t                        cr_trap_handler,
+    input scalar_t                        cr_tlb_miss_handler,
+    input subcycle_t                      cr_eret_subcycle[`THREADS_PER_CORE],
+
     // To control_registers
     output logic                          wb_trap,
     output trap_cause_t                   wb_trap_cause,
@@ -92,12 +98,6 @@ module writeback_stage(
     output thread_idx_t                   wb_trap_thread_idx,
     output scalar_t                       wb_trap_access_vaddr,
     output subcycle_t                     wb_trap_subcycle,
-
-    // From control_registers
-    input scalar_t                        cr_creg_read_val,
-    input scalar_t                        cr_trap_handler,
-    input scalar_t                        cr_tlb_miss_handler,
-    input subcycle_t                      cr_eret_subcycle[`THREADS_PER_CORE],
 
     // Rollback signals to all stages
     output logic                          wb_rollback_en,

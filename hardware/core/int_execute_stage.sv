@@ -40,13 +40,6 @@ module int_execute_stage(
     input logic                       wb_rollback_en,
     input thread_idx_t                wb_rollback_thread_idx,
 
-    // From control_registers
-    input scalar_t                    cr_eret_address[`THREADS_PER_CORE],
-    input                             cr_supervisor_en[`THREADS_PER_CORE],
-
-    // To control_registers
-    output logic                      ix_is_eret,
-
     // To writeback_stage
     output logic                      ix_instruction_valid,
     output decoded_instruction_t      ix_instruction,
@@ -57,6 +50,13 @@ module int_execute_stage(
     output scalar_t                   ix_rollback_pc,
     output subcycle_t                 ix_subcycle,
     output logic                      ix_privileged_op_fault,
+
+    // From control_registers
+    input scalar_t                    cr_eret_address[`THREADS_PER_CORE],
+    input                             cr_supervisor_en[`THREADS_PER_CORE],
+
+    // To control_registers
+    output logic                      ix_is_eret,
 
     // Performance events
     output logic                      perf_uncond_branch,
