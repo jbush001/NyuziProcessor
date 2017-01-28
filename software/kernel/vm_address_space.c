@@ -292,7 +292,8 @@ static int soft_fault(struct vm_address_space *space, const struct vm_area *area
             unlock_vm_cache();
             restore_interrupts(old_flags);
 
-            if (area->cache_length - area_offset < PAGE_SIZE)
+            if (area->cache_length < area_offset
+                || area->cache_length - area_offset < PAGE_SIZE)
                 size_to_read = area->cache_length - area_offset;
             else
                 size_to_read = PAGE_SIZE;
