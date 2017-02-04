@@ -43,6 +43,11 @@ fault_loc:      itlbinsert s0, s1   // This should fault
 handle_fault1:  getcr s0, CR_TRAP_CAUSE
                 assert_reg s0, TT_PRIVILEGED_OP
 
+                // Check that MMU is still enabled and we have
+                // switched to supervisor mode
+                getcr s0, CR_FLAGS
+                assert_reg s0, FLAG_MMU_EN | FLAG_SUPERVISOR_EN
+
                 // Check that fault PC is correct
                 getcr s0, CR_TRAP_PC
                 lea s1, fault_loc
@@ -62,6 +67,10 @@ handle_fault2:  getcr s0, CR_TRAP_CAUSE
                 assert_reg s0, TT_TLB_MISS
                 getcr s0, CR_TRAP_ADDRESS
                 assert_reg s0, 0x2000
+
+                // MMU should be disabled, but still in supervisor mode
+                getcr s0, CR_FLAGS
+                assert_reg s0, FLAG_SUPERVISOR_EN
 
                 call pass_test
 

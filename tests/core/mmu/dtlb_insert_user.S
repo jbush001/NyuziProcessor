@@ -43,8 +43,13 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
 handle_fault1:  getcr s0, CR_TRAP_CAUSE
                 assert_reg s0, TT_PRIVILEGED_OP
 
+                // Check that MMU is still enabled and we have
+                // switched to supervisor mode
+                getcr s0, CR_FLAGS
+                assert_reg s0, (FLAG_MMU_EN | FLAG_SUPERVISOR_EN)
+
                 // Try to read data from new address. This should cause
-                // a TLB miss because the dtlbinsert has have failed.
+                // a TLB miss because dtlbinsert failed.
                 load_const s0, 0x2430
 fault_loc:      load_32 s0, (s0)    // This should fault
 
@@ -54,6 +59,10 @@ handle_fault2:  getcr s0, CR_TRAP_CAUSE
                 assert_reg s0, TT_TLB_MISS | TRAP_CAUSE_DCACHE
                 getcr s0, CR_TRAP_ADDRESS
                 assert_reg s0, 0x2430
+
+                // MMU should be disabled, but still in supervisor mode
+                getcr s0, CR_FLAGS
+                assert_reg s0, FLAG_SUPERVISOR_EN
 
                 // Check that fault PC is correct
                 getcr s0, CR_TRAP_PC

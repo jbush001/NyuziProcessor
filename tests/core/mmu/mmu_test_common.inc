@@ -74,6 +74,10 @@ handle_fault:       getcr s0, CR_TRAP_CAUSE
                     assert_reg s0, \cause
                     getcr s0, CR_TRAP_ADDRESS
                     assert_reg s0, \address
+                    getcr s0, CR_FLAGS
+                    assert_reg s0, \flags | FLAG_SUPERVISOR_EN | FLAG_MMU_EN
+                    getcr s0, CR_SAVED_FLAGS
+                    assert_reg s0, \flags
 
                     // Check that fault PC is correct
                     getcr s0, CR_TRAP_PC
