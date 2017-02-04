@@ -38,6 +38,8 @@ test_harness.register_generic_assembly_tests([
     'write_fault',
     'tlb_invalidate',
     'tlb_invalidate_all',
+    'tlb_invalidate_user',
+    'tlb_invalidate_all_user',
     'synonym',
     'duplicate_tlb_insert',
     'itlb_insert_user',

@@ -1925,6 +1925,12 @@ static void execute_cache_control_inst(struct thread *thread, uint32_t instructi
             uint32_t virtual_address = ROUND_TO_PAGE(get_scalar_reg(thread, ptr_reg) + offset);
             uint32_t tlb_index = ((virtual_address / PAGE_SIZE) % TLB_SETS) * TLB_WAYS;
 
+            if (!thread->enable_supervisor)
+            {
+                raise_trap(thread, 0, TT_PRIVILEGED_OP, false, false);
+                return;
+            }
+
             for (way = 0; way < TLB_WAYS; way++)
             {
                 if (thread->core->itlb[tlb_index + way].virtual_address == virtual_address)
@@ -1940,6 +1946,12 @@ static void execute_cache_control_inst(struct thread *thread, uint32_t instructi
         case CC_INVALIDATE_TLB_ALL:
         {
             int i;
+
+            if (!thread->enable_supervisor)
+            {
+                raise_trap(thread, 0, TT_PRIVILEGED_OP, false, false);
+                return;
+            }
 
             for (i = 0; i < TLB_SETS * TLB_WAYS; i++)
             {
