@@ -50,7 +50,7 @@ _start:             lea s0, interrupt_handler
                     # Disable interrupts before finishing.  This avoids a race condition
                     # where the emulator can begin processing an interrupt before
                     # halting.
-                    move s0, 0
+                    move s0, 4
                     setcr s0, CR_FLAGS
 
                     halt_current_thread

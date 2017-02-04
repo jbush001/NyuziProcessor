@@ -1571,19 +1571,18 @@ static void execute_control_register_inst(struct thread *thread, uint32_t instru
 {
     uint32_t cr_index = extract_unsigned_bits(instruction, 0, 5);
     uint32_t dst_src_reg = extract_unsigned_bits(instruction, 5, 5);
+
+    // Only threads in supervisor mode can access control registers.
+    if (!thread->enable_supervisor)
+    {
+        raise_trap(thread, 0, TT_PRIVILEGED_OP, false, false);
+        return;
+    }
+
     if (extract_unsigned_bits(instruction, 29, 1))
     {
         // Load
         uint32_t value = 0xffffffff;
-
-        // Only threads in supervisor mode can read control registers
-        // other than
-        if (!thread->enable_supervisor && cr_index != CR_THREAD_ID
-            && cr_index != CR_CYCLE_COUNT)
-        {
-            raise_trap(thread, 0, TT_PRIVILEGED_OP, false, false);
-            return;
-        }
 
         switch (cr_index)
         {
@@ -1663,13 +1662,6 @@ static void execute_control_register_inst(struct thread *thread, uint32_t instru
     }
     else
     {
-        // Only threads in supervisor mode can write control registers.
-        if (!thread->enable_supervisor)
-        {
-            raise_trap(thread, 0, TT_PRIVILEGED_OP, false, false);
-            return;
-        }
-
         // Store
         uint32_t value = get_scalar_reg(thread, dst_src_reg);
         switch (cr_index)
