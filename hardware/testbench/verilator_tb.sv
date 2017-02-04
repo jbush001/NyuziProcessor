@@ -417,7 +417,7 @@ module verilator_tb(
             $readmemh(filename, memory.sdram_data);
         else
         begin
-            $display("error opening file");
+            $display("No memory image file specified with +bin");
             $finish;
         end
     end
