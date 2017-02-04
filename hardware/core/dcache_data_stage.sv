@@ -148,6 +148,7 @@ module dcache_data_stage(
     logic is_tlb_update;
     logic supervisor_fault;
     logic alignment_fault;
+    logic creg_is_privileged;
     logic privilege_op_fault;
     logic write_fault;
     logic tlb_miss;
@@ -482,8 +483,11 @@ module dcache_data_stage(
 
     // Faults
     assign alignment_fault = (dcache_load_en || dcache_store_en) && is_unaligned;
+    assign creg_is_privileged = !dt_instruction.is_load
+        || (dt_instruction.creg_index != CR_THREAD_ID
+        && dt_instruction.creg_index != CR_CYCLE_COUNT);
     assign privilege_op_fault = !cr_supervisor_en[dt_thread_idx]
-        && ((creg_access_en && !dt_instruction.is_load)
+        && ((creg_access_en && creg_is_privileged)
             || is_tlb_update
             || (cache_control_en && dt_instruction.cache_control_op == CACHE_DINVALIDATE));
     assign write_fault = !dt_tlb_writable

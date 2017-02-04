@@ -1575,6 +1575,16 @@ static void execute_control_register_inst(struct thread *thread, uint32_t instru
     {
         // Load
         uint32_t value = 0xffffffff;
+
+        // Only threads in supervisor mode can read control registers
+        // other than
+        if (!thread->enable_supervisor && cr_index != CR_THREAD_ID
+            && cr_index != CR_CYCLE_COUNT)
+        {
+            raise_trap(thread, 0, TT_PRIVILEGED_OP, false, false);
+            return;
+        }
+
         switch (cr_index)
         {
             case CR_THREAD_ID:

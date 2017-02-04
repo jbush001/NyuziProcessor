@@ -144,6 +144,7 @@ def send_host_interrupt(_):
 
 test_harness.register_generic_assembly_tests([
     'setcr_non_super',
+    'getcr_non_super',
     'eret_non_super',
     'dinvalidate_non_super',
     'syscall',
