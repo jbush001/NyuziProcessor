@@ -20,8 +20,8 @@
 #define IMM_ARITH_INST(__type__) ((__type__) << 28)
 #define MEM_INST(__type__) (0x80000000 | ((__type__) << 25))
 
-.macro test_illegal_inst testnum, instvalue, flags
-                lea s0, handle_fault\testnum
+.macro _test_illegal_inst testnum, subtest, instvalue, flags
+                lea s0, handle_fault\testnum\()_\subtest
                 setcr s0, CR_TRAP_HANDLER
 
                 // Switch modes if necessary
@@ -29,10 +29,10 @@
                 setcr s0, CR_FLAGS
                 flush_pipeline
 
-fault_loc\testnum :
+fault_loc\testnum\()_\subtest :
                 .long \instvalue
                 should_not_get_here
-handle_fault\testnum :
+handle_fault\testnum\()_\subtest :
                 getcr s0, CR_TRAP_CAUSE
                 assert_reg s0, TT_ILLEGAL_INSTRUCTION
 
@@ -44,39 +44,36 @@ handle_fault\testnum :
 
                 // Check that trap PC is correct
                 getcr s0, CR_TRAP_PC
-                lea s1, fault_loc\testnum
+                lea s1, fault_loc\testnum\()_\subtest
                 cmpeq_i s0, s0, s1
                 btrue s0, 1f
                 call fail_test
 1:
 .endm
 
+.macro test_illegal_inst testnum, instvalue
+    // Test in user mode
+    _test_illegal_inst \testnum, 0, \instvalue, 0
+
+    // Test in supervisor mode
+    _test_illegal_inst \testnum, 1, \instvalue, FLAG_SUPERVISOR_EN
+.endm
+
+
+
                 .globl _start
 _start:
                 // Check all in user mode
-                test_illegal_inst 1, REG_ARITH_INST(3), 0
-                test_illegal_inst 2, REG_ARITH_INST(6), 0
-                test_illegal_inst 3, REG_ARITH_INST(7), 0
-                test_illegal_inst 4, IMM_ARITH_INST(3), 0
-                test_illegal_inst 5, IMM_ARITH_INST(6), 0
-                test_illegal_inst 6, IMM_ARITH_INST(7), 0
-                test_illegal_inst 7, MEM_INST(9), 0
-                test_illegal_inst 8, MEM_INST(10), 0
-                test_illegal_inst 9, MEM_INST(11), 0
-                test_illegal_inst 10, MEM_INST(12), 0
-                test_illegal_inst 11, MEM_INST(15), 0
-
-                // Check all in supervisor mode
-                test_illegal_inst 12, REG_ARITH_INST(3), FLAG_SUPERVISOR_EN
-                test_illegal_inst 13, REG_ARITH_INST(6), FLAG_SUPERVISOR_EN
-                test_illegal_inst 14, REG_ARITH_INST(7), FLAG_SUPERVISOR_EN
-                test_illegal_inst 15, IMM_ARITH_INST(3), FLAG_SUPERVISOR_EN
-                test_illegal_inst 16, IMM_ARITH_INST(6), FLAG_SUPERVISOR_EN
-                test_illegal_inst 17, IMM_ARITH_INST(7), FLAG_SUPERVISOR_EN
-                test_illegal_inst 18, MEM_INST(9), FLAG_SUPERVISOR_EN
-                test_illegal_inst 19, MEM_INST(10), FLAG_SUPERVISOR_EN
-                test_illegal_inst 20, MEM_INST(11), FLAG_SUPERVISOR_EN
-                test_illegal_inst 21, MEM_INST(12), FLAG_SUPERVISOR_EN
-                test_illegal_inst 22, MEM_INST(15), FLAG_SUPERVISOR_EN
+                test_illegal_inst 1, REG_ARITH_INST(3)
+                test_illegal_inst 2, REG_ARITH_INST(6)
+                test_illegal_inst 3, REG_ARITH_INST(7)
+                test_illegal_inst 4, IMM_ARITH_INST(3)
+                test_illegal_inst 5, IMM_ARITH_INST(6)
+                test_illegal_inst 6, IMM_ARITH_INST(7)
+                test_illegal_inst 7, MEM_INST(9)
+                test_illegal_inst 8, MEM_INST(10)
+                test_illegal_inst 9, MEM_INST(11)
+                test_illegal_inst 10, MEM_INST(12)
+                test_illegal_inst 11, MEM_INST(15)
 
                 call pass_test
