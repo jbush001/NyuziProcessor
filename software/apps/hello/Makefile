@@ -1,5 +1,5 @@
 #
-# Copyright 2016 Jeff Bush
+# Copyright 2011-2015 Jeff Bush
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,20 +14,28 @@
 # limitations under the License.
 #
 
-all:
-	cd hello && make
-	cd mandelbrot && make
-	cd plasma && make
-	cd quakeview && make
-	cd rotozoom && make
-	cd sceneview && make
-	#cd doom && make
+TOPDIR=../../../
+
+include $(TOPDIR)/build/target.mk
+
+LIBS=-lc
+SRCS=hello.c
+
+OBJS := $(SRCS_TO_OBJS)
+DEPS := $(SRCS_TO_DEPS)
+
+$(OBJ_DIR)/hello.hex: $(CRT0_BARE) $(OBJS)
+	$(LD) -o $(OBJ_DIR)/hello.elf $(LDFLAGS) $(CRT0_BARE) $(OBJS) $(LIBS) -los-bare $(LDFLAGS)
+	$(ELF2HEX) -o $(OBJ_DIR)/hello.hex $(OBJ_DIR)/hello.elf
+
+run: $(OBJ_DIR)/hello.hex
+	$(EMULATOR) $(OBJ_DIR)/hello.hex
+
+verirun: $(OBJ_DIR)/hello.hex
+	$(VERILATOR) +bin=$(OBJ_DIR)/hello.hex
 
 clean:
-	cd hello && make clean
-	cd mandelbrot && make clean
-	cd plasma && make clean
-	cd quakeview && make clean
-	cd rotozoom && make clean
-	cd sceneview && make clean
-	#cd doom && make clean
+	rm -rf $(OBJ_DIR)
+
+-include $(DEPS)
+
