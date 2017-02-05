@@ -15,47 +15,47 @@
 # limitations under the License.
 #
 
-#
-# Read a Wavefront .OBJ file and convert it into a flat file that can be read
-# by the viewer program
-#
+"""
+Read a Wavefront .OBJ file and convert it into a flat file that can be read
+by the viewer program
+"""
 
-import sys
+import math
 import os
 import re
-import subprocess
 import struct
-import math
+import subprocess
+import sys
 import tempfile
 
 NUM_MIP_LEVELS = 4
 
 # This is the final output of the parsing stage
-textureList = []  # (width, height, data)
-meshList = []		# (texture index, vertex list, index list)
+texture_list = []  # (width, height, data)
+mesh_list = []		# (texture index, vertex list, index list)
 
-materialNameToTextureIdx = {}
-textureFileToTextureIdx = {}
+material_name_to_texture_idx = {}
+texture_file_to_texture_idx = {}
 
-size_re1 = re.compile('Geometry: (?P<width>\d+)x(?P<height>\d+)')  # JPEG
+size_re1 = re.compile(r'Geometry: (?P<width>\d+)x(?P<height>\d+)')  # JPEG
 size_re2 = re.compile(
-    'PNG width: (?P<width>\d+), height: (?P<height>\d+)')  # PNG
+    r'PNG width: (?P<width>\d+), height: (?P<height>\d+)')  # PNG
 
 
-def read_image_file(filename, resizeToWidth=None, resizeToHeight=None):
+def read_image_file(filename, resize_to_width=None, resize_to_height=None):
     width = None
     height = None
     handle, temppath = tempfile.mkstemp(suffix='.bin')
     os.close(handle)
 
     args = ['convert', '-debug', 'all']
-    if resizeToWidth:
-        args += ['-resize', str(resizeToWidth) + 'x' +
-                 str(resizeToHeight) + '^']
+    if resize_to_width:
+        args += ['-resize', str(resize_to_width) + 'x' +
+                 str(resize_to_height) + '^']
 
     args += [filename, 'rgba:' + temppath]
     p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = p.communicate()
+    _, err = p.communicate()
 
     # This is a kludge.  Try to determine width and height from debug
     # information
@@ -76,18 +76,18 @@ def read_image_file(filename, resizeToWidth=None, resizeToHeight=None):
 
     # Imagemagick often leaves junk at the end of the file, so explicitly
     # truncate here.
-    expectedSize = resizeToWidth * resizeToHeight * \
-        4 if resizeToWidth else width * height * 4
+    expected_size = resize_to_width * resize_to_height * \
+        4 if resize_to_width else width * height * 4
     with open(temppath, 'rb') as f:
-        textureData = f.read(expectedSize)
+        texture_data = f.read(expected_size)
 
-    if resizeToWidth and len(textureData) != expectedSize:
-        print('length mismatch' + str(len(textureData)) +
-              ' != ' + str(expectedSize))
+    if resize_to_width and len(texture_data) != expected_size:
+        print('length mismatch' + str(len(texture_data)) +
+              ' != ' + str(expected_size))
 
     os.unlink(temppath)
 
-    return (width, height, textureData)
+    return (width, height, texture_data)
 
 
 def read_texture(filename):
@@ -104,12 +104,11 @@ def read_texture(filename):
 
 
 def read_mtl_file(filename):
-    global textureList, materialNameToTextureIdx
+    global texture_list, material_name_to_texture_idx
 
     print('read material file ' + filename)
 
-    currentName = ''
-    currentFile = ''
+    current_name = ''
     with open(filename) as f:
         for line in f:
             if line[0] == '#' or line.strip() == '':
@@ -117,19 +116,19 @@ def read_mtl_file(filename):
 
             fields = [s for s in line.strip().split(' ') if s]
             if fields[0] == 'newmtl':
-                currentName = fields[1]
-                materialNameToTextureIdx[fields[1]] = -1
+                current_name = fields[1]
+                material_name_to_texture_idx[fields[1]] = -1
             elif fields[0] == 'map_Kd':
-                textureFile = fields[1]
-                if textureFile in textureFileToTextureIdx:
+                texture_file = fields[1]
+                if texture_file in texture_file_to_texture_idx:
                     # We've already used this texture, just tag the same ID
-                    materialNameToTextureIdx[
-                        currentName] = textureFileToTextureIdx[textureFile]
+                    material_name_to_texture_idx[
+                        current_name] = texture_file_to_texture_idx[texture_file]
                 else:
                     # load a new texture
-                    materialNameToTextureIdx[currentName] = len(textureList)
-                    textureFileToTextureIdx[textureFile] = len(textureList)
-                    textureList.append(read_texture(os.path.dirname(
+                    material_name_to_texture_idx[current_name] = len(texture_list)
+                    texture_file_to_texture_idx[texture_file] = len(texture_list)
+                    texture_list.append(read_texture(os.path.dirname(
                         filename) + '/' + fields[1].replace('\\', '/')))
 
 
@@ -162,16 +161,15 @@ def zero_to_one_based_index(x):
 
 
 def read_obj_file(filename):
-    global meshList
+    global mesh_list
 
-    vertexPositions = []
-    textureCoordinates = []
+    vertex_positions = []
+    texture_coordinates = []
     normals = []
-    combinedVertices = []
-    vertexToIndex = {}
-    triangleIndexList = []
-    currentMaterial = None
-    currentTextureId = -1
+    combined_vertices = []
+    vertex_to_index = {}
+    triangle_index_list = []
+    current_texture_id = -1
 
     with open(filename, 'r') as f:
         for line in f:
@@ -180,88 +178,89 @@ def read_obj_file(filename):
 
             fields = [s for s in line.strip().split(' ') if s]
             if fields[0] == 'v':
-                vertexPositions.append(
+                vertex_positions.append(
                     (float(fields[1]), float(fields[2]), float(fields[3])))
             elif fields[0] == 'vt':
-                textureCoordinates.append((float(fields[1]), float(fields[2])))
+                texture_coordinates.append((float(fields[1]), float(fields[2])))
             elif fields[0] == 'vn':
                 normals.append(
                     (float(fields[1]), float(fields[2]), float(fields[3])))
             elif fields[0] == 'f':
-                # The OBJ file references vertexPositions and texture coordinates independently.
-                # They must be paired in our implementation. Build a new vertex list that
+                # The OBJ file references vertex_positions and texture
+                # coordinates independently. They must be paired in our
+                # implementation. Build a new vertex list that
                 # combines those and generate an index list into that.
 
-                # Break the strings 'vertexIndex/textureIndex' into a list and
+                # Break the strings 'vertex_index/texture_index' into a list and
                 # convert to 0 based array (OBJ is 1 based)
-                parsedIndices = []
-                for indexTuple in fields[1:]:
-                    parsedIndices.append([zero_to_one_based_index(
-                        int(x)) if x != '' else '' for x in indexTuple.split('/')])
+                parsed_indices = []
+                for index_tuple in fields[1:]:
+                    parsed_indices.append([zero_to_one_based_index(
+                        int(x)) if x != '' else '' for x in index_tuple.split('/')])
 
-                if len(parsedIndices[0]) < 3:
-                    # This file does not contain normals.  Generate a face normal
-                    # that we will substitute.
-                    # XXX this isn't perfect because the vertex normal should be the
-                    # combination of all face normals, but it's good enough for
-                    # our purposes.
-                    faceNormal = compute_normal(
-                        vertexPositions[
-                            parsedIndices[0][0]], vertexPositions[
-                            parsedIndices[1][0]], vertexPositions[
-                            parsedIndices[2][0]])
+                if len(parsed_indices[0]) < 3:
+                    # This file does not contain normals.  Generate a face
+                    # normal that we will substitute.
+                    # XXX this isn't perfect because the vertex normal should
+                    # be the combination of all face normals, but it's good
+                    # enough for our purposes.
+                    face_normal = compute_normal(
+                        vertex_positions[
+                            parsed_indices[0][0]], vertex_positions[
+                            parsed_indices[1][0]], vertex_positions[
+                            parsed_indices[2][0]])
                 else:
-                    faceNormal = None
+                    face_normal = None
 
                 # Create a new vertex array that combines the attributes
-                polygonIndices = []
-                for indices in parsedIndices:
-                    vertexAttrs = vertexPositions[indices[0]]
+                polygon_indices = []
+                for indices in parsed_indices:
+                    vertex_attrs = vertex_positions[indices[0]]
                     if len(indices) > 1 and indices[1]:
-                        vertexAttrs += textureCoordinates[indices[1]]
+                        vertex_attrs += texture_coordinates[indices[1]]
                     else:
-                        vertexAttrs += (0, 0)
+                        vertex_attrs += (0, 0)
 
-                    if faceNormal:
-                        vertexAttrs += faceNormal
+                    if face_normal:
+                        vertex_attrs += face_normal
                     else:
-                        vertexAttrs += normals[indices[2]]
+                        vertex_attrs += normals[indices[2]]
 
-                    if vertexAttrs not in vertexToIndex:
-                        vertexToIndex[vertexAttrs] = len(combinedVertices)
-                        combinedVertices += [vertexAttrs]
+                    if vertex_attrs not in vertex_to_index:
+                        vertex_to_index[vertex_attrs] = len(combined_vertices)
+                        combined_vertices += [vertex_attrs]
 
-                    polygonIndices += [vertexToIndex[vertexAttrs]]
+                    polygon_indices += [vertex_to_index[vertex_attrs]]
 
-                # faceList is made up of polygons. Convert to triangles
-                for index in range(1, len(polygonIndices) - 1):
-                    triangleIndexList += [polygonIndices[0],
-                                          polygonIndices[index],
-                                          polygonIndices[index + 1]]
+                # face_list is made up of polygons. Convert to triangles.
+                for index in range(1, len(polygon_indices) - 1):
+                    triangle_index_list += [polygon_indices[0],
+                                          polygon_indices[index],
+                                          polygon_indices[index + 1]]
             elif fields[0] == 'usemtl':
                 # Switch material
-                newTextureId = materialNameToTextureIdx[fields[1]]
-                if newTextureId != currentTextureId:
-                    if triangleIndexList:
+                new_texture_id = material_name_to_texture_idx[fields[1]]
+                if new_texture_id != current_texture_id:
+                    if triangle_index_list:
                         # State change, emit current primitives and clear the
                         # current combined list
-                        meshList += [(currentTextureId,
-                                      combinedVertices, triangleIndexList)]
-                        combinedVertices = []
-                        vertexToIndex = {}
-                        triangleIndexList = []
-                    currentTextureId = newTextureId
+                        mesh_list += [(current_texture_id,
+                                      combined_vertices, triangle_index_list)]
+                        combined_vertices = []
+                        vertex_to_index = {}
+                        triangle_index_list = []
+                    current_texture_id = new_texture_id
             elif fields[0] == 'mtllib':
                 read_mtl_file(os.path.dirname(filename) + '/' + fields[1])
 
-        if triangleIndexList != []:
-            meshList += [(currentTextureId, combinedVertices,
-                          triangleIndexList)]
+        if triangle_index_list != []:
+            mesh_list += [(current_texture_id, combined_vertices,
+                          triangle_index_list)]
 
 
 def print_stats():
-    totalTriangles = 0
-    totalVertices = 0
+    total_triangles = 0
+    total_vertices = 0
     minx = float('Inf')
     maxx = float('-Inf')
     miny = float('Inf')
@@ -269,9 +268,9 @@ def print_stats():
     minz = float('Inf')
     maxz = float('-Inf')
 
-    for _, vertices, indices in meshList:
-        totalTriangles += len(indices) // 3
-        totalVertices += len(vertices)
+    for _, vertices, indices in mesh_list:
+        total_triangles += len(indices) // 3
+        total_vertices += len(vertices)
         for x, y, z, _, _, _, _, _ in vertices:
             minx = min(x, minx)
             miny = min(y, miny)
@@ -280,9 +279,9 @@ def print_stats():
             maxy = max(y, maxy)
             maxz = max(z, maxz)
 
-    print('meshes ' + str(len(meshList)))
-    print('triangles ' + str(totalTriangles))
-    print('vertices ' + str(totalVertices))
+    print('meshes ' + str(len(mesh_list)))
+    print('triangles ' + str(total_triangles))
+    print('vertices ' + str(total_vertices))
     print('scene bounds ')
     print('  x ' + str(minx) + ' ' + str(maxx))
     print('  y ' + str(miny) + ' ' + str(maxy))
@@ -294,53 +293,53 @@ def align(addr, alignment):
 
 
 def write_resource_file(filename):
-    global textureList
-    global meshList
+    global texture_list
+    global mesh_list
 
-    currentDataOffset = 12 + len(textureList) * \
-        12 + len(meshList) * 16  # Skip header
-    currentHeaderOffset = 12
+    current_data_offset = 12 + len(texture_list) * \
+        12 + len(mesh_list) * 16  # Skip header
+    current_header_offset = 12
 
     with open(filename, 'wb') as f:
         # Write textures
-        for width, height, data in textureList:
+        for width, height, data in texture_list:
             # Write file header
-            f.seek(currentHeaderOffset)
-            f.write(struct.pack('iihh', currentDataOffset,
+            f.seek(current_header_offset)
+            f.write(struct.pack('iihh', current_data_offset,
                                 NUM_MIP_LEVELS, width, height))
-            currentHeaderOffset += 12
+            current_header_offset += 12
 
             # Write data
-            f.seek(currentDataOffset)
+            f.seek(current_data_offset)
             f.write(data)
-            currentDataOffset = align(currentDataOffset + len(data), 4)
+            current_data_offset = align(current_data_offset + len(data), 4)
 
         # Write meshes
-        for textureIdx, vertices, indices in meshList:
-            currentDataOffset = align(currentDataOffset, 4)
+        for texture_idx, vertices, indices in mesh_list:
+            current_data_offset = align(current_data_offset, 4)
 
             # Write file header
-            f.seek(currentHeaderOffset)
-            f.write(struct.pack('iiii', currentDataOffset,
-                                textureIdx, len(vertices), len(indices)))
-            currentHeaderOffset += 16
+            f.seek(current_header_offset)
+            f.write(struct.pack('iiii', current_data_offset,
+                                texture_idx, len(vertices), len(indices)))
+            current_header_offset += 16
 
             # Write data
-            f.seek(currentDataOffset)
+            f.seek(current_data_offset)
             for vert in vertices:
                 for val in vert:
                     f.write(struct.pack('f', val))
-                    currentDataOffset += 4
+                    current_data_offset += 4
 
             for index in indices:
                 f.write(struct.pack('I', index))
-                currentDataOffset += 4
+                current_data_offset += 4
 
         # Write file header
         f.seek(0)
-        f.write(struct.pack('I', currentDataOffset))  # total size
-        f.write(struct.pack('I', len(textureList)))  # num textures
-        f.write(struct.pack('I', len(meshList)))  # num meshes
+        f.write(struct.pack('I', current_data_offset))  # total size
+        f.write(struct.pack('I', len(texture_list)))  # num textures
+        f.write(struct.pack('I', len(mesh_list)))  # num meshes
 
         print('wrote ' + filename)
 
