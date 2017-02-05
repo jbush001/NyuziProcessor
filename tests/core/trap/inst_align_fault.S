@@ -22,15 +22,50 @@
 
                 .globl _start
 _start:
+
+                // The first fault will occur in supervisor mode
                 // Set up fault handler
-                lea s0, handle_fault
+                lea s0, handle_fault1
                 setcr s0, CR_TRAP_HANDLER
+
+                // jump to bad address
+                move pc, 0x567
+
+handle_fault1:  getcr s0, CR_TRAP_CAUSE
+                assert_reg s0, TT_UNALIGNED_ACCESS
+
+                // Check that we're still in supervisor mode
+                getcr s0, CR_FLAGS
+                assert_reg s0, FLAG_SUPERVISOR_EN
+                getcr s0, CR_SAVED_FLAGS
+                assert_reg s0, FLAG_SUPERVISOR_EN
+
+                getcr s0, CR_TRAP_PC
+                assert_reg s0, 0x567
+                call pass_test
+
+                // The second fault will occur in user mode
+                // Set up fault handler
+                lea s0, handle_fault2
+                setcr s0, CR_TRAP_HANDLER
+
+                // Switch to user mode
+                move s0, 0
+                setcr s0, CR_FLAGS
+                flush_pipeline
 
                 // jump to bad address
                 move pc, 0x357
 
-handle_fault:   getcr s0, CR_TRAP_CAUSE
+handle_fault2:  getcr s0, CR_TRAP_CAUSE
                 assert_reg s0, TT_UNALIGNED_ACCESS
+
+                // Check that we've swiched back to supervisor mode
+                getcr s0, CR_FLAGS
+                assert_reg s0, FLAG_SUPERVISOR_EN
+                getcr s0, CR_SAVED_FLAGS
+                assert_reg s0, 0
+
                 getcr s0, CR_TRAP_PC
                 assert_reg s0, 0x357
                 call pass_test

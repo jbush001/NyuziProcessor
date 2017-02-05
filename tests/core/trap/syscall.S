@@ -37,6 +37,11 @@ fault_loc:      syscall     // This should fault
 
 handle_fault:   getcr s0, CR_TRAP_CAUSE
                 assert_reg s0, TT_SYSCALL
+                getcr s0, CR_FLAGS
+                assert_reg s0, FLAG_SUPERVISOR_EN
+                getcr s0, CR_SAVED_FLAGS
+                assert_reg s0, 0
+
                 getcr s0, CR_TRAP_PC
                 lea s1, fault_loc
                 cmpeq_i s0, s0, s1

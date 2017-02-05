@@ -20,9 +20,15 @@
 // Test that unaligned data accesses properly faults
 //
 
-.macro test_unaligned_fault testnum, op, ptr, value, fault_addr, is_store
+.macro test_unaligned_fault testnum, op, ptr, value, fault_addr, is_store, flags
                 lea s0, handle_fault\testnum
                 setcr s0, CR_TRAP_HANDLER
+
+                // Switch modes if necessary
+                move s0, \flags
+                setcr s0, CR_FLAGS
+                flush_pipeline
+
 fault_loc\testnum :
                 \op \value, (\ptr\())
                 should_not_get_here
@@ -31,6 +37,12 @@ handle_fault\testnum :
                 assert_reg s0, (TT_UNALIGNED_ACCESS | TRAP_CAUSE_DCACHE | (\is_store << 4))
                 getcr s0, CR_TRAP_ADDRESS
                 assert_reg s0, \fault_addr
+
+                // Check that we've switched back to supervisor mode
+                getcr s0, CR_FLAGS
+                assert_reg s0, FLAG_SUPERVISOR_EN
+                getcr s0, CR_SAVED_FLAGS
+                assert_reg s0, \flags
 
                 // Check that PC is correct
                 getcr s0, CR_TRAP_PC
@@ -46,21 +58,40 @@ handle_fault\testnum :
 _start:         move s10, 17            // Scalar pointer
                 load_v v10, vec_ptr
 
-                test_unaligned_fault 1, load_u16, s10, s11, 17, 0
-                test_unaligned_fault 2, load_32, s10, s11, 17, 0
-                test_unaligned_fault 3, load_v, s10, v11, 17, 0
+                //
+                // Test in user mode
+                //
+                test_unaligned_fault 1, load_u16, s10, s11, 17, 0, 0
+                test_unaligned_fault 2, load_32, s10, s11, 17, 0, 0
+                test_unaligned_fault 3, load_v, s10, v11, 17, 0, 0
 
                 // Gather load will fault on lane 3
-                test_unaligned_fault 4, load_gath, v10, v11, 17, 0
+                test_unaligned_fault 4, load_gath, v10, v11, 17, 0, 0
                 getcr s0, CR_SUBCYCLE
                 assert_reg s0, 3
 
-                test_unaligned_fault 5, store_16, s10, s11, 17, 1
-                test_unaligned_fault 6, store_32, s10, s11, 17, 1
-                test_unaligned_fault 7, store_v, s10, v11, 17, 1
+                test_unaligned_fault 5, store_16, s10, s11, 17, 1, 0
+                test_unaligned_fault 6, store_32, s10, s11, 17, 1, 0
+                test_unaligned_fault 7, store_v, s10, v11, 17, 1, 0
 
                 // Scatter store will fault on lane 3
-                test_unaligned_fault 8, store_scat, v10, v11, 17, 1
+                test_unaligned_fault 8, store_scat, v10, v11, 17, 1, 0
+                getcr s0, CR_SUBCYCLE
+                assert_reg s0, 3
+
+                //
+                // Same as above, except in supervisor mode
+                //
+                test_unaligned_fault 10, load_u16, s10, s11, 17, 0, FLAG_SUPERVISOR_EN
+                test_unaligned_fault 11, load_32, s10, s11, 17, 0, FLAG_SUPERVISOR_EN
+                test_unaligned_fault 12, load_v, s10, v11, 17, 0, FLAG_SUPERVISOR_EN
+                test_unaligned_fault 13, load_gath, v10, v11, 17, 0, FLAG_SUPERVISOR_EN
+                getcr s0, CR_SUBCYCLE
+                assert_reg s0, 3
+                test_unaligned_fault 14, store_16, s10, s11, 17, 1, FLAG_SUPERVISOR_EN
+                test_unaligned_fault 15, store_32, s10, s11, 17, 1, FLAG_SUPERVISOR_EN
+                test_unaligned_fault 16, store_v, s10, v11, 17, 1, FLAG_SUPERVISOR_EN
+                test_unaligned_fault 17, store_scat, v10, v11, 17, 1, FLAG_SUPERVISOR_EN
                 getcr s0, CR_SUBCYCLE
                 assert_reg s0, 3
 

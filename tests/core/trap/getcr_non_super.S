@@ -27,11 +27,19 @@ _start:
                 setcr s0, CR_FLAGS
                 flush_pipeline
 
-fault_loc:      getcr s0, CR_THREAD_ID        // This should fault
+fault_loc:      getcr s0, CR_TRAP_HANDLER        // This should fault
                 should_not_get_here
 
-handle_fault:   getcr s10, CR_TRAP_CAUSE
+handle_fault:   // Check that s0 was not updated. If it were, that could
+                // leak information from the supervisor
+                assert_reg s0, 0
+
+                getcr s10, CR_TRAP_CAUSE
                 assert_reg s10, TT_PRIVILEGED_OP
+                getcr s0, CR_FLAGS
+                assert_reg s0, FLAG_SUPERVISOR_EN
+                getcr s0, CR_SAVED_FLAGS
+                assert_reg s0, 0
                 getcr s10, CR_TRAP_PC
                 lea s11, fault_loc
                 cmpeq_i s10, s10, s11
