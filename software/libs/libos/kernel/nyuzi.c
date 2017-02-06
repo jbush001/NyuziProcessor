@@ -24,7 +24,7 @@ int get_current_thread_id(void)
 
 unsigned int get_cycle_count(void)
 {
-    return 0;   // XXX not implemented
+    return __syscall(SYS_get_cycle_count, 0, 0, 0, 0, 0);
 }
 
 void *create_area(unsigned int address, unsigned int size, int placement,

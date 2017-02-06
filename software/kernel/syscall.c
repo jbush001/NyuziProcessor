@@ -121,6 +121,9 @@ int handle_syscall(int arg0, int arg1, int arg2, int arg3, int arg4,
             else
                 return 0;
 
+        case SYS_get_cycle_count:
+            return __builtin_nyuzi_read_control_reg(6);
+
         default:
             panic("Unknown syscall %d\n", arg0);
     }

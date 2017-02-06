@@ -14,11 +14,12 @@
 // limitations under the License.
 //
 
+#include <nyuzi.h>
 #include <time.h>
 
 #define CLOCK_HZ 50000000
 
 clock_t clock(void)
 {
-    return __builtin_nyuzi_read_control_reg(6) / (CLOCK_HZ / CLOCKS_PER_SEC);
+    return get_cycle_count() / (CLOCK_HZ / CLOCKS_PER_SEC);
 }

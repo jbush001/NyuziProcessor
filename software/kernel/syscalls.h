@@ -25,3 +25,4 @@
 #define SYS_create_area 6
 #define SYS_set_perf_counter 7
 #define SYS_read_perf_counter 8
+#define SYS_get_cycle_count 9

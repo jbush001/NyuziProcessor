@@ -29,4 +29,4 @@
 
 extern int __errno_array[__MAX_THREADS];
 
-#define errno __errno_array[__builtin_nyuzi_read_control_reg(0)]
+#define errno __errno_array[get_current_thread_id()]
