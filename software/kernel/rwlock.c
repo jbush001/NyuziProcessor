@@ -48,8 +48,7 @@ void rwlock_lock_read(struct rwlock *m)
 {
     int old_flags;
 
-    old_flags = disable_interrupts();
-    acquire_spinlock(&m->spinlock);
+    old_flags = acquire_spinlock_int(&m->spinlock);
     if (!list_is_empty(&m->writer_wait_list) || m->write_locked)
     {
         // Rule 1: Don't acquire lock if there are waiting writers.
@@ -60,16 +59,14 @@ void rwlock_lock_read(struct rwlock *m)
         m->active_read_count++;
 
     assert(!m->write_locked);
-    release_spinlock(&m->spinlock);
-    restore_interrupts(old_flags);
+    release_spinlock_int(&m->spinlock, old_flags);
 }
 
 void rwlock_unlock_read(struct rwlock *m)
 {
     int old_flags;
 
-    old_flags = disable_interrupts();
-    acquire_spinlock(&m->spinlock);
+    old_flags = acquire_spinlock_int(&m->spinlock);
 
     assert(!m->write_locked);
     assert(m->active_read_count > 0);
@@ -81,16 +78,14 @@ void rwlock_unlock_read(struct rwlock *m)
         make_thread_ready(list_remove_head(&m->writer_wait_list, struct thread));
     }
 
-    release_spinlock(&m->spinlock);
-    restore_interrupts(old_flags);
+    release_spinlock_int(&m->spinlock, old_flags);
 }
 
 void rwlock_lock_write(struct rwlock *m)
 {
     int old_flags;
 
-    old_flags = disable_interrupts();
-    acquire_spinlock(&m->spinlock);
+    old_flags = acquire_spinlock_int(&m->spinlock);
 
     // Wait until all readers are out of the critical section.
     if (m->active_read_count > 0 || m->write_locked)
@@ -101,16 +96,14 @@ void rwlock_lock_write(struct rwlock *m)
 
     assert(m->active_read_count == 0);
     m->write_locked = 1;
-    release_spinlock(&m->spinlock);
-    restore_interrupts(old_flags);
+    release_spinlock_int(&m->spinlock, old_flags);
 }
 
 void rwlock_unlock_write(struct rwlock *m)
 {
     int old_flags;
 
-    old_flags = disable_interrupts();
-    acquire_spinlock(&m->spinlock);
+    old_flags = acquire_spinlock_int(&m->spinlock);
 
     assert(m->write_locked);
     assert(m->active_read_count == 0);
@@ -135,8 +128,7 @@ void rwlock_unlock_write(struct rwlock *m)
     else
         m->write_locked = 0;
 
-    release_spinlock(&m->spinlock);
-    restore_interrupts(old_flags);
+    release_spinlock_int(&m->spinlock, old_flags);
 }
 
 #if TEST_RWLOCK

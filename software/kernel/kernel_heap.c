@@ -48,8 +48,7 @@ void *kmalloc(unsigned int size)
     unsigned int va;
     int old_flags;
 
-    old_flags = disable_interrupts();
-    acquire_spinlock(&heap_lock);
+    old_flags = acquire_spinlock_int(&heap_lock);
 
     // Walk ranges in order to find one that is big enough
     for (prev_ptr = &free_list; *prev_ptr; prev_ptr = &(*prev_ptr)->next)
@@ -95,8 +94,7 @@ void *kmalloc(unsigned int size)
         insert_free_range(new_range);
     }
 
-    release_spinlock(&heap_lock);
-    restore_interrupts(old_flags);
+    release_spinlock_int(&heap_lock, old_flags);
 
     return result;
 }
@@ -108,11 +106,9 @@ void kfree(void *ptr, unsigned int size)
 
     new_range->size = size;
 
-    old_flags = disable_interrupts();
-    acquire_spinlock(&heap_lock);
+    old_flags = acquire_spinlock_int(&heap_lock);
     insert_free_range(new_range);
-    release_spinlock(&heap_lock);
-    restore_interrupts(old_flags);
+    release_spinlock_int(&heap_lock, old_flags);
 }
 
 static void insert_free_range(struct free_range *new_range)

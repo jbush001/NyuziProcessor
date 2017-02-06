@@ -120,8 +120,7 @@ int read_sdmmc_device(unsigned int block_address, void *ptr)
     int result;
     int old_flags;
 
-    old_flags = disable_interrupts();
-    acquire_spinlock(&sd_lock);
+    old_flags = acquire_spinlock_int(&sd_lock);
 
     result = send_sd_command(SD_CMD_READ_BLOCK, block_address);
     if (result != 0)
@@ -134,8 +133,7 @@ int read_sdmmc_device(unsigned int block_address, void *ptr)
     spi_transfer(0xff);
     spi_transfer(0xff);
 
-    release_spinlock(&sd_lock);
-    restore_interrupts(old_flags);
+    release_spinlock_int(&sd_lock, old_flags);
 
     return BLOCK_SIZE;
 }

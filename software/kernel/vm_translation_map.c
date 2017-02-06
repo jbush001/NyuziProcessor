@@ -145,8 +145,7 @@ struct vm_translation_map *create_translation_map(void)
     map = slab_alloc(&translation_map_slab);
     map->page_dir = page_to_pa(vm_allocate_page());
 
-    old_flags = disable_interrupts();
-    acquire_spinlock(&kernel_space_lock);
+    old_flags = acquire_spinlock_int(&kernel_space_lock);
     // Copy kernel page tables into new page directory
     memcpy((unsigned int*) PA_TO_VA(map->page_dir) + 768,
            (unsigned int*) PA_TO_VA(kernel_map.page_dir) + 768,
@@ -156,8 +155,7 @@ struct vm_translation_map *create_translation_map(void)
     map->lock = 0;
 
     list_add_tail(&map_list, (struct list_node*) map);
-    release_spinlock(&kernel_space_lock);
-    restore_interrupts(old_flags);
+    release_spinlock_int(&kernel_space_lock, old_flags);
 
     return map;
 }
@@ -168,11 +166,9 @@ void destroy_translation_map(struct vm_translation_map *map)
     unsigned int *pgdir;
     int old_flags;
 
-    old_flags = disable_interrupts();
-    acquire_spinlock(&kernel_space_lock);
+    old_flags = acquire_spinlock_int(&kernel_space_lock);
     list_remove_node(map);
-    release_spinlock(&kernel_space_lock);
-    restore_interrupts(old_flags);
+    release_spinlock_int(&kernel_space_lock, old_flags);
 
     // Free user space page tables
     pgdir = (unsigned int*) PA_TO_VA(map->page_dir);
@@ -200,8 +196,7 @@ void vm_map_page(struct vm_translation_map *map, unsigned int va, unsigned int p
     if (va >= KERNEL_BASE)
     {
         // Map into kernel space
-        old_flags = disable_interrupts();
-        acquire_spinlock(&kernel_space_lock);
+        old_flags = acquire_spinlock_int(&kernel_space_lock);
 
         // The page tables for kernel space are shared by all page directories.
         // Check the first page directory to see if this is present. If not,
@@ -224,14 +219,12 @@ void vm_map_page(struct vm_translation_map *map, unsigned int va, unsigned int p
 
         // XXX need to invalidate on other cores
 
-        release_spinlock(&kernel_space_lock);
-        restore_interrupts(old_flags);
+        release_spinlock_int(&kernel_space_lock, old_flags);
     }
     else
     {
         // Map only into this address space
-        old_flags = disable_interrupts();
-        acquire_spinlock(&map->lock);
+        old_flags = acquire_spinlock_int(&map->lock);
         pgdir = (unsigned int*) PA_TO_VA(map->page_dir);
         if ((pgdir[pgdindex] & PAGE_PRESENT) == 0)
             pgdir[pgdindex] = page_to_pa(vm_allocate_page()) | PAGE_PRESENT;
@@ -242,8 +235,7 @@ void vm_map_page(struct vm_translation_map *map, unsigned int va, unsigned int p
 
         // XXX need to invalidate on other cores
 
-        release_spinlock(&map->lock);
-        restore_interrupts(old_flags);
+        release_spinlock_int(&map->lock, old_flags);
     }
 }
 
@@ -260,8 +252,7 @@ unsigned int query_translation_map(struct vm_translation_map *map, unsigned int 
     if (va >= KERNEL_BASE)
     {
         // Check kernel space
-        old_flags = disable_interrupts();
-        acquire_spinlock(&kernel_space_lock);
+        old_flags = acquire_spinlock_int(&kernel_space_lock);
 
         // The page tables for kernel space are shared by all page directories.
         // Check the first page directory to see if this is present.
@@ -274,14 +265,12 @@ unsigned int query_translation_map(struct vm_translation_map *map, unsigned int 
             ptentry = ((unsigned int*)PA_TO_VA(pgtbl))[pgtindex];
         }
 
-        release_spinlock(&kernel_space_lock);
-        restore_interrupts(old_flags);
+        release_spinlock_int(&kernel_space_lock, old_flags);
     }
     else
     {
         // Check this user space
-        old_flags = disable_interrupts();
-        acquire_spinlock(&map->lock);
+        old_flags = acquire_spinlock_int(&map->lock);
         pgdir = (unsigned int*) PA_TO_VA(map->page_dir);
         if ((pgdir[pgdindex] & PAGE_PRESENT) == 0)
             ptentry = 0;
@@ -291,8 +280,7 @@ unsigned int query_translation_map(struct vm_translation_map *map, unsigned int 
             ptentry = ((unsigned int*)PA_TO_VA(pgtbl))[pgtindex];
         }
 
-        release_spinlock(&map->lock);
-        restore_interrupts(old_flags);
+        release_spinlock_int(&map->lock, old_flags);
     }
 
     return ptentry;

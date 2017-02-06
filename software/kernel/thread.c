@@ -78,11 +78,9 @@ void boot_init_thread(void)
     strlcpy(th->name, "idle_thread", sizeof(th->name));
 
     cur_thread[current_hw_thread()] = th;
-    old_flags = disable_interrupts();
-    acquire_spinlock(&kernel_proc->lock);
+    old_flags = acquire_spinlock_int(&kernel_proc->lock);
     list_add_tail(&kernel_proc->thread_list, &th->process_entry);
-    release_spinlock(&kernel_proc->lock);
-    restore_interrupts(old_flags);
+    release_spinlock_int(&kernel_proc->lock, old_flags);
 
     register_interrupt_handler(1, timer_tick);
     start_timer();
@@ -159,11 +157,9 @@ static void destroy_thread(struct thread *th)
 
     assert(th->state == THREAD_DEAD);
 
-    old_flags = disable_interrupts();
-    acquire_spinlock(&proc->lock);
+    old_flags = acquire_spinlock_int(&proc->lock);
     list_remove_node(&th->process_entry);
-    release_spinlock(&proc->lock);
-    restore_interrupts(old_flags);
+    release_spinlock_int(&proc->lock, old_flags);
 
     // A thread cannot clean itself up. The kernel stack would go away and
     // crash.
@@ -192,11 +188,9 @@ void dec_proc_ref(struct process *proc)
         VM_DEBUG("destroying process %d\n", proc->id);
         assert(list_is_empty(&proc->thread_list));
 
-        old_flags = disable_interrupts();
-        acquire_spinlock(&process_list_lock);
+        old_flags = acquire_spinlock_int(&process_list_lock);
         list_remove_node(proc);
-        release_spinlock(&process_list_lock);
-        restore_interrupts(old_flags);
+        release_spinlock_int(&process_list_lock, old_flags);
 
         destroy_address_space(proc->space);
         slab_free(&process_slab, proc);
@@ -215,11 +209,9 @@ int grim_reaper(void *ignore)
     for (;;)
     {
         // Dequeue a thread to kill
-        old_flags = disable_interrupts();
-        acquire_spinlock(&thread_q_lock);
+        old_flags = acquire_spinlock_int(&thread_q_lock);
         th = list_remove_head(&dead_q, struct thread);
-        release_spinlock(&thread_q_lock);
-        restore_interrupts(old_flags);
+        release_spinlock_int(&thread_q_lock, old_flags);
 
         if (th == 0)
         {
@@ -289,8 +281,7 @@ void reschedule(void)
 
     // Put current thread back on ready queue
 
-    old_flags = disable_interrupts();
-    acquire_spinlock(&thread_q_lock);
+    old_flags = acquire_spinlock_int(&thread_q_lock);
     old_thread = cur_thread[hwthread];
     assert(old_thread->state != THREAD_READY);
 
@@ -312,8 +303,7 @@ void reschedule(void)
         context_switch(&old_thread->current_stack, next_thread->current_stack);
     }
 
-    release_spinlock(&thread_q_lock);
-    restore_interrupts(old_flags);
+    release_spinlock_int(&thread_q_lock, old_flags);
 }
 
 void disable_preempt(void)

@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include "trap.h"
+
 typedef volatile int spinlock_t;
 
 static inline void acquire_spinlock(spinlock_t *sp)
@@ -32,8 +34,24 @@ static inline void acquire_spinlock(spinlock_t *sp)
     while (!__sync_bool_compare_and_swap(sp, 0, 1));
 }
 
+// Disables interrupts before acquiring spinlock. Returns old CPU flags.
+static inline int acquire_spinlock_int(spinlock_t *sp)
+{
+    int old_flags = disable_interrupts();
+    acquire_spinlock(sp);
+    return old_flags;
+}
+
 static inline void release_spinlock(spinlock_t *sp)
 {
     *sp = 0;
     __sync_synchronize();
+}
+
+// Restores interrupts after erlaseing spinlock, takes flags returned by
+// acquire_spinlock_int
+static inline void release_spinlock_int(spinlock_t *sp, int old_flags)
+{
+    release_spinlock(sp);
+    restore_interrupts(old_flags);
 }

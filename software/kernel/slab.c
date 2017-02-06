@@ -24,8 +24,7 @@ void *slab_alloc(struct slab_allocator *sa)
     void *object = 0;
     int old_flags;
 
-    old_flags = disable_interrupts();
-    acquire_spinlock(&sa->lock);
+    old_flags = acquire_spinlock_int(&sa->lock);
     if (sa->free_list)
     {
         // Grab freed object
@@ -47,8 +46,7 @@ void *slab_alloc(struct slab_allocator *sa)
         sa->wilderness_offset += sa->object_size;
     }
 
-    release_spinlock(&sa->lock);
-    restore_interrupts(old_flags);
+    release_spinlock_int(&sa->lock, old_flags);
 
     return object;
 }
@@ -57,12 +55,10 @@ void slab_free(struct slab_allocator *sa, void *object)
 {
     int old_flags;
 
-    old_flags = disable_interrupts();
-    acquire_spinlock(&sa->lock);
+    old_flags = acquire_spinlock_int(&sa->lock);
     *((void**) object) = sa->free_list;
     sa->free_list = object;
-    release_spinlock(&sa->lock);
-    restore_interrupts(old_flags);
+    release_spinlock_int(&sa->lock, old_flags);
 }
 
 #ifdef TEST_SLAB

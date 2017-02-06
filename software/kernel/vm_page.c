@@ -64,8 +64,7 @@ struct vm_page *vm_allocate_page(void)
     page->cache = 0;
     page->dirty = 0;
     page->ref_count = 1;
-    release_spinlock(&page_lock);
-    restore_interrupts(old_flags);
+    release_spinlock_int(&page_lock, old_flags);
 
     pa = (page - pages) * PAGE_SIZE;
 
@@ -87,11 +86,9 @@ void dec_page_ref(struct vm_page *page)
     if (__sync_fetch_and_add(&page->ref_count, -1) == 1)
     {
         VM_DEBUG("freeing page pa %08x\n", page_to_pa(page));
-        old_flags = disable_interrupts();
-        acquire_spinlock(&page_lock);
+        old_flags = acquire_spinlock_int(&page_lock);
         list_add_head(&free_page_list, page);
-        release_spinlock(&page_lock);
-        restore_interrupts(old_flags);
+        release_spinlock_int(&page_lock, old_flags);
     }
 }
 
@@ -115,9 +112,7 @@ unsigned int allocate_contiguous_memory(unsigned int size)
     int found_run;
     int old_flags;
 
-    old_flags = disable_interrupts();
-    acquire_spinlock(&page_lock);
-
+    old_flags = acquire_spinlock_int(&page_lock);
 
     // Find free range
     do
@@ -127,8 +122,7 @@ unsigned int allocate_contiguous_memory(unsigned int size)
         {
             if (base_index == total_pages - page_count)
             {
-                release_spinlock(&page_lock);
-                restore_interrupts(old_flags);
+                release_spinlock_int(&page_lock, old_flags);
                 return 0xffffffff;  // No free range
             }
 
@@ -156,8 +150,7 @@ unsigned int allocate_contiguous_memory(unsigned int size)
         list_remove_node(&pages[base_index + page_offset]);
     }
 
-    release_spinlock(&page_lock);
-    restore_interrupts(old_flags);
+    release_spinlock_int(&page_lock, old_flags);
 
     return base_index * PAGE_SIZE;
 }
