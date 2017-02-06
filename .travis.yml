@@ -5,15 +5,21 @@ language: c
 services:
 - docker
 
-# Don't download the compiler and Verilator (which aren't built here and
+# Don't pull the compiler and Verilator sources (which aren't built here and
 # are large)
 git:
   submodules: false
 
-# Dockerfile is here: https://github.com/jbush001/NyuziBuildContainer
+# Pull a container from DockerHub that has Verilator and the Nyuzi toolchain.
+# https://hub.docker.com/r/jeffbush001/nyuzi-build/
+# I built this on my machine using Dockerfile and scripts from here:
+# https://github.com/jbush001/NyuziBuildContainer
 before_install:
-- docker pull jeffbush001/nyuzi-build	
+- docker pull jeffbush001/nyuzi-build
 
+# Mount the source directory in the container and set that to be the working
+# directory. Then launch the script build/run_ci_tests.sh from this repository,
+# which will do the rest.
 script:
 - docker run -v $TRAVIS_BUILD_DIR:/root/NyuziProcessor -w /root/NyuziProcessor jeffbush001/nyuzi-build /bin/bash -c build/run_ci_tests.sh
 
