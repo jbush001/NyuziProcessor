@@ -268,7 +268,7 @@ module sim_sdram
     assign burst_length = 1 << mode_register_ff[2:0];
     assign burst_interleaved = mode_register_ff[3];
     assign burst_address_offset = burst_interleaved
-        ? 8'(burst_column_address) ^ 8'(burst_count_ff)
-        : 8'(burst_column_address) + 8'(burst_count_ff);
+        ? COL_ADDR_WIDTH'(burst_column_address) ^ COL_ADDR_WIDTH'(burst_count_ff)
+        : COL_ADDR_WIDTH'(burst_column_address) + COL_ADDR_WIDTH'(burst_count_ff);
     assign burst_address = {bank_active_row[burst_bank], burst_bank, burst_address_offset};
 endmodule
