@@ -65,3 +65,5 @@ The simulator writes a file called `trace.vcd` in
 format in the current working directory. This can be with a waveform
 viewer like [GTKWave](http://gtkwave.sourceforge.net/).
 
+Waveform files get big quickly. Even running a minute of simulation can
+produce hundreds of megabytes of trace data.
