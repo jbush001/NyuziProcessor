@@ -52,6 +52,7 @@
 // breakpoint address. It is invalid, because it uses a reserved format
 // type. The interpreter only performs a breakpoint lookup when it sees
 // this instruction as an optimization.
+// This is different than the native 'breakpoint' instruction.
 #define BREAKPOINT_INST 0x707fffff
 
 struct thread
