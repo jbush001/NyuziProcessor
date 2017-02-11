@@ -24,7 +24,7 @@
 
                     .globl _start
 _start:             getcr s0, 0
-                    btrue s0, start_thread_n
+                    bnz s0, start_thread_n
 
                     load_32 sp, temp_stack
                     load_32 s0, memory_size
@@ -45,7 +45,7 @@ _start:             getcr s0, 0
                     // Set up entry address for trampoline
                     load_32 s0, kernel_main_addr
                     setcr s0, CR_TRAP_PC
-                    goto trampoline
+                    b trampoline
 
 start_thread_n:     // Set up entry address for trampoline
                     load_32 s0, thread_n_main_addr

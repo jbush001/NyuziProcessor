@@ -42,7 +42,7 @@ handle_fault:   getcr s0, CR_TRAP_CAUSE
                 getcr s0, CR_TRAP_PC
                 lea s1, fault_pc
                 cmpeq_i s0, s0, s1
-                btrue s0, 1f
+                bnz s0, 1f
                 should_not_get_here
 1:
 

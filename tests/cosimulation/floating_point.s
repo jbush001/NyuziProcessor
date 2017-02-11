@@ -33,7 +33,7 @@ test_loop:  load_32 s1, (s0)
             reciprocal s11, s2
             add_i s0, s0, 8
             cmpge_i s6, s0, s15
-            bfalse s6, test_loop
+            bnz s6, test_loop
 
             halt_current_thread
 

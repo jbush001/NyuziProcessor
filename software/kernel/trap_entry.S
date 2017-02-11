@@ -31,11 +31,11 @@ trap_entry:             setcr s0, CR_SCRATCHPAD0        // Save s0 in scratchpad
 
                         getcr s0, CR_SAVED_FLAGS        // Get old flags
                         and s0, s0, FLAG_SUPERVISOR_EN  // Was in supervisor mode?
-                        btrue s0, is_supervisor
+                        bnz s0, is_supervisor
 
                         // Need to switch to kernel stack. First, find the
                         // current thread for this hardware thread.
-                        getcr s0, CR_CURRENT_HW_THREAD     // Current hardware thread
+                        getcr s0, CR_CURRENT_HW_THREAD  // Current hardware thread
                         shl s0, s0, 2                   // Multiply by 4 (bytes/entry)
                         lea s1, trap_kernel_stack_addr
                         load_32 s1, (s1)                // Get base of array
@@ -43,7 +43,7 @@ trap_entry:             setcr s0, CR_SCRATCHPAD0        // Save s0 in scratchpad
                         load_32 s1, (s1)                // Get kernel_stack pointer
                         store_32 sp, -76(s1)            // Save user stack pointer
                         move sp, s1                     // switch stacks
-                        goto save_frame
+                        b save_frame
 
                         // Already in kernel mode. Don't need to switch stacks, just
                         // decrement pointer
@@ -192,7 +192,7 @@ tlb_miss_handler:   setcr s0, CR_SCRATCHPAD0    // Save s0 in scratchpad
                     add_i s0, s0, s1            // Pointer to page directory entry
                     load_32 s0, (s0)            // Read page directory entry
                     and s1, s0, 1               // Is present bit set?
-                    bfalse s1, pte_not_present  // No page table
+                    bz s1, pte_not_present      // No page table
                     shr s0, s0, 12              // Mask off all low bits to get rounded PTE base
                     shl s0, s0, 12
 
@@ -207,11 +207,11 @@ tlb_miss_handler:   setcr s0, CR_SCRATCHPAD0    // Save s0 in scratchpad
                     // Update TLB
 update_tlb:         getcr s1, CR_TRAP_CAUSE     // Get fault reason
                     and s1, s1, 0x20            // Is DTLB miss?
-                    bfalse s1, fill_itlb        // If no, branch to update ITLB
+                    bz s1, fill_itlb            // If no, branch to update ITLB
 
 fill_dltb:          getcr s1, CR_TRAP_ADDR      // Get fault virtual address
                     dtlbinsert s1, s0           // Set virtual address for DTLB
-                    goto done
+                    b done
 
 fill_itlb:          getcr s1, CR_TRAP_ADDR      // Get fault virtual address
                     itlbinsert s1, s0           // Set virtual address for ITLB
@@ -221,7 +221,7 @@ done:               getcr s0, CR_SCRATCHPAD0    // Get saved s0 from scratchpad
                     eret
 
 pte_not_present:    move s0, 0                  // Null entry (present bit not set)
-                    goto update_tlb             // Insert this into TLB
+                    b update_tlb                // Insert this into TLB
 
 
                     .globl disable_interrupts

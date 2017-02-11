@@ -27,6 +27,6 @@ _start:         move s0, 5
 1:              store_32 s0, (s1)
                 add_i s0, s0, 1
                 cmpge_i s2, s0, 10
-                bfalse s2, 1b
+                bz s2, 1b
                 halt_all_threads
 

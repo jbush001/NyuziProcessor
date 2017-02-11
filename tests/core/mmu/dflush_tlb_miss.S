@@ -53,7 +53,7 @@ tlb_fault:      // Check that the fault is correct
                 getcr s0, CR_TRAP_PC
                 lea s1, fault_loc
                 cmpeq_i s0, s0, s1
-                btrue s0, 1f
+                bnz s0, 1f
                 call fail_test
 1:
                 call pass_test

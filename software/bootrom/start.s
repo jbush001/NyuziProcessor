@@ -30,7 +30,7 @@
                     .globl _start
                     .type _start,@function
 _start:             getcr s0, 0             # Get current thread ID
-                    btrue s0, jump_to_zero  # Not thread 0, skip loader
+                    bnz s0, jump_to_zero  # Not thread 0, skip loader
 
                     load_32 sp, temp_stack  # Set up stack
                     call main               # Serial loader

@@ -36,16 +36,16 @@ user_copy:      load_32 s3, fault_handler_addr  // Base of fault handler array
                 lea s3, uc_fault
                 store_32 s3, (s4)
 
-1:              bfalse s2, 2f
+1:              bz s2, 2f
                 load_s8 s3, (s1)
                 store_8 s3, (s0)
                 add_i s0, s0, 1
                 add_i s1, s1, 1
                 sub_i s2, s2, 1
-                goto 1b
+                b 1b
 
 uc_fault:       move s0, -1 // Failure
-                goto 3f
+                b 3f
 
 2:              move s0, 0  // Success
 
@@ -66,19 +66,19 @@ user_strlcpy:   load_32 s3, fault_handler_addr  // Base of fault handler array
                 lea s3, usc_fault
                 store_32 s3, (s4)
 
-                bfalse s2, 2f
+                bz s2, 2f
 
 1:              sub_i s2, s2, 1
-                bfalse s2, 2f
+                bz s2, 2f
                 load_s8 s3, (s1)
-                bfalse s3, 2f       // Delimiter
+                bz s3, 2f       // Delimiter
                 store_8 s3, (s0)
                 add_i s0, s0, 1
                 add_i s1, s1, 1
-                goto 1b
+                b 1b
 
 usc_fault:      move s0, -1 // Failure
-                goto 3f
+                b 3f
 
 2:               move s3, 0
                 store_8 s3, (s0)            // Append null

@@ -40,7 +40,7 @@ fill_loop:      store_32    s2, (s0)
                 # Increment and loop
                 add_i       s0, s0, 4      # Increment pionter
                 sub_i       s1, s1, 4      # Decrement count
-                btrue       s1, fill_loop
+                bnz       s1, fill_loop
 
                 # Now check the pattern
                 load_32     s0, base_addr
@@ -49,7 +49,7 @@ fill_loop:      store_32    s2, (s0)
 
 check_loop:     load_32 s5, (s0)
                 cmpne_i s6, s5, s2
-                btrue s6, error
+                bnz s6, error
 
                 # Compute next random number
                 mull_i       s2, s2, s3
@@ -58,17 +58,17 @@ check_loop:     load_32 s5, (s0)
                 # Increment and loop
                 add_i       s0, s0, 4      # Increment pionter
                 sub_i       s1, s1, 4      # Decrement count
-                btrue       s1, check_loop
+                bnz       s1, check_loop
 
 success:        load_32 s0, device_base
                 move s1, 0xffff
                 store_32 s1, 4(s0)          # Green LEDs
-done0:          goto done0
+1:              b 1b
 
 error:          load_32 s0, device_base
                 move s1, 0xffff
                 store_32 s1, 0(s0)          # Red LEDs
-done1:          goto done1
+1:              b 1b
 
 base_addr:      .long 0x2000
 test_length:    .long 0x8000000 - 0x2000

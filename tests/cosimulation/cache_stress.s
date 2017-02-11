@@ -50,7 +50,7 @@ main_loop:      mull_i s1, s1, s2    # Generate next random number
 
                 add_i s0, s0, 13     # Increment write value
                 sub_i s5, s5, 1      # Decrement count
-                btrue s5, main_loop
+                bnz s5, main_loop
 
                 halt_current_thread
 

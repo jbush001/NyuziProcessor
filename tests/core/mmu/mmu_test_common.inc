@@ -28,21 +28,21 @@
                     lea s0, \itlb_entries
 1:                  load_32 s1, (s0)
                     cmpeq_i s2, s1, -1
-                    btrue s2, 2f
+                    bnz s2, 2f
                     load_32 s2, 4(s0)
                     itlbinsert s1, s2
                     add_i s0, s0, 8
-                    goto 1b
+                    b 1b
 2:
                     // Load DTLB
                     lea s0, \dtlb_entries
 1:                  load_32 s1, (s0)
                     cmpeq_i s2, s1, -1
-                    btrue s2, 2f
+                    bnz s2, 2f
                     load_32 s2, 4(s0)
                     dtlbinsert s1, s2
                     add_i s0, s0, 8
-                    goto 1b
+                    b 1b
 2:
 .endm
 
@@ -83,7 +83,7 @@ handle_fault:       getcr s0, CR_TRAP_CAUSE
                     getcr s0, CR_TRAP_PC
                     lea s1, fault_loc
                     cmpeq_i s0, s0, s1
-                    btrue s0, 1f
+                    bnz s0, 1f
                     call fail_test
 1:
 

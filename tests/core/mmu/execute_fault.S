@@ -28,7 +28,7 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
                 move s0, FLAG_MMU_EN | FLAG_SUPERVISOR_EN
                 setcr s0, CR_FLAGS
                 flush_pipeline
-                goto noexec_page        // Jump to nonexecutable page
+                b noexec_page        // Jump to nonexecutable page
 
 fault_handler:  getcr s0, CR_TRAP_CAUSE
                 assert_reg s0, TT_NOT_EXECUTABLE

@@ -43,7 +43,7 @@ handle_fault:   // Check that s0 was not updated. If it were, that could
                 getcr s10, CR_TRAP_PC
                 lea s11, fault_loc
                 cmpeq_i s10, s10, s11
-                btrue s10, 1f
+                bnz s10, 1f
                 call fail_test
 1:              call pass_test
 

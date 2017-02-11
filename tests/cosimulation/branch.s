@@ -29,34 +29,34 @@ _start:
                 move s2, -1
 
 # Unconditional Branch
-test0:          goto 1f
+test0:          b 1f
                 move s10, 1
-                goto 2f
+                b 2f
 1:              move s10, 2
 
-# bfalse, taken
-2:              bfalse s1, 1f
+# bz, taken
+2:              bz s1, 1f
                 move s10, 3
-                goto 2f
+                b 2f
 1:              move s10, 4
 
-# bfalse, not taken
-2:              bfalse s0, 1f
+# bz, not taken
+2:              bz s0, 1f
                 move s10, 5
-                goto 2f
+                b 2f
 1:              move s10, 6
 
 
-# btrue, taken
-2:              btrue s0, 1f
+# bnz, taken
+2:              bnz s0, 1f
                 move s10, 7
-                goto 2f
+                b 2f
 1:              move s10, 8
 
-# btrue, not taken
-2:              btrue s1, 1f
+# bnz, not taken
+2:              bnz s1, 1f
                 move s10, 9
-                goto 2f
+                b 2f
 1:              move s10, 10
 
 # Call

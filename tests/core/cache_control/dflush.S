@@ -36,7 +36,7 @@ fill_loop:          add_i s3, s1, s0            // Get value to store
                     dflush s4
                     add_i s0, s0, 4             // Increment index by num threads
                     cmplt_i s4, s0, s10         // Past end?
-                    btrue s4, fill_loop         // No, so loop
+                    bnz s4, fill_loop         // No, so loop
 
                     halt_current_thread
 

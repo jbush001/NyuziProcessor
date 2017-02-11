@@ -19,5 +19,5 @@ _start:     nop
             nop
             nop
             nop
-            goto 1  // This will crash because of an unaligned address
+            b 1  // This will crash because of an unaligned address
 

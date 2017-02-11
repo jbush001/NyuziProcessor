@@ -47,17 +47,17 @@ _start:
                     # Only thread 0 does initialization.  Skip for other
                     # threads, which only arrive here after thread 0 has
                     # completed initialization and started them).
-                    btrue s0, do_main
+                    bnz s0, do_main
 
                     # Call global initializers
                     load_32 s24, init_array_start
                     load_32 s25, init_array_end
 init_loop:          cmpeq_i s0, s24, s25    # End of array?
-                    btrue s0, do_main       # If so, exit loop
+                    bnz s0, do_main       # If so, exit loop
                     load_32 s0, (s24)       # Load ctor address
                     add_i s24, s24, 4       # Next array index
                     call s0                 # Call constructor
-                    goto init_loop
+                    b init_loop
 
 do_main:            move s0, 0    # Set argc to 0
                     call main
@@ -66,10 +66,10 @@ do_main:            move s0, 0    # Set argc to 0
                     # call destructors.
                     lea s0, exit_flag
 1:                  load_sync s1, (s0)
-                    btrue s1, 1b
+                    bnz s1, 1b
                     move s1, 1
                     store_sync s1, (s0)
-                    bfalse s1, 1b
+                    bz s1, 1b
 
                     # Call atexit functions
                     call call_atexit_functions
@@ -78,7 +78,7 @@ do_main:            move s0, 0    # Set argc to 0
                     move s0, -1
                     load_32 s1, thread_halt_addr
                     store_32 s0, (s1)
-1:                  goto 1b
+1:                  b 1b
 
 stacks_base:        .long 0x200000
 init_array_start:   .long __init_array_start

@@ -84,7 +84,7 @@
                 shl s0, s0, 16
                 or s0, s0, 0x104
                 store_32 s1, (s0)
-1:              goto 1b
+1:              b 1b
 .endm
 
 .macro halt_all_threads
@@ -93,7 +93,7 @@
                 or s0, s0, 0x104
                 move s1, -1
                 store_32 s1, (s0)
-1:              goto 1b
+1:              b 1b
 .endm
 
 // Print a null terminated string pointer to by s0 to the serial
@@ -102,13 +102,13 @@
 .macro print_string
                 load_32 s1, _seraddr    // Load address of serial registers
 1:              load_u8 s2, (s0)        // Read a character
-                bfalse s2, 3f           // If delimeter, exit
+                bz s2, 3f           // If delimeter, exit
 2:              load_32 s3, (s1)        // Read STATUS
                 and s3, s3, 1           // Check write available bit
-                bfalse s3, 2b           // If this is clear, busy wait
+                bz s3, 2b           // If this is clear, busy wait
                 store_32 s2, 8(s1)      // Write space available, send char
                 add_i s0, s0, 1         // Increment pointer
-                goto 1b                 // Loop for next char
+                b 1b                 // Loop for next char
 3:
 .endm
 _seraddr:       .long 0xffff0040
@@ -118,13 +118,13 @@ _seraddr:       .long 0xffff0040
 .macro assert_reg reg, testval
                 load_const s25, \testval
                 cmpeq_i s25, s25, \reg
-                btrue s25, 1f
+                bnz s25, 1f
                 call fail_test
 1:
 .endm
 
 .macro flush_pipeline
-                goto 1f
+                b 1f
 1:
 .endm
 

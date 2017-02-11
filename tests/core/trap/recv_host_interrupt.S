@@ -31,7 +31,7 @@
                     setcr s0, CR_FLAGS
                     flush_pipeline
 
-int_addr\intnum :   goto 1b     // Wait for interrupt
+int_addr\intnum :   b int_addr\intnum     // Wait for interrupt
 
 handle_trap\intnum :
                     // Ack interrupt
@@ -51,7 +51,7 @@ handle_trap\intnum :
                     getcr s0, CR_TRAP_PC
                     lea s1, int_addr\intnum
                     cmpeq_i s0, s0, s1
-                    btrue s0, 1f
+                    bnz s0, 1f
                     call fail_test
 1:                  // Interrupts are now off
 .endm

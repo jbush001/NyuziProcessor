@@ -45,7 +45,7 @@ _start:             lea s0, interrupt_handler
 1:                  mull_i s2, s2, s3
                     add_i s2, s2, s4
                     sub_i s1, s1, 1
-                    btrue s1, 1b
+                    bnz s1, 1b
 
                     # Disable interrupts before finishing.  This avoids a race condition
                     # where the emulator can begin processing an interrupt before

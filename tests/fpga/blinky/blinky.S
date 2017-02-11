@@ -30,17 +30,17 @@ loop0:          store_32    s1, (s0)        # Update LEDs
                 # Wait
                 move        s4, s3
 delay0:         sub_i       s4, s4, 1
-                btrue       s4, delay0
+                bnz         s4, delay0
 
                 # Rotate left
                 shl         s1, s1, 1
 
                 # Check if we've wrapped
                 shr         s2, s1, 18
-                bfalse      s2, loop0
+                bz          s2, loop0
 
                 move        s1, 1
-                goto        loop0
+                b           loop0
 
 device_addr:    .long 0xFFFF0000
 delay:          .long 100000

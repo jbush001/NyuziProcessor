@@ -28,7 +28,7 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
                 move s0, FLAG_MMU_EN        // Switch to user mode
                 setcr s0, CR_FLAGS
                 flush_pipeline
-                goto super_page        // Jump to supervisor page
+                b super_page        // Jump to supervisor page
 
 fault_handler:  getcr s0, CR_TRAP_CAUSE
                 assert_reg s0, TT_SUPERVISOR_ACCESS
@@ -39,7 +39,7 @@ fault_handler:  getcr s0, CR_TRAP_CAUSE
                 getcr s0, CR_TRAP_PC
                 lea s1, super_page
                 cmpeq_i s0, s0, s1
-                btrue s0, 1f
+                bnz s0, 1f
                 call fail_test
 1:
 

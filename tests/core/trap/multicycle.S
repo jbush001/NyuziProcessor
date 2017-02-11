@@ -28,7 +28,7 @@
 
                     .globl _start
 _start:             getcr s0, 0                 // Find my thread ID
-                    btrue s0, spinner_thread    // If it is 1, jump to spinner thread
+                    bnz s0, spinner_thread    // If it is 1, jump to spinner thread
 
                     // Start spinner thread, which is described below
                     load_const s0, REG_THREAD_RESUME
@@ -58,13 +58,13 @@ loop0:
                     load_v v0, ptrvec     // Get vector of pointers
                     load_gath v0, (v0)     // Gather load from pointers
                     sub_i s0, s0, 1        // Decrement counter and loop if not done
-                    btrue s0, loop0
+                    bnz s0, loop0
 
                     call pass_test
 
 interrupt_handler:  getcr s12, CR_TRAP_CAUSE
                     cmpeq_i s13, s12, TT_INTERRUPT
-                    bfalse s13, bad_int
+                    bz s13, bad_int
 
                     // Ack interrupt
                     move s25, 2
@@ -82,7 +82,7 @@ bad_int:            call fail_test
 // The purpose of the spinner thread is to issue instructions in between the gather
 // instructions from thread 0 and reset the subcycle counter. Otherwise it is still
 // the value of the last instruction and the test appears to pass.
-spinner_thread:     goto spinner_thread
+spinner_thread:     b spinner_thread
 
                     .align 64
 

@@ -76,7 +76,7 @@ tlb_miss_loc:   store_32 s11, (s11)     // This will cause a TLB miss the first 
                 lea s25, align_fault_loc
                 getcr s26, CR_TRAP_PC
                 cmpeq_i s25, s25, s26
-                btrue s25, 1f
+                bnz s25, 1f
                 call fail_test
 1:
                 call pass_test
@@ -102,7 +102,7 @@ handle_tlb_miss:
                 lea s25, tlb_miss_loc
                 getcr s26, CR_TRAP_PC
                 cmpeq_i s25, s25, s26
-                btrue s25, 1f
+                bnz s25, 1f
                 call fail_test
 1:
 

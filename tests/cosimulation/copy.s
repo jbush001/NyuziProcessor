@@ -30,7 +30,7 @@ loop:       load_u8 s3, (s1)
             add_i s0, s0, 1
             add_i s1, s1, 1
             sub_i s2, s2, 1
-            btrue s2, loop
+            bnz s2, loop
 
             halt_current_thread
 

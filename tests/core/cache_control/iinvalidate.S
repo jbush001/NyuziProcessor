@@ -33,11 +33,11 @@ jumploc:    nop                // This location will be patched
             store_32 s1, (s0)
             iinvalidate s0
             membar
-            goto looptop
+            b looptop
 
             // Control will flow here after patch
 breakout:   move s10, 3
 
             call pass_test
 
-newinst:    .long    0xf6000280    // goto +20
+newinst:    .long    0xf6000280    // b +20

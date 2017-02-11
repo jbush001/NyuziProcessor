@@ -21,10 +21,10 @@
 
                     .global __ashldi3
                     .type __ashldi3,@function
-__ashldi3:          bfalse s2, do_nothing   # if shift amount is 0, skip
+__ashldi3:          bz s2, do_nothing   # if shift amount is 0, skip
 
                     cmpge_i s3, s2, 32      # Is the shift amount >= 32?
-                    btrue s3, greater
+                    bnz s3, greater
 
                     # Shift is less than 32 bits
                     move s3, 32

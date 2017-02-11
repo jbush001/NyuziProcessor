@@ -30,7 +30,7 @@
     move \oldval, s25
     add_i s25, s25, 1
     store_sync s25, (\ptr )
-    bfalse s25, 1b
+    bz s25, 1b
 .endm
 
                     .globl _start
@@ -42,12 +42,12 @@ _start:             start_all_threads
 
 fill_loop:          sync_fetch_and_increment s3, s1     // Find next slot
                     cmpge_i s4, s3, s0                  // Done?
-                    btrue s4, exit_loop                 // If so, exit
+                    bnz s4, exit_loop                 // If so, exit
                     and s3, s3, NUM_SLOTS - 1           // Mask so it wraps
                     shl s3, s3, 2                       // Multiply index by four
                     add_i s3, s3, s2                    // Add to array base
                     sync_fetch_and_increment s4, s3     // Increment array index (s4 is ignored)
-                    goto fill_loop
+                    b fill_loop
 
 exit_loop:          halt_current_thread
 current_index:      .long 0

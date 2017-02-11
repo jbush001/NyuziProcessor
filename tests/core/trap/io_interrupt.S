@@ -35,7 +35,7 @@
 handle_trap:    // Check that
                 getcr s24, CR_INTERRUPT_PENDING
                 and s24, s24, 2     // Cosimulation interrupt will also be set, ignore
-                btrue s24, 1f       // If interrupt pending continue
+                bnz s24, 1f       // If interrupt pending continue
                 call fail_test
 1:
 
@@ -85,9 +85,9 @@ repeat_loop:    move s0, '0'
 print_loop:     store_32 s0, (s1)      // Send char
                 add_i s0, s0, 1
                 cmpgt_i s2, s0, 'z'
-                bfalse s2, print_loop
+                bz s2, print_loop
                 sub_i s5, s5, 1
-                btrue s5, repeat_loop
+                bnz s5, repeat_loop
 
                 move s0, '\n'
                 store_32 s0, (s1)

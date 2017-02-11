@@ -267,10 +267,10 @@ def generate_device_io(outfile):
         outfile.write('\t\tstore_32 s{}, (s9)\n'.format(generate_arith_reg()))
 
 BRANCH_TYPES = [
-    ('bfalse', True),
-    ('btrue', True),
+    ('bz', True),
+    ('bnz', True),
     ('call', False),
-    ('goto', False)
+    ('b', False)
 ]
 
 
@@ -371,7 +371,7 @@ fill_loop:      store_32 s5, (s3)
                 # Increment and loop
                 add_i s3, s3, 4      # Increment pointer
                 sub_i s4, s4, 1      # Decrement count
-                btrue s4, fill_loop
+                bnz s4, fill_loop
 
                 ####### Initialize registers with non-zero contents #######
                 move v3, s3
