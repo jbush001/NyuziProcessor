@@ -269,8 +269,6 @@ def generate_device_io(outfile):
 BRANCH_TYPES = [
     ('bfalse', True),
     ('btrue', True),
-    ('ball', True),
-    ('bnall', True),
     ('call', False),
     ('goto', False)
 ]

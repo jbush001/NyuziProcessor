@@ -268,13 +268,7 @@ module int_execute_stage(
             && of_instruction.is_branch
             && !privileged_op_fault)
         begin
-            unique case (of_instruction.branch_type)
-                BRANCH_ALL:
-                begin
-                    branch_taken = of_operand1[0][15:0] == 16'hffff;
-                    is_conditional_branch = 1;
-                end
-
+            case (of_instruction.branch_type)
                 BRANCH_ZERO:
                 begin
                     branch_taken = of_operand1[0] == 0;
@@ -287,12 +281,6 @@ module int_execute_stage(
                     is_conditional_branch = 1;
                 end
 
-                BRANCH_NOT_ALL:
-                begin
-                    branch_taken = of_operand1[0][15:0] != 16'hffff;
-                    is_conditional_branch = 1;
-                end
-
                 BRANCH_ALWAYS,
                 BRANCH_CALL_OFFSET,
                 BRANCH_CALL_REGISTER,
@@ -301,6 +289,9 @@ module int_execute_stage(
                     branch_taken = 1;
                     perf_uncond_branch = 1;
                 end
+
+                default:
+                    ;
             endcase
         end
     end

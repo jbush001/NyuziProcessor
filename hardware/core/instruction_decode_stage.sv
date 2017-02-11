@@ -194,12 +194,10 @@ module instruction_decode_stage(
             7'b1110_111: dlut_out = {F, F, F,  IMM_24_15, SCLR1_4_0, SCLR2_9_5,  F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
 
             // Format B (branch)
-            7'b1111_000: dlut_out = {F, F, F, IMM_24_5, SCLR1_4_0, SCLR2_NONE,   F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
             7'b1111_001: dlut_out = {F, F, F, IMM_24_5, SCLR1_4_0, SCLR2_NONE,   F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
             7'b1111_010: dlut_out = {F, F, F, IMM_24_5, SCLR1_4_0, SCLR2_NONE,   F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
             7'b1111_011: dlut_out = {F, F, F, IMM_24_5, SCLR1_NONE, SCLR2_NONE,  F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
             7'b1111_100: dlut_out = {F, F, T, IMM_24_5, SCLR1_NONE, SCLR2_PC,    F, F, F, F, OP2_SRC_SCALAR2, MASK_SRC_ALL_ONES, F, T};
-            7'b1111_101: dlut_out = {F, F, F, IMM_24_5, SCLR1_4_0, SCLR2_NONE,   F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
             7'b1111_110: dlut_out = {F, F, T, IMM_24_5, SCLR1_4_0, SCLR2_PC,     F, F, F, F, OP2_SRC_SCALAR2, MASK_SRC_ALL_ONES, F, T};
             7'b1111_111: dlut_out = {F, F, T, IMM_24_5, SCLR1_4_0, SCLR2_PC,     F, F, F, F, OP2_SRC_SCALAR2, MASK_SRC_ALL_ONES, F, F};
 

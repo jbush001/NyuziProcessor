@@ -1780,10 +1780,6 @@ static void execute_branch_inst(struct thread *thread, uint32_t instruction)
     TALLY_INSTRUCTION(branch_inst);
     switch (extract_unsigned_bits(instruction, 25, 3))
     {
-        case BRANCH_ALL:
-            branch_taken = (get_scalar_reg(thread, src_reg) & 0xffff) == 0xffff;
-            break;
-
         case BRANCH_ZERO:
             branch_taken = get_scalar_reg(thread, src_reg) == 0;
             break;
@@ -1799,10 +1795,6 @@ static void execute_branch_inst(struct thread *thread, uint32_t instruction)
         case BRANCH_CALL_OFFSET:
             branch_taken = true;
             set_scalar_reg(thread, LINK_REG, thread->pc);
-            break;
-
-        case BRANCH_NOT_ALL:
-            branch_taken = (get_scalar_reg(thread, src_reg) & 0xffff) != 0xffff;
             break;
 
         case BRANCH_CALL_REGISTER:
@@ -1831,6 +1823,10 @@ static void execute_branch_inst(struct thread *thread, uint32_t instruction)
                 try_to_dispatch_interrupt(thread);
 
             return; // Short circuit branch side effect below
+
+        default:
+            raise_trap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false);
+            return;
     }
 
     if (branch_taken)

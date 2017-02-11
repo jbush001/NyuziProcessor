@@ -107,12 +107,10 @@ enum memory_op
 
 enum branch_type
 {
-    BRANCH_ALL = 0,
     BRANCH_ZERO = 1,
     BRANCH_NOT_ZERO = 2,
     BRANCH_ALWAYS = 3,
     BRANCH_CALL_OFFSET = 4,
-    BRANCH_NOT_ALL = 5,
     BRANCH_CALL_REGISTER = 6,
     BRANCH_ERET = 7
 };

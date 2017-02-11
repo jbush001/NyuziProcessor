@@ -19,6 +19,7 @@
 #define REG_ARITH_INST(__type__) (0xc0000000 | ((__type__) << 26))
 #define IMM_ARITH_INST(__type__) ((__type__) << 28)
 #define MEM_INST(__type__) (0x80000000 | ((__type__) << 25))
+#define BRANCH_INST(__type__) (0xf0000000 | ((__type__) << 25))
 
 .macro _test_illegal_inst testnum, subtest, instvalue, flags
                 lea s0, handle_fault\testnum\()_\subtest
@@ -75,5 +76,7 @@ _start:
                 test_illegal_inst 9, MEM_INST(11)
                 test_illegal_inst 10, MEM_INST(12)
                 test_illegal_inst 11, MEM_INST(15)
+                test_illegal_inst 12, BRANCH_INST(0)
+                test_illegal_inst 13, BRANCH_INST(5)
 
                 call pass_test

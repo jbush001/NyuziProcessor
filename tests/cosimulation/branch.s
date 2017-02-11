@@ -59,42 +59,6 @@ test0:          goto 1f
                 goto 2f
 1:              move s10, 10
 
-# ball, taken
-2:              ball s2, 1f
-                move s10, 11
-                goto 2f
-1:              move s10, 12
-
-# ball, not taken, zero
-2:              ball s1, 1f
-                move s10, 13
-                goto 2f
-1:              move s10, 14
-
-# ball, not taken, some bits
-2:              ball s0, 1f
-                move s10, 15
-                goto 2f
-1:              move s10, 16
-
-# bnall not taken
-2:              bnall s2, 1f
-                move s10, 17
-                goto 2f
-1:              move s10, 18
-
-# bnall, taken, zero
-2:              bnall s1, 1f
-                move s10, 19
-                goto 2f
-1:              move s10, 20
-
-# bnall, not taken, some bits
-2:              bnall s0, 1f
-                move s10, 21
-                goto 2f
-1:              move s10, 22
-
 # Call
 2:              call calltest1
 calltest1:      move s10, 23
