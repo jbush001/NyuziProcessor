@@ -131,6 +131,7 @@ module instruction_decode_stage(
     register_idx_t scalar_sel2;
     logic has_trap;
     logic is_syscall;
+    logic is_breakpoint;
     logic raise_interrupt;
     thread_bitmap_t masked_interrupt_flags;
 
@@ -212,10 +213,11 @@ module instruction_decode_stage(
     assign is_getlane = (is_fmt_r || is_fmt_i) && alu_op == OP_GETLANE;
 
     assign is_syscall = is_fmt_r && ifd_instruction[25:20] == OP_SYSCALL;
+    assign is_breakpoint = is_fmt_r && ifd_instruction[25:20] == OP_BREAKPOINT;
     assign is_nop = ifd_instruction == `INSTRUCTION_NOP;
     assign has_trap = dlut_out.illegal || ifd_alignment_fault || ifd_tlb_miss
         || ifd_supervisor_fault || raise_interrupt || is_syscall
-        || ifd_page_fault || ifd_executable_fault;
+        || is_breakpoint || ifd_page_fault || ifd_executable_fault;
 
     // Check for TLB miss first, since permission bits are not valid if there
     // is a TLB miss. The order of the remaining faults should match that in
@@ -238,6 +240,8 @@ module instruction_decode_stage(
             decoded_instr_nxt.trap_cause = {2'b00, TT_ILLEGAL_INSTRUCTION};
         else if (is_syscall)
             decoded_instr_nxt.trap_cause = {2'b00, TT_SYSCALL};
+        else if (is_breakpoint)
+            decoded_instr_nxt.trap_cause = {2'b00, TT_BREAKPOINT};
         else
             decoded_instr_nxt.trap_cause = {2'b00, TT_RESET};
     end

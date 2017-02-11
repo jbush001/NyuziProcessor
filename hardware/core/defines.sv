@@ -81,6 +81,7 @@ typedef enum logic[5:0] {
     OP_CMPLE_F              = 6'b101111,    // Floating point less than or equal
     OP_CMPEQ_F              = 6'b110000,    // Floating point equal
     OP_CMPNE_F              = 6'b110001,    // Floating point not-equal
+    OP_BREAKPOINT           = 6'b111110,
     OP_SYSCALL              = 6'b111111
 } alu_op_t;
 
@@ -175,7 +176,8 @@ typedef enum logic[3:0] {
     TT_TLB_MISS             = 4'd7,
     TT_ILLEGAL_STORE        = 4'd8,
     TT_SUPERVISOR_ACCESS    = 4'd9,
-    TT_NOT_EXECUTABLE       = 4'd10
+    TT_NOT_EXECUTABLE       = 4'd10,
+    TT_BREAKPOINT           = 4'd11
 } trap_type_t;
 
 typedef struct packed

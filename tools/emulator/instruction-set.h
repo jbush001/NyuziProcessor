@@ -69,6 +69,7 @@ enum arithmetic_op
     OP_CMPLE_F = 47,
     OP_CMPEQ_F = 48,
     OP_CMPNE_F = 49,
+    OP_BREAKPOINT = 62,
     OP_SYSCALL = 63
 };
 
@@ -149,7 +150,8 @@ enum trap_type
     TT_TLB_MISS = 7,
     TT_ILLEGAL_STORE = 8,
     TT_SUPERVISOR_ACCESS = 9,
-    TT_NOT_EXECUTABLE = 10
+    TT_NOT_EXECUTABLE = 10,
+    TT_BREAKPOINT = 11
 };
 
 enum cache_control_op

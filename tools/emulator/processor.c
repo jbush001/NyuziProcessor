@@ -999,6 +999,13 @@ static void execute_register_arith_inst(struct thread *thread, uint32_t instruct
         return;
     }
 
+    if (op == OP_BREAKPOINT)
+    {
+        raise_trap(thread, 0, TT_BREAKPOINT, false, false);
+        return;
+    }
+
+
     TALLY_INSTRUCTION(reg_arith_inst);
     if (op == OP_GETLANE)
     {
