@@ -15,7 +15,7 @@
 //
 
 #include <stdio.h>
-#include <sdmmc.h>
+#include <bare-metal/sdmmc.h>
 #include <unistd.h>
 
 //

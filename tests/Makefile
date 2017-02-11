@@ -33,6 +33,7 @@ test:
 	cd compiler && USE_VERILATOR=1 $(PYTHON) ./runtest.py
 	cd cosimulation && $(PYTHON) ./runtest.py
 	cd kernel/initdata && $(PYTHON) ./runtest.py
+	cd fpga && make
 	cd render && make test
 
 # For this target to work, pylint must be installed (https://www.pylint.org/)

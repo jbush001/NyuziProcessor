@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2015 Jeff Bush
+# Copyright 2015 Jeff Bush
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,26 +14,17 @@
 # limitations under the License.
 #
 
-TOPDIR=../../..
+# We can't run these automated, but make sure they build
+all:
+	cd blinky && make
+	cd memory_test && make
+	cd sdmmc_dump && make
+	cd sdmmc_native && make
+	cd uart_chargen && make
 
-include $(TOPDIR)/build/target.mk
-
-LIBS=-lc
-SRCS=sdmmc_dump.c
-
-OBJS := $(SRCS_TO_OBJS)
-DEPS := $(SRCS_TO_DEPS)
-
-$(OBJ_DIR)/sdmmc_dump.hex: $(CRT0_BARE) $(OBJS)
-	$(LD) -o $(OBJ_DIR)/sdmmc_dump.elf $(LDFLAGS) $(CRT0_BARE) $(OBJS) $(LIBS) -los-bare $(LDFLAGS)
-	$(ELF2HEX) -o $(OBJ_DIR)/sdmmc_dump.hex $(OBJ_DIR)/sdmmc_dump.elf
-
-fpgarun: sdmmc_dump.hex
-	$(SERIAL_BOOT) $(SERIAL_PORT) sdmmc_dump.hex
-
-clean: FORCE
-	rm -f $(OBJ_DIR)/*
-
-FORCE:
-
--include $(DEPS)
+clean:
+	cd blinky && make clean
+	cd memory_test && make clean
+	cd sdmmc_dump && make clean
+	cd sdmmc_native && make clean
+	cd uart_chargen && make clean

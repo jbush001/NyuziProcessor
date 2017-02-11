@@ -61,12 +61,12 @@ check_loop:     load_32 s5, (s0)
                 bnz       s1, check_loop
 
 success:        load_32 s0, device_base
-                move s1, 0xffff
+                move s1, -1
                 store_32 s1, 4(s0)          # Green LEDs
 1:              b 1b
 
 error:          load_32 s0, device_base
-                move s1, 0xffff
+                move s1, -1
                 store_32 s1, 0(s0)          # Red LEDs
 1:              b 1b
 
