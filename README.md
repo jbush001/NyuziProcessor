@@ -11,8 +11,6 @@ This project also includes an LLVM-based C++ toolchain.
 **Mailing list:** https://groups.google.com/forum/#!forum/nyuzi-processor-dev<br/>
 **License:** Apache 2.0<br/>
 
-# Getting Started
-
 The following instructions explain how to set up the Nyuzi development
 environment. This includes an emulator and cycle-accurate hardware simulator,
 which allow hardware and software development without an FPGA.
@@ -75,7 +73,7 @@ Run tests:
 
 _If you are on a Linux distribution that defaults to python3, you may run into build
 problems with the compiler. In tools/NyuziToolchain/tools/CMakeLists.txt, comment
-out the following line:
+out the following line:_
 
     add_llvm_external_project(lldb)
 
@@ -86,7 +84,7 @@ Occasionally a change will require a new version of the compiler. To rebuild:
     make
     sudo make install
 
-## What next?
+## What Next?
 
 Sample applications are available in [software/apps](software/apps). You can
 run these in the emulator by typing 'make run' (some need 3rd party data
@@ -97,6 +95,4 @@ For example, this will render a 3D model in the emulator:
     cd software/apps/sceneview
     make run
 
-# Running on FPGA
-
-See instructions in hardware/fpga/de2-115/README.md
+To run on FPGA, see instructions in hardware/fpga/de2-115/README.md
