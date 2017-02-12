@@ -113,7 +113,7 @@ You can correlate the trace...
     f42c:    1d 20 14 82                                      store_8 s0, 1288(sp)
     f430:    60 03 00 ac                                      getcr s27, 0
     f434:    5b 03 80 08                                      setne_i s26, s27, 0
-    f438:    1a 02 00 f4                                      btrue s26, main+772
+    f438:    1a 02 00 f4                                      bnz s26, main+772
     f43c:    1f b0 ef a9                                      load_32 s0, -1044(pc)
     ```
 
