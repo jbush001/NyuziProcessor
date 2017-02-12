@@ -68,5 +68,5 @@ itlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT | TLB_EXECUTABLE
 
 dtlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT
                 .long 0x00002000, 0xffff0000 | TLB_PRESENT | TLB_WRITABLE
-                .long 0xffff0000, 0x2000 | TLB_PRESENT | TLB_WRITABLE
+                .long 0xffff0000, 0x00002000 | TLB_PRESENT | TLB_WRITABLE
                 .long 0xffffffff, 0xffffffff

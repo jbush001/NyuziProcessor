@@ -114,7 +114,7 @@ handle_tlb_miss:
 
 
 itlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT | TLB_EXECUTABLE
-                .long 0xffffffff, 0xfffffff
+                .long 0xffffffff, 0xffffffff
 
 dtlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT
                 .long 0x00003000, 0x00003000 | TLB_PRESENT | TLB_WRITABLE   // writes to this page

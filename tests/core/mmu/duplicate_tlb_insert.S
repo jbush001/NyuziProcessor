@@ -45,11 +45,11 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
                 call pass_test
 
 itlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT | TLB_EXECUTABLE
-                .long 0xffffffff, 0xfffffff
+                .long 0xffffffff, 0xffffffff
 
 dtlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT
 
-                // Note duplicate inserts for 0x1000
+                // Note duplicate inserts for 0x2000
                 .long 0x00002000, 0x00009000 | TLB_PRESENT
                 .long 0x00002000, 0x00008000 | TLB_PRESENT
                 .long 0x00002000, 0x00007000 | TLB_PRESENT

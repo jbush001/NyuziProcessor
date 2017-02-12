@@ -25,7 +25,7 @@
 _start:         mmu_fault_test (TT_PAGE_FAULT | TRAP_CAUSE_STORE | TRAP_CAUSE_DCACHE), store_32, 0x2350, itlb_entries, dtlb_entries, FLAG_MMU_EN | FLAG_SUPERVISOR_EN
 
 itlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT | TLB_EXECUTABLE
-                .long 0xffffffff, 0xfffffff
+                .long 0xffffffff, 0xffffffff
 
 dtlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT
                 .long 0x00002000, 0x00002000        // present bit not set

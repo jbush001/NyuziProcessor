@@ -35,12 +35,10 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
                 move pc, s0         // Jump to address
 
 itlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT | TLB_EXECUTABLE | TLB_SUPERVISOR
-                .long 0x00001000, 0x1000 | TLB_PRESENT | TLB_EXECUTABLE | TLB_SUPERVISOR
                 .long 0x80000000, 0x00002000 | TLB_PRESENT | TLB_EXECUTABLE | TLB_SUPERVISOR
                 .long 0xffffffff, 0xffffffff
 
 dtlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT | TLB_SUPERVISOR
-                .long 0x00001000, 0x1000 | TLB_PRESENT | TLB_SUPERVISOR
                 .long 0x80000000, 0x00002000 | TLB_PRESENT | TLB_SUPERVISOR
                 .long 0xffff0000, 0xffff0000 | TLB_PRESENT | TLB_SUPERVISOR | TLB_WRITABLE
                 .long 0xffffffff, 0xffffffff
