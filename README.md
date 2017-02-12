@@ -34,13 +34,14 @@ The makefile executes this operation in batch mode*
 
 These instruction assume OSX Mavericks or later.
 
-Open the AppStore application, search for XCode and install it. Install the
-command line compiler tools by opening Terminal and typing the following:
+Install XCode from the AppStore application ([Click Here](https://itunes.apple.com/us/app/xcode/id497799835?mt=12)).
+Then install the command line compiler tools by opening Terminal and typing the
+following:
 
     xcode-select --install
 
-Install MacPorts (https://www.macports.org/install.php), and use it to install
-the remaining packages:
+Install MacPorts from https://www.macports.org/install.php, then use it to install
+the remaining packages from the terminal:
 
     sudo port install cmake bison swig swig-python imagemagick libsdl2 curl emacs
 
