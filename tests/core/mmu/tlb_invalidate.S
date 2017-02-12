@@ -17,9 +17,9 @@
 #include "mmu_test_common.inc"
 
 //
-// Check that tlbinval instruction will remove a TLB entry from DTLB by
+// Ensure the tlbinval instruction removes a TLB entry from DTLB by
 // mapping a page, ensuring it can be accessed, invalidating, then
-// attempting to access it again. The second access will raise a fault.
+// attempting to access it again. The second access should raise a fault.
 //
 
                 .globl _start

@@ -18,8 +18,8 @@
 
 //
 // Ensure the tlbinvalall instruction invalidates TLB entries
-// XXX I can't check that all entries are missing, just that tlbinvalall removed
-// at least the next page I attempted to access
+// XXX I can't check that all entries are missing, just that tlbinvalall
+// removed at least the next page I attempted to access. Should add this.
 //
 
                 .globl _start

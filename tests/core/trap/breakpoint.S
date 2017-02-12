@@ -17,7 +17,7 @@
 #include "../../asm_macros.inc"
 
 //
-// Test raising a breakpoint trap.
+// Ensure breakpoint instruction raises a trap.
 //
 
                 .globl _start

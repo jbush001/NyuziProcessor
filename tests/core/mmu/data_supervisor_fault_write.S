@@ -17,8 +17,11 @@
 #include "mmu_test_common.inc"
 
 //
-// Test writing to a supervisor page from user mode faults.
+// Ensure writing to a supervisor page while in user mode faults.
+// XXX does not validate that the page was not updated, only that it
+// raises a fault. Should add this.
 //
+
                 .globl _start
 _start:         mmu_fault_test (TT_SUPERVISOR_ACCESS | TRAP_CAUSE_STORE | TRAP_CAUSE_DCACHE), store_32, 0x2350, itlb_entries, dtlb_entries, FLAG_MMU_EN
 

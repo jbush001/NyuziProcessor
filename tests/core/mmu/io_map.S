@@ -17,8 +17,8 @@
 #include "mmu_test_common.inc"
 
 //
-// Ensure we are properly translating I/O addresses, specifically that
-// we are using the physical address and not the virtual address to determine
+// Ensure processor properly translates I/O addresses, specifically that
+// it uses the physical address and not the virtual address to determine
 // if something is in the I/O range.
 // Map a chunk of normal memory at the virtual range 0xffff0000 where I/O
 // is physically located, and map the I/O range at 0x2000

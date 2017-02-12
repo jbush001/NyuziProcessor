@@ -17,14 +17,14 @@
 #include "mmu_test_common.inc"
 
 //
-// This test allocates two address space identifiers, then adds a TLB
-// entry for each. The two TLB entries have the same virtual address, but
-// map to different physical addresses. This test switches between the two
-// address spaces and reads from the address in each to ensure the proper
-// physical page is mapped. It also implicitly validates that the global
-// TLB bit is observed and those entries appear in both address spaces
-// (The test would fail in the second address space if not, because the
-// code pages wouldn't be mapped).
+// Validate proper address space identifier (ASID) operation.
+// Allocate two ASIDs, then add a TLB entry for each. The two TLB entries have
+// the same virtual address, but map to different physical addresses. Switch
+// between the two address spaces and read from the address in each to ensure
+// the proper physical page is mapped. This test also implicitly validates that
+// the global TLB bit is observed and those entries appear in both address
+// spaces (The test would fail in the second address space if not, because
+// the code pages wouldn't be mapped).
 //
 
                 .globl _start

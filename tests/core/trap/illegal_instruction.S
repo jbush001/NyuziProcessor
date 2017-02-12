@@ -16,6 +16,11 @@
 
 #include "../../asm_macros.inc"
 
+//
+// Ensure instructions will invalid operation fields raise traps
+// (illegal instruction)
+//
+
 #define REG_ARITH_INST(__type__) (0xc0000000 | ((__type__) << 26))
 #define IMM_ARITH_INST(__type__) ((__type__) << 28)
 #define MEM_INST(__type__) (0x80000000 | ((__type__) << 25))

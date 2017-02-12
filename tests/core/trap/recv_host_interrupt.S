@@ -17,7 +17,7 @@
 #include "../../asm_macros.inc"
 
 //
-// Test mechanism for delivering interrupts from an external program
+// Validate mechanism for delivering interrupts from an external program
 // to the emulator.
 //
 

@@ -17,8 +17,8 @@
 #include "mmu_test_common.inc"
 
 //
-// Check that the processor faults and doesn't update the TLB if
-// itlbinsert is called from user mode.
+// Ensure processor faults and doesn't update the TLB if itlbinsert is called
+// while in user mode.
 //
 
                 .globl _start

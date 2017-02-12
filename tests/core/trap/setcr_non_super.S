@@ -17,8 +17,8 @@
 #include "../../asm_macros.inc"
 
 //
-// Ensure that attempting to write to a control register while in
-// user mode raises a fault and doesn't update the register.
+// Ensure that writing to a control register while in user mode raises a fault
+// and doesn't update the register.
 //
 
                 .globl _start

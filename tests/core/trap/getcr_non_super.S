@@ -16,6 +16,10 @@
 
 #include "../../asm_macros.inc"
 
+//
+// Ensure executing getcr instruction faults in user mode.
+//
+
                 .globl _start
 _start:
                 // Set up fault handler

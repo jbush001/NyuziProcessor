@@ -17,8 +17,13 @@
 #include "mmu_test_common.inc"
 
 //
-// Similar to supervisor_fault_write, but to an I/O mapped page, which is treated
-// differently in hardware.
+// Ensure writing to an supervisor I/O page while in user mode faults.
+// Similar to data_supervisor_fault_write, but to an I/O mapped page, which is
+// treated differently in hardware.
+// (I/O pages are those mapped from 0xffff0000-0xffffffff, which are uncached
+// and use a separate peripheral bus)
+// XXX does not check that the I/O address wasn't written, just that it faults.
+// Should add this.
 //
                 .globl _start
 _start:         mmu_fault_test (TT_SUPERVISOR_ACCESS | TRAP_CAUSE_STORE | TRAP_CAUSE_DCACHE), store_32, 0x2350, itlb_entries, dtlb_entries, FLAG_MMU_EN

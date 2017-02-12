@@ -17,8 +17,10 @@
 #include "mmu_test_common.inc"
 
 //
-// This test writes to a page that has a TLB entry, but is not marked
-// present and ensures it raises a page fault.
+// Ensure writing to a page that has a TLB entry but is not marked
+// present raises a page fault.
+// XXX only checks that it raises a fault, not that the page isn't updated,
+// should add this.
 //
 
                 .globl _start

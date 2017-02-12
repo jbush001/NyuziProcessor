@@ -16,6 +16,11 @@
 
 #include "mmu_test_common.inc"
 
+//
+// Ensure executing tlbinvalall while in user mode faults and
+// does not change the contents of the TLB.
+//
+
                 .globl _start
 _start:         load_tlb_entries itlb_entries, dtlb_entries
 

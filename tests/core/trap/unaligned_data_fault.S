@@ -17,7 +17,8 @@
 #include "../../asm_macros.inc"
 
 //
-// Test that unaligned data accesses properly faults
+// Test that unaligned data accesses faults
+// XXX does not check that memory isn't updated. Should do that.
 //
 
 .macro _test_unaligned_fault testnum, subtest, op, ptr, value, fault_addr, is_store, flags, subcycle

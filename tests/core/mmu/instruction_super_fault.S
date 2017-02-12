@@ -17,7 +17,7 @@
 #include "mmu_test_common.inc"
 
 //
-// Check that processor raises a fault if it attempts to execute from a
+// Ensure the processor raises a fault if it attempts to execute from a
 // page that is marked as a supervisor when it is in user mode.
 //
 

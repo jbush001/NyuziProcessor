@@ -17,7 +17,7 @@
 #include "mmu_test_common.inc"
 
 //
-// Ensure processor will raise a fault if it attempts to run code from a page
+// Ensure processor raises a fault if it attempts to execute code from a page
 // that doesn't have the execute bit set.
 //
 

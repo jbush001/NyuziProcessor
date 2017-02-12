@@ -17,7 +17,7 @@
 #include "mmu_test_common.inc"
 
 //
-// Test reading from a supervisor page from user mode faults.
+// Ensure reading a supervisor page while in user mode faults.
 //
                 .globl _start
 _start:         mmu_fault_test (TT_SUPERVISOR_ACCESS | TRAP_CAUSE_DCACHE), load_32, 0x2350, itlb_entries, dtlb_entries, FLAG_MMU_EN

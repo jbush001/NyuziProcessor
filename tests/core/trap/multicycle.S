@@ -17,11 +17,11 @@
 #include "../../asm_macros.inc"
 
 //
-// This checks that, if an interrupt comes in during a gather load, it resumes
-// from the correct lane. In this test, v0 is both the vector of pointers and the
+// Ensure that gather instructions resume from the correct lane after
+// an interrupt. In this test, v0 is both the vector of pointers and the
 // destination. If it restarted from 0 after returning from the interrupt, it would
 // use the data value as a pointer. The data value is an odd number, which will
-// cause an alignment exception if accessed as such.
+// cause an alignment exception if it used as a pointer.
 //
 
 .set TIMER_INTERVAL, 100

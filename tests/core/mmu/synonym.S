@@ -17,9 +17,9 @@
 #include "mmu_test_common.inc"
 
 //
-// This creates two virtual mappings to the same physical address
-// (cache synonym) and ensures the value written in one is readable
-// in the other.
+// Ensure cache synonyms (two virtual mappings to the same physical address)
+// work correctly by writing to one virtual address and reading from the
+// other.
 //
 
                 .globl _start

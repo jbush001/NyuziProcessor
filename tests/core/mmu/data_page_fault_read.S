@@ -17,9 +17,10 @@
 #include "mmu_test_common.inc"
 
 //
-// This test reads from a page that has a TLB entry, but is not marked
-// present and ensures it raises a page fault.
+// Ensure reading from a page with a TLB entry that is not marked
+// present raises a page fault.
 //
+
                 .globl _start
 _start:         mmu_fault_test (TT_PAGE_FAULT | TRAP_CAUSE_DCACHE), load_32, 0x2350, itlb_entries, dtlb_entries, FLAG_MMU_EN | FLAG_SUPERVISOR_EN
 

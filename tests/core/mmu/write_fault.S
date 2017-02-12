@@ -17,8 +17,10 @@
 #include "mmu_test_common.inc"
 
 //
-// This test that writes to a page that does not have its writable bit set
+// Ensure writing to a page that does not have its writable bit set
 // faults.
+// XXX this does not check that the page wasn't updated, only that it
+// raised a fault. Should add this.
 //
 
                 .globl _start

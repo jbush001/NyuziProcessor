@@ -17,8 +17,8 @@
 #include "mmu_test_common.inc"
 
 //
-// Ensure instruction/data translation are working correctly by mapping
-// code to a high address and executing it.
+// Ensure instruction/data translation is working correctly by mapping
+// code to a high virtual address and executing it.
 //
 
                 .globl _start

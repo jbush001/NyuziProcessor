@@ -17,10 +17,13 @@
 #include "mmu_test_common.inc"
 
 //
-// This test writes from a page that is not marked writable.
-// It's similar to write_fault, but checks pages that are mapped
+// Ensure a fault occurs when writing to a I/O page that does not have the
+// writable bit set.
+// This is similar to the write_fault test, but checks pages that are mapped
 // into the I/O physical region, since those are handled differently
 // in hardware.
+// XXX does not check that the page wasn't updated, only that it raised a fault.
+// Should add this.
 //
 
                 .globl _start

@@ -18,8 +18,8 @@
 
 //
 // Ensure inserting TLB entries multiple times for the same virtual address
-// replaces the existing entry. This inserts several different physical
-// mappings and checks that only the last mapping takes effect
+// replaces the existing entry. Inserts several different physical
+// mappings and check that only the last mapping takes effect
 //
 
                 .globl _start

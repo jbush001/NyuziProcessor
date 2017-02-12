@@ -16,6 +16,11 @@
 
 #include "mmu_test_common.inc"
 
+//
+// Ensure executing tlbinval while in user mode faults and does not change the
+// contents of the TLB.
+//
+
                 .globl _start
 _start:         load_tlb_entries itlb_entries, dtlb_entries
 
@@ -51,6 +56,7 @@ handle_fault:   getcr s0, CR_TRAP_CAUSE
                 assert_reg s0, FLAG_MMU_EN | FLAG_SUPERVISOR_EN
 
                 // Read the first page. Ensure value is correct.
+                // This ensures the tlbinval did not update the TLB.
                 load_const s1, 0x2234
                 load_32 s0, (s1)
                 assert_reg s0, 0xdeadbeef

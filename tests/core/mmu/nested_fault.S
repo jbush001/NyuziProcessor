@@ -17,7 +17,7 @@
 #include "mmu_test_common.inc"
 
 //
-// Verify a TLB miss in the middle of another fault works correctly
+// Ensure a TLB miss in the middle of handling another fault works correctly
 // Specifically that it saves the fault state and restores it on eret.
 //
 

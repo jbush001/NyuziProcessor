@@ -17,7 +17,7 @@
 #include "mmu_test_common.inc"
 
 //
-// Check that processor raises page fault if it attempts to execute from a
+// Ensure processor raises a page fault if it attempts to execute from a
 // page that does not have the present bit set.
 //
 
