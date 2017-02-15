@@ -17,11 +17,19 @@ This project uses Emacs [Verilog Mode](http://www.veripool.org/wiki/verilog-mode
 to automatically generate wire definitions and resets. If you have Emacs installed,
 type 'make autos' from the command line to update the definitions in batch mode.
 
-This design uses parameterized memories (FIFOs and SRAM blocks), but not all
-tools support this. This can use hard coded memory instances compatible with
-memory compilers or SRAM wizards. Using `make core/srams.inc` generates an
-include file with all used memory sizes in the design. You can tweak the script
-tools/misc/extract_mems.py to change the module names or parameter formats.
+This design uses parameterized memories (FIFOs and SRAM blocks) in the modules
+core/sram_1r1w.sv, core/sram_2r1w.sv, and core/sync_fifo.sv. By default, these
+instantite simulator versions, which are not synthesizable (at least not
+efficiently).
+
+- For Altera parts, you must set the define `VENDOR_ALTERA, which will use the
+  megafunctions ALTSYNCRAM and SCFIFO.
+- If you want to use this with a different vendor, create a `VENDOR_xxx define and
+  add a new section that uses the appropriate module.
+- For tools that generate memories using a separate memory compiler, running
+  `make core/srams.inc` will generate an include file with all used memory
+  sizes in the design. You can tweak the script tools/misc/extract_mems.py to
+  change the module names or parameter formats.
 
 ## Command Line Arguments
 
@@ -48,7 +56,7 @@ arguments with a plus sign):
 increase it, change the parameter MAX_BLOCK_DEVICE_SIZE in
 testbench/sim_sdmmc.sv
 
-The amount of RAM available in the Verilog simulator is hard coded to 16MB. To alter
+The amount of RAM available in the testbench is hard coded to 16MB. To alter
 it, change MEM_SIZE in testbench/verilator_tb.sv.
 
 The simulator exits when all threads halt by writing to the appropriate control
@@ -64,6 +72,5 @@ The simulator writes a file called `trace.vcd` in
 "[value change dump](http://en.wikipedia.org/wiki/Value_change_dump)"
 format in the current working directory. This can be with a waveform
 viewer like [GTKWave](http://gtkwave.sourceforge.net/).
-
 Waveform files get big quickly. Even running a minute of simulation can
 produce hundreds of megabytes of trace data.
