@@ -5,7 +5,7 @@ three directories:
   associativity, number of cores) are in core/config.sv
 - fpga/
   Components of a quick and dirty system-on-chip test environment. These
-  are not part of the Nyuzi core, but are put here to allow testing on FPGA.
+  are not part of the Nyuzi core, but are here to allow testing on FPGA.
   Includes an SDRAM controller, VGA controller, AXI interconnect, and other
   peripherals like a serial port. (Documentation is
   [here](https://github.com/jbush001/NyuziProcessor/wiki/FPGA-Test-Environment)).
@@ -17,21 +17,24 @@ This project uses Emacs [Verilog Mode](http://www.veripool.org/wiki/verilog-mode
 to automatically generate wire definitions and resets. If you have Emacs installed,
 type 'make autos' from the command line to update the definitions in batch mode.
 
+When building for simulation, the preprocessor macro `SIMULATION is defined.
+This is used in the code to disable portions of code during synthesis. If you
+are creating a simulation project for another toolchain, make sure this is
+defined.
+
 This design uses parameterized memories (FIFOs and SRAM blocks) in the modules
 core/sram_1r1w.sv, core/sram_2r1w.sv, and core/sync_fifo.sv. By default, these
 instantite simulator versions, which are not synthesizable (at least not
 efficiently).
 
-- For Altera parts, you must set the define `VENDOR_ALTERA, which will use the
-  megafunctions ALTSYNCRAM and SCFIFO.
+- For Altera parts, the build files define the preprocessor macro
+  `VENDOR_ALTERA, which will use the megafunctions ALTSYNCRAM and SCFIFO.
 - If you want to use this with a different vendor, create a `VENDOR_xxx define and
   add a new section that uses the appropriate module.
 - For tools that generate memories using a separate memory compiler, running
   `make core/srams.inc` will generate an include file with all used memory
   sizes in the design. You can tweak the script tools/misc/extract_mems.py to
   change the module names or parameter formats.
-
-## Command Line Arguments
 
 Typing make in this directory compiles an executable 'verilator_model' in the
 bin/ directory. It accepts the following command line arguments (Verilog prefixes
