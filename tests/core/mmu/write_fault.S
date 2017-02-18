@@ -19,12 +19,31 @@
 //
 // Ensure writing to a page that does not have its writable bit set
 // faults.
-// XXX this does not check that the page wasn't updated, only that it
-// raised a fault. Should add this.
 //
 
+.set ORIGINAL_VALUE, 0xb74e5a8d
+.set TEST_ADDR, 0x2350
+
+
                 .globl _start
-_start:         mmu_fault_test (TT_ILLEGAL_STORE | TRAP_CAUSE_DCACHE | TRAP_CAUSE_STORE), store_32, 0x2350, itlb_entries, dtlb_entries, FLAG_MMU_EN | FLAG_SUPERVISOR_EN
+_start:
+                # Write an arbitrary value into the location we are going to
+                # attempt to write. We'll check this after the test.
+                load_const s0, ORIGINAL_VALUE       # Magic value
+                load_const s1, TEST_ADDR
+                store_32 s0, (s1)
+
+                mmu_fault_test (TT_ILLEGAL_STORE | TRAP_CAUSE_DCACHE | TRAP_CAUSE_STORE), store_32, 0x2350, itlb_entries, dtlb_entries, FLAG_MMU_EN | FLAG_SUPERVISOR_EN
+
+                # Disable MMU, check that location wasn't updated
+                move s0, FLAG_SUPERVISOR_EN
+                setcr s0, CR_FLAGS
+
+                load_const s0, TEST_ADDR
+                load_32 s0, (s0)
+                assert_reg s0, ORIGINAL_VALUE
+
+                call pass_test
 
 itlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT | TLB_EXECUTABLE
                 .long 0xffffffff, 0xffffffff

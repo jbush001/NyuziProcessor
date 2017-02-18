@@ -27,6 +27,7 @@
 //
                 .globl _start
 _start:         mmu_fault_test (TT_SUPERVISOR_ACCESS | TRAP_CAUSE_STORE | TRAP_CAUSE_DCACHE), store_32, 0x2350, itlb_entries, dtlb_entries, FLAG_MMU_EN
+                call pass_test
 
 itlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT | TLB_EXECUTABLE
                 .long 0xffffffff, 0xffffffff

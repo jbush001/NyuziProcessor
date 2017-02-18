@@ -22,12 +22,13 @@
 // This is similar to the write_fault test, but checks pages that are mapped
 // into the I/O physical region, since those are handled differently
 // in hardware.
-// XXX does not check that the page wasn't updated, only that it raised a fault.
+// XXX does not check that the location wasn't written, only that it raised a fault.
 // Should add this.
 //
 
                 .globl _start
 _start:         mmu_fault_test (TT_ILLEGAL_STORE | TRAP_CAUSE_STORE | TRAP_CAUSE_DCACHE), store_32, 0x2350, itlb_entries, dtlb_entries, FLAG_MMU_EN | FLAG_SUPERVISOR_EN
+                call pass_test
 
 itlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT | TLB_EXECUTABLE
                 .long 0xffffffff, 0xffffffff

@@ -65,8 +65,9 @@
                     flush_pipeline
 
                     load_const s0, \address
-fault_loc:          \access_op s0, (s0)            // This should fault
-                    call fail_test                 // Fail if no
+                    load_const s15, 0x12345678      // Put known value in dest
+fault_loc:          \access_op s15, (s0)            // This should fault
+                    call fail_test                  // Fail if no
 
                     // After fault resumes from here. Check that it behaved as
                     // expected.
@@ -78,6 +79,7 @@ handle_fault:       getcr s0, CR_TRAP_CAUSE
                     assert_reg s0, \flags | FLAG_SUPERVISOR_EN | FLAG_MMU_EN
                     getcr s0, CR_SAVED_FLAGS
                     assert_reg s0, \flags
+                    assert_reg s15, 0x12345678  // Ensure dest reg wasn't modified
 
                     // Check that fault PC is correct
                     getcr s0, CR_TRAP_PC
@@ -86,7 +88,5 @@ handle_fault:       getcr s0, CR_TRAP_CAUSE
                     bnz s0, 1f
                     call fail_test
 1:
-
-                    call pass_test
 .endm
 
