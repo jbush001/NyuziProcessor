@@ -18,10 +18,11 @@
 
 //
 // Ensure that attempting to execute the 'dinvalidate' instruction faults if
-// the thread is in user mode.
-// XXX ensure the side effect of the instruction doesn't occur and the
-// cache line is still valid.
+// the thread is in user mode and doesn't perfom its side effects.
 //
+
+.set DATA_LOCATION, 0x4000
+.set WRITE_VALUE, 0x12345678
 
                 .globl _start
 _start:
@@ -34,7 +35,11 @@ _start:
                 setcr s0, CR_FLAGS
                 flush_pipeline
 
-fault_loc:      dinvalidate s0 // This should fault
+                load_const s10, DATA_LOCATION
+                load_const s11, WRITE_VALUE
+                store_32 s11, (s10)
+
+fault_loc:      dinvalidate s10 // This should fault
 
                 should_not_get_here
 
@@ -49,4 +54,13 @@ handle_fault:   getcr s0, CR_TRAP_CAUSE
                 cmpeq_i s0, s0, s1
                 bnz s0, 1f
                 call fail_test
-1:              call pass_test
+1:
+
+                // Read the data location and ensure it still has the
+                // new value (if the side effect of dinvalidate occurred,
+                // it would have reverted the location to its original value).
+                load_const s10, DATA_LOCATION
+                load_32 s11, (s10)
+                assert_reg s11, WRITE_VALUE
+
+                call pass_test
