@@ -17,7 +17,8 @@
 #include "mmu_test_common.inc"
 
 //
-// Ensure writing to a supervisor page while in user mode faults.
+// Ensure writing to a supervisor page while in user mode faults and does
+// not update memory.
 //
 
 .set ORIGINAL_VALUE, 0xb74e5a8d

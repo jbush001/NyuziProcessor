@@ -18,7 +18,7 @@
 
 //
 // Ensure writing to a page that has a TLB entry but is not marked
-// present raises a page fault.
+// present raises a page fault and does not update the page.
 //
 
 .set ORIGINAL_VALUE, 0xb74e5a8d

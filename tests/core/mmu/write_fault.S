@@ -18,7 +18,7 @@
 
 //
 // Ensure writing to a page that does not have its writable bit set
-// faults.
+// faults and does not update memory.
 //
 
 .set ORIGINAL_VALUE, 0xb74e5a8d
