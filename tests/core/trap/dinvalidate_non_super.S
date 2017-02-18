@@ -19,6 +19,8 @@
 //
 // Ensure that attempting to execute the 'dinvalidate' instruction faults if
 // the thread is in user mode.
+// XXX ensure the side effect of the instruction doesn't occur and the
+// cache line is still valid.
 //
 
                 .globl _start

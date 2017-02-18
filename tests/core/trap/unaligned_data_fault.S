@@ -18,7 +18,6 @@
 
 //
 // Test that unaligned data accesses faults
-// XXX does not check that memory isn't updated. Should do that.
 //
 
 .macro _test_unaligned_fault testnum, subtest, op, ptr, value, fault_addr, is_store, flags, subcycle
@@ -64,13 +63,17 @@ handle_fault\testnum\()_\subtest :
     _test_unaligned_fault \testnum, 1, \op, \ptr, \value, \fault_addr, \is_store, FLAG_SUPERVISOR_EN, \subcycle
 .endm
 
+.set ORIGINAL_VALUE, 0x12345678
+
                 .globl _start
 _start:         move s10, 17            // Scalar pointer
                 load_v v10, vec_ptr
 
-                //
-                // Test in user mode
-                //
+                // Store check value at target location
+                load_const s0, ORIGINAL_VALUE
+                move s1, 16             // Aligned version of s10
+                store_32 s0, (s1)
+
                 test_unaligned_fault 1, load_u16, s10, s11, 17, 0, 0
                 test_unaligned_fault 2, load_32, s10, s11, 17, 0, 0
                 test_unaligned_fault 3, load_v, s10, v11, 17, 0, 0
@@ -84,6 +87,11 @@ _start:         move s10, 17            // Scalar pointer
 
                 // Scatter store will fault on lane 3
                 test_unaligned_fault 8, store_scat, v10, v11, 17, 1, 3
+
+                // Read back location to ensure it hasn't changed
+                move s1, 16
+                load_32 s0, (s1)
+                assert_reg s0, ORIGINAL_VALUE
 
                 call pass_test
 
