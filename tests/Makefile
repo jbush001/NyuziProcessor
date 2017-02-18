@@ -24,6 +24,7 @@ test:
 	cd core/mmu && $(PYTHON) ./runtest.py
 	cd core/trap && $(PYTHON) ./runtest.py
 	cd core/perf_counters && $(PYTHON) ./runtest.py
+	cd stress/atomic && $(PYTHON) ./runtest.py
 	cd shared_memory && $(PYTHON) ./runtest.py
 	cd device/sdmmc/ && $(PYTHON) ./runtest.py
 	cd device/ps2/ && $(PYTHON) ./runtest.py

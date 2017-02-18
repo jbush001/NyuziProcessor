@@ -16,8 +16,8 @@
 #
 
 """
-Test load_sync/store_sync instructions by having four threads update
-variables round-robin.
+This test writes a pattern to memory and manually flushes it from code. It then
+checks the contents of system memory to ensure the data was flushed correctly.
 """
 
 import struct
@@ -26,26 +26,7 @@ import sys
 sys.path.insert(0, '../..')
 import test_harness
 
-
-@test_harness.test
-def atomic(_):
-    test_harness.build_program(['atomic.S'])
-    test_harness.run_program(
-        environment='verilator',
-        dump_file='obj/vmem.bin',
-        dump_base=0x100000,
-        dump_length=0x800,
-        flush_l2=True)
-
-    with open('obj/vmem.bin', 'rb') as memfile:
-        for _ in range(512):
-            val = memfile.read(4)
-            if len(val) < 4:
-                raise test_harness.TestException('output file is truncated')
-
-            num_val, = struct.unpack('<L', val)
-            if num_val != 10:
-                raise test_harness.TestException(
-                    'FAIL: mismatch: ' + str(num_val))
+test_harness.register_generic_assembly_tests([
+    'atomic'])
 
 test_harness.execute_tests()
