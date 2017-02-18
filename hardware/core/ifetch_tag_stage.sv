@@ -46,9 +46,9 @@ module ifetch_tag_stage
     output scalar_t                     ift_pc_vaddr,
     output thread_idx_t                 ift_thread_idx,
     output logic                        ift_tlb_hit,
-    output                              ift_tlb_present,
-    output                              ift_tlb_executable,
-    output                              ift_tlb_supervisor,
+    output logic                        ift_tlb_present,
+    output logic                        ift_tlb_executable,
+    output logic                        ift_tlb_supervisor,
     output l1i_tag_t                    ift_tag[`L1I_WAYS],
     output logic                        ift_valid[`L1I_WAYS],
 
