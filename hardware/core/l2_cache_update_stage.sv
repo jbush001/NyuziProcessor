@@ -41,7 +41,7 @@ module l2_cache_update_stage(
 
     // To l2_cache_read_stage
     output logic                                   l2u_write_en,
-    output [$clog2(`L2_WAYS * `L2_SETS) - 1:0]     l2u_write_addr,
+    output logic[$clog2(`L2_WAYS * `L2_SETS) - 1:0] l2u_write_addr,
     output cache_line_data_t                       l2u_write_data,
 
     // To cores

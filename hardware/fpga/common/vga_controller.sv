@@ -27,7 +27,7 @@ module vga_controller
 
     // I/O bus control register access
     io_bus_interface.slave      io_bus,
-    output                      frame_interrupt,
+    output logic                frame_interrupt,
 
     // DMA access to memory
     axi4_interface.master       axi_bus,
@@ -36,11 +36,11 @@ module vga_controller
     output [7:0]                vga_r,
     output [7:0]                vga_g,
     output [7:0]                vga_b,
-    output                      vga_clk,
-    output                      vga_blank_n,
-    output                      vga_hs,
-    output                      vga_vs,
-    output                      vga_sync_n);
+    output logic                vga_clk,
+    output logic                vga_blank_n,
+    output logic                vga_hs,
+    output logic                vga_vs,
+    output logic                vga_sync_n);
 
     // The burst length is twice that of a CPU cache line fill to ensure
     // sufficient memory bandwidth even when ping-ponging.

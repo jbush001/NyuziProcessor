@@ -52,8 +52,8 @@ module dcache_data_stage(
     output l1d_way_idx_t                      dd_update_lru_way,
 
     // To io_request_queue
-    output                                    dd_io_write_en,
-    output                                    dd_io_read_en,
+    output logic                              dd_io_write_en,
+    output logic                              dd_io_read_en,
     output thread_idx_t                       dd_io_thread_idx,
     output scalar_t                           dd_io_addr,
     output scalar_t                           dd_io_write_value,
@@ -78,8 +78,8 @@ module dcache_data_stage(
 
     // To control_registers
     // These signals are unregistered
-    output                                    dd_creg_write_en,
-    output                                    dd_creg_read_en,
+    output logic                              dd_creg_write_en,
+    output logic                              dd_creg_read_en,
     output control_register_t                 dd_creg_index,
     output scalar_t                           dd_creg_write_val,
 
@@ -102,7 +102,7 @@ module dcache_data_stage(
     output logic                              dd_membar_en,
     output logic                              dd_iinvalidate_en,
     output logic                              dd_dinvalidate_en,
-    output [`CACHE_LINE_BYTES - 1:0]          dd_store_mask,
+    output logic[`CACHE_LINE_BYTES - 1:0]     dd_store_mask,
     output cache_line_index_t                 dd_store_addr,
     output cache_line_data_t                  dd_store_data,
     output thread_idx_t                       dd_store_thread_idx,

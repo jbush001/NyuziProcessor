@@ -24,7 +24,7 @@ module ps2_controller
     (input                      clk,
     input                       reset,
     io_bus_interface.slave      io_bus,
-    output                      rx_interrupt,
+    output logic                rx_interrupt,
 
     // PS/2 Interface
     input                       ps2_clk,

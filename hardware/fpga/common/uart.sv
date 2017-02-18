@@ -26,10 +26,10 @@ module uart
 
     // IO bus interface
     io_bus_interface.slave    io_bus,
-    output                    rx_interrupt,
+    output logic              rx_interrupt,
 
     // UART interface
-    output                    uart_tx,
+    output logic              uart_tx,
     input                     uart_rx);
 
     localparam STATUS_REG = BASE_ADDRESS;

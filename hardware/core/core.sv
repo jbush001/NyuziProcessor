@@ -37,7 +37,7 @@ module core
     input l2rsp_packet_t                   l2_response,
 
     // To l1_l2_interface
-    output                                 l2i_request_valid,
+    output logic                           l2i_request_valid,
     output l2req_packet_t                  l2i_request,
 
     // From io_request_queue
@@ -46,7 +46,7 @@ module core
     input iorsp_packet_t                   ii_response,
 
     // To io_request_queue
-    output                                 ior_request_valid,
+    output logic                           ior_request_valid,
     output ioreq_packet_t                  ior_request,
 
     // Performance events

@@ -48,7 +48,7 @@ module sync_fifo
     output logic                 empty,
     output logic                 almost_empty,
     input                        dequeue_en,
-    output [WIDTH - 1:0]         value_o);
+    output logic[WIDTH - 1:0]    value_o);
 
 `ifdef VENDOR_ALTERA
     SCFIFO #(

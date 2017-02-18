@@ -55,9 +55,9 @@ module l1_l2_interface
     output l2req_packet_t                         l2i_request,
 
     // To ifetch_tag_stage
-    output                                        l2i_icache_lru_fill_en,
+    output logic                                  l2i_icache_lru_fill_en,
     output l1i_set_idx_t                          l2i_icache_lru_fill_set,
-    output [`L1I_WAYS - 1:0]                      l2i_itag_update_en,
+    output logic[`L1I_WAYS - 1:0]                 l2i_itag_update_en,
     output l1i_set_idx_t                          l2i_itag_update_set,
     output l1i_tag_t                              l2i_itag_update_tag,
     output logic                                  l2i_itag_update_valid,
@@ -91,11 +91,11 @@ module l1_l2_interface
     // To dcache_tag_stage
     output logic                                  l2i_snoop_en,
     output l1d_set_idx_t                          l2i_snoop_set,
-    output [`L1D_WAYS - 1:0]                      l2i_dtag_update_en_oh,
+    output logic[`L1D_WAYS - 1:0]                 l2i_dtag_update_en_oh,
     output l1d_set_idx_t                          l2i_dtag_update_set,
     output l1d_tag_t                              l2i_dtag_update_tag,
     output logic                                  l2i_dtag_update_valid,
-    output                                        l2i_dcache_lru_fill_en,
+    output logic                                  l2i_dcache_lru_fill_en,
     output l1d_set_idx_t                          l2i_dcache_lru_fill_set,
 
     // From dcache_data_stage
@@ -123,10 +123,10 @@ module l1_l2_interface
     output cache_line_data_t                      l2i_ddata_update_data,
 
     // To writeback_stage
-    output [`CACHE_LINE_BYTES - 1:0]              sq_store_bypass_mask,
+    output logic[`CACHE_LINE_BYTES - 1:0]         sq_store_bypass_mask,
     output logic                                  sq_store_sync_success,
     output cache_line_data_t                      sq_store_bypass_data,
-    output                                        sq_rollback_en);
+    output logic                                  sq_rollback_en);
 
     logic[`L1D_WAYS - 1:0] snoop_hit_way_oh;    // Only snoops dcache
     l1d_way_idx_t snoop_hit_way_idx;

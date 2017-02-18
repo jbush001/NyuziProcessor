@@ -43,12 +43,12 @@ module sdram_controller
     input                                   reset,
 
     // Interface to SDRAM
-    output                                  dram_clk,
-    output                                  dram_cke,
-    output                                  dram_cs_n,
-    output                                  dram_ras_n,
-    output                                  dram_cas_n,
-    output                                  dram_we_n,
+    output logic                            dram_clk,
+    output logic                            dram_cke,
+    output logic                            dram_cs_n,
+    output logic                            dram_ras_n,
+    output logic                            dram_cas_n,
+    output logic                            dram_we_n,
     output logic[1:0]                       dram_ba,
     output logic[12:0]                      dram_addr,
     inout [DATA_WIDTH - 1:0]                dram_dq,

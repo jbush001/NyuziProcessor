@@ -24,9 +24,9 @@ module uart_transmit
     input                         reset,
     input[DIVISOR_WIDTH - 1:0]    clocks_per_bit,
     input                         tx_en,
-    output                        tx_ready,
+    output logic                  tx_ready,
     input[7:0]                    tx_char,
-    output                        uart_tx);
+    output logic                  uart_tx);
 
     localparam START_BIT = 1'b0;
     localparam STOP_BIT = 1'b1;

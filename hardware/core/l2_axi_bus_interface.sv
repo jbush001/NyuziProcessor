@@ -44,7 +44,7 @@ module l2_axi_bus_interface(
     output l2req_packet_t                  l2bi_request,
     output cache_line_data_t               l2bi_data_from_memory,
     output logic                           l2bi_stall,
-    output                                 l2bi_collided_miss,
+    output logic                           l2bi_collided_miss,
 
     // From l2_cache_read_stage
     input                                  l2r_needs_writeback,

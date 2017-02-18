@@ -51,7 +51,7 @@ module cache_lru
     // Fill interface. Used to request LRU to replace when filling.
     input                                 fill_en,
     input [SET_INDEX_WIDTH - 1:0]         fill_set,
-    output logic [WAY_INDEX_WIDTH - 1:0]  fill_way,
+    output logic[WAY_INDEX_WIDTH - 1:0]   fill_way,
 
     // Access interface. Used to move a way to the MRU position when
     // it has been accessed.

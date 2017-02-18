@@ -61,7 +61,7 @@ module l1_store_queue(
     output logic                           sq_dequeue_ready,
     output cache_line_index_t              sq_dequeue_addr,
     output l1_miss_entry_idx_t             sq_dequeue_idx,
-    output [`CACHE_LINE_BYTES - 1:0]       sq_dequeue_mask,
+    output logic[`CACHE_LINE_BYTES - 1:0]  sq_dequeue_mask,
     output cache_line_data_t               sq_dequeue_data,
     output logic                           sq_dequeue_synchronized,
     output logic                           sq_dequeue_flush,

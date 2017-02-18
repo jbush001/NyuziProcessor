@@ -30,12 +30,12 @@ module logic_analyzer
     parameter CAPTURE_SIZE = 64,
     parameter BAUD_DIVIDE = 1)
 
-    (input                       clk,
-    input                         reset,
+    (input                          clk,
+    input                           reset,
     input[CAPTURE_WIDTH_BITS - 1:0] capture_data,
-    input                        capture_enable,
-    input                        trigger,
-    output                       uart_tx);
+    input                           capture_enable,
+    input                           trigger,
+    output logic                    uart_tx);
 
     localparam CAPTURE_INDEX_WIDTH = $clog2(CAPTURE_SIZE);
     localparam CAPTURE_WIDTH_BYTES = (CAPTURE_WIDTH_BITS + 7) / 8;

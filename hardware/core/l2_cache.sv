@@ -43,7 +43,7 @@ module l2_cache(
     input l2req_packet_t                  l2i_request[`NUM_CORES],
 
     // To l1_l2_interface
-    output                                l2_ready[`NUM_CORES],
+    output logic                          l2_ready[`NUM_CORES],
     output logic                          l2_response_valid,
     output l2rsp_packet_t                 l2_response,
 

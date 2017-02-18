@@ -41,7 +41,7 @@ module l2_cache_pending_miss_cam
     input cache_line_index_t request_addr,
     input                    enqueue_load_request,
     input                    l2r_is_l2_fill,
-    output                   duplicate_request);
+    output logic             duplicate_request);
 
     logic[QUEUE_ADDR_WIDTH - 1:0] cam_hit_entry;
     logic cam_hit;

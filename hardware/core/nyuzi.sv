@@ -29,7 +29,7 @@ module nyuzi
     input                           reset,
     axi4_interface.master           axi_bus,
     io_bus_interface.master         io_bus,
-    output                          processor_halt,
+    output logic                    processor_halt,
     input [NUM_INTERRUPTS - 1:0]    interrupt_req);
 
     l2req_packet_t l2i_request[`NUM_CORES];

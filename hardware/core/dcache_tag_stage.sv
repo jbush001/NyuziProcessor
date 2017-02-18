@@ -68,16 +68,16 @@ module dcache_tag_stage
     output logic                                dt_tlb_present,
 
     // To ifetch_tag_stage
-    output                                      dt_invalidate_tlb_en,
-    output                                      dt_invalidate_tlb_all_en,
+    output logic                                dt_invalidate_tlb_en,
+    output logic                                dt_invalidate_tlb_all_en,
     output page_index_t                         dt_itlb_vpage_idx,
     output [`ASID_WIDTH - 1:0]                  dt_itlb_update_asid,
-    output                                      dt_update_itlb_en,
+    output logic                                dt_update_itlb_en,
     output page_index_t                         dt_update_itlb_ppage_idx,
-    output                                      dt_update_itlb_present,
-    output                                      dt_update_itlb_supervisor,
-    output                                      dt_update_itlb_global,
-    output                                      dt_update_itlb_executable,
+    output logic                                dt_update_itlb_present,
+    output logic                                dt_update_itlb_supervisor,
+    output logic                                dt_update_itlb_global,
+    output logic                                dt_update_itlb_executable,
 
     // From l1_l2_interface
     input                                       l2i_dcache_lru_fill_en,
