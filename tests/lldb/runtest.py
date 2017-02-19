@@ -29,10 +29,10 @@ DEBUG = False
 class EmulatorProcess(object):
 
     """
-    This handles spawning the emulator process and allows communication
-    with it via stdin and stdout. It has the __enter__ and __exit__ methods
-    allowing it to be used in the 'with' construct so it will automatically
-    be torn down when the test is done.
+    This spawns the emulator process and LLDB in MI (machine interface) mode.
+    It allows communication with LLDB with it via stdin and stdout. It has the
+    __enter__ and __exit__ methods allowing it to be used in the 'with'
+    construct so it will automatically be torn down when the test is done.
     """
 
     def __init__(self, hexfile):
@@ -129,7 +129,7 @@ def parse_stack_crawl(response):
     """
 
     stack_info = []
-    for line in response.split('\n'):
+    for line in response.split('\\n'):
         frame_match = FRAME_RE.search(line)
         if frame_match:
             func = frame_match.group('function')
