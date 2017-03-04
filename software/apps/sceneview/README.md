@@ -65,6 +65,6 @@ change MEM_SIZE to 'h3000000 (48 MB)
 4. Type make in the hardware directory to rebuild the verilator model
 
 Once you have made these changes, you can run the test by typing 'make verirun'. This is
-compute sensitive and will take hours to complete. You should not run this with
-VCD logging enabled (described in hardware README).
+compute intensive and will take hours to complete. You should not run this with
+VCD logging enabled, as the files will be enormous (described in hardware README).
 

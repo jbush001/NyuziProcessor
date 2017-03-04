@@ -127,7 +127,7 @@ int main()
     }
 }
 
-// Originally I write a simple zero-fill loop inline that didn't worry about
+// Originally I wrote a simple zero-fill loop inline that didn't worry about
 // alignment or non-word size. Unfortunately, LLVM recognizes the fill loop
 // and converts it to a memset call. There doesn't seem to be any way to
 // override that behavior. Instead, I just created a proper memset call.
