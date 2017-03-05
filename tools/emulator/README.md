@@ -82,6 +82,13 @@ Other notes:
   execution point.
 - The debugger does not work with virtual memory enabled.
 
+It should be possible to use any GUI debugger that works with the GDB/MI
+protocol, such as [Eclipse](https://eclipse.org/) or Emacs using the
+lldb-mi executable that is installed with the toolchain, but I have not
+tested this. There are some instructions
+[here](https://www.codeplay.com/portal/lldb-mi-driver---part-2-setting-up-the-driver),
+which would need to be adapted to this environment.
+
 ### Tracing
 
 Another way of debugging is to enable verbose instruction logging. Change the
