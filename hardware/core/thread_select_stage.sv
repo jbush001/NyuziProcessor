@@ -164,7 +164,7 @@ module thread_select_stage(
             // fills up because there are several stages in-between.
             assign ts_fetch_en[thread_idx] = !ififo_almost_full && thread_en[thread_idx];
 
-            /// XXX Treat PC specially for scoreboard?
+            /// XXX PC should not be tracked by the scoreboard
 
             // Generate destination register bitmap for the next instruction
             // to be issued.
@@ -362,7 +362,7 @@ module thread_select_stage(
     // instruction issue and not scheduling instructions that would
     // collide. Track instructions even if they don't write back to a
     // register, since they may have other side effects that the writeback
-    // stage handles.
+    // stage handles (for example, a store instruction can raise an exception)
     always_comb
     begin
         writeback_allocate_nxt = {1'b0, writeback_allocate[WRITEBACK_ALLOC_STAGES - 1:1]};
