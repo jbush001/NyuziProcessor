@@ -17,31 +17,41 @@
 #include <stdint.h>
 #include <stdio.h>
 
-volatile unsigned int glob_array[16] = {
-    100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115
-};
+volatile unsigned int glob_array[16];
 
 int main()
 {
-  veci16_t values =   { 0, 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15 };
-	veci16_t pointers = { 0, 3, 13, 15, 12, 10,  7,  1,  5, 11,  9, 14,  6,  2,  4,  8 };
-  veci16_t gathered_ptrs;
-  pointers <<= 2;
-  pointers += int(&glob_array);
+    veci16_t values1 =   {  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15 };
+    veci16_t values2 =   { 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45 };
+    veci16_t pointers = {   0,  3, 13, 15, 12, 10,  7,  1,  5, 11,  9, 14,  6,  2,  4,  8 };
+    veci16_t gathered_ptrs1;
+    veci16_t gathered_ptrs2;
+    pointers <<= 2;
+    pointers += int(&glob_array);
 
-	__builtin_nyuzi_scatter_storei_masked(pointers, values, 0xffef);
+    __builtin_nyuzi_scatter_storei(pointers, values1);
+    for (int i = 0; i < 16; i++)
+        printf("%d ", glob_array[i]);
 
-	for (int i = 0; i < 16; i++)
-		printf("%d ", glob_array[i]);
+    // CHECK: 0 7 13 1 14 8 12 6 15 10 5 9 4 2 11 3
 
-  // CHECK: 0 7 13 1 14 8 12 6 15 10 5 9 4 2 114 3
+    __builtin_nyuzi_scatter_storei_masked(pointers, values2, 0x5555);
+    for (int i = 0; i < 16; i++)
+        printf("%d ", glob_array[i]);
 
-  printf("\n");
-	gathered_ptrs = __builtin_nyuzi_gather_loadi_masked(pointers, 0xffff);
-	for (int i = 0; i < 16; i++)
-		printf("%d ", gathered_ptrs[i]);
+    // CHECK: 0 37 43 31 14 8 12 6 45 10 35 39 4 2 41 33
 
-  // CHECK: 0 1 2 3 4 5 6 7 8 9 10 114 12 13 14 15
+    printf("\n");
+    gathered_ptrs1 = __builtin_nyuzi_gather_loadi(pointers);
+    for (int i = 0; i < 16; i++)
+        printf("%d ", gathered_ptrs1[i]);
 
+    // CHECK: 0 31 2 33 4 35 6 37 8 39 10 41 12 43 14 45
 
+    printf("\n");
+    gathered_ptrs2 = __builtin_nyuzi_gather_loadi_masked(pointers, 0xffff);
+    for (int i = 0; i < 16; i++)
+        printf("%d ", gathered_ptrs2[i]);
+
+    // CHECK: 0 31 2 33 4 35 6 37 8 39 10 41 12 43 14 45
 }
