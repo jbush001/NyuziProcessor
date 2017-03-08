@@ -49,4 +49,4 @@ private:
     float fC00;	// Value of C at 0, 0
 };
 
-}
+} // namespace librender

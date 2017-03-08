@@ -16,7 +16,8 @@
 
 #include "line.h"
 
-using namespace librender;
+namespace librender
+{
 
 namespace
 {
@@ -54,11 +55,11 @@ inline unsigned int clipmask(int x, int y, int left, int top, int right, int bot
     return mask;
 }
 
-}
+} // namespace
 
 // Cohen/Sutherland line clipping
-void librender::drawLineClipped(Surface *dest, int x1, int y1, int x2, int y2, unsigned int color,
-                                int left, int top, int right, int bottom)
+void drawLineClipped(Surface *dest, int x1, int y1, int x2, int y2, unsigned int color,
+                     int left, int top, int right, int bottom)
 {
     int clippedX1 = x1;
     int clippedY1 = y1;
@@ -120,7 +121,7 @@ void librender::drawLineClipped(Surface *dest, int x1, int y1, int x2, int y2, u
         drawLine(dest, clippedX1, clippedY1, clippedX2, clippedY2, color);
 }
 
-void librender::drawLine(Surface *dest, int x1, int y1, int x2, int y2, unsigned int color)
+void drawLine(Surface *dest, int x1, int y1, int x2, int y2, unsigned int color)
 {
     // Swap if necessary so we always draw top to bottom
     if (y1 > y2)
@@ -197,3 +198,6 @@ void librender::drawLine(Surface *dest, int x1, int y1, int x2, int y2, unsigned
         }
     }
 }
+
+} // namespace librender
+

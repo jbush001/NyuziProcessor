@@ -33,8 +33,8 @@ class RegionAllocator
 public:
     RegionAllocator(unsigned int arenaSize)
         :	fArenaBase(new char[arenaSize]),
-            fTotalSize(arenaSize),
-            fNextAlloc(fArenaBase)
+          fTotalSize(arenaSize),
+          fNextAlloc(fArenaBase)
     {
     }
 
@@ -82,7 +82,7 @@ private:
     char * volatile fNextAlloc;
 };
 
-}
+} // namespace librender
 
 inline void *operator new(size_t size, librender::RegionAllocator &allocator)
 {

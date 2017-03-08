@@ -54,4 +54,4 @@ private:
     Surface *fDepthBuffer = nullptr;
 };
 
-}
+} // namespace librender

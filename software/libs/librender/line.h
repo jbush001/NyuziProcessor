@@ -26,4 +26,4 @@ void drawLineClipped(Surface *dest, int x1, int y1, int x2, int y2, unsigned int
                      int left, int top, int right, int bottom);
 void drawLine(Surface *dest, int x1, int y1, int x2, int y2, unsigned int color);
 
-}
+} // namespace librender

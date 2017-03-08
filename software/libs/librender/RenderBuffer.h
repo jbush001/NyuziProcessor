@@ -33,9 +33,9 @@ class RenderBuffer
 public:
     RenderBuffer()
         :	fData(0),
-            fNumElements(0),
-            fStride(0),
-            fBaseStepPointers(static_cast<veci16_t*>(memalign(sizeof(vecu16_t), sizeof(vecu16_t))))
+          fNumElements(0),
+          fStride(0),
+          fBaseStepPointers(static_cast<veci16_t*>(memalign(sizeof(vecu16_t), sizeof(vecu16_t))))
     {
     }
 
@@ -103,7 +103,7 @@ public:
     vecu16_t gatherElements(veci16_t indices, int paramNum, int mask) const
     {
         const veci16_t ptrVec = indices * fStride + paramNum * kElementSize
-            + reinterpret_cast<int>(fData);
+                                + reinterpret_cast<int>(fData);
 
         return __builtin_nyuzi_gather_loadf_masked(ptrVec, mask);
     }
@@ -118,5 +118,4 @@ private:
     veci16_t *fBaseStepPointers;
 };
 
-}
-
+} // namespace librender

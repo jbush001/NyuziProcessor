@@ -89,4 +89,4 @@ private:
     int fAttribsPerVertex;
 };
 
-}
+} // namespace librender

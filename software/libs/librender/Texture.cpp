@@ -21,9 +21,11 @@
 #include "Shader.h"
 #include "Texture.h"
 
-using namespace librender;
+namespace librender
+{
 
-namespace {
+namespace
+{
 
 const float kOneOver255 = 1.0 / 255.0;
 
@@ -41,7 +43,23 @@ void unpackRGBA(veci16_t packedColor, vecf16_t outColor[3])
                         vecf16_t) * kOneOver255;
 }
 
+// Convert a number in the range -1.0 <= n <= 1.0 to 0.0 <= n < 1.0
+// If the number is less than 0, add 1 so it wraps around
+inline vecf16_t wrapfv(vecf16_t in)
+{
+    return __builtin_nyuzi_vector_mixf(__builtin_nyuzi_mask_cmpf_lt(in, vecf16_t(0.0)),
+                                       in + vecf16_t(1.0), in);
 }
+
+// If a number is greater than max, make it be zero.
+// This wraps in the case that 0 <= in <= max.
+inline veci16_t wrapiv(veci16_t in, int max)
+{
+    return __builtin_nyuzi_vector_mixi(__builtin_nyuzi_mask_cmpf_lt(in, veci16_t(max)),
+                                       in, veci16_t(0));
+}
+
+} // namespace
 
 Texture::Texture()
 {
@@ -73,25 +91,6 @@ void Texture::setMipSurface(int mipLevel, const Surface *surface)
     }
 }
 
-namespace
-{
-// Convert a number in the range -1.0 <= n <= 1.0 to 0.0 <= n < 1.0
-// If the number is less than 0, add 1 so it wraps around
-inline vecf16_t wrapfv(vecf16_t in)
-{
-    return __builtin_nyuzi_vector_mixf(__builtin_nyuzi_mask_cmpf_lt(in, vecf16_t(0.0)),
-                                       in + vecf16_t(1.0), in);
-}
-
-// If a number is greater than max, make it be zero.
-// This wraps in the case that 0 <= in <= max.
-inline veci16_t wrapiv(veci16_t in, int max)
-{
-    return __builtin_nyuzi_vector_mixi(__builtin_nyuzi_mask_cmpf_lt(in, veci16_t(max)),
-                                       in, veci16_t(0));
-}
-}
-
 void Texture::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
                          vecf16_t *outColor) const
 {
@@ -101,7 +100,7 @@ void Texture::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
     // XXX this is a hack because it only looks at one direction. Should do
     // something better here.
     int mipLevel = __builtin_clz(static_cast<unsigned int>(1.0f /
-        __builtin_fabsf(u[1] - u[0]))) - fBaseMipBits;
+                                 __builtin_fabsf(u[1] - u[0]))) - fBaseMipBits;
     if (mipLevel > fMaxMipLevel)
         mipLevel = fMaxMipLevel;
     else if (mipLevel < 0)
@@ -159,4 +158,7 @@ void Texture::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
         unpackRGBA(surface->readPixels(tx, ty, mask), outColor);
     }
 }
+
+} // namespace librender
+
 

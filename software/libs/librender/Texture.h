@@ -46,4 +46,4 @@ private:
     int fMaxMipLevel = 0;
 };
 
-}
+} // namespace librender

@@ -24,7 +24,8 @@
 #include "Rasterizer.h"
 #include "SIMDMath.h"
 
-using namespace librender;
+namespace librender
+{
 
 namespace
 {
@@ -122,9 +123,9 @@ void subdivideTile(
     const veci16_t acceptEdgeValue2 = acceptStep2 + acceptCornerValue2;
     const veci16_t acceptEdgeValue3 = acceptStep3 + acceptCornerValue3;
     const unsigned int trivialAcceptMask = static_cast<unsigned int>(
-        __builtin_nyuzi_mask_cmpi_sle(acceptEdgeValue1, veci16_t(0))
-        & __builtin_nyuzi_mask_cmpi_sle(acceptEdgeValue2, veci16_t(0))
-        & __builtin_nyuzi_mask_cmpi_sle(acceptEdgeValue3, veci16_t(0)));
+            __builtin_nyuzi_mask_cmpi_sle(acceptEdgeValue1, veci16_t(0))
+            & __builtin_nyuzi_mask_cmpi_sle(acceptEdgeValue2, veci16_t(0))
+            & __builtin_nyuzi_mask_cmpi_sle(acceptEdgeValue3, veci16_t(0)));
 
     if (tileSizeBits == 2)
     {
@@ -164,9 +165,9 @@ void subdivideTile(
     const veci16_t rejectEdgeValue2 = rejectStep2 + rejectCornerValue2;
     const veci16_t rejectEdgeValue3 = rejectStep3 + rejectCornerValue3;
     const unsigned int trivialRejectMask = static_cast<unsigned int>(
-        __builtin_nyuzi_mask_cmpi_sgt(rejectEdgeValue1, veci16_t(0))
-        | __builtin_nyuzi_mask_cmpi_sgt(rejectEdgeValue2, veci16_t(0))
-        | __builtin_nyuzi_mask_cmpi_sgt(rejectEdgeValue3, veci16_t(0)));
+            __builtin_nyuzi_mask_cmpi_sgt(rejectEdgeValue1, veci16_t(0))
+            | __builtin_nyuzi_mask_cmpi_sgt(rejectEdgeValue2, veci16_t(0))
+            | __builtin_nyuzi_mask_cmpi_sgt(rejectEdgeValue3, veci16_t(0)));
 
     // Recurse into blocks that are neither trivially rejected or accepted.
     // They are partially overlapped and need to be further subdivided.
@@ -347,12 +348,12 @@ void rasterizeSweep(TriangleFiller &filler,
     while (row < bbBottom);
 }
 
-}
+} // namespace
 
-void librender::fillTriangle(TriangleFiller &filler,
-                             int tileLeft, int tileTop,
-                             int x1, int y1, int x2, int y2, int x3, int y3,
-                             int clipRight, int clipBottom)
+void fillTriangle(TriangleFiller &filler,
+                  int tileLeft, int tileTop,
+                  int x1, int y1, int x2, int y2, int x3, int y3,
+                  int clipRight, int clipBottom)
 {
     int bbLeft = max(min3(x1, x2, x3) & ~3, tileLeft);
     int bbTop = max(min3(y1, y2, y3) & ~3, tileTop);
@@ -367,3 +368,5 @@ void librender::fillTriangle(TriangleFiller &filler,
                            x1, y1, x2, y2, x3, y3);
     }
 }
+
+} // namespace librender

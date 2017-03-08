@@ -130,4 +130,4 @@ private:
     bool fWireframeMode = false;
 };
 
-}
+} // namespace librender

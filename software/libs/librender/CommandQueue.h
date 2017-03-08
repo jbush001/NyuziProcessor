@@ -167,7 +167,7 @@ public:
 
         iterator(Bucket *bucket, int index)
             : 	fBucket(bucket),
-                fIndex(index)
+               fIndex(index)
         {}
 
         Bucket *fBucket;
@@ -242,4 +242,4 @@ private:
     volatile int fSpinLock = 0;
 };
 
-}
+} // namespace librender

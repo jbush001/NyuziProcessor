@@ -159,4 +159,4 @@ private:
 
 };
 
-}
+} // namespace librender

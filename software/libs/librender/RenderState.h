@@ -44,4 +44,4 @@ struct RenderState
     } cullingMode = kCullCW;
 };
 
-}
+} // namespace librender

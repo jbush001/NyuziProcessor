@@ -19,26 +19,27 @@
 #include <stdlib.h>
 #include "Surface.h"
 
-using namespace librender;
+namespace librender
+{
 
 Surface::Surface(int width, int height, void *base)
     :	fWidth(width),
-        fHeight(height),
-        fStride(width * kBytesPerPixel),
-        fBaseAddress(reinterpret_cast<int>(base)),
-        fOwnedPointer(false)
+      fHeight(height),
+      fStride(width * kBytesPerPixel),
+      fBaseAddress(reinterpret_cast<int>(base)),
+      fOwnedPointer(false)
 {
     initializeOffsetVectors();
 }
 
 Surface::Surface(int width, int height)
     :	fWidth(width),
-        fHeight(height),
-        fStride(width * kBytesPerPixel),
-        fOwnedPointer(true)
+      fHeight(height),
+      fStride(width * kBytesPerPixel),
+      fOwnedPointer(true)
 {
     fBaseAddress = reinterpret_cast<int>(memalign(kCacheLineSize,
-        static_cast<size_t>(width * height * kBytesPerPixel)));
+                                         static_cast<size_t>(width * height * kBytesPerPixel)));
     initializeOffsetVectors();
 }
 
@@ -53,7 +54,8 @@ void Surface::initializeOffsetVectors()
     // Screen space coordinate offset vector
     float twoOverWidth = 2.0 / fWidth;
     float twoOverHeight = 2.0 / fHeight;
-    fXStep = {
+    fXStep =
+    {
         0, 1, 2, 3,
         0, 1, 2, 3,
         0, 1, 2, 3,
@@ -62,7 +64,8 @@ void Surface::initializeOffsetVectors()
 
     fXStep *= twoOverWidth;
 
-    fYStep = {
+    fYStep =
+    {
         0, 0, 0, 0,
         1, 1, 1, 1,
         2, 2, 2, 2,
@@ -71,14 +74,16 @@ void Surface::initializeOffsetVectors()
 
     fYStep *= twoOverHeight;
 
-    f4x4AtOrigin = {
+    f4x4AtOrigin =
+    {
         0, 4, 8, 12,
         0, 4, 8, 12,
         0, 4, 8, 12,
         0, 4, 8, 12
     };
 
-    veci16_t widthOffset = {
+    veci16_t widthOffset =
+    {
         0, 0, 0, 0,
         4, 4, 4, 4,
         8, 8, 8, 8,
@@ -91,7 +96,7 @@ void Surface::initializeOffsetVectors()
 void Surface::clearTileSlow(int left, int top, unsigned int value)
 {
     veci16_t *ptr = reinterpret_cast<veci16_t*>(fBaseAddress + (left + top * fWidth)
-        * kBytesPerPixel);
+                    * kBytesPerPixel);
     const veci16_t kClearColor = veci16_t(value);
     int right = min(kTileSize, fWidth - left);
     int bottom = min(kTileSize, fHeight - top);
@@ -125,3 +130,5 @@ void Surface::flushTile(int left, int top)
         ptr += kStride;
     }
 }
+
+} // namespace librender

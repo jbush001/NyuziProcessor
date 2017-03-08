@@ -107,4 +107,4 @@ inline vecf16_t isqrtfv(vecf16_t number)
     return y;
 }
 
-}
+} // namespace librender

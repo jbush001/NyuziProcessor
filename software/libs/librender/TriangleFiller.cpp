@@ -18,12 +18,13 @@
 #include <stdio.h>
 #include "TriangleFiller.h"
 
-using namespace librender;
+namespace librender
+{
 
 TriangleFiller::TriangleFiller(RenderTarget *target)
     : 	fTarget(target),
-        fTwoOverWidth(2.0f / target->getColorBuffer()->getWidth()),
-        fTwoOverHeight(2.0f / target->getColorBuffer()->getHeight())
+       fTwoOverWidth(2.0f / target->getColorBuffer()->getWidth()),
+       fTwoOverHeight(2.0f / target->getColorBuffer()->getHeight())
 {
 }
 
@@ -211,4 +212,6 @@ void TriangleFiller::fillMasked(int left, int top, unsigned short mask)
 
     fTarget->getColorBuffer()->writeBlockMasked(left, top, mask, vecu16_t(pixelValues));
 }
+
+} // namespace librender
 

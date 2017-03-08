@@ -86,4 +86,4 @@ private:
     float fInvGradientMatrix11;
 };
 
-}
+} // namespace librender

@@ -129,4 +129,4 @@ private:
     float fValues[3];
 };
 
-}
+} // namespace librender
