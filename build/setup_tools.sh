@@ -15,8 +15,13 @@
 # limitations under the License.
 #
 
-git submodule init
-git submodule update
+function fail {
+     echo $1
+     exit 1
+}
+
+git submodule init || fail "Error initializing submodules"
+git submodule update || fail "Error updating submodules"
 
 #
 # Build Verilator
@@ -28,34 +33,30 @@ cd tools/verilator
 # XXX if the project has been updated, this should probably do a configure again.
 if [ ! -f Makefile ]; then
 	if [ ! -f configure ]; then
-		autoconf
+		autoconf || fail "Error creating configuration script for Verilator"
 	fi
 
-	./configure
+	./configure || fail "Error configurating Verilator"
 fi
 
-make
-sudo make install
+make || fail "Error building verilator"
+sudo make install || fail "Error installing verilator"
 )
 
 #
 # Build the compiler toolchain
 #
+mkdir -p tools/NyuziToolchain/build || fail "Error creating toolchain build directory"
 
-if [ ! -d tools/NyuziToolchain/build ]; then
+if [ ! -d tools/NyuziToolchain/Makefile ]; then
 	# Create makefiles. This only needs to be run once. Once the makefiles are
 	# created, cmake will reconfigure on its own if necessary when make is
 	# invoked.
-	mkdir tools/NyuziToolchain/build
 	cd tools/NyuziToolchain/build
-	cmake -DCMAKE_BUILD_TYPE=Release ..
+	cmake -DCMAKE_BUILD_TYPE=Release .. || fail "Error configuring toolchain"
 else
-	# The install target leaves some files with root permissions in the
-	# build directory. If we are rebuilding, this will cause an error.
-	# Change ownership here to fix that.
 	cd tools/NyuziToolchain/build
-	chown -R `whoami` .
 fi
 
-make
-sudo make install
+make || fail "Error building toolchain"
+sudo make install || fail "Error installing toolchain"
