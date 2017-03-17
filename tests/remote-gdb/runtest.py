@@ -479,6 +479,18 @@ def gdb_invalid_command(_):
 
 
 @test_harness.test
+def gdb_big_command(_):
+    """ Check for buffer overflows by sending a very large command"""
+    hexfile = test_harness.build_program(['count.S'], image_type='raw')
+    with EmulatorProcess(hexfile), DebugConnection() as conn:
+        # Big, invalid command. this should return an error (empty response)
+        conn.expect('x' * 0x10000, '')
+
+        # Now send a valid request to ensure it is still alive.
+        conn.expect('qC', 'QC01')
+
+
+@test_harness.test
 def gdb_queries(_):
     """Miscellaneous query commands not covered in other tests"""
 
