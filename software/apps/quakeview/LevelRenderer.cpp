@@ -14,20 +14,10 @@
 // limitations under the License.
 //
 
-#include "Render.h"
-
-using namespace librender;
+#include "LevelRenderer.h"
 
 namespace
 {
-
-RenderBspNode *gBspRoot;
-const uint8_t *gPvsList;
-RenderBspNode *gLeaves;
-int gNumLeaves;
-Texture *gTextureAtlasTexture;
-Texture *gLightmapAtlasTexture;
-int gFrame;
 
 RenderBspNode *findNode(RenderBspNode *head, float x, float y, float z)
 {
@@ -82,7 +72,9 @@ void markLeaves(RenderBspNode *leafNodes, const uint8_t *pvsList, int index, int
 }
 
 // Render from front to back to take advantage of early-Z rejection
-void renderRecursive(RenderContext *context, const RenderBspNode *node, const Vec3 &camera, int markNumber)
+void renderRecursive(librender::RenderContext *context,
+                     const RenderBspNode *node,
+                     const librender::Vec3 &camera, int markNumber)
 {
     if (!node->frontChild)
     {
@@ -108,25 +100,27 @@ void renderRecursive(RenderContext *context, const RenderBspNode *node, const Ve
     }
 }
 
+} // namespace
+
+void LevelRenderer::setBspData(RenderBspNode *root, const uint8_t *pvsList,
+                               RenderBspNode *leaves, int numLeaves,
+                               librender::Texture *atlasTexture,
+                               librender::Texture *lightmapAtlas)
+{
+    fBspRoot = root;
+    fPvsList = pvsList;
+    fLeaves = leaves;
+    fNumLeaves = numLeaves;
+    fTextureAtlasTexture = atlasTexture;
+    fLightmapAtlasTexture = lightmapAtlas;
 }
 
-void setBspData(RenderBspNode *root, const uint8_t *pvsList, RenderBspNode *leaves, int numLeaves,
-                Texture *atlasTexture, librender::Texture *lightmapAtlas)
+void LevelRenderer::render(librender::RenderContext *context, const librender::Vec3 &cameraPos)
 {
-    gBspRoot = root;
-    gPvsList = pvsList;
-    gLeaves = leaves;
-    gNumLeaves = numLeaves;
-    gTextureAtlasTexture = atlasTexture;
-    gLightmapAtlasTexture = lightmapAtlas;
-}
-
-void renderScene(RenderContext *context, Vec3 cameraPos)
-{
-    context->bindTexture(0, gTextureAtlasTexture);
-    context->bindTexture(1, gLightmapAtlasTexture);
-    RenderBspNode *currentNode = findNode(gBspRoot, cameraPos[0], cameraPos[1], cameraPos[2]);
-    markLeaves(gLeaves, gPvsList, currentNode->pvsIndex, gNumLeaves, gFrame);
-    renderRecursive(context, gBspRoot, cameraPos, gFrame);
-    gFrame++;
+    context->bindTexture(0, fTextureAtlasTexture);
+    context->bindTexture(1, fLightmapAtlasTexture);
+    RenderBspNode *currentNode = findNode(fBspRoot, cameraPos[0], cameraPos[1], cameraPos[2]);
+    markLeaves(fLeaves, fPvsList, currentNode->pvsIndex, fNumLeaves, fFrame);
+    renderRecursive(context, fBspRoot, cameraPos, fFrame);
+    fFrame++;
 }

@@ -428,19 +428,16 @@ void PakFile::loadLightmaps(const bspheader_t *bspHeader, const uint8_t *data)
         atlasEnt.vOffset = vMin;
 
         // Copy into lightmap
-#define lmap_dest(x, y) destPtr[(lightmapY + y) * kLightmapSize + lightmapX + x]
-
         const uint8_t *lightmapSrc = lightmaps + face.lightOffset;
         for (int y = 0; y < lightmapPixelHeight; y++)
         {
             for (int x = 0; x < lightmapPixelWidth; x++)
             {
                 // Only set lowest channel, others are unused
-                lmap_dest(x, y) = *lightmapSrc++;;
+                destPtr[(lightmapY + y) * kLightmapSize + lightmapX + x]
+                    = *lightmapSrc++;;
             }
         }
-
-#undef lmap_dest
 
         if (lightmapPixelHeight > bandHeight)
             bandHeight = lightmapPixelHeight;
@@ -667,9 +664,3 @@ void PakFile::parseEntities(const char *data)
             entity = nullptr;
     }
 }
-
-
-
-
-
-

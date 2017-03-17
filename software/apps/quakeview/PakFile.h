@@ -26,7 +26,7 @@
 #include <string.h>
 #include <Texture.h>
 #include "pak.h"
-#include "Render.h"
+#include "LevelRenderer.h"
 
 struct EntityAttribute
 {

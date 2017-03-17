@@ -25,7 +25,7 @@
 #include <time.h>
 #include <vga.h>
 #include "PakFile.h"
-#include "Render.h"
+#include "LevelRenderer.h"
 #include "TextureShader.h"
 
 using namespace librender;
@@ -204,8 +204,11 @@ int main()
     pak.open("pak0.pak");
     pak.readBspFile("maps/e1m1.bsp");
     Texture *atlasTexture = pak.getTextureAtlasTexture();
-    setBspData(pak.getBspTree(), pak.getPvsList(), pak.getBspTree() + pak.getNumInteriorNodes(),
-               pak.getNumLeaves(), atlasTexture, pak.getLightmapAtlasTexture());
+
+    LevelRenderer renderer;
+    renderer.setBspData(pak.getBspTree(), pak.getPvsList(), pak.getBspTree()
+                        + pak.getNumInteriorNodes(), pak.getNumLeaves(),
+                        atlasTexture, pak.getLightmapAtlasTexture());
     Entity *ent = pak.findEntityByClassName("info_player_start");
     if (!ent)
     {
@@ -245,7 +248,7 @@ int main()
 
         context->bindUniforms(&uniforms, sizeof(uniforms));
 
-        renderScene(context, gCameraPos);
+        renderer.render(context, gCameraPos);
 
         clock_t startTime = clock();
         context->finish();

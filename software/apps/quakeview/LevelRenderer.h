@@ -37,7 +37,20 @@ struct RenderBspNode
     int markNumber;
 };
 
-void setBspData(RenderBspNode *root, const uint8_t *pvsList, RenderBspNode *leaves,
-                int numLeaves, librender::Texture *atlasTexture, librender::Texture *lightmapAtlas);
-void renderScene(librender::RenderContext *context, librender::Vec3 cameraPos);
-void renderTextureAtlas(librender::RenderContext *context);
+class LevelRenderer
+{
+public:
+    void setBspData(RenderBspNode *root, const uint8_t *pvsList,
+                    RenderBspNode *leaves, int numLeaves,
+                    librender::Texture *atlasTexture, librender::Texture *lightmapAtlas);
+    void render(librender::RenderContext *context, const librender::Vec3 &cameraPos);
+
+private:
+    RenderBspNode *fBspRoot;
+    const uint8_t *fPvsList;
+    RenderBspNode *fLeaves;
+    int fNumLeaves;
+    librender::Texture *fTextureAtlasTexture;
+    librender::Texture *fLightmapAtlasTexture;
+    int fFrame;
+};

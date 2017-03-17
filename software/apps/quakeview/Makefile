@@ -25,7 +25,7 @@ MEMORY_SIZE=4000000
 CFLAGS+=-fno-rtti -std=c++11 -I$(TOPDIR)/software/libs/librender -DFB_WIDTH=$(FB_WIDTH) -DFB_HEIGHT=$(FB_HEIGHT)
 LIBS=-lrender -lc -los-bare
 
-SRCS=main.cpp PakFile.cpp MeshBuilder.cpp Render.cpp
+SRCS=main.cpp PakFile.cpp MeshBuilder.cpp LevelRenderer.cpp
 
 OBJS := $(CRT0_BARE) $(SRCS_TO_OBJS)
 DEPS := $(SRCS_TO_DEPS)
