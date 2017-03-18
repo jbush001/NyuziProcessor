@@ -65,8 +65,8 @@ module thread_select_stage(
     input thread_bitmap_t              l2i_dcache_wake_bitmap,
     input thread_bitmap_t              ior_wake_bitmap,
 
-    // Performace events
-    output logic                       perf_instruction_issue);
+    // To performance_counters
+    output logic                       ts_perf_instruction_issue);
 
     localparam THREAD_FIFO_SIZE = 8;
 
@@ -391,7 +391,7 @@ module thread_select_stage(
         .index(issue_thread_idx));
 
     assign issue_instr = thread_instr[issue_thread_idx];
-    assign perf_instruction_issue = |thread_issue_oh;
+    assign ts_perf_instruction_issue = |thread_issue_oh;
 
     always_ff @(posedge clk)
     begin

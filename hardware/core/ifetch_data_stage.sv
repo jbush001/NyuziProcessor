@@ -79,10 +79,10 @@ module ifetch_data_stage(
     input                            wb_rollback_en,
     input thread_idx_t               wb_rollback_thread_idx,
 
-    // Performance events
-    output logic                     perf_icache_hit,
-    output logic                     perf_icache_miss,
-    output logic                     perf_itlb_miss);
+    // To performance_counters
+    output logic                     ifd_perf_icache_hit,
+    output logic                     ifd_perf_icache_miss,
+    output logic                     ifd_perf_itlb_miss);
 
     logic cache_hit;
     logic[`L1I_WAYS - 1:0] way_hit_oh;
@@ -130,9 +130,9 @@ module ifetch_data_stage(
         && !ifd_near_miss;
     assign ifd_cache_miss_paddr = {ift_pc_paddr.tag, ift_pc_paddr.set_idx};
     assign ifd_cache_miss_thread_idx = ift_thread_idx;
-    assign perf_icache_hit = cache_hit && ift_instruction_requested;
-    assign perf_icache_miss = !cache_hit && ift_tlb_hit && ift_instruction_requested;
-    assign perf_itlb_miss = ift_instruction_requested && !ift_tlb_hit;
+    assign ifd_perf_icache_hit = cache_hit && ift_instruction_requested;
+    assign ifd_perf_icache_miss = !cache_hit && ift_tlb_hit && ift_instruction_requested;
+    assign ifd_perf_itlb_miss = ift_instruction_requested && !ift_tlb_hit;
     assign alignment_fault = ift_pc_paddr[1:0] != 0;
 
     //

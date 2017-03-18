@@ -81,9 +81,9 @@ module l2_cache_read_stage(
     output l2_tag_t                           l2r_writeback_tag,
     output logic                              l2r_needs_writeback,
 
-    // Performance events
-    output logic                              perf_l2_miss,
-    output logic                              perf_l2_hit);
+    // To performance_counters
+    output logic                              l2r_perf_l2_miss,
+    output logic                              l2r_perf_l2_hit);
 
     localparam GLOBAL_THREAD_IDX_WIDTH = $clog2(`TOTAL_THREADS);
 
@@ -211,8 +211,8 @@ module l2_cache_read_stage(
     // Performance events
     assign is_hit_or_miss = l2t_request_valid && (l2t_request.packet_type == L2REQ_STORE || can_store_sync
         || l2t_request.packet_type == L2REQ_LOAD ) && !l2t_is_l2_fill;
-    assign perf_l2_miss = is_hit_or_miss && !(|hit_way_oh);
-    assign perf_l2_hit = is_hit_or_miss && |hit_way_oh;
+    assign l2r_perf_l2_miss = is_hit_or_miss && !(|hit_way_oh);
+    assign l2r_perf_l2_hit = is_hit_or_miss && |hit_way_oh;
 
     always_ff @(posedge clk)
     begin

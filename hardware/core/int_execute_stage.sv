@@ -58,10 +58,10 @@ module int_execute_stage(
     // To control_registers
     output logic                      ix_is_eret,
 
-    // Performance events
-    output logic                      perf_uncond_branch,
-    output logic                      perf_cond_branch_taken,
-    output logic                      perf_cond_branch_not_taken);
+    // To performance_counters
+    output logic                      ix_perf_uncond_branch,
+    output logic                      ix_perf_cond_branch_taken,
+    output logic                      ix_perf_cond_branch_not_taken);
 
     vector_t vector_result;
     logic is_eret;
@@ -262,7 +262,7 @@ module int_execute_stage(
     begin
         branch_taken = 0;
         is_conditional_branch = 0;
-        perf_uncond_branch = 0;
+        ix_perf_uncond_branch = 0;
 
         if (is_valid_instruction
             && of_instruction.is_branch
@@ -287,7 +287,7 @@ module int_execute_stage(
                 BRANCH_ERET:
                 begin
                     branch_taken = 1;
-                    perf_uncond_branch = 1;
+                    ix_perf_uncond_branch = 1;
                 end
 
                 default:
@@ -296,8 +296,8 @@ module int_execute_stage(
         end
     end
 
-    assign perf_cond_branch_taken = is_conditional_branch && branch_taken;
-    assign perf_cond_branch_not_taken = is_conditional_branch && !branch_taken;
+    assign ix_perf_cond_branch_taken = is_conditional_branch && branch_taken;
+    assign ix_perf_cond_branch_not_taken = is_conditional_branch && !branch_taken;
 
     always_ff @(posedge clk)
     begin

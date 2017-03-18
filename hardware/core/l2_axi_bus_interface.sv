@@ -56,8 +56,8 @@ module l2_axi_bus_interface(
     input                                  l2r_request_valid,
     input l2req_packet_t                   l2r_request,
 
-    // Performance event
-    output logic                           perf_l2_writeback);
+    // To performance_counters
+    output logic                           l2bi_perf_l2_writeback);
 
     typedef enum {
         STATE_IDLE,
@@ -127,7 +127,7 @@ module l2_axi_bus_interface(
         .request_addr({miss_addr.tag, miss_addr.set_idx}),
         .*);
 
-    assign perf_l2_writeback = enqueue_writeback_request && !writeback_queue_almost_full;
+    assign l2bi_perf_l2_writeback = enqueue_writeback_request && !writeback_queue_almost_full;
 
     assign writeback_queue_in.address = {l2r_writeback_tag, miss_addr.set_idx}; // Old address
     assign writeback_queue_in.data = l2r_data; // Old line to writeback

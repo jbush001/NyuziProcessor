@@ -118,9 +118,9 @@ module writeback_stage(
     // To thread_select_stage
     output thread_bitmap_t                wb_suspend_thread_oh,
 
-    // Performance events
-    output logic                          perf_instruction_retire,
-    output logic                          perf_store_rollback);
+    // To performance_counters
+    output logic                          wb_perf_instruction_retire,
+    output logic                          wb_perf_store_rollback);
 
     scalar_t mem_load_lane;
     logic[$clog2(`CACHE_LINE_WORDS) - 1:0] mem_load_lane_idx;
@@ -151,8 +151,9 @@ module writeback_stage(
     register_idx_t writeback_reg_nxt;
     logic writeback_is_last_subcycle_nxt;
 
-    assign perf_instruction_retire = fx5_instruction_valid || ix_instruction_valid || dd_instruction_valid;
-    assign perf_store_rollback = sq_rollback_en;
+    assign wb_perf_instruction_retire = fx5_instruction_valid || ix_instruction_valid
+        || dd_instruction_valid;
+    assign wb_perf_store_rollback = sq_rollback_en;
 
     //
     // Rollback control logic

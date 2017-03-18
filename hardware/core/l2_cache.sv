@@ -50,7 +50,7 @@ module l2_cache(
     // External bus interface
     axi4_interface.master                 axi_bus,
 
-    // Performance events
+    // To performance_counters
     output logic[`L2_PERF_EVENTS - 1:0]   l2_perf_events);
 
     /*AUTOLOGIC*/
@@ -62,6 +62,7 @@ module l2_cache(
     logic               l2a_request_valid;      // From l2_cache_arb_stage of l2_cache_arb_stage.v
     logic               l2bi_collided_miss;     // From l2_axi_bus_interface of l2_axi_bus_interface.v
     cache_line_data_t   l2bi_data_from_memory;  // From l2_axi_bus_interface of l2_axi_bus_interface.v
+    logic               l2bi_perf_l2_writeback; // From l2_axi_bus_interface of l2_axi_bus_interface.v
     l2req_packet_t      l2bi_request;           // From l2_axi_bus_interface of l2_axi_bus_interface.v
     logic               l2bi_request_valid;     // From l2_axi_bus_interface of l2_axi_bus_interface.v
     logic               l2bi_stall;             // From l2_axi_bus_interface of l2_axi_bus_interface.v
@@ -72,6 +73,8 @@ module l2_cache(
     logic               l2r_is_l2_fill;         // From l2_cache_read_stage of l2_cache_read_stage.v
     logic               l2r_is_restarted_flush; // From l2_cache_read_stage of l2_cache_read_stage.v
     logic               l2r_needs_writeback;    // From l2_cache_read_stage of l2_cache_read_stage.v
+    logic               l2r_perf_l2_hit;        // From l2_cache_read_stage of l2_cache_read_stage.v
+    logic               l2r_perf_l2_miss;       // From l2_cache_read_stage of l2_cache_read_stage.v
     l2req_packet_t      l2r_request;            // From l2_cache_read_stage of l2_cache_read_stage.v
     logic               l2r_request_valid;      // From l2_cache_read_stage of l2_cache_read_stage.v
     logic               l2r_store_sync_success; // From l2_cache_read_stage of l2_cache_read_stage.v
@@ -97,9 +100,6 @@ module l2_cache(
     logic [$clog2(`L2_WAYS*`L2_SETS)-1:0] l2u_write_addr;// From l2_cache_update_stage of l2_cache_update_stage.v
     cache_line_data_t   l2u_write_data;         // From l2_cache_update_stage of l2_cache_update_stage.v
     logic               l2u_write_en;           // From l2_cache_update_stage of l2_cache_update_stage.v
-    logic               perf_l2_hit;            // From l2_cache_read_stage of l2_cache_read_stage.v
-    logic               perf_l2_miss;           // From l2_cache_read_stage of l2_cache_read_stage.v
-    logic               perf_l2_writeback;      // From l2_axi_bus_interface of l2_axi_bus_interface.v
     // End of automatics
 
     l2_cache_arb_stage l2_cache_arb_stage(.*);
@@ -110,8 +110,8 @@ module l2_cache(
     l2_axi_bus_interface l2_axi_bus_interface(.*);
 
     assign l2_perf_events = {
-        perf_l2_hit,
-        perf_l2_miss,
-        perf_l2_writeback
+        l2r_perf_l2_hit,
+        l2r_perf_l2_miss,
+        l2bi_perf_l2_writeback
     };
 endmodule
