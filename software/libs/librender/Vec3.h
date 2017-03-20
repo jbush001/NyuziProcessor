@@ -22,6 +22,9 @@
 namespace librender
 {
 
+//
+// 3 element vector
+//
 class Vec3
 {
 public:

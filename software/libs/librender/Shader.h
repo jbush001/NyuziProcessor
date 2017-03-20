@@ -41,9 +41,8 @@ enum VertexParam
     kParamW
 };
 
-
 //
-// This is overriden by the application to perform vertex and pixel shading.
+// This is subclassed by the application to perform vertex and pixel shading.
 //
 
 class Shader

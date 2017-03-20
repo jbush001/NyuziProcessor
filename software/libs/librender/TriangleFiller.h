@@ -28,9 +28,11 @@ namespace librender
 
 const int kMaxParams = 16;
 
-// This represents the state for one triangle at a time. It's called by the
-// rasterizer for each 4x4 batch of pixels. It computes the colors for
-// them by calling into the shader, then writes them back to the render target.
+//
+// This delegate shades pixels and writes them to the render target.
+// It maintains state for one triangle at a time. The rasterizer calls
+// it for each 4x4 batch of pixels.
+//
 class TriangleFiller
 {
 public:
@@ -39,16 +41,21 @@ public:
     TriangleFiller(const TriangleFiller&) = delete;
     TriangleFiller& operator=(const TriangleFiller&) = delete;
 
-    // Called by rasterizer to fill a 4x4 block.  The left and top coordinates
-    // are in raster space, representing the count of pixels from the upper
-    // left corner.
+    // The rasterizer calls this to fill a 4x4 block.  The left and top
+    // coordinates are raster coordinates (count of pixels from the upper
+    // left corner).
     void fillMasked(int left, int top, unsigned short mask);
 
-    // Set up interpolation for triangle
+    // This is called before setUpParam. The coordinates represent the
+    // on-screen position of the triangle.
     void setUpTriangle(const RenderState *state,
                        float x1, float y1, float z1,
                        float x2, float y2, float z2,
                        float x3, float y3, float z3);
+
+    // Each time this is called, it will advance the index of the parameter it
+    // is configuring the value for. c1, c2, and c3 represent the value of the
+    // parameter at each of the three triangle points.
     void setUpParam(float c1, float c2, float c3);
 
 private:

@@ -23,7 +23,7 @@ namespace librender
 {
 
 //
-// Dynamic array with a fast, lock-free append. This allocates memory using
+// Dynamic array with a fast append. This allocates memory from
 // RegionAllocator.
 //
 
@@ -43,27 +43,9 @@ public:
         fAllocator = allocator;
     }
 
-    void sort()
-    {
-        if (!fFirstBucket)
-            return;		// Empty
-
-        // Insertion sort.  This is fairly efficient when the array
-        // is already mostly sorted, which is usually the case.
-        for (iterator i = begin().next(), e = end(); i != e; ++i)
-        {
-            iterator j = i;
-            while (j != begin() && *j.prev() > *j)
-            {
-                // swap
-                T temp = *j;
-                *j = *j.prev();
-                *j.prev() = temp;
-                --j;
-            }
-        }
-    }
-
+    // This function is reentrant. Insertion order will be arbitrary when
+    // called by multiple threads simultaneously. It is lock-free
+    // unless it needs to allocate a new bucket.
     void append(const T &copyFrom)
     {
         int index;
@@ -91,9 +73,9 @@ public:
         bucket->items[index] = copyFrom;
     }
 
-    // reset() must be called on this object before calling reset() on the
+    // This function must be called before calling reset() on the
     // RegionAllocator this object is using to properly clean up objects and
-    // to avoid stale pointers.
+    // to avoid stale pointers. This is not thread safe.
     void reset()
     {
         // Invoke destructor on items.
@@ -103,6 +85,28 @@ public:
         fFirstBucket = nullptr;
         fLastBucket = nullptr;
         fNextBucketIndex = 0;
+    }
+
+    // Sort all items in queue. This is not thread safe.
+    void sort()
+    {
+        if (!fFirstBucket)
+            return;		// Empty
+
+        // Insertion sort.  This is fairly efficient when the array
+        // is already mostly sorted, which is usually the case.
+        for (iterator i = begin().next(), e = end(); i != e; ++i)
+        {
+            iterator j = i;
+            while (j != begin() && *j.prev() > *j)
+            {
+                // swap
+                T temp = *j;
+                *j = *j.prev();
+                *j.prev() = temp;
+                --j;
+            }
+        }
     }
 
     class iterator
@@ -194,7 +198,7 @@ private:
 
     void allocateBucket()
     {
-        // Lock
+        // Acquire spinlock
         do
         {
             // Busy wait without calling the sync version of compare and swap.
@@ -208,6 +212,7 @@ private:
         while (!__sync_bool_compare_and_swap(&fSpinLock, 0, 1));
 
         // Check that someone didn't beat us to allocating the bucket.
+        // If they did, just return.
         if (fNextBucketIndex == BUCKET_SIZE || fLastBucket == nullptr)
         {
             if (fLastBucket)

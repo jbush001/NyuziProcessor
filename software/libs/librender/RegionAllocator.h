@@ -25,7 +25,11 @@ namespace librender
 
 //
 // This quickly allocates short-lived objects by slicing them off the end
-// of a larger chunk.  It can only free all objects at once.
+// of a larger chunk. It can only free all objects at once.
+// The advantages of this approach are:
+// - It's fast. The allocation policy is simple, and is easy to make lock-free
+//   to minimize synchronization overhead.
+// - It doesn't have any internal fragmentation.
 //
 
 class RegionAllocator
@@ -46,7 +50,7 @@ public:
         delete [] fArenaBase;
     }
 
-    // This is thread safe and lock-free. Alignment must be a power of 2
+    // This is reentrant and lock-free. Alignment must be a power of 2
     void *alloc(size_t size, size_t alignment = 4)
     {
         char *nextAlloc;

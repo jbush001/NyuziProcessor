@@ -28,6 +28,8 @@ namespace librender
 
 //
 // Interface for client applications to enqueue rendering commands.
+// State set with bindXXX will apply for any drawing calls
+// invoked after until the next bind of the same attribute.
 //
 class RenderContext
 {
@@ -43,34 +45,55 @@ public:
         fClearColorBuffer = true;
     }
 
+    // Set where rendered raster data should be written
     void bindTarget(RenderTarget *target);
+
+    // Set a Shader that will be called for all pixels rendered
+    // after the call.
     void bindShader(Shader *shader);
+
+    // Set interpolated vertex attributes for next draw call.
     void bindVertexAttrs(const RenderBuffer *vertexAttrs);
+
+    // This texture will be passed to pixel shaders for all triangles
+    // rendered after this call.
     void bindTexture(int textureIndex, Texture *texture)
     {
         fCurrentState.fTextures[textureIndex] = texture;
     }
 
-    // XXX Unlike other state changes, this will be invalidated when finish() is called.
+    // The uniforms array is passed to shaders and is used for values
+    // that are constant for all pixels.
+    // XXX Unlike other state changes, this will be invalidated when finish()
+    // is called. You will need to call it again for the next frame.
     void bindUniforms(const void *uniforms, size_t size);
 
+    // If enabled is true, this will
+    // - Update the depth buffer for each pixel covered by triangles
+    // - Perform a depth test and reject any pixels that do not match.
     void enableDepthBuffer(bool enabled)
     {
         fCurrentState.fEnableDepthBuffer = enabled;
     }
 
+    // If this is true, the alpha value will be used to blend newly written
+    // pixels with values already in the framebuffer. If false, newly
+    // written pixels will replace old ones.
     void enableBlend(bool enabled)
     {
         fCurrentState.fEnableBlend = enabled;
     }
 
-    // Draw primitives using currently bound state.  Indices reference into bound
-    // vertex attribute buffer.
+    // Draw primitives using currently configured state set by bindXXX calls.
+    // Indices reference into bound vertex attribute buffer.
     void drawElements(const RenderBuffer *indices);
 
-    // Execute all submitted drawing commands. No rendering occurs until this is called.
+    // Execute all submitted drawing commands. No rendering occurs until
+    // this is called.
     void finish();
 
+    // If this is set, no pixels will be rendered, but lines will be drawn at the
+    // edge of rendered triangles.
     void enableWireframeMode(bool enable)
     {
         fWireframeMode = enable;

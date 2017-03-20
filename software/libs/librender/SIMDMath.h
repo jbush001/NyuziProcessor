@@ -20,7 +20,7 @@
 #include <stdint.h>
 
 //
-// Arithmetic on vector register values, and a few scalar straglers that
+// Arithmetic on vector register values, and a few scalar stragglers that
 // I couldn't find anywhere else to put.
 //
 
