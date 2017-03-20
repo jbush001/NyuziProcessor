@@ -390,12 +390,10 @@ void make_thread_ready(struct thread *th)
     assert(th->state != THREAD_RUNNING);
     assert(th->state != THREAD_DEAD);
 
-    old_flags = disable_interrupts();
-    acquire_spinlock(&thread_q_lock);
+    old_flags = acquire_spinlock_int(&thread_q_lock);
     th->state = THREAD_READY;
     list_add_tail(&ready_q, th);
-    release_spinlock(&thread_q_lock);
-    restore_interrupts(old_flags);
+    release_spinlock_int(&thread_q_lock, old_flags);
 }
 
 void dump_process_list(void)
@@ -405,8 +403,7 @@ void dump_process_list(void)
     struct thread *th;
 
     kprintf("process list\n");
-    old_flags = disable_interrupts();
-    acquire_spinlock(&process_list_lock);
+    old_flags = acquire_spinlock_int(&process_list_lock);
     list_for_each(&process_list, proc, struct process)
     {
         kprintf("process %d\n", proc->id);
@@ -417,7 +414,6 @@ void dump_process_list(void)
         release_spinlock(&proc->lock);
     }
 
-    release_spinlock(&process_list_lock);
-    restore_interrupts(old_flags);
+    release_spinlock_int(&process_list_lock, old_flags);
 }
 
