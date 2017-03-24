@@ -355,10 +355,10 @@ void remote_gdb_main_loop(struct processor *proc, bool enable_fb_window)
                         uint32_t values[NUM_VECTOR_LANES];
 
                         dbg_get_vector_reg(proc, current_thread, reg_id - 32, values);
-                        for (lane_idx = NUM_VECTOR_LANES - 1; lane_idx >= 0; lane_idx--)
+                        for (lane_idx = 0; lane_idx < NUM_VECTOR_LANES; lane_idx++)
                         {
-                            sprintf(response + (NUM_VECTOR_LANES - lane_idx - 1)
-                                    * 8, "%08x", endian_swap32(values[lane_idx]));
+                            sprintf(response + lane_idx * 8, "%08x",
+                                endian_swap32(values[lane_idx]));
                         }
 
                         send_response_packet(response);

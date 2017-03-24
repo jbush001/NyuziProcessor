@@ -198,7 +198,7 @@ void cosim_check_set_vector_reg(struct processor *proc, uint32_t pc, uint32_t re
         print_registers(proc, expected_thread);
         printf("COSIM MISMATCH, thread %d\n", expected_thread);
         printf("Reference: %08x v%d{%04x} <= ", pc, reg, mask & 0xffff);
-        for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
+        for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
             printf("%08x ", values[lane]);
 
         printf("\n");
@@ -217,8 +217,8 @@ void cosim_check_vector_store(struct processor *proc, uint32_t pc, uint32_t addr
     byte_mask = 0;
     for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
     {
-        if (mask & (1 << lane))
-            byte_mask |= 0xfull << (lane * 4);
+        if (mask & (0x8000 >> lane))
+            byte_mask |= 0xf000000000000000ull >> (lane * 4);
     }
 
     cosim_event_triggered = true;
@@ -232,7 +232,7 @@ void cosim_check_vector_store(struct processor *proc, uint32_t pc, uint32_t addr
         print_registers(proc, expected_thread);
         printf("COSIM MISMATCH, thread %d\n", expected_thread);
         printf("Reference: %08x memory[%x]{%016" PRIx64 "} <= ", pc, address, byte_mask);
-        for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
+        for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
             printf("%08x ", values[lane]);
 
         printf("\n_hardware:  ");
@@ -288,7 +288,7 @@ static void print_cosim_expected(void)
 
         case EVENT_MEM_STORE:
             printf("memory[%x]{%016" PRIx64 "} <= ", expected_address, expected_mask);
-            for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
+            for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
                 printf("%08x ", expected_values[lane]);
 
             printf("\n");
@@ -297,7 +297,7 @@ static void print_cosim_expected(void)
         case EVENT_VECTOR_WRITEBACK:
             printf("v%d{%04x} <= ", expected_register, (uint32_t)
                    expected_mask & 0xffff);
-            for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
+            for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
                 printf("%08x ", expected_values[lane]);
 
             printf("\n");
@@ -335,7 +335,7 @@ static bool masked_vectors_equal(uint32_t mask, const uint32_t *values1, const u
 
     for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
     {
-        if (mask & (1 << lane))
+        if (mask & (0x8000 >> lane))
         {
             if (values1[lane] != values2[lane])
                 return false;

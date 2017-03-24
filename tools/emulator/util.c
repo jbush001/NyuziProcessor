@@ -25,7 +25,7 @@ int parse_hex_vector(const char *str, uint32_t *vector_values, bool endian_swap)
     int digit;
     uint32_t lane_value;
 
-    for (lane = NUM_VECTOR_LANES - 1; lane >= 0 && *c; lane--)
+    for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
     {
         lane_value = 0;
         for (digit = 0; digit < 8; digit++)
