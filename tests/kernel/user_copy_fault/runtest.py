@@ -30,7 +30,7 @@ def kernel_ucf(name):
 
     environment = name[underscore + 1:]
     test_harness.build_program(['user_copy_fault.c'], image_type='user')
-    result = test_harness.run_kernel(environment=environment, timeout=120)
+    result = test_harness.run_kernel(environment=environment, timeout=240)
     test_harness.check_result('user_copy_fault.c', result)
 
 test_harness.execute_tests()

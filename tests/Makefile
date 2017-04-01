@@ -33,7 +33,7 @@ test:
 	cd compiler-rt && $(PYTHON) ./runtest.py
 	cd compiler && USE_VERILATOR=1 $(PYTHON) ./runtest.py
 	cd cosimulation && $(PYTHON) ./runtest.py
-	cd kernel/hello && $(PYTHON) ./runtest.py
+	cd kernel/initdata && $(PYTHON) ./runtest.py
 	cd fpga && make
 	cd render && make test
 

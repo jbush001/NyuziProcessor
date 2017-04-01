@@ -30,7 +30,7 @@ def kernel_globalinit(name):
 
     environment = name[underscore + 1:]
     test_harness.build_program(['constructor.cpp'], image_type='user')
-    result = test_harness.run_kernel(environment=environment, timeout=120)
+    result = test_harness.run_kernel(environment=environment, timeout=240)
     test_harness.check_result('constructor.cpp', result)
 
 test_harness.execute_tests()

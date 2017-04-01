@@ -30,7 +30,7 @@ def kernel_hello(name):
 
     environment = name[underscore + 1:]
     test_harness.build_program(['hello.c'], image_type='user')
-    result = test_harness.run_kernel(environment=environment, timeout=120)
+    result = test_harness.run_kernel(environment=environment, timeout=240)
     test_harness.check_result('hello.c', result)
 
 test_harness.execute_tests()
