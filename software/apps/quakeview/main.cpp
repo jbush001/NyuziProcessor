@@ -136,14 +136,14 @@ void processKeyboardEvents()
         gCameraOrientationMatrix *= kRotateLeft;
 
     if (gKeyPressed[kUpArrow])
-        gCameraPos += gCameraOrientationMatrix.inverse() * Vec3(0, 0, -kMoveSpeed);
+        gCameraPos += gCameraOrientationMatrix.transpose() * Vec3(0, 0, -kMoveSpeed);
     else if (gKeyPressed[kDownArrow])
-        gCameraPos += gCameraOrientationMatrix.inverse() * Vec3(0, 0, kMoveSpeed);
+        gCameraPos += gCameraOrientationMatrix.transpose() * Vec3(0, 0, kMoveSpeed);
 
     if (gKeyPressed[kUKey])
-        gCameraPos += gCameraOrientationMatrix.inverse() * Vec3(0, kMoveSpeed, 0);
+        gCameraPos += gCameraOrientationMatrix.transpose() * Vec3(0, kMoveSpeed, 0);
     else if (gKeyPressed[kDKey])
-        gCameraPos += gCameraOrientationMatrix.inverse() * Vec3(0, -kMoveSpeed, 0);
+        gCameraPos += gCameraOrientationMatrix.transpose() * Vec3(0, -kMoveSpeed, 0);
 }
 
 void parseCoordinateString(const char *string, float outCoord[3])
