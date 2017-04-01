@@ -152,7 +152,7 @@ void RenderContext::shadeVertices(int index)
     int numVertices = state.fVertexAttrBuffer->getNumElements() - index * 16;
     int mask;
     if (numVertices < 16)
-        mask = (0xffff0000 >> numVertices) & 0xffff;
+        mask = (1 << numVertices) - 1;
     else
     {
         numVertices = 16;

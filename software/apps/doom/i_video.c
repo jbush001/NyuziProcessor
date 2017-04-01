@@ -170,8 +170,8 @@ void I_FinishUpdate (void)
     {
         for (x = 0; x < SCREENWIDTH; x += 8)
         {
-            mask = 0xc000;
-            for (offs = 0; offs < 8; offs++, mask >>= 2)
+            mask = 0x0003;
+            for (offs = 0; offs < 8; offs++, mask <<= 2)
             {
                 pixelVals = __builtin_nyuzi_vector_mixi(mask, (veci16_t) gPalette[*src++],
                                                         pixelVals);

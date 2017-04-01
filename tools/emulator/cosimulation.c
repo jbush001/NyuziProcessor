@@ -217,7 +217,7 @@ void cosim_check_vector_store(struct processor *proc, uint32_t pc, uint32_t addr
     byte_mask = 0;
     for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
     {
-        if (mask & (0x8000 >> lane))
+        if (mask & (1 << lane))
             byte_mask |= 0xf000000000000000ull >> (lane * 4);
     }
 
@@ -335,7 +335,7 @@ static bool masked_vectors_equal(uint32_t mask, const uint32_t *values1, const u
 
     for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
     {
-        if (mask & (0x8000 >> lane))
+        if (mask & (1 << lane))
         {
             if (values1[lane] != values2[lane])
                 return false;

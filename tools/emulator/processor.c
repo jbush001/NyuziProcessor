@@ -678,7 +678,7 @@ static void set_vector_reg(struct thread *thread, uint32_t reg, uint32_t mask,
 
     for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
     {
-        if (mask & (0x8000 >> lane))
+        if (mask & (1 << lane))
             thread->vector_reg[reg][lane] = values[lane];
     }
 }
@@ -1032,9 +1032,9 @@ static void execute_register_arith_inst(struct thread *thread, uint32_t instruct
                 uint32_t scalar_value = get_scalar_reg(thread, op2reg);
                 for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
                 {
-                    result <<= 1;
+                    result >>= 1;
                     result |= scalar_arithmetic_op(op, thread->vector_reg[op1reg][lane],
-                                                   scalar_value) ? 1 : 0;
+                                                   scalar_value) ? 0x8000 : 0;
                 }
 
                 break;
@@ -1047,9 +1047,9 @@ static void execute_register_arith_inst(struct thread *thread, uint32_t instruct
                 // Pack compare results in low 16 bits of scalar register
                 for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
                 {
-                    result <<= 1;
+                    result >>= 1;
                     result |= scalar_arithmetic_op(op, thread->vector_reg[op1reg][lane],
-                                                   thread->vector_reg[op2reg][lane]) ? 1 : 0;
+                                                   thread->vector_reg[op2reg][lane]) ? 0x8000 : 0;
                 }
 
                 break;
@@ -1158,9 +1158,9 @@ static void execute_immediate_arith_inst(struct thread *thread, uint32_t instruc
                 // Pack compare results into low 16 bits of scalar register
                 for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
                 {
-                    result <<= 1;
+                    result >>= 1;
                     result |= scalar_arithmetic_op(op, thread->vector_reg[op1reg][lane],
-                                                   imm_value) ? 1 : 0;
+                                                   imm_value) ? 0x8000 : 0;
                 }
 
                 break;
@@ -1489,7 +1489,7 @@ static void execute_block_load_store_inst(struct thread *thread, uint32_t instru
 
         for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
         {
-            if (mask & (0x8000 >> lane))
+            if (mask & (1 << lane))
                 block_ptr[lane] = store_value[lane];
         }
 
@@ -1531,7 +1531,7 @@ static void execute_scatter_gather_inst(struct thread *thread, uint32_t instruct
 
     lane = thread->subcycle;
     virtual_address = thread->vector_reg[ptrreg][lane] + offset;
-    if ((mask & (0x8000 >> lane)) && (virtual_address & 3) != 0)
+    if ((mask & (1 << lane)) && (virtual_address & 3) != 0)
     {
         raise_trap(thread, virtual_address, TT_UNALIGNED_ACCESS, !is_load, true);
         return;
@@ -1544,12 +1544,12 @@ static void execute_scatter_gather_inst(struct thread *thread, uint32_t instruct
     {
         uint32_t load_value[NUM_VECTOR_LANES];
         memset(load_value, 0, NUM_VECTOR_LANES * sizeof(uint32_t));
-        if (mask & (0x8000 >> lane))
+        if (mask & (1 << lane))
             load_value[lane] = *UINT32_PTR(thread->core->proc->memory, physical_address);
 
-        set_vector_reg(thread, destsrcreg, mask & (0x8000 >> lane), load_value);
+        set_vector_reg(thread, destsrcreg, mask & (1 << lane), load_value);
     }
-    else if (mask & (0x8000 >> lane))
+    else if (mask & (1 << lane))
     {
         if (thread->core->proc->enable_tracing)
         {

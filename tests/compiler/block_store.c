@@ -40,7 +40,7 @@ int main()
         0xdf8d2b3a
     };
 
-    __builtin_nyuzi_block_storei_masked(&global_vec, source_vals, 0x5555);
+    __builtin_nyuzi_block_storei_masked(&global_vec, source_vals, 0xaaaa);
     for (int i = 0; i < 16; i++)
         printf("%08x\n", ((unsigned int*) &global_vec)[i]);
 

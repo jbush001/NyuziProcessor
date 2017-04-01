@@ -292,14 +292,14 @@ module dcache_data_stage(
     //
     idx_to_oh #(
         .NUM_SIGNALS(`CACHE_LINE_WORDS),
-        .DIRECTION("MSB0")
+        .DIRECTION("LSB0")
     ) idx_to_oh_subcycle(
         .one_hot(subcycle_mask),
         .index(dt_subcycle));
 
     idx_to_oh #(
         .NUM_SIGNALS(`CACHE_LINE_WORDS),
-        .DIRECTION("MSB0")
+        .DIRECTION("LSB0")
     ) idx_to_oh_cache_lane(
         .one_hot(cache_lane_mask),
         .index(cache_lane_idx));
@@ -406,7 +406,8 @@ module dcache_data_stage(
     generate
         for (mask_idx = 0; mask_idx < `CACHE_LINE_BYTES; mask_idx++)
         begin : store_mask_gen
-            assign dd_store_mask[mask_idx] = word_store_mask[mask_idx / 4]
+            assign dd_store_mask[mask_idx] = word_store_mask[
+                (`CACHE_LINE_BYTES - mask_idx - 1) / 4]
                 & byte_store_mask[mask_idx & 3];
         end
     endgenerate

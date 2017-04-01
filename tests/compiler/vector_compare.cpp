@@ -90,22 +90,22 @@ int main()
 
     // Test all comparison builtins
     compareVectors(kVecA, kVecB);
-    // CHECK: 1607
-    // CHECK: 9e8f
-    // CHECK: 6170
-    // CHECK: e9f8
-    // CHECK: 6407
-    // CHECK: ec8f
-    // CHECK: 1370
-    // CHECK: 9bf8
-    // CHECK: 8888
-    // CHECK: 7777
+    // CHECK: e068
+    // CHECK: f179
+    // CHECK: 0e86
+    // CHECK: 1f97
+    // CHECK: e026
+    // CHECK: f137
+    // CHECK: 0ec8
+    // CHECK: 1fd9
+    // CHECK: 1111
+    // CHECK: eeee
 
     compareVectors(kVecC, kVecD);
-    // CHECK: 6407
-    // CHECK: ec8f
-    // CHECK: 1370
-    // CHECK: 9bf8
-    // CHECK: 8888
-    // CHECK: 7777
+    // CHECK: e026
+    // CHECK: f137
+    // CHECK: 0ec8
+    // CHECK: 1fd9
+    // CHECK: 1111
+    // CHECK: eeee
 }

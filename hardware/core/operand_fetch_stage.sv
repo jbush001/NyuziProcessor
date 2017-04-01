@@ -98,7 +98,7 @@ module operand_fetch_stage(
                 .read2_en(ts_instruction.has_vector2),
                 .read2_addr({ts_thread_idx, ts_instruction.vector_sel2}),
                 .read2_data(vector_val2[lane]),
-                .write_en(wb_writeback_en && wb_writeback_is_vector && wb_writeback_mask[lane]),
+                .write_en(wb_writeback_en && wb_writeback_is_vector && wb_writeback_mask[~lane]),
                 .write_addr({wb_writeback_thread_idx, wb_writeback_reg}),
                 .write_data(wb_writeback_value[lane]),
                 .*);

@@ -39,10 +39,10 @@ veci16_t bitonicSort(veci16_t items)
 	items = butterfly(items, kSwapIndices3, 0b0000111111110000);
 	items = butterfly(items, kSwapIndices2, 0b0011001111001100);
 	items = butterfly(items, kSwapIndices1, 0b1010101001010101);
-	items = butterfly(items, kSwapIndices4, 0b0000000011111111);
-	items = butterfly(items, kSwapIndices3, 0b0000111100001111);
-	items = butterfly(items, kSwapIndices2, 0b0011001100110011);
-	items = butterfly(items, kSwapIndices1, 0b0101010101010101);
+	items = butterfly(items, kSwapIndices4, 0b1111111100000000);
+	items = butterfly(items, kSwapIndices3, 0b1111000011110000);
+	items = butterfly(items, kSwapIndices2, 0b1100110011001100);
+	items = butterfly(items, kSwapIndices1, 0b1010101010101010);
 
 	return items;
 }

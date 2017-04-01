@@ -338,14 +338,14 @@ module writeback_stage(
     generate
         for (mask_lane = 0; mask_lane < `VECTOR_LANES; mask_lane++)
         begin : compare_result_gen
-            assign scycle_vcompare_result[mask_lane] = ix_result[mask_lane][0];
-            assign mcycle_vcompare_result[mask_lane] = fx5_result[mask_lane][0];
+            assign scycle_vcompare_result[mask_lane] = ix_result[~mask_lane][0];
+            assign mcycle_vcompare_result[mask_lane] = fx5_result[~mask_lane][0];
         end
     endgenerate
 
     idx_to_oh #(
         .NUM_SIGNALS(`VECTOR_LANES),
-        .DIRECTION("MSB0")
+        .DIRECTION("LSB0")
     ) convert_dd_lane(
         .one_hot(dd_vector_lane_oh),
         .index(dd_subcycle));

@@ -145,8 +145,8 @@ void subdivideTile(
 
         while (currentMask)
         {
-            const int index = __builtin_clz(currentMask) - 16;
-            currentMask &= ~(0x8000 >> index);
+            const int index = __builtin_ctz(currentMask);
+            currentMask &= ~(1 << index);
             const int subTileLeft = tileLeft + ((index & 3) << subTileSizeBits);
             const int subTileTop = tileTop + ((index >> 2) << subTileSizeBits);
             const int tileCount = 1 << subTileSizeBits;
@@ -184,8 +184,8 @@ void subdivideTile(
 
         while (recurseMask)
         {
-            const int index = __builtin_clz(recurseMask) - 16;
-            recurseMask &= ~(0x8000 >> index);
+            const int index = __builtin_ctz(recurseMask);
+            recurseMask &= ~(1 << index);
             const int x = tileLeft + ((index & 3) << subTileSizeBits);
             const int y = tileTop + ((index >> 2) << subTileSizeBits);
             if (x >= clipRight || y >= clipBottom)

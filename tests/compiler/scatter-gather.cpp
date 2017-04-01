@@ -35,7 +35,7 @@ int main()
 
     // CHECK: 0 7 13 1 14 8 12 6 15 10 5 9 4 2 11 3
 
-    __builtin_nyuzi_scatter_storei_masked(pointers, values2, 0x5555);
+    __builtin_nyuzi_scatter_storei_masked(pointers, values2, 0xaaaa);
     for (int i = 0; i < 16; i++)
         printf("%d ", glob_array[i]);
 
