@@ -17,11 +17,12 @@
 #include <stdint.h>
 #include <stdio.h>
 
-veci16_t global_vec;
+veci16_t global_ivec;
+vecf16_t global_fvec;
 
 int main()
 {
-    veci16_t source_vals = {
+    veci16_t isource_vals = {
         0xf9b831b8,
         0x9f7b4265,
         0xa70a45a2,
@@ -40,9 +41,9 @@ int main()
         0xdf8d2b3a
     };
 
-    __builtin_nyuzi_block_storei_masked(&global_vec, source_vals, 0xaaaa);
+    __builtin_nyuzi_block_storei_masked(&global_ivec, isource_vals, 0xaaaa);
     for (int i = 0; i < 16; i++)
-        printf("%08x\n", ((unsigned int*) &global_vec)[i]);
+        printf("%08x\n", ((unsigned int*) &global_ivec)[i]);
 
     // CHECK: 00000000
     // CHECK: 9f7b4265
@@ -60,4 +61,44 @@ int main()
     // CHECK: ba9c15b3
     // CHECK: 00000000
     // CHECK: df8d2b3a
+
+    vecf16_t source_fvals = {
+        16.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0,
+        10.0,
+        11.0,
+        12.0,
+        13.0,
+        14.0,
+        15.0
+    };
+
+    __builtin_nyuzi_block_storef_masked(&global_fvec, source_fvals, 0xaaaa);
+    for (int i = 0; i < 16; i++)
+        printf("%g\n", ((unsigned int*) &global_fvec)[i]);
+
+    // CHECK: 0.0
+    // CHECK: 1.0
+    // CHECK: 0.0
+    // CHECK: 3.0
+    // CHECK: 0.0
+    // CHECK: 5.0
+    // CHECK: 0.0
+    // CHECK: 7.0
+    // CHECK: 0.0
+    // CHECK: 9.0
+    // CHECK: 0.0
+    // CHECK: 11.0
+    // CHECK: 0.0
+    // CHECK: 13.0
+    // CHECK: 0.0
+    // CHECK: 15.0
 }
