@@ -1,123 +1,155 @@
-/* A C-program for MT19937: Integer version (1998/4/6)            */
-/*  genrand() generates one pseudorandom unsigned integer (32bit) */
-/* which is uniformly distributed among 0 to 2^32-1  for each     */
-/* call. sgenrand(seed) set initial values to the working area    */
-/* of 624 words. Before genrand(), sgenrand(seed) must be         */
-/* called once. (seed is any 32-bit integer except for 0).        */
-/*   Coded by Takuji Nishimura, considering the suggestions by    */
-/* Topher Cooper and Marc Rieffel in July-Aug. 1997.              */
+/*
+   A C-program for MT19937, with initialization improved 2002/1/26.
+   Coded by Takuji Nishimura and Makoto Matsumoto.
 
-/* This library is free software; you can redistribute it and/or   */
-/* modify it under the terms of the GNU Library General Public     */
-/* License as published by the Free Software Foundation; either    */
-/* version 2 of the License, or (at your option) any later         */
-/* version.                                                        */
-/* This library is distributed in the hope that it will be useful, */
-/* but WITHOUT ANY WARRANTY; without even the implied warranty of  */
-/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.            */
-/* See the GNU Library General Public License for more details.    */
-/* You should have received a copy of the GNU Library General      */
-/* Public License along with this library; if not, write to the    */
-/* Free Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA   */
-/* 02111-1307  USA                                                 */
+   Before using, initialize the state by using init_genrand(seed)
+   or init_by_array(init_key, key_length).
 
-/* Copyright (C) 1997 Makoto Matsumoto and Takuji Nishimura.       */
-/* When you use this, send an email to: matumoto@math.keio.ac.jp   */
-/* with an appropriate reference to your work.                     */
+   Copyright (C) 1997 - 2002, Makoto Matsumoto and Takuji Nishimura,
+   All rights reserved.
 
-/* REFERENCE                                                       */
-/* M. Matsumoto and T. Nishimura,                                  */
-/* "Mersenne Twister: A 623-Dimensionally Equidistributed Uniform  */
-/* Pseudo-Random Number Generator",                                */
-/* ACM Transactions on Modeling and Computer Simulation,           */
-/* Vol. 8, No. 1, January 1998, pp 3--30.                          */
+   Redistribution and use in source and binary forms, with or without
+   modification, are permitted provided that the following conditions
+   are met:
+
+     1. Redistributions of source code must retain the above copyright
+        notice, this list of conditions and the following disclaimer.
+
+     2. Redistributions in binary form must reproduce the above copyright
+        notice, this list of conditions and the following disclaimer in the
+        documentation and/or other materials provided with the distribution.
+
+     3. The names of its contributors may not be used to endorse or promote
+        products derived from this software without specific prior written
+        permission.
+
+   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+   A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+   CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+   EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+   PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+   PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+   Any feedback is very welcome.
+   http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html
+   email: m-mat @ math.sci.hiroshima-u.ac.jp (remove space)
+*/
 
 #include <stdio.h>
 
 /* Period parameters */
 #define N 624
 #define M 397
-#define MATRIX_A 0x9908b0df   /* constant vector a */
-#define UPPER_MASK 0x80000000 /* most significant w-r bits */
-#define LOWER_MASK 0x7fffffff /* least significant r bits */
+#define MATRIX_A 0x9908b0dfUL   /* constant vector a */
+#define UPPER_MASK 0x80000000UL /* most significant w-r bits */
+#define LOWER_MASK 0x7fffffffUL /* least significant r bits */
 
-/* Tempering parameters */
-#define TEMPERING_MASK_B 0x9d2c5680
-#define TEMPERING_MASK_C 0xefc60000
-#define TEMPERING_SHIFT_U(y)  (y >> 11)
-#define TEMPERING_SHIFT_S(y)  (y << 7)
-#define TEMPERING_SHIFT_T(y)  (y << 15)
-#define TEMPERING_SHIFT_L(y)  (y >> 18)
-
-static unsigned int mt[N]; /* the array for the state vector  */
+static unsigned long mt[N]; /* the array for the state vector  */
 static int mti=N+1; /* mti==N+1 means mt[N] is not initialized */
 
-/* initializing the array with a NONZERO seed */
-void
-sgenrand(unsigned int seed)
+/* initializes mt[N] with a seed */
+void init_genrand(unsigned long s)
 {
-    /* setting initial seeds to mt[N] using         */
-    /* the generator Line 25 of Table 1 in          */
-    /* [KNUTH 1981, The Art of Computer Programming */
-    /*    Vol. 2 (2nd Ed.), pp102]                  */
-    mt[0]= seed & 0xffffffff;
-    for (mti=1; mti<N; mti++)
-        mt[mti] = (69069 * mt[mti-1]) & 0xffffffff;
+    mt[0]= s & 0xffffffffUL;
+    for (mti=1; mti<N; mti++) {
+        mt[mti] =
+	    (1812433253UL * (mt[mti-1] ^ (mt[mti-1] >> 30)) + mti);
+        /* See Knuth TAOCP Vol2. 3rd Ed. P.106 for multiplier. */
+        /* In the previous versions, MSBs of the seed affect   */
+        /* only MSBs of the array mt[].                        */
+        /* 2002/01/09 modified by Makoto Matsumoto             */
+        mt[mti] &= 0xffffffffUL;
+        /* for >32 bit machines */
+    }
 }
 
-unsigned int
-genrand()
+/* initialize by an array with array-length */
+/* init_key is the array for initializing keys */
+/* key_length is its length */
+/* slight change for C++, 2004/2/26 */
+void init_by_array(unsigned long init_key[], int key_length)
 {
-    unsigned int y;
-    static unsigned int mag01[2]={0x0, MATRIX_A};
+    int i, j, k;
+    init_genrand(19650218UL);
+    i=1; j=0;
+    k = (N>key_length ? N : key_length);
+    for (; k; k--) {
+        mt[i] = (mt[i] ^ ((mt[i-1] ^ (mt[i-1] >> 30)) * 1664525UL))
+          + init_key[j] + j; /* non linear */
+        mt[i] &= 0xffffffffUL; /* for WORDSIZE > 32 machines */
+        i++; j++;
+        if (i>=N) { mt[0] = mt[N-1]; i=1; }
+        if (j>=key_length) j=0;
+    }
+    for (k=N-1; k; k--) {
+        mt[i] = (mt[i] ^ ((mt[i-1] ^ (mt[i-1] >> 30)) * 1566083941UL))
+          - i; /* non linear */
+        mt[i] &= 0xffffffffUL; /* for WORDSIZE > 32 machines */
+        i++;
+        if (i>=N) { mt[0] = mt[N-1]; i=1; }
+    }
+
+    mt[0] = 0x80000000UL; /* MSB is 1; assuring non-zero initial array */
+}
+
+/* generates a random number on [0,0xffffffff]-interval */
+unsigned long genrand_int32(void)
+{
+    unsigned long y;
+    static unsigned long mag01[2]={0x0UL, MATRIX_A};
     /* mag01[x] = x * MATRIX_A  for x=0,1 */
 
     if (mti >= N) { /* generate N words at one time */
         int kk;
 
-        if (mti == N+1)   /* if sgenrand() has not been called, */
-            sgenrand(4357); /* a default initial seed is used   */
+        if (mti == N+1)   /* if init_genrand() has not been called, */
+            init_genrand(5489UL); /* a default initial seed is used */
 
         for (kk=0;kk<N-M;kk++) {
             y = (mt[kk]&UPPER_MASK)|(mt[kk+1]&LOWER_MASK);
-            mt[kk] = mt[kk+M] ^ (y >> 1) ^ mag01[y & 0x1];
+            mt[kk] = mt[kk+M] ^ (y >> 1) ^ mag01[y & 0x1UL];
         }
         for (;kk<N-1;kk++) {
             y = (mt[kk]&UPPER_MASK)|(mt[kk+1]&LOWER_MASK);
-            mt[kk] = mt[kk+(M-N)] ^ (y >> 1) ^ mag01[y & 0x1];
+            mt[kk] = mt[kk+(M-N)] ^ (y >> 1) ^ mag01[y & 0x1UL];
         }
         y = (mt[N-1]&UPPER_MASK)|(mt[0]&LOWER_MASK);
-        mt[N-1] = mt[M-1] ^ (y >> 1) ^ mag01[y & 0x1];
+        mt[N-1] = mt[M-1] ^ (y >> 1) ^ mag01[y & 0x1UL];
 
         mti = 0;
     }
 
     y = mt[mti++];
-    y ^= TEMPERING_SHIFT_U(y);
-    y ^= TEMPERING_SHIFT_S(y) & TEMPERING_MASK_B;
-    y ^= TEMPERING_SHIFT_T(y) & TEMPERING_MASK_C;
-    y ^= TEMPERING_SHIFT_L(y);
+
+    /* Tempering */
+    y ^= (y >> 11);
+    y ^= (y << 7) & 0x9d2c5680UL;
+    y ^= (y << 15) & 0xefc60000UL;
+    y ^= (y >> 18);
 
     return y;
 }
 
-int main()
+int main(void)
 {
-    int j;
-
-    sgenrand(4357); /* any nonzero integer can be used as a seed */
-    for (j=0; j<32; j++) {
-    	printf("0x%08x ", genrand());
-        if (j%4==3) putchar('\n');
+    int i;
+    unsigned long init[4]={0x123, 0x234, 0x345, 0x456}, length=4;
+    init_by_array(init, length);
+    for (i=0; i<20; i++) {
+      printf("%10lu ", genrand_int32());
+      if (i%5==4) printf("\n");
     }
-    putchar('\n');
-}
 
-// CHECK: 0xd13c8af5 0xffc27482 0x82a6958b 0x21ac240a
-// CHECK: 0x09110bba 0xfe127bc0 0xa02e7212 0x10060698
-// CHECK: 0x692452f5 0x2280870e 0xfb1a7281 0xd65f6aa9
-// CHECK: 0xf72cdf2e 0x38a64b65 0x71c6a7fc 0x568bd78a
-// CHECK: 0xb4914c36 0x087f92b3 0x5e664962 0x6c480ade
-// CHECK: 0x96d45948 0x4fde3e48 0xe6eecdc2 0xb573569d
-// CHECK: 0x74fb2b75 0x8a89d69c 0x127e83d2 0x3a79201f
-// CHECK: 0x36221122 0xc8fbafb9 0x85cdaf55 0x28460952
+    // CHECK: 1067595299  955945823  477289528 4107218783 4228976476
+    // CHECK: 3344332714 3355579695  227628506  810200273 2591290167
+    // CHECK: 2560260675 3242736208  646746669 1479517882 4245472273
+    // CHECK: 1143372638 3863670494 3221021970 1773610557 1138697238
+
+    return 0;
+}
