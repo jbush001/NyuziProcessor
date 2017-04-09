@@ -16,6 +16,8 @@
 
 #include <stdio.h>
 
+// Regression test: This was failing previous because of incorrect lowering.
+
 int __attribute__ ((noinline)) isnan(float a)
 {
     return !(a==a);

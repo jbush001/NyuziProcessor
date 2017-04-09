@@ -37,9 +37,9 @@ int main()
 {
 	simple_crypt(prespawn_name,  sizeof(prespawn_name)  - 1);
 	for (int i = 0; i < sizeof(prespawn_name); i++)
-		printf("%02x ", prespawn_name[i]);
+		printf("%c", prespawn_name[i]);
 
 	printf("\n");
-	// CHECK: 70 72 65 73 70 61 77 6e 20 25 69 20 30 20 25 69 00
+	// CHECK: prespawn %i 0 %i
 	return 0;
 }
