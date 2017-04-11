@@ -116,7 +116,7 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
         else:
             return ELF_FILE
     except subprocess.CalledProcessError as exc:
-        raise TestException('Compilation failed:\n' + exc.output)
+        raise TestException('Compilation failed:\n' + exc.output.decode())
 
 
 class TimedProcessRunner(threading.Thread):
