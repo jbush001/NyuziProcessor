@@ -81,8 +81,8 @@ module instruction_decode_stage(
 
     typedef enum logic[2:0] {
         IMM_ZERO,
-        IMM_22_15, // Masked immediate arithmetic
-        IMM_22_10, // Unmasked immediate arithmetic
+        IMM_23_15, // Masked immediate arithmetic
+        IMM_23_10, // Unmasked immediate arithmetic
         IMM_24_15, // Masked memory access
         IMM_24_10, // Unmasked memory access
         IMM_24_5   // Branch offset
@@ -151,11 +151,9 @@ module instruction_decode_stage(
             7'b110_101_?: dlut_out = {F, T, T, IMM_ZERO, SCLR1_4_0, SCLR2_14_10,   T, T, F, T, OP2_SRC_VECTOR2, MASK_SRC_SCALAR2, F, F};
 
             // Format I (immediate arithmetic)
-            7'b0_000_???: dlut_out = {F, F, T, IMM_22_10, SCLR1_4_0, SCLR2_NONE,       F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
-            7'b0_001_???: dlut_out = {F, T, T, IMM_22_10, SCLR1_4_0, SCLR2_NONE,       T, F, F, T, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
-            7'b0_010_???: dlut_out = {F, T, T, IMM_22_15, SCLR1_4_0, SCLR2_14_10,    T, F, F, T, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, F, F};
-            7'b0_100_???: dlut_out = {F, T, T, IMM_22_10, SCLR1_4_0, SCLR2_NONE,       F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
-            7'b0_101_???: dlut_out = {F, T, T, IMM_22_15, SCLR1_4_0, SCLR2_14_10,    F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, F, F};
+            7'b0_00_????: dlut_out = {F, F, T, IMM_23_10, SCLR1_4_0, SCLR2_NONE,   F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
+            7'b0_01_????: dlut_out = {F, T, T, IMM_23_10, SCLR1_4_0, SCLR2_NONE,   T, F, F, T, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
+            7'b0_11_????: dlut_out = {F, T, T, IMM_23_15, SCLR1_4_0, SCLR2_14_10,  T, F, F, T, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, F, F};
 
             // Format M (memory)
             // Store
@@ -304,11 +302,11 @@ module instruction_decode_stage(
     always_comb
     begin
         if (is_fmt_i)
-            alu_op = alu_op_t'({1'b0, ifd_instruction[27:23]});    // Format B
+            alu_op = alu_op_t'({1'b0, ifd_instruction[28:24]});
         else if (dlut_out.is_call)
             alu_op = OP_MOVE;    // Treat a call as move ra, pc
         else
-            alu_op = alu_op_t'(ifd_instruction[25:20]); // Format A
+            alu_op = alu_op_t'(ifd_instruction[25:20]); // Format R
     end
 
     assign decoded_instr_nxt.alu_op = alu_op;
@@ -334,8 +332,8 @@ module instruction_decode_stage(
     always_comb
     begin
         case (dlut_out.imm_loc)
-            IMM_22_15: decoded_instr_nxt.immediate_value = scalar_t'($signed(ifd_instruction[22:15]));
-            IMM_22_10: decoded_instr_nxt.immediate_value = scalar_t'($signed(ifd_instruction[22:10]));
+            IMM_23_15: decoded_instr_nxt.immediate_value = scalar_t'($signed(ifd_instruction[23:15]));
+            IMM_23_10: decoded_instr_nxt.immediate_value = scalar_t'($signed(ifd_instruction[23:10]));
             IMM_24_15: decoded_instr_nxt.immediate_value = scalar_t'($signed(ifd_instruction[24:15]));
             IMM_24_10: decoded_instr_nxt.immediate_value = scalar_t'($signed(ifd_instruction[24:10]));
             IMM_24_5: decoded_instr_nxt.immediate_value = scalar_t'($signed(ifd_instruction[24:5]));

@@ -84,11 +84,9 @@ enum register_arith_format
 
 enum immediate_arith_format
 {
-    FMT_IMM_SS = 0,
-    FMT_IMM_VV = 1,
-    FMT_IMM_VV_M = 2,
-    FMT_IMM_VS = 4,
-    FMT_IMM_VS_M = 5
+    FMT_IMM_S = 0,
+    FMT_IMM_V = 1,
+    FMT_IMM_VM = 3,
 };
 
 enum memory_op

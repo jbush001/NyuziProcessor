@@ -298,7 +298,7 @@ def gdb_read_write_memory(_):
     with EmulatorProcess(hexfile), DebugConnection() as conn:
         # Read program code at address 0. This should match values
         # in count.hex
-        conn.expect('m0,10', '0004800700088007000c800700108007')
+        conn.expect('m0,10', '0004000f0008000f000c000f0010000f')
 
         # (address, data)
         tests = [

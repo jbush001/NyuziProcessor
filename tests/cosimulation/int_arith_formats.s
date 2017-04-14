@@ -71,75 +71,53 @@ _start:     move v0, 0
             ashr_mask v3, s10, v1, v2
             shr_mask v2, s10, v3, v1
             shl_mask v1, s10, v2, v3
-            or s3, s1, 120
-            and s2, s3, 81
-            xor s1, s2, 83
-            add_i s3, s1, 64
-            sub_i s2, s3, 107
-            mull_i s1, s2, 45
-            mulh_u s3, s1, 113
-            mulh_i s2, s3, 40
-            ashr s1, s2, 70
-            shr s3, s1, 24
-            shl s2, s3, 105
-            or v1, v2, 29
-            and v3, v1, 114
-            xor v2, v3, 124
-            add_i v1, v2, 33
-            sub_i v3, v1, 35
-            mull_i v2, v3, 125
-            mulh_u v1, v2, 68
-            mulh_i v3, v1, 56
-            ashr v2, v3, 88
-            shr v1, v2, 125
-            shl v3, v1, 32
-            or_mask v2, s10, v3, 63
-            and_mask v1, s10, v2, 100
-            xor_mask v3, s10, v1, 89
-            add_i_mask v2, s10, v3, 107
-            sub_i_mask v1, s10, v2, 127
-            mull_i_mask v3, s10, v1, 88
-            mulh_u_mask v2, s10, v3, 103
-            mulh_i_mask v1, s10, v2, 51
-            ashr_mask v3, s10, v1, 81
-            shr_mask v2, s10, v3, 119
-            shl_mask v1, s10, v2, 31
-            or v3, s1, 74
-            and v2, s3, 55
-            xor v1, s2, 64
-            add_i v3, s1, 113
-            sub_i v2, s3, 34
-            mull_i v1, s2, 107
-            mulh_u v3, s1, 123
-            mulh_i v2, s3, 78
-            ashr v1, s2, 53
-            shr v3, s1, 12
-            shl v2, s3, 83
-            or_mask v1, s10, s2, 37
-            and_mask v3, s10, s1, 49
-            xor_mask v2, s10, s3, 13
-            add_i_mask v1, s10, s2, 83
-            sub_i_mask v3, s10, s1, 79
-            mull_i_mask v2, s10, s3, 16
-            mulh_u_mask v1, s10, s2, 20
-            mulh_i_mask v3, s10, s1, 36
-            ashr_mask v2, s10, s3, 120
-            shr_mask v1, s10, s2, 66
-            shl_mask v3, s10, s1, 106
-            clz s2, s3
-            ctz s3, s2
-            move s2, s3
-            clz v3, v2
-            ctz v2, v3
-            move v3, v2
-            clz_mask v2, s10, v3
-            ctz_mask v3, s10, v2
-            move_mask v2, s10, v3
-            clz v3, v2
-            ctz v2, v3
-            move v3, v2
-            clz_mask v2, s10, v3
-            ctz_mask v3, s10, v2
-            move_mask v2, s10, v3
+            or s3, s1, 77
+            and s2, s3, 32
+            xor s1, s2, 50
+            add_i s3, s1, 100
+            sub_i s2, s3, 83
+            mull_i s1, s2, 118
+            mulh_u s3, s1, 34
+            mulh_i s2, s3, 18
+            ashr s1, s2, 54
+            shr s3, s1, 73
+            shl s2, s3, 78
+            or v1, v2, 14
+            and v3, v1, 69
+            xor v2, v3, 88
+            add_i v1, v2, 41
+            sub_i v3, v1, 71
+            mull_i v2, v3, 76
+            mulh_u v1, v2, 99
+            mulh_i v3, v1, 90
+            ashr v2, v3, 44
+            shr v1, v2, 3
+            shl v3, v1, 12
+            or_mask v2, s10, v3, 46
+            and_mask v1, s10, v2, 76
+            xor_mask v3, s10, v1, 96
+            add_i_mask v2, s10, v3, 11
+            sub_i_mask v1, s10, v2, 89
+            mull_i_mask v3, s10, v1, 109
+            mulh_u_mask v2, s10, v3, 72
+            mulh_i_mask v1, s10, v2, 92
+            ashr_mask v3, s10, v1, 110
+            shr_mask v2, s10, v3, 87
+            shl_mask v1, s10, v2, 9
+            clz s3, s1
+            ctz s1, s3
+            move s3, s1
+            clz v1, v3
+            ctz v3, v1
+            move v1, v3
+            clz_mask v3, s10, v1
+            ctz_mask v1, s10, v3
+            move_mask v3, s10, v1
+            clz v1, v3
+            ctz v3, v1
+            move v1, v3
+            clz_mask v3, s10, v1
+            ctz_mask v1, s10, v3
+            move_mask v3, s10, v1
             halt_current_thread
 

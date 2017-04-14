@@ -1125,21 +1125,19 @@ static void execute_register_arith_inst(struct thread *thread, uint32_t instruct
 
 static void execute_immediate_arith_inst(struct thread *thread, uint32_t instruction)
 {
-    enum immediate_arith_format fmt = extract_unsigned_bits(instruction, 28, 3);
+    enum immediate_arith_format fmt = extract_unsigned_bits(instruction, 29, 2);
     uint32_t imm_value;
-    enum arithmetic_op op = extract_unsigned_bits(instruction, 23, 5);
+    enum arithmetic_op op = extract_unsigned_bits(instruction, 24, 5);
     uint32_t op1reg = extract_unsigned_bits(instruction, 0, 5);
     uint32_t maskreg = extract_unsigned_bits(instruction, 10, 5);
     uint32_t destreg = extract_unsigned_bits(instruction, 5, 5);
-    uint32_t has_mask = fmt == FMT_IMM_VV_M || fmt == FMT_IMM_VS_M;
     int lane;
-    uint32_t operand1;
 
     TALLY_INSTRUCTION(imm_arith_inst);
-    if (has_mask)
-        imm_value = extract_signed_bits(instruction, 15, 8);
+    if (fmt == FMT_IMM_VM)
+        imm_value = extract_signed_bits(instruction, 15, 9);
     else
-        imm_value = extract_signed_bits(instruction, 10, 13);
+        imm_value = extract_signed_bits(instruction, 10, 14);
 
     if (op == OP_GETLANE)
     {
@@ -1151,8 +1149,8 @@ static void execute_immediate_arith_inst(struct thread *thread, uint32_t instruc
         uint32_t result = 0;
         switch (fmt)
         {
-            case FMT_IMM_VV:
-            case FMT_IMM_VV_M:
+            case FMT_IMM_V:
+            case FMT_IMM_VM:
                 TALLY_INSTRUCTION(vector_inst);
 
                 // Pack compare results into low 16 bits of scalar register
@@ -1165,9 +1163,7 @@ static void execute_immediate_arith_inst(struct thread *thread, uint32_t instruc
 
                 break;
 
-            case FMT_IMM_SS:
-            case FMT_IMM_VS:
-            case FMT_IMM_VS_M:
+            case FMT_IMM_S:
                 result = scalar_arithmetic_op(op, get_scalar_reg(thread, op1reg),
                                               imm_value) ? 0xffff : 0;
                 break;
@@ -1179,7 +1175,7 @@ static void execute_immediate_arith_inst(struct thread *thread, uint32_t instruc
 
         set_scalar_reg(thread, destreg, result);
     }
-    else if (fmt == FMT_IMM_SS)
+    else if (fmt == FMT_IMM_S)
     {
         uint32_t result = scalar_arithmetic_op(op, get_scalar_reg(thread, op1reg),
                                                imm_value);
@@ -1194,13 +1190,11 @@ static void execute_immediate_arith_inst(struct thread *thread, uint32_t instruc
         TALLY_INSTRUCTION(vector_inst);
         switch (fmt)
         {
-            case FMT_IMM_VV_M:
-            case FMT_IMM_VS_M:
+            case FMT_IMM_VM:
                 mask = get_scalar_reg(thread, maskreg);
                 break;
 
-            case FMT_IMM_VV:
-            case FMT_IMM_VS:
+            case FMT_IMM_V:
                 mask = 0xffff;
                 break;
 
@@ -1209,19 +1203,10 @@ static void execute_immediate_arith_inst(struct thread *thread, uint32_t instruc
                 return;
         }
 
-        if (fmt == FMT_IMM_VV || fmt == FMT_IMM_VV_M)
+        for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
         {
-            for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-            {
-                result[lane] = scalar_arithmetic_op(op, thread->vector_reg[op1reg][lane],
-                                                    imm_value);
-            }
-        }
-        else
-        {
-            operand1 = get_scalar_reg(thread, op1reg);
-            for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-                result[lane] = scalar_arithmetic_op(op, operand1, imm_value);
+            result[lane] = scalar_arithmetic_op(op, thread->vector_reg[op1reg][lane],
+                                                imm_value);
         }
 
         set_vector_reg(thread, destreg, mask, result);
