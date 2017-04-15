@@ -52,7 +52,7 @@ int main(int argc, const char *argv[])
         int max;
     } expected_ranges[] = {
         0, 0,		// PERF_L2_WRITEBACK
-        2, 7,		// PERF_L2_MISS
+        0, 7,		// PERF_L2_MISS
         2, 10,		// PERF_L2_HIT
         0, 0,		// PERF_STORE_ROLLBACK
         5, 10,		// PERF_STORE
@@ -62,7 +62,7 @@ int main(int argc, const char *argv[])
         400, 500,	// PERF_ICACHE_HIT
         0, 0,		// PERF_ITLB_MISS
         0, 0,		// PERF_DCACHE_MISS
-        20, 30,		// PERF_DCACHE_HIT
+        10, 30,		// PERF_DCACHE_HIT
         0, 0,		// PERF_DTLB_MISS
         2, 10,		// PERF_UNCOND_BRANCH
         9, 15,		// PERF_COND_BRANCH_TAKEN
