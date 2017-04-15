@@ -124,7 +124,8 @@ def generate_binary_arith(outfile):
 UNARY_OPS = [
     'clz',
     'ctz',
-    'move'
+    'move',
+    'movehi'
 ]
 
 
@@ -134,15 +135,29 @@ def generate_unary_arith(outfile):
     mnemonic = random.choice(UNARY_OPS)
     dest = generate_arith_reg()
     rega = generate_arith_reg()
-    fmt = random.randint(0, 3)
-    if fmt == 0:
-        maskreg = generate_arith_reg()
-        outfile.write('\t\t{}_mask  v{}, s{}, v{}\n'.format
-                      (mnemonic, dest, maskreg, rega))
-    elif fmt == 1:
-        outfile.write('\t\t{} v{}, v{}\n'.format(mnemonic, dest, rega))
+    if mnemonic == 'movehi':
+        outfile.write('\t\tmovehi s{}, {}\n'.format(dest, random.randint(0, 0x7ffff)))
     else:
-        outfile.write('\t\t{} s{}, s{}\n'.format(mnemonic, dest, rega))
+        fmt = random.randint(0, 3)
+        if mnemonic == 'move' and random.randint(0, 1) == 0:
+            # Move with immediate value
+            if fmt == 0:
+                maskreg = generate_arith_reg()
+                outfile.write('\t\t{}_mask  v{}, s{}, {}\n'.format
+                              (mnemonic, dest, maskreg, random.randint(-0xff, 0xff)))
+            elif fmt == 1:
+                outfile.write('\t\t{} v{}, {}\n'.format(mnemonic, dest, random.randint(-0xff, 0xff)))
+            else:
+                outfile.write('\t\t{} s{}, {}\n'.format(mnemonic, dest, random.randint(-0x1fff, 0x1fff)))
+        else:
+            if fmt == 0:
+                maskreg = generate_arith_reg()
+                outfile.write('\t\t{}_mask  v{}, s{}, v{}\n'.format
+                              (mnemonic, dest, maskreg, rega))
+            elif fmt == 1:
+                outfile.write('\t\t{} v{}, v{}\n'.format(mnemonic, dest, rega))
+            else:
+                outfile.write('\t\t{} s{}, s{}\n'.format(mnemonic, dest, rega))
 
 COMPARE_FORMS = [
     ('v', 'v'),

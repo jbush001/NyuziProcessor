@@ -81,11 +81,12 @@ module instruction_decode_stage(
 
     typedef enum logic[2:0] {
         IMM_ZERO,
-        IMM_23_15, // Masked immediate arithmetic
-        IMM_23_10, // Unmasked immediate arithmetic
-        IMM_24_15, // Masked memory access
-        IMM_24_10, // Unmasked memory access
-        IMM_24_5   // Branch offset
+        IMM_23_15,  // Masked immediate arithmetic
+        IMM_23_10,  // Unmasked immediate arithmetic
+        IMM_24_15,  // Masked memory access
+        IMM_24_10,  // Unmasked memory access
+        IMM_24_5,   // Branch offset
+        IMM_EXT_19  // 19 bit extended immediate value
     } imm_loc_t;
 
     typedef enum logic[1:0] {
@@ -153,6 +154,7 @@ module instruction_decode_stage(
             // Format I (immediate arithmetic)
             7'b0_00_????: dlut_out = {F, F, T, IMM_23_10, SCLR1_4_0, SCLR2_NONE,   F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
             7'b0_01_????: dlut_out = {F, T, T, IMM_23_10, SCLR1_4_0, SCLR2_NONE,   T, F, F, T, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
+            7'b0_10_????: dlut_out = {F, F, T, IMM_EXT_19, SCLR1_4_0, SCLR2_NONE,  F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
             7'b0_11_????: dlut_out = {F, T, T, IMM_23_15, SCLR1_4_0, SCLR2_14_10,  T, F, F, T, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, F, F};
 
             // Format M (memory)
@@ -332,6 +334,7 @@ module instruction_decode_stage(
     always_comb
     begin
         case (dlut_out.imm_loc)
+            IMM_EXT_19: decoded_instr_nxt.immediate_value = { ifd_instruction[23:10], ifd_instruction[4:0], 13'd0 };
             IMM_23_15: decoded_instr_nxt.immediate_value = scalar_t'($signed(ifd_instruction[23:15]));
             IMM_23_10: decoded_instr_nxt.immediate_value = scalar_t'($signed(ifd_instruction[23:10]));
             IMM_24_15: decoded_instr_nxt.immediate_value = scalar_t'($signed(ifd_instruction[24:15]));

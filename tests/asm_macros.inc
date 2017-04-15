@@ -134,11 +134,8 @@ _seraddr:       .long 0xffff0040
 
 // Load a constant value into a register
 .macro load_const oreg, value
-                move \oreg, (((\value ) >> 20) & 0xfff)     // Bits 31-20
-                shl \oreg, \oreg, 12
-                or \oreg, \oreg, (((\value ) >> 8) & 0xfff) // Bits 19-8
-                shl \oreg, \oreg, 8
-                or \oreg, \oreg,    ((\value ) & 0xff)
+                movehi \oreg, (((\value ) >> 13) & 0x7ffff)
+                or \oreg, \oreg, ((\value ) & 0x1fff)
 .endm
 
 // Print failure message and halt

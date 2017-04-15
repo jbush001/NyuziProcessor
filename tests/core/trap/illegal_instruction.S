@@ -22,7 +22,6 @@
 //
 
 #define REG_ARITH_INST(__type__) (0xc0000000 | ((__type__) << 26))
-#define IMM_ARITH_INST(__type__) ((__type__) << 29)
 #define MEM_INST(__type__) (0x80000000 | ((__type__) << 25))
 #define BRANCH_INST(__type__) (0xf0000000 | ((__type__) << 25))
 
@@ -73,7 +72,6 @@ _start:
                 test_illegal_inst 1, REG_ARITH_INST(3)
                 test_illegal_inst 2, REG_ARITH_INST(6)
                 test_illegal_inst 3, REG_ARITH_INST(7)
-                test_illegal_inst 4, IMM_ARITH_INST(2)
                 test_illegal_inst 7, MEM_INST(9)
                 test_illegal_inst 8, MEM_INST(10)
                 test_illegal_inst 9, MEM_INST(11)

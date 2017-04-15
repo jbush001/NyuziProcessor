@@ -86,6 +86,7 @@ enum immediate_arith_format
 {
     FMT_IMM_S = 0,
     FMT_IMM_V = 1,
+    FMT_IMM_MOVEHI = 2,
     FMT_IMM_VM = 3,
 };
 

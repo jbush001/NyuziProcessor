@@ -1134,10 +1134,20 @@ static void execute_immediate_arith_inst(struct thread *thread, uint32_t instruc
     int lane;
 
     TALLY_INSTRUCTION(imm_arith_inst);
-    if (fmt == FMT_IMM_VM)
-        imm_value = extract_signed_bits(instruction, 15, 9);
-    else
-        imm_value = extract_signed_bits(instruction, 10, 14);
+    switch (fmt) {
+        case FMT_IMM_VM:
+            imm_value = extract_signed_bits(instruction, 15, 9);
+            break;
+
+        case FMT_IMM_MOVEHI:
+            imm_value = (extract_unsigned_bits(instruction, 10, 14) << 18)
+                | (extract_unsigned_bits(instruction, 0, 5) << 13);
+            break;
+
+        default:
+            imm_value = extract_signed_bits(instruction, 10, 14);
+            break;
+    }
 
     if (op == OP_GETLANE)
     {
@@ -1175,7 +1185,7 @@ static void execute_immediate_arith_inst(struct thread *thread, uint32_t instruc
 
         set_scalar_reg(thread, destreg, result);
     }
-    else if (fmt == FMT_IMM_S)
+    else if (fmt == FMT_IMM_S || fmt == FMT_IMM_MOVEHI)
     {
         uint32_t result = scalar_arithmetic_op(op, get_scalar_reg(thread, op1reg),
                                                imm_value);
