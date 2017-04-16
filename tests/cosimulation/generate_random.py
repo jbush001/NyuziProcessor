@@ -366,14 +366,14 @@ _start:         start_all_threads
                 move v0, 0
                 move s0, 0
 
-                load_32 s9, device_ptr
+                li s9, 0xffff0004   # device pointer
 
                 ######### Fill private memory with a random pattern ######
-                move s3, s2    # Base Address
-                load_32 s4, fill_length    # Size to copy
+                move s3, s2             # Base Address
+                li s4, 0x1000 / 4       # Size to copy
                 getcr s5, CR_CURRENT_THREAD    # Use thread ID as seed
-                load_32 s6, generator_a
-                load_32 s7, generator_c
+                li s6, 1103515245       # Random generator A
+                li s7, 12345            # Random generator C
 
 fill_loop:      store_32 s5, (s3)
 
@@ -445,13 +445,6 @@ branch_addrs:   .long ''')
                 outfile.write(', ')
 
             outfile.write('start_thread{}'.format(i))
-
-        outfile.write('''
-fill_length:    .long 0x1000 / 4
-generator_a:    .long 1103515245
-generator_c:    .long 12345
-device_ptr:     .long 0xffff0004
-''')
 
         for thread in range(num_threads):
             outfile.write('\nstart_thread{}:\n'.format(thread))

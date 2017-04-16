@@ -34,8 +34,8 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
                 setcr s0, CR_FLAGS
                 flush_pipeline
 
-                load_const s0, 0x2000
-                load_const s1, 0x2000 | TLB_PRESENT | TLB_EXECUTABLE
+                li s0, 0x2000
+                li s1, 0x2000 | TLB_PRESENT | TLB_EXECUTABLE
 fault_loc:      itlbinsert s0, s1   // This should fault
 
                 should_not_get_here
@@ -58,7 +58,7 @@ handle_fault1:  getcr s0, CR_TRAP_CAUSE
 
                 // Jump to new page. This should fail because the entry
                 // wasn't added to the TLB
-                load_const s0, 0x2000
+                li s0, 0x2000
                 move pc, s0
 
                 should_not_get_here

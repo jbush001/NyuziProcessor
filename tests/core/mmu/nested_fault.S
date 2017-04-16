@@ -48,14 +48,14 @@ vecptr:         .long 0x3000, 0x3000, 0x3000, 0x3000, 0x3000, 0x3000, 0x3000, 0x
 //
 // This handles the first alignment fault
 //
-handle_fault:   load_const s10, 0x88cf70b4
+handle_fault:   li s10, 0x88cf70b4
                 setcr s10, CR_SCRATCHPAD0
-                load_const s10, 0x78662516
+                li s10, 0x78662516
                 setcr s10, CR_SCRATCHPAD1
 
                 // Note: use a register that won't be clobbered in the
                 // TLB miss handler.
-                load_const s11, 0x2000
+                li s11, 0x2000
 tlb_miss_loc:   store_32 s11, (s11)     // This will cause a TLB miss the first time
 
                 // We have returned from the TLB miss here. Ensure the
@@ -107,8 +107,8 @@ handle_tlb_miss:
 1:
 
                 // Update TLB
-                load_const s26, 0x2000
-                load_const s27, 0x2000 | TLB_PRESENT | TLB_WRITABLE
+                li s26, 0x2000
+                li s27, 0x2000 | TLB_PRESENT | TLB_WRITABLE
                 dtlbinsert s26, s27
                 eret
 

@@ -34,8 +34,8 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
                 setcr s0, CR_FLAGS
                 flush_pipeline
 
-                load_const s0, 0x2000
-                load_const s1, 0x2000 | TLB_PRESENT
+                li s0, 0x2000
+                li s1, 0x2000 | TLB_PRESENT
                 dtlbinsert s0, s1   // This should fault
 
                 should_not_get_here
@@ -50,7 +50,7 @@ handle_fault1:  getcr s0, CR_TRAP_CAUSE
 
                 // Try to read data from new address. This should cause
                 // a TLB miss because dtlbinsert failed.
-                load_const s0, 0x2430
+                li s0, 0x2430
 fault_loc:      load_32 s0, (s0)    // This should fault
 
                 should_not_get_here

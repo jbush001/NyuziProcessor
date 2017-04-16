@@ -36,9 +36,9 @@
                     .globl _start
 _start:             start_all_threads
 
-                    load_const s0, (NUM_SLOTS * 10)       // Total writes
+                    li s0, (NUM_SLOTS * 10)       // Total writes
                     lea s1, current_index               // Pointer to shared index
-                    load_const s2, 0x100000             // Pointer to array base
+                    li s2, 0x100000             // Pointer to array base
 
 fill_loop:          sync_fetch_and_increment s3, s1     // Find next slot
                     cmpge_i s4, s3, s0                  // Done?

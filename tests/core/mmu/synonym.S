@@ -30,10 +30,10 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
                 setcr s0, CR_FLAGS
                 flush_pipeline
 
-                load_const s0, 0xdeadbeef
-                load_const s1, 0x2234
+                li s0, 0xdeadbeef
+                li s1, 0x2234
                 store_32 s0, (s1)
-                load_const s2, 0x3234
+                li s2, 0x3234
                 load_32 s3, (s2)
                 assert_reg s3, 0xdeadbeef
 

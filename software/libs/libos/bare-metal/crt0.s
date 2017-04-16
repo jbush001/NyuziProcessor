@@ -41,7 +41,7 @@ _start:
                     # Set up stack
                     getcr s0, 0             # get my thread ID
                     shl s0, s0, 14          # 16k bytes per stack
-                    load_32 sp, stacks_base
+                    li sp, 0x200000         # Base of stacks
                     sub_i sp, sp, s0        # Compute stack address
 
                     # Only thread 0 does initialization.  Skip for other
@@ -76,12 +76,10 @@ do_main:            move s0, 0    # Set argc to 0
 
                     #  Halt all threads.
                     move s0, -1
-                    load_32 s1, thread_halt_addr
+                    li s1, 0xffff0104   # thread halt register
                     store_32 s0, (s1)
 1:                  b 1b
 
-stacks_base:        .long 0x200000
 init_array_start:   .long __init_array_start
 init_array_end:     .long __init_array_end
-thread_halt_addr:   .long 0xffff0104
 exit_flag:          .long 0

@@ -26,8 +26,8 @@
 _start:         load_tlb_entries itlb_entries, dtlb_entries
 
                 // Store known value on data page
-                load_const s0, 0xdeadbeef
-                load_const s1, 0x2234
+                li s0, 0xdeadbeef
+                li s1, 0x2234
                 store_32 s0, (s1)
 
                 // Fail on TLB miss

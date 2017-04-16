@@ -70,7 +70,7 @@ _start:         move s10, 17            // Scalar pointer
                 load_v v10, vec_ptr
 
                 // Store check value at target location
-                load_const s0, ORIGINAL_VALUE
+                li s0, ORIGINAL_VALUE
                 move s1, 16             // Aligned version of s10
                 store_32 s0, (s1)
 

@@ -25,9 +25,9 @@
 _start:             start_all_threads
 
                     getcr s0, CR_CURRENT_THREAD
-                    load_const s1, 0x1f0e6231
-                    load_const s2, 0x400000     // Base address of region to write to
-                    load_const s10, 4096        // Number of cache lines to fill
+                    li s1, 0x1f0e6231
+                    li s2, 0x400000     // Base address of region to write to
+                    li s10, 4096        // Number of cache lines to fill
 fill_loop:          add_i s3, s1, s0            // Get value to store
                     move v0, s3
                     shl s4, s0, 6               // Mult index by 64 to find offset

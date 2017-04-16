@@ -42,7 +42,7 @@ _start:     lea s0, ivec1
             cmple_u s9, v0, v1
 
             # Vector/scalar integer comparison
-            load_32 s20, ival3
+            li s20, BU
             cmpeq_i s0, v0, s20
             cmpne_i s1, v0, s20
             cmpgt_i s2, v0, s20
@@ -55,7 +55,7 @@ _start:     lea s0, ivec1
             cmple_u s9, v0, s20
 
             # Scalar integer comparison
-            load_32 s21, ival4
+            li s21, BS
             cmpeq_i s0, s21, s20
             cmpne_i s1, s21, s20
             cmpgt_i s2, s21, s20
@@ -105,8 +105,6 @@ fvec1: .float -7.5, -6.5, -5.5, -4.5, -3.5, -2.5, -1.5, -0.5, 0.5, 1.5, 2.5, 3.5
 fvec2: .float 7.5, 6.5, 5.5, 4.5, 3.5, 2.5, 1.5, 0.5, -0.5, -1.5, -2.5, -3.5, -4.5, -5.5, -6.5, -7.5
 ivec1: .long BU, BS, BU, BS, BU, SM, BS, SM, BU, BS, BU, BS, BU, SM, BS, SM
 ivec2: .long BU, BS, BS, BU, SM, BU, SM, BS, BU, BS, BS, BU, SM, BU, SM, BS
-ival3: .long BU
-ival4: .long BS
 fval3: .float 1.0
 fval4: .float -1.0
 

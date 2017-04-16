@@ -27,8 +27,8 @@
                 .globl _start
 _start:         load_tlb_entries itlb_entries, dtlb_entries
 
-                load_const s0, 0x2000
-                load_const s1, 0xdeadbeef
+                li s0, 0x2000
+                li s1, 0xdeadbeef
                 store_32 s1, (s0)
 
                 // Enable MMU
@@ -37,12 +37,12 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
                 flush_pipeline
 
                 // Read data value
-                load_const s0, 0xffff0000
+                li s0, 0xffff0000
                 load_32 s1, (s0)
                 assert_reg s1, 0xdeadbeef
 
                 // Write success value to new I/O region
-                load_const s1, 0x2000
+                li s1, 0x2000
                 lea s0, message
 1:              load_u8 s2, (s0)        // Read a character
                 bz s2, 3f           // If delimeter, exit

@@ -29,8 +29,8 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
                 setcr s0, CR_TRAP_HANDLER
 
                 // Store known value on data page
-                load_const s0, 0xdeadbeef
-                load_const s1, 0x2234
+                li s0, 0xdeadbeef
+                li s1, 0x2234
                 store_32 s0, (s1)
 
                 // Enable MMU and switch to user mode
@@ -57,7 +57,7 @@ handle_fault:   getcr s0, CR_TRAP_CAUSE
 
                 // Read the first page. Ensure value is correct.
                 // This ensures the tlbinval did not update the TLB.
-                load_const s1, 0x2234
+                li s1, 0x2234
                 load_32 s0, (s1)
                 assert_reg s0, 0xdeadbeef
 

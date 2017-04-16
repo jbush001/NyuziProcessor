@@ -64,8 +64,8 @@
                     setcr s0, CR_FLAGS          // Enable MMU
                     flush_pipeline
 
-                    load_const s0, \address
-                    load_const s15, 0x12345678      // Put known value in dest
+                    li s0, \address
+                    li s15, 0x12345678      // Put known value in dest
 fault_loc:          \access_op s15, (s0)            // This should fault
                     call fail_test                  // Fail if no
 

@@ -71,7 +71,7 @@ _start:    lea s1, testvar1
             lea s1, testvar2
             add_i v4, v4, s1
             add_i v5, v5, s1
-            load_32 s2, mask
+            li s2, 0x5a5a
 
             load_gath v6, (v4)
             move v7, 0
@@ -95,7 +95,6 @@ _start:    lea s1, testvar1
             .align 4
 testvar1:   .long 0x1234abcd, 0, 0, 0
 test_sync:  .long 0
-mask:       .long 0x5a5a
             .align 64
 testvar2:   .long 0x2aa7d2c1, 0xeeb91caf, 0x304010ad, 0x96981e0d, 0x3a03b41f, 0x81363fee, 0x32d7bd42, 0xeaa8df61
             .long 0x9228d73e, 0xfcf12265, 0x2515fbeb, 0x6cd307a0, 0x2c18c1b8, 0xda8e48d5, 0x1f5c4bd2, 0xace51435

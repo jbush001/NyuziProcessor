@@ -27,8 +27,8 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
 
                 // Before enabling MMU, write a value that we will
                 // read back later to ensure the proper page is mapped.
-                load_const s0, 0xdeadbeef
-                load_const s1, 0x3000
+                li s0, 0xdeadbeef
+                li s1, 0x3000
                 store_32 s0, (s1)
 
                 // Enable MMU
@@ -38,7 +38,7 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
 
                 // Read from the mapped location and ensure it
                 // gets the value from physical page 0x3000
-                load_const s1, 0x2000
+                li s1, 0x2000
                 load_32 s0, (s1)
                 assert_reg s0, 0xdeadbeef
 

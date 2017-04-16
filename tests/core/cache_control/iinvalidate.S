@@ -23,7 +23,7 @@
             .globl _start
 
 _start:     lea s0, jumploc
-            load_32 s1, newinst
+            li s1, 0xf6000280    // b +20
 
 looptop:    move s10, 1
 jumploc:    nop                // This location will be patched
@@ -39,5 +39,3 @@ jumploc:    nop                // This location will be patched
 breakout:   move s10, 3
 
             call pass_test
-
-newinst:    .long    0xf6000280    // b +20

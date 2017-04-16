@@ -63,14 +63,13 @@ value1:     .long 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
 value2:     .long 0xaaaaaaaa, 0xbbbbbbbb, 0xcccccccc, 0xdddddddd, 0xeeeeeeee, 0xffffffff
             .long 0x11111111, 0x22222222, 0x33333333, 0x44444444, 0x55555555, 0x66666666
             .long 0x77777777, 0x88888888, 0x99999999
-mask:       .long 0x5a5a
 
 _start:     move v0, 0
             load_v v2, value2
             load_v v3, value1
             move s2, 0x456
             move s3, 0x123
-            load_32 s10, mask
+            li s10, 0x5a5a
 ''')
 
 dest = 1

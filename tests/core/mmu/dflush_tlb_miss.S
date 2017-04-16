@@ -32,13 +32,13 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
                 setcr s0, CR_TRAP_HANDLER
                 setcr s0, CR_TLB_MISS_HANDLER
 
-                load_const s0, 0x2234           // Has mapping
+                li s0, 0x2234           // Has mapping
                 dflush  s0
 
                 lea s0, tlb_fault               // Second test should produce TLB miss
                 setcr s0, CR_TLB_MISS_HANDLER
 
-                load_const s0, 0x3234           // no mapping
+                li s0, 0x3234           // no mapping
 fault_loc:      dflush  s0                      // This should raise a tlb fault
 
                 should_not_get_here

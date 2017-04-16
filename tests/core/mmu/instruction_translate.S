@@ -53,7 +53,7 @@ dtlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT | TLB_SUPERVISOR
 
                 // Print message
                 lea s0, message
-                load_const s1, 0xffff0040   // Load address of serial registers
+                li s1, 0xffff0040   // Load address of serial registers
 1:              load_u8 s2, (s0)            // Read a character
                 bz s2, 3f               // If delimeter, exit
 2:              load_32 s3, (s1)            // Read UART STATUS

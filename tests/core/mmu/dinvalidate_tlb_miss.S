@@ -33,13 +33,13 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
                 lea s0, fail_test               // First test fails if there is a TLB miss
                 setcr s0, CR_TLB_MISS_HANDLER
 
-                load_const s0, 0x2234
+                li s0, 0x2234
                 dinvalidate s0
 
                 lea s0, tlb_fault               // Second test should produce TLB miss
                 setcr s0, CR_TLB_MISS_HANDLER
 
-                load_const s0, 0x3234
+                li s0, 0x3234
 fault_loc:      dinvalidate s0                  // This should raise a tlb fault
 
                 should_not_get_here

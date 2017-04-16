@@ -7,14 +7,13 @@ value1:     .long 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
 value2:     .long 0xaaaaaaaa, 0xbbbbbbbb, 0xcccccccc, 0xdddddddd, 0xeeeeeeee, 0xffffffff
             .long 0x11111111, 0x22222222, 0x33333333, 0x44444444, 0x55555555, 0x66666666
             .long 0x77777777, 0x88888888, 0x99999999
-mask:       .long 0x5a5a
 
 _start:     move v0, 0
             load_v v2, value2
             load_v v3, value1
             move s2, 0x456
             move s3, 0x123
-            load_32 s10, mask
+            li s10, 0x5a5a
 
             or s1, s2, s3
             and s3, s1, s2
@@ -71,39 +70,39 @@ _start:     move v0, 0
             ashr_mask v3, s10, v1, v2
             shr_mask v2, s10, v3, v1
             shl_mask v1, s10, v2, v3
-            or s3, s1, 77
-            and s2, s3, 32
-            xor s1, s2, 50
-            add_i s3, s1, 100
-            sub_i s2, s3, 83
-            mull_i s1, s2, 118
-            mulh_u s3, s1, 34
-            mulh_i s2, s3, 18
-            ashr s1, s2, 54
-            shr s3, s1, 73
-            shl s2, s3, 78
-            or v1, v2, 14
-            and v3, v1, 69
-            xor v2, v3, 88
-            add_i v1, v2, 41
-            sub_i v3, v1, 71
-            mull_i v2, v3, 76
-            mulh_u v1, v2, 99
-            mulh_i v3, v1, 90
-            ashr v2, v3, 44
-            shr v1, v2, 3
-            shl v3, v1, 12
-            or_mask v2, s10, v3, 46
-            and_mask v1, s10, v2, 76
-            xor_mask v3, s10, v1, 96
-            add_i_mask v2, s10, v3, 11
-            sub_i_mask v1, s10, v2, 89
-            mull_i_mask v3, s10, v1, 109
-            mulh_u_mask v2, s10, v3, 72
-            mulh_i_mask v1, s10, v2, 92
-            ashr_mask v3, s10, v1, 110
-            shr_mask v2, s10, v3, 87
-            shl_mask v1, s10, v2, 9
+            or s3, s1, 41
+            and s2, s3, 10
+            xor s1, s2, 96
+            add_i s3, s1, 123
+            sub_i s2, s3, 117
+            mull_i s1, s2, 22
+            mulh_u s3, s1, 75
+            mulh_i s2, s3, 60
+            ashr s1, s2, 92
+            shr s3, s1, 46
+            shl s2, s3, 17
+            or v1, v2, 48
+            and v3, v1, 121
+            xor v2, v3, 120
+            add_i v1, v2, 93
+            sub_i v3, v1, 29
+            mull_i v2, v3, 89
+            mulh_u v1, v2, 13
+            mulh_i v3, v1, 70
+            ashr v2, v3, 87
+            shr v1, v2, 79
+            shl v3, v1, 73
+            or_mask v2, s10, v3, 72
+            and_mask v1, s10, v2, 73
+            xor_mask v3, s10, v1, 75
+            add_i_mask v2, s10, v3, 16
+            sub_i_mask v1, s10, v2, 6
+            mull_i_mask v3, s10, v1, 73
+            mulh_u_mask v2, s10, v3, 81
+            mulh_i_mask v1, s10, v2, 80
+            ashr_mask v3, s10, v1, 61
+            shr_mask v2, s10, v3, 43
+            shl_mask v1, s10, v2, 52
             clz s3, s1
             ctz s1, s3
             move s3, s1

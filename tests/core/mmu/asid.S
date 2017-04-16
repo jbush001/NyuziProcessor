@@ -29,35 +29,35 @@
 
                 .globl _start
 _start:         // Set up first TLB page
-                load_const s0, 0x1000
-                load_const s1, 0x1000 | TLB_PRESENT | TLB_GLOBAL | TLB_EXECUTABLE | TLB_WRITABLE
+                li s0, 0x1000
+                li s1, 0x1000 | TLB_PRESENT | TLB_GLOBAL | TLB_EXECUTABLE | TLB_WRITABLE
                 dtlbinsert s0, s1
                 itlbinsert s0, s1
-                load_const s0, 0xffff0000
-                load_const s1, 0xffff0000 | TLB_PRESENT | TLB_GLOBAL | TLB_WRITABLE
+                li s0, 0xffff0000
+                li s1, 0xffff0000 | TLB_PRESENT | TLB_GLOBAL | TLB_WRITABLE
                 dtlbinsert s0, s1
 
                 // Map page into ASID 1
                 move s0, 1
                 setcr s0, CR_CURRENT_ASID
-                load_const s0, 0x2000
-                load_const s1, 0x2000 | TLB_PRESENT
+                li s0, 0x2000
+                li s1, 0x2000 | TLB_PRESENT
                 dtlbinsert s0, s1
 
                 // Write value
-                load_const s2, 0xbe8ab8a
+                li s2, 0xbe8ab8a
                 store_32 s2, (s0)
 
                 // Map page into ASID 2
                 move s0, 2
                 setcr s0, CR_CURRENT_ASID
-                load_const s0, 0x2000
-                load_const s1, 0x3000 | TLB_PRESENT
+                li s0, 0x2000
+                li s1, 0x3000 | TLB_PRESENT
                 dtlbinsert s0, s1
 
                 // Write value
-                load_const s0, 0x3000
-                load_const s2, 0x31c126de
+                li s0, 0x3000
+                li s2, 0x31c126de
                 store_32 s2, (s0)
 
                 // Enable MMU
@@ -66,7 +66,7 @@ _start:         // Set up first TLB page
                 flush_pipeline
 
                 // Read from address space 1
-                load_const s1, 0x2000
+                li s1, 0x2000
                 move s0, 1
                 setcr s0, CR_CURRENT_ASID
                 flush_pipeline

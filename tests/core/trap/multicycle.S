@@ -31,7 +31,7 @@ _start:             getcr s0, 0                 // Find my thread ID
                     bnz s0, spinner_thread    // If it is 1, jump to spinner thread
 
                     // Start spinner thread, which is described below
-                    load_const s0, REG_THREAD_RESUME
+                    li s0, REG_THREAD_RESUME
                     move s1, 3    // Two threads enabled
                     store_32 s1, (s0)
 
@@ -40,8 +40,8 @@ _start:             getcr s0, 0                 // Find my thread ID
                     setcr s24, CR_INTERRUPT_MASK
 
                     // Reset timer
-                    load_const s24, TIMER_INTERVAL
-                    load_const s25, REG_TIMER_COUNT
+                    li s24, TIMER_INTERVAL
+                    li s25, REG_TIMER_COUNT
                     store_32 s24, (s25)
 
                     lea s10, interrupt_handler
@@ -71,8 +71,8 @@ interrupt_handler:  getcr s12, CR_TRAP_CAUSE
                     setcr s25, CR_INTERRUPT_ACK
 
                     // Reset timer
-                    load_const s24, TIMER_INTERVAL
-                    load_const s25, REG_TIMER_COUNT
+                    li s24, TIMER_INTERVAL
+                    li s25, REG_TIMER_COUNT
                     store_32 s24, (s25)
 
                     eret

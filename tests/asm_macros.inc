@@ -116,7 +116,7 @@ _seraddr:       .long 0xffff0040
 // If register is not equal to testval, print failure message.
 // Otherwise continue. Clobbers s25
 .macro assert_reg reg, testval
-                load_const s25, \testval
+                li s25, \testval
                 cmpeq_i s25, s25, \reg
                 bnz s25, 1f
                 call fail_test
@@ -130,12 +130,6 @@ _seraddr:       .long 0xffff0040
 
 .macro should_not_get_here
                 call fail_test
-.endm
-
-// Load a constant value into a register
-.macro load_const oreg, value
-                movehi \oreg, (((\value ) >> 13) & 0x7ffff)
-                or \oreg, \oreg, ((\value ) & 0x1fff)
 .endm
 
 // Print failure message and halt

@@ -40,7 +40,7 @@ handle_trap:    // Check that
 1:
 
                 // Write serial character
-                load_const s24, REG_SERIAL_WRITE
+                li s24, REG_SERIAL_WRITE
                 move s25, '*'
                 store_32 s25, (s24)    // Send char
 
@@ -49,8 +49,8 @@ handle_trap:    // Check that
                 setcr s25, CR_INTERRUPT_ACK
 
                 // Reset timer
-                load_const s24, TIMER_INTERVAL
-                load_const s25, REG_TIMER_COUNT
+                li s24, TIMER_INTERVAL
+                li s25, REG_TIMER_COUNT
                 store_32 s24, (s25)
 
                 eret
@@ -66,8 +66,8 @@ _start:
                 setcr s24, CR_INTERRUPT_MASK
 
                 // Configure timer
-                load_const s24, TIMER_INTERVAL
-                load_const s25, REG_TIMER_COUNT
+                li s24, TIMER_INTERVAL
+                li s25, REG_TIMER_COUNT
                 store_32 s24, (s25)
 
                 // Enable interrupts
@@ -76,7 +76,7 @@ _start:
                 flush_pipeline
 
                 // Write start character
-                load_const s1, REG_SERIAL_WRITE
+                li s1, REG_SERIAL_WRITE
                 move s0, '!'
                 store_32 s0, (s1)
 

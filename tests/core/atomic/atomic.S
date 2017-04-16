@@ -28,7 +28,7 @@
 _start:         lea s0, test_sync
 
                 // Successful
-                load_const s2, VALUE2
+                li s2, VALUE2
                 load_sync s1, (s0)
                 assert_reg s1, VALUE1
                 store_sync s2, (s0)
@@ -37,7 +37,7 @@ _start:         lea s0, test_sync
                 assert_reg s1, VALUE2
 
                 // Unsuccessful
-                load_const s2, VALUE3
+                li s2, VALUE3
                 load_sync s1, (s0)
                 assert_reg s1, VALUE2
                 store_32 s4, 4(s0)       // Will invalidate cache line

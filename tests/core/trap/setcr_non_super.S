@@ -36,7 +36,7 @@ _start:
                 setcr s0, CR_FLAGS
                 flush_pipeline
 
-                load_const s0, 0xdeadbeef
+                li s0, 0xdeadbeef
 fault_loc:      setcr s0, CR_SCRATCHPAD0        // This should fault
 
                 should_not_get_here

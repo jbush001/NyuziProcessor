@@ -35,8 +35,8 @@ _start:
                 setcr s0, CR_FLAGS
                 flush_pipeline
 
-                load_const s10, DATA_LOCATION
-                load_const s11, WRITE_VALUE
+                li s10, DATA_LOCATION
+                li s11, WRITE_VALUE
                 store_32 s11, (s10)
 
 fault_loc:      dinvalidate s10 // This should fault
@@ -59,7 +59,7 @@ handle_fault:   getcr s0, CR_TRAP_CAUSE
                 // Read the data location and ensure it still has the
                 // new value (if the side effect of dinvalidate occurred,
                 // it would have reverted the location to its original value).
-                load_const s10, DATA_LOCATION
+                li s10, DATA_LOCATION
                 load_32 s11, (s10)
                 assert_reg s11, WRITE_VALUE
 

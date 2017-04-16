@@ -30,10 +30,10 @@
 _start:         start_all_threads
 
                 getcr s1, CR_CURRENT_THREAD # seed for RNG (based on thread ID)
-                load_32 s5, num_iterations
-                load_32 s2, generator_a
-                load_32 s3, generator_c
-                load_32 s6, write_region
+                li s5, 10000        # num iterations
+                li s2, 1103515245   # A
+                li s3, 12345        # C
+                li s6, 0x3000       # write region
                 getcr s8, CR_CURRENT_THREAD # get thread ID
                 shl s8, s8, 2        # Compute thread write offset (thread * 4)
                 move s0, 7           # Initialize value to write
@@ -53,11 +53,6 @@ main_loop:      mull_i s1, s1, s2    # Generate next random number
                 bnz s5, main_loop
 
                 halt_current_thread
-
-write_region:   .long 0x3000
-generator_a:    .long 1103515245
-generator_c:    .long 12345
-num_iterations: .long 10000
 
 
 

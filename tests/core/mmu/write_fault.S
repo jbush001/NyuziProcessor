@@ -29,8 +29,8 @@
 _start:
                 # Write an arbitrary value into the location we are going to
                 # attempt to write. We'll check this after the test.
-                load_const s0, ORIGINAL_VALUE       # Magic value
-                load_const s1, TEST_ADDR
+                li s0, ORIGINAL_VALUE       # Magic value
+                li s1, TEST_ADDR
                 store_32 s0, (s1)
 
                 mmu_fault_test (TT_ILLEGAL_STORE | TRAP_CAUSE_DCACHE | TRAP_CAUSE_STORE), store_32, 0x2350, itlb_entries, dtlb_entries, FLAG_MMU_EN | FLAG_SUPERVISOR_EN
@@ -39,7 +39,7 @@ _start:
                 move s0, FLAG_SUPERVISOR_EN
                 setcr s0, CR_FLAGS
 
-                load_const s0, TEST_ADDR
+                li s0, TEST_ADDR
                 load_32 s0, (s0)
                 assert_reg s0, ORIGINAL_VALUE
 
