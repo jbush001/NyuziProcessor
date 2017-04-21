@@ -64,7 +64,7 @@ int main(int argc, const char *argv[])
         0, 0,		// PERF_DCACHE_MISS
         10, 30,		// PERF_DCACHE_HIT
         0, 0,		// PERF_DTLB_MISS
-        2, 10,		// PERF_UNCOND_BRANCH
+        2, 15,		// PERF_UNCOND_BRANCH
         9, 15,		// PERF_COND_BRANCH_TAKEN
         1, 8		// PERF_COND_BRANCH_NOT_TAKEN
     };
