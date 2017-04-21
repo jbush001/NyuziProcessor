@@ -111,6 +111,7 @@ typedef enum logic[2:0] {
 } cache_op_t;
 
 typedef enum logic[2:0] {
+    BRANCH_REGISTER         = 3'b000,
     BRANCH_ZERO             = 3'b001,
     BRANCH_NOT_ZERO         = 3'b010,
     BRANCH_ALWAYS           = 3'b011,

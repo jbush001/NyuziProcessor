@@ -77,7 +77,6 @@ _start:
                 test_illegal_inst 9, MEM_INST(11)
                 test_illegal_inst 10, MEM_INST(12)
                 test_illegal_inst 11, MEM_INST(15)
-                test_illegal_inst 12, BRANCH_INST(0)
                 test_illegal_inst 13, BRANCH_INST(5)
 
                 call pass_test

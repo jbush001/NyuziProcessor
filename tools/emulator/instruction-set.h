@@ -107,6 +107,7 @@ enum memory_op
 
 enum branch_type
 {
+    BRANCH_REGISTER = 0,
     BRANCH_ZERO = 1,
     BRANCH_NOT_ZERO = 2,
     BRANCH_ALWAYS = 3,

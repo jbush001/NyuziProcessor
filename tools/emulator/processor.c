@@ -1782,6 +1782,10 @@ static void execute_branch_inst(struct thread *thread, uint32_t instruction)
     TALLY_INSTRUCTION(branch_inst);
     switch (extract_unsigned_bits(instruction, 25, 3))
     {
+        case BRANCH_REGISTER:
+            thread->pc = get_scalar_reg(thread, src_reg);
+            return; // Short circuit, since the source register is the dest
+
         case BRANCH_ZERO:
             branch_taken = get_scalar_reg(thread, src_reg) == 0;
             break;

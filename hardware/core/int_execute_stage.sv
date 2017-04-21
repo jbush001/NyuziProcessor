@@ -284,6 +284,7 @@ module int_execute_stage(
                 BRANCH_ALWAYS,
                 BRANCH_CALL_OFFSET,
                 BRANCH_CALL_REGISTER,
+                BRANCH_REGISTER,
                 BRANCH_ERET:
                 begin
                     branch_taken = 1;
@@ -309,7 +310,8 @@ module int_execute_stage(
 
         // Branch handling
         case (of_instruction.branch_type)
-            BRANCH_CALL_REGISTER: ix_rollback_pc <= of_operand1[0];
+            BRANCH_CALL_REGISTER,
+            BRANCH_REGISTER: ix_rollback_pc <= of_operand1[0];
             BRANCH_ERET: ix_rollback_pc <= cr_eret_address[of_thread_idx];
             default:
                 ix_rollback_pc <= of_instruction.pc + 4 + of_instruction.immediate_value;
