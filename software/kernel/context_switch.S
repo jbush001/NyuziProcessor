@@ -71,8 +71,9 @@ context_switch:     sub_i sp, sp, 0x840
                     store_32 s25, 0x804(sp)
                     store_32 s26, 0x808(sp)
                     store_32 s27, 0x80c(sp)
-                    store_32 fp,  0x810(sp) // s28
-                    store_32 ra,  0x814(sp)
+                    store_32 s28, 0x810(sp)
+                    store_32 fp,  0x814(sp)
+                    store_32 ra,  0x818(sp)
 
                     // Swap stacks
                     store_32 sp, (s0)   // Save old stack
@@ -117,9 +118,10 @@ context_switch:     sub_i sp, sp, 0x840
                     load_32 s25, 0x804(sp)
                     load_32 s26, 0x808(sp)
                     load_32 s27, 0x80c(sp)
-                    load_32 fp,  0x810(sp)
+                    load_32 s28, 0x810(sp)
+                    load_32 fp,  0x814(sp)
+                    load_32 ra,  0x818(sp)
                     add_i sp, sp, 0x840
 
-                    // Reload calling address directly into PC
-                    load_32 pc,  -44(sp)
+                    ret
 

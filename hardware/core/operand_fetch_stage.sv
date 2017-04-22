@@ -58,7 +58,6 @@ module operand_fetch_stage(
     scalar_t scalar_val2;
     vector_t vector_val1;
     vector_t vector_val2;
-    scalar_t cyc1_adjusted_pc;
     decoded_instruction_t cyc1_instruction;
     logic cyc1_instruction_valid;
     thread_idx_t cyc1_thread_idx;
@@ -121,10 +120,6 @@ module operand_fetch_stage(
         cyc1_instruction <= ts_instruction;
         cyc1_thread_idx <= ts_thread_idx;
         cyc1_subcycle <= ts_subcycle;
-
-        // By convention, most processors use the current instruction address + 4 when
-        // the PC is read. It's kind of goofy, perhaps rethink this.
-        cyc1_adjusted_pc <= ts_instruction.pc + 4;
     end
 
     //
@@ -149,13 +144,11 @@ module operand_fetch_stage(
 
         case (cyc1_instruction.op1_src)
             OP1_SRC_VECTOR1: of_operand1 <= vector_val1;
-            OP1_SRC_PC:      of_operand1 <= {`VECTOR_LANES{cyc1_adjusted_pc}};
             default:         of_operand1 <= {`VECTOR_LANES{scalar_val1}};    // OP_SRC_SCALAR1
         endcase
 
         case (cyc1_instruction.op2_src)
             OP2_SRC_SCALAR2: of_operand2 <= {`VECTOR_LANES{scalar_val2}};
-            OP2_SRC_PC:      of_operand2 <= {`VECTOR_LANES{cyc1_adjusted_pc}};
             OP2_SRC_VECTOR2: of_operand2 <= vector_val2;
             default:         of_operand2 <= {`VECTOR_LANES{cyc1_instruction.immediate_value}}; // OP2_SRC_IMMEDIATE
         endcase

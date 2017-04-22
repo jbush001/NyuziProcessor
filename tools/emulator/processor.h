@@ -51,6 +51,7 @@ bool is_stopped_on_fault(const struct processor*);
 bool execute_instructions(struct processor*, uint32_t thread_id,
                           uint64_t instructions);
 
+uint32_t dbg_get_pc(struct processor*, uint32_t thread_id);
 void dbg_single_step(struct processor*, uint32_t thread_id);
 uint32_t dbg_get_scalar_reg(const struct processor*, uint32_t thread_id,
                             uint32_t reg_id);

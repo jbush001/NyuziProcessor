@@ -36,8 +36,7 @@ typedef logic[$clog2(`VECTOR_LANES) - 1:0] subcycle_t;
 typedef logic[`VECTOR_LANES - 1:0] vector_lane_mask_t;
 
 `define INSTRUCTION_NOP 32'd0
-`define REG_RA (register_idx_t'(30))
-`define REG_PC (register_idx_t'(31))
+`define REG_RA (register_idx_t'(31))
 
 // Immediate/register arithmetic
 typedef enum logic[5:0] {
@@ -126,17 +125,15 @@ typedef enum logic [1:0] {
     MASK_SRC_ALL_ONES
 } mask_src_t;
 
-typedef enum logic [1:0] {
+typedef enum logic {
     OP1_SRC_VECTOR1,
-    OP1_SRC_PC,
     OP1_SRC_SCALAR1
 } op1_src_t;
 
 typedef enum logic [1:0] {
     OP2_SRC_SCALAR2,
     OP2_SRC_VECTOR2,
-    OP2_SRC_IMMEDIATE,
-    OP2_SRC_PC
+    OP2_SRC_IMMEDIATE
 } op2_src_t;
 
 typedef enum logic [1:0] {
@@ -217,6 +214,7 @@ typedef struct packed {
     scalar_t immediate_value;
     logic is_branch;
     branch_type_t branch_type;
+    logic is_call;
     pipeline_sel_t pipeline_sel;
     logic is_memory_access;
     memory_op_t memory_access_type;

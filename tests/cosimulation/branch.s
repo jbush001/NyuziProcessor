@@ -68,22 +68,5 @@ calltest1:      move s10, 23
                 call s0
 calltest2:      move s10, 24
 
-# Load PC from memory
-                lea s1, pcloaddest
-                load_32 pc, (s1)
-                move s11, 123        # This should not happen
-pcloaddest:     .long pcloadhere
-pcloadhere:     move s10, 1
-
-# Load PC from register
-                lea s1, pcarithhere
-                move pc, s1
-                move s10, 25
-pcarithhere:    move s10, 26
-
-# Make sure vector moves don't trigger branch
-                move v31, s1
-                move s10, 27
-
                 halt_current_thread
 

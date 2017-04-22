@@ -33,11 +33,11 @@ __ashldi3:          bz s2, do_nothing   # if shift amount is 0, skip
                     shl s0, s0, s2      # Shift low word
                     shl s1, s1, s2      # Shift high word
                     or s1, s1, s3       # Fill in bits in upper word
-                    move pc, ra
+                    ret
 
                     # Shift is greater than 32
 greater:            sub_i s2, s2, 32    # Figure out how much to shift upper word
                     shl s1, s0, s2      # shift lower word and move it into upper
                     move s0, 0          # Lower word is 0
 
-do_nothing:         move pc, ra
+do_nothing:         ret

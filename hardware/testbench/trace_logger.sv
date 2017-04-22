@@ -183,33 +183,6 @@ module trace_logger(
                 trace_reorder_queue[tindex].data <= wb_writeback_value;
             end
 
-            // Handle PC destination.
-            if (ix_instruction_valid
-                && ix_instruction_has_dest
-                && ix_instruction_dest_reg == `REG_PC
-                && !ix_instruction_dest_is_vector)
-            begin
-                assert(trace_reorder_queue[6].event_type == EVENT_INVALID);
-                trace_reorder_queue[5].event_type <= EVENT_SWRITEBACK;
-                trace_reorder_queue[5].pc <= ix_instruction_pc;
-                trace_reorder_queue[5].thread_idx <= wb_rollback_thread_idx;
-                trace_reorder_queue[5].writeback_reg <= 31;
-                trace_reorder_queue[5].data[0] <= wb_rollback_pc;
-            end
-            else if (dd_instruction_valid
-                && dd_instruction_has_dest
-                && dd_instruction_dest_reg == `REG_PC
-                && !dd_instruction_dest_is_vector
-                && !dd_rollback_en)
-            begin
-                assert(trace_reorder_queue[5].event_type == EVENT_INVALID);
-                trace_reorder_queue[4].event_type <= EVENT_SWRITEBACK;
-                trace_reorder_queue[4].pc <= dd_instruction_pc;
-                trace_reorder_queue[4].thread_idx <= wb_rollback_thread_idx;
-                trace_reorder_queue[4].writeback_reg <= 31;
-                trace_reorder_queue[4].data[0] <= wb_rollback_pc;
-            end
-
             if (dd_store_en)
             begin
                 assert(trace_reorder_queue[6].event_type == EVENT_INVALID);

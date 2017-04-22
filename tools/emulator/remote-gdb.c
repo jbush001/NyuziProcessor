@@ -39,7 +39,7 @@ static void __attribute__ ((format (printf, 1, 2))) send_formatted_response(cons
 
 static int client_socket = -1;
 static int *last_signals;
-static const char *GENERIC_REGS[] = { "fp", "sp", "ra", "pc" };
+static const char *GENERIC_REGS[] = { "fp", "sp", "ra" };
 
 static int read_byte(void)
 {
@@ -363,6 +363,12 @@ void remote_gdb_main_loop(struct processor *proc, bool enable_fb_window)
 
                         send_response_packet(response);
                     }
+                    else if (reg_id == 64)
+                    {
+                        // program counter
+                        value = dbg_get_pc(proc, current_thread);
+                        send_formatted_response("%08x", endian_swap32(value));
+                    }
                     else
                         send_response_packet("");
 
@@ -430,13 +436,15 @@ void remote_gdb_main_loop(struct processor *proc, bool enable_fb_window)
                     else if (memcmp(request + 1, "RegisterInfo", 12) == 0)
                     {
                         uint32_t reg_id = (uint32_t) strtoul(request + 13, NULL, 16);
-                        if (reg_id < 32)
+                        if (reg_id < 32 || reg_id == 64)
                         {
                             sprintf(response, "name:s%d;bitsize:32;encoding:uint;format:hex;set:General Purpose Scalar Registers;gcc:%d;dwarf:%d;",
                                     reg_id, reg_id, reg_id);
 
-                            if (reg_id >= 28)
-                                sprintf(response + strlen(response), "generic:%s;", GENERIC_REGS[reg_id - 28]);
+                            if (reg_id == 64)
+                                sprintf(response + strlen(response), "generic:pc;");
+                            else if (reg_id >= 29)
+                                sprintf(response + strlen(response), "generic:%s;", GENERIC_REGS[reg_id - 29]);
 
                             send_response_packet(response);
                         }

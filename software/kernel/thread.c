@@ -110,7 +110,7 @@ struct thread *spawn_thread_internal(const char *name,
     th->kernel_stack_ptr = (unsigned int*) (th->kernel_stack_area->high_address + 1);
     th->current_stack = (unsigned int*) ((unsigned char*) th->kernel_stack_ptr - 0x840);
     th->proc = proc;
-    ((unsigned int*) th->current_stack)[0x814 / 4] = (unsigned int) init_func;
+    ((unsigned int*) th->current_stack)[0x818 / 4] = (unsigned int) init_func;
     th->start_func = start_func;
     th->param = param;
     th->id = __sync_fetch_and_add(&next_thread_id, 1);

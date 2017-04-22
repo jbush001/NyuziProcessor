@@ -184,7 +184,7 @@ def gdb_breakpoint(_):
         conn.expect('?', 'S05')
 
         # Read PC register. Should be 0x000000c, but endian swapped
-        conn.expect('g1f', '0c000000')
+        conn.expect('g40', '0c000000')
 
         # Read s0, which should be 3
         conn.expect('g00', '03000000')
@@ -194,7 +194,7 @@ def gdb_breakpoint(_):
 
         # Ensure the instruction it stopped at is
         # executed and it breaks on the next instruction
-        conn.expect('g1f', '10000000')
+        conn.expect('g40', '10000000')
 
         # Read s0, which should be 4
         conn.expect('g00', '04000000')
@@ -217,7 +217,7 @@ def gdb_remove_breakpoint(_):
         conn.expect('C', 'S05')
 
         # Read PC register. Should be at second breakpoint
-        conn.expect('g1f', '14000000')
+        conn.expect('g40', '14000000')
 
         # Read s0, which should be 5
         conn.expect('g00', '05000000')
@@ -246,13 +246,13 @@ def gdb_single_step(_):
     hexfile = test_harness.build_program(['count.S'], image_type='raw')
     with EmulatorProcess(hexfile), DebugConnection() as conn:
         # Read PC register
-        conn.expect('g1f', '00000000')
+        conn.expect('g40', '00000000')
 
         # Single step
         conn.expect('S', 'S05')
 
         # Read PC register
-        conn.expect('g1f', '04000000')
+        conn.expect('g40', '04000000')
 
         # Read s0
         conn.expect('g00', '01000000')
@@ -261,7 +261,7 @@ def gdb_single_step(_):
         conn.expect('s', 'S05')
 
         # Read PC register
-        conn.expect('g1f', '08000000')
+        conn.expect('g40', '08000000')
 
         # Read s0
         conn.expect('g00', '02000000')
@@ -286,7 +286,7 @@ def gdb_single_step_breakpoint(_):
         conn.expect('S', 'S05')
 
         # Read PC register
-        conn.expect('g1f', '08000000')
+        conn.expect('g40', '08000000')
 
         # Read s0
         conn.expect('g00', '02000000')
@@ -358,10 +358,10 @@ def gdb_read_write_register(_):
             conn.expect('g' + hex(reg)[2:], value)
 
         # Read invalid register index
-        conn.expect('g40', '')
+        conn.expect('g41', '')
 
         # Write invalid register index
-        conn.expect('G40,12345678', '')
+        conn.expect('G41,12345678', '')
 
 
 @test_harness.test
@@ -369,17 +369,17 @@ def gdb_register_info(_):
     hexfile = test_harness.build_program(['count.S'], image_type='raw')
     with EmulatorProcess(hexfile), DebugConnection() as conn:
         # Scalar registers
-        for idx in range(27):
+        for idx in range(28):
             regid = str(idx + 1)
             conn.expect('qRegisterInfo' + hex(idx + 1)[2:], 'name:s' + regid +
                         ';bitsize:32;encoding:uint;format:hex;'
                         'set:General Purpose Scalar Registers;gcc:' + regid +
                         ';dwarf:' + regid + ';')
 
-        # These registers (sp, fp, ra, pc) are special and have additional
+        # These registers (sp, fp, ra) are special and have additional
         # information.
-        names = ['fp', 'sp', 'ra', 'pc']
-        for idx, name in zip(range(27, 32), names):
+        names = ['fp', 'sp', 'ra']
+        for idx, name in zip(range(28, 32), names):
             regid = str(idx + 1)
             conn.expect('qRegisterInfo' + hex(idx + 1)[2:], 'name:s' + regid +
                         ';bitsize:32;encoding:uint;format:hex;'
@@ -394,7 +394,7 @@ def gdb_register_info(_):
                         'set:General Purpose Vector Registers;gcc:' + regid +
                         ';dwarf:' + regid + ';')
 
-        conn.expect('qRegisterInfo64', '')
+        conn.expect('qRegisterInfo65', '')
 
 
 @test_harness.test
@@ -428,7 +428,7 @@ def gdb_select_thread(_):
                 conn.expect('S', 'S05')
 
                 # Read PC register
-                conn.expect('g1f', '{:08x}'.format(
+                conn.expect('g40', '{:08x}'.format(
                     test_harness.endian_swap((index + 1) * 4)))
 
         # Now all threads are at the same instruction:
@@ -446,7 +446,7 @@ def gdb_select_thread(_):
         # Read back PC and register values
         for index, (num_steps, regval) in enumerate(tests):
             conn.expect('Hg' + str(index + 1), 'OK')   # Switch to thread
-            conn.expect('g1f', '{:08x}'.format(
+            conn.expect('g40', '{:08x}'.format(
                 test_harness.endian_swap(0x14 + num_steps * 4)))
             conn.expect('g01', '{:08x}'.format(regval))
 
@@ -516,11 +516,11 @@ def gdb_vcont(_):
 
         # Step
         conn.expect('vCont;s:0001', 'S05')
-        conn.expect('g1f', '04000000')
+        conn.expect('g40', '04000000')
 
         # Continue
         conn.expect('vCont;c', 'S05')
-        conn.expect('g1f', '10000000')
+        conn.expect('g40', '10000000')
 
 
 @test_harness.test
@@ -528,7 +528,7 @@ def gdb_crash(_):
     hexfile = test_harness.build_program(['crash.S'], image_type='raw')
     with EmulatorProcess(hexfile), DebugConnection() as conn:
         conn.expect('c', 'S05')
-        conn.expect('g1f', '15000000')
+        conn.expect('g40', '15000000')
 
 
 test_harness.execute_tests()

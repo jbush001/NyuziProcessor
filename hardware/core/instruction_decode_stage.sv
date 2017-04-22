@@ -99,8 +99,7 @@ module instruction_decode_stage(
         SCLR2_NONE,
         SCLR2_19_15,
         SCLR2_14_10,
-        SCLR2_9_5,
-        SCLR2_PC
+        SCLR2_9_5
     } scalar2_loc_t;
 
     struct packed {
@@ -199,9 +198,9 @@ module instruction_decode_stage(
             7'b1111_001: dlut_out = {F, F, F, IMM_24_5, SCLR1_4_0, SCLR2_NONE,   F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
             7'b1111_010: dlut_out = {F, F, F, IMM_24_5, SCLR1_4_0, SCLR2_NONE,   F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
             7'b1111_011: dlut_out = {F, F, F, IMM_24_5, SCLR1_NONE, SCLR2_NONE,  F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
-            7'b1111_100: dlut_out = {F, F, T, IMM_24_5, SCLR1_NONE, SCLR2_PC,    F, F, F, F, OP2_SRC_SCALAR2, MASK_SRC_ALL_ONES, F, T};
-            7'b1111_110: dlut_out = {F, F, T, IMM_24_5, SCLR1_4_0, SCLR2_PC,     F, F, F, F, OP2_SRC_SCALAR2, MASK_SRC_ALL_ONES, F, T};
-            7'b1111_111: dlut_out = {F, F, T, IMM_24_5, SCLR1_4_0, SCLR2_PC,     F, F, F, F, OP2_SRC_SCALAR2, MASK_SRC_ALL_ONES, F, F};
+            7'b1111_100: dlut_out = {F, F, T, IMM_24_5, SCLR1_NONE, SCLR2_NONE,  F, F, F, F, OP2_SRC_SCALAR2, MASK_SRC_ALL_ONES, F, T};
+            7'b1111_110: dlut_out = {F, F, T, IMM_24_5, SCLR1_4_0, SCLR2_NONE,   F, F, F, F, OP2_SRC_SCALAR2, MASK_SRC_ALL_ONES, F, T};
+            7'b1111_111: dlut_out = {F, F, T, IMM_24_5, SCLR1_4_0, SCLR2_NONE,   F, F, F, F, OP2_SRC_SCALAR2, MASK_SRC_ALL_ONES, F, F};
 
             // Invalid instruction format
             default: dlut_out = {T, F, F, IMM_ZERO, SCLR1_NONE, SCLR2_NONE, F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
@@ -280,7 +279,6 @@ module instruction_decode_stage(
             SCLR2_14_10: scalar_sel2 = ifd_instruction[14:10];
             SCLR2_19_15: scalar_sel2 = ifd_instruction[19:15];
             SCLR2_9_5: scalar_sel2 = ifd_instruction[9:5];
-            SCLR2_PC: scalar_sel2 = `REG_PC;
             default: scalar_sel2 = 0;
         endcase
     end
@@ -302,6 +300,7 @@ module instruction_decode_stage(
     assign decoded_instr_nxt.dest_is_vector = dlut_out.dest_is_vector && !is_compare
         && !is_getlane;
     assign decoded_instr_nxt.dest_reg = dlut_out.is_call ? `REG_RA : ifd_instruction[9:5];
+    assign decoded_instr_nxt.is_call = dlut_out.is_call;
     always_comb
     begin
         if (is_fmt_i)
@@ -321,16 +320,11 @@ module instruction_decode_stage(
     begin
         if (dlut_out.op1_is_vector)
             decoded_instr_nxt.op1_src = OP1_SRC_VECTOR1;
-        else if (decoded_instr_nxt.scalar_sel1 == `REG_PC)
-            decoded_instr_nxt.op1_src = OP1_SRC_PC;
         else
             decoded_instr_nxt.op1_src = OP1_SRC_SCALAR1;
-
-        if (dlut_out.op2_src == OP2_SRC_SCALAR2 && scalar_sel2 == `REG_PC)
-            decoded_instr_nxt.op2_src = OP2_SRC_PC;
-        else
-            decoded_instr_nxt.op2_src = dlut_out.op2_src;
     end
+
+    assign decoded_instr_nxt.op2_src = dlut_out.op2_src;
 
     always_comb
     begin

@@ -59,7 +59,7 @@ handle_fault1:  getcr s0, CR_TRAP_CAUSE
                 // Jump to new page. This should fail because the entry
                 // wasn't added to the TLB
                 li s0, 0x2000
-                move pc, s0
+                b s0
 
                 should_not_get_here
 

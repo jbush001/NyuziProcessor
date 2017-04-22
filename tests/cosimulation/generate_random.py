@@ -421,7 +421,7 @@ fill_loop:      store_32 s5, (s3)
                 lea s4, branch_addrs
                 add_i s3, s3, s4
                 load_32 s3, (s3)
-                move pc, s3
+                b s3
 
 interrupt_handler:
                 getcr s11, CR_TRAP_PC

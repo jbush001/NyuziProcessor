@@ -29,7 +29,8 @@ _start:
                 setcr s0, CR_TRAP_HANDLER
 
                 // jump to bad address
-                move pc, 0x567
+                move s0, 0x567
+                b s0
 
 handle_fault1:  getcr s0, CR_TRAP_CAUSE
                 assert_reg s0, TT_UNALIGNED_ACCESS
@@ -55,7 +56,8 @@ handle_fault1:  getcr s0, CR_TRAP_CAUSE
                 flush_pipeline
 
                 // jump to bad address
-                move pc, 0x357
+                move s0, 0x357
+                b s0
 
 handle_fault2:  getcr s0, CR_TRAP_CAUSE
                 assert_reg s0, TT_UNALIGNED_ACCESS

@@ -33,9 +33,9 @@ __lshrdi3:          bz s2, do_nothing   # if shift amount is 0, skip
                     shr s0, s0, s2      # Shift lower word
                     shr s1, s1, s2      # Shift upper word
                     or s0, s0, s3       # Fill in top bits in lower word
-                    move pc, ra
+                    ret
 
 greater:            sub_i s2, s2, 32    # How much to shift lower word
                     shr s0, s1, s2      # shift upper word and move into lower
                     move s1, 0          # upper word is now 0
-do_nothing:         move pc, ra
+do_nothing:         ret

@@ -221,25 +221,6 @@ module writeback_stage(
             wb_trap_thread_idx = dd_thread_idx;
             wb_trap_access_vaddr = dd_request_vaddr;
         end
-        else if (ix_instruction_valid && ix_instruction.has_dest && ix_instruction.dest_reg == `REG_PC
-            && !ix_instruction.dest_is_vector)
-        begin
-            // Arithmetic with PC destination
-            wb_rollback_en = 1'b1;
-            wb_rollback_pc = ix_result[0];
-            wb_rollback_thread_idx = ix_thread_idx;
-            wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
-        end
-        else if (dd_instruction_valid && dd_instruction.has_dest && dd_instruction.dest_reg == `REG_PC
-            && !dd_instruction.dest_is_vector && !dd_rollback_en)
-        begin
-            // Memory load with PC destination. Check dd_rollback_en to ensure this
-            // isn't a cache miss (if it was, handle it in below)
-            wb_rollback_en = 1'b1;
-            wb_rollback_pc = swapped_word_value;
-            wb_rollback_thread_idx = dd_thread_idx;
-            wb_rollback_pipeline = PIPE_MEM;
-        end
         else if (ix_instruction_valid && ix_rollback_en)
         begin
             // Check for rollback from single cycle pipeline. This happens
@@ -409,7 +390,9 @@ module writeback_stage(
 
                 writeback_thread_idx_nxt = ix_thread_idx;
                 writeback_is_vector_nxt = ix_instruction.dest_is_vector;
-                if (ix_instruction.is_compare)
+                if (ix_instruction.is_call)
+                    writeback_value_nxt = vector_t'(ix_instruction.pc + 32'd4);
+                else if (ix_instruction.is_compare)
                     writeback_value_nxt = vector_t'(scycle_vcompare_result);
                 else
                     writeback_value_nxt = ix_result;

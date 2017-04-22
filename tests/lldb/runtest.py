@@ -150,11 +150,11 @@ def lldb(_):
     hexfile = test_harness.build_program(
         ['test_program.c'], opt_level='-O0', cflags=['-g'])
     with EmulatorProcess(hexfile) as conn:
-        conn.send_command('file "obj/test.elf"')
+        conn.send_command('file "obj/program.elf"')
         conn.send_command('gdb-remote 8000\n')
         response = conn.send_command(
             'breakpoint set --file test_program.c --line 27')
-        if 'Breakpoint 1: where = test.elf`func2 + 96 at test_program.c:27' not in response:
+        if 'Breakpoint 1: where = program.elf`func2 + 96 at test_program.c:27' not in response:
             raise test_harness.TestException(
                 'breakpoint: did not find expected value ' + response)
 

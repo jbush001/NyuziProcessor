@@ -17,8 +17,7 @@
 #ifndef INSTRUCTION_SET_H
 #define INSTRUCTION_SET_H
 
-#define LINK_REG 30
-#define PC_REG 31
+#define LINK_REG 31
 #define INSTRUCTION_NOP 0
 
 #define TLB_PRESENT 1
