@@ -19,9 +19,3 @@ To generate and run tests:
 The tests operate by first compiling and executing the program on the host
 and comparing the results to the output from the emulator.
 
-This often fails because it generates large functions and the constant pool
-is out of range of PC relative addressing:
-
-    Compilation failed:
-    fatal error: error in backend: fixup out of range
-
