@@ -319,8 +319,8 @@ module writeback_stage(
     generate
         for (mask_lane = 0; mask_lane < `VECTOR_LANES; mask_lane++)
         begin : compare_result_gen
-            assign scycle_vcompare_result[mask_lane] = ix_result[~mask_lane][0];
-            assign mcycle_vcompare_result[mask_lane] = fx5_result[~mask_lane][0];
+            assign scycle_vcompare_result[mask_lane] = ix_result[`VECTOR_LANES - mask_lane - 1][0];
+            assign mcycle_vcompare_result[mask_lane] = fx5_result[`VECTOR_LANES - mask_lane - 1][0];
         end
     endgenerate
 
