@@ -21,9 +21,9 @@
 
                 .global     _start
 
-_start:         load_32     s0, device_addr # LED Device address
+_start:         li          s0, 0xFFFF0000  # LED Device address
                 move        s1, 1           # Current display value
-                load_32     s3, delay       # Delay
+                li          s3, 100000      # Delay
 
 loop0:          store_32    s1, (s0)        # Update LEDs
 
@@ -41,6 +41,3 @@ delay0:         sub_i       s4, s4, 1
 
                 move        s1, 1
                 b           loop0
-
-device_addr:    .long 0xFFFF0000
-delay:          .long 100000
