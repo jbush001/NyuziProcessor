@@ -48,7 +48,7 @@ def run_csmith_test(_):
     csmith_include = '-I/usr/local/include/csmith-' + version_str
 
     for x in range(100):
-        source_file = 'test%04x.c' % x
+        source_file = 'test%04d.c' % x
         print('running ' + source_file)
 
         subprocess.check_call(['csmith', '-o', source_file])
