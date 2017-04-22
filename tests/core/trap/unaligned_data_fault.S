@@ -67,7 +67,8 @@ handle_fault\testnum\()_\subtest :
 
                 .globl _start
 _start:         move s10, 17            // Scalar pointer
-                load_v v10, vec_ptr
+                lea s0, vec_ptr
+                load_v v10, (s0)
 
                 // Store check value at target location
                 li s0, ORIGINAL_VALUE

@@ -355,7 +355,8 @@ _start:         start_all_threads
                 add_i s2, s2, 8    # Start at 8 MB
                 shl s2, s2, 20    # Multiply by 1meg: private base address
 
-                load_v v2, ptrvec
+                lea s0, ptrvec
+                load_v v2, (s0)
                 add_i v2, v2, s2    # Set up vector private base register (for scatter/gather)
 
                 # Copy base addresses into computed addresses

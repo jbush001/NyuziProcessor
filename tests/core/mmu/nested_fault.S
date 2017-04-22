@@ -36,7 +36,8 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
                 flush_pipeline
 
                 // Set up vector pointers
-                load_v v1, vecptr
+                lea s0, vecptr
+                load_v v1, (s0)
 align_fault_loc: store_scat v0, (v1) // This will fault when it hits address 17 and call handle_fault
 
                 should_not_get_here

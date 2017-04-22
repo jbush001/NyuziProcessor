@@ -22,8 +22,10 @@
 
 
                 .globl _start
-_start:         load_v v0, shuffle_indices
-                load_v v1, shuffle_values
+_start:         lea s0, shuffle_indices
+                load_v v0, (s0)
+                lea s0, shuffle_values
+                load_v v1, (s0)
                 shuffle v2, v1, v0
 
                 getlane s1, v1, 1

@@ -66,8 +66,10 @@ _start:    lea s1, testvar1
             load_v v2, 64(s10)
 
             # Gather load/scatter store
-            load_v v4, shuffleIdx1
-            load_v v5, shuffleIdx2
+            lea s0, shuffle_idx1
+            load_v v4, (s0)
+            lea s0, shuffle_idx2
+            load_v v5, (s0)
             lea s1, testvar2
             add_i v4, v4, s1
             add_i v5, v5, s1
@@ -100,9 +102,9 @@ testvar2:   .long 0x2aa7d2c1, 0xeeb91caf, 0x304010ad, 0x96981e0d, 0x3a03b41f, 0x
             .long 0x9228d73e, 0xfcf12265, 0x2515fbeb, 0x6cd307a0, 0x2c18c1b8, 0xda8e48d5, 0x1f5c4bd2, 0xace51435
 testvar3:   .long 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 testvar4:   .long 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-shuffleIdx1:.long 56, 40, 0, 4, 24, 52, 16, 8, 12, 36, 44, 20, 32, 28, 60, 48
+shuffle_idx1:.long 56, 40, 0, 4, 24, 52, 16, 8, 12, 36, 44, 20, 32, 28, 60, 48
 
 # Note: last lane is unaligned, but it is masked off so it shouldn't generate a fault.
-shuffleIdx2: .long 12, 60, 16, 28, 48, 0, 52, 56, 40, 24, 8, 44, 4, 20, 36, 3
+shuffle_idx2: .long 12, 60, 16, 28, 48, 0, 52, 56, 40, 24, 8, 44, 4, 20, 36, 3
 
 

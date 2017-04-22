@@ -17,8 +17,8 @@
                     .globl _start
 _start:
                     # Call global initializers
-                    load_32 s24, init_array_start
-                    load_32 s25, init_array_end
+                    lea s24, __init_array_start
+                    lea s25, __init_array_end
 init_loop:          cmpeq_i s0, s24, s25    # End of array?
                     bnz s0, do_main       # If so, exit loop
                     load_32 s0, (s24)       # Load ctor address
@@ -32,9 +32,6 @@ do_main:            call main
                     call call_atexit_functions
 
                     call exit
-
-init_array_start:   .long __init_array_start
-init_array_end:     .long __init_array_end
 
 
                     .globl __other_thread_start

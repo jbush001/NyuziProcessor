@@ -77,8 +77,10 @@ _start:     lea s0, ivec1
             cmple_f s5, v0, v1
 
             # vector/scalar floating point comparison
-            load_32 s10, fval3
-            load_32 s11, fval4
+            lea s10, fval3
+            load_32 s10, (s10)
+            lea s11, fval4
+            load_32 s11, (s11)
             cmpgt_f s2, v0, s10
             cmplt_f s3, v0, s10
             cmpge_f s4, v0, s10

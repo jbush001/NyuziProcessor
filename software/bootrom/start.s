@@ -30,11 +30,10 @@
                     .globl _start
                     .type _start,@function
 _start:             getcr s0, 0             # Get current thread ID
-                    bnz s0, jump_to_zero  # Not thread 0, skip loader
+                    bnz s0, jump_to_zero    # Not thread 0, skip loader
 
-                    load_32 sp, temp_stack  # Set up stack
+                    li sp, 0x400000         # Temporary stack
                     call main               # Serial loader
 
-jump_to_zero:       move pc, 0              # Jump to program in SDRAM
-
-temp_stack:         .long 0x400000
+jump_to_zero:       move s0, 0
+                    b s0              # Jump to program in SDRAM

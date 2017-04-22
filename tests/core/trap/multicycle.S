@@ -32,11 +32,11 @@ _start:             getcr s0, 0                 // Find my thread ID
 
                     // Start spinner thread, which is described below
                     li s0, REG_THREAD_RESUME
-                    move s1, 3    // Two threads enabled
+                    li s1, 3    // Two threads enabled
                     store_32 s1, (s0)
 
                     // Set up interrupts
-                    move s24, 2
+                    li s24, 2
                     setcr s24, CR_INTERRUPT_MASK
 
                     // Reset timer
@@ -46,16 +46,17 @@ _start:             getcr s0, 0                 // Find my thread ID
 
                     lea s10, interrupt_handler
                     setcr s10, CR_TRAP_HANDLER     // Set fault handler address
-                    move s10, 5
+                    li s10, 5
                     setcr s10, CR_FLAGS             // Enable interrupts
 
-                    move s0, 1024                   // Number of loops
+                    li s0, 1024                   // Number of loops
 loop0:
                     // Invalidate the second page so we will miss the cache part way through
                     // fetching these
                     lea s1, dataloc2
                     dinvalidate s1
-                    load_v v0, ptrvec     // Get vector of pointers
+                    lea s2, ptrvec
+                    load_v v0, (s2)        // Get vector of pointers
                     load_gath v0, (v0)     // Gather load from pointers
                     sub_i s0, s0, 1        // Decrement counter and loop if not done
                     bnz s0, loop0

@@ -28,7 +28,7 @@
                 .globl user_copy
                 .type user_copy,@function
 
-user_copy:      load_32 s3, fault_handler_addr  // Base of fault handler array
+user_copy:      lea s3, fault_handler  // Base of fault handler array
                 getcr s4, CR_CURRENT_HW_THREAD
                 shl s4, s4, 2           // Turn into array offset
                 add_i s4, s4, s3        // Now address of fault entry
@@ -58,7 +58,7 @@ uc_fault:       move s0, -1 // Failure
                 .globl user_strlcpy
                 .type user_strlcpy,@function
 
-user_strlcpy:   load_32 s3, fault_handler_addr  // Base of fault handler array
+user_strlcpy:   lea s3, fault_handler  // Base of fault handler array
                 getcr s4, CR_CURRENT_HW_THREAD
                 shl s4, s4, 2           // Turn into array offset
                 add_i s4, s4, s3        // Now address of fault entry
@@ -88,5 +88,3 @@ usc_fault:      move s0, -1 // Failure
 3:              move s3, 0
                 store_32 s3, (s4)
                 ret
-
-fault_handler_addr:  .long fault_handler

@@ -65,8 +65,10 @@ value2:     .long 0xaaaaaaaa, 0xbbbbbbbb, 0xcccccccc, 0xdddddddd, 0xeeeeeeee, 0x
             .long 0x77777777, 0x88888888, 0x99999999
 
 _start:     move v0, 0
-            load_v v2, value2
-            load_v v3, value1
+            lea s0, value2
+            load_v v2, (s0)
+            lea s0, value1
+            load_v v3, (s0)
             move s2, 0x456
             move s3, 0x123
             li s10, 0x5a5a

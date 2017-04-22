@@ -15,8 +15,9 @@
 //
 
                 .globl _start
-_start:         load_v v0, vectorval
-                load_32 s1, scalarval
+_start:         lea s0, vectorval
+                load_v v0, (s0)
+                li s1, 0x853e7f7d
                 move s0, 1
                 load_32 s0, (s0)    # Force crash to break into debugger
                                     # XXX need break instruction
@@ -26,5 +27,4 @@ vectorval:      .long 0xef0334f1, 0x9930089d, 0x9981f793, 0x3f4bae54
                 .long 0x8fa2ea7a, 0xbdec8f53, 0x9cf53695, 0x2651726d
                 .long 0x70ee2595, 0x348d6ed2, 0x631289f4, 0x5dae869c
                 .long 0x836c42ba, 0xe15584aa, 0x4bbadbe2, 0x21f3a441
-scalarval:      .long 0x853e7f7d
 

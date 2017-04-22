@@ -66,13 +66,12 @@
 .set REG_HOST_INTERRUPT, 0xffff0018
 .set REG_SERIAL_WRITE, 0xffff0048
 .set REG_THREAD_RESUME, 0xffff0100
+.set REG_THREAD_HALT, 0xffff0104
 .set REG_TIMER_COUNT, 0xffff0240
 
 .macro start_all_threads
-                move s0, -1
-                shl s0, s0, 16
-                or s0, s0, 0x100
-                move s1, -1
+                li s0, REG_THREAD_RESUME
+                li s1, 0xffffffff
                 store_32 s1, (s0)
 .endm
 
@@ -80,18 +79,14 @@
                 getcr s0, CR_CURRENT_THREAD
                 move s1, 1
                 shl s1, s1, s0
-                move s0, -1
-                shl s0, s0, 16
-                or s0, s0, 0x104
+                li s0, REG_THREAD_HALT
                 store_32 s1, (s0)
 1:              b 1b
 .endm
 
 .macro halt_all_threads
-                move s0, -1
-                shl s0, s0, 16
-                or s0, s0, 0x104
-                move s1, -1
+                li s0, REG_THREAD_HALT
+                li s1, 0xffffffff
                 store_32 s1, (s0)
 1:              b 1b
 .endm
@@ -100,18 +95,17 @@
 // port. Clobbers s0-s3.
                 .align 4, 0xff
 .macro print_string
-                load_32 s1, _seraddr    // Load address of serial registers
+                li s1, 0xffff0040       // Load address of serial registers
 1:              load_u8 s2, (s0)        // Read a character
-                bz s2, 3f           // If delimeter, exit
+                bz s2, 3f               // If delimeter, exit
 2:              load_32 s3, (s1)        // Read STATUS
                 and s3, s3, 1           // Check write available bit
-                bz s3, 2b           // If this is clear, busy wait
+                bz s3, 2b               // If this is clear, busy wait
                 store_32 s2, 8(s1)      // Write space available, send char
                 add_i s0, s0, 1         // Increment pointer
-                b 1b                 // Loop for next char
+                b 1b                    // Loop for next char
 3:
 .endm
-_seraddr:       .long 0xffff0040
 
 // If register is not equal to testval, print failure message.
 // Otherwise continue. Clobbers s25
