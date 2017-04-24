@@ -51,7 +51,11 @@ def run_csmith_test(_):
         source_file = 'test%04d.c' % x
         print('running ' + source_file)
 
-        subprocess.check_call(['csmith', '-o', source_file])
+        # Disable packed structs because we don't support unaligned accesses.
+        # Disable longlong to avoid incompatibilities between 32-bit Nyuzi
+        # and 64-bit hosts.
+        subprocess.check_call(['csmith', '-o', source_file, '--no-longlong',
+            '--no-packed-struct'])
 
         # Compile and run on host
         subprocess.check_call(
