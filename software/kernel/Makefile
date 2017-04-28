@@ -55,6 +55,6 @@ kernel.elf: $(OBJS) $(DEPS)
 	$(OBJDUMP) --disassemble $(OBJ_DIR)/kernel.elf > kernel.lst
 
 clean:
-	rm -rf obj $(OBJ_DIR)/kernel.elf
+	rm -rf obj $(OBJ_DIR)/kernel.elf kernel.hex
 
 -include $(DEPS)

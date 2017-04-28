@@ -1769,37 +1769,42 @@ static void execute_memory_access_inst(struct thread *thread, uint32_t instructi
 
 static void execute_branch_inst(struct thread *thread, uint32_t instruction)
 {
-    bool branch_taken = false;
     uint32_t src_reg = extract_unsigned_bits(instruction, 0, 5);
+    uint32_t offset20 = extract_signed_bits(instruction, 5, 20);
+    uint32_t offset25 = extract_signed_bits(instruction, 0, 25);
 
     TALLY_INSTRUCTION(branch_inst);
     switch (extract_unsigned_bits(instruction, 25, 3))
     {
         case BRANCH_REGISTER:
             thread->pc = thread->scalar_reg[src_reg];
-            return; // Short circuit, since the source register is the dest
+            break;
 
         case BRANCH_ZERO:
-            branch_taken = thread->scalar_reg[src_reg] == 0;
+            if (thread->scalar_reg[src_reg] == 0)
+                thread->pc += offset20;
+
             break;
 
         case BRANCH_NOT_ZERO:
-            branch_taken = thread->scalar_reg[src_reg] != 0;
+            if (thread->scalar_reg[src_reg] != 0)
+                thread->pc += offset20;
+
             break;
 
         case BRANCH_ALWAYS:
-            branch_taken = true;
+            thread->pc += offset25;
             break;
 
         case BRANCH_CALL_OFFSET:
-            branch_taken = true;
             set_scalar_reg(thread, LINK_REG, thread->pc);
+            thread->pc += offset25;
             break;
 
         case BRANCH_CALL_REGISTER:
             set_scalar_reg(thread, LINK_REG, thread->pc);
             thread->pc = thread->scalar_reg[src_reg];
-            return; // Short circuit, since the source register is the dest
+            break;
 
         case BRANCH_ERET:
             if (!thread->enable_supervisor)
@@ -1821,15 +1826,12 @@ static void execute_branch_inst(struct thread *thread, uint32_t instruction)
             if (thread->enable_interrupt)
                 try_to_dispatch_interrupt(thread);
 
-            return; // Short circuit branch side effect below
+            break;
 
         default:
             raise_trap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false);
-            return;
+            break;
     }
-
-    if (branch_taken)
-        thread->pc += extract_signed_bits(instruction, 5, 20);
 }
 
 static void execute_cache_control_inst(struct thread *thread, uint32_t instruction)

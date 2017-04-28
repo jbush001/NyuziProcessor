@@ -85,7 +85,8 @@ module instruction_decode_stage(
         IMM_23_10,  // Unmasked immediate arithmetic
         IMM_24_15,  // Masked memory access
         IMM_24_10,  // Unmasked memory access
-        IMM_24_5,   // Branch offset
+        IMM_24_5,   // Small branch offset
+        IMM_24_0,   // Large branch offset
         IMM_EXT_19  // 19 bit extended immediate value
     } imm_loc_t;
 
@@ -197,8 +198,8 @@ module instruction_decode_stage(
             7'b1111_000: dlut_out = {F, F, F, IMM_24_5, SCLR1_4_0, SCLR2_NONE,   F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
             7'b1111_001: dlut_out = {F, F, F, IMM_24_5, SCLR1_4_0, SCLR2_NONE,   F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
             7'b1111_010: dlut_out = {F, F, F, IMM_24_5, SCLR1_4_0, SCLR2_NONE,   F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
-            7'b1111_011: dlut_out = {F, F, F, IMM_24_5, SCLR1_NONE, SCLR2_NONE,  F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
-            7'b1111_100: dlut_out = {F, F, T, IMM_24_5, SCLR1_NONE, SCLR2_NONE,  F, F, F, F, OP2_SRC_SCALAR2, MASK_SRC_ALL_ONES, F, T};
+            7'b1111_011: dlut_out = {F, F, F, IMM_24_0, SCLR1_NONE, SCLR2_NONE,  F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F};
+            7'b1111_100: dlut_out = {F, F, T, IMM_24_0, SCLR1_NONE, SCLR2_NONE,  F, F, F, F, OP2_SRC_SCALAR2, MASK_SRC_ALL_ONES, F, T};
             7'b1111_110: dlut_out = {F, F, T, IMM_24_5, SCLR1_4_0, SCLR2_NONE,   F, F, F, F, OP2_SRC_SCALAR2, MASK_SRC_ALL_ONES, F, T};
             7'b1111_111: dlut_out = {F, F, T, IMM_24_5, SCLR1_4_0, SCLR2_NONE,   F, F, F, F, OP2_SRC_SCALAR2, MASK_SRC_ALL_ONES, F, F};
 
@@ -335,6 +336,7 @@ module instruction_decode_stage(
             IMM_24_15: decoded_instr_nxt.immediate_value = scalar_t'($signed(ifd_instruction[24:15]));
             IMM_24_10: decoded_instr_nxt.immediate_value = scalar_t'($signed(ifd_instruction[24:10]));
             IMM_24_5: decoded_instr_nxt.immediate_value = scalar_t'($signed(ifd_instruction[24:5]));
+            IMM_24_0: decoded_instr_nxt.immediate_value = scalar_t'($signed(ifd_instruction[24:0]));
             default: decoded_instr_nxt.immediate_value = 0;
         endcase
     end
