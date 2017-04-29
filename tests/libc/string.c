@@ -123,10 +123,10 @@ int main()
     printf("5.5 %d\n", get_sign(noinline_strncmp("foot", "foo", 4)));   // CHECK: 5.5 1
     printf("5.6 %d\n", get_sign(noinline_strncmp("fpo", "foo", 4)));    // CHECK: 5.6 1
 
-    printf("6.1 %u\n", noinline_strlen(""));        // CHECK: 6.1 0
-    printf("6.2 %u\n", noinline_strlen("a"));       // CHECK: 6.2 1
-    printf("6.3 %u\n", noinline_strlen("ab"));      // CHECK: 6.3 2
-    printf("6.4 %u\n", noinline_strlen("abcdefg")); // CHECK: 6.4 7
+    printf("6.1 %lu\n", noinline_strlen(""));        // CHECK: 6.1 0
+    printf("6.2 %lu\n", noinline_strlen("a"));       // CHECK: 6.2 1
+    printf("6.3 %lu\n", noinline_strlen("ab"));      // CHECK: 6.3 2
+    printf("6.4 %lu\n", noinline_strlen("abcdefg")); // CHECK: 6.4 7
 
     noinline_strcpy(dest, "jasdfha");
     printf("7.1 \"%s\"\n", dest);   // CHECK: 7.1 "jasdfha"

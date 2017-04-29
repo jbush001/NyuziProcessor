@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # Copyright 2011-2015 Jeff Bush
 #

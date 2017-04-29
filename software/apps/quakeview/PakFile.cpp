@@ -132,7 +132,7 @@ void PakFile::readBspFile(const char *bspFilename)
         return;
     }
 
-    const bspheader_t *bspHeader = (bspheader_t*) data;
+    const bspheader_t *bspHeader = reinterpret_cast<bspheader_t*>(data);
 
     if (bspHeader->version != kBspVersion)
     {
@@ -198,7 +198,8 @@ void PakFile::loadTextureAtlas(const bspheader_t *bspHeader, const uint8_t *data
     //
     // Copy texture information into a temporary array
     //
-    const miptex_lump_t *mipHeader = (const miptex_lump_t*)(data + bspHeader->textures.offset);
+    const miptex_lump_t *mipHeader = reinterpret_cast<const miptex_lump_t*>(data
+        + bspHeader->textures.offset);
     fNumTextures = mipHeader->numTextures;
     printf("%d textures\n", mipHeader->numTextures);
 
@@ -342,14 +343,19 @@ const int kLightmapSize = 1024;
 
 void PakFile::loadLightmaps(const bspheader_t *bspHeader, const uint8_t *data)
 {
-    const face_t *faces = (const face_t*)(data + bspHeader->faces.offset);
+    const face_t *faces = reinterpret_cast<const face_t*>(data
+        + bspHeader->faces.offset);
     int numFaces = bspHeader->faces.length / sizeof(face_t);
-    const int32_t *edgeList = (const int32_t*)(data + bspHeader->surfedges.offset);
-    const edge_t *edges = (const edge_t*)(data + bspHeader->edges.offset);
+    const int32_t *edgeList = reinterpret_cast<const int32_t*>(data
+        + bspHeader->surfedges.offset);
+    const edge_t *edges = reinterpret_cast<const edge_t*>(data
+        + bspHeader->edges.offset);
     const texture_info_t *texInfos = reinterpret_cast<const texture_info_t*>(data
         + bspHeader->texinfo.offset);
-    const vertex_t *vertices = (const vertex_t*)(data + bspHeader->vertices.offset);
-    const uint8_t *lightmaps = (const uint8_t*)(data + bspHeader->lighting.offset);
+    const vertex_t *vertices = reinterpret_cast<const vertex_t*>(data
+        + bspHeader->vertices.offset);
+    const uint8_t *lightmaps = reinterpret_cast<const uint8_t*>(data
+        + bspHeader->lighting.offset);
 
     fLightmapAtlasEntries = new AtlasEntry[numFaces];
 

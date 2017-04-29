@@ -228,7 +228,7 @@ int vfprintf(FILE *f, const char *format, va_list args)
                         // See "How to Print Floating Point Numbers Accurately" by Guy L. Steele Jr.
                         // and Jon L. White for the gory details.
                         // XXX does not handle inf and NaN
-                        float floatval = va_arg(args, float);
+                        double floatval = va_arg(args, double);
                         int wholePart;
                         float frac;
 

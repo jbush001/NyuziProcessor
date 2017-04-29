@@ -149,6 +149,8 @@ int fgetc(FILE *f)
 
 FILE *fopen(const char *filename, const char *mode)
 {
+    (void) mode;
+
     int fd  = open(filename, 0);
     if (fd < 0)
         return NULL;
@@ -208,11 +210,13 @@ int fprintf(FILE *f, const char *fmt, ...)
 
 int fflush(FILE *file)
 {
+    (void) file;
     return 0;
 }
 
 int ferror(FILE *file)
 {
+    (void) file;
     return 0;	// XXX not implemented
 }
 

@@ -727,7 +727,7 @@ static void raise_trap(struct thread *thread, uint32_t trap_address, enum trap_t
             && type != TT_SYSCALL)
     {
         thread->pc -= 4;    // reset PC to faulting instruction
-        printf("Thread %d caught fault %d @%08x\n", thread->id, type, thread->pc);
+        printf("Thread %u caught fault %d @%08x\n", thread->id, type, thread->pc);
         print_thread_registers(thread);
         thread->core->proc->crashed = true;
         return;
@@ -1541,7 +1541,7 @@ static void execute_scatter_gather_inst(struct thread *thread, uint32_t instruct
     {
         if (thread->core->proc->enable_tracing)
         {
-            printf("%08x [th %u] store_scatter (%d) %08x %08x\n", thread->pc - 4,
+            printf("%08x [th %u] store_scatter (%u) %08x %08x\n", thread->pc - 4,
                    thread->id, thread->subcycle, virtual_address,
                    thread->vector_reg[destsrcreg][lane]);
         }

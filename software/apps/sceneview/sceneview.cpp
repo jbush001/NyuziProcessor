@@ -76,7 +76,7 @@ char *readResourceFile()
         return nullptr;
     }
 
-    printf("reading resource file, %d bytes\n", header.fileSize);
+    printf("reading resource file, %u bytes\n", header.fileSize);
 
     resourceData = (char*) malloc(header.fileSize);
     fseek(fp, 0, SEEK_SET);

@@ -78,6 +78,8 @@ void operator delete[](void *ptr) throw()
 
 extern "C" void __cxa_atexit(void (*func)(void *), void *objptr, void *dso)
 {
+    (void) dso;
+
     AtExitCallback *callback = new AtExitCallback();
 
     // Destructor functions are called in the reverse order that they

@@ -104,8 +104,6 @@ def read_texture(filename):
 
 
 def read_mtl_file(filename):
-    global material_name_to_texture_idx
-
     print('read material file ' + filename)
 
     current_name = ''
