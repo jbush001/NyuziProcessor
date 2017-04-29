@@ -27,6 +27,7 @@
 
 #define __MAX_THREADS 64
 
+extern int get_current_thread_id();
 extern int __errno_array[__MAX_THREADS];
 
 #define errno __errno_array[get_current_thread_id()]

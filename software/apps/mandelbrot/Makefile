@@ -20,6 +20,7 @@ include $(TOPDIR)/build/target.mk
 
 LIBS=-lc
 SRCS=mandelbrot.c
+CFLAGS+=-Werror
 
 OBJS := $(SRCS_TO_OBJS)
 DEPS := $(SRCS_TO_DEPS)

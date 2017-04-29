@@ -32,12 +32,17 @@
 
 int open(const char *path, int mode)
 {
+    (void) path;
+    (void) mode;
+
     errno = EINVAL;
     return -1;
 }
 
 int close(int fd)
 {
+    (void) fd;
+
     errno = EBADF;
     return -1;
 }
@@ -64,24 +69,37 @@ int write(int fd, const void *buf, unsigned int nbyte)
 
 off_t lseek(int fd, off_t offset, int whence)
 {
+    (void) fd;
+    (void) offset;
+    (void) whence;
+
     errno = EBADF;
     return -1;
 }
 
 int stat(const char *path, struct stat *buf)
 {
+    (void) path;
+    (void) buf;
+
     errno = EINVAL;
     return -1;
 }
 
 int fstat(int fd, struct stat *buf)
 {
+    (void) fd;
+    (void) buf;
+
     errno = EBADF;
     return -1;
 }
 
 int access(const char *path, int mode)
 {
+    (void) path;
+    (void) mode;
+
     errno = EBADF;
     return -1;
 }

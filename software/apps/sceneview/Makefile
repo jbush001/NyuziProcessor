@@ -23,7 +23,7 @@ FB_WIDTH=640
 FB_HEIGHT=480
 MEMORY_SIZE=8000000
 
-CFLAGS+=-fno-rtti -ffast-math -std=c++11 -I$(TOPDIR)/software/libs/librender -DFB_WIDTH=$(FB_WIDTH) -DFB_HEIGHT=$(FB_HEIGHT)
+CFLAGS+=-fno-rtti -ffast-math -std=c++11 -I$(TOPDIR)/software/libs/librender -DFB_WIDTH=$(FB_WIDTH) -DFB_HEIGHT=$(FB_HEIGHT) -Werror
 LIBS=-lrender -lc -los-bare
 
 SRCS=sceneview.cpp

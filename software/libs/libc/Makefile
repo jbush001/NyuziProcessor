@@ -18,7 +18,7 @@ TOPDIR=../../../
 
 include $(TOPDIR)/build/target.mk
 
-CFLAGS += -Werror -Wno-expansion-to-defined
+CFLAGS+=-Werror -Wno-expansion-to-defined
 VPATH=src
 
 SRCS=math.c \

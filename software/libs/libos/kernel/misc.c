@@ -22,10 +22,14 @@
 
 int usleep(useconds_t delay)
 {
+    (void) delay;
+
     return -1;
 }
 
 void exit(int status)
 {
-    __syscall(SYS_thread_exit, 0, 0, 0, 0, 0);
+    __syscall(SYS_thread_exit, status, 0, 0, 0, 0);
+    while (1)   // Will never hit this
+        ;
 }

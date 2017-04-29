@@ -18,7 +18,7 @@ TOPDIR=../../../../
 
 include $(TOPDIR)/build/target.mk
 
-CFLAGS+=-I..
+CFLAGS+=-I.. -Werror
 
 SRCS=schedule.c \
 	uart.c \

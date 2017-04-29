@@ -18,7 +18,7 @@ TOPDIR=../../../
 
 include $(TOPDIR)/build/target.mk
 
-CFLAGS+=-g
+CFLAGS+=-g -Werror
 
 SRCS=ashldi3.s \
 	divsi3.c \

@@ -19,6 +19,8 @@ TOPDIR=../../../
 include $(TOPDIR)/build/target.mk
 
 LIBS=-lc -los-bare
+CFLAGS+=-Werror
+
 SRCS=hash.cpp
 
 OBJS=$(CRT0_BARE) $(SRCS_TO_OBJS)

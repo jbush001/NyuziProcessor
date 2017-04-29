@@ -18,7 +18,7 @@ TOPDIR=../../
 
 include $(TOPDIR)/build/target.mk
 
-CFLAGS=-O3  -Wall -W # Override default CFLAGS
+CFLAGS=-O3  -Wall -W -Werror # Override default CFLAGS
 BASE_ADDRESS=0xc0000000
 
 SRCS=main.c \
