@@ -79,11 +79,12 @@ char *readResourceFile()
 
     printf("reading resource file, %u bytes\n", header.fileSize);
 
-    resourceData = (char*) malloc(header.fileSize);
+    resourceData = static_cast<char*>(malloc(header.fileSize));
     fseek(fp, 0, SEEK_SET);
     if (fread(resourceData, header.fileSize, 1, fp) != 1)
     {
         fclose(fp);
+        free(resourceData);
         printf("error reading resource file\n");
         return nullptr;
     }

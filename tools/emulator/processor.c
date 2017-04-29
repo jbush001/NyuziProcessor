@@ -205,6 +205,7 @@ struct processor *init_processor(uint32_t memory_size, uint32_t num_cores,
         if (ftruncate(shared_memory_fd, memory_size) < 0)
         {
             perror("init_processor: couldn't resize shared memory file");
+            free(proc);
             return NULL;
         }
 
@@ -213,6 +214,7 @@ struct processor *init_processor(uint32_t memory_size, uint32_t num_cores,
         if (proc->memory == NULL)
         {
             perror("init_processor: mmap failed");
+            free(proc);
             return NULL;
         }
     }
@@ -222,6 +224,7 @@ struct processor *init_processor(uint32_t memory_size, uint32_t num_cores,
         if (proc->memory == NULL)
         {
             perror("init_processor: malloc failed");
+            free(proc);
             return NULL;
         }
 

@@ -31,8 +31,10 @@ void MeshBuilder::appendIndex(int value)
     else if (fNumIndices >= kMinAlloc && (fNumIndices & (fNumIndices - 1)) == 0) {
         int *newArray = static_cast<int*>(realloc(fIndexVector, fNumIndices
             * 2 * sizeof(int)));
-        if (newArray == nullptr)
+        if (newArray == nullptr) {
+            printf("out of memory\n");
             return;
+        }
 
         fIndexVector = newArray;
     }
@@ -43,9 +45,17 @@ void MeshBuilder::appendIndex(int value)
 void MeshBuilder::appendVertex(float value)
 {
     if (fNumVertexAttrs == 0)
-        fVertexVector = (float*) malloc(sizeof(float) * kMinAlloc);
-    else if (fNumVertexAttrs >= kMinAlloc && (fNumVertexAttrs & (fNumVertexAttrs - 1)) == 0)
-        fVertexVector = (float*) realloc(fVertexVector, fNumVertexAttrs * 2 * sizeof(float));
+        fVertexVector = static_cast<float*>(malloc(sizeof(float) * kMinAlloc));
+    else if (fNumVertexAttrs >= kMinAlloc && (fNumVertexAttrs & (fNumVertexAttrs - 1)) == 0) {
+        float *newArray = static_cast<float*>(realloc(fVertexVector, fNumVertexAttrs
+            * 2 * sizeof(float)));
+        if (newArray == nullptr) {
+            printf("out of memory\n");
+            return;
+        }
+
+        fVertexVector = newArray;
+    }
 
     fVertexVector[fNumVertexAttrs++] = value;
 }

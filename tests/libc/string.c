@@ -149,9 +149,9 @@ int main()
     printf("9.3 %d\n", noinline_strchr(search_str, 'g') - search_str); // CHECK: 9.3 6
     printf("9.4 %p\n", noinline_strchr(search_str, 'h')); // CHECK: 9.4 0
 
-    printf("10.1 %d\n", (char*) noinline_memchr(search_str, 'a', 7) - search_str); // CHECK: 10.1 0
-    printf("10.2 %d\n", (char*) noinline_memchr(search_str, 'c', 7) - search_str); // CHECK: 10.2 2
-    printf("10.3 %d\n", (char*) noinline_memchr(search_str, 'g', 7) - search_str); // CHECK: 10.3 6
+    printf("10.1 %td\n", (char*) noinline_memchr(search_str, 'a', 7) - search_str); // CHECK: 10.1 0
+    printf("10.2 %td\n", (char*) noinline_memchr(search_str, 'c', 7) - search_str); // CHECK: 10.2 2
+    printf("10.3 %td\n", (char*) noinline_memchr(search_str, 'g', 7) - search_str); // CHECK: 10.3 6
     printf("10.4 %p\n", (char*) noinline_memchr(search_str, 'h', 7)); // CHECK: 10.4 0
     printf("10.5 %p\n", (char*) noinline_memchr(search_str, 'd', 3)); // CHECK: 10.5 0
 

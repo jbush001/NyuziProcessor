@@ -96,6 +96,7 @@ int main(int argc, char * const argv[])
     if (::memcmp(header.id, "PACK", 4) != 0)
     {
         printf("bad file type\n");
+        fclose(inputFile);
         return 1;
     }
 
@@ -104,7 +105,7 @@ int main(int argc, char * const argv[])
     fseek(inputFile, header.dirOffset, SEEK_SET);
     if (fread(oldDirectory, header.dirSize, 1, inputFile) != 1)
     {
-        free(oldDirectory)
+        delete [] oldDirectory;
         fclose(inputFile);
         perror("error reading directory");
         return 1;
@@ -126,6 +127,7 @@ int main(int argc, char * const argv[])
     if (!outputFile)
     {
         perror("Couldn't write output file");
+        delete [] oldDirectory;
         return 1;
     }
 

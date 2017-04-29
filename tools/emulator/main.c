@@ -207,6 +207,7 @@ int main(int argc, char *argv[])
                 {
                     fprintf(stderr, "bad format for memory dump\n");
                     usage();
+                    free(mem_dump_filename);
                     return 1;
                 }
 

@@ -438,6 +438,7 @@ int read_binary_file(const char *filename, unsigned char **out_ptr, unsigned int
     {
         perror("Error reading file");
         fclose(input_file);
+        free(data);
         return 0;
     }
 

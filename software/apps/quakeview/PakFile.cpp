@@ -80,6 +80,7 @@ void *PakFile::readFile(const char *lumpname) const
     if (fread(buf, fDirectory[fileIndex].size, 1, fFile) != 1)
     {
         printf("PakFile::readFile: error reading\n");
+        free(buf);
         return nullptr;
     }
 

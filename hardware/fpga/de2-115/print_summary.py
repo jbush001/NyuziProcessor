@@ -24,15 +24,15 @@ import re
 
 speed_re = re.compile('(?P<speed>[0-9\.]+) MHz')
 with open('output_files/de2_115.sta.rpt') as f:
-    foundSection = False
+    found_section = False
     for line in f:
-        if foundSection:
+        if found_section:
             got = speed_re.search(line)
             if got:
                 print('Fmax ' + got.group('speed') + 'MHz')
                 break
         elif line.find('; Slow 1200mV 85C Model Fmax Summary') != -1:
-            foundSection = True
+            found_section = True
 
 count_re = re.compile('(?P<num>[0-9,]+)')
 with open('output_files/de2_115.fit.rpt') as f:
