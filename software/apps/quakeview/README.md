@@ -31,16 +31,15 @@ FB_WIDTH and FB_HEIGHT in the Makefile.
 
 To run on FPGA, type 'make fpgarun'. It will transfer the data files over the
 serial port into a ramdisk in memory. This will take a while. The repak utility
-can reduce the size of the PAK file. Move the original PAK file in a different
-directory, then:
+(tools/repak) can reduce the size of the PAK file. Move the original PAK file
+in a different directory, then:
 
-    g++ -o repak repak.cpp
-    ./repak -o pak0.pak <original pak location> gfx/palette.lmp maps/e1m1.bsp
+    ../../../bin/repak -o pak0.pak <original pak location> gfx/palette.lmp maps/e1m1.bsp
 
 If you want to load a different mission, it to the end of the repak command line (for example,
 maps/e1m2.bsp). You can list all files in the PAK file like this:
 
-    ./repak -l pak0.pak
+    ../../../bin/repak -l pak0.pak
 
 ## Running in Verilog Simulation
 

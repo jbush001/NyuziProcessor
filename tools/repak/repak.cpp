@@ -14,6 +14,7 @@
 // limitations under the License.
 //
 
+// .PAK is a proprietary file format for storing Quake level data.
 // The .PAK file is big, and the quakeview test program only needs a few
 // files from it. This is inconvenient when transfering it over the serial
 // port in the FPGA test environment. This utility creates a new .PAK
@@ -72,7 +73,6 @@ int main(int argc, char * const argv[])
 
     if (argc < optind + 2 && listFiles == 0)
     {
-        printf("optind %d argc %d\n", optind, argc);
         fprintf(stderr, "Not enough arguments\n");
         usage();
         return 1;
@@ -121,9 +121,8 @@ int main(int argc, char * const argv[])
         return 0;
     }
 
-    int numKeepEntries = argc - (optind + 1);
+    uint32_t numKeepEntries = uint32_t(argc - optind - 1);
     pakfile_t *newDirectory = new pakfile_t[numKeepEntries]();
-
     FILE *outputFile = fopen(outputFilename, "wb");
     if (!outputFile)
     {
@@ -147,10 +146,12 @@ int main(int argc, char * const argv[])
         return 1;
     }
 
-    int newDataOffset = numKeepEntries * sizeof(pakfile_t) + sizeof(pakheader_t);
-    for (int newDirIndex = 0; newDirIndex < numKeepEntries; newDirIndex++)
+    uint32_t newDataOffset = numKeepEntries * sizeof(pakfile_t)
+        + sizeof(pakheader_t);
+    for (uint32_t newDirIndex = 0; newDirIndex < numKeepEntries;
+        newDirIndex++)
     {
-        const char *filename = argv[newDirIndex + optind + 1];
+        const char *filename = argv[int(newDirIndex) + optind + 1];
         strcpy(newDirectory[newDirIndex].name, filename);
         newDirectory[newDirIndex].offset = newDataOffset;
 
@@ -161,7 +162,6 @@ int main(int argc, char * const argv[])
             if (strcmp(oldDirectory[i].name, filename) == 0)
             {
                 // Copy file contents from old to new file
-                printf("copying %s\n", oldDirectory[i].name);
                 newDirectory[newDirIndex].size = oldDirectory[i].size;
                 void *tmp = malloc(oldDirectory[i].size);
 
@@ -228,7 +228,8 @@ int main(int argc, char * const argv[])
         return 1;
     }
 
-    if (fwrite(newDirectory, sizeof(pakfile_t), numKeepEntries, outputFile) != numKeepEntries)
+    if (fwrite(newDirectory, sizeof(pakfile_t), numKeepEntries, outputFile)
+        != numKeepEntries)
     {
         perror("failed to write directory");
         fclose(inputFile);

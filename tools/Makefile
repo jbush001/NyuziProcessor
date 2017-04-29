@@ -18,9 +18,11 @@ all:
 	cd emulator && make
 	cd serial_boot && make
 	cd mkfs && make
+	cd repak && make
 
 clean:
 	cd emulator && make clean
 	cd serial_boot && make clean
 	cd mkfs && make clean
+	cd repak && make clean
 

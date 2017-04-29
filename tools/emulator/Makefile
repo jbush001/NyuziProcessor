@@ -40,7 +40,7 @@ all: $(OBJDIR) $(BINDIR) $(TARGET)
 
 $(TARGET): $(OBJS) $(DEPS)
 	echo $(OBJS)
-	gcc -g -o $@ $(OBJS) $(LIBS)
+	$(CC) -g -o $@ $(OBJS) $(LIBS)
 
 clean:
 	rm -rf $(OBJ_DIR)
