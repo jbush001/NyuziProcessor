@@ -37,8 +37,6 @@ counts = {}
 
 
 def findFunction(pc):
-    global functions
-
     low = 0
     high = len(functions)
     while low < high:

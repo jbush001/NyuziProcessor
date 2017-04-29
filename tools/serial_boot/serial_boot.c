@@ -459,7 +459,7 @@ void print_progress_bar(unsigned int current, unsigned int total)
     for (; i < PROGRESS_BAR_WIDTH; i++)
         printf(" ");
 
-    printf("] (%d%%)", current * 100 / total);
+    printf("] (%u%%)", current * 100 / total);
     fflush(stdout);
 }
 
@@ -550,13 +550,13 @@ int main(int argc, const char *argv[])
     if (!ping_target(serial_fd))
         return 1;
 
-    printf("Program is %d bytes\n", program_length);
+    printf("Program is %u bytes\n", program_length);
     if (!send_file(serial_fd, 0, program_data, program_length))
         return 1;
 
     if (ramdisk_data)
     {
-        printf("\n_ramdisk is %d bytes\n", ramdisk_length);
+        printf("\n_ramdisk is %u bytes\n", ramdisk_length);
         if (!send_file(serial_fd, RAMDISK_BASE, ramdisk_data, ramdisk_length))
             return 1;
     }

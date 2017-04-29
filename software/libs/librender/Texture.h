@@ -58,7 +58,7 @@ public:
 private:
     const Surface *fMipSurfaces[kMaxMipLevels];
     bool fEnableBilinearFiltering = false;
-    int fBaseMipBits;
+    int fBaseMipBits = 0;
     int fMaxMipLevel = 0;
 };
 

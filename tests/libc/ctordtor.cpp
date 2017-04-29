@@ -24,7 +24,7 @@
 class GlobalObj
 {
 public:
-    GlobalObj(char *_name)
+    explicit GlobalObj(char *_name)
         : name(_name)
     {
         printf("%s constructor\n", name);

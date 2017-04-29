@@ -19,9 +19,9 @@ import sys
 import binascii
 
 with open(sys.argv[1], 'rb') as f:
-	while True:
-		word = f.read(4)
-		if not word:
-			break
+    while True:
+        word = f.read(4)
+        if not word:
+            break
 
-		print(binascii.hexlify(word).decode())
+        print(binascii.hexlify(word).decode())

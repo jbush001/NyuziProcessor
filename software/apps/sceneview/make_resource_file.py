@@ -104,7 +104,7 @@ def read_texture(filename):
 
 
 def read_mtl_file(filename):
-    global texture_list, material_name_to_texture_idx
+    global material_name_to_texture_idx
 
     print('read material file ' + filename)
 
@@ -293,9 +293,6 @@ def align(addr, alignment):
 
 
 def write_resource_file(filename):
-    global texture_list
-    global mesh_list
-
     current_data_offset = 12 + len(texture_list) * \
         12 + len(mesh_list) * 16  # Skip header
     current_header_offset = 12

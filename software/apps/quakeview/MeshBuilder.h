@@ -39,12 +39,12 @@ private:
     void appendVertex(float value);
 
     int fNumAttributes;
-    int *fIndexVector;
+    int *fIndexVector = nullptr;
     int fNumIndices = 0;
-    float *fVertexVector;
+    float *fVertexVector = nullptr;
     int fNumVertexAttrs = 0;
     int fPolyPointCount = 0;
-    int fFirstPolyIndex;
-    int fPolyIndex1;
-    int fPolyIndex2;
+    int fFirstPolyIndex = 0;
+    int fPolyIndex1 = 0;
+    int fPolyIndex2 = 0;
 };

@@ -130,7 +130,7 @@ void RenderContext::finish()
 
 #if DISPLAY_STATS
     printf("total triangles = %d\n", fBaseSequenceNumber);
-    printf("used %d bytes\n", fAllocator.bytesUsed());
+    printf("used %u bytes\n", fAllocator.bytesUsed());
 #endif
 
     // Clean up memory
@@ -154,10 +154,7 @@ void RenderContext::shadeVertices(int index)
     if (numVertices < 16)
         mask = (1 << numVertices) - 1;
     else
-    {
-        numVertices = 16;
         mask = 0xffff;
-    }
 
     int attribsPerVertex = state.fShader->getNumAttribs();
     vecf16_t packedAttribs[attribsPerVertex];

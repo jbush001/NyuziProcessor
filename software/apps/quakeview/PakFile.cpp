@@ -218,7 +218,7 @@ void PakFile::loadTextureAtlas(const bspheader_t *bspHeader, const uint8_t *data
             continue;
         }
 
-        const miptex_t *texture = (const miptex_t*)(data + bspHeader->textures.offset
+        const miptex_t *texture = reinterpret_cast<const miptex_t*>(data + bspHeader->textures.offset
                                   + mipHeader->offset[textureIdx]);
         texArray[textureIdx].width = texture->width;
         texArray[textureIdx].height = texture->height;
@@ -346,7 +346,8 @@ void PakFile::loadLightmaps(const bspheader_t *bspHeader, const uint8_t *data)
     int numFaces = bspHeader->faces.length / sizeof(face_t);
     const int32_t *edgeList = (const int32_t*)(data + bspHeader->surfedges.offset);
     const edge_t *edges = (const edge_t*)(data + bspHeader->edges.offset);
-    const texture_info_t *texInfos = (const texture_info_t*)(data + bspHeader->texinfo.offset);
+    const texture_info_t *texInfos = reinterpret_cast<const texture_info_t*>(data
+        + bspHeader->texinfo.offset);
     const vertex_t *vertices = (const vertex_t*)(data + bspHeader->vertices.offset);
     const uint8_t *lightmaps = (const uint8_t*)(data + bspHeader->lighting.offset);
 
@@ -465,15 +466,23 @@ void PakFile::loadLightmaps(const bspheader_t *bspHeader, const uint8_t *data)
 
 void PakFile::loadBspNodes(const bspheader_t *bspHeader, const uint8_t *data)
 {
-    const leaf_t *leaves = (const leaf_t*)(data + bspHeader->leaves.offset);
-    const uint16_t *faceList = (const uint16_t*)(data + bspHeader->marksurfaces.offset);
-    const face_t *faces = (const face_t*)(data + bspHeader->faces.offset);
-    const int32_t *edgeList = (const int32_t*)(data + bspHeader->surfedges.offset);
-    const edge_t *edges = (const edge_t*)(data + bspHeader->edges.offset);
-    const vertex_t *vertices = (const vertex_t*)(data + bspHeader->vertices.offset);
-    const texture_info_t *texInfos = (const texture_info_t*)(data + bspHeader->texinfo.offset);
-    const bspnode_t *nodes = (const bspnode_t*)(data + bspHeader->nodes.offset);
-    const plane_t *planes = (const plane_t*)(data + bspHeader->planes.offset);
+    const leaf_t *leaves = reinterpret_cast<const leaf_t*>(data + bspHeader->leaves.offset);
+    const uint16_t *faceList = reinterpret_cast<const uint16_t*>(data
+        + bspHeader->marksurfaces.offset);
+    const face_t *faces = reinterpret_cast<const face_t*>(data
+        + bspHeader->faces.offset);
+    const int32_t *edgeList = reinterpret_cast<const int32_t*>(data
+        + bspHeader->surfedges.offset);
+    const edge_t *edges = reinterpret_cast<const edge_t*>(data
+        + bspHeader->edges.offset);
+    const vertex_t *vertices = reinterpret_cast<const vertex_t*>(data
+        + bspHeader->vertices.offset);
+    const texture_info_t *texInfos = reinterpret_cast<const texture_info_t*>(data
+        + bspHeader->texinfo.offset);
+    const bspnode_t *nodes = reinterpret_cast<const bspnode_t*>(data
+        + bspHeader->nodes.offset);
+    const plane_t *planes = reinterpret_cast<const plane_t*>(data
+        + bspHeader->planes.offset);
 
     fNumBspLeaves = bspHeader->leaves.length / sizeof(leaf_t);
     fNumInteriorNodes = bspHeader->nodes.length / sizeof(bspnode_t);

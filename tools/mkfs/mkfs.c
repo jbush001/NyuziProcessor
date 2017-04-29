@@ -69,7 +69,7 @@ int main(int argc, const char *argv[])
 
     file_offset = ROUND_UP((num_directory_entries - 1) * sizeof(struct directory_entry)
                           + sizeof(struct fs_header), BLOCK_SIZE);
-    printf("first file offset = %d\n", file_offset);
+    printf("first file offset = %u\n", file_offset);
     header_size = sizeof(struct fs_header) + sizeof(struct directory_entry)
         * (num_directory_entries - 1);
     header = (struct fs_header*) malloc(header_size);

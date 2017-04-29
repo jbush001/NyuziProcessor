@@ -42,7 +42,7 @@ int main()
 
     // The name is invalid and will fail to copy. Ensure it returns 0.
     ptr = create_area(0, 0x1000, AREA_PLACE_SEARCH_UP, (char*) 1, AREA_WRITABLE);
-    printf("create area returned %d\n", ptr);
+    printf("create area returned %p \n", ptr);
     // CHECK: create area returned 0
 }
 

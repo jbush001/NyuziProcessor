@@ -191,7 +191,7 @@ int close(int fd)
 
 int read(int fd, void *buf, unsigned int nbytes)
 {
-    unsigned int size_to_copy;
+    int size_to_copy;
     struct file_descriptor *fd_ptr;
     unsigned int slice_length;
     unsigned int total_read;
@@ -216,8 +216,8 @@ int read(int fd, void *buf, unsigned int nbytes)
     if (size_to_copy <= 0)
         return 0;	// End of file
 
-    if (nbytes > size_to_copy)
-        nbytes = size_to_copy;
+    if (nbytes > (unsigned int) size_to_copy)
+        nbytes = (unsigned int) size_to_copy;
 
     offset_in_block = fd_ptr->current_offset & (BLOCK_SIZE - 1);
     block_number = (fd_ptr->start_offset + fd_ptr->current_offset) / BLOCK_SIZE;

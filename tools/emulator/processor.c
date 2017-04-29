@@ -640,7 +640,7 @@ static void print_thread_registers(const struct thread *thread)
 static void set_scalar_reg(struct thread *thread, uint32_t reg, uint32_t value)
 {
     if (thread->core->proc->enable_tracing)
-        printf("%08x [th %d] s%d <= %08x\n", thread->pc - 4, thread->id, reg, value);
+        printf("%08x [th %u] s%d <= %08x\n", thread->pc - 4, thread->id, reg, value);
 
     if (thread->core->proc->enable_cosim)
     {
@@ -658,7 +658,7 @@ static void set_vector_reg(struct thread *thread, uint32_t reg, uint32_t mask,
 
     if (thread->core->proc->enable_tracing)
     {
-        printf("%08x [th %d] v%d{%04x} <= ", thread->pc - 4, thread->id, reg,
+        printf("%08x [th %u] v%d{%04x} <= ", thread->pc - 4, thread->id, reg,
                mask & 0xffff);
         for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
             printf("%08x ", values[lane]);
@@ -716,7 +716,7 @@ static void raise_trap(struct thread *thread, uint32_t trap_address, enum trap_t
 {
     if (thread->core->proc->enable_tracing)
     {
-        printf("%08x [th %d] trap %d store %d cache %d %08x\n",
+        printf("%08x [th %u] trap %d store %d cache %d %08x\n",
                thread->pc - 4, thread->id, type, is_store, is_data_cache,
                trap_address);
     }
@@ -1391,7 +1391,7 @@ static void execute_scalar_load_store_inst(struct thread *thread, uint32_t instr
             invalidate_sync_address(thread->core, physical_address);
             if (thread->core->proc->enable_tracing)
             {
-                printf("%08x [th %d] memory store size %d %08x %02x\n", thread->pc - 4,
+                printf("%08x [th %u] memory store size %d %08x %02x\n", thread->pc - 4,
                        thread->id, access_size, virtual_address, value_to_store);
             }
 
@@ -1468,7 +1468,7 @@ static void execute_block_load_store_inst(struct thread *thread, uint32_t instru
 
         if (thread->core->proc->enable_tracing)
         {
-            printf("%08x [th %d] write_mem_block %08x\n", thread->pc - 4, thread->id,
+            printf("%08x [th %u] write_mem_block %08x\n", thread->pc - 4, thread->id,
                    virtual_address);
         }
 
@@ -1541,7 +1541,7 @@ static void execute_scatter_gather_inst(struct thread *thread, uint32_t instruct
     {
         if (thread->core->proc->enable_tracing)
         {
-            printf("%08x [th %d] store_scatter (%d) %08x %08x\n", thread->pc - 4,
+            printf("%08x [th %u] store_scatter (%d) %08x %08x\n", thread->pc - 4,
                    thread->id, thread->subcycle, virtual_address,
                    thread->vector_reg[destsrcreg][lane]);
         }

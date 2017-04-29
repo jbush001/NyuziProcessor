@@ -31,7 +31,7 @@ const float kOneOver255 = 1.0 / 255.0;
 
 // Convert a 32-bit RGBA color (packed in an integer) into four floating point (0.0 - 1.0)
 // color channels.
-void unpackRGBA(veci16_t packedColor, vecf16_t outColor[3])
+void unpackRGBA(veci16_t packedColor, vecf16_t *outColor)
 {
     outColor[kColorR] = __builtin_convertvector(packedColor & 255, vecf16_t)
                         * kOneOver255;

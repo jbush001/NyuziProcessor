@@ -137,7 +137,7 @@ int run_cosimulation(struct processor *proc, bool verbose)
             verilog_model_halted = true;
             break;
         }
-        else if (sscanf(line, "interrupt %d %x", &thread_id, &pc) == 2)
+        else if (sscanf(line, "interrupt %u %x", &thread_id, &pc) == 2)
             cosim_interrupt(proc, thread_id, pc);
         else if (!verbose)
             printf("%s\n", line);	// Echo unrecognized lines to stdout (verbose already does this for all lines)

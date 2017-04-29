@@ -123,10 +123,10 @@ int main()
     printf("5.5 %d\n", get_sign(noinline_strncmp("foot", "foo", 4)));   // CHECK: 5.5 1
     printf("5.6 %d\n", get_sign(noinline_strncmp("fpo", "foo", 4)));    // CHECK: 5.6 1
 
-    printf("6.1 %d\n", noinline_strlen(""));        // CHECK: 6.1 0
-    printf("6.2 %d\n", noinline_strlen("a"));       // CHECK: 6.2 1
-    printf("6.3 %d\n", noinline_strlen("ab"));      // CHECK: 6.3 2
-    printf("6.4 %d\n", noinline_strlen("abcdefg")); // CHECK: 6.4 7
+    printf("6.1 %u\n", noinline_strlen(""));        // CHECK: 6.1 0
+    printf("6.2 %u\n", noinline_strlen("a"));       // CHECK: 6.2 1
+    printf("6.3 %u\n", noinline_strlen("ab"));      // CHECK: 6.3 2
+    printf("6.4 %u\n", noinline_strlen("abcdefg")); // CHECK: 6.4 7
 
     noinline_strcpy(dest, "jasdfha");
     printf("7.1 \"%s\"\n", dest);   // CHECK: 7.1 "jasdfha"
@@ -147,13 +147,13 @@ int main()
     printf("9.1 %d\n", noinline_strchr(search_str, 'a') - search_str); // CHECK: 9.1 0
     printf("9.2 %d\n", noinline_strchr(search_str, 'c') - search_str); // CHECK: 9.2 2
     printf("9.3 %d\n", noinline_strchr(search_str, 'g') - search_str); // CHECK: 9.3 6
-    printf("9.4 %d\n", noinline_strchr(search_str, 'h')); // CHECK: 9.4 0
+    printf("9.4 %p\n", noinline_strchr(search_str, 'h')); // CHECK: 9.4 0
 
     printf("10.1 %d\n", (char*) noinline_memchr(search_str, 'a', 7) - search_str); // CHECK: 10.1 0
     printf("10.2 %d\n", (char*) noinline_memchr(search_str, 'c', 7) - search_str); // CHECK: 10.2 2
     printf("10.3 %d\n", (char*) noinline_memchr(search_str, 'g', 7) - search_str); // CHECK: 10.3 6
-    printf("10.4 %d\n", (char*) noinline_memchr(search_str, 'h', 7)); // CHECK: 10.4 0
-    printf("10.5 %d\n", (char*) noinline_memchr(search_str, 'd', 3)); // CHECK: 10.5 0
+    printf("10.4 %p\n", (char*) noinline_memchr(search_str, 'h', 7)); // CHECK: 10.4 0
+    printf("10.5 %p\n", (char*) noinline_memchr(search_str, 'd', 3)); // CHECK: 10.5 0
 
     dest[0] = '\0';
     noinline_strcat(dest, "abc");
