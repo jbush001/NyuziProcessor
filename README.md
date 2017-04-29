@@ -1,6 +1,7 @@
 # Nyuzi Processor
 [![Build Status](https://travis-ci.org/jbush001/NyuziProcessor.svg?branch=master)](https://travis-ci.org/jbush001/NyuziProcessor)
 [![Chat at https://gitter.im/jbush001/NyuziProcessor](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jbush001/NyuziProcessor?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/fbafdd72749e459d8de6f381abc7436d)](https://www.codacy.com/app/jbush001/NyuziProcessor?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jbush001/NyuziProcessor&amp;utm_campaign=Badge_Grade)
 
 Nyuzi is an experimental multicore GPGPU processor. It supports vector floating
 point, hardware multithreading, virtual memory, and cache coherence. The
