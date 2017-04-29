@@ -130,7 +130,7 @@ void PakFile::dumpEntities() const
 void PakFile::readBspFile(const char *bspFilename)
 {
     uint8_t *data = (uint8_t*) readFile(bspFilename);
-    if (!data)
+    if (data == nullptr)
     {
         printf("Couldn't find BSP file");
         return;
@@ -244,7 +244,7 @@ void PakFile::loadTextureAtlas(const bspheader_t *bspHeader, const uint8_t *data
     //
     // Create atlas mip surfaces
     //
-    Surface *atlasSurfaces[kNumMipLevels];	// One for each mip level
+    Surface *atlasSurfaces[kNumMipLevels]; // One for each mip level
     for (int mipLevel = 0; mipLevel < kNumMipLevels; mipLevel++)
     {
         atlasSurfaces[mipLevel] = new Surface(kAtlasSize >> mipLevel, kAtlasSize >> mipLevel);
@@ -262,7 +262,7 @@ void PakFile::loadTextureAtlas(const bspheader_t *bspHeader, const uint8_t *data
     for (int textureIdx = 0; textureIdx < mipHeader->numTextures; textureIdx++)
     {
         if (texArray[textureIdx].data[0] == nullptr)
-            continue;	// Skip unused texture entries
+            continue;    // Skip unused texture entries
 
         if (destX + texArray[textureIdx].width + kGuardMargin > kAtlasSize)
         {
@@ -294,7 +294,7 @@ void PakFile::loadTextureAtlas(const bspheader_t *bspHeader, const uint8_t *data
                              + ((destY >> mipLevel) * destStride + (destX >> mipLevel));
             const uint8_t *src = static_cast<const uint8_t*>(texArray[textureIdx].data[mipLevel]);
             if (src == nullptr)
-                continue;	// Skip unused texture
+                continue;    // Skip unused texture
 
 #define dest_pixel(x, y) dest[(y) * destStride + (x)]
 #define src_pixel(x, y) palette[src[(y) * srcMipWidth + (x)]]
@@ -428,7 +428,7 @@ void PakFile::loadLightmaps(const bspheader_t *bspHeader, const uint8_t *data)
 
         AtlasEntry &atlasEnt = fLightmapAtlasEntries[faceIndex];
         if (face.lightOffset < 0)
-            continue;	// No map
+            continue;    // No map
 
         atlasEnt.left = float(lightmapX) / (kLightmapSize - 1);
         atlasEnt.bottom = 1.0 - (float(lightmapY + lightmapPixelHeight - 1) / (kLightmapSize - 1));
@@ -670,7 +670,7 @@ void PakFile::parseEntities(const char *data)
         }
         else if (*c == '{')
         {
-            if (!inName)
+            if (inName == 0)
             {
                 printf("missing value\n");
                 return;

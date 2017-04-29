@@ -20,7 +20,7 @@
 #include "MeshBuilder.h"
 
 MeshBuilder::MeshBuilder(int numAttributes)
-    : 	fNumAttributes(numAttributes)
+    : fNumAttributes(numAttributes)
 {
 }
 

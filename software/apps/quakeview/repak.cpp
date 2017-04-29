@@ -70,7 +70,7 @@ int main(int argc, char * const argv[])
         }
     }
 
-    if (argc < optind + 2 && !listFiles)
+    if (argc < optind + 2 && listFiles == 0)
     {
         printf("optind %d argc %d\n", optind, argc);
         fprintf(stderr, "Not enough arguments\n");
@@ -117,6 +117,7 @@ int main(int argc, char * const argv[])
         for (int i = 0; i < numOldDirEntries; i++)
             printf("  %s\n", oldDirectory[i].name);
 
+        fclose(inputFile);
         return 0;
     }
 
@@ -127,6 +128,7 @@ int main(int argc, char * const argv[])
     if (!outputFile)
     {
         perror("Couldn't write output file");
+        fclose(inputFile);
         delete [] oldDirectory;
         return 1;
     }
@@ -139,6 +141,9 @@ int main(int argc, char * const argv[])
     if (fwrite(&newHeader, sizeof(pakheader_t), 1, outputFile) != 1)
     {
         perror("fwrite failed");
+        fclose(inputFile);
+        fclose(outputFile);
+        delete [] oldDirectory;
         return 1;
     }
 
@@ -163,24 +168,36 @@ int main(int argc, char * const argv[])
                 if (fseek(inputFile, oldDirectory[i].offset, SEEK_SET))
                 {
                     perror("error seeking old file");
+                    fclose(inputFile);
+                    fclose(outputFile);
+                    delete [] oldDirectory;
                     return 1;
                 }
 
                 if (fread(tmp, oldDirectory[i].size, 1, inputFile) != 1)
                 {
                     perror("error reading old file");
+                    fclose(inputFile);
+                    fclose(outputFile);
+                    delete [] oldDirectory;
                     return 1;
                 }
 
                 if (fseek(outputFile, newDataOffset, SEEK_SET))
                 {
                     perror("error seeking new file");
+                    fclose(inputFile);
+                    fclose(outputFile);
+                    delete [] oldDirectory;
                     return 1;
                 }
 
                 if (fwrite(tmp, oldDirectory[i].size, 1, outputFile) != 1)
                 {
                     perror("error writing new file");
+                    fclose(inputFile);
+                    fclose(outputFile);
+                    delete [] oldDirectory;
                     return 1;
                 }
 
@@ -194,6 +211,9 @@ int main(int argc, char * const argv[])
         if (!foundOldEntry)
         {
             printf("Couldn't find %s in original file\n", filename);
+            fclose(inputFile);
+            fclose(outputFile);
+            delete [] oldDirectory;
             return 1;
         }
     }
@@ -202,17 +222,24 @@ int main(int argc, char * const argv[])
     if (fseek(outputFile, sizeof(pakheader_t), SEEK_SET))
     {
         perror("error seeking in output file");
+        fclose(inputFile);
+        fclose(outputFile);
+        delete [] oldDirectory;
         return 1;
     }
 
     if (fwrite(newDirectory, sizeof(pakfile_t), numKeepEntries, outputFile) != numKeepEntries)
     {
         perror("failed to write directory");
+        fclose(inputFile);
+        fclose(outputFile);
+        delete [] oldDirectory;
         return 1;
     }
 
     fclose(inputFile);
     fclose(outputFile);
+    delete [] oldDirectory;
 
     return 0;
 }
