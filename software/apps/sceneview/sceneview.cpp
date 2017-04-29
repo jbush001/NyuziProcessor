@@ -73,6 +73,7 @@ char *readResourceFile()
     if (fread(&header, sizeof(header), 1, fp) != 1)
     {
         printf("error reading resource file header\n");
+        fclose(fp);
         return nullptr;
     }
 
@@ -82,6 +83,7 @@ char *readResourceFile()
     fseek(fp, 0, SEEK_SET);
     if (fread(resourceData, header.fileSize, 1, fp) != 1)
     {
+        fclose(fp);
         printf("error reading resource file\n");
         return nullptr;
     }
@@ -246,6 +248,8 @@ int main()
         context->finish();
         printf("rendered frame in %d uS\n", clock() - startTime);
     }
+
+    delete[] textures;
 
     return 0;
 }

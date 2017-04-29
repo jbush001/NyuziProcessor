@@ -109,17 +109,17 @@ private:
     void loadBspNodes(const bspheader_t *bspHeader, const uint8_t *data);
     void parseEntities(const char *data);
 
-    pakfile_t *fDirectory;
+    pakfile_t *fDirectory = nullptr;
     int fNumDirEntries;
-    librender::Texture *fTextureAtlasTexture;
-    librender::Texture *fLightmapAtlasTexture;
-    AtlasEntry *fTextureAtlasEntries;
-    AtlasEntry *fLightmapAtlasEntries;
+    librender::Texture *fTextureAtlasTexture = nullptr;
+    librender::Texture *fLightmapAtlasTexture = nullptr;
+    AtlasEntry *fTextureAtlasEntries = nullptr;
+    AtlasEntry *fLightmapAtlasEntries = nullptr;
     int fNumBspLeaves;
     int fNumTextures;
-    FILE *fFile;
-    RenderBspNode *fBspNodes;
-    uint8_t *fPvsData;
+    FILE *fFile = nullptr;
+    RenderBspNode *fBspNodes = nullptr;
+    uint8_t *fPvsData = nullptr;
     int fNumInteriorNodes;
     Entity *fEntityList = nullptr;
 };

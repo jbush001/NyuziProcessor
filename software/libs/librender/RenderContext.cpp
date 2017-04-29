@@ -130,7 +130,7 @@ void RenderContext::finish()
 
 #if DISPLAY_STATS
     printf("total triangles = %d\n", fBaseSequenceNumber);
-    printf("used %lu bytes\n", fAllocator.bytesUsed());
+    printf("used %zu bytes\n", fAllocator.bytesUsed());
 #endif
 
     // Clean up memory

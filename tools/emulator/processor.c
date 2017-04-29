@@ -198,6 +198,7 @@ struct processor *init_processor(uint32_t memory_size, uint32_t num_cores,
         if (shared_memory_fd < 0)
         {
             perror("init_processor: Error opening shared memory file");
+            free(proc);
             return NULL;
         }
 
@@ -296,6 +297,7 @@ int load_hex_file(struct processor *proc, const char *filename)
         *memptr++ = endian_swap32((uint32_t) strtoul(line, NULL, 16));
         if ((uint32_t)((memptr - proc->memory) * 4) >= proc->memory_size)
         {
+            fclose(file);
             fprintf(stderr, "load_hex_file: hex file too big to fit in memory\n");
             return -1;
         }
@@ -320,6 +322,7 @@ void write_memory_to_file(const struct processor *proc, const char *filename,
 
     if (fwrite((int8_t*) proc->memory + base_address, MIN(proc->memory_size, length), 1, file) <= 0)
     {
+        fclose(file);
         perror("write_memory_to_file: fwrite failed");
         return;
     }

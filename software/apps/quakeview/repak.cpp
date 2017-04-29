@@ -89,6 +89,7 @@ int main(int argc, char * const argv[])
     if (fread(&header, sizeof(header), 1, inputFile) != 1)
     {
         perror("error reading file");
+        fclose(inputFile);
         return 1;
     }
 
@@ -103,6 +104,8 @@ int main(int argc, char * const argv[])
     fseek(inputFile, header.dirOffset, SEEK_SET);
     if (fread(oldDirectory, header.dirSize, 1, inputFile) != 1)
     {
+        free(oldDirectory)
+        fclose(inputFile);
         perror("error reading directory");
         return 1;
     }
@@ -117,7 +120,7 @@ int main(int argc, char * const argv[])
     }
 
     int numKeepEntries = argc - (optind + 1);
-    pakfile_t *newDirectory = new pakfile_t[numKeepEntries];
+    pakfile_t *newDirectory = new pakfile_t[numKeepEntries]();
 
     FILE *outputFile = fopen(outputFilename, "wb");
     if (!outputFile)

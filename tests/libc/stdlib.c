@@ -46,22 +46,22 @@ int main()
 
         search_key = 1;
         search_result = (int*) bsearch(&search_key, values, 13, sizeof(int), compare_int_values);
-        printf("bsearch 1 %d\n", (search_result - values));
+        printf("bsearch 1 %td\n", (search_result - values));
         // CHECK: bsearch 1 0
 
         search_key = 6;
         search_result = (int*) bsearch(&search_key, values, 13, sizeof(int), compare_int_values);
-        printf("bsearch 6 %d\n", (search_result - values));
+        printf("bsearch 6 %td\n", (search_result - values));
         // CHECK: bsearch 6 5
 
         search_key = 17;
         search_result = (int*) bsearch(&search_key, values, 13, sizeof(int), compare_int_values);
-        printf("bsearch 17 %d\n", (search_result - values));
+        printf("bsearch 17 %td\n", (search_result - values));
         // CHECK: bsearch 17 8
 
         search_key = 29;
         search_result = (int*) bsearch(&search_key, values, 13, sizeof(int), compare_int_values);
-        printf("bsearch 29 %d\n", (search_result - values));
+        printf("bsearch 29 %td\n", (search_result - values));
         // CHECK: bsearch 29 12
     }
 }

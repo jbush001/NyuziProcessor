@@ -27,9 +27,15 @@ MeshBuilder::MeshBuilder(int numAttributes)
 void MeshBuilder::appendIndex(int value)
 {
     if (fNumIndices == 0)
-        fIndexVector = (int*) malloc(sizeof(int) * kMinAlloc);
-    else if (fNumIndices >= kMinAlloc && (fNumIndices & (fNumIndices - 1)) == 0)
-        fIndexVector = (int*) realloc(fIndexVector, fNumIndices * 2 * sizeof(int));
+        fIndexVector = static_cast<int*>(malloc(sizeof(int) * kMinAlloc));
+    else if (fNumIndices >= kMinAlloc && (fNumIndices & (fNumIndices - 1)) == 0) {
+        int *newArray = static_cast<int*>(realloc(fIndexVector, fNumIndices
+            * 2 * sizeof(int)));
+        if (newArray == nullptr)
+            return;
+
+        fIndexVector = newArray;
+    }
 
     fIndexVector[fNumIndices++] = value;
 }

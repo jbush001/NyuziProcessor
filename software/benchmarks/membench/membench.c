@@ -92,8 +92,10 @@ void read_test()
     do
     {
         // The compiler will automatically unroll this
-        for (unroll_count = 0; unroll_count < LOOP_UNROLL; unroll_count++)
+        for (unroll_count = 0; unroll_count < LOOP_UNROLL; unroll_count++) {
             result = src[unroll_count];
+            (void) result;
+        }
 
         src += NUM_THREADS * LOOP_UNROLL;
     }

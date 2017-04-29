@@ -119,12 +119,14 @@ int main(int argc, const char *argv[])
             if (fread(tmp, slice_length, 1, source_fp) != 1)
             {
                 perror("error reading from source file");
+                fclose(source_fp);
                 return 1;
             }
 
             if (fwrite(tmp, slice_length, 1, output_fp) != 1)
             {
                 perror("error writing to output file");
+                fclose(source_fp);
                 return 1;
             }
 

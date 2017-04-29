@@ -369,6 +369,8 @@ int main(int argc, char *argv[])
     if (enable_memory_dump)
         write_memory_to_file(proc, mem_dump_filename, mem_dump_base, mem_dump_length);
 
+    free(mem_dump_filename);
+
     dump_instruction_stats(proc);
     if (block_device_open)
         close_block_device();

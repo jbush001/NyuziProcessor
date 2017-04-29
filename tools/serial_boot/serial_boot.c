@@ -437,6 +437,7 @@ int read_binary_file(const char *filename, unsigned char **out_ptr, unsigned int
     if (fread(data, file_length, 1, input_file) != 1)
     {
         perror("Error reading file");
+        fclose(input_file);
         return 0;
     }
 

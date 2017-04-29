@@ -29,6 +29,9 @@ using namespace librender;
 
 bool PakFile::open(const char *filename)
 {
+    if (fFile)
+        fclose(fFile);
+
     fFile = fopen(filename, "rb");
 
     pakheader_t header;
@@ -174,7 +177,8 @@ namespace
 
 int compareTexturePackingData(const void *a, const void *b)
 {
-    return ((const TexturePackingData*) b)->height - ((const TexturePackingData*) a)->height;
+    return reinterpret_cast<const TexturePackingData*>(b)->height
+        - reinterpret_cast<const TexturePackingData*>(a)->height;
 }
 
 }

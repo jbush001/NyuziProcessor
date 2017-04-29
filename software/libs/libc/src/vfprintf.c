@@ -36,7 +36,7 @@
 
 static const char *kHexDigits = "0123456789abcdef";
 static const char *kFlagCharacters = "-+ 0";
-static const char *kPrefixCharacters = "FNhlL";
+static const char *kPrefixCharacters = "FNhlLzt";
 
 /*
  *	 % flags width .precision prefix format
