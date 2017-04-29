@@ -155,7 +155,7 @@ int main()
         for (int i = 0; i < NUM_PALETTE_ENTRIES; i++)
         {
 #ifdef STRIPES
-            int j = (i >> 3) & 1 ? 0xff : 0;
+            int j = ((i >> 3) & 1) != 0 ? 0xff : 0;
             gPalette[i] = (j << 16) | (j << 8) | j;
 #else
             gPalette[i] = (uint32_t(128 + 127 * sin(M_PI * i / (NUM_PALETTE_ENTRIES / 8))) << 16)

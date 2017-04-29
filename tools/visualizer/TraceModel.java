@@ -58,7 +58,6 @@ class TraceModel
             FileInputStream fstream = new FileInputStream(filename);
             DataInputStream in = new DataInputStream(fstream);
             BufferedReader br = new BufferedReader(new InputStreamReader(in));
-            String line;
             for (fNumEvents = 0; fNumEvents < kMaxLines; fNumEvents++)
             {
                 String eventLine = br.readLine();

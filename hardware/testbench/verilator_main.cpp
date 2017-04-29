@@ -41,7 +41,6 @@ double sc_time_stamp()
 
 int main(int argc, char **argv, char **env)
 {
-    unsigned int randomSeed;
     unsigned int randomizeRegs;
 
     Verilated::commandArgs(argc, argv);
@@ -55,6 +54,7 @@ int main(int argc, char **argv, char **env)
     if (randomizeRegs)
     {
         // Initialize random seed.
+        unsigned int randomSeed;
         if (VL_VALUEPLUSARGS_II(32, "randseed=", 'd', randomSeed))
             srand48(randomSeed);
         else
