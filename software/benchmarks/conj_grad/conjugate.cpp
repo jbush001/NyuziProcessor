@@ -38,7 +38,7 @@ float mag2(const vecf16 &v1)
 
 vecf16 mul(const matrix &m1, const vecf16 &v2)
 {
-    int i, j;
+    int i;
     vecf16 v_ret;
     vecf16 v_tmp = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     for (i = 0; i < 16; i ++)
