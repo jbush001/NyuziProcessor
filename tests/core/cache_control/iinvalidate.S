@@ -23,7 +23,7 @@
             .globl _start
 
 _start:     lea s0, jumploc
-            li s1, 0xf6000014    // b +20
+            li s1, 0xf6000005    // b +20
 
 looptop:    move s10, 1
 jumploc:    nop                // This location will be patched

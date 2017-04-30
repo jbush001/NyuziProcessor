@@ -85,8 +85,8 @@ module instruction_decode_stage(
         IMM_23_10,  // Unmasked immediate arithmetic
         IMM_24_15,  // Masked memory access
         IMM_24_10,  // Unmasked memory access
-        IMM_24_5,   // Small branch offset
-        IMM_24_0,   // Large branch offset
+        IMM_24_5,   // Small branch offset (multiply by four)
+        IMM_24_0,   // Large branch offset (multiply by four)
         IMM_EXT_19  // 19 bit extended immediate value
     } imm_loc_t;
 
@@ -335,8 +335,10 @@ module instruction_decode_stage(
             IMM_23_10: decoded_instr_nxt.immediate_value = scalar_t'($signed(ifd_instruction[23:10]));
             IMM_24_15: decoded_instr_nxt.immediate_value = scalar_t'($signed(ifd_instruction[24:15]));
             IMM_24_10: decoded_instr_nxt.immediate_value = scalar_t'($signed(ifd_instruction[24:10]));
-            IMM_24_5: decoded_instr_nxt.immediate_value = scalar_t'($signed(ifd_instruction[24:5]));
-            IMM_24_0: decoded_instr_nxt.immediate_value = scalar_t'($signed(ifd_instruction[24:0]));
+
+            // Branch offsets are multiplied by four
+            IMM_24_5: decoded_instr_nxt.immediate_value = scalar_t'($signed({ifd_instruction[24:5], 2'b00}));
+            IMM_24_0: decoded_instr_nxt.immediate_value = scalar_t'($signed({ifd_instruction[24:0], 2'b00}));
             default: decoded_instr_nxt.immediate_value = 0;
         endcase
     end

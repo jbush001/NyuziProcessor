@@ -528,7 +528,7 @@ def gdb_crash(_):
     hexfile = test_harness.build_program(['crash.S'], image_type='raw')
     with EmulatorProcess(hexfile), DebugConnection() as conn:
         conn.expect('c', 'S05')
-        conn.expect('g40', '15000000')
+        conn.expect('g40', '10000000')
 
 
 test_harness.execute_tests()

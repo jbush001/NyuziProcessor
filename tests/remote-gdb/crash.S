@@ -19,5 +19,5 @@ _start:     nop
             nop
             nop
             nop
-            b 1  // This will crash because of an unaligned address
+            .long (0xc0000000 | (3 << 26)) # Invalid register arithmetic type
 
