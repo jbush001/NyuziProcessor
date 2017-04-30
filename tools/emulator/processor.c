@@ -1776,8 +1776,10 @@ static void execute_memory_access_inst(struct thread *thread, uint32_t instructi
 static void execute_branch_inst(struct thread *thread, uint32_t instruction)
 {
     uint32_t src_reg = extract_unsigned_bits(instruction, 0, 5);
-    uint32_t offset20 = extract_signed_bits(instruction, 5, 20) * 4;
-    uint32_t offset25 = extract_signed_bits(instruction, 0, 25) * 4;
+
+    // Subtract 4 because PC was already incremented after fetching instruction
+    uint32_t offset20 = extract_signed_bits(instruction, 5, 20) * 4 - 4;
+    uint32_t offset25 = extract_signed_bits(instruction, 0, 25) * 4 - 4;
 
     TALLY_INSTRUCTION(branch_inst);
     switch (extract_unsigned_bits(instruction, 25, 3))
