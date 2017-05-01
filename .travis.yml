@@ -11,9 +11,8 @@ git:
   submodules: false
 
 # Pull a container from DockerHub that has Verilator and the Nyuzi toolchain.
-# https://hub.docker.com/r/jeffbush001/nyuzi-build/
-# I built this on my machine using Dockerfile and scripts from here:
-# https://github.com/jbush001/NyuziBuildContainer
+# https://hub.docker.com/r/jeffbush001/nyuzi-build/. It is created using
+# build/Dockerfile and build/build-container.sh.
 before_install:
 - docker pull jeffbush001/nyuzi-build
 
