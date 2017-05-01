@@ -164,8 +164,6 @@ module thread_select_stage(
             // fills up because there are several stages in-between.
             assign ts_fetch_en[thread_idx] = !ififo_almost_full && thread_en[thread_idx];
 
-            /// XXX PC should not be tracked by the scoreboard
-
             // Generate destination register bitmap for the next instruction
             // to be issued.
             always_comb
