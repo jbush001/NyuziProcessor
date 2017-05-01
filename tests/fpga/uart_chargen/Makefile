@@ -28,11 +28,11 @@ $(OBJ_DIR)/chargen.hex: $(CRT0_BARE) $(OBJS)
 	$(LD) -o $(OBJ_DIR)/chargen.elf $(LDFLAGS) $(CRT0_BARE) $(OBJS) $(LIBS) -los-bare $(LDFLAGS)
 	$(ELF2HEX) -o $(OBJ_DIR)/chargen.hex $(OBJ_DIR)/chargen.elf
 
-fpgarun: chargen.hex
-	$(SERIAL_BOOT) $(SERIAL_PORT) chargen.hex
+fpgarun: $(OBJ_DIR)/chargen.hex
+	$(SERIAL_BOOT) $(SERIAL_PORT) $(OBJ_DIR)/chargen.hex
 
 run-verilator: chargen.hex
-	../../../bin/verilator_model +bin=chargen.hex
+	../../../bin/verilator_model +bin=$(OBJ_DIR)/chargen.hex
 
 clean: FORCE
 	rm -f chargen.elf chargen.hex
