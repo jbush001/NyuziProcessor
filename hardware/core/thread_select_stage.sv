@@ -71,7 +71,7 @@ module thread_select_stage(
     localparam THREAD_FIFO_SIZE = 8;
 
     // Number of stages in longest pipeline
-    localparam ROLLBACK_STAGES = 5;
+    localparam ROLLBACK_STAGES = 4;
 
     // Difference between longest and shortest execution pipeline
     localparam WRITEBACK_ALLOC_STAGES = 4;

@@ -18,10 +18,7 @@
 
 //
 // Contains vector and scalar register files and fetches values
-// from them. This stage has two cycles of latency. The first stage
-// fetches the results from register SRAM, which has one cycle of
-// latency. The second stage steers the register results to the
-// appropriate operand ports.
+// from them.
 //
 
 module operand_fetch_stage(
@@ -58,14 +55,7 @@ module operand_fetch_stage(
     scalar_t scalar_val2;
     vector_t vector_val1;
     vector_t vector_val2;
-    decoded_instruction_t cyc1_instruction;
-    logic cyc1_instruction_valid;
-    thread_idx_t cyc1_thread_idx;
-    subcycle_t cyc1_subcycle;
 
-    //
-    // Fetch register values (cycle 1)
-    //
     sram_2r1w #(
         .DATA_WIDTH($bits(scalar_t)),
         .SIZE(32 * `THREADS_PER_CORE),
@@ -107,60 +97,42 @@ module operand_fetch_stage(
     always_ff @(posedge clk, posedge reset)
     begin
         if (reset)
-            cyc1_instruction_valid <= 0;
+            of_instruction_valid <= 0;
         else
         begin
-            cyc1_instruction_valid <= ts_instruction_valid
+            of_instruction_valid <= ts_instruction_valid
                 && (!wb_rollback_en || wb_rollback_thread_idx != ts_thread_idx);
         end
     end
 
     always_ff @(posedge clk)
     begin
-        cyc1_instruction <= ts_instruction;
-        cyc1_thread_idx <= ts_thread_idx;
-        cyc1_subcycle <= ts_subcycle;
+        of_instruction <= ts_instruction;
+        of_thread_idx <= ts_thread_idx;
+        of_subcycle <= ts_subcycle;
     end
 
-    //
-    // Output stage (cycle 2)
-    //
-    always_ff @(posedge clk, posedge reset)
-    begin
-        if (reset)
-            of_instruction_valid <= 0;
-        else
-        begin
-            of_instruction_valid <= cyc1_instruction_valid && (!wb_rollback_en
-                || wb_rollback_thread_idx != cyc1_thread_idx);
-        end
-    end
-
-    always_ff @(posedge clk)
-    begin
-        of_instruction <= cyc1_instruction;
-        of_thread_idx <= cyc1_thread_idx;
-        of_subcycle <= cyc1_subcycle;
-
-        case (cyc1_instruction.op1_src)
-            OP1_SRC_VECTOR1: of_operand1 <= vector_val1;
-            default:         of_operand1 <= {`VECTOR_LANES{scalar_val1}};    // OP_SRC_SCALAR1
-        endcase
-
-        case (cyc1_instruction.op2_src)
-            OP2_SRC_SCALAR2: of_operand2 <= {`VECTOR_LANES{scalar_val2}};
-            OP2_SRC_VECTOR2: of_operand2 <= vector_val2;
-            default:         of_operand2 <= {`VECTOR_LANES{cyc1_instruction.immediate_value}}; // OP2_SRC_IMMEDIATE
-        endcase
-
-        case (cyc1_instruction.mask_src)
-            MASK_SRC_SCALAR1: of_mask_value <= scalar_val1[`VECTOR_LANES - 1:0];
-            MASK_SRC_SCALAR2: of_mask_value <= scalar_val2[`VECTOR_LANES - 1:0];
-            default:          of_mask_value <= {`VECTOR_LANES{1'b1}};    // MASK_SRC_ALL_ONES
-        endcase
-
-        of_store_value <= cyc1_instruction.store_value_is_vector
+    assign of_store_value = of_instruction.store_value_is_vector
             ? vector_val2
             : {{`VECTOR_LANES - 1{32'd0}}, scalar_val2};
+
+    always_comb
+    begin
+        case (of_instruction.op1_src)
+            OP1_SRC_VECTOR1: of_operand1 = vector_val1;
+            default:         of_operand1 = {`VECTOR_LANES{scalar_val1}};    // OP_SRC_SCALAR1
+        endcase
+
+        case (of_instruction.op2_src)
+            OP2_SRC_SCALAR2: of_operand2 = {`VECTOR_LANES{scalar_val2}};
+            OP2_SRC_VECTOR2: of_operand2 = vector_val2;
+            default:         of_operand2 = {`VECTOR_LANES{of_instruction.immediate_value}}; // OP2_SRC_IMMEDIATE
+        endcase
+
+        case (of_instruction.mask_src)
+            MASK_SRC_SCALAR1: of_mask_value = scalar_val1[`VECTOR_LANES - 1:0];
+            MASK_SRC_SCALAR2: of_mask_value = scalar_val2[`VECTOR_LANES - 1:0];
+            default:          of_mask_value = {`VECTOR_LANES{1'b1}};    // MASK_SRC_ALL_ONES
+        endcase
     end
 endmodule
