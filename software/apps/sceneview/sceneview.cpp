@@ -151,7 +151,9 @@ int main()
     // Set up resource data
     char *resourceData = readResourceFile();
     const FileHeader *resourceHeader = (FileHeader*) resourceData;
+#ifndef TEST_TEXTURE
     const TextureEntry *texHeader = (TextureEntry*)(resourceData + sizeof(FileHeader));
+#endif
     const MeshEntry *meshHeader = (MeshEntry*)(resourceData + sizeof(FileHeader) + resourceHeader->numTextures
                                   * sizeof(TextureEntry));
     Texture **textures = new Texture*[resourceHeader->numTextures];
