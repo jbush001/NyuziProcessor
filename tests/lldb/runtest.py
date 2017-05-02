@@ -154,7 +154,7 @@ def lldb(_):
         conn.send_command('gdb-remote 8000\n')
         response = conn.send_command(
             'breakpoint set --file test_program.c --line 27')
-        if 'Breakpoint 1: where = program.elf`func2 + 96 at test_program.c:27' not in response:
+        if 'Breakpoint 1: where = program.elf`func2 + 100 at test_program.c:27' not in response:
             raise test_harness.TestException(
                 'breakpoint: did not find expected value ' + response)
 
