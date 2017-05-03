@@ -86,13 +86,7 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
 
     compiler_args += source_files
 
-    needs_stdlib = False
-    for file_name in source_files:
-        if file_name.endswith('.c') or file_name.endswith('.cpp'):
-            needs_stdlib = True
-            break
-
-    if needs_stdlib:
+    if any(name.endswith(('.c', '.cpp')) for name in source_files):
         compiler_args += ['-I' + LIB_DIR + 'libc/include',
                           '-I' + LIB_DIR + 'libos',
                           LIB_DIR + 'libc/libc.a',
