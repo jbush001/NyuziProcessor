@@ -160,6 +160,9 @@ module sram_2r1w
 
     initial
     begin
+        for (int i = 0; i < SIZE; i++)
+            data[i] = '0;
+
         if ($test$plusargs("dumpmems") != 0)
             $display("sram2r1w %d %d", DATA_WIDTH, SIZE);
     end

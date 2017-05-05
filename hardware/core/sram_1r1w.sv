@@ -120,6 +120,9 @@ module sram_1r1w
 
     initial
     begin
+        for (int i = 0; i < SIZE; i++)
+            data[i] = '0;
+
         if ($test$plusargs("dumpmems") != 0)
             $display("sram1r1w %d %d", DATA_WIDTH, SIZE);
     end
