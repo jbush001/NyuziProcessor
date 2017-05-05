@@ -100,7 +100,11 @@ module sram_1r1w
     // Simulation
     logic[DATA_WIDTH - 1:0] data[SIZE];
 
-    always_ff @(posedge clk)
+    // Note: use always here instead of always_ff so Modelsim will allow
+    // initializing the array to zeroes in the initial block. That in
+    // turn is necessary to avoid X-propagation issues with running with
+    // four-state simulators.
+    always @(posedge clk)
     begin
         if (write_en)
             data[write_addr] <= write_data;
