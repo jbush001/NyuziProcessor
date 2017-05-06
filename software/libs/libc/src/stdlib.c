@@ -26,7 +26,7 @@ int __errno_array[__MAX_THREADS];
 void abort(void)
 {
     puts("abort");
-    exit(0);
+    __builtin_trap();
 }
 
 int abs(int value)

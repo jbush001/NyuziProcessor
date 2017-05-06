@@ -155,6 +155,7 @@ static void set_vector_reg(struct thread*, uint32_t reg, uint32_t mask,
 static void invalidate_sync_address(struct core*, uint32_t address);
 static void try_to_dispatch_interrupt(struct thread*);
 static uint32_t get_pending_interrupts(struct thread*);
+static const char *get_trap_name(enum trap_type);
 static void raise_trap(struct thread*, uint32_t address, enum trap_type type, bool is_store,
                        bool is_data_cache);
 static bool translate_address(struct thread*, uint32_t virtual_address, uint32_t
@@ -717,6 +718,27 @@ static uint32_t get_pending_interrupts(struct thread *thread)
            | (~thread->core->is_level_triggered & thread->latched_interrupts);
 }
 
+static const char *get_trap_name(enum trap_type type)
+{
+#define TRAP_ENTRY(x)  case TT_ ## x: return #x;
+    switch (type)
+    {
+        TRAP_ENTRY(RESET)
+        TRAP_ENTRY(ILLEGAL_INSTRUCTION)
+        TRAP_ENTRY(PRIVILEGED_OP)
+        TRAP_ENTRY(INTERRUPT)
+        TRAP_ENTRY(SYSCALL)
+        TRAP_ENTRY(UNALIGNED_ACCESS)
+        TRAP_ENTRY(PAGE_FAULT)
+        TRAP_ENTRY(TLB_MISS)
+        TRAP_ENTRY(ILLEGAL_STORE)
+        TRAP_ENTRY(SUPERVISOR_ACCESS)
+        TRAP_ENTRY(NOT_EXECUTABLE)
+        TRAP_ENTRY(BREAKPOINT)
+    }
+#undef TRAP_ENTRY
+}
+
 static void raise_trap(struct thread *thread, uint32_t trap_address, enum trap_type type,
                        bool is_store, bool is_data_cache)
 {
@@ -733,7 +755,8 @@ static void raise_trap(struct thread *thread, uint32_t trap_address, enum trap_t
             && type != TT_SYSCALL)
     {
         thread->pc -= 4;    // reset PC to faulting instruction
-        printf("Thread %u caught fault %d @%08x\n", thread->id, type, thread->pc);
+        printf("Thread %u caught fault %s @%08x\n", thread->id,
+            get_trap_name(type), thread->pc);
         print_thread_registers(thread);
         thread->core->proc->crashed = true;
         return;

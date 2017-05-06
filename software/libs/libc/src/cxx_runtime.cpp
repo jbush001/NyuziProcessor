@@ -101,6 +101,6 @@ extern "C" void call_atexit_functions()
 extern "C" void __cxa_pure_virtual()
 {
     puts("Pure Virtual Function Call");
-    abort();
+    __builtin_trap();
 }
 
