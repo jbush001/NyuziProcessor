@@ -92,7 +92,7 @@ public:
     // Load up to 16 parameters with contiguous indices.
     // Given a packed array of the form a0b0 a0b1... a_1b_0 a_1b_1...
     // Return up to 16 elements packed in a vector: a_mb_n, a_mb_(n+1)...
-    vecu16_t gatherElements(int baseIndex, int paramNum, int mask) const
+    vecu16_t gatherElements(int baseIndex, int paramNum, vmask_t mask) const
     {
         const veci16_t ptrVec = *fBaseStepPointers + baseIndex * fStride
                                 + paramNum * kElementSize;
@@ -100,7 +100,7 @@ public:
     }
 
     // Load up to 16 parameters with arbitrary indices.
-    vecu16_t gatherElements(veci16_t indices, int paramNum, int mask) const
+    vecu16_t gatherElements(veci16_t indices, int paramNum, vmask_t mask) const
     {
         const veci16_t ptrVec = indices * fStride + paramNum * kElementSize
                                 + reinterpret_cast<int>(fData);

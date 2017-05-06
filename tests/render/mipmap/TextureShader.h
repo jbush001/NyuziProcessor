@@ -35,7 +35,7 @@ public:
     }
 
     void shadeVertices(vecf16_t *outParams, const vecf16_t *inAttribs, const void *_uniforms,
-                       int ) const override
+                       vmask_t) const override
     {
         const TextureUniforms *uniforms = static_cast<const TextureUniforms*>(_uniforms);
 
@@ -54,7 +54,7 @@ public:
 
     void shadePixels(vecf16_t *outColor, const vecf16_t *inParams,
                      const void *, const Texture * const * sampler,
-                     unsigned short mask) const override
+                     vmask_t mask) const override
     {
         sampler[0]->readPixels(inParams[0], inParams[1], mask, outColor);
     }

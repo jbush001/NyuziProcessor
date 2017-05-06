@@ -59,7 +59,7 @@ public:
     //   4  5  6  7
     //   8  9 10 11
     //  12 13 14 15
-    void writeBlockMasked(int left, int top, int mask, vecu16_t values)
+    void writeBlockMasked(int left, int top, vmask_t mask, vecu16_t values)
     {
         veci16_t ptrs = f4x4AtOrigin + left * 4 + top * fStride;
         __builtin_nyuzi_scatter_storei_masked(ptrs, values, mask);
@@ -97,7 +97,7 @@ public:
     // Push a tile from the L2 cache back to system memory
     void flushTile(int left, int top);
 
-    veci16_t readPixels(veci16_t tx, veci16_t ty, unsigned short mask) const
+    veci16_t readPixels(veci16_t tx, veci16_t ty, vmask_t mask) const
     {
         veci16_t pointers = (ty * fStride + tx * kBytesPerPixel)
                             + fBaseAddress;

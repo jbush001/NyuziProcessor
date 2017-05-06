@@ -46,7 +46,7 @@ public:
     // @param This is an array that points to four vectors. The first vector is red,
     //    followed by blue, green, and alpha. Each lane of the vector corresponds to
     //    a lane in the coordinate vectors.
-    void readPixels(vecf16_t u, vecf16_t v, unsigned short mask, vecf16_t *outChannels) const;
+    void readPixels(vecf16_t u, vecf16_t v, vmask_t mask, vecf16_t *outChannels) const;
 
     // If enable is true, this will perform bilinear filtering to interpolate
     // values between pixels. If false, it will choose the nearest neighbor.

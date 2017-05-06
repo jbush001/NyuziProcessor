@@ -35,7 +35,7 @@ public:
     }
 
     void shadeVertices(vecf16_t *outParams, const vecf16_t *inAttribs, const void *_uniforms,
-                       int ) const override
+                       vmask_t) const override
     {
         const CheckerboardUniforms *uniforms = static_cast<const CheckerboardUniforms*>(_uniforms);
 
@@ -54,7 +54,7 @@ public:
 
     void shadePixels(vecf16_t *outColor, const vecf16_t *inParams,
                      const void *, const Texture * const *,
-                     unsigned short ) const override
+                     vmask_t) const override
     {
         int check = __builtin_nyuzi_mask_cmpi_eq(((__builtin_convertvector(inParams[0] * 4, veci16_t) & 1)
                     ^ (__builtin_convertvector(inParams[1] * 4, veci16_t) & 1)), veci16_t(0));

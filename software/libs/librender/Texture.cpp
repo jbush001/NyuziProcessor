@@ -91,7 +91,7 @@ void Texture::setMipSurface(int mipLevel, const Surface *surface)
     }
 }
 
-void Texture::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
+void Texture::readPixels(vecf16_t u, vecf16_t v, vmask_t mask,
                          vecf16_t *outColor) const
 {
     // Determine the closest mip-level. Compute the pitch between the top

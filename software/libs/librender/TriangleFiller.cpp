@@ -131,7 +131,7 @@ void TriangleFiller::setUpParam(float c0, float c1, float c2)
     fNumParams++;
 }
 
-void TriangleFiller::fillMasked(int left, int top, unsigned short mask)
+void TriangleFiller::fillMasked(int left, int top, vmask_t mask)
 {
     // Convert from raster to screen space coordinates.
     vecf16_t x = fTarget->getColorBuffer()->getXStep() + (left * fTwoOverWidth - 1.0f);

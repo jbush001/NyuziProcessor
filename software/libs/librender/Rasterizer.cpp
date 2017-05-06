@@ -122,10 +122,10 @@ void subdivideTile(
     const veci16_t acceptEdgeValue1 = acceptStep1 + acceptCornerValue1;
     const veci16_t acceptEdgeValue2 = acceptStep2 + acceptCornerValue2;
     const veci16_t acceptEdgeValue3 = acceptStep3 + acceptCornerValue3;
-    const unsigned int trivialAcceptMask = static_cast<unsigned int>(
+    const vmask_t trivialAcceptMask =
             __builtin_nyuzi_mask_cmpi_sle(acceptEdgeValue1, veci16_t(0))
             & __builtin_nyuzi_mask_cmpi_sle(acceptEdgeValue2, veci16_t(0))
-            & __builtin_nyuzi_mask_cmpi_sle(acceptEdgeValue3, veci16_t(0)));
+            & __builtin_nyuzi_mask_cmpi_sle(acceptEdgeValue3, veci16_t(0));
 
     if (tileSizeBits == 2)
     {
@@ -164,10 +164,10 @@ void subdivideTile(
     const veci16_t rejectEdgeValue1 = rejectStep1 + rejectCornerValue1;
     const veci16_t rejectEdgeValue2 = rejectStep2 + rejectCornerValue2;
     const veci16_t rejectEdgeValue3 = rejectStep3 + rejectCornerValue3;
-    const unsigned int trivialRejectMask = static_cast<unsigned int>(
+    const vmask_t trivialRejectMask =
             __builtin_nyuzi_mask_cmpi_sgt(rejectEdgeValue1, veci16_t(0))
             | __builtin_nyuzi_mask_cmpi_sgt(rejectEdgeValue2, veci16_t(0))
-            | __builtin_nyuzi_mask_cmpi_sgt(rejectEdgeValue3, veci16_t(0)));
+            | __builtin_nyuzi_mask_cmpi_sgt(rejectEdgeValue3, veci16_t(0));
 
     // Recurse into blocks that are neither trivially rejected or accepted.
     // They are partially overlapped and need to be further subdivided.
@@ -319,7 +319,7 @@ void rasterizeSweep(TriangleFiller &filler,
     {
         for (int colCount = 0; ; colCount++)
         {
-            int mask = __builtin_nyuzi_mask_cmpi_sge(edgeValue1, veci16_t(0))
+            vmask_t mask = __builtin_nyuzi_mask_cmpi_sge(edgeValue1, veci16_t(0))
                        & __builtin_nyuzi_mask_cmpi_sge(edgeValue2, veci16_t(0))
                        & __builtin_nyuzi_mask_cmpi_sge(edgeValue3, veci16_t(0));
             if (mask)

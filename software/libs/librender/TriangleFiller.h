@@ -44,7 +44,7 @@ public:
     // The rasterizer calls this to fill a 4x4 block.  The left and top
     // coordinates are raster coordinates (count of pixels from the upper
     // left corner).
-    void fillMasked(int left, int top, unsigned short mask);
+    void fillMasked(int left, int top, vmask_t mask);
 
     // This is called before setUpParam. The coordinates represent the
     // on-screen position of the triangle.

@@ -37,7 +37,7 @@ public:
     }
 
     void shadeVertices(vecf16_t *outParams, const vecf16_t *inAttribs, const void *_uniforms,
-                       int) const override
+                       vmask_t) const override
     {
         const DepthUniforms *uniforms = static_cast<const DepthUniforms*>(_uniforms);
 
@@ -55,7 +55,7 @@ public:
 
     void shadePixels(vecf16_t *outColor, const vecf16_t *inParams,
                      const void *, const Texture * const * ,
-                     unsigned short ) const override
+                     vmask_t) const override
     {
         // Scale depth value.
         // XXX this is hardcoded based on the size of the model. The last parameter

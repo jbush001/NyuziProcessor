@@ -46,7 +46,7 @@ public:
     }
 
     void shadeVertices(vecf16_t *outParams, const vecf16_t *inAttribs, const void *_uniforms,
-                       int ) const override
+                       vmask_t) const override
     {
         const PhongUniforms *uniforms = static_cast<const PhongUniforms*>(_uniforms);
 
@@ -68,7 +68,7 @@ public:
 
     void shadePixels(vecf16_t *outColor, const vecf16_t *inParams,
                      const void *_castToUniforms, const Texture * const *,
-                     unsigned short ) const override
+                     vmask_t) const override
     {
         const PhongUniforms *uniforms = static_cast<const PhongUniforms*>(_castToUniforms);
 
