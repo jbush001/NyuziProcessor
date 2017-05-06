@@ -90,6 +90,75 @@ module sram_1r1w
             assign read_data = data_from_ram;
         end
     endgenerate
+`elsif VENDOR_XILINX
+    // For [Synth 8-439] module 'xpm_memory_sdpram' not found:
+    // https://www.xilinx.com/support/answers/67815.html
+
+    localparam XPM_MEM_SIZE = (1 << ADDR_WIDTH) * DATA_WIDTH; // Memory size in bits
+
+    logic[DATA_WIDTH - 1:0] data_from_ram;
+
+    xpm_memory_sdpram # (
+        .MEMORY_SIZE        (XPM_MEM_SIZE),    // Size in bits
+        .MEMORY_PRIMITIVE   ("auto"),          // Left Vivado choosing
+        .CLOCKING_MODE      ("common_clock"),  // Clock both port A and port B with clka
+        .MEMORY_INIT_FILE   ("none"),
+        .MEMORY_INIT_PARAM  (""    ),
+        .USE_MEM_INIT       (0),               // No init
+        .WAKEUP_TIME        ("disable_sleep"), // Dynamic power saving Disabled
+        .MESSAGE_CONTROL    (0),               // Dynamic message reporting Disabled
+        .ECC_MODE           ("no_ecc"),        // No ECC
+        .AUTO_SLEEP_TIME    (0),               // Reserved
+
+        // Port A module parameters
+        .WRITE_DATA_WIDTH_A (DATA_WIDTH),
+        .BYTE_WRITE_WIDTH_A (DATA_WIDTH),
+        .ADDR_WIDTH_A       (ADDR_WIDTH),
+
+        // Port B module parameters
+        .READ_DATA_WIDTH_B  (DATA_WIDTH),
+        .ADDR_WIDTH_B       (ADDR_WIDTH),
+        .READ_RESET_VALUE_B ("0"),
+        .READ_LATENCY_B     (1),               // Read data output to port doutb takes 1 clk
+        .WRITE_MODE_B       ("read_first")     // Seems to be the best choice according to ug974
+    ) data0 (
+        .sleep          (1'b0),
+
+        // Port A module ports
+        .clka           (clk),
+        .ena            (write_en),
+        .wea            (write_en),
+        .addra          (write_addr),
+        .dina           (write_data),
+        .injectsbiterra (1'b0),
+        .injectdbiterra (1'b0),
+
+        // Port B module ports
+        .clkb           (clk),
+        .rstb           (1'b0),
+        .enb            (read_en),
+        .regceb         (1'b1),
+        .addrb          (read_addr),
+        .doutb          (data_from_ram),
+        .sbiterrb       (),
+        .dbiterrb       ()
+    );
+
+    generate
+        if (READ_DURING_WRITE == "NEW_DATA") begin
+            logic pass_thru_en;
+            logic[DATA_WIDTH - 1:0] pass_thru_data;
+
+            always_ff @(posedge clk) begin
+                pass_thru_en <= write_en && read_en && read_addr == write_addr;
+                pass_thru_data <= write_data;
+            end
+
+            assign read_data = pass_thru_en ? pass_thru_data : data_from_ram;
+        end else begin
+            assign read_data = data_from_ram;
+        end
+    endgenerate
 `elsif MEMORY_COMPILER
     generate
         `define _GENERATE_SRAM1R1W
