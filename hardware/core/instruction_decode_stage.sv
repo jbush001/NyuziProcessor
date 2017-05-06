@@ -135,6 +135,7 @@ module instruction_decode_stage(
     logic is_breakpoint;
     logic raise_interrupt;
     thread_bitmap_t masked_interrupt_flags;
+    logic is_unary_arith;
 
     // I originally tried to structure the instruction set so that this could
     // determine the format of the instruction from the first 7 bits. Those
@@ -259,8 +260,17 @@ module instruction_decode_stage(
     assign raise_interrupt = masked_interrupt_flags[ifd_thread_idx];
     assign decoded_instr_nxt.has_trap = has_trap;
 
+    assign is_unary_arith = is_fmt_r && (alu_op == OP_CLZ
+        || alu_op == OP_CTZ
+        || alu_op == OP_MOVE
+        || alu_op == OP_FTOI
+        || alu_op == OP_RECIPROCAL
+        || alu_op == OP_SEXT8
+        || alu_op == OP_SEXT16
+        || alu_op == OP_ITOF)
+        && dlut_out.mask_src != MASK_SRC_SCALAR1;
     assign decoded_instr_nxt.has_scalar1 = dlut_out.scalar1_loc != SCLR1_NONE && !is_nop
-        && !has_trap;
+        && !has_trap && !is_unary_arith;
     always_comb
     begin
         case (dlut_out.scalar1_loc)
