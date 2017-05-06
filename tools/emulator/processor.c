@@ -735,6 +735,8 @@ static const char *get_trap_name(enum trap_type type)
         TRAP_ENTRY(SUPERVISOR_ACCESS)
         TRAP_ENTRY(NOT_EXECUTABLE)
         TRAP_ENTRY(BREAKPOINT)
+        default:
+            return "???";
     }
 #undef TRAP_ENTRY
 }
