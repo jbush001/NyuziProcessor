@@ -30,7 +30,7 @@ import sys
 import re
 
 symbolre = re.compile(
-    '(?P<addr>[A-Fa-f0-9]+) g\s+F\s+\.text\s+[A-Fa-f0-9]+\s+(?P<symbol>\w+)')
+    r'(?P<addr>[A-Fa-f0-9]+) g\s+F\s+\.text\s+[A-Fa-f0-9]+\s+(?P<symbol>\w+)')
 
 functions = []  # Each element is (address, name)
 counts = {}

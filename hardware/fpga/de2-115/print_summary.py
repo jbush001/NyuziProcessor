@@ -22,7 +22,7 @@ import re
 # Pull some basic metrics out of the report files and print them
 #
 
-speed_re = re.compile('(?P<speed>[0-9\.]+) MHz')
+speed_re = re.compile(r'(?P<speed>[0-9\.]+) MHz')
 with open('output_files/de2_115.sta.rpt') as f:
     found_section = False
     for line in f:
