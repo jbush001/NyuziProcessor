@@ -26,11 +26,11 @@ import re
 import sys
 
 patterns = [
-    [re.compile('sram1r1w\s+(?P<width>\d+)\s+(?P<depth>\d+)'),
+    [re.compile(r'sram1r1w\s+(?P<width>\d+)\s+(?P<depth>\d+)'),
      [], 'sram1r1w_', '_GENERATE_SRAM1R1W'],
-    [re.compile('sram2r1w\s+(?P<width>\d+)\s+(?P<depth>\d+)'),
+    [re.compile(r'sram2r1w\s+(?P<width>\d+)\s+(?P<depth>\d+)'),
      [], 'sram2r1w_', '_GENERATE_SRAM2R1W'],
-    [re.compile('sync_fifo\s+(?P<width>\d+)\s+(?P<depth>\d+)'),
+    [re.compile(r'sync_fifo\s+(?P<width>\d+)\s+(?P<depth>\d+)'),
      [], 'fifo_', '_GENERATE_FIFO']
 ]
 
