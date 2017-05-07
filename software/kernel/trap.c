@@ -24,6 +24,7 @@
 struct interrupt_frame
 {
     unsigned int gpr[32];
+    unsigned int pc;
     unsigned int flags;
     unsigned int subcycle;
 };
@@ -126,7 +127,7 @@ void handle_trap(struct interrupt_frame *frame)
             {
                 // Jump to user_copy fault handler if set
                 if (fault_handler[current_hw_thread()] != 0)
-                    frame->gpr[31] = fault_handler[current_hw_thread()];
+                    frame->pc = fault_handler[current_hw_thread()];
                 else
                     bad_fault(frame);
             }
@@ -143,7 +144,7 @@ void handle_trap(struct interrupt_frame *frame)
                                            frame->gpr[2], frame->gpr[3],
                                            frame->gpr[4], frame->gpr[5]);
 
-            frame->gpr[31] += 4;    // Next instruction
+            frame->pc += 4;    // Next instruction
             disable_interrupts();
             break;
 
