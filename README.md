@@ -25,8 +25,8 @@ versions. It should work for other distributions, but you will probably need
 to change some package names. From a terminal, execute the following:
 
     sudo apt-get -y install autoconf cmake make gcc g++ bison flex python \
-        perl emacs openjdk-8-jdk swig zlib1g-dev python-dev libxml2-dev \
-        libedit-dev libncurses5-dev libsdl2-dev gtkwave imagemagick
+        python3 perl emacs openjdk-8-jdk swig zlib1g-dev python-dev \
+        libxml2-dev libedit-dev libncurses5-dev libsdl2-dev gtkwave imagemagick
 
 *Emacs is used for [verilog-mode](http://www.veripool.org/wiki/verilog-mode) AUTO macros.
 The makefile executes this operation in batch mode*
