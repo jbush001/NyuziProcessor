@@ -19,7 +19,10 @@
 # This creates the container used on TravisCI to build Nyuzi and
 # run tests. It copies the files into a temporary directory, uses
 # the Dockerfile in this directory to create the container, then uploads
-# them to my dockerhub account.
+# them to a dockerhub account. Set the variable DOCKER_REPO to the
+# appropriate path, eg.:
+#
+# DOCKER_REPO=username/nyuzi-build ./build_container.sh
 #
 
 TOOLCHAIN_DIR=/usr/local/llvm-nyuzi/bin
@@ -35,6 +38,6 @@ cp $TOOLCHAIN_DIR/llvm-objdump tmp/
 cp -R /usr/local/share/verilator tmp/share_verilator
 cp /usr/local/bin/verilator* tmp/
 
-docker build -t jeffbush001/nyuzi-build:latest .
-docker push jeffbush001/nyuzi-build
+docker build -t $DOCKER_REPO:latest .
+docker push $DOCKER_REPO
 
