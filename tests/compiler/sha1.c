@@ -141,7 +141,7 @@ void sha1_write(sha1nfo *s, const char *data, size_t len) {
 }
 
 void sha1_pad(sha1nfo *s) {
-	// Implement SHA-1 padding (fips180-2 Â§5.1.1)
+	// Implement SHA-1 padding (fips180-2 5.1.1)
 
 	// Pad with 0x80 followed by 0x00 until the end of the block
 	sha1_addUncounted(s, 0x80);
