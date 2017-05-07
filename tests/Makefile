@@ -14,8 +14,7 @@
 # limitations under the License.
 #
 
-# Can change this to python3 to test with that version
-PYTHON=python
+PYTHON=python3
 
 test:
 	cd remote-gdb && $(PYTHON) ./runtest.py
