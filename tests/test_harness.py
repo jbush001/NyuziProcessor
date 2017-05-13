@@ -259,7 +259,7 @@ def run_kernel(
                             stderr=subprocess.STDOUT)
 
     return run_program(environment=environment, block_device=block_file,
-        executable=PROJECT_TOP + '/software/kernel/kernel.hex')
+        timeout=timeout, executable=PROJECT_TOP + '/software/kernel/kernel.hex')
 
 def assert_files_equal(file1, file2, error_msg='file mismatch'):
     """Read two files and throw a TestException if they are not the same
