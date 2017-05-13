@@ -83,6 +83,8 @@ trampoline:         lea s0, page_dir_addr
                     // Go!
                     eret
 
+
+                    .data
                     .globl page_dir_addr
                     .globl boot_pages_used
 
