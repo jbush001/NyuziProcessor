@@ -170,7 +170,8 @@ def run_program(
         dump_length=None,
         timeout=60,
         flush_l2=False,
-        trace=False):
+        trace=False,
+        executable=None):
     """Run test program.
 
     This uses the hex file produced by build_program.
@@ -193,6 +194,8 @@ def run_program(
             TestException if emulated program crashes or the program cannot
               execute for some other reason.
     """
+    if not executable:
+        executable = HEX_FILE
 
     if environment == 'emulator':
         args = [BIN_DIR + 'emulator']
@@ -203,7 +206,7 @@ def run_program(
             args += ['-d', dump_file + ',' +
                      hex(dump_base) + ',' + hex(dump_length)]
 
-        args += [HEX_FILE]
+        args += [executable]
         return _run_test_with_timeout(args, timeout)
     elif environment == 'verilator':
         args = [BIN_DIR + 'verilator_model']
@@ -221,7 +224,7 @@ def run_program(
         if trace:
             args += ['+trace']
 
-        args += ['+bin=' + HEX_FILE]
+        args += ['+bin=' + executable]
         output = _run_test_with_timeout(args, timeout)
         if '***HALTED***' not in output:
             raise TestException(output + '\nProgram did not halt normally')
@@ -255,26 +258,8 @@ def run_kernel(
     subprocess.check_output([BIN_DIR + 'mkfs', block_file, ELF_FILE],
                             stderr=subprocess.STDOUT)
 
-    if environment == 'emulator':
-        args = [
-            BIN_DIR + 'emulator',
-            '-b', block_file,
-            PROJECT_TOP + '/software/kernel/kernel.hex']
-        return _run_test_with_timeout(args, timeout)
-    elif environment == 'verilator':
-        args = [
-            BIN_DIR + 'verilator_model',
-            '+block=' + block_file,
-            '+bin=' + PROJECT_TOP + '/software/kernel/kernel.hex']
-
-        output = _run_test_with_timeout(args, timeout)
-        if '***HALTED***' not in output:
-            raise TestException(output + '\nProgram did not halt normally')
-
-        return output
-    else:
-        raise TestException('Unknown execution environment')
-
+    return run_program(environment=environment, block_device=block_file,
+        executable=PROJECT_TOP + '/software/kernel/kernel.hex')
 
 def assert_files_equal(file1, file2, error_msg='file mismatch'):
     """Read two files and throw a TestException if they are not the same
