@@ -53,6 +53,4 @@ dtlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT
                 .long 0xffff0000, 0xffff0000 | TLB_PRESENT | TLB_WRITABLE    // I/O area
                 .long 0xffffffff, 0xffffffff
 
-                // Should be 0x2000
-                .align 0x1000, 0xff
-notpresent_page: should_not_get_here
+notpresent_page = 0x2000
