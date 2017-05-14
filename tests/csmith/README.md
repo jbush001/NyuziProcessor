@@ -19,3 +19,5 @@ To generate and run tests:
 The tests operate by first compiling and executing the program on the host
 and comparing the results to the output from the emulator.
 
+**Unfortunately, when this is running on a 64 bit host, some of the operations
+will produce different results, which will cause false negatives.**
