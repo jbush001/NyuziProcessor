@@ -146,9 +146,11 @@ def generate_unary_arith(outfile):
                 outfile.write('\t\t{}_mask  v{}, s{}, {}\n'.format
                               (mnemonic, dest, maskreg, random.randint(-0xff, 0xff)))
             elif fmt == 1:
-                outfile.write('\t\t{} v{}, {}\n'.format(mnemonic, dest, random.randint(-0xff, 0xff)))
+                outfile.write('\t\t{} v{}, {}\n'.format(mnemonic, dest,
+                    random.randint(-0xff, 0xff)))
             else:
-                outfile.write('\t\t{} s{}, {}\n'.format(mnemonic, dest, random.randint(-0x1fff, 0x1fff)))
+                outfile.write('\t\t{} s{}, {}\n'.format(mnemonic, dest,
+                    random.randint(-0x1fff, 0x1fff)))
         else:
             if fmt == 0:
                 maskreg = generate_arith_reg()

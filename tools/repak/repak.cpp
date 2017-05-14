@@ -79,7 +79,7 @@ int main(int argc, char * const argv[])
     }
 
     FILE *inputFile = fopen(argv[optind], "rb");
-    if (!inputFile)
+    if (inputFile == NULL)
     {
         perror("can't open file");
         return 1;
@@ -124,7 +124,7 @@ int main(int argc, char * const argv[])
     uint32_t numKeepEntries = uint32_t(argc - optind - 1);
     pakfile_t *newDirectory = new pakfile_t[numKeepEntries]();
     FILE *outputFile = fopen(outputFilename, "wb");
-    if (!outputFile)
+    if (outputFile == NULL)
     {
         perror("Couldn't write output file");
         fclose(inputFile);

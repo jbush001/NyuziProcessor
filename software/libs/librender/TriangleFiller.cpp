@@ -24,7 +24,8 @@ namespace librender
 TriangleFiller::TriangleFiller(RenderTarget *target)
     : 	fTarget(target),
        fTwoOverWidth(2.0f / target->getColorBuffer()->getWidth()),
-       fTwoOverHeight(2.0f / target->getColorBuffer()->getHeight())
+       fTwoOverHeight(2.0f / target->getColorBuffer()->getHeight()),
+       fOneOverZInterpolator()
 {
 }
 

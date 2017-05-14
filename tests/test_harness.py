@@ -425,7 +425,7 @@ def execute_tests():
         except TestException as exc:
             print(COLOR_RED + 'FAIL' + COLOR_NONE)
             failing_tests += [(param, exc.args[0])]
-        except Exception as exc:
+        except Exception as exc: # pylint: disable=W0703
             print(COLOR_RED + 'FAIL' + COLOR_NONE)
             failing_tests += [(param, 'Test threw exception:\n' +
                                traceback.format_exc())]

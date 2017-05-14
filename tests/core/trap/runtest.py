@@ -60,7 +60,8 @@ def run_io_interrupt(name):
 
     # Remove all asterisks (interrupts) and make sure string is intact
     stripped = output.replace('*', '')
-    if stripped != '0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz' * 10:
+    if stripped != '0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`' \
+        'abcdefghijklmnopqrstuvwxyz' * 10:
         raise test_harness.TestException(
             'Base string does not match:\n' + stripped)
 

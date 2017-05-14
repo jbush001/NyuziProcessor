@@ -306,7 +306,9 @@ def gdb_read_write_memory(_):
             (0x1234, '22'),
             (0x2242, '45f280397a5a3255fa19238693ff13c729'),
             (0x100000, '55483c091aac1e8c6db4bed1'),
-            (0x200000, '16e1d56029e912a04121ce41a635155f3442355533703fafcb57f8295dd6330f82f9ffc40edb589fac1523665dc2f6e80c1e2de9718d253fcbce1c8a52c9dc21'),
+            (0x200000, '16e1d56029e912a04121ce41a635155f3442355533703fafcb57f8'
+                '295dd6330f82f9ffc40edb589fac1523665dc2f6e80c1e2de9718d253fcbc'
+                'e1c8a52c9dc21'),
         ]
 
         # Write memory
@@ -340,15 +342,19 @@ def gdb_read_write_register(_):
         # Check values set by program (remote GDB returns in swapped byte
         # order...)
         conn.expect('g1', '7d7f3e85')
-        conn.expect('g20', 'f13403ef9d08309993f7819954ae4b3f7aeaa28f538fecbd9536f59c6d7251269525ee70d26e8d34f48912639c86ae5dba426c83aa8455e1e2dbba4b41a4f321')
+        conn.expect('g20', 'f13403ef9d08309993f7819954ae4b3f7aeaa28f538fecbd95'
+            '36f59c6d7251269525ee70d26e8d34f48912639c86ae5dba426c83aa8455e1e2dbba4b41a4f321')
 
         tests = [
             (0, 'd3839b18'),
             (1, '7b53cc78'),
             (30, '0904c47d'),
-            (32, 'aef331bc7dbd6f1d042be4d6f1e1649855d864387eb8f0fd49c205c37790d1874078516c1a05c74f67678456679ba7e05bb5aed7303c5aeeeba6e619accf702a'),
-            (36, 'cb7e3668a97ef8ea55902658b62a682406f7206f75e5438ff95b4519fed1e73e16ce5a29b4385fa2560820f0c8f42227709387dbad3a8208b57c381e268ffe38'),
-            (63, '9e2d89afb0633c2f64b2eb4fdbba4663401ee673753a66d6d899e4a4101ae4920b0b16f0e716e4f7d62d83b5784740c138ac6ab94fa14256ebb468e25f20e02f')
+            (32, 'aef331bc7dbd6f1d042be4d6f1e1649855d864387eb8f0fd49c205c37790'
+                'd1874078516c1a05c74f67678456679ba7e05bb5aed7303c5aeeeba6e619accf702a'),
+            (36, 'cb7e3668a97ef8ea55902658b62a682406f7206f75e5438ff95b4519fed1'
+                'e73e16ce5a29b4385fa2560820f0c8f42227709387dbad3a8208b57c381e268ffe38'),
+            (63, '9e2d89afb0633c2f64b2eb4fdbba4663401ee673753a66d6d899e4a4101a'
+                'e4920b0b16f0e716e4f7d62d83b5784740c138ac6ab94fa14256ebb468e25f20e02f')
         ]
 
         for reg, value in tests:

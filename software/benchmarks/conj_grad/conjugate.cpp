@@ -86,7 +86,7 @@ matrix_t genSpace()
     matrix_t m_ret, m1;
     for (i = 0; i < 16; i++)
         for (j = 0; j < 16; j++)
-            m1.rows[i][j] = rand() / 1000000000.0;	// the const makes the rand() low enough
+            m1.rows[i][j] = rand() / 1000000000.0; // the const makes the rand() low enough
 
     // C * transpose(C)
     for (i = 0; i < 16; i++)
@@ -106,7 +106,7 @@ vecf16 genAns()
     int i;
     vecf16 v_ret;
     for (i = 0; i < 16; i++)
-        v_ret[i] = rand() / 1000000000.0;	// the const makes the rand() low enough
+        v_ret[i] = rand() / 1000000000.0; // the const makes the rand() low enough
     return v_ret;
 }
 
