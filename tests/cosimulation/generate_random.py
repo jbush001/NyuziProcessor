@@ -125,9 +125,13 @@ UNARY_OPS = [
     'clz',
     'ctz',
     'move',
-    'movehi'
+    'movehi',
+    'sext_8',
+    'sext_16',
+# See note above about floating point
+#    'itof',
+#    'ftoi'
 ]
-
 
 def generate_unary_arith(outfile):
     """Write a single unary arithmetic instruction to a file"""
