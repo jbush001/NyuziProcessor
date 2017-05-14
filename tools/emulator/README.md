@@ -101,7 +101,7 @@ This dumps every memory and register transfer to the console.
 Many test programs have a target to build the list file, but you can create
 one like this:
 
-    /usr/local/llvm-nyuzi/bin/llvm-objdump --disassemble program.elf > program.lst 2> /dev/null
+    /usr/local/llvm-nyuzi/bin/llvm-objdump -d -S program.elf > program.lst 2> /dev/null
 
 You can correlate the trace...
 

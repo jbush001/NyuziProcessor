@@ -31,7 +31,13 @@ void print64bit(long long int value)
 
 void printfloathex(float value)
 {
-    printf("0x%08x\n", *((int*) &value));
+    union {
+        float fval;
+        int ival;
+    } u;
+
+    u.fval = value;
+    printf("0x%08x\n", u.ival);
 }
 
 long long int __ashldi3(long long int value, int shamt);
