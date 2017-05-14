@@ -66,7 +66,8 @@ functions.sort(key=lambda a: a[0])
 lines_processed = 0
 with open(sys.argv[2], 'r') as f:
     for line in f.readlines():
-        if find_function(int(line, 16)):
+        func = find_function(int(line, 16))
+        if func:
             counts[func] += 1
 
 total_cycles = 0

@@ -22,7 +22,7 @@ namespace librender
 {
 
 TriangleFiller::TriangleFiller(RenderTarget *target)
-    : 	fTarget(target),
+    :  fTarget(target),
        fTwoOverWidth(2.0f / target->getColorBuffer()->getWidth()),
        fTwoOverHeight(2.0f / target->getColorBuffer()->getHeight()),
        fOneOverZInterpolator()
@@ -153,8 +153,8 @@ void TriangleFiller::fillMasked(int left, int top, vmask_t mask)
         // Early Z optimization: any pixels that fail the Z test are removed
         // from the pixel mask.
         mask &= passDepthTest;
-        if (!mask)
-            return;	// All pixels are occluded
+        if (mask == 0)
+            return; // All pixels are occluded
 
         fTarget->getDepthBuffer()->writeBlockMasked(left, top, mask, vecu16_t(zValues));
     }
