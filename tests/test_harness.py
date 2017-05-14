@@ -103,12 +103,13 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
         if image_type == 'raw':
             dump_hex(input_file=ELF_FILE, output_file=HEX_FILE)
             return HEX_FILE
-        elif image_type == 'bare-metal':
+
+        if image_type == 'bare-metal':
             subprocess.check_output([COMPILER_DIR + 'elf2hex', '-o', HEX_FILE, ELF_FILE],
                                     stderr=subprocess.STDOUT)
             return HEX_FILE
-        else:
-            return ELF_FILE
+
+        return ELF_FILE
     except subprocess.CalledProcessError as exc:
         raise TestException('Compilation failed:\n' + exc.output.decode())
 
