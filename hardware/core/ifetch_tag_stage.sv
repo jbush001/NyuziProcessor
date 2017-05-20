@@ -38,13 +38,13 @@ module ifetch_tag_stage
     input l1i_way_idx_t                 ifd_update_lru_way,
     input                               ifd_cache_miss,
     input                               ifd_near_miss,
-    input thread_idx_t                  ifd_cache_miss_thread_idx,
+    input local_thread_idx_t            ifd_cache_miss_thread_idx,
 
     // To ifetch_data_stage
     output logic                        ift_instruction_requested,
     output l1i_addr_t                   ift_pc_paddr,
     output scalar_t                     ift_pc_vaddr,
-    output thread_idx_t                 ift_thread_idx,
+    output local_thread_idx_t           ift_thread_idx,
     output logic                        ift_tlb_hit,
     output logic                        ift_tlb_present,
     output logic                        ift_tlb_executable,
@@ -80,14 +80,14 @@ module ifetch_tag_stage
 
     // From writeback_stage
     input                               wb_rollback_en,
-    input thread_idx_t                  wb_rollback_thread_idx,
+    input local_thread_idx_t            wb_rollback_thread_idx,
     input scalar_t                      wb_rollback_pc,
 
     // From thread_select_stage
     input local_thread_bitmap_t         ts_fetch_en);
 
     scalar_t next_program_counter[`THREADS_PER_CORE];
-    thread_idx_t selected_thread_idx;
+    local_thread_idx_t selected_thread_idx;
     scalar_t last_selected_pc;
     l1i_addr_t pc_to_fetch;
     local_thread_bitmap_t can_fetch_thread_bitmap;
@@ -142,7 +142,7 @@ module ifetch_tag_stage
             begin
                 if (reset)
                     next_program_counter[thread_idx] <= RESET_PC;
-                else if (wb_rollback_en && wb_rollback_thread_idx == thread_idx_t'(thread_idx))
+                else if (wb_rollback_en && wb_rollback_thread_idx == local_thread_idx_t'(thread_idx))
                     next_program_counter[thread_idx] <= wb_rollback_pc;
                 else if ((ifd_cache_miss || ifd_near_miss) && last_selected_thread_oh[thread_idx])
                     next_program_counter[thread_idx] <= next_program_counter[thread_idx] - 4;

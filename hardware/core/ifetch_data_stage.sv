@@ -34,7 +34,7 @@ module ifetch_data_stage(
     input                            ift_instruction_requested,
     input l1i_addr_t                 ift_pc_paddr,
     input scalar_t                   ift_pc_vaddr,
-    input thread_idx_t               ift_thread_idx,
+    input local_thread_idx_t         ift_thread_idx,
     input                            ift_tlb_hit,
     input                            ift_tlb_present,
     input                            ift_tlb_executable,
@@ -59,7 +59,7 @@ module ifetch_data_stage(
     // To l1_l2_interface
     output logic                     ifd_cache_miss,
     output cache_line_index_t        ifd_cache_miss_paddr,
-    output thread_idx_t              ifd_cache_miss_thread_idx,    // also to ifetch_tag
+    output local_thread_idx_t        ifd_cache_miss_thread_idx,    // also to ifetch_tag
 
     // From control registers
     input logic                      cr_supervisor_en[`THREADS_PER_CORE],
@@ -68,7 +68,7 @@ module ifetch_data_stage(
     output scalar_t                  ifd_instruction,
     output logic                     ifd_instruction_valid,
     output scalar_t                  ifd_pc,
-    output thread_idx_t              ifd_thread_idx,
+    output local_thread_idx_t        ifd_thread_idx,
     output logic                     ifd_alignment_fault,
     output logic                     ifd_tlb_miss,
     output logic                     ifd_supervisor_fault,
@@ -77,7 +77,7 @@ module ifetch_data_stage(
 
     // From writeback_stage
     input                            wb_rollback_en,
-    input thread_idx_t               wb_rollback_thread_idx,
+    input local_thread_idx_t         wb_rollback_thread_idx,
 
     // To performance_counters
     output logic                     ifd_perf_icache_hit,

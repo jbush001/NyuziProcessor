@@ -36,7 +36,7 @@ module fp_execute_stage1(
 
     // From writeback_stage
     input logic                                    wb_rollback_en,
-    input thread_idx_t                             wb_rollback_thread_idx,
+    input local_thread_idx_t                       wb_rollback_thread_idx,
 
     // From operand_fetch_stage
     input vector_t                                 of_operand1,
@@ -44,14 +44,14 @@ module fp_execute_stage1(
     input vector_lane_mask_t                       of_mask_value,
     input                                          of_instruction_valid,
     input decoded_instruction_t                    of_instruction,
-    input thread_idx_t                             of_thread_idx,
+    input local_thread_idx_t                       of_thread_idx,
     input subcycle_t                               of_subcycle,
 
     // To fp_execute_stage2
     output logic                                   fx1_instruction_valid,
     output decoded_instruction_t                   fx1_instruction,
     output vector_lane_mask_t                      fx1_mask_value,
-    output thread_idx_t                            fx1_thread_idx,
+    output local_thread_idx_t                      fx1_thread_idx,
     output subcycle_t                              fx1_subcycle,
     output logic[`NUM_VECTOR_LANES - 1:0]          fx1_result_is_inf,
     output logic[`NUM_VECTOR_LANES - 1:0]          fx1_result_is_nan,
@@ -86,16 +86,16 @@ module fp_execute_stage1(
     generate
         for (lane_idx = 0; lane_idx < `NUM_VECTOR_LANES; lane_idx++)
         begin : lane_logic_gen
-            ieee754_binary32_t fop1;
-            ieee754_binary32_t fop2;
-            logic[`IEEE754_B32_SIG_WIDTH:0] full_significand1;    // Note extra bit
-            logic[`IEEE754_B32_SIG_WIDTH:0] full_significand2;
+            float32_t fop1;
+            float32_t fop2;
+            logic[`FLOAT32_SIG_WIDTH:0] full_significand1;    // Note extra bit
+            logic[`FLOAT32_SIG_WIDTH:0] full_significand2;
             logic op1_hidden_bit;
             logic op2_hidden_bit;
             logic op1_is_larger;
-            logic[`IEEE754_B32_EXP_WIDTH - 1:0] exp_difference;
+            logic[`FLOAT32_EXP_WIDTH - 1:0] exp_difference;
             logic is_subtract;
-            logic[`IEEE754_B32_EXP_WIDTH - 1:0] mul_exponent;
+            logic[`FLOAT32_EXP_WIDTH - 1:0] mul_exponent;
             logic fop1_is_inf;
             logic fop1_is_nan;
             logic fop2_is_inf;

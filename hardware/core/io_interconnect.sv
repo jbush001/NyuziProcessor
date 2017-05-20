@@ -39,7 +39,7 @@ module io_interconnect(
     logic[`NUM_CORES - 1:0] grant_oh;
     logic request_sent;
     core_id_t request_core;
-    thread_idx_t request_thread_idx;
+    local_thread_idx_t request_thread_idx;
     ioreq_packet_t grant_request;
 
     genvar request_idx;

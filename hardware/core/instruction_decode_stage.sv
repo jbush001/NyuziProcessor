@@ -47,7 +47,7 @@ module instruction_decode_stage(
     input                         ifd_instruction_valid,
     input scalar_t                ifd_instruction,
     input scalar_t                ifd_pc,
-    input thread_idx_t            ifd_thread_idx,
+    input local_thread_idx_t      ifd_thread_idx,
     input                         ifd_alignment_fault,
     input                         ifd_supervisor_fault,
     input                         ifd_page_fault,
@@ -63,7 +63,7 @@ module instruction_decode_stage(
     // To thread_select_stage
     output decoded_instruction_t  id_instruction,
     output logic                  id_instruction_valid,
-    output thread_idx_t           id_thread_idx,
+    output local_thread_idx_t     id_thread_idx,
 
     // From io_request_queue
     input local_thread_bitmap_t ior_pending,
@@ -74,7 +74,7 @@ module instruction_decode_stage(
 
     // From writeback_stage
     input                         wb_rollback_en,
-    input thread_idx_t            wb_rollback_thread_idx);
+    input local_thread_idx_t      wb_rollback_thread_idx);
 
     localparam T = 1'b1;
     localparam F = 1'b0;

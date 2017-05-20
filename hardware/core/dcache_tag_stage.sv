@@ -44,7 +44,7 @@ module dcache_tag_stage
     input vector_t                              of_store_value,
     input                                       of_instruction_valid,
     input decoded_instruction_t                 of_instruction,
-    input thread_idx_t                          of_thread_idx,
+    input local_thread_idx_t                    of_thread_idx,
     input subcycle_t                            of_subcycle,
 
     // From dcache_data_stage
@@ -55,7 +55,7 @@ module dcache_tag_stage
     output logic                                dt_instruction_valid,
     output decoded_instruction_t                dt_instruction,
     output vector_lane_mask_t                   dt_mask_value,
-    output thread_idx_t                         dt_thread_idx,
+    output local_thread_idx_t                   dt_thread_idx,
     output l1d_addr_t                           dt_request_vaddr,
     output l1d_addr_t                           dt_request_paddr,
     output logic                                dt_tlb_hit,
@@ -101,7 +101,7 @@ module dcache_tag_stage
 
     // From writeback_stage
     input logic                                 wb_rollback_en,
-    input thread_idx_t                          wb_rollback_thread_idx);
+    input local_thread_idx_t                    wb_rollback_thread_idx);
 
     l1d_addr_t request_addr_nxt;
     logic cache_load_en;

@@ -28,7 +28,7 @@ module operand_fetch_stage(
     // From thread_select_stage
     input                             ts_instruction_valid,
     input decoded_instruction_t       ts_instruction,
-    input thread_idx_t                ts_thread_idx,
+    input local_thread_idx_t          ts_thread_idx,
     input subcycle_t                  ts_subcycle,
 
     // To fp_execute_stage1/int_execute_stage/dcache_tag_stage
@@ -38,14 +38,14 @@ module operand_fetch_stage(
     output vector_t                   of_store_value,
     output decoded_instruction_t      of_instruction,
     output logic                      of_instruction_valid,
-    output thread_idx_t               of_thread_idx,
+    output local_thread_idx_t         of_thread_idx,
     output subcycle_t                 of_subcycle,
 
     // From writeback_stage
     input                             wb_rollback_en,
-    input thread_idx_t                wb_rollback_thread_idx,
+    input local_thread_idx_t          wb_rollback_thread_idx,
     input                             wb_writeback_en,
-    input thread_idx_t                wb_writeback_thread_idx,
+    input local_thread_idx_t          wb_writeback_thread_idx,
     input                             wb_writeback_is_vector,
     input vector_t                    wb_writeback_value,
     input vector_lane_mask_t          wb_writeback_mask,

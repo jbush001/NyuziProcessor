@@ -30,7 +30,7 @@ module io_request_queue
     // From dcache_data_stage
     input                                  dd_io_write_en,
     input                                  dd_io_read_en,
-    input thread_idx_t                     dd_io_thread_idx,
+    input local_thread_idx_t               dd_io_thread_idx,
     input scalar_t                         dd_io_addr,
     input scalar_t                         dd_io_write_value,
 
@@ -63,7 +63,7 @@ module io_request_queue
     local_thread_bitmap_t wake_thread_oh;
     local_thread_bitmap_t send_request;
     local_thread_bitmap_t send_grant_oh;
-    thread_idx_t send_grant_idx;
+    local_thread_idx_t send_grant_idx;
 
     genvar thread_idx;
     generate
@@ -81,7 +81,7 @@ module io_request_queue
                 else
                 begin
                     if ((dd_io_write_en | dd_io_read_en) && dd_io_thread_idx
-                        == thread_idx_t'(thread_idx))
+                        == local_thread_idx_t'(thread_idx))
                     begin
                         if (pending_request[thread_idx].valid)
                         begin
@@ -100,7 +100,7 @@ module io_request_queue
                     end
 
                     if (ii_response_valid && ii_response.core == CORE_ID && ii_response.thread_idx
-                        == thread_idx_t'(thread_idx))
+                        == local_thread_idx_t'(thread_idx))
                     begin
                         // Ensure there isn't a response for an entry that isn't pending
                         assert(pending_request[thread_idx].valid);
@@ -108,7 +108,7 @@ module io_request_queue
                         pending_request[thread_idx].value <= ii_response.read_value;
                     end
 
-                    if (ii_ready && |send_grant_oh && send_grant_idx == thread_idx_t'(thread_idx))
+                    if (ii_ready && |send_grant_oh && send_grant_idx == local_thread_idx_t'(thread_idx))
                         pending_request[thread_idx].request_sent <= 1;
                 end
             end

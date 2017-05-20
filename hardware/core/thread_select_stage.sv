@@ -35,7 +35,7 @@ module thread_select_stage(
     // From instruction_decode_stage
     input decoded_instruction_t        id_instruction,
     input                              id_instruction_valid,
-    input thread_idx_t                 id_thread_idx,
+    input local_thread_idx_t           id_thread_idx,
 
     // To ifetch_tag_stage
     output local_thread_bitmap_t       ts_fetch_en,
@@ -43,16 +43,16 @@ module thread_select_stage(
     // To operand_fetch_stage
     output logic                       ts_instruction_valid,
     output decoded_instruction_t       ts_instruction,
-    output thread_idx_t                ts_thread_idx,
+    output local_thread_idx_t          ts_thread_idx,
     output subcycle_t                  ts_subcycle,
 
     // From writeback_stage
     input                              wb_writeback_en,
-    input thread_idx_t                 wb_writeback_thread_idx,
+    input local_thread_idx_t           wb_writeback_thread_idx,
     input                              wb_writeback_is_vector,
     input register_idx_t               wb_writeback_reg,
     input                              wb_writeback_is_last_subcycle,
-    input thread_idx_t                 wb_rollback_thread_idx,
+    input local_thread_idx_t           wb_rollback_thread_idx,
     input                              wb_rollback_en,
     input pipeline_sel_t               wb_rollback_pipeline,
     input subcycle_t                   wb_rollback_subcycle,
@@ -83,7 +83,7 @@ module thread_select_stage(
     local_thread_bitmap_t thread_blocked;
     local_thread_bitmap_t can_issue_thread;
     local_thread_bitmap_t thread_issue_oh;
-    thread_idx_t issue_thread_idx;
+    local_thread_idx_t issue_thread_idx;
     logic[WRITEBACK_ALLOC_STAGES - 1:0] writeback_allocate;
     logic[WRITEBACK_ALLOC_STAGES - 1:0] writeback_allocate_nxt;
     subcycle_t current_subcycle[`THREADS_PER_CORE];
@@ -98,7 +98,7 @@ module thread_select_stage(
     // Track issued instructions so we can clear scoreboard entries on a rollback
     struct packed {
         logic valid;
-        thread_idx_t thread_idx;
+        local_thread_idx_t thread_idx;
         logic[SCOREBOARD_ENTRIES - 1:0] scoreboard_bitmap;
     } rollback_dest[ROLLBACK_STAGES];
 
@@ -136,9 +136,9 @@ module thread_select_stage(
             logic scoreboard_conflict;
 
             assign rollback_this_thread = wb_rollback_en
-                && wb_rollback_thread_idx == thread_idx_t'(thread_idx);
+                && wb_rollback_thread_idx == local_thread_idx_t'(thread_idx);
             assign enqueue_this_thread = id_instruction_valid
-                && id_thread_idx == thread_idx_t'(thread_idx);
+                && id_thread_idx == local_thread_idx_t'(thread_idx);
 
             sync_fifo #(
                 .WIDTH($bits(id_instruction)),
@@ -249,7 +249,7 @@ module thread_select_stage(
                 // Since this doesn't wait on the scoreboard to issue
                 // intermediate subcycles, this is necessary for correctness.
                 scoreboard_clear_bitmap = 0;
-                if (wb_writeback_en && wb_writeback_thread_idx == thread_idx_t'(thread_idx)
+                if (wb_writeback_en && wb_writeback_thread_idx == local_thread_idx_t'(thread_idx)
                     && wb_writeback_is_last_subcycle)
                 begin
                     if (wb_writeback_is_vector)
@@ -259,11 +259,11 @@ module thread_select_stage(
                 end
 
                 // Clear scoreboard entries for rolled back threads.
-                if (wb_rollback_en && wb_rollback_thread_idx == thread_idx_t'(thread_idx))
+                if (wb_rollback_en && wb_rollback_thread_idx == local_thread_idx_t'(thread_idx))
                 begin
                     for (int i = 0; i < ROLLBACK_STAGES - 1; i++)
                     begin
-                        if (rollback_dest[i].valid && rollback_dest[i].thread_idx == thread_idx_t'(thread_idx))
+                        if (rollback_dest[i].valid && rollback_dest[i].thread_idx == local_thread_idx_t'(thread_idx))
                             scoreboard_clear_bitmap |= rollback_dest[i].scoreboard_bitmap;
                     end
 
@@ -272,7 +272,7 @@ module thread_select_stage(
                     // stage if this originated there.
                     if (rollback_dest[ROLLBACK_STAGES - 1].valid
                         && rollback_dest[ROLLBACK_STAGES - 1].thread_idx
-                        == thread_idx_t'(thread_idx)
+                        == local_thread_idx_t'(thread_idx)
                         && wb_rollback_pipeline == PIPE_MEM)
                     begin
                         scoreboard_clear_bitmap |= rollback_dest[ROLLBACK_STAGES - 1]
@@ -323,7 +323,7 @@ module thread_select_stage(
                 else
                 begin
                     scoreboard[thread_idx] <= scoreboard_nxt[thread_idx];
-                    if (wb_rollback_en && wb_rollback_thread_idx == thread_idx_t'(thread_idx))
+                    if (wb_rollback_en && wb_rollback_thread_idx == local_thread_idx_t'(thread_idx))
                         current_subcycle[thread_idx] <= wb_rollback_subcycle;
                     else if (issue_last_subcycle[thread_idx])
                         current_subcycle[thread_idx] <= 0;

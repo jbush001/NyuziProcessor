@@ -35,7 +35,7 @@ module dcache_data_stage(
     input                                     dt_instruction_valid,
     input decoded_instruction_t               dt_instruction,
     input vector_lane_mask_t                  dt_mask_value,
-    input thread_idx_t                        dt_thread_idx,
+    input local_thread_idx_t                  dt_thread_idx,
     input l1d_addr_t                          dt_request_vaddr,
     input l1d_addr_t                          dt_request_paddr,
     input                                     dt_tlb_hit,
@@ -54,7 +54,7 @@ module dcache_data_stage(
     // To io_request_queue
     output logic                              dd_io_write_en,
     output logic                              dd_io_read_en,
-    output thread_idx_t                       dd_io_thread_idx,
+    output local_thread_idx_t                 dd_io_thread_idx,
     output scalar_t                           dd_io_addr,
     output scalar_t                           dd_io_write_value,
 
@@ -62,7 +62,7 @@ module dcache_data_stage(
     output logic                              dd_instruction_valid,
     output decoded_instruction_t              dd_instruction,
     output vector_lane_mask_t                 dd_lane_mask,
-    output thread_idx_t                       dd_thread_idx,
+    output local_thread_idx_t                 dd_thread_idx,
     output l1d_addr_t                         dd_request_vaddr,
     output subcycle_t                         dd_subcycle,
     output logic                              dd_rollback_en,
@@ -95,7 +95,7 @@ module dcache_data_stage(
      // To l1_l2_interface
     output logic                              dd_cache_miss,
     output cache_line_index_t                 dd_cache_miss_addr,
-    output thread_idx_t                       dd_cache_miss_thread_idx,
+    output local_thread_idx_t                 dd_cache_miss_thread_idx,
     output logic                              dd_cache_miss_synchronized,
     output logic                              dd_store_en,
     output logic                              dd_flush_en,
@@ -105,14 +105,14 @@ module dcache_data_stage(
     output logic[`CACHE_LINE_BYTES - 1:0]     dd_store_mask,
     output cache_line_index_t                 dd_store_addr,
     output cache_line_data_t                  dd_store_data,
-    output thread_idx_t                       dd_store_thread_idx,
+    output local_thread_idx_t                 dd_store_thread_idx,
     output logic                              dd_store_synchronized,
     output cache_line_index_t                 dd_store_bypass_addr,
-    output thread_idx_t                       dd_store_bypass_thread_idx,
+    output local_thread_idx_t                 dd_store_bypass_thread_idx,
 
     // From writeback_stage
     input logic                               wb_rollback_en,
-    input thread_idx_t                        wb_rollback_thread_idx,
+    input local_thread_idx_t                  wb_rollback_thread_idx,
     input pipeline_sel_t                      wb_rollback_pipeline,
 
     // To performance_counters
@@ -473,7 +473,7 @@ module dcache_data_stage(
             begin
                 if (reset)
                     dd_sync_load_pending[thread_idx] <= 0;
-                else if (dcache_load_en && is_synchronized && dt_thread_idx == thread_idx_t'(thread_idx))
+                else if (dcache_load_en && is_synchronized && dt_thread_idx == local_thread_idx_t'(thread_idx))
                 begin
                     // Track if this is the first or restarted request.
                     dd_sync_load_pending[thread_idx] <= !dd_sync_load_pending[thread_idx];

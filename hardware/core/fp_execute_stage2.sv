@@ -33,14 +33,14 @@ module fp_execute_stage2(
 
     // From writeback_stage
     input logic                                 wb_rollback_en,
-    input thread_idx_t                          wb_rollback_thread_idx,
+    input local_thread_idx_t                    wb_rollback_thread_idx,
     input pipeline_sel_t                        wb_rollback_pipeline,
 
     // From fp_execute_stage1
     input vector_lane_mask_t                    fx1_mask_value,
     input                                       fx1_instruction_valid,
     input decoded_instruction_t                 fx1_instruction,
-    input thread_idx_t                          fx1_thread_idx,
+    input local_thread_idx_t                    fx1_thread_idx,
     input subcycle_t                            fx1_subcycle,
     input [`NUM_VECTOR_LANES - 1:0]             fx1_result_is_inf,
     input [`NUM_VECTOR_LANES - 1:0]             fx1_result_is_nan,
@@ -64,7 +64,7 @@ module fp_execute_stage2(
     output logic                                fx2_instruction_valid,
     output decoded_instruction_t                fx2_instruction,
     output vector_lane_mask_t                   fx2_mask_value,
-    output thread_idx_t                         fx2_thread_idx,
+    output local_thread_idx_t                   fx2_thread_idx,
     output subcycle_t                           fx2_subcycle,
     output logic[`NUM_VECTOR_LANES - 1:0]       fx2_result_is_inf,
     output logic[`NUM_VECTOR_LANES - 1:0]       fx2_result_is_nan,

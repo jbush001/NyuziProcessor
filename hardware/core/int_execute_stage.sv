@@ -33,19 +33,19 @@ module int_execute_stage(
     input vector_lane_mask_t          of_mask_value,
     input                             of_instruction_valid,
     input decoded_instruction_t       of_instruction,
-    input thread_idx_t                of_thread_idx,
+    input local_thread_idx_t          of_thread_idx,
     input subcycle_t                  of_subcycle,
 
     // From writeback_stage
     input logic                       wb_rollback_en,
-    input thread_idx_t                wb_rollback_thread_idx,
+    input local_thread_idx_t          wb_rollback_thread_idx,
 
     // To writeback_stage
     output logic                      ix_instruction_valid,
     output decoded_instruction_t      ix_instruction,
     output vector_t                   ix_result,
     output vector_lane_mask_t         ix_mask_value,
-    output thread_idx_t               ix_thread_idx,
+    output local_thread_idx_t         ix_thread_idx,
     output logic                      ix_rollback_en,
     output scalar_t                   ix_rollback_pc,
     output subcycle_t                 ix_subcycle,
@@ -86,7 +86,7 @@ module int_execute_stage(
             logic[5:0] lz;
             logic[5:0] tz;
             scalar_t reciprocal;
-            ieee754_binary32_t fp_operand;
+            float32_t fp_operand;
             logic[5:0] reciprocal_estimate;
             logic shift_in_sign;
             scalar_t rshift;

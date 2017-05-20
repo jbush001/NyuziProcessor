@@ -23,14 +23,15 @@
 // Floating point types
 //
 
-`define IEEE754_B32_EXP_WIDTH 8
-`define IEEE754_B32_SIG_WIDTH 23
+`define FLOAT32_EXP_WIDTH 8
+`define FLOAT32_SIG_WIDTH 23
 
+// IEEE 754 Binary 32 encoding
 typedef struct packed {
     logic sign;
-    logic[`IEEE754_B32_EXP_WIDTH - 1:0] exponent;
-    logic[`IEEE754_B32_SIG_WIDTH - 1:0] significand;
-} ieee754_binary32_t;
+    logic[`FLOAT32_EXP_WIDTH - 1:0] exponent;
+    logic[`FLOAT32_SIG_WIDTH - 1:0] significand;
+} float32_t;
 
 //
 // Execution pipeline defines
@@ -42,7 +43,7 @@ typedef struct packed {
 
 typedef logic[31:0] scalar_t;
 typedef scalar_t[`NUM_VECTOR_LANES - 1:0] vector_t;
-typedef logic[$clog2(`THREADS_PER_CORE) - 1:0] thread_idx_t;
+typedef logic[$clog2(`THREADS_PER_CORE) - 1:0] local_thread_idx_t;
 typedef logic[`THREADS_PER_CORE - 1:0] local_thread_bitmap_t; // One bit per thread
 typedef logic[4:0] register_idx_t;
 typedef logic[$clog2(`NUM_VECTOR_LANES) - 1:0] subcycle_t;
@@ -369,7 +370,7 @@ typedef struct packed {
 // I/O bus request
 typedef struct packed {
     logic is_store;
-    thread_idx_t thread_idx;
+    local_thread_idx_t thread_idx;
     scalar_t address;
     scalar_t value;
 } ioreq_packet_t;
@@ -377,7 +378,7 @@ typedef struct packed {
 // I/O bus response
 typedef struct packed {
     core_id_t core;
-    thread_idx_t thread_idx;
+    local_thread_idx_t thread_idx;
     scalar_t read_value;
 } iorsp_packet_t;
 

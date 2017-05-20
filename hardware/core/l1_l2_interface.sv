@@ -71,7 +71,7 @@ module l1_l2_interface
     // From ifetch_data_stage
     input logic                                   ifd_cache_miss,
     input cache_line_index_t                      ifd_cache_miss_paddr,
-    input thread_idx_t                            ifd_cache_miss_thread_idx,
+    input local_thread_idx_t                      ifd_cache_miss_thread_idx,
 
     // To ifetch_data_stage
     output logic                                  l2i_idata_update_en,
@@ -101,7 +101,7 @@ module l1_l2_interface
     // From dcache_data_stage
     input                                         dd_cache_miss,
     input cache_line_index_t                      dd_cache_miss_addr,
-    input thread_idx_t                            dd_cache_miss_thread_idx,
+    input local_thread_idx_t                      dd_cache_miss_thread_idx,
     input                                         dd_cache_miss_synchronized,
     input                                         dd_store_en,
     input                                         dd_flush_en,
@@ -111,10 +111,10 @@ module l1_l2_interface
     input [`CACHE_LINE_BYTES - 1:0]               dd_store_mask,
     input cache_line_index_t                      dd_store_addr,
     input cache_line_data_t                       dd_store_data,
-    input thread_idx_t                            dd_store_thread_idx,
+    input local_thread_idx_t                      dd_store_thread_idx,
     input                                         dd_store_synchronized,
     input cache_line_index_t                      dd_store_bypass_addr,
-    input thread_idx_t                            dd_store_bypass_thread_idx,
+    input local_thread_idx_t                      dd_store_bypass_thread_idx,
 
     // To dcache_data_stage
     output logic                                  l2i_ddata_update_en,

@@ -41,12 +41,12 @@ module control_registers
 
     // From int_execute_stage
     input                                   ix_is_eret,
-    input thread_idx_t                      ix_thread_idx,
+    input local_thread_idx_t                ix_thread_idx,
 
     // From dcache_data_stage
     // dd_xxx signals are unregistered. dt_thread_idx represents thread going into
     // dcache_data_stage)
-    input thread_idx_t                      dt_thread_idx,
+    input local_thread_idx_t                dt_thread_idx,
     input                                   dd_creg_write_en,
     input                                   dd_creg_read_en,
     input control_register_t                dd_creg_index,
@@ -57,7 +57,7 @@ module control_registers
     input trap_cause_t                      wb_trap_cause,
     input scalar_t                          wb_trap_pc,
     input scalar_t                          wb_trap_access_vaddr,
-    input thread_idx_t                      wb_trap_thread_idx,
+    input local_thread_idx_t                wb_trap_thread_idx,
     input subcycle_t                        wb_trap_subcycle,
 
     // To writeback_stage

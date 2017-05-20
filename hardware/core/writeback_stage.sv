@@ -46,14 +46,14 @@ module writeback_stage(
     input decoded_instruction_t           fx5_instruction,
     input vector_t                        fx5_result,
     input vector_lane_mask_t              fx5_mask_value,
-    input thread_idx_t                    fx5_thread_idx,
+    input local_thread_idx_t              fx5_thread_idx,
     input subcycle_t                      fx5_subcycle,
 
     // From int_execute_stage (integer pipeline)
     input                                 ix_instruction_valid,
     input decoded_instruction_t           ix_instruction,
     input vector_t                        ix_result,
-    input thread_idx_t                    ix_thread_idx,
+    input local_thread_idx_t              ix_thread_idx,
     input vector_lane_mask_t              ix_mask_value,
     input logic                           ix_rollback_en,
     input scalar_t                        ix_rollback_pc,
@@ -64,7 +64,7 @@ module writeback_stage(
     input                                 dd_instruction_valid,
     input decoded_instruction_t           dd_instruction,
     input vector_lane_mask_t              dd_lane_mask,
-    input thread_idx_t                    dd_thread_idx,
+    input local_thread_idx_t              dd_thread_idx,
     input l1d_addr_t                      dd_request_vaddr,
     input subcycle_t                      dd_subcycle,
     input                                 dd_rollback_en,
@@ -95,20 +95,20 @@ module writeback_stage(
     output logic                          wb_trap,
     output trap_cause_t                   wb_trap_cause,
     output scalar_t                       wb_trap_pc,
-    output thread_idx_t                   wb_trap_thread_idx,
+    output local_thread_idx_t             wb_trap_thread_idx,
     output scalar_t                       wb_trap_access_vaddr,
     output subcycle_t                     wb_trap_subcycle,
 
     // Rollback signals to all stages
     output logic                          wb_rollback_en,
-    output thread_idx_t                   wb_rollback_thread_idx,
+    output local_thread_idx_t             wb_rollback_thread_idx,
     output scalar_t                       wb_rollback_pc,
     output pipeline_sel_t                 wb_rollback_pipeline,
     output subcycle_t                     wb_rollback_subcycle,
 
     // To operand_fetch_stage/thread_select_stage
     output logic                          wb_writeback_en,
-    output thread_idx_t                   wb_writeback_thread_idx,
+    output local_thread_idx_t             wb_writeback_thread_idx,
     output logic                          wb_writeback_is_vector,
     output vector_t                       wb_writeback_value,
     output vector_lane_mask_t             wb_writeback_mask,
@@ -144,7 +144,7 @@ module writeback_stage(
     logic is_last_subcycle_sx;
     logic is_last_subcycle_mx;
     logic writeback_en_nxt;
-    thread_idx_t writeback_thread_idx_nxt;
+    local_thread_idx_t writeback_thread_idx_nxt;
     logic writeback_is_vector_nxt;
     vector_t writeback_value_nxt;
     vector_lane_mask_t writeback_mask_nxt;

@@ -35,11 +35,11 @@ module trace_logger(
     // From writeback stage
     input                            wb_writeback_en,
     input                            wb_writeback_is_vector,
-    input thread_idx_t               wb_writeback_thread_idx,
+    input local_thread_idx_t         wb_writeback_thread_idx,
     input register_idx_t             wb_writeback_reg,
     input vector_t                   wb_writeback_value,
     input vector_lane_mask_t         wb_writeback_mask,
-    input thread_idx_t               wb_rollback_thread_idx,
+    input local_thread_idx_t         wb_rollback_thread_idx,
     input scalar_t                   wb_trap_pc,
     input scalar_t                   wb_rollback_pc,
     input                            debug_is_sync_store,
@@ -69,7 +69,7 @@ module trace_logger(
     input                            dd_instruction_is_load,
     input memory_op_t                dd_instruction_memory_access_type,
     input scalar_t                   dt_instruction_pc,
-    input thread_idx_t               dt_thread_idx,
+    input local_thread_idx_t         dt_thread_idx,
     input scalar_t                   dt_request_virt_addr,
     input                            sq_rollback_en,
     input                            sq_store_sync_success);
@@ -87,7 +87,7 @@ module trace_logger(
     typedef struct packed {
         trace_event_type_t event_type;
         scalar_t pc;
-        thread_idx_t thread_idx;
+        local_thread_idx_t thread_idx;
         register_idx_t writeback_reg;
         scalar_t addr;
         logic[`CACHE_LINE_BYTES - 1:0] mask;

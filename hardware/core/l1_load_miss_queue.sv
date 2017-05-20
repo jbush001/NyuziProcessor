@@ -28,7 +28,7 @@ module l1_load_miss_queue(
     // Enqueue request
     input                                   cache_miss,
     input cache_line_index_t                cache_miss_addr,
-    input thread_idx_t                      cache_miss_thread_idx,
+    input local_thread_idx_t                cache_miss_thread_idx,
     input                                   cache_miss_synchronized,
 
     // Dequeue request
@@ -56,7 +56,7 @@ module l1_load_miss_queue(
     logic request_unique;
     local_thread_bitmap_t send_grant_oh;
     local_thread_bitmap_t arbiter_request;
-    thread_idx_t send_grant_idx;
+    local_thread_idx_t send_grant_idx;
 
     idx_to_oh #(.NUM_SIGNALS(`THREADS_PER_CORE)) idx_to_oh_miss_thread(
         .index(cache_miss_thread_idx),
