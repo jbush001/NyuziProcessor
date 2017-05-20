@@ -116,7 +116,7 @@ module writeback_stage(
     output logic                          wb_writeback_is_last_subcycle,
 
     // To thread_select_stage
-    output thread_bitmap_t                wb_suspend_thread_oh,
+    output local_thread_bitmap_t          wb_suspend_thread_oh,
 
     // To performance_counters
     output logic                          wb_perf_instruction_retire,
@@ -135,11 +135,11 @@ module writeback_stage(
     pipeline_sel_t __debug_wb_pipeline;
     logic __debug_is_sync_store;
 `endif
-    logic[`VECTOR_LANES - 1:0] scycle_vcompare_result;
-    logic[`VECTOR_LANES - 1:0] mcycle_vcompare_result;
+    logic[`NUM_VECTOR_LANES - 1:0] scycle_vcompare_result;
+    logic[`NUM_VECTOR_LANES - 1:0] mcycle_vcompare_result;
     vector_lane_mask_t dd_vector_lane_oh;
     cache_line_data_t bypassed_read_data;
-    thread_bitmap_t thread_dd_oh;
+    local_thread_bitmap_t thread_dd_oh;
     logic is_last_subcycle_dd;
     logic is_last_subcycle_sx;
     logic is_last_subcycle_mx;
@@ -256,7 +256,7 @@ module writeback_stage(
 
     // Suspend thread if necessary
     assign wb_suspend_thread_oh = (dd_suspend_thread || sq_rollback_en || ior_rollback_en)
-        ? thread_dd_oh : thread_bitmap_t'(0);
+        ? thread_dd_oh : local_thread_bitmap_t'(0);
 
     // If there is a pending store for the value that was just read, merge it into
     // the data returned from the L1 data cache.
@@ -317,15 +317,15 @@ module writeback_stage(
     // Compress vector comparisons to one bit per lane.
     genvar mask_lane;
     generate
-        for (mask_lane = 0; mask_lane < `VECTOR_LANES; mask_lane++)
+        for (mask_lane = 0; mask_lane < `NUM_VECTOR_LANES; mask_lane++)
         begin : compare_result_gen
-            assign scycle_vcompare_result[mask_lane] = ix_result[`VECTOR_LANES - mask_lane - 1][0];
-            assign mcycle_vcompare_result[mask_lane] = fx5_result[`VECTOR_LANES - mask_lane - 1][0];
+            assign scycle_vcompare_result[mask_lane] = ix_result[`NUM_VECTOR_LANES - mask_lane - 1][0];
+            assign mcycle_vcompare_result[mask_lane] = fx5_result[`NUM_VECTOR_LANES - mask_lane - 1][0];
         end
     endgenerate
 
     idx_to_oh #(
-        .NUM_SIGNALS(`VECTOR_LANES),
+        .NUM_SIGNALS(`NUM_VECTOR_LANES),
         .DIRECTION("LSB0")
     ) convert_dd_lane(
         .one_hot(dd_vector_lane_oh),
@@ -429,19 +429,19 @@ module writeback_stage(
                                 if (dd_is_io_address)
                                 begin
                                     writeback_value_nxt[0] = ior_read_value;
-                                    writeback_mask_nxt = {`VECTOR_LANES{1'b1}};
+                                    writeback_mask_nxt = {`NUM_VECTOR_LANES{1'b1}};
                                 end
                                 else
                                 begin
                                     writeback_value_nxt[0] = swapped_word_value;
-                                    writeback_mask_nxt = {`VECTOR_LANES{1'b1}};
+                                    writeback_mask_nxt = {`NUM_VECTOR_LANES{1'b1}};
                                 end
                             end
 
                             MEM_CONTROL_REG:
                             begin
                                 writeback_value_nxt[0] = cr_creg_read_val;
-                                writeback_mask_nxt = {`VECTOR_LANES{1'b1}};
+                                writeback_mask_nxt = {`NUM_VECTOR_LANES{1'b1}};
                             end
 
                             MEM_BLOCK,
@@ -455,7 +455,7 @@ module writeback_stage(
                             begin
                                 // Gather load
                                 // Grab the appropriate lane.
-                                writeback_value_nxt = {`VECTOR_LANES{swapped_word_value}};
+                                writeback_value_nxt = {`NUM_VECTOR_LANES{swapped_word_value}};
                                 writeback_mask_nxt = dd_vector_lane_oh & dd_lane_mask;
                             end
                         endcase

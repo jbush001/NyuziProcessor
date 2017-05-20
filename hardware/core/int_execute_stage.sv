@@ -72,7 +72,7 @@ module int_execute_stage(
 
     genvar lane;
     generate
-        for (lane = 0; lane < `VECTOR_LANES; lane++)
+        for (lane = 0; lane < `NUM_VECTOR_LANES; lane++)
         begin : lane_alu_gen
             scalar_t lane_operand1;
             scalar_t lane_operand2;

@@ -38,7 +38,7 @@ module thread_select_stage(
     input thread_idx_t                 id_thread_idx,
 
     // To ifetch_tag_stage
-    output thread_bitmap_t             ts_fetch_en,
+    output local_thread_bitmap_t       ts_fetch_en,
 
     // To operand_fetch_stage
     output logic                       ts_instruction_valid,
@@ -58,12 +58,12 @@ module thread_select_stage(
     input subcycle_t                   wb_rollback_subcycle,
 
     // From interrupt_controller
-    input thread_bitmap_t              thread_en,
+    input local_thread_bitmap_t        thread_en,
 
     // From dcache_data_stage
-    input thread_bitmap_t              wb_suspend_thread_oh,
-    input thread_bitmap_t              l2i_dcache_wake_bitmap,
-    input thread_bitmap_t              ior_wake_bitmap,
+    input local_thread_bitmap_t        wb_suspend_thread_oh,
+    input local_thread_bitmap_t        l2i_dcache_wake_bitmap,
+    input local_thread_bitmap_t        ior_wake_bitmap,
 
     // To performance_counters
     output logic                       ts_perf_instruction_issue);
@@ -80,9 +80,9 @@ module thread_select_stage(
 
     decoded_instruction_t thread_instr[`THREADS_PER_CORE];
     decoded_instruction_t issue_instr;
-    thread_bitmap_t thread_blocked;
-    thread_bitmap_t can_issue_thread;
-    thread_bitmap_t thread_issue_oh;
+    local_thread_bitmap_t thread_blocked;
+    local_thread_bitmap_t can_issue_thread;
+    local_thread_bitmap_t thread_issue_oh;
     thread_idx_t issue_thread_idx;
     logic[WRITEBACK_ALLOC_STAGES - 1:0] writeback_allocate;
     logic[WRITEBACK_ALLOC_STAGES - 1:0] writeback_allocate_nxt;

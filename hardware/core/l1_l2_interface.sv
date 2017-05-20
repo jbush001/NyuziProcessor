@@ -63,7 +63,7 @@ module l1_l2_interface
     output logic                                  l2i_itag_update_valid,
 
     // To instruction_decode_stage
-    output thread_bitmap_t                        sq_sync_store_pending,
+    output local_thread_bitmap_t                  sq_sync_store_pending,
 
     // From ifetch_tag_stage
     input l1i_way_idx_t                           ift_fill_lru,
@@ -80,8 +80,8 @@ module l1_l2_interface
     output cache_line_data_t                      l2i_idata_update_data,
 
     // To thread_select_stage
-    output thread_bitmap_t                        l2i_dcache_wake_bitmap,
-    output thread_bitmap_t                        l2i_icache_wake_bitmap,
+    output local_thread_bitmap_t                  l2i_dcache_wake_bitmap,
+    output local_thread_bitmap_t                  l2i_icache_wake_bitmap,
 
     // From dcache_tag_stage
     input logic                                   dt_snoop_valid[`L1D_WAYS],
@@ -142,7 +142,7 @@ module l1_l2_interface
     l1_miss_entry_idx_t icache_l2_response_idx;
     logic storebuf_l2_response_valid;
     l1_miss_entry_idx_t storebuf_l2_response_idx;
-    thread_bitmap_t dcache_miss_wake_bitmap;
+    local_thread_bitmap_t dcache_miss_wake_bitmap;
     logic sq_dequeue_ack;
     logic icache_dequeue_ready;
     logic icache_dequeue_ack;
@@ -176,7 +176,7 @@ module l1_l2_interface
     logic [`CACHE_LINE_BYTES-1:0] sq_dequeue_mask;// From l1_store_queue of l1_store_queue.v
     logic               sq_dequeue_ready;       // From l1_store_queue of l1_store_queue.v
     logic               sq_dequeue_synchronized;// From l1_store_queue of l1_store_queue.v
-    thread_bitmap_t     sq_wake_bitmap;         // From l1_store_queue of l1_store_queue.v
+    local_thread_bitmap_t sq_wake_bitmap;       // From l1_store_queue of l1_store_queue.v
     // End of automatics
 
     l1_store_queue l1_store_queue(.*);

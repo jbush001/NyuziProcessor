@@ -20,42 +20,69 @@
 `include "config.sv"
 
 //
+// Floating point types
+//
+
+`define IEEE754_B32_EXP_WIDTH 8
+`define IEEE754_B32_SIG_WIDTH 23
+
+typedef struct packed {
+    logic sign;
+    logic[`IEEE754_B32_EXP_WIDTH - 1:0] exponent;
+    logic[`IEEE754_B32_SIG_WIDTH - 1:0] significand;
+} ieee754_binary32_t;
+
+//
 // Execution pipeline defines
 //
 
-`define VECTOR_LANES 16
+`define NUM_VECTOR_LANES 16
 `define NUM_REGISTERS 32
 `define TOTAL_THREADS (`THREADS_PER_CORE * `NUM_CORES)
 
 typedef logic[31:0] scalar_t;
-typedef scalar_t[`VECTOR_LANES - 1:0] vector_t;
+typedef scalar_t[`NUM_VECTOR_LANES - 1:0] vector_t;
 typedef logic[$clog2(`THREADS_PER_CORE) - 1:0] thread_idx_t;
-typedef logic[`THREADS_PER_CORE - 1:0] thread_bitmap_t;    // One bit per thread
+typedef logic[`THREADS_PER_CORE - 1:0] local_thread_bitmap_t; // One bit per thread
 typedef logic[4:0] register_idx_t;
-typedef logic[$clog2(`VECTOR_LANES) - 1:0] subcycle_t;
-typedef logic[`VECTOR_LANES - 1:0] vector_lane_mask_t;
+typedef logic[$clog2(`NUM_VECTOR_LANES) - 1:0] subcycle_t;
+typedef logic[`NUM_VECTOR_LANES - 1:0] vector_lane_mask_t;
+
+`define CORE_ID_WIDTH $clog2(`NUM_CORES)
+
+// The width for core ID is hardcoded because using $clog2 doesn't
+// work for one core. This limits to 16 cores.
+typedef logic[3:0] core_id_t;
+
+`define CORE_PERF_EVENTS 13
+`define L2_PERF_EVENTS 3
+`define TOTAL_PERF_EVENTS (`L2_PERF_EVENTS + `CORE_PERF_EVENTS * `NUM_CORES)
+
+//
+// Instruction encodings
+//
 
 `define INSTRUCTION_NOP 32'd0
 `define REG_RA (register_idx_t'(31))
 
-// Immediate/register arithmetic
+// Immediate/register arithmetic operation encodings
 typedef enum logic[5:0] {
-    OP_OR                   = 6'b000000,
+    OP_OR                   = 6'b000000,    // Bitwise logical or
     OP_AND                  = 6'b000001,
     OP_XOR                  = 6'b000011,
-    OP_ADD_I                = 6'b000101,
-    OP_SUB_I                = 6'b000110,
-    OP_MULL_I               = 6'b000111,    // Multiply low
-    OP_MULH_U               = 6'b001000,    // Unsigned multiply high
+    OP_ADD_I                = 6'b000101,    // Add integer
+    OP_SUB_I                = 6'b000110,    // Subtract integer
+    OP_MULL_I               = 6'b000111,    // Multiply integer low
+    OP_MULH_U               = 6'b001000,    // Unsigned multiply, return high bits
     OP_ASHR                 = 6'b001001,    // Arithmetic shift right (sign extend)
     OP_SHR                  = 6'b001010,    // Logical shift right (no sign extend)
     OP_SHL                  = 6'b001011,    // Logical shift left
     OP_CLZ                  = 6'b001100,    // Count leading zeroes
-    OP_SHUFFLE              = 6'b001101,
+    OP_SHUFFLE              = 6'b001101,    // Shuffle vector lanes
     OP_CTZ                  = 6'b001110,    // Count trailing zeroes
     OP_MOVE                 = 6'b001111,
-    OP_CMPEQ_I              = 6'b010000,
-    OP_CMPNE_I              = 6'b010001,
+    OP_CMPEQ_I              = 6'b010000,    // Integer equal
+    OP_CMPNE_I              = 6'b010001,    // Integer not equal
     OP_CMPGT_I              = 6'b010010,    // Integer greater (signed)
     OP_CMPGE_I              = 6'b010011,    // Integer greater or equal (signed)
     OP_CMPLT_I              = 6'b010100,    // Integer less than (signed)
@@ -65,15 +92,15 @@ typedef enum logic[5:0] {
     OP_CMPLT_U              = 6'b011000,    // Integer less than (unsigned)
     OP_CMPLE_U              = 6'b011001,    // Integer less than or equal (unsigned)
     OP_GETLANE              = 6'b011010,    // Getlane
-    OP_FTOI                 = 6'b011011,
+    OP_FTOI                 = 6'b011011,    // Float to integer
     OP_RECIPROCAL           = 6'b011100,    // Reciprocal estimate
-    OP_SEXT8                = 6'b011101,
-    OP_SEXT16               = 6'b011110,
+    OP_SEXT8                = 6'b011101,    // Sign extend 8 bit value
+    OP_SEXT16               = 6'b011110,    // Sign extend 16 bit value
     OP_MULH_I               = 6'b011111,    // Signed multiply high
-    OP_ADD_F                = 6'b100000,
-    OP_SUB_F                = 6'b100001,
-    OP_MUL_F                = 6'b100010,
-    OP_ITOF                 = 6'b101010,
+    OP_ADD_F                = 6'b100000,    // Add floating point
+    OP_SUB_F                = 6'b100001,    // Subtract floating point
+    OP_MUL_F                = 6'b100010,    // Multiply floating point
+    OP_ITOF                 = 6'b101010,    // Integer to float
     OP_CMPGT_F              = 6'b101100,    // Floating point greater than
     OP_CMPLT_F              = 6'b101110,    // Floating point less than
     OP_CMPGE_F              = 6'b101101,    // Floating point greater or equal
@@ -84,6 +111,7 @@ typedef enum logic[5:0] {
     OP_SYSCALL              = 6'b111111
 } alu_op_t;
 
+// Operation type field encodings for memory instructions
 typedef enum logic[3:0] {
     MEM_B                   = 4'b0000,  // Byte (8 bit)
     MEM_BX                  = 4'b0001,  // Byte, sign extended
@@ -98,6 +126,7 @@ typedef enum logic[3:0] {
     MEM_SCGATH_M            = 4'b1110
 } memory_op_t;
 
+// Operation type field encodings for cache control instructions
 typedef enum logic[2:0] {
     CACHE_DTLB_INSERT       = 3'b000,
     CACHE_DINVALIDATE       = 3'b001,
@@ -109,6 +138,7 @@ typedef enum logic[2:0] {
     CACHE_ITLB_INSERT       = 3'b111
 } cache_op_t;
 
+// Operation type field encodings for branch instructions
 typedef enum logic[2:0] {
     BRANCH_REGISTER         = 3'b000,
     BRANCH_ZERO             = 3'b001,
@@ -118,6 +148,48 @@ typedef enum logic[2:0] {
     BRANCH_CALL_REGISTER    = 3'b110,
     BRANCH_ERET             = 3'b111
 } branch_type_t;
+
+// Control register indices
+typedef enum logic [4:0] {
+    CR_THREAD_ID            = 5'd0,
+    CR_TRAP_HANDLER         = 5'd1,
+    CR_TRAP_PC              = 5'd2,
+    CR_TRAP_CAUSE           = 5'd3,
+    CR_FLAGS                = 5'd4,
+    CR_TRAP_ADDRESS         = 5'd5,
+    CR_CYCLE_COUNT          = 5'd6,
+    CR_TLB_MISS_HANDLER     = 5'd7,
+    CR_SAVED_FLAGS          = 5'd8,
+    CR_CURRENT_ASID         = 5'd9,
+    CR_PAGE_DIR             = 5'd10,
+    CR_SCRATCHPAD0          = 5'd11,
+    CR_SCRATCHPAD1          = 5'd12,
+    CR_SUBCYCLE             = 5'd13,
+    CR_INTERRUPT_MASK       = 5'd14,
+    CR_INTERRUPT_ACK        = 5'd15,
+    CR_INTERRUPT_PENDING    = 5'd16,
+    CR_INTERRUPT_TRIGGER    = 5'd17
+} control_register_t;
+
+// Trap type encodings
+typedef enum logic[3:0] {
+    TT_RESET                = 4'd0,
+    TT_ILLEGAL_INSTRUCTION  = 4'd1,
+    TT_PRIVILEGED_OP        = 4'd2,
+    TT_INTERRUPT            = 4'd3,
+    TT_SYSCALL              = 4'd4,
+    TT_UNALIGNED_ACCESS     = 4'd5,
+    TT_PAGE_FAULT           = 4'd6,
+    TT_TLB_MISS             = 4'd7,
+    TT_ILLEGAL_STORE        = 4'd8,
+    TT_SUPERVISOR_ACCESS    = 4'd9,
+    TT_NOT_EXECUTABLE       = 4'd10,
+    TT_BREAKPOINT           = 4'd11
+} trap_type_t;
+
+//
+// Decoded instruction fields
+//
 
 typedef enum logic [1:0] {
     MASK_SRC_SCALAR1,
@@ -142,44 +214,7 @@ typedef enum logic [1:0] {
     PIPE_MCYCLE_ARITH
 } pipeline_sel_t;
 
-typedef enum logic [4:0] {
-    CR_THREAD_ID            = 5'd0,
-    CR_TRAP_HANDLER         = 5'd1,
-    CR_TRAP_PC              = 5'd2,
-    CR_TRAP_CAUSE           = 5'd3,
-    CR_FLAGS                = 5'd4,
-    CR_TRAP_ADDRESS         = 5'd5,
-    CR_CYCLE_COUNT          = 5'd6,
-    CR_TLB_MISS_HANDLER     = 5'd7,
-    CR_SAVED_FLAGS          = 5'd8,
-    CR_CURRENT_ASID         = 5'd9,
-    CR_PAGE_DIR             = 5'd10,
-    CR_SCRATCHPAD0          = 5'd11,
-    CR_SCRATCHPAD1          = 5'd12,
-    CR_SUBCYCLE             = 5'd13,
-    CR_INTERRUPT_MASK       = 5'd14,
-    CR_INTERRUPT_ACK        = 5'd15,
-    CR_INTERRUPT_PENDING    = 5'd16,
-    CR_INTERRUPT_TRIGGER    = 5'd17
-} control_register_t;
-
-typedef enum logic[3:0] {
-    TT_RESET                = 4'd0,
-    TT_ILLEGAL_INSTRUCTION  = 4'd1,
-    TT_PRIVILEGED_OP        = 4'd2,
-    TT_INTERRUPT            = 4'd3,
-    TT_SYSCALL              = 4'd4,
-    TT_UNALIGNED_ACCESS     = 4'd5,
-    TT_PAGE_FAULT           = 4'd6,
-    TT_TLB_MISS             = 4'd7,
-    TT_ILLEGAL_STORE        = 4'd8,
-    TT_SUPERVISOR_ACCESS    = 4'd9,
-    TT_NOT_EXECUTABLE       = 4'd10,
-    TT_BREAKPOINT           = 4'd11
-} trap_type_t;
-
-typedef struct packed
-{
+typedef struct packed {
     logic is_dcache;
     logic is_store;
     trap_type_t trap_type;
@@ -226,15 +261,6 @@ typedef struct packed {
     cache_op_t cache_control_op;
 } decoded_instruction_t;
 
-`define IEEE754_B32_EXP_WIDTH 8
-`define IEEE754_B32_SIG_WIDTH 23
-
-typedef struct packed {
-    logic sign;
-    logic[`IEEE754_B32_EXP_WIDTH - 1:0] exponent;
-    logic[`IEEE754_B32_SIG_WIDTH - 1:0] significand;
-} ieee754_binary32_t;
-
 //
 // Cache defines
 //
@@ -242,7 +268,7 @@ typedef struct packed {
 `define PAGE_SIZE 'h1000
 `define PAGE_NUM_BITS (32 - $clog2(`PAGE_SIZE))
 `define ASID_WIDTH 8
-`define CACHE_LINE_BYTES (`VECTOR_LANES * 4) // Cache line must currently be same as vector width
+`define CACHE_LINE_BYTES (`NUM_VECTOR_LANES * 4) // Must be same as vector width
 `define CACHE_LINE_BITS (`CACHE_LINE_BYTES * 8)
 `define CACHE_LINE_WORDS (`CACHE_LINE_BYTES / 4)
 `define CACHE_LINE_OFFSET_WIDTH $clog2(`CACHE_LINE_BYTES)    // Byte offset into a cache line
@@ -298,11 +324,6 @@ typedef enum logic {
     CT_DCACHE
 } cache_type_t;
 
-`define CORE_ID_WIDTH $clog2(`NUM_CORES)
-
-// The width for core ID is hardcoded because using $clog2 doesn't
-// work for one core. This limits to 16 cores.
-typedef logic[3:0] core_id_t;
 typedef logic[$clog2(`THREADS_PER_CORE) - 1:0] l1_miss_entry_idx_t;
 
 typedef enum logic[2:0] {
@@ -315,6 +336,7 @@ typedef enum logic[2:0] {
     L2REQ_DINVALIDATE
 } l2req_packet_type_t;
 
+// L2 request
 typedef struct packed {
     core_id_t core;
     l1_miss_entry_idx_t id;
@@ -333,6 +355,7 @@ typedef enum logic[2:0] {
     L2RSP_DINVALIDATE_ACK
 } l2rsp_packet_type_t;
 
+// L2 response
 typedef struct packed {
     logic status;
     core_id_t core;
@@ -343,6 +366,7 @@ typedef struct packed {
     cache_line_data_t data;
 } l2rsp_packet_t;
 
+// I/O bus request
 typedef struct packed {
     logic is_store;
     thread_idx_t thread_idx;
@@ -350,11 +374,26 @@ typedef struct packed {
     scalar_t value;
 } ioreq_packet_t;
 
+// I/O bus response
 typedef struct packed {
     core_id_t core;
     thread_idx_t thread_idx;
     scalar_t read_value;
 } iorsp_packet_t;
+
+// Non-cached I/O bus (peripheral register access) external interface
+// write_en and read_en are mutually exclusive. When read_en is asserted, the
+// data will appear on read_data one cycle later.
+interface io_bus_interface;
+    logic write_en;
+    logic read_en;
+    scalar_t address;
+    scalar_t write_data;
+    scalar_t read_data;
+
+    modport master(output write_en, read_en, address, write_data, input read_data);
+    modport slave(input write_en, read_en, address, write_data, output read_data);
+endinterface
 
 // AMBA AXI and ACE Protocol Specification, rev E, Table A3-3
 typedef enum logic[1:0] {
@@ -407,23 +446,5 @@ interface axi4_interface;
         m_awcache, m_arcache,
         output s_awready, s_wready, s_bvalid, s_arready, s_rvalid, s_rdata);
 endinterface
-
-// Non-cached I/O bus (peripheral register access)
-// write_en and read_en are mutually exclusive. When read_en is asserted, the
-// data will appear on read_data one cycle later.
-interface io_bus_interface;
-    logic write_en;
-    logic read_en;
-    scalar_t address;
-    scalar_t write_data;
-    scalar_t read_data;
-
-    modport master(output write_en, read_en, address, write_data, input read_data);
-    modport slave(input write_en, read_en, address, write_data, output read_data);
-endinterface
-
-`define CORE_PERF_EVENTS 13
-`define L2_PERF_EVENTS 3
-`define TOTAL_PERF_EVENTS (`L2_PERF_EVENTS + `CORE_PERF_EVENTS * `NUM_CORES)
 
 `endif

@@ -30,7 +30,7 @@ module l1_store_queue(
     input                                  reset,
 
     // To instruction_decode_stage
-    output thread_bitmap_t                sq_sync_store_pending,
+    output local_thread_bitmap_t           sq_sync_store_pending,
 
     // From dache_data_stage
     input                                  dd_store_en,
@@ -68,7 +68,7 @@ module l1_store_queue(
     output logic                           sq_dequeue_iinvalidate,
     output logic                           sq_dequeue_dinvalidate,
     output logic                           sq_rollback_en,
-    output thread_bitmap_t                 sq_wake_bitmap);
+    output local_thread_bitmap_t           sq_wake_bitmap);
 
     struct packed {
         logic synchronized;
@@ -84,10 +84,10 @@ module l1_store_queue(
         logic[`CACHE_LINE_BYTES - 1:0] mask;
         cache_line_index_t address;
     } pending_stores[`THREADS_PER_CORE];
-    thread_bitmap_t rollback;
-    thread_bitmap_t send_request;
+    local_thread_bitmap_t rollback;
+    local_thread_bitmap_t send_request;
     thread_idx_t send_grant_idx;
-    thread_bitmap_t send_grant_oh;
+    local_thread_bitmap_t send_grant_oh;
 
     rr_arbiter #(.NUM_REQUESTERS(`THREADS_PER_CORE)) request_arbiter(
         .request(send_request),

@@ -55,10 +55,10 @@ module instruction_decode_stage(
     input                         ifd_tlb_miss,
 
     // From dcache_data_stage
-    input thread_bitmap_t         dd_sync_load_pending,
+    input local_thread_bitmap_t dd_sync_load_pending,
 
     // From l1_l2_interface
-    input thread_bitmap_t         sq_sync_store_pending,
+    input local_thread_bitmap_t sq_sync_store_pending,
 
     // To thread_select_stage
     output decoded_instruction_t  id_instruction,
@@ -66,11 +66,11 @@ module instruction_decode_stage(
     output thread_idx_t           id_thread_idx,
 
     // From io_request_queue
-    input thread_bitmap_t         ior_pending,
+    input local_thread_bitmap_t ior_pending,
 
     // From control_registers
-    input thread_bitmap_t         cr_interrupt_en,
-    input thread_bitmap_t         cr_interrupt_pending,
+    input local_thread_bitmap_t cr_interrupt_en,
+    input local_thread_bitmap_t cr_interrupt_pending,
 
     // From writeback_stage
     input                         wb_rollback_en,
@@ -134,7 +134,7 @@ module instruction_decode_stage(
     logic is_syscall;
     logic is_breakpoint;
     logic raise_interrupt;
-    thread_bitmap_t masked_interrupt_flags;
+    local_thread_bitmap_t masked_interrupt_flags;
     logic is_unary_arith;
 
     // I originally tried to structure the instruction set so that this could
@@ -393,7 +393,7 @@ module instruction_decode_stage(
             || memory_access_type == MEM_SCGATH_M))
         begin
             // Scatter/Gather access
-            decoded_instr_nxt.last_subcycle = subcycle_t'(`VECTOR_LANES - 1);
+            decoded_instr_nxt.last_subcycle = subcycle_t'(`NUM_VECTOR_LANES - 1);
         end
         else
             decoded_instr_nxt.last_subcycle = 0;

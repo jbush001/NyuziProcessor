@@ -53,23 +53,23 @@ module fp_execute_stage1(
     output vector_lane_mask_t                      fx1_mask_value,
     output thread_idx_t                            fx1_thread_idx,
     output subcycle_t                              fx1_subcycle,
-    output logic[`VECTOR_LANES - 1:0]              fx1_result_is_inf,
-    output logic[`VECTOR_LANES - 1:0]              fx1_result_is_nan,
-    output logic[`VECTOR_LANES - 1:0][5:0]         fx1_ftoi_lshift,
+    output logic[`NUM_VECTOR_LANES - 1:0]          fx1_result_is_inf,
+    output logic[`NUM_VECTOR_LANES - 1:0]          fx1_result_is_nan,
+    output logic[`NUM_VECTOR_LANES - 1:0][5:0]     fx1_ftoi_lshift,
 
     // Floating point addition/subtraction
-    output scalar_t[`VECTOR_LANES - 1:0]           fx1_significand_le,  // Larger exponent
-    output scalar_t[`VECTOR_LANES - 1:0]           fx1_significand_se,  // Smaller exponent
-    output logic[`VECTOR_LANES - 1:0][5:0]         fx1_se_align_shift,
-    output logic[`VECTOR_LANES - 1:0][7:0]         fx1_add_exponent,
-    output logic[`VECTOR_LANES - 1:0]              fx1_logical_subtract,
-    output logic[`VECTOR_LANES - 1:0]              fx1_add_result_sign,
+    output scalar_t[`NUM_VECTOR_LANES - 1:0]       fx1_significand_le,  // Larger exponent
+    output scalar_t[`NUM_VECTOR_LANES - 1:0]       fx1_significand_se,  // Smaller exponent
+    output logic[`NUM_VECTOR_LANES - 1:0][5:0]     fx1_se_align_shift,
+    output logic[`NUM_VECTOR_LANES - 1:0][7:0]     fx1_add_exponent,
+    output logic[`NUM_VECTOR_LANES - 1:0]          fx1_logical_subtract,
+    output logic[`NUM_VECTOR_LANES - 1:0]          fx1_add_result_sign,
 
     // Floating point multiplication
-    output logic[`VECTOR_LANES - 1:0][31:0]        fx1_multiplicand,
-    output logic[`VECTOR_LANES - 1:0][31:0]        fx1_multiplier,
-    output logic[`VECTOR_LANES - 1:0][7:0]         fx1_mul_exponent,
-    output logic[`VECTOR_LANES - 1:0]              fx1_mul_sign);
+    output logic[`NUM_VECTOR_LANES - 1:0][31:0]    fx1_multiplicand,
+    output logic[`NUM_VECTOR_LANES - 1:0][31:0]    fx1_multiplier,
+    output logic[`NUM_VECTOR_LANES - 1:0][7:0]     fx1_mul_exponent,
+    output logic[`NUM_VECTOR_LANES - 1:0]          fx1_mul_sign);
 
     logic is_fmul;
     logic is_imul;
@@ -84,7 +84,7 @@ module fp_execute_stage1(
 
     genvar lane_idx;
     generate
-        for (lane_idx = 0; lane_idx < `VECTOR_LANES; lane_idx++)
+        for (lane_idx = 0; lane_idx < `NUM_VECTOR_LANES; lane_idx++)
         begin : lane_logic_gen
             ieee754_binary32_t fop1;
             ieee754_binary32_t fop2;

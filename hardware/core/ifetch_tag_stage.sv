@@ -59,7 +59,7 @@ module ifetch_tag_stage
     input l1i_set_idx_t                 l2i_itag_update_set,
     input l1i_tag_t                     l2i_itag_update_tag,
     input                               l2i_itag_update_valid,
-    input thread_bitmap_t               l2i_icache_wake_bitmap,
+    input local_thread_bitmap_t         l2i_icache_wake_bitmap,
     output l1i_way_idx_t                ift_fill_lru,
 
     // From control_registers
@@ -84,19 +84,19 @@ module ifetch_tag_stage
     input scalar_t                      wb_rollback_pc,
 
     // From thread_select_stage
-    input thread_bitmap_t               ts_fetch_en);
+    input local_thread_bitmap_t         ts_fetch_en);
 
     scalar_t next_program_counter[`THREADS_PER_CORE];
     thread_idx_t selected_thread_idx;
     scalar_t last_selected_pc;
     l1i_addr_t pc_to_fetch;
-    thread_bitmap_t can_fetch_thread_bitmap;
-    thread_bitmap_t selected_thread_oh;
-    thread_bitmap_t last_selected_thread_oh;
-    thread_bitmap_t icache_wait_threads;
-    thread_bitmap_t icache_wait_threads_nxt;
-    thread_bitmap_t cache_miss_thread_oh;
-    thread_bitmap_t thread_sleep_mask_oh;
+    local_thread_bitmap_t can_fetch_thread_bitmap;
+    local_thread_bitmap_t selected_thread_oh;
+    local_thread_bitmap_t last_selected_thread_oh;
+    local_thread_bitmap_t icache_wait_threads;
+    local_thread_bitmap_t icache_wait_threads_nxt;
+    local_thread_bitmap_t cache_miss_thread_oh;
+    local_thread_bitmap_t thread_sleep_mask_oh;
     logic cache_fetch_en;
     page_index_t tlb_ppage_idx;
     page_index_t ppage_idx;

@@ -39,10 +39,10 @@ module io_request_queue
     output logic                           ior_rollback_en,
 
     // To instruction_decode_stage
-    output thread_bitmap_t                 ior_pending,
+    output local_thread_bitmap_t           ior_pending,
 
     // To thread_select_stage
-    output thread_bitmap_t                 ior_wake_bitmap,
+    output local_thread_bitmap_t           ior_wake_bitmap,
 
     // From io_interconnect
     input                                  ii_ready,
@@ -60,9 +60,9 @@ module io_request_queue
         scalar_t address;
         scalar_t value;
     } pending_request[`THREADS_PER_CORE];
-    thread_bitmap_t wake_thread_oh;
-    thread_bitmap_t send_request;
-    thread_bitmap_t send_grant_oh;
+    local_thread_bitmap_t wake_thread_oh;
+    local_thread_bitmap_t send_request;
+    local_thread_bitmap_t send_grant_oh;
     thread_idx_t send_grant_idx;
 
     genvar thread_idx;
@@ -130,7 +130,7 @@ module io_request_queue
         .one_hot(wake_thread_oh));
 
     assign ior_wake_bitmap = (ii_response_valid && ii_response.core == CORE_ID)
-        ? wake_thread_oh : thread_bitmap_t'(0);
+        ? wake_thread_oh : local_thread_bitmap_t'(0);
 
     // Send request
     assign ior_request_valid = |send_request;

@@ -62,7 +62,7 @@ module control_registers
 
     // To writeback_stage
     output scalar_t                         cr_creg_read_val,
-    output thread_bitmap_t                  cr_interrupt_en,
+    output local_thread_bitmap_t            cr_interrupt_en,
     output subcycle_t                       cr_eret_subcycle[`THREADS_PER_CORE],
     output scalar_t                         cr_trap_handler,
     output scalar_t                         cr_tlb_miss_handler);

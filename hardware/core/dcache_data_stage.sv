@@ -29,7 +29,7 @@ module dcache_data_stage(
     input                                     reset,
 
     // To instruction_decode_stage
-    output thread_bitmap_t                    dd_sync_load_pending,
+    output local_thread_bitmap_t              dd_sync_load_pending,
 
     // From dcache_tag_stage
     input                                     dt_instruction_valid,
@@ -143,7 +143,7 @@ module dcache_data_stage(
     logic is_unaligned;
     logic is_synchronized;
     logic cache_control_en;
-    logic[$clog2(`VECTOR_LANES) - 1:0] scgath_lane;
+    logic[$clog2(`NUM_VECTOR_LANES) - 1:0] scgath_lane;
     logic is_tlb_access;
     logic is_tlb_update;
     logic supervisor_fault;

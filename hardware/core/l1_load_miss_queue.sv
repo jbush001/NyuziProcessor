@@ -41,21 +41,21 @@ module l1_load_miss_queue(
     // Wake
     input                                   l2_response_valid,
     input l1_miss_entry_idx_t               l2_response_idx,
-    output thread_bitmap_t                  wake_bitmap);
+    output local_thread_bitmap_t            wake_bitmap);
 
     struct packed {
         logic valid;
         logic request_sent;
-        thread_bitmap_t waiting_threads;
+        local_thread_bitmap_t waiting_threads;
         cache_line_index_t address;
         logic synchronized;
     } pending_entries[`THREADS_PER_CORE];
 
-    thread_bitmap_t collided_miss_oh;
-    thread_bitmap_t miss_thread_oh;
+    local_thread_bitmap_t collided_miss_oh;
+    local_thread_bitmap_t miss_thread_oh;
     logic request_unique;
-    thread_bitmap_t send_grant_oh;
-    thread_bitmap_t arbiter_request;
+    local_thread_bitmap_t send_grant_oh;
+    local_thread_bitmap_t arbiter_request;
     thread_idx_t send_grant_idx;
 
     idx_to_oh #(.NUM_SIGNALS(`THREADS_PER_CORE)) idx_to_oh_miss_thread(
@@ -80,7 +80,7 @@ module l1_load_miss_queue(
 
     assign request_unique = !(|collided_miss_oh);
 
-    assign wake_bitmap = l2_response_valid ? pending_entries[l2_response_idx].waiting_threads : thread_bitmap_t'(0);
+    assign wake_bitmap = l2_response_valid ? pending_entries[l2_response_idx].waiting_threads : local_thread_bitmap_t'(0);
 
     genvar wait_entry;
     generate

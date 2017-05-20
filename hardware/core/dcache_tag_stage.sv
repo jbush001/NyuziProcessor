@@ -106,7 +106,7 @@ module dcache_tag_stage
     l1d_addr_t request_addr_nxt;
     logic cache_load_en;
     logic instruction_valid;
-    logic[$clog2(`VECTOR_LANES) - 1:0] scgath_lane;
+    logic[$clog2(`NUM_VECTOR_LANES) - 1:0] scgath_lane;
     page_index_t tlb_ppage_idx;
     logic tlb_hit;
     page_index_t ppage_idx;

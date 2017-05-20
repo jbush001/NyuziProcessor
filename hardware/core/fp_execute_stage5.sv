@@ -26,37 +26,37 @@
 //
 
 module fp_execute_stage5(
-    input                               clk,
-    input                               reset,
+    input                                   clk,
+    input                                   reset,
 
     // From fp_execute_stage4
-    input vector_lane_mask_t            fx4_mask_value,
-    input                               fx4_instruction_valid,
-    input decoded_instruction_t         fx4_instruction,
-    input thread_idx_t                  fx4_thread_idx,
-    input subcycle_t                    fx4_subcycle,
-    input [`VECTOR_LANES - 1:0]         fx4_result_is_inf,
-    input [`VECTOR_LANES - 1:0]         fx4_result_is_nan,
+    input vector_lane_mask_t                fx4_mask_value,
+    input                                   fx4_instruction_valid,
+    input decoded_instruction_t             fx4_instruction,
+    input thread_idx_t                      fx4_thread_idx,
+    input subcycle_t                        fx4_subcycle,
+    input [`NUM_VECTOR_LANES - 1:0]         fx4_result_is_inf,
+    input [`NUM_VECTOR_LANES - 1:0]         fx4_result_is_nan,
 
     // Floating point addition/subtraction
-    input [`VECTOR_LANES - 1:0][7:0]    fx4_add_exponent,
-    input scalar_t[`VECTOR_LANES - 1:0] fx4_add_significand,
-    input [`VECTOR_LANES - 1:0]         fx4_add_result_sign,
-    input [`VECTOR_LANES - 1:0]         fx4_logical_subtract,
-    input [`VECTOR_LANES - 1:0][5:0]    fx4_norm_shift,
+    input [`NUM_VECTOR_LANES - 1:0][7:0]    fx4_add_exponent,
+    input scalar_t[`NUM_VECTOR_LANES - 1:0] fx4_add_significand,
+    input [`NUM_VECTOR_LANES - 1:0]         fx4_add_result_sign,
+    input [`NUM_VECTOR_LANES - 1:0]         fx4_logical_subtract,
+    input [`NUM_VECTOR_LANES - 1:0][5:0]    fx4_norm_shift,
 
     // Floating point multiplication
-    input [`VECTOR_LANES - 1:0][63:0]   fx4_significand_product,
-    input [`VECTOR_LANES - 1:0][7:0]    fx4_mul_exponent,
-    input [`VECTOR_LANES - 1:0]         fx4_mul_sign,
+    input [`NUM_VECTOR_LANES - 1:0][63:0]   fx4_significand_product,
+    input [`NUM_VECTOR_LANES - 1:0][7:0]    fx4_mul_exponent,
+    input [`NUM_VECTOR_LANES - 1:0]         fx4_mul_sign,
 
     // To writeback_stage
-    output logic                        fx5_instruction_valid,
-    output decoded_instruction_t        fx5_instruction,
-    output vector_lane_mask_t           fx5_mask_value,
-    output thread_idx_t                 fx5_thread_idx,
-    output subcycle_t                   fx5_subcycle,
-    output vector_t                     fx5_result);
+    output logic                            fx5_instruction_valid,
+    output decoded_instruction_t            fx5_instruction,
+    output vector_lane_mask_t               fx5_mask_value,
+    output thread_idx_t                     fx5_thread_idx,
+    output subcycle_t                       fx5_subcycle,
+    output vector_t                         fx5_result);
 
     logic is_fmul;
     logic is_imull;
@@ -70,7 +70,7 @@ module fp_execute_stage5(
 
     genvar lane_idx;
     generate
-        for (lane_idx = 0; lane_idx < `VECTOR_LANES; lane_idx++)
+        for (lane_idx = 0; lane_idx < `NUM_VECTOR_LANES; lane_idx++)
         begin : lane_logic_gen
             logic[22:0] add_result_significand;
             logic[7:0] add_result_exponent;

@@ -178,7 +178,7 @@ module trace_logger(
                 trace_reorder_queue[tindex].pc <= debug_wb_pc;
                 trace_reorder_queue[tindex].thread_idx <= wb_writeback_thread_idx;
                 trace_reorder_queue[tindex].writeback_reg <= wb_writeback_reg;
-                trace_reorder_queue[tindex].mask <= {{`CACHE_LINE_BYTES - `VECTOR_LANES{1'b0}},
+                trace_reorder_queue[tindex].mask <= {{`CACHE_LINE_BYTES - `NUM_VECTOR_LANES{1'b0}},
                     wb_writeback_mask};
                 trace_reorder_queue[tindex].data <= wb_writeback_value;
             end
