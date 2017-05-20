@@ -39,8 +39,7 @@ _start:             getcr s0, 0
                     // Set up TLB miss handler. This is a physical address, so need
                     // to mask off virtual address to convert.
                     lea s0, tlb_miss_handler
-                    move s1, -1
-                    shr s1, s1, 8       // Generate mask for low 24 bits
+                    li s1, 0xffffff
                     and s0, s0, s1      // Mask off high bits
                     setcr s0, CR_TLB_MISS_HANDLER
 
@@ -63,8 +62,7 @@ start_thread_n:     // Set up entry address for trampoline
 trampoline:         lea s0, page_dir_addr
 
                     // Convert to physical address
-                    move s1, -1
-                    shr s1, s1, 8       // Generate mask for low 24 bits
+                    li s1, 0xffffff
                     and s0, s0, s1      // Mask off high bits
 
                     load_32 s0, (s0)   // Set up page directory
