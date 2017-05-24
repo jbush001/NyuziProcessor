@@ -189,6 +189,7 @@ void dump_interrupt_frame(const struct interrupt_frame *frame)
             kprintf("\n");
     }
 
+    kprintf("pc %08x ", frame->pc);
     kprintf("Flags: ");
     if (frame->flags & 1)
         kprintf("I");

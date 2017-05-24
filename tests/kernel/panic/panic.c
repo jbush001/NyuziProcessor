@@ -14,16 +14,14 @@
 // limitations under the License.
 //
 
-#pragma once
+extern int __syscall(int n, int arg0, int arg1, int arg2, int arg3, int arg4);
 
-#define SYS_write_serial 0
-#define SYS_spawn_thread 1
-#define SYS_get_thread_id 2
-#define SYS_exec 3
-#define SYS_thread_exit 4
-#define SYS_init_vga 5
-#define SYS_create_area 6
-#define SYS_set_perf_counter 7
-#define SYS_read_perf_counter 8
-#define SYS_get_cycle_count 9
-#define SYS_panic 10
+int main()
+{
+    // This will cause a kernel panic
+    __syscall(10, 0, 0, 0, 0, 0);
+    return 0;
+}
+
+// CHECK: Invalid kernel page fault
+// CHECK: Unaligned Access @00000001 dcache store
