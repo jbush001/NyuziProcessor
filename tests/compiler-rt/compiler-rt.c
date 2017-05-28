@@ -16,21 +16,6 @@
 
 #include <stdio.h>
 
-void printRawHex(unsigned int value)
-{
-    int i;
-    char ch;
-
-    putchar('>');
-    for (i = 7; i >= 0; i--) {
-        ch = (value >> (i * 4)) & 0xf;
-        if (ch < 10)
-            putchar(ch + '0');
-        else
-            putchar(ch - 10 + 'a');
-    }
-}
-
 void print64bit(long long int value)
 {
     unsigned char tmp[8];
