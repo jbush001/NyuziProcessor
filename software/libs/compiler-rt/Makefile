@@ -26,7 +26,7 @@ SRCS=ashldi3.s \
 	lshrdi3.s \
 	modsi3.c \
 	moddi3.c \
-	udivsi3.c \
+	udivsi3.s \
 	udivdi3.c \
 	umodsi3.c \
 	umoddi3.c \
