@@ -16,6 +16,21 @@
 
 #include <stdio.h>
 
+void printRawHex(unsigned int value)
+{
+    int i;
+    char ch;
+
+    putchar('>');
+    for (i = 7; i >= 0; i--) {
+        ch = (value >> (i * 4)) & 0xf;
+        if (ch < 10)
+            putchar(ch + '0');
+        else
+            putchar(ch - 10 + 'a');
+    }
+}
+
 void print64bit(long long int value)
 {
     unsigned char tmp[8];
@@ -78,7 +93,10 @@ int main()
 
     // Unsigned 32-bit integer division
     printf("0x%08x\n", __udivsi3(346074795, 1918)); // CHECK: 0x0002c0d3
+    printf("0x%08x\n", __udivsi3(0xabcdef12, 123)); // CHECK: 0x016593a2
     printf("0x%08x\n", __udivsi3(-226683378, 156)); // CHECK: 0x018dee17
+    printf("0x%08x\n", __udivsi3(1024835, 1024835)); // CHECK: 0x00000001
+    printf("0x%08x\n", __udivsi3(0xf1234567, 0xf1234567)); // CHECK: 0x00000001
     printf("0x%08x\n", __udivsi3(1071046619, -28)); // CHECK: 0x00000000
     printf("0x%08x\n", __udivsi3(-68861959, -758)); // CHECK: 0x00000000
     printf("0x%08x\n", __udivsi3(0, 521)); // CHECK: 0x00000000
@@ -89,6 +107,8 @@ int main()
     printf("0x%08x\n", __divsi3(-345606339, 1878)); // CHECK: 0xfffd3124
     printf("0x%08x\n", __divsi3(1858946429, -730)); // CHECK: 0xffd924bb
     printf("0x%08x\n", __divsi3(-1953179378, -27)); // CHECK: 0x044fd208
+    printf("0x%08x\n", __divsi3(4594545, 4594545)); // CHECK: 0x00000001
+    printf("0x%08x\n", __divsi3(-86739837, -86739837)); // CHECK: 0x00000001
     printf("0x%08x\n", __divsi3(0, 323)); // CHECK:  0x00000000
     printf("0x%08x\n", __divsi3(1976, 1560179702)); // CHECK:  0x00000000
 
