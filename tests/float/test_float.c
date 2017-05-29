@@ -16,7 +16,13 @@
 
 #include <stdio.h>
 
-struct TestCase
+//
+// This executable runs on the target. It performs the operations in
+// test_cases.inc and validates the computes results against the expected
+// results encoded there.
+//
+
+struct test_case
 {
     enum {
         FADD,
@@ -28,12 +34,12 @@ struct TestCase
     } operation;
     unsigned int value1;
     unsigned int value2;
-    unsigned int expectedResult;
+    unsigned int expected_result;
 } TESTS[] = {
     #include "test_cases.inc"
 };
 
-float valueAsFloat(unsigned int value)
+float value_as_float(unsigned int value)
 {
     union
     {
@@ -44,7 +50,7 @@ float valueAsFloat(unsigned int value)
     return u.f;
 }
 
-unsigned int valueAsInt(float value)
+unsigned int value_as_int(float value)
 {
     union
     {
@@ -55,49 +61,53 @@ unsigned int valueAsInt(float value)
     return u.i;
 }
 
-int main()
+int main(void)
 {
-    int testIndex;
+    int test_index;
     unsigned int result;
-    int numTestCases = sizeof(TESTS) / sizeof(struct TestCase);
+    int num_test_cases = sizeof(TESTS) / sizeof(struct test_case);
     int failures = 0;
 
-    for (testIndex = 0; testIndex < numTestCases; testIndex++)
+    for (test_index = 0; test_index < num_test_cases; test_index++)
     {
-        struct TestCase *test = &TESTS[testIndex];
+        struct test_case *test = &TESTS[test_index];
 
         switch (test->operation)
         {
             case FADD:
-                result = valueAsInt(valueAsFloat(test->value1) + valueAsFloat(test->value2));
+                result = value_as_int(value_as_float(test->value1)
+                    + value_as_float(test->value2));
                 break;
             case FSUB:
-                result = valueAsInt(valueAsFloat(test->value1) - valueAsFloat(test->value2));
+                result = value_as_int(value_as_float(test->value1)
+                    - value_as_float(test->value2));
                 break;
             case FMUL:
-                result = valueAsInt(valueAsFloat(test->value1) * valueAsFloat(test->value2));
+                result = value_as_int(value_as_float(test->value1)
+                    * value_as_float(test->value2));
                 break;
             case ITOF:
-                result = valueAsInt((float)(int) test->value1);
+                result = value_as_int((float)(int) test->value1);
                 break;
             case FTOI:
-                result = (unsigned int)(int) valueAsFloat(test->value1);
+                result = (unsigned int)(int) value_as_float(test->value1);
                 break;
             case FCMPLT:
-                result = (valueAsFloat(test->value1) < valueAsFloat(test->value2)) != 0;
+                result = (value_as_float(test->value1)
+                    < value_as_float(test->value2)) != 0;
                 break;
         }
 
-        if (result != test->expectedResult)
+        if (result != test->expected_result)
         {
-            printf("test %d failed: expected %08x, got %08x\n", testIndex + 1,
-                test->expectedResult, result);
+            printf("test %d failed: expected %08x, got %08x\n", test_index + 1,
+                test->expected_result, result);
             failures++;
         }
     }
 
     if (failures == 0)
-        printf("%d tests passed\n", numTestCases);
+        printf("%d tests passed\n", num_test_cases);
     else
-        printf("%d/%d tests failed\n", failures, numTestCases);
+        printf("%d/%d tests failed\n", failures, num_test_cases);
 }

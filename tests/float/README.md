@@ -1,10 +1,10 @@
 This attempts to validate the hardware floating point implementation. It is inspired by
 the [Berkeley TestFloat](http://www.jhauser.us/arithmetic/TestFloat.html) project,
-but is much simpler and uses the host processor to generate results rather than the SoftFloat
-project.
+but is much simpler and uses the host processor to generate results, unlike TestFloat
+which uses a software floating point library to generate the results.
 
-There are currently lots of failures when executing against Verilator, as there are lots
-of rounding issues in hardware. All of the emulator tests should pass.
+There are currently many failures when executing against Verilator, mostly caused by
+rounding errors in hardware. All of the emulator tests should pass.
 
 To execute against emulator:
 

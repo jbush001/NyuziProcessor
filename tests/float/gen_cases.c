@@ -248,11 +248,8 @@ void test_specials(void)
     }
 }
 
-int main()
+void test_random(void)
 {
-    test_add_sub_rounding();
-    test_specials();
-
     for (int opidx = 0; opidx < NUM_ELEMS(OPS); opidx++)
     {
         struct operation *op = &OPS[opidx];
@@ -263,4 +260,11 @@ int main()
             write_test_case(op, value1, value2);
         }
     }
+}
+
+int main(void)
+{
+    test_add_sub_rounding();
+    test_specials();
+    test_random();
 }
