@@ -24,7 +24,7 @@ struct TestCase
         FMUL,
         ITOF,
         FTOI,
-        FGTR
+        FCMPLT
     } operation;
     unsigned int value1;
     unsigned int value2;
@@ -83,15 +83,15 @@ int main()
             case FTOI:
                 result = (unsigned int)(int) valueAsFloat(test->value1);
                 break;
-            case FGTR:
-                result = (valueAsFloat(test->value1) > valueAsFloat(test->value2)) != 0;
+            case FCMPLT:
+                result = (valueAsFloat(test->value1) < valueAsFloat(test->value2)) != 0;
                 break;
         }
 
         if (result != test->expectedResult)
         {
-            printf("test %d failed: expected %08x, got %08x\n", testIndex, test->expectedResult,
-                result);
+            printf("test %d failed: expected %08x, got %08x\n", testIndex + 1,
+                test->expectedResult, result);
             failures++;
         }
     }

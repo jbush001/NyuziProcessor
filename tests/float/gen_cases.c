@@ -14,6 +14,7 @@
 // limitations under the License.
 //
 
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -25,7 +26,7 @@ unsigned int sub_func(unsigned int param1, unsigned int param2);
 unsigned int mul_func(unsigned int param1, unsigned int param2);
 unsigned int ftoi_func(unsigned int param1, unsigned int param2);
 unsigned int itof_func(unsigned int param1, unsigned int param2);
-unsigned int fgtr_func(unsigned int param1, unsigned int param2);
+unsigned int fcmplt_func(unsigned int param1, unsigned int param2);
 
 //
 // Floating point values are constrained so common edge cases are
@@ -42,36 +43,49 @@ unsigned int EXPONENTS[] = {
     128,    // 1
     129,    // 2
     154,    // 27
-    254,
-    255,    // Special
+    254
 };
 
 unsigned int SIGNIFICANDS[] = {
+    // Test various bit positions
     0x000000,
     0x000001,
     0x000002,
     0x000010,
     0x000100,
     0x001000,
-    0x010000,
-    0x7ffffd,
-    0x7ffffe,
-    0x7fffff
+    0x010000
+};
+
+enum op_type
+{
+    FADD,
+    FSUB,
+    FMUL,
+    FCMPLT,
+    ITOF,
+    FTOI
 };
 
 struct operation
 {
     const char *name;
+    const char *operator;
     unsigned int (*func)(unsigned int op1, unsigned int op2);
     int num_operands;
 } OPS[] = {
-    { "FADD", add_func, 2 },
-    { "FSUB", sub_func, 2 },
-    { "FMUL", mul_func, 2 },
-    { "FGTR", fgtr_func, 2 },
-    { "ITOF", itof_func, 1 },
-    { "FTOI", ftoi_func, 1 }
+    { "FADD", "+", add_func, 2 },
+    { "FSUB", "-", sub_func, 2 },
+    { "FMUL", "*", mul_func, 2 },
+    { "FCMPLT", "<", fcmplt_func, 2 },
+    { "ITOF", "itof", itof_func, 1 },
+    { "FTOI", "ftoi", ftoi_func, 1 }
 };
+
+unsigned int make_float(unsigned int sign, unsigned int exponent, unsigned int significand)
+{
+    return (sign << 31) | ((exponent & 0xff) << 23) | (significand & 0x7fffff);
+}
 
 float value_as_float(unsigned int value)
 {
@@ -93,6 +107,41 @@ unsigned int value_as_int(float value)
     } u = { .f = value };
 
     return u.i;
+}
+
+void write_test_case(struct operation *op, unsigned int value1, unsigned int value2)
+{
+    unsigned int result = op->func(value1, value2);
+    if (op->func != ftoi_func)
+    {
+        // Make NaN consistent
+        if (((result >> 23) & 0xff) == 0xff && (result & 0x7fffff) != 0)
+            result = 0x7fffffff;
+    }
+
+    if (op->func == itof_func)
+    {
+        printf("{ %s, 0x%08x, 0, 0x%08x }, // %s %d = %+g\n", op->name,
+            value1, result, op->operator, value1, value_as_float(result));
+    }
+    else if (op->func == ftoi_func)
+    {
+        printf("{ %s, 0x%08x, 0, 0x%08x }, // %s %g = %d\n", op->name,
+            value1, result, op->operator, value_as_float(value1),
+            result);
+    }
+    else if (op->num_operands == 1)
+    {
+        printf("{ %s, 0x%08x, 0, 0x%08x }, // %s %+g = %+g\n", op->name,
+            value1, result, op->operator, value_as_float(value1),
+            value_as_float(result));
+    }
+    else
+    {
+        printf("{ %s, 0x%08x, 0x%08x, 0x%08x }, // %+g %s %+g = %+g\n", op->name,
+            value1, value2, result, value_as_float(value1),
+            op->operator, value_as_float(value2), value_as_float(result));
+    }
 }
 
 unsigned int add_func(unsigned int param1, unsigned int param2)
@@ -120,9 +169,9 @@ unsigned int itof_func(unsigned int param1, unsigned int param2)
     return value_as_int((float)(int)param1);
 }
 
-unsigned int fgtr_func(unsigned int param1, unsigned int param2)
+unsigned int fcmplt_func(unsigned int param1, unsigned int param2)
 {
-    return value_as_float(param1) > value_as_float(param2);
+    return value_as_float(param1) < value_as_float(param2);
 }
 
 unsigned int generate_random_value(void)
@@ -131,27 +180,87 @@ unsigned int generate_random_value(void)
         | ((rand() & 1) << 31);
 }
 
-int main()
+void test_add_sub_rounding(void)
 {
-    for (int opidx = 0; opidx < NUM_ELEMS(OPS); opidx++)
+    unsigned int GRS_SIGNIFICANDS[] = {
+        // Last three bits are 000-111. This represents all values of GRS
+        0x3ff0,
+        0x3ff1,
+        0x3ff2,
+        0x3ff3,
+        0x3ff4,
+        0x3ff5,
+        0x3ff6,
+        0x3ff7,
+
+        // Same as above, but with least significant bit in
+        // non-shifted portion as 1 instead of zero to check
+        // even/odd rounding cases
+        0x3ff8,
+        0x3ff9,
+        0x3ffa,
+        0x3ffb,
+        0x3ffc,
+        0x3ffd,
+        0x3ffe,
+        0x3fff
+    };
+
+    for (int sigidx = 0; sigidx < NUM_ELEMS(GRS_SIGNIFICANDS); sigidx++)
     {
-        struct operation *op = &OPS[opidx];
-        for (int i = 0; i < 256; i++)
+        // Because value2 has a smaller exponent, its lowest three digits
+        // will be shifted out during alignment and become the guard, round,
+        // and sticky bits. We then test all cases with add and subtract
+        // to ensure rounding is handled correctly.
+        unsigned int value2 = make_float(0, 125, GRS_SIGNIFICANDS[sigidx]);
+
+        // Try two odd and even values for the first significand.
+        for (unsigned int sig1 = 0xfffc; sig1 < 0x10000; sig1++)
         {
-            unsigned int value1 = generate_random_value();
-            unsigned int value2 = op->num_operands == 1 ? 0 : generate_random_value();
-            unsigned int result = op->func(value1, value2);
-
-            if (op->func != ftoi_func)
-            {
-                // Make NaN consistent
-                if (((result >> 23) & 0xff) == 0xff && (result & 0x7fffff) != 0)
-                    result = 0x7fffffff;
-            }
-
-            printf("{ %s, 0x%08x, 0x%08x, 0x%08x },\n", op->name,
-                value1, value2, result);
+            unsigned int value1 = make_float(0, 128, sig1);
+            write_test_case(&OPS[0], value1, value2);
+            write_test_case(&OPS[1], value1, value2);
         }
     }
 }
 
+void test_specials(void)
+{
+    const float VALUES[] = {
+        -INFINITY,
+        -1.0,
+        0x80000000,
+        +0.0,
+        +1.0,
+        +INFINITY,
+        NAN
+    };
+    int i, j;
+
+    for (i = 0; i < NUM_ELEMS(VALUES); i++)
+    {
+        for (j = 0; j < NUM_ELEMS(VALUES); j++)
+        {
+            write_test_case(&OPS[0], VALUES[i], VALUES[j]);   // add
+            write_test_case(&OPS[1], VALUES[i], VALUES[j]);   // sub
+            write_test_case(&OPS[2], VALUES[i], VALUES[j]);   // mul
+        }
+    }
+}
+
+int main()
+{
+    test_add_sub_rounding();
+    test_specials();
+
+    for (int opidx = 0; opidx < NUM_ELEMS(OPS); opidx++)
+    {
+        struct operation *op = &OPS[opidx];
+        for (int i = 0; i < 1000; i++)
+        {
+            unsigned int value1 = generate_random_value();
+            unsigned int value2 = op->num_operands == 1 ? 0 : generate_random_value();
+            write_test_case(op, value1, value2);
+        }
+    }
+}

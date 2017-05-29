@@ -1,12 +1,22 @@
-Make tests:
+This attempts to validate the hardware floating point implementation. It is inspired by
+the [Berkeley TestFloat](http://www.jhauser.us/arithmetic/TestFloat.html) project,
+but is much simpler and uses the host processor to generate results rather than the SoftFloat
+project.
 
-    cc -o gen_cases gen_cases.c
-    ./gen_cases > test_cases.inc
+There are currently lots of failures when executing against Verilator, as there are lots
+of rounding issues in hardware. All of the emulator tests should pass.
 
-Execute against emulator:
+To execute against emulator:
 
     make test
 
-Execute against verilator:
+To execute against verilator:
 
     make vtest
+
+When there is a failure, it will print a message like this:
+
+    test 21 failed: expected 00800ffd, got 00000ffd
+
+The test number in the message corresponds to the line in the 'test_cases.inc'
+file.
