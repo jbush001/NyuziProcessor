@@ -165,19 +165,19 @@ module writeback_stage(
     //
     always_comb
     begin
-        wb_rollback_en = 0;
-        wb_rollback_thread_idx = 0;
-        wb_rollback_pc = 0;
-        wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
-        wb_rollback_subcycle = 0;
-        wb_trap = 0;
-        wb_trap_cause = {2'b0, TT_RESET};
-        wb_trap_pc = 0;
-
         // XXX wb_trap_thread_idx seems to be the same as wb_rollback_thread_idx.
         // Should these be combined?
-        wb_trap_thread_idx = 0;
+
+        wb_rollback_en = 0;
+        wb_rollback_pc = 0;
+        wb_rollback_thread_idx = 0;
+        wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
+        wb_trap = 0;
+        wb_trap_cause = {2'b0, TT_RESET};
+        wb_rollback_subcycle = 0;
+        wb_trap_pc = 0;
         wb_trap_access_vaddr = 0;
+        wb_trap_thread_idx = 0;
         wb_trap_subcycle = dd_subcycle;
 
         if (ix_instruction_valid && (ix_instruction.has_trap
@@ -185,7 +185,7 @@ module writeback_stage(
         begin
             // Fault piggybacked on instruction, which goes through the
             // integer pipeline.
-            wb_rollback_en = 1'b1;
+            wb_rollback_en = 1;
             if (ix_instruction.trap_cause.trap_type == TT_TLB_MISS)
                 wb_rollback_pc = cr_tlb_miss_handler;
             else
@@ -208,26 +208,26 @@ module writeback_stage(
         begin
             // Memory access fault
             wb_rollback_en = 1'b1;
-            wb_rollback_thread_idx = dd_thread_idx;
-            wb_rollback_pipeline = PIPE_MEM;
-            wb_trap = 1;
             if (dd_fault_cause.trap_type == TT_TLB_MISS)
                 wb_rollback_pc = cr_tlb_miss_handler;
             else
                 wb_rollback_pc = cr_trap_handler;
 
+            wb_rollback_thread_idx = dd_thread_idx;
+            wb_rollback_pipeline = PIPE_MEM;
+            wb_trap = 1;
             wb_trap_cause = dd_fault_cause;
             wb_trap_pc = dd_instruction.pc;
-            wb_trap_thread_idx = dd_thread_idx;
             wb_trap_access_vaddr = dd_request_vaddr;
+            wb_trap_thread_idx = dd_thread_idx;
         end
         else if (ix_instruction_valid && ix_rollback_en)
         begin
             // Check for rollback from single cycle pipeline. This happens
             // because of a branch.
             wb_rollback_en = 1;
-            wb_rollback_thread_idx = ix_thread_idx;
             wb_rollback_pc = ix_rollback_pc;
+            wb_rollback_thread_idx = ix_thread_idx;
             wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
             if (ix_instruction.branch_type == BRANCH_ERET)
                 wb_rollback_subcycle = cr_eret_subcycle[ix_thread_idx];
@@ -240,8 +240,8 @@ module writeback_stage(
             // of a data cache miss, store queue full, or when an IO request
             // is sent.
             wb_rollback_en = 1;
-            wb_rollback_thread_idx = dd_thread_idx;
             wb_rollback_pc = dd_rollback_pc;
+            wb_rollback_thread_idx = dd_thread_idx;
             wb_rollback_pipeline = PIPE_MEM;
             wb_rollback_subcycle = dd_subcycle;
         end
@@ -340,8 +340,8 @@ module writeback_stage(
         writeback_en_nxt = 0;
         writeback_thread_idx_nxt = 0;
         writeback_mask_nxt = 0;
-        writeback_is_vector_nxt = 0;
         writeback_value_nxt = 0;
+        writeback_is_vector_nxt = 0;
         writeback_reg_nxt = 0;
         writeback_is_last_subcycle_nxt = 0;
 
@@ -358,13 +358,13 @@ module writeback_stage(
                     writeback_en_nxt = 1;
 
                 writeback_thread_idx_nxt = fx5_thread_idx;
-                writeback_is_vector_nxt = fx5_instruction.dest_is_vector;
+                writeback_mask_nxt = fx5_mask_value;
                 if (fx5_instruction.is_compare)
                     writeback_value_nxt = vector_t'(mcycle_vcompare_result);
                 else
                     writeback_value_nxt = fx5_result;
 
-                writeback_mask_nxt = fx5_mask_value;
+                writeback_is_vector_nxt = fx5_instruction.dest_is_vector;
                 writeback_reg_nxt = fx5_instruction.dest_reg;
                 writeback_is_last_subcycle_nxt = is_last_subcycle_mx;
             end
@@ -389,7 +389,7 @@ module writeback_stage(
                 end
 
                 writeback_thread_idx_nxt = ix_thread_idx;
-                writeback_is_vector_nxt = ix_instruction.dest_is_vector;
+                writeback_mask_nxt = ix_mask_value;
                 if (ix_instruction.is_call)
                     writeback_value_nxt = vector_t'(ix_instruction.pc + 32'd4);
                 else if (ix_instruction.is_compare)
@@ -397,7 +397,7 @@ module writeback_stage(
                 else
                     writeback_value_nxt = ix_result;
 
-                writeback_mask_nxt = ix_mask_value;
+                writeback_is_vector_nxt = ix_instruction.dest_is_vector;
                 writeback_reg_nxt = ix_instruction.dest_reg;
                 writeback_is_last_subcycle_nxt = is_last_subcycle_sx;
             end
@@ -409,10 +409,6 @@ module writeback_stage(
             begin
                 writeback_en_nxt = dd_instruction.has_dest && !wb_rollback_en;
                 writeback_thread_idx_nxt = dd_thread_idx;
-                writeback_is_vector_nxt = dd_instruction.dest_is_vector;
-                writeback_reg_nxt = dd_instruction.dest_reg;
-                writeback_is_last_subcycle_nxt = is_last_subcycle_dd;
-
                 if (!dd_instruction.is_cache_control)
                 begin
                     if (dd_instruction.is_load)
@@ -428,20 +424,20 @@ module writeback_stage(
                                 // Scalar Load
                                 if (dd_is_io_address)
                                 begin
-                                    writeback_value_nxt[0] = ior_read_value;
                                     writeback_mask_nxt = {`NUM_VECTOR_LANES{1'b1}};
+                                    writeback_value_nxt[0] = ior_read_value;
                                 end
                                 else
                                 begin
-                                    writeback_value_nxt[0] = swapped_word_value;
                                     writeback_mask_nxt = {`NUM_VECTOR_LANES{1'b1}};
+                                    writeback_value_nxt[0] = swapped_word_value;
                                 end
                             end
 
                             MEM_CONTROL_REG:
                             begin
-                                writeback_value_nxt[0] = cr_creg_read_val;
                                 writeback_mask_nxt = {`NUM_VECTOR_LANES{1'b1}};
+                                writeback_value_nxt[0] = cr_creg_read_val;
                             end
 
                             MEM_BLOCK,
@@ -455,8 +451,8 @@ module writeback_stage(
                             begin
                                 // Gather load
                                 // Grab the appropriate lane.
-                                writeback_value_nxt = {`NUM_VECTOR_LANES{swapped_word_value}};
                                 writeback_mask_nxt = dd_vector_lane_oh & dd_lane_mask;
+                                writeback_value_nxt = {`NUM_VECTOR_LANES{swapped_word_value}};
                             end
                         endcase
                     end
@@ -467,6 +463,10 @@ module writeback_stage(
                         writeback_value_nxt[0] = scalar_t'(sq_store_sync_success);
                     end
                 end
+
+                writeback_is_vector_nxt = dd_instruction.dest_is_vector;
+                writeback_reg_nxt = dd_instruction.dest_reg;
+                writeback_is_last_subcycle_nxt = is_last_subcycle_dd;
             end
 
             default:
@@ -478,8 +478,8 @@ module writeback_stage(
     begin
         wb_writeback_thread_idx <= writeback_thread_idx_nxt;
         wb_writeback_mask <= writeback_mask_nxt;
-        wb_writeback_is_vector <= writeback_is_vector_nxt;
         wb_writeback_value <= writeback_value_nxt;
+        wb_writeback_is_vector <= writeback_is_vector_nxt;
         wb_writeback_reg <= writeback_reg_nxt;
         wb_writeback_is_last_subcycle <= writeback_is_last_subcycle_nxt;
     end
