@@ -49,6 +49,13 @@ the remaining packages from the terminal:
 You may optionally install [GTKWave](http://gtkwave.sourceforge.net/) for analyzing
 waveform files.
 
+Many LLVM tools will fail to build if their dependent packages are too old. If
+you haven't updated MacPorts in a while, you may need to update to get newer
+packages:
+
+    sudo port selfupdate
+    sudo port upgrade outdated
+
 ### Windows
 
 I have not tested this on Windows. Many of the libraries are cross platform, so
