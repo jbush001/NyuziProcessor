@@ -15,6 +15,7 @@
 //
 
 #include <iostream>
+#include <stdlib.h>
 #include "Vverilator_tb.h"
 #include "verilated.h"
 #if VM_TRACE
@@ -41,22 +42,17 @@ double sc_time_stamp()
 
 int main(int argc, char **argv, char **env)
 {
-    unsigned int randomizeRegs;
-
     Verilated::commandArgs(argc, argv);
     Verilated::debug(0);
 
-    if (!VL_VALUEPLUSARGS_II(32, "randomize=", 'd', randomizeRegs))
-        randomizeRegs = 1;
-
     // If this is set, randomize the initial values of registers and
     // SRAMs.
-    if (randomizeRegs)
+    if (Verilated::commandArgsPlusMatch("randomize")[0] != '\0')
     {
         // Initialize random seed.
-        unsigned int randomSeed;
-        if (VL_VALUEPLUSARGS_II(32, "randseed=", 'd', randomSeed))
-            srand48(randomSeed);
+        const char *arg = Verilated::commandArgsPlusMatch("randseed=");
+        if (arg[0] != '\0')
+            srand48(atoi(arg + 10));
         else
         {
             time_t t1;
