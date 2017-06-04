@@ -51,7 +51,7 @@ arguments with a plus sign):
 | +autoflushl2                    | Copy dirty data in the L2 cache to system memory at the end of simulation before writing to file (used with +memdump...) |
 | +profile=*filename*             | Periodically write the program counters to a file. Use with tools/misc/profile.py |
 | +block=*filename*               | Read file into virtual block device, which it exposes as a virtual SD/MMC device.<sup>1</sup>
-| +randomize=*\[1|0\]*              | Randomize initial register and memory values. Used to verify reset handling. Defaults to on.
+| +randomize=*\[1\|0\]*              | Randomize initial register and memory values. Used to verify reset handling. Defaults to on.
 | +randseed=*seed*                | If randomization is enabled, set the seed for the random number generator.
 | +dumpmems                       | Dump the sizes of all internal FIFOs and SRAMs to standard out and exit. Used by tools/misc/extract_mems.py |
 
