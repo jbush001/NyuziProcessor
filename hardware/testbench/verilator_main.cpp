@@ -45,22 +45,25 @@ int main(int argc, char **argv, char **env)
     Verilated::commandArgs(argc, argv);
     Verilated::debug(0);
 
-    // If this is set, randomize the initial values of registers and
-    // SRAMs.
-    if (Verilated::commandArgsPlusMatch("randomize")[0] != '\0')
+    // Default to randomizing contents of memory before the start of
+    // simulation. This flag can disable it.
+    const char *arg = Verilated::commandArgsPlusMatch("randomize=");
+    if (arg[0] == '\0' || atoi(arg + 11) != 0)
     {
         // Initialize random seed.
-        const char *arg = Verilated::commandArgsPlusMatch("randseed=");
+        long randomSeed;
+        arg = Verilated::commandArgsPlusMatch("randseed=");
         if (arg[0] != '\0')
-            srand48(atoi(arg + 10));
+            randomSeed = atol(arg + 10);
         else
         {
             time_t t1;
             time(&t1);
-            srand48((long) t1);
-            VL_PRINTF("Random seed is %li\n", t1);
+            randomSeed = (long) t1;
         }
 
+        srand48(randomSeed);
+        VL_PRINTF("Random seed is %li\n", randomSeed);
         Verilated::randReset(2);
     }
     else
