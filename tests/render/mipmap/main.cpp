@@ -51,8 +51,8 @@ Texture *makeMipMaps()
 {
     const unsigned int kColors[] =
     {
-        0xff0000ff,	// Red
-        0xff00ff00,	// Blue
+        0xff0000ff, // Red
+        0xff00ff00, // Blue
         0xffff0000, // Green
         0xff00ffff, // Yellow
     };

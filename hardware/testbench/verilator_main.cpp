@@ -73,7 +73,7 @@ int main(int argc, char **argv, char **env)
     testbench->reset = 1;
     testbench->clk = 0;
 
-#if VM_TRACE			// If verilator was invoked with --trace
+#if VM_TRACE // If verilator was invoked with --trace
     Verilated::traceEverOn(true);
     VL_PRINTF("Writing waveform to trace.vcd\n");
     VerilatedVcdC* tfp = new VerilatedVcdC;
@@ -90,7 +90,7 @@ int main(int argc, char **argv, char **env)
         testbench->clk = !testbench->clk;
         testbench->eval();
 #if VM_TRACE
-        tfp->dump(currentTime);	// Create waveform trace for this timestamp
+        tfp->dump(currentTime); // Create waveform trace for this timestamp
 #endif
 
         currentTime++;

@@ -75,7 +75,7 @@ int main()
         }
     }
 
-    printf("PASS\n");	// CHECK: PASS
+    printf("PASS\n"); // CHECK: PASS
 
 done:
     return 0;

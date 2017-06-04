@@ -121,12 +121,12 @@ void write_test_case(struct operation *op, unsigned int value1, unsigned int val
 
     if (op->func == itof_func)
     {
-        printf("{ %s, 0x%08x, 0, 0x%08x }, // %s %d = %+g\n", op->name,
+        printf("{ %s, 0x%08x, 0, 0x%08x }, // %s %u = %+g\n", op->name,
             value1, result, op->operator, value1, value_as_float(result));
     }
     else if (op->func == ftoi_func)
     {
-        printf("{ %s, 0x%08x, 0, 0x%08x }, // %s %g = %d\n", op->name,
+        printf("{ %s, 0x%08x, 0, 0x%08x }, // %s %g = %u\n", op->name,
             value1, result, op->operator, value_as_float(value1),
             result);
     }

@@ -23,7 +23,7 @@ namespace librender
 {
 
 Surface::Surface(int width, int height, void *base)
-    :	fWidth(width),
+    : fWidth(width),
       fHeight(height),
       fStride(width * kBytesPerPixel),
       fBaseAddress(reinterpret_cast<int>(base)),
@@ -33,7 +33,7 @@ Surface::Surface(int width, int height, void *base)
 }
 
 Surface::Surface(int width, int height)
-    :	fWidth(width),
+    : fWidth(width),
       fHeight(height),
       fStride(width * kBytesPerPixel),
       fOwnedPointer(true)
