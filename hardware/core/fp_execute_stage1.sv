@@ -273,7 +273,7 @@ module fp_execute_stage1(
         begin
             fx1_instruction_valid <= of_instruction_valid
                 && (!wb_rollback_en || wb_rollback_thread_idx != of_thread_idx)
-                && of_instruction.pipeline_sel == PIPE_MCYCLE_ARITH;
+                && of_instruction.pipeline_sel == PIPE_FLOAT_ARITH;
         end
     end
 endmodule

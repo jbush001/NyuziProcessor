@@ -267,9 +267,9 @@ module thread_select_stage(
                             scoreboard_clear_bitmap |= rollback_dest[i].scoreboard_bitmap;
                     end
 
-                    // The memory pipeline is one stage longer than the single
-                    // cycle arithmetic pipeline, so only invalidate the last
-                    // stage if this originated there.
+                    // The memory pipeline is one stage longer than the integer
+                    // arithmetic pipeline, so only invalidate the last stage
+                    // if this originated there.
                     if (rollback_dest[ROLLBACK_STAGES - 1].valid
                         && rollback_dest[ROLLBACK_STAGES - 1].thread_idx
                         == local_thread_idx_t'(thread_idx)
@@ -286,7 +286,7 @@ module thread_select_stage(
                 // There can be a writeback conflict even if the instruction doesn't
                 // write back to a register (if it cause a rollback, for example)
                 case (thread_instr[thread_idx].pipeline_sel)
-                    PIPE_SCYCLE_ARITH: writeback_conflict = writeback_allocate[0];
+                    PIPE_INT_ARITH: writeback_conflict = writeback_allocate[0];
                     PIPE_MEM: writeback_conflict = writeback_allocate[1];
                     default: writeback_conflict = 0;
                 endcase
@@ -367,7 +367,7 @@ module thread_select_stage(
         if (|thread_issue_oh)
         begin
             case (issue_instr.pipeline_sel)
-                PIPE_MCYCLE_ARITH: writeback_allocate_nxt[3] = 1'b1;
+                PIPE_FLOAT_ARITH: writeback_allocate_nxt[3] = 1'b1;
                 PIPE_MEM: writeback_allocate_nxt[0] = 1'b1;
                 default:
                     ;

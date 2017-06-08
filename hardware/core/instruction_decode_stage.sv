@@ -361,17 +361,17 @@ module instruction_decode_stage(
     always_comb
     begin
         if (has_trap)
-            decoded_instr_nxt.pipeline_sel = PIPE_SCYCLE_ARITH;
+            decoded_instr_nxt.pipeline_sel = PIPE_INT_ARITH;
         else if (is_fmt_r || is_fmt_i)
         begin
             if (alu_op[5] || alu_op == OP_MULL_I || alu_op == OP_MULH_U
                  || alu_op == OP_MULH_I || alu_op == OP_FTOI)
-                decoded_instr_nxt.pipeline_sel = PIPE_MCYCLE_ARITH;
+                decoded_instr_nxt.pipeline_sel = PIPE_FLOAT_ARITH;
             else
-                decoded_instr_nxt.pipeline_sel = PIPE_SCYCLE_ARITH;
+                decoded_instr_nxt.pipeline_sel = PIPE_INT_ARITH;
         end
         else if (ifd_instruction[31:28] == 4'b1111)
-            decoded_instr_nxt.pipeline_sel = PIPE_SCYCLE_ARITH; // branches evaluated in single cycle pipeline
+            decoded_instr_nxt.pipeline_sel = PIPE_INT_ARITH; // branches evaluated in integer pipeline
         else
             decoded_instr_nxt.pipeline_sel = PIPE_MEM;
     end

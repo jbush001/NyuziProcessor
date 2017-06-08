@@ -252,7 +252,7 @@ module int_execute_stage(
 
     assign is_valid_instruction = of_instruction_valid
         && (!wb_rollback_en || wb_rollback_thread_idx != of_thread_idx)
-        && of_instruction.pipeline_sel == PIPE_SCYCLE_ARITH;
+        && of_instruction.pipeline_sel == PIPE_INT_ARITH;
     assign is_eret = is_valid_instruction
         && of_instruction.is_branch
         && of_instruction.branch_type == BRANCH_ERET;

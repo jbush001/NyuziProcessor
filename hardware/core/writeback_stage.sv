@@ -18,7 +18,7 @@
 
 //
 // Instruction Pipeline Writeback Stage
-// - Selects result from appropriate pipeline.
+// - Selects result from appropriate pipeline (memory, integer, floating point)
 // - Aligns memory read results
 // - Writes results back to register file
 // - Handles rollbacks. Most are raised earlier in the pipeline, but it
@@ -171,7 +171,7 @@ module writeback_stage(
         wb_rollback_en = 0;
         wb_rollback_pc = 0;
         wb_rollback_thread_idx = 0;
-        wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
+        wb_rollback_pipeline = PIPE_INT_ARITH;
         wb_trap = 0;
         wb_trap_cause = {2'b0, TT_RESET};
         wb_rollback_subcycle = 0;
@@ -192,7 +192,7 @@ module writeback_stage(
                 wb_rollback_pc = cr_trap_handler;
 
             wb_rollback_thread_idx = ix_thread_idx;
-            wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
+            wb_rollback_pipeline = PIPE_INT_ARITH;
             wb_trap = 1;
             if (ix_privileged_op_fault)
                 wb_trap_cause = {2'b0, TT_PRIVILEGED_OP};
@@ -223,12 +223,12 @@ module writeback_stage(
         end
         else if (ix_instruction_valid && ix_rollback_en)
         begin
-            // Check for rollback from single cycle pipeline. This happens
+            // Check for rollback from integer pipeline. This happens
             // because of a branch.
             wb_rollback_en = 1;
             wb_rollback_pc = ix_rollback_pc;
             wb_rollback_thread_idx = ix_thread_idx;
-            wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
+            wb_rollback_pipeline = PIPE_INT_ARITH;
             if (ix_instruction.branch_type == BRANCH_ERET)
                 wb_rollback_subcycle = cr_eret_subcycle[ix_thread_idx];
             else
@@ -370,7 +370,7 @@ module writeback_stage(
             end
 
             //
-            // Single cycle pipeline result
+            // Integer pipeline result
             //
             3'b010:
             begin
@@ -544,13 +544,13 @@ module writeback_stage(
             3'b100:
             begin
                 __debug_wb_pc <= fx5_instruction.pc;
-                __debug_wb_pipeline <= PIPE_MCYCLE_ARITH;
+                __debug_wb_pipeline <= PIPE_FLOAT_ARITH;
             end
 
             3'b010:
             begin
                 __debug_wb_pc <= ix_instruction.pc;
-                __debug_wb_pipeline <= PIPE_SCYCLE_ARITH;
+                __debug_wb_pipeline <= PIPE_INT_ARITH;
             end
 
             3'b001:

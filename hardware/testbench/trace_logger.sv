@@ -162,7 +162,7 @@ module trace_logger(
             begin : dump_trace_event
                 int tindex;
 
-                if (debug_wb_pipeline == PIPE_SCYCLE_ARITH)
+                if (debug_wb_pipeline == PIPE_INT_ARITH)
                     tindex = 4;
                 else if (debug_wb_pipeline == PIPE_MEM)
                     tindex = 3;

@@ -215,8 +215,8 @@ typedef enum logic [1:0] {
 
 typedef enum logic [1:0] {
     PIPE_MEM,
-    PIPE_SCYCLE_ARITH,
-    PIPE_MCYCLE_ARITH
+    PIPE_INT_ARITH,
+    PIPE_FLOAT_ARITH
 } pipeline_sel_t;
 
 typedef struct packed {
