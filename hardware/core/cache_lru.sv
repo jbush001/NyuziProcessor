@@ -113,6 +113,9 @@ module cache_lru
         .write_data(update_flags),
         .*);
 
+    // XXX I bet there's a way to programmatically create update_flags
+    // and fill_way with a generate loop instead of hard-coding like
+    // I've done here.
     generate
         case (NUM_WAYS)
             1:

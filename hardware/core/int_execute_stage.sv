@@ -22,6 +22,9 @@
 //   addition or bitwise logical operations.
 // - Detects branches
 //
+// (despite the name, this stage also handles floating point reciprocal
+// estimates)
+//
 
 module int_execute_stage(
     input                             clk,

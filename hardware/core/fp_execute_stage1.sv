@@ -28,6 +28,9 @@
 // - Steer significand down smaller-exponent lane
 // Floating point multiplication
 // - Add exponents/multiply significands
+// The floating point pipeline also handles integer multiplication. This
+// stages passes through the integer value to the multiplier in the next
+// stage.
 //
 
 module fp_execute_stage1(

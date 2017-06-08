@@ -21,8 +21,9 @@
 // - Contains an instruction FIFO for each thread
 // - Each cycle, picks a thread to issue using a round robin scheduling
 //   algorithm, avoiding various types of conflicts:
-//   * inter-instruction register dependencies, tracked using a scoreboard
-//     for each thread.
+//   * inter-instruction register dependencies (read-after-write,
+//     write-after-write, write-after-read), tracked using a scoreboard for
+//     each thread.
 //   * writeback hazards between the pipelines of different lengths, tracked
 //     with a shared shift register.
 // - Tracks dcache misses and suspends threads until they are resolved.

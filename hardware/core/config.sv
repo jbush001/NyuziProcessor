@@ -20,7 +20,7 @@
 //
 // Configurable parameters
 // - Number of cache ways must be 1, 2, 4, or 8 (TLB_WAYS does not have
-//   this limitation)
+//   this constraint). This is a limitation in the cache_lru module.
 // - If you change the number of L2 ways, you must also modify the
 //   flush_l2_cache function in testbench/verilator_tb.sv. Comments above
 //   that function describe how and why.
