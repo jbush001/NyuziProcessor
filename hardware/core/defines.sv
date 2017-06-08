@@ -51,8 +51,12 @@ typedef logic[`NUM_VECTOR_LANES - 1:0] vector_lane_mask_t;
 
 `define CORE_ID_WIDTH $clog2(`NUM_CORES)
 
-// The width for core ID is hardcoded because using $clog2 doesn't
-// work for one core. This limits to 16 cores.
+// The width of core_id_t is hardcoded to work around some tool issues.
+// For one core, CORE_ID_WIDTH will be 0, but if I made the range
+// [CORE_ID_WIDTH - 1:0], the range would be [-1:0], which is invalid. I tried
+// defining CORE_ID_WIDTH as (`NUM_CORES == 1 ? 1 : $clog2(`NUM_CORES)), which
+// works fine on many tools, but crashes Synopsys Design Compiler. This limits
+// to 16 cores. To synthesize more, increase this width.
 typedef logic[3:0] core_id_t;
 
 `define CORE_PERF_EVENTS 13

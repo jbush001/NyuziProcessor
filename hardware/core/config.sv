@@ -24,11 +24,14 @@
 // - If you change the number of L2 ways, you must also modify the
 //   flush_l2_cache function in testbench/verilator_tb.sv. Comments above
 //   that function describe how and why.
-// - NUM_CORES must be 1-8. To synthesize more cores, increase CORE_ID_WIDTH
-//   in defines.sv.
+// - NUM_CORES must be 1-16. To synthesize more cores, increase the
+//   width of core_id_t in defines.sv (as above, comments there describe why).
 // - The size of a cache is sets * ways * cache line size (64 bytes)
-// - L1D_SETS sets must be 64 or fewer if virtual address translation is
-//   enabled.
+// - L1D_SETS sets must be 64 or fewer (page size / cache line size) if
+//   virtual address translation is enabled. This avoids aliasing in the
+//   virtually indexed/physically tagged L1 cache by preventing the
+//   same physical address from appearing in different cache sets
+//   (see dcache_tag_stage)
 //
 
 `define NUM_CORES 1
