@@ -22,22 +22,25 @@
 // results encoded there.
 //
 
+enum operation {
+    END = -1,
+    FADD,
+    FSUB,
+    FMUL,
+    ITOF,
+    FTOI,
+    FCMPLT
+};
+
 struct test_case
 {
-    enum {
-        FADD,
-        FSUB,
-        FMUL,
-        ITOF,
-        FTOI,
-        FCMPLT
-    } operation;
+    unsigned int operation;
     unsigned int value1;
     unsigned int value2;
     unsigned int expected_result;
-} TESTS[] = {
-    #include "test_cases.inc"
 };
+
+extern struct test_case TESTS[];
 
 float value_as_float(unsigned int value)
 {
@@ -65,12 +68,13 @@ int main(void)
 {
     int test_index;
     unsigned int result;
-    int num_test_cases = sizeof(TESTS) / sizeof(struct test_case);
     int failures = 0;
 
-    for (test_index = 0; test_index < num_test_cases; test_index++)
+    for (test_index = 0; ; test_index++)
     {
         struct test_case *test = &TESTS[test_index];
+        if ((enum operation) test->operation == END)
+            break;
 
         switch (test->operation)
         {
@@ -107,7 +111,7 @@ int main(void)
     }
 
     if (failures == 0)
-        printf("%d tests passed\n", num_test_cases);
+        printf("%d tests passed\n", test_index);
     else
-        printf("%d/%d tests failed\n", failures, num_test_cases);
+        printf("%d/%d tests failed\n", failures, test_index);
 }

@@ -18,8 +18,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+//
+// This program runs on the host and generates test cases
+// Floating point values are constrained so common edge cases are
+// more common (for example, equal exponents)
+//
+
 #define NUM_ELEMS(x) (sizeof(x) / sizeof(x[0]))
-#define RAND_ELEM(x) x[rand() % NUM_ELEMS(x)]
+#define RAND_ELEM(x) x[rand() % (int) NUM_ELEMS(x)]
 
 unsigned int add_func(unsigned int param1, unsigned int param2);
 unsigned int sub_func(unsigned int param1, unsigned int param2);
@@ -28,12 +34,7 @@ unsigned int ftoi_func(unsigned int param1, unsigned int param2);
 unsigned int itof_func(unsigned int param1, unsigned int param2);
 unsigned int fcmplt_func(unsigned int param1, unsigned int param2);
 
-//
-// Floating point values are constrained so common edge cases are
-// more common (for example, equal exponents)
-//
-
-unsigned int EXPONENTS[] = {
+static unsigned int EXPONENTS[] = {
     0,
     1,
     100,    // -27
@@ -46,7 +47,7 @@ unsigned int EXPONENTS[] = {
     254
 };
 
-unsigned int SIGNIFICANDS[] = {
+static unsigned int SIGNIFICANDS[] = {
     // Test various bit positions
     0x000000,
     0x000001,
@@ -57,29 +58,19 @@ unsigned int SIGNIFICANDS[] = {
     0x010000
 };
 
-enum op_type
+static struct operation
 {
-    FADD,
-    FSUB,
-    FMUL,
-    FCMPLT,
-    ITOF,
-    FTOI
-};
-
-struct operation
-{
-    const char *name;
+    int index;  // Must match indices in run_tests.c
     const char *operator;
     unsigned int (*func)(unsigned int op1, unsigned int op2);
     int num_operands;
 } OPS[] = {
-    { "FADD", "+", add_func, 2 },
-    { "FSUB", "-", sub_func, 2 },
-    { "FMUL", "*", mul_func, 2 },
-    { "FCMPLT", "<", fcmplt_func, 2 },
-    { "ITOF", "itof", itof_func, 1 },
-    { "FTOI", "ftoi", ftoi_func, 1 }
+    { 0, "+", add_func, 2 },
+    { 1, "-", sub_func, 2 },
+    { 2, "*", mul_func, 2 },
+    { 3, "itof", itof_func, 1 },
+    { 4, "ftoi", ftoi_func, 1 },
+    { 5, "<", fcmplt_func, 2 }
 };
 
 unsigned int make_float(unsigned int sign, unsigned int exponent, unsigned int significand)
@@ -121,26 +112,27 @@ void write_test_case(struct operation *op, unsigned int value1, unsigned int val
 
     if (op->func == itof_func)
     {
-        printf("{ %s, 0x%08x, 0, 0x%08x }, // %s %u = %+g\n", op->name,
-            value1, result, op->operator, value1, value_as_float(result));
+        printf(".long %d, 0x%08x, 0, 0x%08x # %s %u = %+g\n", op->index,
+            value1, result, op->operator, value1, (double) value_as_float(result));
     }
     else if (op->func == ftoi_func)
     {
-        printf("{ %s, 0x%08x, 0, 0x%08x }, // %s %g = %u\n", op->name,
-            value1, result, op->operator, value_as_float(value1),
+        printf(".long %d, 0x%08x, 0, 0x%08x # %s %g = %u\n", op->index,
+            value1, result, op->operator, (double) value_as_float(value1),
             result);
     }
     else if (op->num_operands == 1)
     {
-        printf("{ %s, 0x%08x, 0, 0x%08x }, // %s %+g = %+g\n", op->name,
-            value1, result, op->operator, value_as_float(value1),
-            value_as_float(result));
+        printf(".long %d, 0x%08x, 0, 0x%08x # %s %+g = %+g\n", op->index,
+            value1, result, op->operator, (double) value_as_float(value1),
+            (double) value_as_float(result));
     }
     else
     {
-        printf("{ %s, 0x%08x, 0x%08x, 0x%08x }, // %+g %s %+g = %+g\n", op->name,
-            value1, value2, result, value_as_float(value1),
-            op->operator, value_as_float(value2), value_as_float(result));
+        printf(".long %d, 0x%08x, 0x%08x, 0x%08x # %+g %s %+g = %+g\n", op->index,
+            value1, value2, result, (double) value_as_float(value1),
+            op->operator, (double) value_as_float(value2),
+            (double) value_as_float(result));
     }
 }
 
@@ -161,11 +153,15 @@ unsigned int mul_func(unsigned int param1, unsigned int param2)
 
 unsigned int ftoi_func(unsigned int param1, unsigned int param2)
 {
+    (void) param2;
+
     return (unsigned int)(int) value_as_float(param1);
 }
 
 unsigned int itof_func(unsigned int param1, unsigned int param2)
 {
+    (void) param2;
+
     return value_as_int((float)(int)param1);
 }
 
@@ -177,11 +173,12 @@ unsigned int fcmplt_func(unsigned int param1, unsigned int param2)
 unsigned int generate_random_value(void)
 {
     return (RAND_ELEM(EXPONENTS) << 23) | RAND_ELEM(SIGNIFICANDS)
-        | ((rand() & 1) << 31);
+        | ((unsigned int) (rand() & 1) << 31);
 }
 
 void test_add_sub_rounding(void)
 {
+    unsigned int sigidx;
     unsigned int GRS_SIGNIFICANDS[] = {
         // Last three bits are 000-111. This represents all values of GRS
         0x3ff0,
@@ -206,7 +203,7 @@ void test_add_sub_rounding(void)
         0x3fff
     };
 
-    for (int sigidx = 0; sigidx < NUM_ELEMS(GRS_SIGNIFICANDS); sigidx++)
+    for (sigidx = 0; sigidx < NUM_ELEMS(GRS_SIGNIFICANDS); sigidx++)
     {
         // Because value2 has a smaller exponent, its lowest three digits
         // will be shifted out during alignment and become the guard, round,
@@ -235,22 +232,24 @@ void test_specials(void)
         +INFINITY,
         NAN
     };
-    int i, j;
+    unsigned int i, j;
 
     for (i = 0; i < NUM_ELEMS(VALUES); i++)
     {
         for (j = 0; j < NUM_ELEMS(VALUES); j++)
         {
-            write_test_case(&OPS[0], VALUES[i], VALUES[j]);   // add
-            write_test_case(&OPS[1], VALUES[i], VALUES[j]);   // sub
-            write_test_case(&OPS[2], VALUES[i], VALUES[j]);   // mul
+            write_test_case(&OPS[0], value_as_int(VALUES[i]), value_as_int((VALUES[j])));   // add
+            write_test_case(&OPS[1], value_as_int(VALUES[i]), value_as_int((VALUES[j])));   // sub
+            write_test_case(&OPS[2], value_as_int(VALUES[i]), value_as_int((VALUES[j])));   // mul
         }
     }
 }
 
 void test_random(void)
 {
-    for (int opidx = 0; opidx < NUM_ELEMS(OPS); opidx++)
+    unsigned int opidx;
+
+    for (opidx = 0; opidx < NUM_ELEMS(OPS); opidx++)
     {
         struct operation *op = &OPS[opidx];
         for (int i = 0; i < 1000; i++)
@@ -264,7 +263,11 @@ void test_random(void)
 
 int main(void)
 {
+    printf(".data\n");
+    printf(".globl TESTS\n");
+    printf("TESTS:\n");
     test_add_sub_rounding();
     test_specials();
     test_random();
+    printf(".long -1");
 }

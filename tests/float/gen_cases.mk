@@ -16,35 +16,20 @@
 
 TOPDIR=../../
 
-include $(TOPDIR)/build/target.mk
+include $(TOPDIR)/build/tool.mk
 
+TARGET=$(OBJ_DIR)/gen_cases
 
-LIBS=-lc -los-bare
+SRCS=gen_cases.c
 
-SRCS=run_tests.c test_cases.s
-
-OBJS := $(CRT0_BARE) $(SRCS_TO_OBJS)
+OBJS := $(SRCS_TO_OBJS)
 DEPS := $(SRCS_TO_DEPS)
 
-$(OBJ_DIR)/run_tests.hex: $(OBJS) $(DEPS)
-	$(LD) $(OBJS) -o $(OBJ_DIR)/run_tests.elf $(LIBS) $(LDFLAGS)
-	$(ELF2HEX) -o $@ $(OBJ_DIR)/run_tests.elf
+all: $(OBJ_DIR) $(BINDIR) $(TARGET)
 
-test: $(OBJ_DIR)/run_tests.hex
-	$(EMULATOR) $(OBJ_DIR)/run_tests.hex
-
-vtest: $(OBJ_DIR)/run_tests.hex
-	$(VERILATOR) +bin=$(OBJ_DIR)/run_tests.hex
-
-test_cases.s: obj/gen_cases
-	./obj/gen_cases > test_cases.s
-
-obj/gen_cases:
-	make -f gen_cases.mk
-
-clean: FORCE
-	rm -f $(OBJ_DIR)/*
-
-FORCE:
+$(TARGET): $(OBJS) $(DEPS)
+	$(CC) -o $@ $(OBJS)
 
 -include $(DEPS)
+
+
