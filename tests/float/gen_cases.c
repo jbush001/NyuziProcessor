@@ -103,13 +103,6 @@ unsigned int value_as_int(float value)
 void write_test_case(struct operation *op, unsigned int value1, unsigned int value2)
 {
     unsigned int result = op->func(value1, value2);
-    if (op->func != ftoi_func)
-    {
-        // Make NaN consistent
-        if (((result >> 23) & 0xff) == 0xff && (result & 0x7fffff) != 0)
-            result = 0x7fffffff;
-    }
-
     if (op->func == itof_func)
     {
         printf(".long %d, 0x%08x, 0, 0x%08x # %s %u = %+g\n", op->index,
