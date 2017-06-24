@@ -18,6 +18,7 @@
 #define UTIL_H
 
 #include <errno.h>
+#include <math.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -75,6 +76,11 @@ static inline uint32_t value_as_int(float value)
         float f;
         uint32_t i;
     } u = { .f = value };
+
+    // x86 at least propagates NaN as recommended (but not required) by IEEE754,
+    // but Nyuzi uses a consistent NaN representation for simplicity.
+    if (isnan(value))
+        return 0x7fffffff;
 
     return u.i;
 }

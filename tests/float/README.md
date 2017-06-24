@@ -18,15 +18,12 @@ When there is a failure, it will print a message like this:
 
     test 21 failed: expected 00800ffd, got 00000ffd
 
-The test number in the message corresponds to the line in the 'test_cases.inc'
-file.
-
 ----
 
 Using Berkeley TestFloat to generate test cases
 
-*A bunch of these cases fail when using the emulator. I think I need to tweak the
-command line parameters for testfloat_gen*
+A bunch of these cases fail when using the emulator. For example, need to
+convert results to a standard NaN representation (0x7fffffff)
 
 1. Download testfloat and softfloat projects
 
