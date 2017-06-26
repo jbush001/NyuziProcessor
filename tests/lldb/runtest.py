@@ -87,13 +87,14 @@ class EmulatorProcess(object):
         if DEBUG:
             print('LLDB send: ' + cmd)
 
-        self.outstr.write(cmd + '\n')
+        self.outstr.write(str.encode(cmd + '\n'))
+        self.outstr.flush()
         return self.wait_response()
 
     def wait_response(self):
         response = ''
         while True:
-            response += self.instr.read(1)
+            response += self.instr.read(1).decode('utf-8')
             if response.endswith('^done'):
                 break
 
@@ -105,7 +106,7 @@ class EmulatorProcess(object):
     def wait_stop(self):
         current_line = ''
         while True:
-            inchar = self.instr.read(1)
+            inchar = self.instr.read(1).decode('utf-8')
             current_line += inchar
             if inchar == '\n':
                 if DEBUG:
