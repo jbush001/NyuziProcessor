@@ -54,7 +54,7 @@ const double kDenominators[] = {
     -0.166666666666667f,  // 1 / 3!
     0.008333333333333f,   // 1 / 5!
     -0.000198412698413f,  // 1 / 7!
-    0.000002755731922f,	  // 1 / 9!
+    0.000002755731922f,   // 1 / 9!
     -2.50521084e-8f,      // 1 / 11!
     1.6059044e-10f        // 1 / 13!
 };
@@ -68,7 +68,7 @@ vecf16_t slow_sinfv(vecf16_t angle)
 
     int resultSign = __builtin_nyuzi_mask_cmpf_lt(angle, vecf16_t(0.0));
 
-    angle = vecf16_t(veci16_t(angle) & 0x7fffffff);	// fabs
+    angle = vecf16_t(veci16_t(angle) & 0x7fffffff); // fabs
 
     int cmp1 = __builtin_nyuzi_mask_cmpf_gt(angle, vecf16_t(M_PI * 3 / 2));
     angle = __builtin_nyuzi_vector_mixf(cmp1, vecf16_t(M_PI * 2) - angle, angle);
