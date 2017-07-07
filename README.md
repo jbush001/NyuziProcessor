@@ -3,10 +3,10 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/fbafdd72749e459d8de6f381abc7436d)](https://www.codacy.com/app/jbush001/NyuziProcessor?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jbush001/NyuziProcessor&amp;utm_campaign=Badge_Grade)
 [![Chat at https://gitter.im/jbush001/NyuziProcessor](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jbush001/NyuziProcessor?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-Nyuzi is an experimental multicore GPGPU processor. It supports vector floating
-point, hardware multithreading, virtual memory, and cache coherence. The
-SystemVerilog-based hardware implementation is synthesizable and runs on FPGA.
-This project also includes an LLVM-based C++ toolchain.
+Nyuzi is an experimental GPGPU processor. This project includes a
+synthesizable hardware design written in System Verilog, an instruction
+set emulator, an LLVM based C/C++ compiler, software libraries, and tests.
+It is useful for exploring parallel software and hardware.
 
 **Documentation:** https://github.com/jbush001/NyuziProcessor/wiki<br/>
 **Mailing list:** https://groups.google.com/forum/#!forum/nyuzi-processor-dev<br/>
