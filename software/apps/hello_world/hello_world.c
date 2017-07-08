@@ -14,6 +14,8 @@
 // limitations under the License.
 //
 
+// Simple program to demonstrate build system and simulation environment
+
 #include <stdio.h>
 
 int main()

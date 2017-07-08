@@ -21,16 +21,17 @@ include $(TOPDIR)/build/target.mk
 LIBS=-lc
 SRCS=plasma.cpp
 CFLAGS+=-ffast-math -std=c++11 -Werror
+HEX_FILE=$(OBJ_DIR)/plasma.hex
 
 OBJS := $(SRCS_TO_OBJS)
 DEPS := $(SRCS_TO_DEPS)
 
-$(OBJ_DIR)/plasma.hex: $(OBJS)
+$(HEX_FILE): $(OBJS)
 	$(LD) -o $(OBJ_DIR)/plasma.elf $(LDFLAGS) $(CRT0_BARE) $(OBJS) $(LIBS) -los-bare $(LDFLAGS)
-	$(ELF2HEX) -o $(OBJ_DIR)/plasma.hex $(OBJ_DIR)/plasma.elf
+	$(ELF2HEX) -o $(HEX_FILE) $(OBJ_DIR)/plasma.elf
 
-run: $(OBJ_DIR)/plasma.hex
-	$(EMULATOR) -f 640x480 $(OBJ_DIR)/plasma.hex
+run: $(HEX_FILE)
+	$(EMULATOR) -f 640x480 $(HEX_FILE)
 
 krun: fsimage.bin
 	$(EMULATOR) -b fsimage.bin -f 640x480 $(TOPDIR)/software/kernel/kernel.hex
@@ -42,10 +43,10 @@ fsimage.bin: $(OBJ_DIR)/program.elf
 $(OBJ_DIR)/program.elf: $(OBJS)
 	$(LD) -o $(OBJ_DIR)/program.elf --image-base=0x1000 $(LDFLAGS) $(CRT0_KERN) $(OBJS) $(LIBS) -los-kern $(LDFLAGS)
 
-fpgarun: $(OBJ_DIR)/plasma.hex
-	$(SERIAL_BOOT) $(SERIAL_PORT) $(OBJ_DIR)/plasma.hex
+fpgarun: $(HEX_FILE)
+	$(SERIAL_BOOT) $(SERIAL_PORT) $(HEX_FILE)
 
-fpgakrun: $(OBJ_DIR)/plasma.hex fsimage.bin
+fpgakrun: $(HEX_FILE) fsimage.bin
 	$(SERIAL_BOOT) $(SERIAL_PORT) $(TOPDIR)/software/kernel/kernel.hex fsimage.bin
 
 clean:

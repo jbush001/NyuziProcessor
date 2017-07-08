@@ -24,15 +24,16 @@ MEMORY_SIZE=4000000
 
 CFLAGS+=-fno-rtti -std=c++11 -I$(TOPDIR)/software/libs/librender -DFB_WIDTH=$(FB_WIDTH) -DFB_HEIGHT=$(FB_HEIGHT) -Werror
 LIBS=-lrender -lc -los-bare
+HEX_FILE=$(OBJ_DIR)/program.hex
 
 SRCS=main.cpp PakFile.cpp MeshBuilder.cpp LevelRenderer.cpp
 
 OBJS := $(CRT0_BARE) $(SRCS_TO_OBJS)
 DEPS := $(SRCS_TO_DEPS)
 
-all: $(OBJ_DIR)/program.hex
+all: $(HEX_FILE)
 
-$(OBJ_DIR)/program.hex: $(OBJ_DIR)/program.elf
+$(HEX_FILE): $(OBJ_DIR)/program.elf
 	$(ELF2HEX) -o $@ $<
 
 $(OBJ_DIR)/program.elf: $(DEPS) $(OBJS)
@@ -46,20 +47,20 @@ clean:
 	rm -rf $(OBJ_DIR)
 
 # Run in emulator
-run: $(OBJ_DIR)/program.hex fsimage.bin
-	$(EMULATOR) -c 0x$(MEMORY_SIZE) -f $(FB_WIDTH)x$(FB_HEIGHT) -b fsimage.bin $(OBJ_DIR)/program.hex
+run: $(HEX_FILE) fsimage.bin
+	$(EMULATOR) -c 0x$(MEMORY_SIZE) -f $(FB_WIDTH)x$(FB_HEIGHT) -b fsimage.bin $(HEX_FILE)
 
 # Run in emulator under debugger
-debug: $(OBJ_DIR)/program.hex fsimage.bin
-	$(EMULATOR) -m gdb -c 0x$(MEMORY_SIZE) -f $(FB_WIDTH)x$(FB_HEIGHT) -b fsimage.bin $(OBJ_DIR)/program.hex &
+debug: $(HEX_FILE) fsimage.bin
+	$(EMULATOR) -m gdb -c 0x$(MEMORY_SIZE) -f $(FB_WIDTH)x$(FB_HEIGHT) -b fsimage.bin $(HEX_FILE) &
 	$(LLDB) --arch nyuzi $(OBJ_DIR)/program.elf -o "gdb-remote 8000"
 
-fpgarun: $(OBJ_DIR)/program.hex fsimage.bin
-	$(SERIAL_BOOT) $(SERIAL_PORT) $(OBJ_DIR)/program.hex fsimage.bin
+fpgarun: $(HEX_FILE) fsimage.bin
+	$(SERIAL_BOOT) $(SERIAL_PORT) $(HEX_FILE) fsimage.bin
 
-verirun: $(OBJ_DIR)/program.hex fsimage.bin
+verirun: $(HEX_FILE) fsimage.bin
 	@rm -f $(OBJ_DIR)/output.bin output.png
-	$(VERILATOR) +memdumpfile=$(OBJ_DIR)/output.bin +memdumpbase=0x200000 +memdumplen=0x12C000 +bin=$(OBJ_DIR)/program.hex +block=fsimage.bin
+	$(VERILATOR) +memdumpfile=$(OBJ_DIR)/output.bin +memdumpbase=0x200000 +memdumplen=0x12C000 +bin=$(HEX_FILE) +block=fsimage.bin
 	@convert -depth 8 -size 640x480 rgba:$(OBJ_DIR)/output.bin output.png
 
 fsimage.bin: pak0.pak

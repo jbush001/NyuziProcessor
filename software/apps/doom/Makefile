@@ -11,6 +11,7 @@ include $(TOPDIR)/build/target.mk
 
 CFLAGS+=-Wno-unused-const-variable -g
 LIBS=-lc -los-bare
+HEX_FILE=$(OBJ_DIR)/doom.hex
 
 SRCS=	doomdef.c		\
 		doomstat.c		\
@@ -78,28 +79,28 @@ SRCS=	doomdef.c		\
 OBJS := $(CRT0_BARE) $(SRCS_TO_OBJS)
 DEPS := $(SRCS_TO_DEPS)
 
-all: $(OBJ_DIR)/doom.hex fsimage.bin
+all: $(HEX_FILE) fsimage.bin
 
 clean:
 	rm -f $(OBJ_DIR)/*
 
-$(OBJ_DIR)/doom.hex: $(OBJS) $(DEPS)
+$(HEX_FILE): $(OBJS) $(DEPS)
 	$(LD) $(OBJS) -o $(OBJ_DIR)/doom.elf $(LIBS) $(LDFLAGS)
-	$(ELF2HEX) -o $(OBJ_DIR)/doom.hex -b 0 $(OBJ_DIR)/doom.elf
+	$(ELF2HEX) -o $(HEX_FILE) -b 0 $(OBJ_DIR)/doom.elf
 	$(OBJDUMP) --disassemble $(OBJ_DIR)/doom.elf > doom.lst 2> /dev/null
 
-run: $(OBJ_DIR) $(OBJ_DIR)/doom.hex fsimage.bin
+run: $(OBJ_DIR) $(HEX_FILE) fsimage.bin
 	$(EMULATOR) -f 640x400  -b fsimage.bin obj/doom.hex
 
-debug: $(OBJ_DIR) $(OBJ_DIR)/doom.hex fsimage.bin
+debug: $(OBJ_DIR) $(HEX_FILE) fsimage.bin
 	$(EMULATOR) -m gdb -f 640x400  -b fsimage.bin obj/doom.hex &
 	$(LLDB) --arch nyuzi $(OBJ_DIR)/doom.elf -o "gdb-remote 8000"
 
-verirun: $(OBJ_DIR)  $(OBJ_DIR)/doom.hex fsimage.bin
+verirun: $(OBJ_DIR)  $(HEX_FILE) fsimage.bin
 	$(VERILATOR) +bin=obj/doom.hex +block=fsimage.bin
 
-fpgarun: $(OBJ_DIR)/doom.hex
-	$(SERIAL_BOOT) $(SERIAL_PORT) $(OBJ_DIR)/doom.hex fsimage.bin
+fpgarun: $(HEX_FILE)
+	$(SERIAL_BOOT) $(SERIAL_PORT) $(HEX_FILE) fsimage.bin
 
 fsimage.bin: DOOM1.WAD
 	$(MKFS) fsimage.bin DOOM1.WAD

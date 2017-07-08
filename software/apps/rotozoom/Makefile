@@ -20,21 +20,22 @@ include $(TOPDIR)/build/target.mk
 
 LIBS=-lc -los-bare
 CFLAGS+=-Werror
+HEX_FILE=$(OBJ_DIR)/rotozoom.hex
 
 SRCS=main.cpp
 
 OBJS := $(CRT0_BARE) $(SRCS_TO_OBJS)
 DEPS := $(SRCS_TO_DEPS)
 
-$(OBJ_DIR)/rotozoom.hex: $(OBJS)
+$(HEX_FILE): $(OBJS)
 	$(LD) -o $(OBJ_DIR)/rotozoom.elf $(OBJS) $(LIBS) $(LDFLAGS)
-	$(ELF2HEX) -o $(OBJ_DIR)/rotozoom.hex $(OBJ_DIR)/rotozoom.elf
+	$(ELF2HEX) -o $(HEX_FILE) $(OBJ_DIR)/rotozoom.elf
 
-run: $(OBJ_DIR)/rotozoom.hex
-	$(EMULATOR) -r 100000 -f 640x480 $(OBJ_DIR)/rotozoom.hex
+run: $(HEX_FILE)
+	$(EMULATOR) -r 100000 -f 640x480 $(HEX_FILE)
 
-fpgarun: $(OBJ_DIR)/rotozoom.hex
-	$(SERIAL_BOOT) $(SERIAL_PORT) $(OBJ_DIR)/rotozoom.hex
+fpgarun: $(HEX_FILE)
+	$(SERIAL_BOOT) $(SERIAL_PORT) $(HEX_FILE)
 
 clean:
 	rm -rf $(OBJ_DIR)

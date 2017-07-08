@@ -15,7 +15,7 @@
 #
 
 all:
-	cd hello && make
+	cd hello_world && make
 	cd mandelbrot && make
 	cd plasma && make
 	cd quakeview && make
@@ -24,7 +24,7 @@ all:
 	#cd doom && make
 
 clean:
-	cd hello && make clean
+	cd hello_world && make clean
 	cd mandelbrot && make clean
 	cd plasma && make clean
 	cd quakeview && make clean

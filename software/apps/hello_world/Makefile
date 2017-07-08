@@ -19,21 +19,22 @@ TOPDIR=../../../
 include $(TOPDIR)/build/target.mk
 
 LIBS=-lc
-SRCS=hello.c
+SRCS=hello_world.c
 CFLAGS+=-Werror
+HEX_FILE=$(OBJ_DIR)/hello_world.hex
 
 OBJS := $(SRCS_TO_OBJS)
 DEPS := $(SRCS_TO_DEPS)
 
-$(OBJ_DIR)/hello.hex: $(CRT0_BARE) $(OBJS)
-	$(LD) -o $(OBJ_DIR)/hello.elf $(LDFLAGS) $(CRT0_BARE) $(OBJS) $(LIBS) -los-bare $(LDFLAGS)
-	$(ELF2HEX) -o $(OBJ_DIR)/hello.hex $(OBJ_DIR)/hello.elf
+$(HEX_FILE): $(CRT0_BARE) $(OBJS)
+	$(LD) -o $(OBJ_DIR)/hello_world.elf $(LDFLAGS) $(CRT0_BARE) $(OBJS) $(LIBS) -los-bare $(LDFLAGS)
+	$(ELF2HEX) -o $(HEX_FILE) $(OBJ_DIR)/hello_world.elf
 
-run: $(OBJ_DIR)/hello.hex
-	$(EMULATOR) $(OBJ_DIR)/hello.hex
+run: $(HEX_FILE)
+	$(EMULATOR) $(HEX_FILE)
 
-verirun: $(OBJ_DIR)/hello.hex
-	$(VERILATOR) +bin=$(OBJ_DIR)/hello.hex
+verirun: $(HEX_FILE)
+	$(VERILATOR) +bin=$(HEX_FILE)
 
 clean:
 	rm -rf $(OBJ_DIR)
