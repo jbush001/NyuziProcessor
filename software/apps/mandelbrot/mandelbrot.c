@@ -95,6 +95,6 @@ int main()
 
     // Wait for other threads, because returning from main will kill all of them.
     __sync_fetch_and_add(&stop_count, 1);
-    while (stop_count != 4)
+    while (stop_count != NUM_THREADS)
         ;
 }
