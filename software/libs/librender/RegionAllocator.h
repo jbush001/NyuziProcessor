@@ -35,10 +35,10 @@ namespace librender
 class RegionAllocator
 {
 public:
-    RegionAllocator(unsigned int arenaSize)
+    explicit RegionAllocator(unsigned int arenaSize)
         :	fArenaBase(new char[arenaSize]),
-          fTotalSize(arenaSize),
-          fNextAlloc(fArenaBase)
+            fTotalSize(arenaSize),
+            fNextAlloc(fArenaBase)
     {
     }
 

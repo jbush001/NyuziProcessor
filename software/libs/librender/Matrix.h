@@ -35,6 +35,7 @@ class Matrix
 public:
     Matrix()
     {
+        // Identity matrix
         memset(fValues, 0, sizeof(float) * 16);
         fValues[0][0] = 1.0f;
         fValues[1][1] = 1.0f;
@@ -42,7 +43,7 @@ public:
         fValues[3][3] = 1.0f;
     }
 
-    Matrix(const float values[4][4])
+    explicit Matrix(const float values[4][4])
     {
         for (int row = 0; row < 4; row++)
         {
@@ -51,16 +52,8 @@ public:
         }
     }
 
-    Matrix(const Matrix &rhs)
-    {
-        memcpy((void*) fValues, rhs.fValues, sizeof(float) * 16);
-    }
-
-    Matrix &operator=(const Matrix &rhs)
-    {
-        memcpy((void*) fValues, rhs.fValues, sizeof(float) * 16);
-        return *this;
-    }
+    Matrix(const Matrix &rhs) = default;
+    Matrix &operator=(const Matrix &rhs) = default;
 
     Matrix operator*(const Matrix &rhs) const
     {

@@ -33,9 +33,9 @@ class RenderBuffer
 public:
     RenderBuffer()
         :	fData(0),
-          fNumElements(0),
-          fStride(0),
-          fBaseStepPointers(static_cast<veci16_t*>(memalign(sizeof(vecu16_t), sizeof(vecu16_t))))
+            fNumElements(0),
+            fStride(0),
+            fBaseStepPointers(static_cast<veci16_t*>(memalign(sizeof(vecu16_t), sizeof(vecu16_t))))
     {
     }
 

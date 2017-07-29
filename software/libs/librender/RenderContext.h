@@ -34,7 +34,7 @@ namespace librender
 class RenderContext
 {
 public:
-    RenderContext(unsigned int workingMemSize = 0x400000);
+    explicit RenderContext(unsigned int workingMemSize = 0x400000);
     RenderContext(const RenderContext&) = delete;
     RenderContext& operator=(const RenderContext&) = delete;
 

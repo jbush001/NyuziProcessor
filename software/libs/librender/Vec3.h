@@ -42,6 +42,9 @@ public:
         fValues[2] = c;
     }
 
+    Vec3(const Vec3 &rhs) = default;
+    Vec3 &operator=(const Vec3 &rhs) = default;
+
     Vec3 operator+(const Vec3 &other) const
     {
         Vec3 newVal;

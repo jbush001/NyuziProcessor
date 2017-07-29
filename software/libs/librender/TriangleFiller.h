@@ -36,7 +36,7 @@ const int kMaxParams = 16;
 class TriangleFiller
 {
 public:
-    TriangleFiller(RenderTarget *target);
+    explicit TriangleFiller(RenderTarget *target);
 
     TriangleFiller(const TriangleFiller&) = delete;
     TriangleFiller& operator=(const TriangleFiller&) = delete;

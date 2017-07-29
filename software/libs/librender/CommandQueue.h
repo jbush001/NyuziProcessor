@@ -34,7 +34,7 @@ private:
     struct Bucket;
 
 public:
-    CommandQueue() {}
+    CommandQueue() = default;
     CommandQueue(const CommandQueue&) = delete;
     CommandQueue& operator=(const CommandQueue&) = delete;
 
@@ -170,8 +170,8 @@ public:
         friend class CommandQueue;
 
         iterator(Bucket *bucket, int index)
-            : 	fBucket(bucket),
-               fIndex(index)
+            :   fBucket(bucket),
+                fIndex(index)
         {}
 
         Bucket *fBucket;
