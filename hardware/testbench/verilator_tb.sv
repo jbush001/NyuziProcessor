@@ -46,6 +46,16 @@ module verilator_tb(
     io_bus_interface peripheral_io_bus[NUM_PERIPHERALS - 1:0]();
     io_bus_interface nyuzi_io_bus();
     scalar_t peripheral_read_data[NUM_PERIPHERALS];
+`ifdef VCS
+    enum logic[$clog2(NUM_PERIPHERALS) - 1:0] {
+        IO_ONES = 0,
+        IO_LOOPBACK_UART = 1,
+        IO_PS2 = 2,
+        IO_SDCARD = 3,
+        IO_TIMER = 4,
+        IO_VGA = 5
+    } io_bus_source;
+`else
     enum logic[$clog2(NUM_PERIPHERALS) - 1:0] {
         IO_ONES,
         IO_LOOPBACK_UART,
@@ -54,11 +64,16 @@ module verilator_tb(
         IO_TIMER,
         IO_VGA
     } io_bus_source;
+
+`endif // !`ifdef VCS
     int cosim_timer_interval;
     int cosim_interrupt_delay;
     logic cosim_interrupt;
     logic uart_rx_interrupt;
     logic ps2_rx_interrupt;
+
+    localparam SDRAM_DATA_WIDTH = 32; // declare before use
+    wire [SDRAM_DATA_WIDTH-1:0] dram_dq; // inout fix: change from logic to wire to comply with commercial simulator and SystemVerilog standard
 
     /*AUTOLOGIC*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -68,7 +83,6 @@ module verilator_tb(
     logic               dram_cke;               // From sdram_controller of sdram_controller.v
     logic               dram_clk;               // From sdram_controller of sdram_controller.v
     logic               dram_cs_n;              // From sdram_controller of sdram_controller.v
-    logic [SDRAM_DATA_WIDTH-1:0] dram_dq;       // To/From sdram_controller of sdram_controller.v, ...
     logic               dram_ras_n;             // From sdram_controller of sdram_controller.v
     logic               dram_we_n;              // From sdram_controller of sdram_controller.v
     logic               frame_interrupt;        // From vga_controller of vga_controller.v
@@ -130,7 +144,6 @@ module verilator_tb(
         .*);
 
     localparam SDRAM_NUM_BANKS = 4;
-    localparam SDRAM_DATA_WIDTH = 32;
     localparam SDRAM_ROW_ADDR_WIDTH = 12;
     localparam SDRAM_COL_ADDR_WIDTH = $clog2(MEM_SIZE / ((1 << SDRAM_ROW_ADDR_WIDTH)
         * SDRAM_NUM_BANKS * (SDRAM_DATA_WIDTH / 8)));
@@ -151,13 +164,6 @@ module verilator_tb(
         .COL_ADDR_WIDTH(SDRAM_COL_ADDR_WIDTH),
         .MAX_REFRESH_INTERVAL(800)
     ) memory(.*);
-
-    // The s1 interface is not connected to anything in this configuration.
-    assign axi_bus_m[1].m_awvalid = 0;
-    assign axi_bus_m[1].m_wvalid = 0;
-    assign axi_bus_m[1].m_arvalid = 0;
-    assign axi_bus_m[1].m_rready = 0;
-    assign axi_bus_m[1].m_bready = 0;
 
     //
     // Peripherals
@@ -193,16 +199,24 @@ module verilator_tb(
         .*);
 
 `ifdef SIMULATE_VGA
-    // There is no automated test for VGA currently, so I test as follows:
-    // - Modify the makefile to add --trace-depth 1 to VERILATOR_OPTIONS
-    // - Rebuild hardware: DUMP_WAVEFORM=1 make
-    // - Run one of the apps (like mandelbrot) for maybe 20 seconds, ctrl-C to stop
-    // - Look the resulting waveform in GtkWave to check that the timings are correct.
-    vga_controller #(.BASE_ADDRESS('h180)) vga_controller(
-        .io_bus(peripheral_io_bus[IO_VGA]),
-        .axi_bus(axi_bus_m[1]),
-        .*);
-`endif
+   // There is no automated test for VGA currently, so I test as follows:
+   // - Modify the makefile to add --trace-depth 1 to VERILATOR_OPTIONS
+   // - Rebuild hardware: DUMP_WAVEFORM=1 make
+   // - Run one of the apps (like mandelbrot) for maybe 20 seconds, ctrl-C to stop
+   // - Look the resulting waveform in GtkWave to check that the timings are correct.
+   vga_controller #(.BASE_ADDRESS('h180)) 
+   vga_controller(
+                  .io_bus(peripheral_io_bus[IO_VGA]),
+                  .axi_bus(axi_bus_m[1]),
+                  .*);
+`else // !`ifdef SIMULATE_VGA
+    // The s1 interface is not connected to anything in this configuration.
+    assign axi_bus_m[1].m_awvalid = 0;
+    assign axi_bus_m[1].m_wvalid = 0;
+    assign axi_bus_m[1].m_arvalid = 0;
+    assign axi_bus_m[1].m_rready = 0;
+    assign axi_bus_m[1].m_bready = 0;
+`endif // !`ifdef SIMULATE_VGA
 
     assign peripheral_io_bus[IO_ONES].read_data = 32'hffffffff;
 
@@ -439,10 +453,18 @@ module verilator_tb(
             dump_fp = $fopen(filename, "wb");
             for (int i = 0; i < mem_dump_length; i += 4)
             begin
+`ifdef VCS
+                $fwrite(dump_fp,"%c%c%c%c",
+                        memory.sdram_data[(mem_dump_start + i) / 4][31:24],
+                        memory.sdram_data[(mem_dump_start + i) / 4][23:16],
+                        memory.sdram_data[(mem_dump_start + i) / 4][15:8],
+                        memory.sdram_data[(mem_dump_start + i) / 4][7:0]);
+`else
                 $c("fputc(", memory.sdram_data[(mem_dump_start + i) / 4][31:24], ", VL_CVT_I_FP(", dump_fp, "));");
                 $c("fputc(", memory.sdram_data[(mem_dump_start + i) / 4][23:16], ", VL_CVT_I_FP(", dump_fp, "));");
                 $c("fputc(", memory.sdram_data[(mem_dump_start + i) / 4][15:8], ", VL_CVT_I_FP(", dump_fp, "));");
                 $c("fputc(", memory.sdram_data[(mem_dump_start + i) / 4][7:0], ", VL_CVT_I_FP(", dump_fp, "));");
+`endif // !`ifdef VCS
             end
 
             $fclose(dump_fp);

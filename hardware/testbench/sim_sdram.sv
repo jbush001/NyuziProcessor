@@ -103,7 +103,7 @@ module sim_sdram
     end
 
     // Bank active
-    always_ff @(posedge dram_clk)
+    always @(posedge dram_clk) // fix for multiple drivers on bank_active: initial statement not compatible with always_ff according to SystemVerilog standard
     begin
         if (cmd_precharge)
         begin
@@ -216,7 +216,7 @@ module sim_sdram
 
 
     // RAM write
-    always_ff @(posedge dram_clk)
+    always @(posedge dram_clk) // fix for multiple drivers on sdram_data -- other driver is in verilator_tb
     begin
         if (burst_active && cke_ff && burst_w)
             sdram_data[burst_address] <= dram_dq;    // Write

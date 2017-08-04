@@ -214,7 +214,7 @@ module sim_sdmmc(
         endcase
     endtask
 
-    always_ff @(posedge sd_sclk)
+    always @(posedge sd_sclk) // fix for multiple drivers on shift_count: initial statement not compatible with always_ff according to SystemVerilog standard
     begin
         if (sd_cs_n && current_state == SD_INIT_WAIT_FOR_CLOCKS)
         begin
