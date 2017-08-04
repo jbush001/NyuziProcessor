@@ -12,14 +12,12 @@ git:
 
 # Pull a container from DockerHub that has Verilator and the Nyuzi toolchain.
 # It is created using build/Dockerfile and build/build-container.sh.
-# The variable $DOCKER_REPO is set in the Travis CI configuration settings
-# for this project.
 before_install:
-- docker pull $DOCKER_REPO
+- docker pull jeffbush001/nyuzi-build
 
 # Mount the source directory in the container and set that to be the working
 # directory. Then launch the script build/run_ci_tests.sh from this repository,
 # which will do the rest.
 script:
-- docker run -v $TRAVIS_BUILD_DIR:/root/NyuziProcessor -w /root/NyuziProcessor $DOCKER_REPO /bin/bash -c build/run_ci_tests.sh
+- docker run -v $TRAVIS_BUILD_DIR:/root/NyuziProcessor -w /root/NyuziProcessor jeffbush001/nyuzi-build /bin/bash -c build/run_ci_tests.sh
 
