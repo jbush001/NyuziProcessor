@@ -58,7 +58,7 @@ module axi_sram
     begin
         if (loader_we)
         begin
-            wr_addr = loader_addr[31:2];
+            wr_addr = 32'(loader_addr[31:2]);
             wr_data = loader_data;
         end
         else // do write
@@ -114,14 +114,14 @@ module axi_sram
                 // simultaneously, so I don't bother latching addresses separately.
                 if (axi_bus.m_awvalid)
                 begin
-                    burst_address_nxt = axi_bus.m_awaddr[31:2];
+                    burst_address_nxt = 32'(axi_bus.m_awaddr[31:2]);
                     burst_count_nxt = axi_bus.m_awlen;
                     state_nxt = STATE_WRITE_BURST;
                 end
                 else if (axi_bus.m_arvalid)
                 begin
                     do_read = 1;
-                    burst_address_nxt = axi_bus.m_araddr[31:2];
+                    burst_address_nxt = 32'(axi_bus.m_araddr[31:2]);
                     burst_count_nxt = axi_bus.m_arlen;
                     state_nxt = STATE_READ_BURST;
                 end
