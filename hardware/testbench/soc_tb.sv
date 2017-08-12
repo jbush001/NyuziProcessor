@@ -17,10 +17,12 @@
 `include "../core/defines.sv"
 
 //
-// Top module for running CPU in Verilog simulation under Verilator.
+// Top module for simulating a system on chip, which includes the Nyuzi
+// core and peripherals like an SDRAM controller, virtual MMC storage
+// device, etc.
 //
 
-module verilator_tb(
+module soc_tb(
     input       clk,
     input       reset);
 
@@ -204,7 +206,7 @@ module verilator_tb(
    // - Rebuild hardware: DUMP_WAVEFORM=1 make
    // - Run one of the apps (like mandelbrot) for maybe 20 seconds, ctrl-C to stop
    // - Look the resulting waveform in GtkWave to check that the timings are correct.
-   vga_controller #(.BASE_ADDRESS('h180)) 
+   vga_controller #(.BASE_ADDRESS('h180))
    vga_controller(
                   .io_bus(peripheral_io_bus[IO_VGA]),
                   .axi_bus(axi_bus_m[1]),
@@ -453,18 +455,20 @@ module verilator_tb(
             dump_fp = $fopen(filename, "wb");
             for (int i = 0; i < mem_dump_length; i += 4)
             begin
-`ifdef VCS
+`ifdef VERILATOR
+                // -verilator doesn't support fwrite with the %c modifier, so
+                // emit code directly in the generated C files to call fputc.
+                $c("fputc(", memory.sdram_data[(mem_dump_start + i) / 4][31:24], ", VL_CVT_I_FP(", dump_fp, "));");
+                $c("fputc(", memory.sdram_data[(mem_dump_start + i) / 4][23:16], ", VL_CVT_I_FP(", dump_fp, "));");
+                $c("fputc(", memory.sdram_data[(mem_dump_start + i) / 4][15:8], ", VL_CVT_I_FP(", dump_fp, "));");
+                $c("fputc(", memory.sdram_data[(mem_dump_start + i) / 4][7:0], ", VL_CVT_I_FP(", dump_fp, "));");
+`else
                 $fwrite(dump_fp,"%c%c%c%c",
                         memory.sdram_data[(mem_dump_start + i) / 4][31:24],
                         memory.sdram_data[(mem_dump_start + i) / 4][23:16],
                         memory.sdram_data[(mem_dump_start + i) / 4][15:8],
                         memory.sdram_data[(mem_dump_start + i) / 4][7:0]);
-`else
-                $c("fputc(", memory.sdram_data[(mem_dump_start + i) / 4][31:24], ", VL_CVT_I_FP(", dump_fp, "));");
-                $c("fputc(", memory.sdram_data[(mem_dump_start + i) / 4][23:16], ", VL_CVT_I_FP(", dump_fp, "));");
-                $c("fputc(", memory.sdram_data[(mem_dump_start + i) / 4][15:8], ", VL_CVT_I_FP(", dump_fp, "));");
-                $c("fputc(", memory.sdram_data[(mem_dump_start + i) / 4][7:0], ", VL_CVT_I_FP(", dump_fp, "));");
-`endif // !`ifdef VCS
+`endif // !`ifdef VERILATOR
             end
 
             $fclose(dump_fp);

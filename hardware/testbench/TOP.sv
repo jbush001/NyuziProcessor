@@ -12,20 +12,20 @@ module TOP();
 
    logic clk;
    logic reset;
-   
+
    initial
      begin
         clk = '1;
         forever #1 clk = ~clk;
      end
-   
+
    initial
      begin
         reset = '1;
         #11 reset = '0;
      end
-   
-   verilator_tb verilator_tb(.*);
+
+   soc_tb soc_tb(.*);
 
    // Support for FSDB dumping
 
@@ -33,12 +33,12 @@ module TOP();
  `define FSDBFN "trace.fsdb"
 `endif
 
-   initial 
-     begin: DEBUSSY_SETUP 
+   initial
+     begin: DEBUSSY_SETUP
 `ifdef DUMP_FSDB
-        $display("Writing waveform to %s", `FSDBFN); 
-        $fsdbDumpfile(`FSDBFN); 
-        $fsdbDumpvars; 
+        $display("Writing waveform to %s", `FSDBFN);
+        $fsdbDumpfile(`FSDBFN);
+        $fsdbDumpvars;
 //      $fsdbDumpon;
 `else
 `endif

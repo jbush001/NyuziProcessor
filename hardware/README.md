@@ -11,7 +11,7 @@ three directories:
   [here](https://github.com/jbush001/NyuziProcessor/wiki/FPGA-Test-Environment)).
   The makefile for the DE2-115 board target is in fpga/de2-115.
 - testbench/
-  Support for simulation in [Verilator](http://www.veripool.org/wiki/verilator).
+  Support for simulation, including mock peripherals.
 
 This project uses Emacs [Verilog Mode](http://www.veripool.org/wiki/verilog-mode)
 to automatically generate wire definitions and resets. If you have Emacs installed,
@@ -36,9 +36,10 @@ efficiently).
   sizes in the design. You can tweak the script tools/misc/extract_mems.py to
   change the module names or parameter formats.
 
-Typing make in this directory compiles an executable 'verilator_model' in the
-bin/ directory. It accepts the following command line arguments (Verilog prefixes
-arguments with a plus sign):
+This project uses [Verilator](http://www.veripool.org/wiki/verilator) for
+simulation by default. Typing make in this directory compiles an executable
+'verilator_model' in the bin/ directory. It accepts the following command
+line arguments (Verilog prefixes arguments with a plus sign):
 
 |          Argument               | Meaning        |
 |---------------------------------|----------------|
@@ -78,9 +79,10 @@ viewer like [GTKWave](http://gtkwave.sourceforge.net/).
 Waveform files get big quickly. Even running a minute of simulation can
 produce hundreds of megabytes of trace data.
 
-Support for VCS:
+### Support for VCS:
 
-Template scripts have been added to support building and running with VCS.
+Template scripts have been added to support building and running with
+[VCS](https://www.synopsys.com/verification/simulation/vcs.html).
 The VCS scripts are located in the build/ directory.
 
 vcsbuild.pl requires no arguments and builds the model. It will create an

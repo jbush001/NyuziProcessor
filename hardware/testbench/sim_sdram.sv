@@ -216,7 +216,7 @@ module sim_sdram
 
 
     // RAM write
-    always @(posedge dram_clk) // fix for multiple drivers on sdram_data -- other driver is in verilator_tb
+    always @(posedge dram_clk) // fix for multiple drivers on sdram_data -- other driver is in soc_tb
     begin
         if (burst_active && cke_ff && burst_w)
             sdram_data[burst_address] <= dram_dq;    // Write

@@ -16,7 +16,7 @@
 
 #include <iostream>
 #include <stdlib.h>
-#include "Vverilator_tb.h"
+#include "Vsoc_tb.h"
 #include "verilated.h"
 #if VM_TRACE
 #include <verilated_vcd_c.h>
@@ -69,7 +69,7 @@ int main(int argc, char **argv, char **env)
     else
         Verilated::randReset(0);
 
-    Vverilator_tb* testbench = new Vverilator_tb;
+    Vsoc_tb* testbench = new Vsoc_tb;
     testbench->reset = 1;
     testbench->clk = 0;
 
