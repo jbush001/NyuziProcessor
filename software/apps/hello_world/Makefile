@@ -36,6 +36,9 @@ run: $(HEX_FILE)
 verirun: $(HEX_FILE)
 	$(VERILATOR) +bin=$(HEX_FILE)
 
+vcsrun: $(HEX_FILE)
+	$(VCSRUN) +bin=$(HEX_FILE)
+
 clean:
 	rm -rf $(OBJ_DIR)
 

@@ -62,6 +62,11 @@ verirun: $(HEX_FILE)
 	$(VERILATOR) +memdumpfile=$(OBJ_DIR)/output.bin +memdumpbase=200000 +memdumplen=12C000 +bin=$(HEX_FILE) +block=fsimage.bin
 	@convert -depth 8 -size 640x480 rgba:$(OBJ_DIR)/output.bin output.png
 
+vcsrun: $(HEX_FILE)
+	@rm -f $(OBJ_DIR)/output.bin output.png
+	$(VCSRUN) +memdumpfile=$(OBJ_DIR)/output.bin +memdumpbase=200000 +memdumplen=12C000 +bin=$(HEX_FILE) +block=fsimage.bin
+	@convert -depth 8 -size 640x480 rgba:$(OBJ_DIR)/output.bin output.png
+
 fpgarun: $(HEX_FILE)
 	$(SERIAL_BOOT) $(SERIAL_PORT) $(HEX_FILE) fsimage.bin
 

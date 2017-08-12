@@ -6,7 +6,7 @@
 // Simulate with +initreg+0 to initialize to 0
 // Simulate with +initreg+0 to initialize to 1
 
-`include "../core/defines.sv"
+`include "defines.sv"
 
 module TOP();
 

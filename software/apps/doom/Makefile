@@ -99,6 +99,10 @@ debug: $(OBJ_DIR) $(HEX_FILE) fsimage.bin
 verirun: $(OBJ_DIR)  $(HEX_FILE) fsimage.bin
 	$(VERILATOR) +bin=obj/doom.hex +block=fsimage.bin
 
+vcsrun: $(OBJ_DIR)  $(HEX_FILE) fsimage.bin
+	@rm -f $(OBJ_DIR)/output.bin output.png
+	$(VCSRUN) +bin=obj/doom.hex +block=fsimage.bin
+
 fpgarun: $(HEX_FILE)
 	$(SERIAL_BOOT) $(SERIAL_PORT) $(HEX_FILE) fsimage.bin
 

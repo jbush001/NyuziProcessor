@@ -21,6 +21,7 @@
 
 COMPILER_DIR=/usr/local/llvm-nyuzi/bin
 BINDIR=$(TOPDIR)/bin
+BUILDDIR=$(TOPDIR)/build
 OBJ_DIR=obj
 
 CC=$(COMPILER_DIR)/clang
@@ -33,6 +34,7 @@ ELF2HEX=$(COMPILER_DIR)/elf2hex
 LLDB=$(COMPILER_DIR)/lldb
 EMULATOR=$(BINDIR)/emulator
 VERILATOR=$(BINDIR)/verilator_model
+VCSRUN=$(BUILDDIR)/vcsrun.pl
 SERIAL_BOOT=$(BINDIR)/serial_boot
 MKFS=$(BINDIR)/mkfs
 CRT0_BARE=$(TOPDIR)/software/libs/libos/crt0-bare.o
