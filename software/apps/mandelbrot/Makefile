@@ -38,6 +38,11 @@ verirun: $(HEX_FILE)
 	$(VERILATOR) +memdumpfile=$(OBJ_DIR)/output.bin +memdumpbase=0x200000 +memdumplen=0x12C000 +bin=$(HEX_FILE)
 	@convert -depth 8 -size 640x480 rgba:$(OBJ_DIR)/output.bin output.png
 
+vcsrun: $(OBJ_DIR)/mandelbrot.hex
+	@rm -f $(OBJ_DIR)/output.bin output.png
+	$(VCSRUN) +memdumpfile=$(OBJ_DIR)/output.bin +memdumpbase=0x200000 +memdumplen=0x12C000 +bin=$(OBJ_DIR)/mandelbrot.hex
+	@convert -depth 8 -size 640x480 rgba:$(OBJ_DIR)/output.bin output.png
+
 krun: fsimage.bin
 	$(EMULATOR) -b fsimage.bin -f 640x480 $(TOPDIR)/software/kernel/kernel.hex
 

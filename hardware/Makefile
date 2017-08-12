@@ -14,6 +14,9 @@
 # limitations under the License.
 #
 
+BUILDDIR=../build
+VCSBUILD=$(BUILDDIR)/vcsbuild.pl
+
 BINDIR=../bin
 TARGET=$(BINDIR)/verilator_model
 MIN_VERILATOR_VERSION=880
@@ -34,6 +37,9 @@ $(TARGET): $(BINDIR) test_verilator_version
 	verilator $(VERILATOR_OPTIONS) --cc testbench/verilator_tb.sv --exe testbench/verilator_main.cpp
 	make CXXFLAGS=-Wno-parentheses-equality OPT_FAST="-Os"  -C obj/ -f Vverilator_tb.mk Vverilator_tb
 	cp obj/Vverilator_tb $(TARGET)
+
+vcsbuild:
+	$(VCSBUILD)
 
 # Verilator usually doesn't compile the FPGA project files, but this
 # will run it in lint-only mode to catch syntax errors or mismatches
@@ -71,3 +77,5 @@ $(BINDIR):
 clean:
 	rm -rf obj/*
 	rm -f $(TARGET)
+	rm -rf $(BUILDDIR)/csrc $(BUILDDIR)/simv.daidir
+	rm -f $(BUILDDIR)/simv

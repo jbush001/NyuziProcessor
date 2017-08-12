@@ -63,6 +63,11 @@ verirun: $(HEX_FILE) fsimage.bin
 	$(VERILATOR) +memdumpfile=$(OBJ_DIR)/output.bin +memdumpbase=0x200000 +memdumplen=0x12C000 +bin=$(HEX_FILE) +block=fsimage.bin
 	@convert -depth 8 -size 640x480 rgba:$(OBJ_DIR)/output.bin output.png
 
+vcsrun: $(HEX_FILE) fsimage.bin
+	@rm -f $(OBJ_DIR)/output.bin output.png
+	$(VCSRUN) +memdumpfile=$(OBJ_DIR)/output.bin +memdumpbase=0x200000 +memdumplen=0x12C000 +bin=$(HEX_FILE) +block=fsimage.bin
+	@convert -depth 8 -size 640x480 rgba:$(OBJ_DIR)/output.bin output.png
+
 fsimage.bin: pak0.pak
 	$(MKFS) $@ pak0.pak
 

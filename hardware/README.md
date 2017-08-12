@@ -77,3 +77,45 @@ format in the current working directory. This can be with a waveform
 viewer like [GTKWave](http://gtkwave.sourceforge.net/).
 Waveform files get big quickly. Even running a minute of simulation can
 produce hundreds of megabytes of trace data.
+
+Support for VCS:
+
+Template scripts have been added to support building and running with VCS.
+The VCS scripts are located in the build/ directory.
+
+vcsbuild.pl requires no arguments and builds the model. It will create an
+executable named simv and two support directories csrc and simv.daidir all located
+in the build/ directory. vcsbuild.pl uses TOP.sv in the hardware/testbench
+directory as the testbench top. TOP.sv in the VCS build is analogous to
+verilator_main.cpp in the verilator build.
+
+vcsrun.pl will run simulation. It accepts plus arguments in the same way as the
+verilor_model. Any plus argument that is Verilog specific should work. It also
+supports +randomize=*\[1\|0\]* and +randseed=*seed*
+
+vcs.config in the build/ directory is used to configure the paths for VCS and Verdi
+for both scripts (edit the file according to your site's installation).
+
+The Makefile in the hardware/ directory can be used to build the VCS model by
+executing:
+
+% make vcsbuild
+
+Waveform dumping can be enabled by executing:
+
+% make clean
+% DUMP_WAVEFORM=1 make vcsbuild
+
+If waveform dumping is enabled in VCS, the simulator writes a file called
+`trace.fsdb` which can be opened with Verdi.
+
+Several apps can be found in the software/apps/ directory: doom, hello_world,
+mandelbrot, plasma, quakeview, rotozoom, sceneview. The Makefile for doom,
+hello_world, mandelbrot, quakeview, and sceneview support simulation with
+Verilator by executing:
+
+% make verirun
+
+Similarly, the same apps support simulation with VCS by executing:
+
+% make vcsrun
