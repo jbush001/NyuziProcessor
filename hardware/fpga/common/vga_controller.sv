@@ -14,6 +14,8 @@
 // limitations under the License.
 //
 
+`include "defines.sv"
+
 //
 // Drive VGA display.  This is an AXI master that DMAs color
 // data from a memory framebuffer and sends it to an ADV7123 VGA

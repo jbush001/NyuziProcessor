@@ -14,6 +14,8 @@
 // limitations under the License.
 //
 
+`include "defines.sv"
+
 //
 // PS/2 keyboard or mouse controller. Only supports receiving.
 //

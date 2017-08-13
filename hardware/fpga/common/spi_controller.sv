@@ -14,6 +14,8 @@
 // limitations under the License.
 //
 
+`include "defines.sv"
+
 //
 // Serial Peripheral Interface (SPI) bus controller
 // This currenly can only act as a master
