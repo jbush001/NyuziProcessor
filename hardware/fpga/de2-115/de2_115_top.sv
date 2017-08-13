@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 module de2_115_top(
     input                       clk50,
 
