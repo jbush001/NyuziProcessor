@@ -17,6 +17,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // Storage for control registers.
 // Also contains interrupt handling logic.
@@ -34,7 +36,7 @@ module control_registers
     output scalar_t                         cr_eret_address[`THREADS_PER_CORE],
     output logic                            cr_mmu_en[`THREADS_PER_CORE],
     output logic                            cr_supervisor_en[`THREADS_PER_CORE],
-    output logic[`ASID_WIDTH - 1:0]         cr_current_asid[`THREADS_PER_CORE],
+    output logic[ASID_WIDTH - 1:0]          cr_current_asid[`THREADS_PER_CORE],
 
     // To instruction_decode_stage
     output logic[`THREADS_PER_CORE - 1:0]   cr_interrupt_pending,
@@ -210,7 +212,7 @@ module control_registers
                     CR_SCRATCHPAD0:       scratchpad[0][{1'b0, dt_thread_idx}] <= dd_creg_write_val;
                     CR_SCRATCHPAD1:       scratchpad[0][{1'b1, dt_thread_idx}] <= dd_creg_write_val;
                     CR_SUBCYCLE:          subcycle_saved[0][dt_thread_idx] <= subcycle_t'(dd_creg_write_val);
-                    CR_CURRENT_ASID:      cr_current_asid[dt_thread_idx] <= dd_creg_write_val[`ASID_WIDTH - 1:0];
+                    CR_CURRENT_ASID:      cr_current_asid[dt_thread_idx] <= dd_creg_write_val[ASID_WIDTH - 1:0];
                     CR_PAGE_DIR:          page_dir_base[dt_thread_idx] <= dd_creg_write_val;
                     CR_INTERRUPT_MASK:    interrupt_mask[dt_thread_idx] <= dd_creg_write_val[NUM_INTERRUPTS - 1:0];
                     CR_INTERRUPT_TRIGGER: int_trigger_type <= dd_creg_write_val[NUM_INTERRUPTS - 1:0];

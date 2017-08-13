@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // Block SRAM with 1 read port and 1 write port.
 // Reads and writes are performed synchronously. The read value appears

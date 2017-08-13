@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // L2 cache pipeline - read stage
 // - Checks for cache hit.
@@ -85,12 +87,12 @@ module l2_cache_read_stage(
     output logic                              l2r_perf_l2_miss,
     output logic                              l2r_perf_l2_hit);
 
-    localparam GLOBAL_THREAD_IDX_WIDTH = $clog2(`TOTAL_THREADS);
+    localparam GLOBAL_THREAD_IDX_WIDTH = $clog2(TOTAL_THREADS);
 
     // Track synchronized load/stores, and determine if a synchronized store
     // was successful.
-    cache_line_index_t sync_load_address[`TOTAL_THREADS];
-    logic sync_load_address_valid[`TOTAL_THREADS];
+    cache_line_index_t sync_load_address[TOTAL_THREADS];
+    logic sync_load_address_valid[TOTAL_THREADS];
     logic can_store_sync;
 
     logic[`L2_WAYS - 1:0] hit_way_oh;
@@ -141,7 +143,7 @@ module l2_cache_read_stage(
     // Cache memory
     //
     sram_1r1w #(
-        .DATA_WIDTH(`CACHE_LINE_BITS),
+        .DATA_WIDTH(CACHE_LINE_BITS),
         .SIZE(`L2_WAYS * `L2_SETS),
         .READ_DURING_WRITE("NEW_DATA")
     ) sram_l2_data(
@@ -230,7 +232,7 @@ module l2_cache_read_stage(
     begin
         if (reset)
         begin
-            for (int i = 0; i < `TOTAL_THREADS; i++)
+            for (int i = 0; i < TOTAL_THREADS; i++)
             begin
                 sync_load_address_valid[i] <= '0;
                 sync_load_address[i] <= '0;
@@ -270,7 +272,7 @@ module l2_cache_read_stage(
                         if (l2t_request.packet_type == L2REQ_STORE || can_store_sync)
                         begin
                             // Invalidate
-                            for (int entry_idx = 0; entry_idx < `TOTAL_THREADS; entry_idx++)
+                            for (int entry_idx = 0; entry_idx < TOTAL_THREADS; entry_idx++)
                             begin
                                 if (sync_load_address[entry_idx] == {l2t_request.address.tag, l2t_request.address.set_idx})
                                     sync_load_address_valid[entry_idx] <= 0;

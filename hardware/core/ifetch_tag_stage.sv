@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // Instruction Pipeline - Instruction Fetch Tag Stage
 // - Selects a program counter from one of the threads to fetch from the
@@ -64,12 +66,12 @@ module ifetch_tag_stage
 
     // From control_registers
     input                               cr_mmu_en[`THREADS_PER_CORE],
-    input [`ASID_WIDTH - 1:0]           cr_current_asid[`THREADS_PER_CORE],
+    input [ASID_WIDTH - 1:0]            cr_current_asid[`THREADS_PER_CORE],
 
     // From dcache_tag_stage
     input                               dt_invalidate_tlb_en,
     input                               dt_invalidate_tlb_all_en,
-    input [`ASID_WIDTH - 1:0]           dt_itlb_update_asid,
+    input [ASID_WIDTH - 1:0]            dt_itlb_update_asid,
     input page_index_t                  dt_itlb_vpage_idx,
     input                               dt_update_itlb_en,
     input                               dt_update_itlb_supervisor,
@@ -216,7 +218,7 @@ module ifetch_tag_stage
         .update_global(dt_update_itlb_global),
         .invalidate_en(dt_invalidate_tlb_en),
         .invalidate_all_en(dt_invalidate_tlb_all_en),
-        .request_vpage_idx(cache_fetch_en ? pc_to_fetch[31-:`PAGE_NUM_BITS] : dt_itlb_vpage_idx),
+        .request_vpage_idx(cache_fetch_en ? pc_to_fetch[31-:PAGE_NUM_BITS] : dt_itlb_vpage_idx),
         .request_asid(cache_fetch_en ? cr_current_asid[selected_thread_idx] : dt_itlb_update_asid),
         .update_ppage_idx(dt_update_itlb_ppage_idx),
         .lookup_ppage_idx(tlb_ppage_idx),
@@ -245,7 +247,7 @@ module ifetch_tag_stage
             ift_tlb_present = 1;
             ift_tlb_executable = 1;
             ift_tlb_supervisor = 0;
-            ppage_idx = last_selected_pc[31-:`PAGE_NUM_BITS];
+            ppage_idx = last_selected_pc[31-:PAGE_NUM_BITS];
         end
     end
 `else
@@ -254,7 +256,7 @@ module ifetch_tag_stage
     assign ift_tlb_present = 1;
     assign ift_executable = 1;
     assign ift_tlb_supervisor = 0;
-    assign ppage_idx = last_selected_pc[31-:`PAGE_NUM_BITS];
+    assign ppage_idx = last_selected_pc[31-:PAGE_NUM_BITS];
 `endif
 
     cache_lru #(
@@ -310,6 +312,6 @@ module ifetch_tag_stage
         last_selected_thread_oh <= selected_thread_oh;
     end
 
-    assign ift_pc_paddr = {ppage_idx, last_selected_pc[31 - `PAGE_NUM_BITS:0]};
+    assign ift_pc_paddr = {ppage_idx, last_selected_pc[31 - PAGE_NUM_BITS:0]};
     assign ift_pc_vaddr = last_selected_pc;
 endmodule

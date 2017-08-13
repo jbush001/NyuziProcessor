@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // First-in, first-out queue, with synchronous read/write
 // - SIZE must be a power of two and greater than or equal to 4.

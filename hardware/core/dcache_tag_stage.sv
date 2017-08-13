@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // Instruction Pipeline L1 Data Cache Tag Stage.
 // Contains tags and cache line states, which it queries when a memory access
@@ -71,7 +73,7 @@ module dcache_tag_stage
     output logic                                dt_invalidate_tlb_en,
     output logic                                dt_invalidate_tlb_all_en,
     output page_index_t                         dt_itlb_vpage_idx,
-    output [`ASID_WIDTH - 1:0]                  dt_itlb_update_asid,
+    output [ASID_WIDTH - 1:0]                   dt_itlb_update_asid,
     output logic                                dt_update_itlb_en,
     output page_index_t                         dt_update_itlb_ppage_idx,
     output logic                                dt_update_itlb_present,
@@ -97,7 +99,7 @@ module dcache_tag_stage
     // From control_registers
     input                                       cr_mmu_en[`THREADS_PER_CORE],
     input logic                                 cr_supervisor_en[`THREADS_PER_CORE],
-    input [`ASID_WIDTH - 1:0]                   cr_current_asid[`THREADS_PER_CORE],
+    input [ASID_WIDTH - 1:0]                    cr_current_asid[`THREADS_PER_CORE],
 
     // From writeback_stage
     input logic                                 wb_rollback_en,
@@ -106,7 +108,7 @@ module dcache_tag_stage
     l1d_addr_t request_addr_nxt;
     logic cache_load_en;
     logic instruction_valid;
-    logic[$clog2(`NUM_VECTOR_LANES) - 1:0] scgath_lane;
+    logic[$clog2(NUM_VECTOR_LANES) - 1:0] scgath_lane;
     page_index_t tlb_ppage_idx;
     logic tlb_hit;
     page_index_t ppage_idx;
@@ -151,7 +153,7 @@ module dcache_tag_stage
         && !update_dtlb_en
         && !dt_invalidate_tlb_en
         && !dt_invalidate_tlb_all_en;
-    assign dt_itlb_vpage_idx = of_operand1[0][31-:`PAGE_NUM_BITS];
+    assign dt_itlb_vpage_idx = of_operand1[0][31-:PAGE_NUM_BITS];
     assign dt_update_itlb_ppage_idx = new_tlb_value.ppage_idx;
     assign dt_update_itlb_executable = new_tlb_value.executable;
     assign dt_itlb_update_asid = cr_current_asid[of_thread_idx];
@@ -238,7 +240,7 @@ module dcache_tag_stage
         .update_en(update_dtlb_en),
         .invalidate_en(dt_invalidate_tlb_en),
         .invalidate_all_en(dt_invalidate_tlb_all_en),
-        .request_vpage_idx(request_addr_nxt[31-:`PAGE_NUM_BITS]),
+        .request_vpage_idx(request_addr_nxt[31-:PAGE_NUM_BITS]),
         .request_asid(cr_current_asid[of_thread_idx]),
         .update_ppage_idx(new_tlb_value.ppage_idx),
         .update_present(new_tlb_value.present),
@@ -271,7 +273,7 @@ module dcache_tag_stage
             dt_tlb_writable = 1;
             dt_tlb_present = 1;
             dt_tlb_supervisor = 0;
-            ppage_idx = fetched_addr[31-:`PAGE_NUM_BITS];
+            ppage_idx = fetched_addr[31-:PAGE_NUM_BITS];
         end
     end
 `else
@@ -279,7 +281,7 @@ module dcache_tag_stage
     assign dt_tlb_hit = 1;
     assign dt_tlb_writable = 1;
     assign dt_tlb_present = 1;
-    assign ppage_idx = fetched_addr[31-:`PAGE_NUM_BITS];
+    assign ppage_idx = fetched_addr[31-:PAGE_NUM_BITS];
 `endif
 
     cache_lru #(
@@ -316,6 +318,6 @@ module dcache_tag_stage
         end
     end
 
-    assign dt_request_paddr = {ppage_idx, fetched_addr[31 - `PAGE_NUM_BITS:0]};
+    assign dt_request_paddr = {ppage_idx, fetched_addr[31 - PAGE_NUM_BITS:0]};
     assign dt_request_vaddr = fetched_addr;
 endmodule

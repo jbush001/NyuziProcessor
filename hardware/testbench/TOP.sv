@@ -8,6 +8,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 module TOP();
 
    logic clk;

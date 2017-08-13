@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // L2 cache pipeline - tag stage.
 // Performs tag lookup. Results will be available in the next stage.

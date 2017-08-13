@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // Instruction pipeline L1 data cache data stage.
 // - Detects cache miss or hit based on tag information fetched from last
@@ -102,7 +104,7 @@ module dcache_data_stage(
     output logic                              dd_membar_en,
     output logic                              dd_iinvalidate_en,
     output logic                              dd_dinvalidate_en,
-    output logic[`CACHE_LINE_BYTES - 1:0]     dd_store_mask,
+    output logic[CACHE_LINE_BYTES - 1:0]      dd_store_mask,
     output cache_line_index_t                 dd_store_addr,
     output cache_line_data_t                  dd_store_data,
     output local_thread_idx_t                 dd_store_thread_idx,
@@ -125,12 +127,12 @@ module dcache_data_stage(
     logic creg_access_en;
     vector_lane_mask_t word_store_mask;
     logic[3:0] byte_store_mask;
-    logic[$clog2(`CACHE_LINE_WORDS) - 1:0] cache_lane_idx;
+    logic[$clog2(CACHE_LINE_WORDS) - 1:0] cache_lane_idx;
     cache_line_data_t endian_twiddled_data;
     scalar_t lane_store_value;
     logic is_io_address;
-    logic[`CACHE_LINE_WORDS - 1:0] cache_lane_mask;
-    logic[`CACHE_LINE_WORDS - 1:0] subcycle_mask;
+    logic[CACHE_LINE_WORDS - 1:0] cache_lane_mask;
+    logic[CACHE_LINE_WORDS - 1:0] subcycle_mask;
     logic[`L1D_WAYS - 1:0] way_hit_oh;
     l1d_way_idx_t way_hit_idx;
     logic cache_hit;
@@ -143,7 +145,7 @@ module dcache_data_stage(
     logic is_unaligned;
     logic is_synchronized;
     logic cache_control_en;
-    logic[$clog2(`NUM_VECTOR_LANES) - 1:0] scgath_lane;
+    logic[$clog2(NUM_VECTOR_LANES) - 1:0] scgath_lane;
     logic is_tlb_access;
     logic is_tlb_update;
     logic supervisor_fault;
@@ -195,12 +197,12 @@ module dcache_data_stage(
     assign dcache_load_en = dcache_access_en && dt_instruction.is_load;
     assign dcache_store_en = dcache_access_en && !dt_instruction.is_load
         && dd_store_mask != 0;
-    assign dcache_request_addr = {dt_request_paddr[31:`CACHE_LINE_OFFSET_WIDTH],
-        {`CACHE_LINE_OFFSET_WIDTH{1'b0}}};
-    assign cache_lane_idx = dt_request_paddr.offset[`CACHE_LINE_OFFSET_WIDTH - 1:2];
-    assign dd_store_bypass_addr = dt_request_paddr[31:`CACHE_LINE_OFFSET_WIDTH];
+    assign dcache_request_addr = {dt_request_paddr[31:CACHE_LINE_OFFSET_WIDTH],
+        {CACHE_LINE_OFFSET_WIDTH{1'b0}}};
+    assign cache_lane_idx = dt_request_paddr.offset[CACHE_LINE_OFFSET_WIDTH - 1:2];
+    assign dd_store_bypass_addr = dt_request_paddr[31:CACHE_LINE_OFFSET_WIDTH];
     assign dd_store_bypass_thread_idx = dt_thread_idx;
-    assign dd_store_addr = dt_request_paddr[31:`CACHE_LINE_OFFSET_WIDTH];
+    assign dd_store_addr = dt_request_paddr[31:CACHE_LINE_OFFSET_WIDTH];
     assign dd_store_synchronized = is_synchronized;
     assign dd_store_en = dcache_store_en
         && !is_unaligned
@@ -291,14 +293,14 @@ module dcache_data_stage(
     // Store alignment
     //
     idx_to_oh #(
-        .NUM_SIGNALS(`CACHE_LINE_WORDS),
+        .NUM_SIGNALS(CACHE_LINE_WORDS),
         .DIRECTION("LSB0")
     ) idx_to_oh_subcycle(
         .one_hot(subcycle_mask),
         .index(dt_subcycle));
 
     idx_to_oh #(
-        .NUM_SIGNALS(`CACHE_LINE_WORDS),
+        .NUM_SIGNALS(CACHE_LINE_WORDS),
         .DIRECTION("LSB0")
     ) idx_to_oh_cache_lane(
         .one_hot(cache_lane_mask),
@@ -327,7 +329,7 @@ module dcache_data_stage(
     // Endian swap vector data
     genvar swap_word;
     generate
-        for (swap_word = 0; swap_word < `CACHE_LINE_BYTES / 4; swap_word++)
+        for (swap_word = 0; swap_word < CACHE_LINE_BYTES / 4; swap_word++)
         begin : swap_word_gen
             assign endian_twiddled_data[swap_word * 32+:8] = dt_store_value[swap_word][24+:8];
             assign endian_twiddled_data[swap_word * 32 + 8+:8] = dt_store_value[swap_word][16+:8];
@@ -345,7 +347,7 @@ module dcache_data_stage(
         case (dt_instruction.memory_access_type)
             MEM_B, MEM_BX: // Byte
             begin
-                dd_store_data = {`CACHE_LINE_WORDS * 4{dt_store_value[0][7:0]}};
+                dd_store_data = {CACHE_LINE_WORDS * 4{dt_store_value[0][7:0]}};
                 case (dt_request_paddr.offset[1:0])
                     2'd0: byte_store_mask = 4'b1000;
                     2'd1: byte_store_mask = 4'b0100;
@@ -357,7 +359,7 @@ module dcache_data_stage(
 
             MEM_S, MEM_SX: // 16 bits
             begin
-                dd_store_data = {`CACHE_LINE_WORDS * 2{dt_store_value[0][7:0], dt_store_value[0][15:8]}};
+                dd_store_data = {CACHE_LINE_WORDS * 2{dt_store_value[0][7:0], dt_store_value[0][15:8]}};
                 if (dt_request_paddr.offset[1] == 1'b0)
                     byte_store_mask = 4'b1100;
                 else
@@ -367,14 +369,14 @@ module dcache_data_stage(
             MEM_L, MEM_SYNC: // 32 bits
             begin
                 byte_store_mask = 4'b1111;
-                dd_store_data = {`CACHE_LINE_WORDS{dt_store_value[0][7:0], dt_store_value[0][15:8],
+                dd_store_data = {CACHE_LINE_WORDS{dt_store_value[0][7:0], dt_store_value[0][15:8],
                     dt_store_value[0][23:16], dt_store_value[0][31:24]}};
             end
 
             MEM_SCGATH, MEM_SCGATH_M:
             begin
                 byte_store_mask = 4'b1111;
-                dd_store_data = {`CACHE_LINE_WORDS{lane_store_value[7:0], lane_store_value[15:8],
+                dd_store_data = {CACHE_LINE_WORDS{lane_store_value[7:0], lane_store_value[15:8],
                     lane_store_value[23:16], lane_store_value[31:24]}};
             end
 
@@ -404,10 +406,10 @@ module dcache_data_stage(
     // a vector transfer or some bytes within a word for a scalar transfer.
     genvar mask_idx;
     generate
-        for (mask_idx = 0; mask_idx < `CACHE_LINE_BYTES; mask_idx++)
+        for (mask_idx = 0; mask_idx < CACHE_LINE_BYTES; mask_idx++)
         begin : store_mask_gen
             assign dd_store_mask[mask_idx] = word_store_mask[
-                (`CACHE_LINE_BYTES - mask_idx - 1) / 4]
+                (CACHE_LINE_BYTES - mask_idx - 1) / 4]
                 & byte_store_mask[mask_idx & 3];
         end
     endgenerate
@@ -417,7 +419,7 @@ module dcache_data_stage(
         .index(way_hit_idx));
 
     sram_1r1w #(
-        .DATA_WIDTH(`CACHE_LINE_BITS),
+        .DATA_WIDTH(CACHE_LINE_BITS),
         .SIZE(`L1D_WAYS * `L1D_SETS),
         .READ_DURING_WRITE("NEW_DATA")
     ) l1d_data(
@@ -450,7 +452,7 @@ module dcache_data_stage(
         && dt_tlb_hit
         && !cache_near_miss
         && !is_unaligned;
-    assign dd_cache_miss_addr = dcache_request_addr[31:`CACHE_LINE_OFFSET_WIDTH];
+    assign dd_cache_miss_addr = dcache_request_addr[31:CACHE_LINE_OFFSET_WIDTH];
     assign dd_cache_miss_thread_idx = dt_thread_idx;
     assign dd_cache_miss_synchronized = is_synchronized;
 

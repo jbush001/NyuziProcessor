@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // Instruction Pipeline - Instruction Fetch Data Stage
 // - If PC selected in the ifetch_tag_stage is in the instruction cache, reads
@@ -87,9 +89,9 @@ module ifetch_data_stage(
     logic cache_hit;
     logic[`L1I_WAYS - 1:0] way_hit_oh;
     l1i_way_idx_t way_hit_idx;
-    logic[`CACHE_LINE_BITS - 1:0] fetched_cache_line;
+    logic[CACHE_LINE_BITS - 1:0] fetched_cache_line;
     scalar_t fetched_word;
-    logic[$clog2(`CACHE_LINE_WORDS) - 1:0] cache_lane_idx;
+    logic[$clog2(CACHE_LINE_WORDS) - 1:0] cache_lane_idx;
     logic alignment_fault;
     logic rollback_this_stage;
 
@@ -139,7 +141,7 @@ module ifetch_data_stage(
     // Cache data
     //
     sram_1r1w #(
-        .DATA_WIDTH(`CACHE_LINE_BITS),
+        .DATA_WIDTH(CACHE_LINE_BITS),
         .SIZE(`L1I_WAYS * `L1I_SETS),
         .READ_DURING_WRITE("NEW_DATA")
     ) sram_l1i_data(
@@ -151,7 +153,7 @@ module ifetch_data_stage(
         .write_data(l2i_idata_update_data),
         .*);
 
-    assign cache_lane_idx = ~ifd_pc[`CACHE_LINE_OFFSET_WIDTH - 1:2];
+    assign cache_lane_idx = ~ifd_pc[CACHE_LINE_OFFSET_WIDTH - 1:2];
     assign fetched_word = fetched_cache_line[32 * cache_lane_idx+:32];
     assign ifd_instruction = {fetched_word[7:0], fetched_word[15:8], fetched_word[23:16], fetched_word[31:24]};
 

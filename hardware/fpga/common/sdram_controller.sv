@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // Drives control signals for single data rate (SDR) SDRAM, including
 // auto refresh at appropriate intervals. An AXI bus interface initiates

@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // Handles non-cacheable memory operations to memory mapped registers
 // These always block the thread until the transaction is complete.

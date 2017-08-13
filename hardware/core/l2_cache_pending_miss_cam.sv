@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // Tracks pending cache misses in the L2 cache pipeline.
 // This module avoids duplicate loads/stores in the system memory request

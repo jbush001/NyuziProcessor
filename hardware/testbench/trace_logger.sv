@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // This prints register updates and memory writes to the console. The emulator
 // uses this information to verify the hardware is working correctly in
@@ -64,7 +66,7 @@ module trace_logger(
     input                            dd_rollback_en,
     input scalar_t                   dd_instruction_pc,
     input                            dd_store_en,
-    input [`CACHE_LINE_BYTES - 1:0]  dd_store_mask,
+    input [CACHE_LINE_BYTES - 1:0]   dd_store_mask,
     input vector_t                   dd_store_data,
     input                            dd_instruction_is_load,
     input memory_op_t                dd_instruction_memory_access_type,
@@ -90,7 +92,7 @@ module trace_logger(
         local_thread_idx_t thread_idx;
         register_idx_t writeback_reg;
         scalar_t addr;
-        logic[`CACHE_LINE_BYTES - 1:0] mask;
+        logic[CACHE_LINE_BYTES - 1:0] mask;
         vector_t data;
     } trace_event_t;
 
@@ -178,7 +180,7 @@ module trace_logger(
                 trace_reorder_queue[tindex].pc <= debug_wb_pc;
                 trace_reorder_queue[tindex].thread_idx <= wb_writeback_thread_idx;
                 trace_reorder_queue[tindex].writeback_reg <= wb_writeback_reg;
-                trace_reorder_queue[tindex].mask <= {{`CACHE_LINE_BYTES - `NUM_VECTOR_LANES{1'b0}},
+                trace_reorder_queue[tindex].mask <= {{CACHE_LINE_BYTES - NUM_VECTOR_LANES{1'b0}},
                     wb_writeback_mask};
                 trace_reorder_queue[tindex].data <= wb_writeback_value;
             end
@@ -190,8 +192,8 @@ module trace_logger(
                 trace_reorder_queue[5].pc <= dt_instruction_pc;
                 trace_reorder_queue[5].thread_idx <= dt_thread_idx;
                 trace_reorder_queue[5].addr <= {
-                    dt_request_virt_addr[31:`CACHE_LINE_OFFSET_WIDTH],
-                    {`CACHE_LINE_OFFSET_WIDTH{1'b0}}
+                    dt_request_virt_addr[31:CACHE_LINE_OFFSET_WIDTH],
+                    {CACHE_LINE_OFFSET_WIDTH{1'b0}}
                 };
                 trace_reorder_queue[5].mask <= dd_store_mask;
                 trace_reorder_queue[5].data <= dd_store_data;

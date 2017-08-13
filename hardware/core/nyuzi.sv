@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // Top level block for processor. Contains all cores and L2 cache, connects
 // to AXI system bus.
@@ -35,7 +37,7 @@ module nyuzi
     l2req_packet_t l2i_request[`NUM_CORES];
     logic[`NUM_CORES - 1:0] l2i_request_valid;
     ioreq_packet_t ior_request[`NUM_CORES];
-    logic[`TOTAL_PERF_EVENTS - 1:0] perf_events;
+    logic[TOTAL_PERF_EVENTS - 1:0] perf_events;
     io_bus_interface perf_io_bus();
     io_bus_interface interconnect_io_bus();
     enum logic {
@@ -43,7 +45,7 @@ module nyuzi
         IO_ARBITER
     } io_read_source;
     logic[`NUM_CORES - 1:0] ior_request_valid;
-    logic[`TOTAL_THREADS - 1:0] thread_en;
+    logic[TOTAL_THREADS - 1:0] thread_en;
 
     /*AUTOLOGIC*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -57,7 +59,7 @@ module nyuzi
 
     initial
     begin
-        assert(`NUM_CORES >= 1 && `NUM_CORES <= (1 << `CORE_ID_WIDTH));
+        assert(`NUM_CORES >= 1 && `NUM_CORES <= (1 << CORE_ID_WIDTH));
     end
 
     // Thread enable
@@ -72,10 +74,10 @@ module nyuzi
                 case (io_bus.address)
                     // Thread enable flag handling. This is limited to 32 threads.
                     'h100: // resume thread
-                        thread_en <= thread_en | io_bus.write_data[`TOTAL_THREADS - 1:0];
+                        thread_en <= thread_en | io_bus.write_data[TOTAL_THREADS - 1:0];
 
                     'h104: // halt thread
-                        thread_en <= thread_en & ~io_bus.write_data[`TOTAL_THREADS - 1:0];
+                        thread_en <= thread_en & ~io_bus.write_data[TOTAL_THREADS - 1:0];
                 endcase
             end
         end
@@ -84,7 +86,7 @@ module nyuzi
     assign processor_halt = thread_en == 0;
 
     l2_cache l2_cache(
-        .l2_perf_events(perf_events[`L2_PERF_EVENTS - 1:0]),
+        .l2_perf_events(perf_events[L2_PERF_EVENTS - 1:0]),
         .*);
 
     always_ff @(posedge clk)
@@ -118,7 +120,7 @@ module nyuzi
         .*);
 
     performance_counters #(
-        .NUM_EVENTS(`TOTAL_PERF_EVENTS),
+        .NUM_EVENTS(TOTAL_PERF_EVENTS),
         .BASE_ADDRESS('h200)
     ) performance_counters(
         .io_bus(perf_io_bus),
@@ -141,7 +143,7 @@ module nyuzi
                 .ior_request(ior_request[core_idx]),
                 .ii_ready(ii_ready[core_idx]),
                 .ii_response(ii_response),
-                .core_perf_events(perf_events[`L2_PERF_EVENTS + `CORE_PERF_EVENTS * core_idx+:`CORE_PERF_EVENTS]),
+                .core_perf_events(perf_events[L2_PERF_EVENTS + CORE_PERF_EVENTS * core_idx+:CORE_PERF_EVENTS]),
                 .*);
         end
     endgenerate

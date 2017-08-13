@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // The L2 cache has a four stage pipeline:
 //  - Arbitrate: selects one request from cores, or a restarted request
@@ -51,7 +53,7 @@ module l2_cache(
     axi4_interface.master                 axi_bus,
 
     // To performance_counters
-    output logic[`L2_PERF_EVENTS - 1:0]   l2_perf_events);
+    output logic[L2_PERF_EVENTS - 1:0]   l2_perf_events);
 
     /*AUTOLOGIC*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)

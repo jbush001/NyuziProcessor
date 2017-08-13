@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // Queues store requests from the instruction pipeline, sends store requests to
 // L2 interconnect, and processes responses. Cache control commands go through
@@ -39,7 +41,7 @@ module l1_store_queue(
     input                                  dd_iinvalidate_en,
     input                                  dd_dinvalidate_en,
     input cache_line_index_t               dd_store_addr,
-    input [`CACHE_LINE_BYTES - 1:0]        dd_store_mask,
+    input [CACHE_LINE_BYTES - 1:0]         dd_store_mask,
     input cache_line_data_t                dd_store_data,
     input                                  dd_store_synchronized,
     input local_thread_idx_t               dd_store_thread_idx,
@@ -47,7 +49,7 @@ module l1_store_queue(
     input local_thread_idx_t               dd_store_bypass_thread_idx,
 
     // To writeback_stage
-    output logic [`CACHE_LINE_BYTES - 1:0] sq_store_bypass_mask,
+    output logic [CACHE_LINE_BYTES - 1:0]  sq_store_bypass_mask,
     output cache_line_data_t               sq_store_bypass_data,
     output logic                           sq_store_sync_success,
 
@@ -61,7 +63,7 @@ module l1_store_queue(
     output logic                           sq_dequeue_ready,
     output cache_line_index_t              sq_dequeue_addr,
     output l1_miss_entry_idx_t             sq_dequeue_idx,
-    output logic[`CACHE_LINE_BYTES - 1:0]  sq_dequeue_mask,
+    output logic[CACHE_LINE_BYTES - 1:0]   sq_dequeue_mask,
     output cache_line_data_t               sq_dequeue_data,
     output logic                           sq_dequeue_synchronized,
     output logic                           sq_dequeue_flush,
@@ -81,7 +83,7 @@ module l1_store_queue(
         logic thread_waiting;
         logic valid;
         cache_line_data_t data;
-        logic[`CACHE_LINE_BYTES - 1:0] mask;
+        logic[CACHE_LINE_BYTES - 1:0] mask;
         cache_line_index_t address;
     } pending_stores[`THREADS_PER_CORE];
     local_thread_bitmap_t rollback;
@@ -182,7 +184,7 @@ module l1_store_queue(
                     begin
                         assert(!enqueue_cache_control);
 
-                        for (int byte_lane = 0; byte_lane < `CACHE_LINE_BYTES; byte_lane++)
+                        for (int byte_lane = 0; byte_lane < CACHE_LINE_BYTES; byte_lane++)
                         begin
                             if (dd_store_mask[byte_lane])
                                 pending_stores[thread_idx].data[byte_lane * 8+:8] <= dd_store_data[byte_lane * 8+:8];

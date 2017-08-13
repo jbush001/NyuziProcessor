@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // Read only memory that uses AMBA AXI bus interface
 //

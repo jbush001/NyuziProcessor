@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // Asynchronous FIFO, with two clock domains
 // reset is asynchronous and is synchronized to each clock domain

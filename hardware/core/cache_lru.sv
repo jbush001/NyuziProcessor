@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // Maintains a least recently used list for each cache set. Used to determine
 // which cache way to load new cache lines into.

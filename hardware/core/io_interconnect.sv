@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // Accepts IO requests from all cores and serializes requests to external
 // IO interface. Sends responses back to cores.
@@ -61,7 +63,7 @@ module io_interconnect(
 
             oh_to_idx #(.NUM_SIGNALS(`NUM_CORES)) oh_to_idx_grant(
                 .one_hot(grant_oh),
-                .index(grant_idx[`CORE_ID_WIDTH - 1:0]));
+                .index(grant_idx[CORE_ID_WIDTH - 1:0]));
 
             // XXX hack. Ensure high bits are initialized. Notes in defines.sv
             // describe why the core ID width needs to be hardcoded.
@@ -74,7 +76,7 @@ module io_interconnect(
             if (`NUM_CORES <= 2)
                 assign grant_idx[1] = 0;
 
-            assign grant_request = ior_request[grant_idx[`CORE_ID_WIDTH - 1:0]];
+            assign grant_request = ior_request[grant_idx[CORE_ID_WIDTH - 1:0]];
         end
         else
         begin

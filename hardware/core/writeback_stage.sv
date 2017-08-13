@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // Instruction Pipeline Writeback Stage
 // - Selects result from appropriate pipeline (memory, integer, floating point)
@@ -76,7 +78,7 @@ module writeback_stage(
     input trap_cause_t                    dd_fault_cause,
 
     // From l1_store_queue
-    input [`CACHE_LINE_BYTES - 1:0]       sq_store_bypass_mask,
+    input [CACHE_LINE_BYTES - 1:0]        sq_store_bypass_mask,
     input cache_line_data_t               sq_store_bypass_data,
     input                                 sq_store_sync_success,
     input                                 sq_rollback_en,
@@ -123,7 +125,7 @@ module writeback_stage(
     output logic                          wb_perf_store_rollback);
 
     scalar_t mem_load_lane;
-    logic[$clog2(`CACHE_LINE_WORDS) - 1:0] mem_load_lane_idx;
+    logic[$clog2(CACHE_LINE_WORDS) - 1:0] mem_load_lane_idx;
     logic[7:0] byte_aligned;
     logic[15:0] half_aligned;
     logic[31:0] swapped_word_value;
@@ -135,8 +137,8 @@ module writeback_stage(
     pipeline_sel_t __debug_wb_pipeline;
     logic __debug_is_sync_store;
 `endif
-    logic[`NUM_VECTOR_LANES - 1:0] scycle_vcompare_result;
-    logic[`NUM_VECTOR_LANES - 1:0] mcycle_vcompare_result;
+    logic[NUM_VECTOR_LANES - 1:0] scycle_vcompare_result;
+    logic[NUM_VECTOR_LANES - 1:0] mcycle_vcompare_result;
     vector_lane_mask_t dd_vector_lane_oh;
     cache_line_data_t bypassed_read_data;
     local_thread_bitmap_t thread_dd_oh;
@@ -262,7 +264,7 @@ module writeback_stage(
     // the data returned from the L1 data cache.
     genvar byte_lane;
     generate
-        for (byte_lane = 0; byte_lane < `CACHE_LINE_BYTES; byte_lane++)
+        for (byte_lane = 0; byte_lane < CACHE_LINE_BYTES; byte_lane++)
         begin : lane_bypass_gen
             assign bypassed_read_data[byte_lane * 8+:8] = sq_store_bypass_mask[byte_lane]
                 ? sq_store_bypass_data[byte_lane * 8+:8] : dd_load_data[byte_lane * 8+:8];
@@ -270,7 +272,7 @@ module writeback_stage(
     endgenerate
 
     assign memory_op = dd_instruction.memory_access_type;
-    assign mem_load_lane_idx = ~dd_request_vaddr.offset[2+:$clog2(`CACHE_LINE_WORDS)];
+    assign mem_load_lane_idx = ~dd_request_vaddr.offset[2+:$clog2(CACHE_LINE_WORDS)];
     assign mem_load_lane = bypassed_read_data[mem_load_lane_idx * 32+:32];
 
     // Byte memory load aligner.
@@ -305,7 +307,7 @@ module writeback_stage(
     // Endian swap memory load
     genvar swap_word;
     generate
-        for (swap_word = 0; swap_word < `CACHE_LINE_BYTES / 4; swap_word++)
+        for (swap_word = 0; swap_word < CACHE_LINE_BYTES / 4; swap_word++)
         begin : swap_word_gen
             assign endian_twiddled_data[swap_word * 32+:8] = bypassed_read_data[swap_word * 32 + 24+:8];
             assign endian_twiddled_data[swap_word * 32 + 8+:8] = bypassed_read_data[swap_word * 32 + 16+:8];
@@ -317,15 +319,15 @@ module writeback_stage(
     // Compress vector comparisons to one bit per lane.
     genvar mask_lane;
     generate
-        for (mask_lane = 0; mask_lane < `NUM_VECTOR_LANES; mask_lane++)
+        for (mask_lane = 0; mask_lane < NUM_VECTOR_LANES; mask_lane++)
         begin : compare_result_gen
-            assign scycle_vcompare_result[mask_lane] = ix_result[`NUM_VECTOR_LANES - mask_lane - 1][0];
-            assign mcycle_vcompare_result[mask_lane] = fx5_result[`NUM_VECTOR_LANES - mask_lane - 1][0];
+            assign scycle_vcompare_result[mask_lane] = ix_result[NUM_VECTOR_LANES - mask_lane - 1][0];
+            assign mcycle_vcompare_result[mask_lane] = fx5_result[NUM_VECTOR_LANES - mask_lane - 1][0];
         end
     endgenerate
 
     idx_to_oh #(
-        .NUM_SIGNALS(`NUM_VECTOR_LANES),
+        .NUM_SIGNALS(NUM_VECTOR_LANES),
         .DIRECTION("LSB0")
     ) convert_dd_lane(
         .one_hot(dd_vector_lane_oh),
@@ -424,19 +426,19 @@ module writeback_stage(
                                 // Scalar Load
                                 if (dd_is_io_address)
                                 begin
-                                    writeback_mask_nxt = {`NUM_VECTOR_LANES{1'b1}};
+                                    writeback_mask_nxt = {NUM_VECTOR_LANES{1'b1}};
                                     writeback_value_nxt[0] = ior_read_value;
                                 end
                                 else
                                 begin
-                                    writeback_mask_nxt = {`NUM_VECTOR_LANES{1'b1}};
+                                    writeback_mask_nxt = {NUM_VECTOR_LANES{1'b1}};
                                     writeback_value_nxt[0] = swapped_word_value;
                                 end
                             end
 
                             MEM_CONTROL_REG:
                             begin
-                                writeback_mask_nxt = {`NUM_VECTOR_LANES{1'b1}};
+                                writeback_mask_nxt = {NUM_VECTOR_LANES{1'b1}};
                                 writeback_value_nxt[0] = cr_creg_read_val;
                             end
 
@@ -452,7 +454,7 @@ module writeback_stage(
                                 // Gather load
                                 // Grab the appropriate lane.
                                 writeback_mask_nxt = dd_vector_lane_oh & dd_lane_mask;
-                                writeback_value_nxt = {`NUM_VECTOR_LANES{swapped_word_value}};
+                                writeback_value_nxt = {NUM_VECTOR_LANES{swapped_word_value}};
                             end
                         endcase
                     end

@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // Contains vector and scalar register files and fetches values
 // from them.
@@ -74,7 +76,7 @@ module operand_fetch_stage(
 
     genvar lane;
     generate
-        for (lane = 0; lane < `NUM_VECTOR_LANES; lane++)
+        for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
         begin : vector_lane_gen
             sram_2r1w #(
                 .DATA_WIDTH($bits(scalar_t)),
@@ -87,7 +89,7 @@ module operand_fetch_stage(
                 .read2_en(ts_instruction.has_vector2),
                 .read2_addr({ts_thread_idx, ts_instruction.vector_sel2}),
                 .read2_data(vector_val2[lane]),
-                .write_en(wb_writeback_en && wb_writeback_is_vector && wb_writeback_mask[`NUM_VECTOR_LANES - lane - 1]),
+                .write_en(wb_writeback_en && wb_writeback_is_vector && wb_writeback_mask[NUM_VECTOR_LANES - lane - 1]),
                 .write_addr({wb_writeback_thread_idx, wb_writeback_reg}),
                 .write_data(wb_writeback_value[lane]),
                 .*);
@@ -114,25 +116,25 @@ module operand_fetch_stage(
 
     assign of_store_value = of_instruction.store_value_is_vector
             ? vector_val2
-            : {{`NUM_VECTOR_LANES - 1{32'd0}}, scalar_val2};
+            : {{NUM_VECTOR_LANES - 1{32'd0}}, scalar_val2};
 
     always_comb
     begin
         case (of_instruction.op1_src)
             OP1_SRC_VECTOR1: of_operand1 = vector_val1;
-            default:         of_operand1 = {`NUM_VECTOR_LANES{scalar_val1}};    // OP_SRC_SCALAR1
+            default:         of_operand1 = {NUM_VECTOR_LANES{scalar_val1}};    // OP_SRC_SCALAR1
         endcase
 
         case (of_instruction.op2_src)
-            OP2_SRC_SCALAR2: of_operand2 = {`NUM_VECTOR_LANES{scalar_val2}};
+            OP2_SRC_SCALAR2: of_operand2 = {NUM_VECTOR_LANES{scalar_val2}};
             OP2_SRC_VECTOR2: of_operand2 = vector_val2;
-            default:         of_operand2 = {`NUM_VECTOR_LANES{of_instruction.immediate_value}}; // OP2_SRC_IMMEDIATE
+            default:         of_operand2 = {NUM_VECTOR_LANES{of_instruction.immediate_value}}; // OP2_SRC_IMMEDIATE
         endcase
 
         case (of_instruction.mask_src)
-            MASK_SRC_SCALAR1: of_mask_value = scalar_val1[`NUM_VECTOR_LANES - 1:0];
-            MASK_SRC_SCALAR2: of_mask_value = scalar_val2[`NUM_VECTOR_LANES - 1:0];
-            default:          of_mask_value = {`NUM_VECTOR_LANES{1'b1}};    // MASK_SRC_ALL_ONES
+            MASK_SRC_SCALAR1: of_mask_value = scalar_val1[NUM_VECTOR_LANES - 1:0];
+            MASK_SRC_SCALAR2: of_mask_value = scalar_val2[NUM_VECTOR_LANES - 1:0];
+            default:          of_mask_value = {NUM_VECTOR_LANES{1'b1}};    // MASK_SRC_ALL_ONES
         endcase
     end
 endmodule

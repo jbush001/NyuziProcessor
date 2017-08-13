@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // Translation lookaside buffer.
 // Caches virtual to physical address translations.
@@ -35,7 +37,7 @@ module tlb
     input                     invalidate_en,
     input                     invalidate_all_en,
     input page_index_t        request_vpage_idx,
-    input [`ASID_WIDTH - 1:0] request_asid,
+    input [ASID_WIDTH - 1:0]  request_asid,
     input page_index_t        update_ppage_idx,
     input                     update_present,
     input                     update_exe_writable,
@@ -72,7 +74,7 @@ module tlb
     logic update_exe_writable_latched;
     logic update_supervisor_latched;
     logic update_global_latched;
-    logic[`ASID_WIDTH - 1:0] request_asid_latched;
+    logic[ASID_WIDTH - 1:0] request_asid_latched;
 
     //
     // Stage 1: lookup
@@ -88,12 +90,12 @@ module tlb
             page_index_t way_vpage_idx;
             logic way_valid;
             logic entry_valid[NUM_SETS];
-            logic[`ASID_WIDTH - 1:0] way_asid;
+            logic[ASID_WIDTH - 1:0] way_asid;
             logic way_global;
 
             sram_1r1w #(
                 .SIZE(NUM_SETS),
-                .DATA_WIDTH(`PAGE_NUM_BITS * 2 + 4 + `ASID_WIDTH),
+                .DATA_WIDTH(PAGE_NUM_BITS * 2 + 4 + ASID_WIDTH),
                 .READ_DURING_WRITE("NEW_DATA")
             ) tlb_paddr_sram(
                 .read_en(tlb_read_en),

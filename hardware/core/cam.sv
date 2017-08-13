@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // Content addressable memory.
 // Lookup is async: This asserts lookup_idx and lookup_hit the same cycle

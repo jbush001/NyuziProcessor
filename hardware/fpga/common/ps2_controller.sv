@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // PS/2 keyboard or mouse controller. Only supports receiving.
 //

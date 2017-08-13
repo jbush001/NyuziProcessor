@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // SRAM with an AXI interface and external loader interface
 //

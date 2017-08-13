@@ -19,37 +19,39 @@
 
 `include "config.sv"
 
+package defines;
+
 //
 // Floating point types
 //
 
-`define FLOAT32_EXP_WIDTH 8
-`define FLOAT32_SIG_WIDTH 23
+parameter FLOAT32_EXP_WIDTH = 8;
+parameter FLOAT32_SIG_WIDTH = 23;
 
 // IEEE 754 Binary 32 encoding
 typedef struct packed {
     logic sign;
-    logic[`FLOAT32_EXP_WIDTH - 1:0] exponent;
-    logic[`FLOAT32_SIG_WIDTH - 1:0] significand;
+    logic[FLOAT32_EXP_WIDTH - 1:0] exponent;
+    logic[FLOAT32_SIG_WIDTH - 1:0] significand;
 } float32_t;
 
 //
 // Execution pipeline defines
 //
 
-`define NUM_VECTOR_LANES 16
-`define NUM_REGISTERS 32
-`define TOTAL_THREADS (`THREADS_PER_CORE * `NUM_CORES)
+parameter NUM_VECTOR_LANES = 16;
+parameter NUM_REGISTERS = 32;
+parameter TOTAL_THREADS = `THREADS_PER_CORE * `NUM_CORES;
 
 typedef logic[31:0] scalar_t;
-typedef scalar_t[`NUM_VECTOR_LANES - 1:0] vector_t;
+typedef scalar_t[NUM_VECTOR_LANES - 1:0] vector_t;
 typedef logic[$clog2(`THREADS_PER_CORE) - 1:0] local_thread_idx_t;
 typedef logic[`THREADS_PER_CORE - 1:0] local_thread_bitmap_t; // One bit per thread
 typedef logic[4:0] register_idx_t;
-typedef logic[$clog2(`NUM_VECTOR_LANES) - 1:0] subcycle_t;
-typedef logic[`NUM_VECTOR_LANES - 1:0] vector_lane_mask_t;
+typedef logic[$clog2(NUM_VECTOR_LANES) - 1:0] subcycle_t;
+typedef logic[NUM_VECTOR_LANES - 1:0] vector_lane_mask_t;
 
-`define CORE_ID_WIDTH $clog2(`NUM_CORES)
+parameter CORE_ID_WIDTH = $clog2(`NUM_CORES);
 
 // The width of core_id_t is hardcoded to work around some tool issues.
 // For one core, CORE_ID_WIDTH will be 0, but if I made the range
@@ -57,18 +59,20 @@ typedef logic[`NUM_VECTOR_LANES - 1:0] vector_lane_mask_t;
 // defining CORE_ID_WIDTH as (`NUM_CORES == 1 ? 1 : $clog2(`NUM_CORES)), which
 // works fine on many tools, but crashes Synopsys Design Compiler. This limits
 // to 16 cores. To synthesize more, increase this width.
+// XXX CORE_ID_WIDTH was previously a `define. the workaround above may work
+// now that it is a parameter, but I haven't tested.
 typedef logic[3:0] core_id_t;
 
-`define CORE_PERF_EVENTS 13
-`define L2_PERF_EVENTS 3
-`define TOTAL_PERF_EVENTS (`L2_PERF_EVENTS + `CORE_PERF_EVENTS * `NUM_CORES)
+parameter CORE_PERF_EVENTS = 13;
+parameter L2_PERF_EVENTS = 3;
+parameter TOTAL_PERF_EVENTS = L2_PERF_EVENTS + CORE_PERF_EVENTS * `NUM_CORES;
 
 //
 // Instruction encodings
 //
 
-`define INSTRUCTION_NOP 32'd0
-`define REG_RA (register_idx_t'(31))
+parameter INSTRUCTION_NOP = 32'd0;
+parameter REG_RA = (register_idx_t'(31));
 
 // Immediate/register arithmetic operation encodings
 typedef enum logic[5:0] {
@@ -270,22 +274,22 @@ typedef struct packed {
 // Cache defines
 //
 
-`define PAGE_SIZE 'h1000
-`define PAGE_NUM_BITS (32 - $clog2(`PAGE_SIZE))
-`define ASID_WIDTH 8
-`define CACHE_LINE_BYTES (`NUM_VECTOR_LANES * 4) // Must be same as vector width
-`define CACHE_LINE_BITS (`CACHE_LINE_BYTES * 8)
-`define CACHE_LINE_WORDS (`CACHE_LINE_BYTES / 4)
-`define CACHE_LINE_OFFSET_WIDTH $clog2(`CACHE_LINE_BYTES)    // Byte offset into a cache line
-`define ICACHE_TAG_BITS (32 - (`CACHE_LINE_OFFSET_WIDTH + $clog2(`L1I_SETS)))
-`define DCACHE_TAG_BITS (32 - (`CACHE_LINE_OFFSET_WIDTH + $clog2(`L1D_SETS)))
+parameter PAGE_SIZE = 'h1000;
+parameter PAGE_NUM_BITS  = 32 - $clog2(PAGE_SIZE);
+parameter ASID_WIDTH = 8;
+parameter CACHE_LINE_BYTES = NUM_VECTOR_LANES * 4; // Must be same as vector width
+parameter CACHE_LINE_BITS = CACHE_LINE_BYTES * 8;
+parameter CACHE_LINE_WORDS = CACHE_LINE_BYTES / 4;
+parameter CACHE_LINE_OFFSET_WIDTH = $clog2(CACHE_LINE_BYTES);    // Byte offset into a cache line
+parameter ICACHE_TAG_BITS = 32 - (CACHE_LINE_OFFSET_WIDTH + $clog2(`L1I_SETS));
+parameter DCACHE_TAG_BITS = 32 - (CACHE_LINE_OFFSET_WIDTH + $clog2(`L1D_SETS));
 
-typedef logic[`CACHE_LINE_BITS - 1:0] cache_line_data_t;
-typedef logic[`PAGE_NUM_BITS - 1:0] page_index_t;
+typedef logic[CACHE_LINE_BITS - 1:0] cache_line_data_t;
+typedef logic[PAGE_NUM_BITS - 1:0] page_index_t;
 
 typedef struct packed {
-    logic[`PAGE_NUM_BITS - 1:0] ppage_idx;
-    logic[32 - (`PAGE_NUM_BITS + 5) - 1:0] unused;
+    logic[PAGE_NUM_BITS - 1:0] ppage_idx;
+    logic[32 - (PAGE_NUM_BITS + 5) - 1:0] unused;
     logic global_map;
     logic supervisor;
     logic executable;
@@ -295,34 +299,34 @@ typedef struct packed {
 
 typedef logic[$clog2(`L1D_WAYS) - 1:0] l1d_way_idx_t;
 typedef logic[$clog2(`L1D_SETS) - 1:0] l1d_set_idx_t;
-typedef logic[`DCACHE_TAG_BITS - 1:0] l1d_tag_t;
+typedef logic[DCACHE_TAG_BITS - 1:0] l1d_tag_t;
 
 typedef struct packed {
     l1d_tag_t tag;
     l1d_set_idx_t set_idx;
-    logic[`CACHE_LINE_OFFSET_WIDTH - 1:0] offset;
+    logic[CACHE_LINE_OFFSET_WIDTH - 1:0] offset;
 } l1d_addr_t;
 
 typedef logic[$clog2(`L1I_WAYS) - 1:0] l1i_way_idx_t;
 typedef logic[$clog2(`L1I_SETS) - 1:0] l1i_set_idx_t;
-typedef logic[`ICACHE_TAG_BITS - 1:0] l1i_tag_t;
+typedef logic[ICACHE_TAG_BITS - 1:0] l1i_tag_t;
 
 typedef struct packed {
     l1i_tag_t tag;
     l1i_set_idx_t set_idx;
-    logic[`CACHE_LINE_OFFSET_WIDTH - 1:0] offset;
+    logic[CACHE_LINE_OFFSET_WIDTH - 1:0] offset;
 } l1i_addr_t;
 
 typedef logic[$clog2(`L2_WAYS) - 1:0] l2_way_idx_t;
 typedef logic[$clog2(`L2_SETS) - 1:0] l2_set_idx_t;
-typedef logic[(31 - (`CACHE_LINE_OFFSET_WIDTH + $clog2(`L2_SETS))):0] l2_tag_t;
+typedef logic[(31 - (CACHE_LINE_OFFSET_WIDTH + $clog2(`L2_SETS))):0] l2_tag_t;
 typedef struct packed {
     l2_tag_t tag;
     l2_set_idx_t set_idx;
 } l2_addr_t;
 
 // Memory address that is multiple of cache line size
-typedef logic[31 - `CACHE_LINE_OFFSET_WIDTH:0] cache_line_index_t;
+typedef logic[31 - CACHE_LINE_OFFSET_WIDTH:0] cache_line_index_t;
 
 typedef enum logic {
     CT_ICACHE,
@@ -348,7 +352,7 @@ typedef struct packed {
     l2req_packet_type_t packet_type;
     cache_type_t cache_type;
     l2_addr_t address;
-    logic[`CACHE_LINE_BYTES - 1:0] store_mask;
+    logic[CACHE_LINE_BYTES - 1:0] store_mask;
     cache_line_data_t data;
 } l2req_packet_t;
 
@@ -386,20 +390,6 @@ typedef struct packed {
     scalar_t read_value;
 } iorsp_packet_t;
 
-// Non-cached I/O bus (peripheral register access) external interface
-// write_en and read_en are mutually exclusive. When read_en is asserted, the
-// data will appear on read_data one cycle later.
-interface io_bus_interface;
-    logic write_en;
-    logic read_en;
-    scalar_t address;
-    scalar_t write_data;
-    scalar_t read_data;
-
-    modport master(output write_en, read_en, address, write_data, input read_data);
-    modport slave(input write_en, read_en, address, write_data, output read_data);
-endinterface
-
 // AMBA AXI and ACE Protocol Specification, rev E, Table A3-3
 typedef enum logic[1:0] {
     AXI_BURST_FIXED = 2'b00,
@@ -407,13 +397,29 @@ typedef enum logic[1:0] {
     AXI_BURST_WRAP = 2'b10
 } axi_burst_type_t;
 
+endpackage : defines
+
+// Non-cached I/O bus (peripheral register access) external interface
+// write_en and read_en are mutually exclusive. When read_en is asserted, the
+// data will appear on read_data one cycle later.
+interface io_bus_interface;
+    logic write_en;
+    logic read_en;
+    defines::scalar_t address;
+    defines::scalar_t write_data;
+    defines::scalar_t read_data;
+
+    modport master(output write_en, read_en, address, write_data, input read_data);
+    modport slave(input write_en, read_en, address, write_data, output read_data);
+endinterface
+
 // AMBA AXI-4 bus interface
 interface axi4_interface;
     // Write address channel (Table A2-2)
     logic [31:0] m_awaddr;
     logic [7:0] m_awlen;
     logic [2:0] m_awsize;
-    axi_burst_type_t m_awburst;
+    defines::axi_burst_type_t m_awburst;
     logic [3:0] m_awcache;
     logic m_awvalid;
     logic s_awready;
@@ -433,7 +439,7 @@ interface axi4_interface;
     logic [31:0] m_araddr;
     logic [7:0] m_arlen;
     logic [2:0] m_arsize;
-    axi_burst_type_t m_arburst;
+    defines::axi_burst_type_t m_arburst;
     logic [3:0] m_arcache;
     logic m_arvalid;
     logic s_arready;

@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // General Purpose Input/Output
 // Bidirectional pins that can be driven and read

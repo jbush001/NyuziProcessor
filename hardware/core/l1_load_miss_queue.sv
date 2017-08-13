@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // Tracks pending L1 misses. Detects and consolidates multiple misses
 // for the same address. Wakes threads when loads complete.

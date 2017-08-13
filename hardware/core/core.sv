@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // A single instruction pipeline with L1 instruction & data caches and L2
 // interface logic.
@@ -50,12 +52,12 @@ module core
     output ioreq_packet_t                  ior_request,
 
     // To performance_counters
-    output logic [`CORE_PERF_EVENTS - 1:0] core_perf_events);
+    output logic [CORE_PERF_EVENTS - 1:0]  core_perf_events);
 
     /*AUTOLOGIC*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
     scalar_t            cr_creg_read_val;       // From control_registers of control_registers.v
-    logic [`ASID_WIDTH-1:0] cr_current_asid [`THREADS_PER_CORE];// From control_registers of control_registers.v
+    logic [ASID_WIDTH-1:0] cr_current_asid [`THREADS_PER_CORE];// From control_registers of control_registers.v
     scalar_t            cr_eret_address [`THREADS_PER_CORE];// From control_registers of control_registers.v
     subcycle_t          cr_eret_subcycle [`THREADS_PER_CORE];// From control_registers of control_registers.v
     local_thread_bitmap_t cr_interrupt_en;      // From control_registers of control_registers.v
@@ -100,7 +102,7 @@ module core
     local_thread_idx_t  dd_store_bypass_thread_idx;// From dcache_data_stage of dcache_data_stage.v
     cache_line_data_t   dd_store_data;          // From dcache_data_stage of dcache_data_stage.v
     logic               dd_store_en;            // From dcache_data_stage of dcache_data_stage.v
-    logic [`CACHE_LINE_BYTES-1:0] dd_store_mask;// From dcache_data_stage of dcache_data_stage.v
+    logic [CACHE_LINE_BYTES-1:0] dd_store_mask; // From dcache_data_stage of dcache_data_stage.v
     logic               dd_store_synchronized;  // From dcache_data_stage of dcache_data_stage.v
     local_thread_idx_t  dd_store_thread_idx;    // From dcache_data_stage of dcache_data_stage.v
     subcycle_t          dd_subcycle;            // From dcache_data_stage of dcache_data_stage.v
@@ -114,7 +116,7 @@ module core
     logic               dt_instruction_valid;   // From dcache_tag_stage of dcache_tag_stage.v
     logic               dt_invalidate_tlb_all_en;// From dcache_tag_stage of dcache_tag_stage.v
     logic               dt_invalidate_tlb_en;   // From dcache_tag_stage of dcache_tag_stage.v
-    logic [`ASID_WIDTH-1:0] dt_itlb_update_asid;// From dcache_tag_stage of dcache_tag_stage.v
+    logic [ASID_WIDTH-1:0] dt_itlb_update_asid; // From dcache_tag_stage of dcache_tag_stage.v
     page_index_t        dt_itlb_vpage_idx;      // From dcache_tag_stage of dcache_tag_stage.v
     vector_lane_mask_t  dt_mask_value;          // From dcache_tag_stage of dcache_tag_stage.v
     l1d_addr_t          dt_request_paddr;       // From dcache_tag_stage of dcache_tag_stage.v
@@ -136,71 +138,71 @@ module core
     logic               dt_update_itlb_present; // From dcache_tag_stage of dcache_tag_stage.v
     logic               dt_update_itlb_supervisor;// From dcache_tag_stage of dcache_tag_stage.v
     logic               dt_valid [`L1D_WAYS];   // From dcache_tag_stage of dcache_tag_stage.v
-    logic [`NUM_VECTOR_LANES-1:0] [7:0] fx1_add_exponent;// From fp_execute_stage1 of fp_execute_stage1.v
-    logic [`NUM_VECTOR_LANES-1:0] fx1_add_result_sign;// From fp_execute_stage1 of fp_execute_stage1.v
-    logic [`NUM_VECTOR_LANES-1:0] [5:0] fx1_ftoi_lshift;// From fp_execute_stage1 of fp_execute_stage1.v
+    logic [NUM_VECTOR_LANES-1:0] [7:0] fx1_add_exponent;// From fp_execute_stage1 of fp_execute_stage1.v
+    logic [NUM_VECTOR_LANES-1:0] fx1_add_result_sign;// From fp_execute_stage1 of fp_execute_stage1.v
+    logic [NUM_VECTOR_LANES-1:0] [5:0] fx1_ftoi_lshift;// From fp_execute_stage1 of fp_execute_stage1.v
     decoded_instruction_t fx1_instruction;      // From fp_execute_stage1 of fp_execute_stage1.v
     logic               fx1_instruction_valid;  // From fp_execute_stage1 of fp_execute_stage1.v
-    logic [`NUM_VECTOR_LANES-1:0] fx1_logical_subtract;// From fp_execute_stage1 of fp_execute_stage1.v
+    logic [NUM_VECTOR_LANES-1:0] fx1_logical_subtract;// From fp_execute_stage1 of fp_execute_stage1.v
     vector_lane_mask_t  fx1_mask_value;         // From fp_execute_stage1 of fp_execute_stage1.v
-    logic [`NUM_VECTOR_LANES-1:0] [7:0] fx1_mul_exponent;// From fp_execute_stage1 of fp_execute_stage1.v
-    logic [`NUM_VECTOR_LANES-1:0] fx1_mul_sign; // From fp_execute_stage1 of fp_execute_stage1.v
-    logic [`NUM_VECTOR_LANES-1:0] [31:0] fx1_multiplicand;// From fp_execute_stage1 of fp_execute_stage1.v
-    logic [`NUM_VECTOR_LANES-1:0] [31:0] fx1_multiplier;// From fp_execute_stage1 of fp_execute_stage1.v
-    logic [`NUM_VECTOR_LANES-1:0] fx1_result_is_inf;// From fp_execute_stage1 of fp_execute_stage1.v
-    logic [`NUM_VECTOR_LANES-1:0] fx1_result_is_nan;// From fp_execute_stage1 of fp_execute_stage1.v
-    logic [`NUM_VECTOR_LANES-1:0] [5:0] fx1_se_align_shift;// From fp_execute_stage1 of fp_execute_stage1.v
-    scalar_t [`NUM_VECTOR_LANES-1:0] fx1_significand_le;// From fp_execute_stage1 of fp_execute_stage1.v
-    scalar_t [`NUM_VECTOR_LANES-1:0] fx1_significand_se;// From fp_execute_stage1 of fp_execute_stage1.v
+    logic [NUM_VECTOR_LANES-1:0] [7:0] fx1_mul_exponent;// From fp_execute_stage1 of fp_execute_stage1.v
+    logic [NUM_VECTOR_LANES-1:0] fx1_mul_sign;  // From fp_execute_stage1 of fp_execute_stage1.v
+    logic [NUM_VECTOR_LANES-1:0] [31:0] fx1_multiplicand;// From fp_execute_stage1 of fp_execute_stage1.v
+    logic [NUM_VECTOR_LANES-1:0] [31:0] fx1_multiplier;// From fp_execute_stage1 of fp_execute_stage1.v
+    logic [NUM_VECTOR_LANES-1:0] fx1_result_is_inf;// From fp_execute_stage1 of fp_execute_stage1.v
+    logic [NUM_VECTOR_LANES-1:0] fx1_result_is_nan;// From fp_execute_stage1 of fp_execute_stage1.v
+    logic [NUM_VECTOR_LANES-1:0] [5:0] fx1_se_align_shift;// From fp_execute_stage1 of fp_execute_stage1.v
+    scalar_t [NUM_VECTOR_LANES-1:0] fx1_significand_le;// From fp_execute_stage1 of fp_execute_stage1.v
+    scalar_t [NUM_VECTOR_LANES-1:0] fx1_significand_se;// From fp_execute_stage1 of fp_execute_stage1.v
     subcycle_t          fx1_subcycle;           // From fp_execute_stage1 of fp_execute_stage1.v
     local_thread_idx_t  fx1_thread_idx;         // From fp_execute_stage1 of fp_execute_stage1.v
-    logic [`NUM_VECTOR_LANES-1:0] [7:0] fx2_add_exponent;// From fp_execute_stage2 of fp_execute_stage2.v
-    logic [`NUM_VECTOR_LANES-1:0] fx2_add_result_sign;// From fp_execute_stage2 of fp_execute_stage2.v
-    logic [`NUM_VECTOR_LANES-1:0] [5:0] fx2_ftoi_lshift;// From fp_execute_stage2 of fp_execute_stage2.v
-    logic [`NUM_VECTOR_LANES-1:0] fx2_guard;    // From fp_execute_stage2 of fp_execute_stage2.v
+    logic [NUM_VECTOR_LANES-1:0] [7:0] fx2_add_exponent;// From fp_execute_stage2 of fp_execute_stage2.v
+    logic [NUM_VECTOR_LANES-1:0] fx2_add_result_sign;// From fp_execute_stage2 of fp_execute_stage2.v
+    logic [NUM_VECTOR_LANES-1:0] [5:0] fx2_ftoi_lshift;// From fp_execute_stage2 of fp_execute_stage2.v
+    logic [NUM_VECTOR_LANES-1:0] fx2_guard;     // From fp_execute_stage2 of fp_execute_stage2.v
     decoded_instruction_t fx2_instruction;      // From fp_execute_stage2 of fp_execute_stage2.v
     logic               fx2_instruction_valid;  // From fp_execute_stage2 of fp_execute_stage2.v
-    logic [`NUM_VECTOR_LANES-1:0] fx2_logical_subtract;// From fp_execute_stage2 of fp_execute_stage2.v
+    logic [NUM_VECTOR_LANES-1:0] fx2_logical_subtract;// From fp_execute_stage2 of fp_execute_stage2.v
     vector_lane_mask_t  fx2_mask_value;         // From fp_execute_stage2 of fp_execute_stage2.v
-    logic [`NUM_VECTOR_LANES-1:0] [7:0] fx2_mul_exponent;// From fp_execute_stage2 of fp_execute_stage2.v
-    logic [`NUM_VECTOR_LANES-1:0] fx2_mul_sign; // From fp_execute_stage2 of fp_execute_stage2.v
-    logic [`NUM_VECTOR_LANES-1:0] fx2_result_is_inf;// From fp_execute_stage2 of fp_execute_stage2.v
-    logic [`NUM_VECTOR_LANES-1:0] fx2_result_is_nan;// From fp_execute_stage2 of fp_execute_stage2.v
-    logic [`NUM_VECTOR_LANES-1:0] fx2_round;    // From fp_execute_stage2 of fp_execute_stage2.v
-    scalar_t [`NUM_VECTOR_LANES-1:0] fx2_significand_le;// From fp_execute_stage2 of fp_execute_stage2.v
-    logic [`NUM_VECTOR_LANES-1:0] [63:0] fx2_significand_product;// From fp_execute_stage2 of fp_execute_stage2.v
-    scalar_t [`NUM_VECTOR_LANES-1:0] fx2_significand_se;// From fp_execute_stage2 of fp_execute_stage2.v
-    logic [`NUM_VECTOR_LANES-1:0] fx2_sticky;   // From fp_execute_stage2 of fp_execute_stage2.v
+    logic [NUM_VECTOR_LANES-1:0] [7:0] fx2_mul_exponent;// From fp_execute_stage2 of fp_execute_stage2.v
+    logic [NUM_VECTOR_LANES-1:0] fx2_mul_sign;  // From fp_execute_stage2 of fp_execute_stage2.v
+    logic [NUM_VECTOR_LANES-1:0] fx2_result_is_inf;// From fp_execute_stage2 of fp_execute_stage2.v
+    logic [NUM_VECTOR_LANES-1:0] fx2_result_is_nan;// From fp_execute_stage2 of fp_execute_stage2.v
+    logic [NUM_VECTOR_LANES-1:0] fx2_round;     // From fp_execute_stage2 of fp_execute_stage2.v
+    scalar_t [NUM_VECTOR_LANES-1:0] fx2_significand_le;// From fp_execute_stage2 of fp_execute_stage2.v
+    logic [NUM_VECTOR_LANES-1:0] [63:0] fx2_significand_product;// From fp_execute_stage2 of fp_execute_stage2.v
+    scalar_t [NUM_VECTOR_LANES-1:0] fx2_significand_se;// From fp_execute_stage2 of fp_execute_stage2.v
+    logic [NUM_VECTOR_LANES-1:0] fx2_sticky;    // From fp_execute_stage2 of fp_execute_stage2.v
     subcycle_t          fx2_subcycle;           // From fp_execute_stage2 of fp_execute_stage2.v
     local_thread_idx_t  fx2_thread_idx;         // From fp_execute_stage2 of fp_execute_stage2.v
-    logic [`NUM_VECTOR_LANES-1:0] [7:0] fx3_add_exponent;// From fp_execute_stage3 of fp_execute_stage3.v
-    logic [`NUM_VECTOR_LANES-1:0] fx3_add_result_sign;// From fp_execute_stage3 of fp_execute_stage3.v
-    scalar_t [`NUM_VECTOR_LANES-1:0] fx3_add_significand;// From fp_execute_stage3 of fp_execute_stage3.v
-    logic [`NUM_VECTOR_LANES-1:0] [5:0] fx3_ftoi_lshift;// From fp_execute_stage3 of fp_execute_stage3.v
+    logic [NUM_VECTOR_LANES-1:0] [7:0] fx3_add_exponent;// From fp_execute_stage3 of fp_execute_stage3.v
+    logic [NUM_VECTOR_LANES-1:0] fx3_add_result_sign;// From fp_execute_stage3 of fp_execute_stage3.v
+    scalar_t [NUM_VECTOR_LANES-1:0] fx3_add_significand;// From fp_execute_stage3 of fp_execute_stage3.v
+    logic [NUM_VECTOR_LANES-1:0] [5:0] fx3_ftoi_lshift;// From fp_execute_stage3 of fp_execute_stage3.v
     decoded_instruction_t fx3_instruction;      // From fp_execute_stage3 of fp_execute_stage3.v
     logic               fx3_instruction_valid;  // From fp_execute_stage3 of fp_execute_stage3.v
-    logic [`NUM_VECTOR_LANES-1:0] fx3_logical_subtract;// From fp_execute_stage3 of fp_execute_stage3.v
+    logic [NUM_VECTOR_LANES-1:0] fx3_logical_subtract;// From fp_execute_stage3 of fp_execute_stage3.v
     vector_lane_mask_t  fx3_mask_value;         // From fp_execute_stage3 of fp_execute_stage3.v
-    logic [`NUM_VECTOR_LANES-1:0] [7:0] fx3_mul_exponent;// From fp_execute_stage3 of fp_execute_stage3.v
-    logic [`NUM_VECTOR_LANES-1:0] fx3_mul_sign; // From fp_execute_stage3 of fp_execute_stage3.v
-    logic [`NUM_VECTOR_LANES-1:0] fx3_result_is_inf;// From fp_execute_stage3 of fp_execute_stage3.v
-    logic [`NUM_VECTOR_LANES-1:0] fx3_result_is_nan;// From fp_execute_stage3 of fp_execute_stage3.v
-    logic [`NUM_VECTOR_LANES-1:0] [63:0] fx3_significand_product;// From fp_execute_stage3 of fp_execute_stage3.v
+    logic [NUM_VECTOR_LANES-1:0] [7:0] fx3_mul_exponent;// From fp_execute_stage3 of fp_execute_stage3.v
+    logic [NUM_VECTOR_LANES-1:0] fx3_mul_sign;  // From fp_execute_stage3 of fp_execute_stage3.v
+    logic [NUM_VECTOR_LANES-1:0] fx3_result_is_inf;// From fp_execute_stage3 of fp_execute_stage3.v
+    logic [NUM_VECTOR_LANES-1:0] fx3_result_is_nan;// From fp_execute_stage3 of fp_execute_stage3.v
+    logic [NUM_VECTOR_LANES-1:0] [63:0] fx3_significand_product;// From fp_execute_stage3 of fp_execute_stage3.v
     subcycle_t          fx3_subcycle;           // From fp_execute_stage3 of fp_execute_stage3.v
     local_thread_idx_t  fx3_thread_idx;         // From fp_execute_stage3 of fp_execute_stage3.v
-    logic [`NUM_VECTOR_LANES-1:0] [7:0] fx4_add_exponent;// From fp_execute_stage4 of fp_execute_stage4.v
-    logic [`NUM_VECTOR_LANES-1:0] fx4_add_result_sign;// From fp_execute_stage4 of fp_execute_stage4.v
-    logic [`NUM_VECTOR_LANES-1:0] [31:0] fx4_add_significand;// From fp_execute_stage4 of fp_execute_stage4.v
+    logic [NUM_VECTOR_LANES-1:0] [7:0] fx4_add_exponent;// From fp_execute_stage4 of fp_execute_stage4.v
+    logic [NUM_VECTOR_LANES-1:0] fx4_add_result_sign;// From fp_execute_stage4 of fp_execute_stage4.v
+    logic [NUM_VECTOR_LANES-1:0] [31:0] fx4_add_significand;// From fp_execute_stage4 of fp_execute_stage4.v
     decoded_instruction_t fx4_instruction;      // From fp_execute_stage4 of fp_execute_stage4.v
     logic               fx4_instruction_valid;  // From fp_execute_stage4 of fp_execute_stage4.v
-    logic [`NUM_VECTOR_LANES-1:0] fx4_logical_subtract;// From fp_execute_stage4 of fp_execute_stage4.v
+    logic [NUM_VECTOR_LANES-1:0] fx4_logical_subtract;// From fp_execute_stage4 of fp_execute_stage4.v
     vector_lane_mask_t  fx4_mask_value;         // From fp_execute_stage4 of fp_execute_stage4.v
-    logic [`NUM_VECTOR_LANES-1:0] [7:0] fx4_mul_exponent;// From fp_execute_stage4 of fp_execute_stage4.v
-    logic [`NUM_VECTOR_LANES-1:0] fx4_mul_sign; // From fp_execute_stage4 of fp_execute_stage4.v
-    logic [`NUM_VECTOR_LANES-1:0] [5:0] fx4_norm_shift;// From fp_execute_stage4 of fp_execute_stage4.v
-    logic [`NUM_VECTOR_LANES-1:0] fx4_result_is_inf;// From fp_execute_stage4 of fp_execute_stage4.v
-    logic [`NUM_VECTOR_LANES-1:0] fx4_result_is_nan;// From fp_execute_stage4 of fp_execute_stage4.v
-    logic [`NUM_VECTOR_LANES-1:0] [63:0] fx4_significand_product;// From fp_execute_stage4 of fp_execute_stage4.v
+    logic [NUM_VECTOR_LANES-1:0] [7:0] fx4_mul_exponent;// From fp_execute_stage4 of fp_execute_stage4.v
+    logic [NUM_VECTOR_LANES-1:0] fx4_mul_sign;  // From fp_execute_stage4 of fp_execute_stage4.v
+    logic [NUM_VECTOR_LANES-1:0] [5:0] fx4_norm_shift;// From fp_execute_stage4 of fp_execute_stage4.v
+    logic [NUM_VECTOR_LANES-1:0] fx4_result_is_inf;// From fp_execute_stage4 of fp_execute_stage4.v
+    logic [NUM_VECTOR_LANES-1:0] fx4_result_is_nan;// From fp_execute_stage4 of fp_execute_stage4.v
+    logic [NUM_VECTOR_LANES-1:0] [63:0] fx4_significand_product;// From fp_execute_stage4 of fp_execute_stage4.v
     subcycle_t          fx4_subcycle;           // From fp_execute_stage4 of fp_execute_stage4.v
     local_thread_idx_t  fx4_thread_idx;         // From fp_execute_stage4 of fp_execute_stage4.v
     decoded_instruction_t fx5_instruction;      // From fp_execute_stage5 of fp_execute_stage5.v
@@ -292,7 +294,7 @@ module core
     local_thread_idx_t  of_thread_idx;          // From operand_fetch_stage of operand_fetch_stage.v
     logic               sq_rollback_en;         // From l1_l2_interface of l1_l2_interface.v
     cache_line_data_t   sq_store_bypass_data;   // From l1_l2_interface of l1_l2_interface.v
-    logic [`CACHE_LINE_BYTES-1:0] sq_store_bypass_mask;// From l1_l2_interface of l1_l2_interface.v
+    logic [CACHE_LINE_BYTES-1:0] sq_store_bypass_mask;// From l1_l2_interface of l1_l2_interface.v
     logic               sq_store_sync_success;  // From l1_l2_interface of l1_l2_interface.v
     local_thread_bitmap_t sq_sync_store_pending;// From l1_l2_interface of l1_l2_interface.v
     local_thread_bitmap_t ts_fetch_en;          // From thread_select_stage of thread_select_stage.v

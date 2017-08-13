@@ -14,7 +14,9 @@
 // limitations under the License.
 //
 
-`include "../core/defines.sv"
+`include "defines.sv"
+
+import defines::*;
 
 //
 // Top module for simulating a system on chip, which includes the Nyuzi
@@ -354,11 +356,11 @@ module soc_tb(
         input l2_set_idx_t set;
         input l2_way_idx_t way;
     begin
-        for (int line_offset = 0; line_offset < `CACHE_LINE_WORDS; line_offset++)
+        for (int line_offset = 0; line_offset < CACHE_LINE_WORDS; line_offset++)
         begin
-            memory.sdram_data[(int'(tag) * `L2_SETS + int'(set)) * `CACHE_LINE_WORDS + line_offset] =
+            memory.sdram_data[(int'(tag) * `L2_SETS + int'(set)) * CACHE_LINE_WORDS + line_offset] =
                 int'(nyuzi.l2_cache.l2_cache_read_stage.sram_l2_data.data[{way, set}]
-                 >> ((`CACHE_LINE_WORDS - 1 - line_offset) * 32));
+                 >> ((CACHE_LINE_WORDS - 1 - line_offset) * 32));
         end
     end
     endtask
@@ -405,9 +407,9 @@ module soc_tb(
     begin
         $display("cores %0d|threads per core %0d|l1i$ %0dk %0d ways|l1d$ %0dk %0d ways|l2$ %0dk %0d ways|itlb %0d entries|dtlb %0d entries",
             `NUM_CORES, `THREADS_PER_CORE,
-            `L1I_WAYS * `L1I_SETS * `CACHE_LINE_BYTES / 1024, `L1I_WAYS,
-            `L1D_WAYS * `L1D_SETS * `CACHE_LINE_BYTES / 1024, `L1D_WAYS,
-            `L2_WAYS * `L2_SETS * `CACHE_LINE_BYTES / 1024, `L2_WAYS,
+            `L1I_WAYS * `L1I_SETS * CACHE_LINE_BYTES / 1024, `L1I_WAYS,
+            `L1D_WAYS * `L1D_SETS * CACHE_LINE_BYTES / 1024, `L1D_WAYS,
+            `L2_WAYS * `L2_SETS * CACHE_LINE_BYTES / 1024, `L2_WAYS,
             `ITLB_ENTRIES, `DTLB_ENTRIES);
 
         if ($test$plusargs("statetrace") != 0)

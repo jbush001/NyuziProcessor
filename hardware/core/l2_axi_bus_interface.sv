@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // L2 AXI Bus Interface
 // Receives L2 cache misses and writeback requests from the L2 pipeline and
@@ -82,7 +84,7 @@ module l2_axi_bus_interface(
     // signal to stop accepting new packets this number of cycles early so
     // requests that are already in the L2 pipeline don't overrun the FIFOs.
     localparam L2REQ_LATENCY = 4;
-    localparam BURST_BEATS = `CACHE_LINE_BITS / `AXI_DATA_WIDTH;
+    localparam BURST_BEATS = CACHE_LINE_BITS / `AXI_DATA_WIDTH;
     localparam BURST_OFFSET_WIDTH = $clog2(BURST_BEATS);
 
     l2_addr_t miss_addr;
@@ -228,7 +230,7 @@ module l2_axi_bus_interface(
                 else if (load_request_pending)
                 begin
                     if (l2bi_collided_miss
-                        || (lmq_out_request.store_mask == {`CACHE_LINE_BYTES{1'b1}}
+                        || (lmq_out_request.store_mask == {CACHE_LINE_BYTES{1'b1}}
                         && lmq_out_request.packet_type == L2REQ_STORE))
                     begin
                         // Skip the read and restart the request immediately if:
@@ -369,8 +371,8 @@ module l2_axi_bus_interface(
         if (state_ff == STATE_READ_TRANSFER && axi_bus.s_rvalid)
             bif_load_buffer[burst_offset_ff] <= axi_bus.s_rdata;
 
-        axi_bus.m_araddr <= {l2bi_request.address, {`CACHE_LINE_OFFSET_WIDTH{1'b0}}};
-        axi_bus.m_awaddr <= {bif_writeback_address, {`CACHE_LINE_OFFSET_WIDTH{1'b0}}};
+        axi_bus.m_araddr <= {l2bi_request.address, {CACHE_LINE_OFFSET_WIDTH{1'b0}}};
+        axi_bus.m_awaddr <= {bif_writeback_address, {CACHE_LINE_OFFSET_WIDTH{1'b0}}};
         axi_bus.m_wdata <= bif_writeback_lanes[~burst_offset_nxt];
     end
 endmodule

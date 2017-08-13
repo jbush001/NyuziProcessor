@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // Instruction Pipeline Thread Select Stage
 // - Contains an instruction FIFO for each thread
@@ -77,7 +79,7 @@ module thread_select_stage(
     // Difference between longest and shortest execution pipeline
     localparam WRITEBACK_ALLOC_STAGES = 4;
 
-    localparam SCOREBOARD_ENTRIES = `NUM_REGISTERS * 2;
+    localparam SCOREBOARD_ENTRIES = NUM_REGISTERS * 2;
 
     decoded_instruction_t thread_instr[`THREADS_PER_CORE];
     decoded_instruction_t issue_instr;

@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // Instruction Pipeline - Instruction Decode Stage
 // Populate the decoded_instruction_t structure with fields from
@@ -216,7 +218,7 @@ module instruction_decode_stage(
 
     assign is_syscall = is_fmt_r && ifd_instruction[25:20] == OP_SYSCALL;
     assign is_breakpoint = is_fmt_r && ifd_instruction[25:20] == OP_BREAKPOINT;
-    assign is_nop = ifd_instruction == `INSTRUCTION_NOP;
+    assign is_nop = ifd_instruction == INSTRUCTION_NOP;
     assign has_trap = dlut_out.illegal || ifd_alignment_fault || ifd_tlb_miss
         || ifd_supervisor_fault || raise_interrupt || is_syscall
         || is_breakpoint || ifd_page_fault || ifd_executable_fault;
@@ -310,7 +312,7 @@ module instruction_decode_stage(
 
     assign decoded_instr_nxt.dest_is_vector = dlut_out.dest_is_vector && !is_compare
         && !is_getlane;
-    assign decoded_instr_nxt.dest_reg = dlut_out.is_call ? `REG_RA : ifd_instruction[9:5];
+    assign decoded_instr_nxt.dest_reg = dlut_out.is_call ? REG_RA : ifd_instruction[9:5];
     assign decoded_instr_nxt.is_call = dlut_out.is_call;
     always_comb
     begin
@@ -393,7 +395,7 @@ module instruction_decode_stage(
             || memory_access_type == MEM_SCGATH_M))
         begin
             // Scatter/Gather access
-            decoded_instr_nxt.last_subcycle = subcycle_t'(`NUM_VECTOR_LANES - 1);
+            decoded_instr_nxt.last_subcycle = subcycle_t'(NUM_VECTOR_LANES - 1);
         end
         else
             decoded_instr_nxt.last_subcycle = 0;

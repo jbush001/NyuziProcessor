@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // This routes AXI transactions between two masters and two slaves
 // mapped into different regions of a common address space.

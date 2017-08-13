@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // This module is in each core and handles communications between
 // L1 and L2 caches. It hides the L2 protocol from the execution pipeline,
@@ -108,7 +110,7 @@ module l1_l2_interface
     input                                         dd_membar_en,
     input                                         dd_iinvalidate_en,
     input                                         dd_dinvalidate_en,
-    input [`CACHE_LINE_BYTES - 1:0]               dd_store_mask,
+    input [CACHE_LINE_BYTES - 1:0]                dd_store_mask,
     input cache_line_index_t                      dd_store_addr,
     input cache_line_data_t                       dd_store_data,
     input local_thread_idx_t                      dd_store_thread_idx,
@@ -123,7 +125,7 @@ module l1_l2_interface
     output cache_line_data_t                      l2i_ddata_update_data,
 
     // To writeback_stage
-    output logic[`CACHE_LINE_BYTES - 1:0]         sq_store_bypass_mask,
+    output logic[CACHE_LINE_BYTES - 1:0]          sq_store_bypass_mask,
     output logic                                  sq_store_sync_success,
     output cache_line_data_t                      sq_store_bypass_data,
     output logic                                  sq_rollback_en);
@@ -173,7 +175,7 @@ module l1_l2_interface
     logic               sq_dequeue_flush;       // From l1_store_queue of l1_store_queue.v
     l1_miss_entry_idx_t sq_dequeue_idx;         // From l1_store_queue of l1_store_queue.v
     logic               sq_dequeue_iinvalidate; // From l1_store_queue of l1_store_queue.v
-    logic [`CACHE_LINE_BYTES-1:0] sq_dequeue_mask;// From l1_store_queue of l1_store_queue.v
+    logic [CACHE_LINE_BYTES-1:0] sq_dequeue_mask;// From l1_store_queue of l1_store_queue.v
     logic               sq_dequeue_ready;       // From l1_store_queue of l1_store_queue.v
     logic               sq_dequeue_synchronized;// From l1_store_queue of l1_store_queue.v
     local_thread_bitmap_t sq_wake_bitmap;       // From l1_store_queue of l1_store_queue.v

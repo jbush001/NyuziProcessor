@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // L2 cache pipeline - update stage.
 // - Update cache data if this is a cache fill or store.
@@ -59,7 +61,7 @@ module l2_cache_update_stage(
 
     genvar byte_lane;
     generate
-        for (byte_lane = 0; byte_lane < `CACHE_LINE_BYTES; byte_lane++)
+        for (byte_lane = 0; byte_lane < CACHE_LINE_BYTES; byte_lane++)
         begin : lane_mask_gen
             assign l2u_write_data[byte_lane * 8+:8] = (l2r_request.store_mask[byte_lane] && update_data)
                 ? l2r_request.data[byte_lane * 8+:8]

@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // Serial Peripheral Interface (SPI) bus controller
 // This currenly can only act as a master

@@ -16,6 +16,8 @@
 
 `include "defines.sv"
 
+import defines::*;
+
 //
 // l2 request arbiter stage. Selects among core L2 requests and restarted
 // request from fill interface. Restarted requests take precedence to avoid
@@ -76,9 +78,9 @@ module l2_cache_arb_stage(
 
             oh_to_idx #(.NUM_SIGNALS(`NUM_CORES)) oh_to_idx_grant(
                 .one_hot(grant_oh),
-                .index(grant_idx[`CORE_ID_WIDTH - 1:0]));
+                .index(grant_idx[CORE_ID_WIDTH - 1:0]));
 
-            assign grant_request = l2i_request[grant_idx[`CORE_ID_WIDTH - 1:0]];
+            assign grant_request = l2i_request[grant_idx[CORE_ID_WIDTH - 1:0]];
         end
         else
         begin
