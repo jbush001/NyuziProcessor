@@ -141,9 +141,7 @@ int vfprintf(FILE *f, const char *format, va_list args)
                     case 'u':	/* Unsigned decimal */
                     case 'd':
                     case 'i':	{ /* Signed decimal */
-                        unsigned int value;
-                        value = va_arg(args, unsigned);		/* long */
-
+                        unsigned long long value;
                         /* figure out base */
                         if (*format == 'o')
                             radix = 8;
@@ -152,10 +150,19 @@ int vfprintf(FILE *f, const char *format, va_list args)
                         else
                             radix = 10;
 
+                        if (PREFIX_IS_SET('L')) {
+                            value = (unsigned long long int) va_arg(args, long long);
+                        } else {
+                            if ((*format == 'd' || *format == 'i'))
+                                value = (unsigned long long int)(long long int) va_arg(args, int);
+                            else
+                                value = (unsigned long long int) va_arg(args, unsigned int);
+                        }
+
                         /* handle sign */
                         if ((*format == 'd' || *format == 'i')) {
-                            if ((long) value < 0) {
-                                value = (unsigned) (- (long) value);
+                            if ((long long int) value < 0) {
+                                value = (unsigned long long) (-(long long int) value);
                                 fputc('-', f);
                             }
                         }
