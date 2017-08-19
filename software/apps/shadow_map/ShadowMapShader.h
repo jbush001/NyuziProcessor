@@ -1,5 +1,5 @@
 //
-// Copyright 2011-2015 Jeff Bush
+// Copyright 2017 Jeff Bush
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -58,7 +58,8 @@ public:
                      vmask_t) const override
     {
         // Need to squeeze value into 0.0-1.0 to fit in texture
-        vecf16_t depthval = -inParams[0] / 10;
+        // The 0.1 is arbitrary and probably depends on the scene.
+        vecf16_t depthval = -inParams[0] * 0.1;
         outColor[kColorR] = depthval;
         outColor[kColorG] = depthval;
         outColor[kColorB] = depthval;

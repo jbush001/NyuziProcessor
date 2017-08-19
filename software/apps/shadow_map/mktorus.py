@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright 2011-2017 Jeff Bush
+# Copyright 2017 Jeff Bush
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -61,12 +61,12 @@ print('const int kNumTorusIndices = %d;' % (OUTER_STEPS * INNER_STEPS * 6))
 print('const int kTorusIndices[] = {')
 
 
-def step_wrapping_outer(x):
-    return (x + 1) % OUTER_STEPS
+def step_wrapping_outer(index):
+    return (index + 1) % OUTER_STEPS
 
 
-def step_wrapping_inner(x):
-    return (x + 1) % INNER_STEPS
+def step_wrapping_inner(index):
+    return (index + 1) % INNER_STEPS
 
 for outer_step in range(OUTER_STEPS):
     for inner_step in range(INNER_STEPS):

@@ -1,5 +1,5 @@
 //
-// Copyright 2011-2015 Jeff Bush
+// Copyright 2017 Jeff Bush
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -65,6 +65,11 @@ int main()
     RenderContext *context = new RenderContext();
 
     // Shadow map that is both a source texture and render target
+    // XXX Ideally we would make this texture 16 bits with a single channel,
+    // but librender currently hardcodes one surface format (RGBA8888),
+    // which wastes some memory and limits the depth resolution to 256.
+    // It would also be ideal to bind the texture as the depth buffer so
+    // we didn't need a color buffer.
     Surface *lightMapSurface = new Surface(kLightmapSize, kLightmapSize);
     Surface *lightDepthBuffer = new Surface(kLightmapSize, kLightmapSize);
     RenderTarget *lightMapTarget = new RenderTarget();

@@ -1,5 +1,5 @@
 //
-// Copyright 2011-2015 Jeff Bush
+// Copyright 2017 Jeff Bush
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 
 using namespace librender;
 
-const float kEpsilon = 0.2;
+const float kShadowBias = 0.2;
 
 #define ENABLE_SHADOW 1
 #define USE_LAMBERTIAN 1
@@ -101,9 +101,11 @@ public:
         sampler[0]->readPixels(inParams[4] * 0.5 + 0.5, inParams[5] * 0.5 + 0.5, mask,
             shadowMapValue);
 #if ENABLE_SHADOW
+        // The multiplier here must be the inverse of the one in
+        // ShadowMapShader.
         vecf16_t depth = -shadowMapValue[0] * 10;
         vmask_t inShadow = __builtin_nyuzi_mask_cmpf_gt(depth - inParams[6],
-            (vecf16_t) kEpsilon);
+            (vecf16_t) kShadowBias);
 #else
         vmask_t inShadow = 0;
 #endif
