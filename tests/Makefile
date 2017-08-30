@@ -18,7 +18,7 @@ PYTHON=python3
 
 test:
 	cd remote-gdb && $(PYTHON) ./runtest.py
-	cd core/atomic/ && $(PYTHON) ./runtest.py
+	cd core/isa/ && $(PYTHON) ./runtest.py
 	cd core/cache_control/ && $(PYTHON) ./runtest.py
 	cd core/mmu && $(PYTHON) ./runtest.py
 	cd core/trap && $(PYTHON) ./runtest.py

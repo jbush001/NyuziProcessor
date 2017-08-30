@@ -14,8 +14,7 @@
 # limitations under the License.
 #
 
-.include "../asm_macros.inc"
-
+#include "../../asm_macros.inc"
 
 #
 # Test all branch types
@@ -30,43 +29,58 @@ _start:
 
 # Unconditional Branch
 test0:          b 1f
-                move s10, 1
-                b 2f
-1:              move s10, 2
+                call fail_test
+1:
 
 # bz, taken
-2:              bz s1, 1f
-                move s10, 3
-                b 2f
-1:              move s10, 4
+                bz s1, 1f
+                call fail_test
+1:
 
 # bz, not taken
-2:              bz s0, 1f
-                move s10, 5
+                bz s0, 1f
                 b 2f
-1:              move s10, 6
+1:              call fail_test
 
 
 # bnz, taken
 2:              bnz s0, 1f
-                move s10, 7
-                b 2f
-1:              move s10, 8
+                call fail_test
+1:
 
 # bnz, not taken
 2:              bnz s1, 1f
-                move s10, 9
                 b 2f
-1:              move s10, 10
+1:              call fail_test
 
 # Call
-2:              call calltest1
-calltest1:      move s10, 23
+2:
+                call calltest1
+retaddr1:       call fail_test
+                nop
+                nop
+                nop
+                nop
+                nop
+                nop
+calltest1:      lea s0, retaddr1
+                cmpeq_i s1, s0, ra
+                bnz s1, 2f
+                call fail_test
 
 # Call register
-                lea s0, calltest2
+2:              lea s0, calltest2
                 call s0
-calltest2:      move s10, 24
+retaddr2:       call fail_test
+                nop
+                nop
+                nop
+                nop
+                nop
+                nop
+calltest2:      lea s0, retaddr2
+                cmpeq_i s1, s0, ra
+                bnz s1, 2f
+                call fail_test
 
-                halt_current_thread
-
+2:              call pass_test

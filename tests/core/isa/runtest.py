@@ -15,17 +15,18 @@
 # limitations under the License.
 #
 
-"""
-This test writes a pattern to memory and manually flushes it from code. It then
-checks the contents of system memory to ensure the data was flushed correctly.
-"""
-
 import sys
 
 sys.path.insert(0, '../..')
 import test_harness
 
 test_harness.register_generic_assembly_tests([
-    'atomic'])
+    'arithmetic',
+    'branch',
+    'compare',
+    'shuffle',
+    'load_store',
+    'atomic'
+])
 
 test_harness.execute_tests()
