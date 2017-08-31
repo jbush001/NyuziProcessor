@@ -21,12 +21,13 @@ sys.path.insert(0, '../..')
 import test_harness
 
 test_harness.register_generic_assembly_tests([
-    'arithmetic',
+    'int_arithmetic',
     'branch',
     'compare',
     'shuffle',
     'load_store',
-    'atomic'
+    'atomic',
+    'float_ops'
 ])
 
 test_harness.execute_tests()
