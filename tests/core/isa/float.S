@@ -67,11 +67,19 @@ add_ops:
 add_ops_end:
 
 sub_ops:
-    .float 5.0, 0.5, 4.5            # Normal subtraction
-    .float 5.0, 5.0, 0.0            # Result is zero
+    .float 5.0, 0.5, 4.5            # Positive result
+    .float -1.0, 5.0, -6.0          # Negative result
+    .float 1.0, 5.0, -4.0
     .float -1.0, -5.0, 4.0          # Subtract negative is add
+    .float 1.0, -5.0, 6.0           # Same
+    .float 5.0, 5.0, 0.0            # Result is zero
     .float 5.0, 0.0, 5.0            # Subtract zero does nothing
+    .float 5.0, -0.0, 5.0           # Same, negative zero
     .float 0.0, 5.0, -5.0           # Subtract number from zero
+    .float -0.0, 5.0, -5.0          # Same, negative zero
+    .float 1000000.0, 0.0000001, 1000000.0      # Second op is lost because of precision
+    .float 0.0000001, 0.00000001, 0.00000009    # Very small number
+    .float 10000000.0, 1000000.0, 9000000.0     # Large number
 
     # XXX inf and NaN cases
 sub_ops_end:
@@ -85,6 +93,10 @@ mul_ops:
     .float -2.0, 4.0, -8.0          # negative x positive
     .float 2.0, -4.0, -8.0          # positive x negative
     .float -2.0, -4.0, 8.0          # negative x negative
+    .float 100000.0, 7.0, 700000.0
+    .float 7.0, 100000.0, 700000.0
+    .float 5.0, 0.00001, 0.00005
+    .float 0.00001, 5.0, 0.00005
 
     # XXX inf and NaN cases
 mul_ops_end:
