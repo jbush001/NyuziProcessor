@@ -27,7 +27,8 @@ test_harness.register_generic_assembly_tests([
     'shuffle',
     'load_store',
     'atomic',
-    'float_ops'
+    'float_ops',
+    'float'
 ])
 
 test_harness.execute_tests()
