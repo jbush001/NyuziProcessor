@@ -102,6 +102,7 @@ _start:    lea s1, testvar1
             b 1b
 2:
 
+            # Test load_v/store_v
             # Note: here we are accessing testvar3, but use testvar2 address
             # with offset to verify it works correctly.
             lea s10, testvar2
@@ -110,6 +111,32 @@ _start:    lea s1, testvar1
             cmpeq_i s0, v1, v2      # Are stored and loaded values equal?
             bnz s0, 1f              # if so, jump ahead
             call fail_test          # no, fail.
+
+            # load_v_mask
+            move v2, 0
+            li s0, 0x55aa
+            lea s10, testvar2
+            load_v_mask v2, s0, (s10)
+            lea s0, expected_result4
+            load_v v3, (s0)
+            cmpeq_i s0, v2, v3
+            bnz s0, 1f
+            call fail_test
+1:
+
+            # store_v_mask
+            lea s10, testvar2
+            load_v v1, (s10)
+            li s0, 0x55aa
+            lea s1, write_var
+            store_v_mask v1, s0, (s1)
+            load_v v2, (s1)
+            lea s1, expected_result4
+            load_v v3, (s1)
+            cmpeq_i s0, v2, v3
+            bnz s0, 1f
+            call fail_test
+1:
 
             # Gather load. Now that we've proved load_v works, can use that
             # To load values.
@@ -122,19 +149,19 @@ _start:    lea s1, testvar1
             add_i v5, v5, s1
 
             load_gath v6, (v4)
-            assert_vector_reg v6, expected_shuffle_result1
+            assert_vector_reg v6, expected_result1
 
             li s2, 0x5a5a
             move v7, 0
             load_gath_mask v7, s2, (v4)
-            assert_vector_reg v7, expected_shuffle_result2
+            assert_vector_reg v7, expected_result2
 
             # Scatter store
             lea s0, shuffle_idx1
             load_v v4, (s0)
             lea s0, shuffle_idx2
             load_v v5, (s0)
-            lea s1, testvar4
+            lea s1, write_var
             add_i v4, v4, s1
             add_i v5, v5, s1
 
@@ -144,7 +171,7 @@ _start:    lea s1, testvar1
             # Reload destination locations
             lea s0, testvar3
             load_v v8, (s0)
-            assert_vector_reg v8, expected_shuffle_result3
+            assert_vector_reg v8, expected_result3
 
             call pass_test
 
@@ -154,14 +181,16 @@ testvar1:   .long 0x1234abcd, 0, 0, 0
 testvar2:   .long 0x2aa7d2c1, 0xeeb91caf, 0x304010ad, 0x96981e0d, 0x3a03b41f, 0x81363fee, 0x32d7bd42, 0xeaa8df61
             .long 0x9228d73e, 0xfcf12265, 0x2515fbeb, 0x6cd307a0, 0x2c18c1b8, 0xda8e48d5, 0x1f5c4bd2, 0xace51435
 testvar3:   .long 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-testvar4:   .long 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+write_var:   .long 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 shuffle_idx1:.long 56, 40, 0, 4, 24, 52, 16, 8, 12, 36, 44, 20, 32, 28, 60, 48
 
 # Note: last lane is unaligned, but it is masked off so it shouldn't generate a fault.
 shuffle_idx2: .long 12, 60, 16, 28, 48, 0, 52, 56, 40, 24, 8, 44, 4, 20, 36, 3
 
-expected_shuffle_result1: .long 0x1f5c4bd2, 0x2515fbeb, 0x2aa7d2c1, 0xeeb91caf, 0x32d7bd42, 0xda8e48d5, 0x3a03b41f, 0x304010ad
-                          .long 0x96981e0d, 0xfcf12265, 0x6cd307a0, 0x81363fee, 0x9228d73e, 0xeaa8df61, 0xace51435, 0x2c18c1b8
-expected_shuffle_result2: .long 0x00000000, 0x2515fbeb, 0x00000000, 0xeeb91caf, 0x32d7bd42, 0x00000000, 0x3a03b41f, 0x00000000
-                          .long 0x00000000, 0xfcf12265, 0x00000000, 0x81363fee, 0x9228d73e, 0x00000000, 0xace51435, 0x00000000
-expected_shuffle_result3: .long 0x1234, 0x1249, 0x125e, 0x1273, 0x1288, 0x129d, 0x12b2, 0x12c7, 0x12dc, 0x12f1, 0x1306, 0x131b, 0x1330, 0x1345, 0x135a, 0x136f
+expected_result1: .long 0x1f5c4bd2, 0x2515fbeb, 0x2aa7d2c1, 0xeeb91caf, 0x32d7bd42, 0xda8e48d5, 0x3a03b41f, 0x304010ad
+                  .long 0x96981e0d, 0xfcf12265, 0x6cd307a0, 0x81363fee, 0x9228d73e, 0xeaa8df61, 0xace51435, 0x2c18c1b8
+expected_result2: .long 0x00000000, 0x2515fbeb, 0x00000000, 0xeeb91caf, 0x32d7bd42, 0x00000000, 0x3a03b41f, 0x00000000
+                  .long 0x00000000, 0xfcf12265, 0x00000000, 0x81363fee, 0x9228d73e, 0x00000000, 0xace51435, 0x00000000
+expected_result3: .long 0x1234, 0x1249, 0x125e, 0x1273, 0x1288, 0x129d, 0x12b2, 0x12c7, 0x12dc, 0x12f1, 0x1306, 0x131b, 0x1330, 0x1345, 0x135a, 0x136f
+expected_result4: .long 0, 0xeeb91caf, 0, 0x96981e0d, 0, 0x81363fee, 0, 0xeaa8df61
+                  .long 0x9228d73e, 0, 0x2515fbeb, 0, 0x2c18c1b8, 0, 0x1f5c4bd2, 0
