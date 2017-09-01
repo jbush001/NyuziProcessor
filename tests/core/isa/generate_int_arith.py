@@ -33,18 +33,18 @@ def vector_op(vec1, vec2, op):
 def splat(val):
     return [ val for i in range(VECTOR_WIDTH) ]
 
-def apply_mask(mask, value):
-    return [ val if (mask & (1 << i)) else 0 for i, val in enumerate(value) ]
+def apply_mask(mask, vec):
+    return [ val if (mask & (1 << i)) else 0 for i, val in enumerate(vec) ]
 
 def hexlist(values):
-    str = ''
+    result = ''
     for x in values:
-        if str:
-            str += ', ' + hex(x)
+        if result:
+            result += ', ' + hex(x)
         else:
-            str = hex(x)
+            result = hex(x)
 
-    return str
+    return result
 
 def ashr32(val, amt):
     if val & 0x80000000:
