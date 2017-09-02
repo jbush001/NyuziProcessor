@@ -23,7 +23,7 @@
 # Each thread stores to rand() * 4 * NUM_THREADS + thread_id.  As a consequence,
 # each memory location can be assigned by only one thread. This avoids a problem
 # that would occur when write ordering differs between the emulator and cycle
-# accurate model
+# accurate model (note that NUM_THREADS is hardcoded to 4).
 #
 
                 .globl _start
@@ -33,19 +33,18 @@ _start:         start_all_threads
                 li s5, 10000        # num iterations
                 li s2, 1103515245   # A
                 li s3, 12345        # C
-                li s6, 0x3000       # write region
                 getcr s8, CR_CURRENT_THREAD # get thread ID
-                shl s8, s8, 2        # Compute thread write offset (thread * 4)
-                move s0, 7           # Initialize value to write
+                shl s8, s8, 2       # Compute thread write offset (thread * 4)
+                li s6, 0x3000       # base of write region
+                add_i s8, s8, s6    # Add thread offset to this
+                li s9, 0x0007fff0   # Address mask (multiple of 16, 512k range)
+                move s0, 7          # Initialize value to write
 
-main_loop:      mull_i s1, s1, s2    # Generate next random number
+main_loop:      mull_i s1, s1, s2    # Generate next random number (seed * A + C)
                 add_i s1, s1, s3
 
-                shr s4, s1, 17       # Chop high bits (0-32k)
-                shl s4, s4, 4        # Multiply by 16 (four threads times four bytes, 512k)
-                add_i s4, s4, s8     # Add thread offset (0, 4, 8, 12)
-                add_i s4, s4, s6     # Add to start of write region
-
+                and s4, s1, s9       # Mask to constrain to memory range
+                add_i s4, s4, s8     # Add to base of region
                 store_32 s0, (s4)    # Write the word
 
                 add_i s0, s0, 13     # Increment write value
