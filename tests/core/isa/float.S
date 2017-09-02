@@ -71,6 +71,11 @@ add_ops:
     .float inf, -inf, nan
     .float nan, 1.0, nan
     .float 1.0, nan, nan
+    .float nan, nan, nan
+    .long 0x00800000, 0x80800000, 0 # Add underflow 2e-38 + -2e-38 = 0
+
+    # Failing cases
+    #.long 0x7f7fffff, 0x7f7fffff, 0x7f800000 # Issue #56: Add overflow: 1e+38 + 1e+38 = inf
 add_ops_end:
 
 sub_ops:
@@ -94,13 +99,16 @@ sub_ops:
     .float 1.0, -inf, inf
     .float 1.0, inf, -inf
     .float inf, inf, nan
-    .float nan, -1.0, nan
+    .float nan, 1.0, nan
     .float 1.0, nan, nan
+    .float nan, nan, nan
 sub_ops_end:
 
 mul_ops:
     .float 0.0, 4.0, 0.0            # Zero identity
     .float 4.0, 0.0, 0.0
+    .float 4.0, -0.0, -0.0          # Same w/ negative zero
+    .float -4.0, 0.0, -0.0
     .float 1.0, 4.0, 4.0            # One identity
     .float 4.0, 1.0, 4.0
     .float 2.5, 12.0, 30.0
@@ -120,5 +128,8 @@ mul_ops:
     .float 1, inf, inf
     .float nan, 1, nan
     .float 1, nan, nan
-mul_ops_end:
+    .long 0x7f7fffff, 0x40800000, 0x7f800000       # Mul overflow: 1e+38 * 4 = inf
 
+    # Failing cases
+    #.long 0x00800000, 0x2d000000, 0x0             # Issue #57: Mul underflow: 1e-38 * 1e-12 = 0
+mul_ops_end:
