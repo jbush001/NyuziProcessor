@@ -29,7 +29,7 @@
             load_32 s2, 4(s0)      # operand 2
             load_32 s3, 8(s0)      # expected result
             \op s4, s1, s2
-            cmpeq_f s5, s4, s3
+            cmpeq_i s5, s4, s3     # Use integer compare so we don't treat specials differently
             bnz s5, 2f
             call fail_test
 2:          add_i s0, s0, 12
@@ -62,8 +62,15 @@ add_ops:
     .float -0.0, 2.323, 2.323       # negative zero
     .float 2.323, -0.0 , 2.323      # negative zero
     .float 5.67666007898e-42, 0.0, 5.67666007898e-42   # subnormal minus zero
-
-    # XXX inf and NaN cases
+    .float inf, inf, inf
+    .float inf, 1.0, inf
+    .float -inf, 1.0, -inf
+    .float 0, -inf, -inf
+    .float 1.0, inf, inf
+    .float 1.0, -inf, -inf
+    .float inf, -inf, nan
+    .float nan, 1.0, nan
+    .float 1.0, nan, nan
 add_ops_end:
 
 sub_ops:
@@ -80,8 +87,15 @@ sub_ops:
     .float 1000000.0, 0.0000001, 1000000.0      # Second op is lost because of precision
     .float 0.0000001, 0.00000001, 0.00000009    # Very small number
     .float 10000000.0, 1000000.0, 9000000.0     # Large number
-
-    # XXX inf and NaN cases
+    .float inf, -inf, inf
+    .float inf, -1.0, inf
+    .float -inf, -1.0, -inf
+    .float 0, inf, -inf
+    .float 1.0, -inf, inf
+    .float 1.0, inf, -inf
+    .float inf, inf, nan
+    .float nan, -1.0, nan
+    .float 1.0, nan, nan
 sub_ops_end:
 
 mul_ops:
@@ -97,7 +111,14 @@ mul_ops:
     .float 7.0, 100000.0, 700000.0
     .float 5.0, 0.00001, 0.00005
     .float 0.00001, 5.0, 0.00005
-
-    # XXX inf and NaN cases
+    .float inf, 0, nan
+    .float 0, inf, nan
+    .float inf, inf, inf
+    .float inf, -inf, -inf
+    .float -inf, inf, -inf
+    .float inf, 1, inf
+    .float 1, inf, inf
+    .float nan, 1, nan
+    .float 1, nan, nan
 mul_ops_end:
 
