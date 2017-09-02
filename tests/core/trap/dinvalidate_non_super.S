@@ -17,8 +17,8 @@
 #include "../../asm_macros.inc"
 
 //
-// Ensure that attempting to execute the 'dinvalidate' instruction faults if
-// the thread is in user mode and doesn't perfom its side effects.
+// Ensure that attempting to execute the 'dinvalidate' instruction faults
+// and doesn't perform its side effects if the thread is in user mode.
 //
 
 .set DATA_LOCATION, 0x4000

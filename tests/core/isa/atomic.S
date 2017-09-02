@@ -16,6 +16,9 @@
 
 .include "../../asm_macros.inc"
 
+#
+# Test load_sync/store_sync instructions.
+#
 
 #define VALUE1 0xace9e130
 #define VALUE2 0xff3dac7b

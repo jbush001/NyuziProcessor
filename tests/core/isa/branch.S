@@ -20,7 +20,6 @@
 # Test all branch types
 #
 
-
                 .globl _start
 _start:
                 move s0, 1
