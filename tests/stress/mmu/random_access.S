@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2015 Jeff Bush
+# Copyright 2017 Jeff Bush
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,21 @@
 #
 
 #include "../../asm_macros.inc"
+
+#
+# This test spawns four threads. Each one has a separate data address space,
+# which are mapped to physical memory in an interleaving pattern. The threads
+# write to random addresses in a 128k region in their address space, which
+# will cause a series of TLB hits and misses. 4 threads * 128k = 512k total,
+# The default 64 entry TLB can map a maximum of 256k, therefore each memory
+# access has a 50% chance of hitting the cache. The value written to
+# each location consists of the virtual address in the low 24 bits and the thread
+# ID in the high bits. This is using a pseudo random number generator to try
+# trigger race condtions and edge cases. The number of writes is made
+# sufficiently high that every location is written at least once, which allows
+# the python test script to verify the contents after this has finished.
+#
+
 
                 .globl _start
 _start:         lea s0, tlb_miss

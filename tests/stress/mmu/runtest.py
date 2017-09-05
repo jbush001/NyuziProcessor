@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright 2011-2015 Jeff Bush
+# Copyright 2017 Jeff Bush
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,8 +16,9 @@
 #
 
 """
-Test load_sync/store_sync instructions by having four threads update
-variables round-robin.
+Test virtual address translation by running a program that writes patterns
+to memory, then reading back the values to see if they match what is expected.
+More details are in random_access.S
 """
 
 import struct
