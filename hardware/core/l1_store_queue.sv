@@ -43,7 +43,7 @@ module l1_store_queue(
     input cache_line_index_t               dd_store_addr,
     input [CACHE_LINE_BYTES - 1:0]         dd_store_mask,
     input cache_line_data_t                dd_store_data,
-    input                                  dd_store_synchronized,
+    input                                  dd_store_sync,
     input local_thread_idx_t               dd_store_thread_idx,
     input cache_line_index_t               dd_store_bypass_addr,
     input local_thread_idx_t               dd_store_bypass_thread_idx,
@@ -65,7 +65,7 @@ module l1_store_queue(
     output l1_miss_entry_idx_t             sq_dequeue_idx,
     output logic[CACHE_LINE_BYTES - 1:0]   sq_dequeue_mask,
     output cache_line_data_t               sq_dequeue_data,
-    output logic                           sq_dequeue_synchronized,
+    output logic                           sq_dequeue_sync,
     output logic                           sq_dequeue_flush,
     output logic                           sq_dequeue_iinvalidate,
     output logic                           sq_dequeue_dinvalidate,
@@ -73,7 +73,7 @@ module l1_store_queue(
     output local_thread_bitmap_t           sq_wake_bitmap);
 
     struct packed {
-        logic synchronized;
+        logic sync;
         logic flush;
         logic iinvalidate;
         logic dinvalidate;
@@ -121,11 +121,11 @@ module l1_store_queue(
             assign send_this_cycle = send_grant_oh[thread_idx] && sq_dequeue_ack;
             assign can_write_combine = pending_stores[thread_idx].valid
                 && pending_stores[thread_idx].address == dd_store_addr
-                && !pending_stores[thread_idx].synchronized
+                && !pending_stores[thread_idx].sync
                 && !pending_stores[thread_idx].flush
                 && !pending_stores[thread_idx].iinvalidate
                 && !pending_stores[thread_idx].dinvalidate
-                && !dd_store_synchronized
+                && !dd_store_sync
                 && !pending_stores[thread_idx].request_sent
                 && !send_this_cycle
                 && !dd_flush_en
@@ -133,7 +133,7 @@ module l1_store_queue(
                 && !dd_dinvalidate_en;
             assign is_restarted_sync_request = pending_stores[thread_idx].valid
                 && pending_stores[thread_idx].response_received
-                && pending_stores[thread_idx].synchronized;
+                && pending_stores[thread_idx].sync;
             assign update_store_entry = store_requested_this_entry
                 && (!pending_stores[thread_idx].valid || can_write_combine || got_response_this_entry)
                 && !is_restarted_sync_request;
@@ -145,7 +145,7 @@ module l1_store_queue(
                 && (!pending_stores[thread_idx].valid || got_response_this_entry)
                 && (dd_flush_en || dd_dinvalidate_en || dd_iinvalidate_en);
             assign sq_sync_store_pending[thread_idx] = pending_stores[thread_idx].valid
-                && pending_stores[thread_idx].synchronized;
+                && pending_stores[thread_idx].sync;
 
             always_comb
             begin
@@ -160,7 +160,7 @@ module l1_store_queue(
                     //   allow enqueuing a new one. This is simpler, because it avoids
                     //   needing to handle the lost wakeup issue (like the near miss case
                     //   in the data cache)
-                    if (dd_store_synchronized)
+                    if (dd_store_sync)
                         rollback[thread_idx] = !is_restarted_sync_request;
                     else if (pending_stores[thread_idx].valid && !can_write_combine
                         && !got_response_this_entry)
@@ -213,7 +213,7 @@ module l1_store_queue(
                             assert(!got_response_this_entry);
                             assert(!pending_stores[thread_idx].flush);
                             assert(!rollback[thread_idx]);
-                            assert(dd_store_synchronized);    // Restarted instruction must be synchronized
+                            assert(dd_store_sync);    // Restarted instruction must be synchronized
                             assert(!enqueue_cache_control);
                             pending_stores[thread_idx].valid <= 0;
                         end
@@ -229,7 +229,7 @@ module l1_store_queue(
 
                             pending_stores[thread_idx].valid <= 1;
                             pending_stores[thread_idx].address <= dd_store_addr;
-                            pending_stores[thread_idx].synchronized <= dd_store_synchronized;
+                            pending_stores[thread_idx].sync <= dd_store_sync;
                             pending_stores[thread_idx].flush <= 0;
                             pending_stores[thread_idx].iinvalidate <= 0;
                             pending_stores[thread_idx].dinvalidate <= 0;
@@ -243,7 +243,7 @@ module l1_store_queue(
 
                         pending_stores[thread_idx].valid <= 1;
                         pending_stores[thread_idx].address <= dd_store_addr;
-                        pending_stores[thread_idx].synchronized <= 0;
+                        pending_stores[thread_idx].sync <= 0;
                         pending_stores[thread_idx].flush <= dd_flush_en;
                         pending_stores[thread_idx].iinvalidate <= dd_iinvalidate_en;
                         pending_stores[thread_idx].dinvalidate <= dd_dinvalidate_en;
@@ -266,7 +266,7 @@ module l1_store_queue(
                         // When the L2 cache responds to a synchronized memory transaction, the
                         // entry is still valid until the thread wakes back up and retrives the
                         // result. If it is not synchronized, finish the transaction.
-                        if (pending_stores[thread_idx].synchronized)
+                        if (pending_stores[thread_idx].sync)
                         begin
                             pending_stores[thread_idx].response_received <= 1;
                             pending_stores[thread_idx].sync_success <= storebuf_l2_sync_success;
@@ -286,7 +286,7 @@ module l1_store_queue(
     assign sq_dequeue_addr = pending_stores[send_grant_idx].address;
     assign sq_dequeue_mask = pending_stores[send_grant_idx].mask;
     assign sq_dequeue_data = pending_stores[send_grant_idx].data;
-    assign sq_dequeue_synchronized = pending_stores[send_grant_idx].synchronized;
+    assign sq_dequeue_sync = pending_stores[send_grant_idx].sync;
     assign sq_dequeue_flush = pending_stores[send_grant_idx].flush;
     assign sq_dequeue_iinvalidate = pending_stores[send_grant_idx].iinvalidate;
     assign sq_dequeue_dinvalidate = pending_stores[send_grant_idx].dinvalidate;
@@ -327,7 +327,7 @@ module l1_store_queue(
             // Check that above is true for dequeued entries
             assert(!sq_dequeue_ready || $onehot0({pending_stores[send_grant_idx].flush,
                 pending_stores[send_grant_idx].dinvalidate, pending_stores[send_grant_idx].iinvalidate,
-                pending_stores[send_grant_idx].synchronized}));
+                pending_stores[send_grant_idx].sync}));
 
             // Can't assert wake and sleep signals in same cycle
             assert((sq_wake_bitmap & rollback) == 0);

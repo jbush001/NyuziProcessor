@@ -104,7 +104,7 @@ module l1_l2_interface
     input                                         dd_cache_miss,
     input cache_line_index_t                      dd_cache_miss_addr,
     input local_thread_idx_t                      dd_cache_miss_thread_idx,
-    input                                         dd_cache_miss_synchronized,
+    input                                         dd_cache_miss_sync,
     input                                         dd_store_en,
     input                                         dd_flush_en,
     input                                         dd_membar_en,
@@ -114,7 +114,7 @@ module l1_l2_interface
     input cache_line_index_t                      dd_store_addr,
     input cache_line_data_t                       dd_store_data,
     input local_thread_idx_t                      dd_store_thread_idx,
-    input                                         dd_store_synchronized,
+    input                                         dd_store_sync,
     input cache_line_index_t                      dd_store_bypass_addr,
     input local_thread_idx_t                      dd_store_bypass_thread_idx,
 
@@ -151,7 +151,7 @@ module l1_l2_interface
     logic dcache_dequeue_ready;
     logic dcache_dequeue_ack;
     cache_line_index_t dcache_dequeue_addr;
-    logic dcache_dequeue_synchronized;
+    logic dcache_dequeue_sync;
     cache_line_index_t icache_dequeue_addr;
     l1_miss_entry_idx_t dcache_dequeue_idx;
     l1_miss_entry_idx_t icache_dequeue_idx;
@@ -177,7 +177,7 @@ module l1_l2_interface
     logic               sq_dequeue_iinvalidate; // From l1_store_queue of l1_store_queue.v
     logic [CACHE_LINE_BYTES-1:0] sq_dequeue_mask;// From l1_store_queue of l1_store_queue.v
     logic               sq_dequeue_ready;       // From l1_store_queue of l1_store_queue.v
-    logic               sq_dequeue_synchronized;// From l1_store_queue of l1_store_queue.v
+    logic               sq_dequeue_sync;        // From l1_store_queue of l1_store_queue.v
     local_thread_bitmap_t sq_wake_bitmap;       // From l1_store_queue of l1_store_queue.v
     // End of automatics
 
@@ -188,14 +188,14 @@ module l1_l2_interface
         .cache_miss(dd_cache_miss),
         .cache_miss_addr(dd_cache_miss_addr),
         .cache_miss_thread_idx(dd_cache_miss_thread_idx),
-        .cache_miss_synchronized(dd_cache_miss_synchronized),
+        .cache_miss_sync(dd_cache_miss_sync),
 
         // Next request
         .dequeue_ready(dcache_dequeue_ready),
         .dequeue_ack(dcache_dequeue_ack),
         .dequeue_addr(dcache_dequeue_addr),
         .dequeue_idx(dcache_dequeue_idx),
-        .dequeue_synchronized(dcache_dequeue_synchronized),
+        .dequeue_sync(dcache_dequeue_sync),
 
         // Wake threads when a transaction is complete
         .l2_response_valid(dcache_l2_response_valid),
@@ -210,14 +210,14 @@ module l1_l2_interface
         .cache_miss(ifd_cache_miss),
         .cache_miss_addr(ifd_cache_miss_paddr),
         .cache_miss_thread_idx(ifd_cache_miss_thread_idx),
-        .cache_miss_synchronized('0),
+        .cache_miss_sync('0),
 
         // Next request
         .dequeue_ready(icache_dequeue_ready),
         .dequeue_ack(icache_dequeue_ack),
         .dequeue_addr(icache_dequeue_addr),
         .dequeue_idx(icache_dequeue_idx),
-        .dequeue_synchronized(),
+        .dequeue_sync(),
 
         // Wake threads when a transaction is complete
         .l2_response_valid(icache_l2_response_valid),
@@ -404,7 +404,7 @@ module l1_l2_interface
         begin
             // Send data cache request packet
             l2i_request_valid = 1;
-            l2i_request.packet_type = dcache_dequeue_synchronized ? L2REQ_LOAD_SYNC : L2REQ_LOAD;
+            l2i_request.packet_type = dcache_dequeue_sync ? L2REQ_LOAD_SYNC : L2REQ_LOAD;
             l2i_request.id = dcache_dequeue_idx;
             l2i_request.address = dcache_dequeue_addr;
             l2i_request.cache_type = CT_DCACHE;
@@ -424,7 +424,7 @@ module l1_l2_interface
             l2i_request_valid = 1;
             if (sq_dequeue_flush)
                 l2i_request.packet_type = L2REQ_FLUSH;
-            else if (sq_dequeue_synchronized)
+            else if (sq_dequeue_sync)
                 l2i_request.packet_type = L2REQ_STORE_SYNC;
             else if (sq_dequeue_iinvalidate)
                 l2i_request.packet_type = L2REQ_IINVALIDATE;

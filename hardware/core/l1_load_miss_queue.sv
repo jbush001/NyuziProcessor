@@ -31,14 +31,14 @@ module l1_load_miss_queue(
     input                                   cache_miss,
     input cache_line_index_t                cache_miss_addr,
     input local_thread_idx_t                cache_miss_thread_idx,
-    input                                   cache_miss_synchronized,
+    input                                   cache_miss_sync,
 
     // Dequeue request
     output logic                            dequeue_ready,
     input                                   dequeue_ack,
     output cache_line_index_t               dequeue_addr,
     output l1_miss_entry_idx_t              dequeue_idx,
-    output logic                            dequeue_synchronized,
+    output logic                            dequeue_sync,
 
     // Wake
     input                                   l2_response_valid,
@@ -50,7 +50,7 @@ module l1_load_miss_queue(
         logic request_sent;
         local_thread_bitmap_t waiting_threads;
         cache_line_index_t address;
-        logic synchronized;
+        logic sync;
     } pending_entries[`THREADS_PER_CORE];
 
     local_thread_bitmap_t collided_miss_oh;
@@ -78,7 +78,7 @@ module l1_load_miss_queue(
     assign dequeue_ready = |arbiter_request;
     assign dequeue_addr = pending_entries[send_grant_idx].address;
     assign dequeue_idx = send_grant_idx;
-    assign dequeue_synchronized = pending_entries[send_grant_idx].synchronized;
+    assign dequeue_sync = pending_entries[send_grant_idx].sync;
 
     assign request_unique = !(|collided_miss_oh);
 
@@ -91,8 +91,8 @@ module l1_load_miss_queue(
             // Synchronized requests cannot be combined with other requests.
             assign collided_miss_oh[wait_entry] = pending_entries[wait_entry].valid
                 && pending_entries[wait_entry].address == cache_miss_addr
-                && !pending_entries[wait_entry].synchronized
-                && !cache_miss_synchronized;
+                && !pending_entries[wait_entry].sync
+                && !cache_miss_sync;
             assign arbiter_request[wait_entry] = pending_entries[wait_entry].valid
                 && !pending_entries[wait_entry].request_sent;
 
@@ -119,7 +119,7 @@ module l1_load_miss_queue(
                         pending_entries[wait_entry].valid <= 1;
                         pending_entries[wait_entry].address <= cache_miss_addr;
                         pending_entries[wait_entry].request_sent <= 0;
-                        pending_entries[wait_entry].synchronized <= cache_miss_synchronized;
+                        pending_entries[wait_entry].sync <= cache_miss_sync;
 
                         // Ensure this entry isn't already in use or a response
                         // isn't coming in this cycle (lower level logic should prevent

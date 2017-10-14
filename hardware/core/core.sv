@@ -68,7 +68,7 @@ module core
     scalar_t            cr_trap_handler;        // From control_registers of control_registers.v
     logic               dd_cache_miss;          // From dcache_data_stage of dcache_data_stage.v
     cache_line_index_t  dd_cache_miss_addr;     // From dcache_data_stage of dcache_data_stage.v
-    logic               dd_cache_miss_synchronized;// From dcache_data_stage of dcache_data_stage.v
+    logic               dd_cache_miss_sync;     // From dcache_data_stage of dcache_data_stage.v
     local_thread_idx_t  dd_cache_miss_thread_idx;// From dcache_data_stage of dcache_data_stage.v
     control_register_t  dd_creg_index;          // From dcache_data_stage of dcache_data_stage.v
     logic               dd_creg_read_en;        // From dcache_data_stage of dcache_data_stage.v
@@ -103,7 +103,7 @@ module core
     cache_line_data_t   dd_store_data;          // From dcache_data_stage of dcache_data_stage.v
     logic               dd_store_en;            // From dcache_data_stage of dcache_data_stage.v
     logic [CACHE_LINE_BYTES-1:0] dd_store_mask; // From dcache_data_stage of dcache_data_stage.v
-    logic               dd_store_synchronized;  // From dcache_data_stage of dcache_data_stage.v
+    logic               dd_store_sync;          // From dcache_data_stage of dcache_data_stage.v
     local_thread_idx_t  dd_store_thread_idx;    // From dcache_data_stage of dcache_data_stage.v
     subcycle_t          dd_subcycle;            // From dcache_data_stage of dcache_data_stage.v
     logic               dd_suspend_thread;      // From dcache_data_stage of dcache_data_stage.v

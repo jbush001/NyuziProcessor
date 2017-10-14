@@ -98,7 +98,7 @@ module dcache_data_stage(
     output logic                              dd_cache_miss,
     output cache_line_index_t                 dd_cache_miss_addr,
     output local_thread_idx_t                 dd_cache_miss_thread_idx,
-    output logic                              dd_cache_miss_synchronized,
+    output logic                              dd_cache_miss_sync,
     output logic                              dd_store_en,
     output logic                              dd_flush_en,
     output logic                              dd_membar_en,
@@ -108,7 +108,7 @@ module dcache_data_stage(
     output cache_line_index_t                 dd_store_addr,
     output cache_line_data_t                  dd_store_data,
     output local_thread_idx_t                 dd_store_thread_idx,
-    output logic                              dd_store_synchronized,
+    output logic                              dd_store_sync,
     output cache_line_index_t                 dd_store_bypass_addr,
     output local_thread_idx_t                 dd_store_bypass_thread_idx,
 
@@ -143,7 +143,7 @@ module dcache_data_stage(
     logic dcache_store_en;
     logic io_access_en;
     logic is_unaligned;
-    logic is_synchronized;
+    logic is_sync;
     logic cache_control_en;
     logic[$clog2(NUM_VECTOR_LANES) - 1:0] scgath_lane;
     logic is_tlb_access;
@@ -166,7 +166,7 @@ module dcache_data_stage(
         && wb_rollback_thread_idx == dt_thread_idx
         && wb_rollback_pipeline == PIPE_MEM;
     assign is_io_address = dt_request_paddr ==? 32'hffff????;
-    assign is_synchronized = dt_instruction.memory_access_type == MEM_SYNC;
+    assign is_sync = dt_instruction.memory_access_type == MEM_SYNC;
 
     // Determine if this instruction accesses the TLB (and thus will raise a TLB
     // miss if the entry is not present)
@@ -203,7 +203,7 @@ module dcache_data_stage(
     assign dd_store_bypass_addr = dt_request_paddr[31:CACHE_LINE_OFFSET_WIDTH];
     assign dd_store_bypass_thread_idx = dt_thread_idx;
     assign dd_store_addr = dt_request_paddr[31:CACHE_LINE_OFFSET_WIDTH];
-    assign dd_store_synchronized = is_synchronized;
+    assign dd_store_sync = is_sync;
     assign dd_store_en = dcache_store_en
         && !is_unaligned
         && dt_tlb_writable
@@ -286,7 +286,7 @@ module dcache_data_stage(
 
     // Treat a synchronized load as a cache miss the first time it occurs, because
     // it needs to send it to the L2 cache to register it.
-    assign cache_hit = |way_hit_oh && (!is_synchronized || dd_sync_load_pending[dt_thread_idx])
+    assign cache_hit = |way_hit_oh && (!is_sync || dd_sync_load_pending[dt_thread_idx])
         && dt_tlb_hit;
 
     //
@@ -445,7 +445,7 @@ module dcache_data_stage(
         && |l2i_dtag_update_en_oh
         && l2i_dtag_update_set == dt_request_paddr.set_idx
         && l2i_dtag_update_tag == dt_request_paddr.tag
-        && !is_synchronized;
+        && !is_sync;
 
     assign dd_cache_miss = dcache_load_en
         && !cache_hit
@@ -454,7 +454,7 @@ module dcache_data_stage(
         && !is_unaligned;
     assign dd_cache_miss_addr = dcache_request_addr[31:CACHE_LINE_OFFSET_WIDTH];
     assign dd_cache_miss_thread_idx = dt_thread_idx;
-    assign dd_cache_miss_synchronized = is_synchronized;
+    assign dd_cache_miss_sync = is_sync;
 
     assign dd_update_lru_en = cache_hit && dcache_access_en && !is_unaligned;
     assign dd_update_lru_way = way_hit_idx;
@@ -475,7 +475,7 @@ module dcache_data_stage(
             begin
                 if (reset)
                     dd_sync_load_pending[thread_idx] <= 0;
-                else if (dcache_load_en && is_synchronized && dt_thread_idx == local_thread_idx_t'(thread_idx))
+                else if (dcache_load_en && is_sync && dt_thread_idx == local_thread_idx_t'(thread_idx))
                 begin
                     // Track if this is the first or restarted request.
                     dd_sync_load_pending[thread_idx] <= !dd_sync_load_pending[thread_idx];
