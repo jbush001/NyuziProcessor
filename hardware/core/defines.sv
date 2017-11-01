@@ -63,6 +63,8 @@ parameter CORE_ID_WIDTH = $clog2(`NUM_CORES);
 // now that it is a parameter, but I haven't tested.
 typedef logic[3:0] core_id_t;
 
+// This should match the number of signals in the assignment to core_perf_events
+// in core.sv.
 parameter CORE_PERF_EVENTS = 13;
 parameter L2_PERF_EVENTS = 3;
 parameter TOTAL_PERF_EVENTS = L2_PERF_EVENTS + CORE_PERF_EVENTS * `NUM_CORES;
@@ -72,7 +74,7 @@ parameter TOTAL_PERF_EVENTS = L2_PERF_EVENTS + CORE_PERF_EVENTS * `NUM_CORES;
 //
 
 parameter INSTRUCTION_NOP = 32'd0;
-parameter REG_RA = (register_idx_t'(31));
+parameter REG_RA = register_idx_t'(31);
 
 // Immediate/register arithmetic operation encodings
 typedef enum logic[5:0] {
@@ -325,7 +327,7 @@ typedef struct packed {
     l2_set_idx_t set_idx;
 } l2_addr_t;
 
-// Memory address that is multiple of cache line size
+// Memory address expressed as multiple of cache line size
 typedef logic[31 - CACHE_LINE_OFFSET_WIDTH:0] cache_line_index_t;
 
 typedef enum logic {

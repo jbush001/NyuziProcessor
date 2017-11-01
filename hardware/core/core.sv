@@ -351,6 +351,8 @@ module core
     l1_l2_interface #(.CORE_ID(CORE_ID)) l1_l2_interface(.*);
     io_request_queue #(.CORE_ID(CORE_ID)) io_request_queue(.*);
 
+    // The number os signals in this assignment must match CORE_PERF_EVENTS
+    // in defines.sv.
     assign core_perf_events = {
         ix_perf_cond_branch_not_taken,
         ix_perf_cond_branch_taken,
