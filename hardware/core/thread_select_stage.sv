@@ -52,9 +52,9 @@ module thread_select_stage(
     // From writeback_stage
     input                              wb_writeback_en,
     input local_thread_idx_t           wb_writeback_thread_idx,
-    input                              wb_writeback_is_vector,
+    input                              wb_writeback_vector,
     input register_idx_t               wb_writeback_reg,
-    input                              wb_writeback_is_last_subcycle,
+    input                              wb_writeback_last_subcycle,
     input local_thread_idx_t           wb_rollback_thread_idx,
     input                              wb_rollback_en,
     input pipeline_sel_t               wb_rollback_pipeline,
@@ -174,7 +174,7 @@ module thread_select_stage(
                 scoreboard_dest_bitmap_nxt = 0;
                 if (thread_instr_nxt.has_dest)
                 begin
-                    if (thread_instr_nxt.dest_is_vector)
+                    if (thread_instr_nxt.dest_vector)
                         scoreboard_dest_bitmap_nxt[{1'b1, thread_instr_nxt.dest_reg}] = 1;
                     else
                         scoreboard_dest_bitmap_nxt[{1'b0, thread_instr_nxt.dest_reg}] = 1;
@@ -189,7 +189,7 @@ module thread_select_stage(
                 scoreboard_dep_bitmap_nxt = 0;
                 if (thread_instr_nxt.has_dest)
                 begin
-                    if (thread_instr_nxt.dest_is_vector)
+                    if (thread_instr_nxt.dest_vector)
                         scoreboard_dep_bitmap_nxt[{1'b1, thread_instr_nxt.dest_reg}] = 1;
                     else
                         scoreboard_dep_bitmap_nxt[{1'b0, thread_instr_nxt.dest_reg}] = 1;
@@ -253,9 +253,9 @@ module thread_select_stage(
                 // intermediate subcycles, this is necessary for correctness.
                 scoreboard_clear_bitmap = 0;
                 if (wb_writeback_en && wb_writeback_thread_idx == local_thread_idx_t'(thread_idx)
-                    && wb_writeback_is_last_subcycle)
+                    && wb_writeback_last_subcycle)
                 begin
-                    if (wb_writeback_is_vector)
+                    if (wb_writeback_vector)
                         scoreboard_clear_bitmap[{1'b1, wb_writeback_reg}] = 1;
                     else
                         scoreboard_clear_bitmap[{1'b0, wb_writeback_reg}] = 1;

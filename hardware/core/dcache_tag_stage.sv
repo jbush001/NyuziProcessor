@@ -114,7 +114,7 @@ module dcache_tag_stage
     page_index_t ppage_idx;
     scalar_t fetched_addr;
     logic tlb_lookup_en;
-    logic is_valid_cache_control;
+    logic valid_cache_control;
     logic update_dtlb_en;
     logic tlb_writable;
     logic tlb_present;
@@ -124,25 +124,25 @@ module dcache_tag_stage
     assign instruction_valid = of_instruction_valid
         && (!wb_rollback_en || wb_rollback_thread_idx != of_thread_idx)
         && of_instruction.pipeline_sel == PIPE_MEM;
-    assign is_valid_cache_control = instruction_valid
-        && of_instruction.is_cache_control;
+    assign valid_cache_control = instruction_valid
+        && of_instruction.cache_control;
     assign cache_load_en = instruction_valid
         && of_instruction.memory_access_type != MEM_CONTROL_REG
-        && of_instruction.is_memory_access      // Not cache control
-        && of_instruction.is_load;
+        && of_instruction.memory_access      // Not cache control
+        && of_instruction.load;
     assign scgath_lane = ~of_subcycle;
     assign request_addr_nxt = of_operand1[scgath_lane] + of_instruction.immediate_value;
     assign new_tlb_value = of_store_value[0];
-    assign dt_invalidate_tlb_en = is_valid_cache_control
+    assign dt_invalidate_tlb_en = valid_cache_control
         && of_instruction.cache_control_op == CACHE_TLB_INVAL
         && cr_supervisor_en[of_thread_idx];
-    assign dt_invalidate_tlb_all_en = is_valid_cache_control
+    assign dt_invalidate_tlb_all_en = valid_cache_control
         && of_instruction.cache_control_op == CACHE_TLB_INVAL_ALL
         && cr_supervisor_en[of_thread_idx];
-    assign update_dtlb_en = is_valid_cache_control
+    assign update_dtlb_en = valid_cache_control
         && of_instruction.cache_control_op == CACHE_DTLB_INSERT
         && cr_supervisor_en[of_thread_idx];
-    assign dt_update_itlb_en = is_valid_cache_control
+    assign dt_update_itlb_en = valid_cache_control
         && of_instruction.cache_control_op == CACHE_ITLB_INSERT
         && cr_supervisor_en[of_thread_idx];
     assign dt_update_itlb_supervisor = new_tlb_value.supervisor;

@@ -73,7 +73,7 @@ module writeback_stage(
     input scalar_t                        dd_rollback_pc,
     input cache_line_data_t               dd_load_data,
     input                                 dd_suspend_thread,
-    input                                 dd_is_io_address,
+    input                                 dd_io_access,
     input logic                           dd_fault,
     input trap_cause_t                    dd_fault_cause,
 
@@ -111,11 +111,11 @@ module writeback_stage(
     // To operand_fetch_stage/thread_select_stage
     output logic                          wb_writeback_en,
     output local_thread_idx_t             wb_writeback_thread_idx,
-    output logic                          wb_writeback_is_vector,
+    output logic                          wb_writeback_vector,
     output vector_t                       wb_writeback_value,
     output vector_lane_mask_t             wb_writeback_mask,
     output register_idx_t                 wb_writeback_reg,
-    output logic                          wb_writeback_is_last_subcycle,
+    output logic                          wb_writeback_last_subcycle,
 
     // To thread_select_stage
     output local_thread_bitmap_t          wb_suspend_thread_oh,
@@ -135,23 +135,23 @@ module writeback_stage(
     // Used by testbench
     scalar_t __debug_wb_pc;
     pipeline_sel_t __debug_wb_pipeline;
-    logic __debug_is_sync_store;
+    logic __debug_sync_store;
 `endif
     logic[NUM_VECTOR_LANES - 1:0] scycle_vcompare_result;
     logic[NUM_VECTOR_LANES - 1:0] mcycle_vcompare_result;
     vector_lane_mask_t dd_vector_lane_oh;
     cache_line_data_t bypassed_read_data;
     local_thread_bitmap_t thread_dd_oh;
-    logic is_last_subcycle_dd;
-    logic is_last_subcycle_sx;
-    logic is_last_subcycle_mx;
+    logic last_subcycle_dd;
+    logic last_subcycle_sx;
+    logic last_subcycle_mx;
     logic writeback_en_nxt;
     local_thread_idx_t writeback_thread_idx_nxt;
-    logic writeback_is_vector_nxt;
+    logic writeback_vector_nxt;
     vector_t writeback_value_nxt;
     vector_lane_mask_t writeback_mask_nxt;
     register_idx_t writeback_reg_nxt;
-    logic writeback_is_last_subcycle_nxt;
+    logic writeback_last_subcycle_nxt;
 
     assign wb_perf_instruction_retire = fx5_instruction_valid || ix_instruction_valid
         || dd_instruction_valid;
@@ -333,9 +333,9 @@ module writeback_stage(
         .one_hot(dd_vector_lane_oh),
         .index(dd_subcycle));
 
-    assign is_last_subcycle_dd = dd_subcycle == dd_instruction.last_subcycle;
-    assign is_last_subcycle_sx = ix_subcycle == ix_instruction.last_subcycle;
-    assign is_last_subcycle_mx = fx5_subcycle == fx5_instruction.last_subcycle;
+    assign last_subcycle_dd = dd_subcycle == dd_instruction.last_subcycle;
+    assign last_subcycle_sx = ix_subcycle == ix_instruction.last_subcycle;
+    assign last_subcycle_mx = fx5_subcycle == fx5_instruction.last_subcycle;
 
     always_comb
     begin
@@ -343,9 +343,9 @@ module writeback_stage(
         writeback_thread_idx_nxt = 0;
         writeback_mask_nxt = 0;
         writeback_value_nxt = 0;
-        writeback_is_vector_nxt = 0;
+        writeback_vector_nxt = 0;
         writeback_reg_nxt = 0;
-        writeback_is_last_subcycle_nxt = 0;
+        writeback_last_subcycle_nxt = 0;
 
         // wb_rollback_en is derived combinatorially from the instruction
         // that is about to retire, so this doesn't need to check
@@ -361,14 +361,14 @@ module writeback_stage(
 
                 writeback_thread_idx_nxt = fx5_thread_idx;
                 writeback_mask_nxt = fx5_mask_value;
-                if (fx5_instruction.is_compare)
+                if (fx5_instruction.compare)
                     writeback_value_nxt = vector_t'(mcycle_vcompare_result);
                 else
                     writeback_value_nxt = fx5_result;
 
-                writeback_is_vector_nxt = fx5_instruction.dest_is_vector;
+                writeback_vector_nxt = fx5_instruction.dest_vector;
                 writeback_reg_nxt = fx5_instruction.dest_reg;
-                writeback_is_last_subcycle_nxt = is_last_subcycle_mx;
+                writeback_last_subcycle_nxt = last_subcycle_mx;
             end
 
             //
@@ -376,7 +376,7 @@ module writeback_stage(
             //
             3'b010:
             begin
-                if (ix_instruction.is_branch
+                if (ix_instruction.branch
                     && (ix_instruction.branch_type == BRANCH_CALL_OFFSET
                     || ix_instruction.branch_type == BRANCH_CALL_REGISTER))
                 begin
@@ -392,16 +392,16 @@ module writeback_stage(
 
                 writeback_thread_idx_nxt = ix_thread_idx;
                 writeback_mask_nxt = ix_mask_value;
-                if (ix_instruction.is_call)
+                if (ix_instruction.call)
                     writeback_value_nxt = vector_t'(ix_instruction.pc + 32'd4);
-                else if (ix_instruction.is_compare)
+                else if (ix_instruction.compare)
                     writeback_value_nxt = vector_t'(scycle_vcompare_result);
                 else
                     writeback_value_nxt = ix_result;
 
-                writeback_is_vector_nxt = ix_instruction.dest_is_vector;
+                writeback_vector_nxt = ix_instruction.dest_vector;
                 writeback_reg_nxt = ix_instruction.dest_reg;
-                writeback_is_last_subcycle_nxt = is_last_subcycle_sx;
+                writeback_last_subcycle_nxt = last_subcycle_sx;
             end
 
             //
@@ -411,9 +411,9 @@ module writeback_stage(
             begin
                 writeback_en_nxt = dd_instruction.has_dest && !wb_rollback_en;
                 writeback_thread_idx_nxt = dd_thread_idx;
-                if (!dd_instruction.is_cache_control)
+                if (!dd_instruction.cache_control)
                 begin
-                    if (dd_instruction.is_load)
+                    if (dd_instruction.load)
                     begin
                         unique case (memory_op)
                             MEM_B:      writeback_value_nxt[0] = scalar_t'(byte_aligned);
@@ -424,7 +424,7 @@ module writeback_stage(
                             MEM_L:
                             begin
                                 // Scalar Load
-                                if (dd_is_io_address)
+                                if (dd_io_access)
                                 begin
                                     writeback_mask_nxt = {NUM_VECTOR_LANES{1'b1}};
                                     writeback_value_nxt[0] = ior_read_value;
@@ -466,9 +466,9 @@ module writeback_stage(
                     end
                 end
 
-                writeback_is_vector_nxt = dd_instruction.dest_is_vector;
+                writeback_vector_nxt = dd_instruction.dest_vector;
                 writeback_reg_nxt = dd_instruction.dest_reg;
-                writeback_is_last_subcycle_nxt = is_last_subcycle_dd;
+                writeback_last_subcycle_nxt = last_subcycle_dd;
             end
 
             default:
@@ -481,9 +481,9 @@ module writeback_stage(
         wb_writeback_thread_idx <= writeback_thread_idx_nxt;
         wb_writeback_mask <= writeback_mask_nxt;
         wb_writeback_value <= writeback_value_nxt;
-        wb_writeback_is_vector <= writeback_is_vector_nxt;
+        wb_writeback_vector <= writeback_vector_nxt;
         wb_writeback_reg <= writeback_reg_nxt;
-        wb_writeback_is_last_subcycle <= writeback_is_last_subcycle_nxt;
+        wb_writeback_last_subcycle <= writeback_last_subcycle_nxt;
     end
 
     always_ff @(posedge clk, posedge reset)
@@ -499,9 +499,9 @@ module writeback_stage(
             assert($onehot0({ix_instruction_valid, dd_instruction_valid, fx5_instruction_valid}));
 
 `ifdef SIMULATION
-            if (dd_instruction_valid && !dd_instruction.is_cache_control)
+            if (dd_instruction_valid && !dd_instruction.cache_control)
             begin
-                if (dd_instruction.is_load)
+                if (dd_instruction.load)
                 begin
                     // Loads should always have a destination register.
                     assert(dd_instruction.has_dest);
@@ -511,16 +511,16 @@ module writeback_stage(
                         || memory_op == MEM_CONTROL_REG)
                     begin
                         // Must be scalar destination
-                        assert(!dd_instruction.dest_is_vector);
+                        assert(!dd_instruction.dest_vector);
                     end
                     else
-                        assert(dd_instruction.dest_is_vector);
+                        assert(dd_instruction.dest_vector);
                 end
                 else if (memory_op == MEM_SYNC)
                 begin
                     // Synchronized stores are special because they write back (whether they
                     // were successful).
-                    assert(dd_instruction.has_dest && !dd_instruction.dest_is_vector);
+                    assert(dd_instruction.has_dest && !dd_instruction.dest_vector);
                 end
             end
 `endif
@@ -540,7 +540,7 @@ module writeback_stage(
         end
 
         // Used by testbench for cosimulation output
-        __debug_is_sync_store <= dd_instruction_valid && !dd_instruction.is_load
+        __debug_sync_store <= dd_instruction_valid && !dd_instruction.load
             && memory_op == MEM_SYNC;
         case ({fx5_instruction_valid, ix_instruction_valid, dd_instruction_valid})
             3'b100:

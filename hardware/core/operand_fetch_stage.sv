@@ -48,7 +48,7 @@ module operand_fetch_stage(
     input local_thread_idx_t          wb_rollback_thread_idx,
     input                             wb_writeback_en,
     input local_thread_idx_t          wb_writeback_thread_idx,
-    input                             wb_writeback_is_vector,
+    input                             wb_writeback_vector,
     input vector_t                    wb_writeback_value,
     input vector_lane_mask_t          wb_writeback_mask,
     input register_idx_t              wb_writeback_reg);
@@ -69,7 +69,7 @@ module operand_fetch_stage(
         .read2_en(ts_instruction_valid && ts_instruction.has_scalar2),
         .read2_addr({ts_thread_idx, ts_instruction.scalar_sel2}),
         .read2_data(scalar_val2),
-        .write_en(wb_writeback_en && !wb_writeback_is_vector),
+        .write_en(wb_writeback_en && !wb_writeback_vector),
         .write_addr({wb_writeback_thread_idx, wb_writeback_reg}),
         .write_data(wb_writeback_value[0]),
         .*);
@@ -89,7 +89,7 @@ module operand_fetch_stage(
                 .read2_en(ts_instruction.has_vector2),
                 .read2_addr({ts_thread_idx, ts_instruction.vector_sel2}),
                 .read2_data(vector_val2[lane]),
-                .write_en(wb_writeback_en && wb_writeback_is_vector && wb_writeback_mask[NUM_VECTOR_LANES - lane - 1]),
+                .write_en(wb_writeback_en && wb_writeback_vector && wb_writeback_mask[NUM_VECTOR_LANES - lane - 1]),
                 .write_addr({wb_writeback_thread_idx, wb_writeback_reg}),
                 .write_data(wb_writeback_value[lane]),
                 .*);
@@ -114,7 +114,7 @@ module operand_fetch_stage(
         of_subcycle <= ts_subcycle;
     end
 
-    assign of_store_value = of_instruction.store_value_is_vector
+    assign of_store_value = of_instruction.store_value_vector
             ? vector_val2
             : {{NUM_VECTOR_LANES - 1{32'd0}}, scalar_val2};
 

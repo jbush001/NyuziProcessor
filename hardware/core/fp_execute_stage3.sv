@@ -40,8 +40,8 @@ module fp_execute_stage3(
     input decoded_instruction_t                 fx2_instruction,
     input local_thread_idx_t                    fx2_thread_idx,
     input subcycle_t                            fx2_subcycle,
-    input [NUM_VECTOR_LANES - 1:0]             fx2_result_is_inf,
-    input [NUM_VECTOR_LANES - 1:0]             fx2_result_is_nan,
+    input [NUM_VECTOR_LANES - 1:0]             fx2_result_inf,
+    input [NUM_VECTOR_LANES - 1:0]             fx2_result_nan,
     input [NUM_VECTOR_LANES - 1:0][5:0]        fx2_ftoi_lshift,
 
     // Floating point addition/subtraction
@@ -65,8 +65,8 @@ module fp_execute_stage3(
     output vector_lane_mask_t                   fx3_mask_value,
     output local_thread_idx_t                   fx3_thread_idx,
     output subcycle_t                           fx3_subcycle,
-    output logic[NUM_VECTOR_LANES - 1:0]       fx3_result_is_inf,
-    output logic[NUM_VECTOR_LANES - 1:0]       fx3_result_is_nan,
+    output logic[NUM_VECTOR_LANES - 1:0]       fx3_result_inf,
+    output logic[NUM_VECTOR_LANES - 1:0]       fx3_result_nan,
     output logic[NUM_VECTOR_LANES - 1:0][5:0]  fx3_ftoi_lshift,
 
     // Floating point addition/subtraction
@@ -80,9 +80,9 @@ module fp_execute_stage3(
     output logic[NUM_VECTOR_LANES - 1:0][7:0]  fx3_mul_exponent,
     output logic[NUM_VECTOR_LANES - 1:0]       fx3_mul_sign);
 
-    logic is_ftoi;
+    logic ftoi;
 
-    assign is_ftoi = fx2_instruction.alu_op == OP_FTOI;
+    assign ftoi = fx2_instruction.alu_op == OP_FTOI;
 
     genvar lane_idx;
     generate
@@ -90,7 +90,7 @@ module fp_execute_stage3(
         begin : lane_logic_gen
             logic carry_in;
             scalar_t unnormalized_sum;
-            logic sum_is_odd;
+            logic sum_odd;
             logic round_up;
             logic round_tie;
             logic do_round;
@@ -98,10 +98,10 @@ module fp_execute_stage3(
 
             // Round-to-nearest, round half to even. Compute the value of the low bit
             // of the sum to predict if the result is odd.
-            assign sum_is_odd = fx2_significand_le[lane_idx][0] ^ fx2_significand_se[lane_idx][0];
+            assign sum_odd = fx2_significand_le[lane_idx][0] ^ fx2_significand_se[lane_idx][0];
             assign round_tie = (fx2_guard[lane_idx] && !(fx2_round[lane_idx] || fx2_sticky[lane_idx]));
             assign round_up = (fx2_guard[lane_idx] && (fx2_round[lane_idx] || fx2_sticky[lane_idx]));
-            assign do_round = (round_up || (sum_is_odd && round_tie));
+            assign do_round = (round_up || (sum_odd && round_tie));
 
             // For logical subtraction, rounding reduces the unnormalized sum because
             // it rounds the subtrahend up. Since this inverts the second parameter
@@ -112,14 +112,14 @@ module fp_execute_stage3(
             // For float<->int conversions, overload this to handle changing between signed-magnitude
             // and two's complement format. LE is set to zero and fx2_logical_subtract indicates
             // if it needs a conversion.
-            assign carry_in = fx2_logical_subtract[lane_idx] ^ (do_round && !is_ftoi);
+            assign carry_in = fx2_logical_subtract[lane_idx] ^ (do_round && !ftoi);
             assign {unnormalized_sum, _unused} = {fx2_significand_le[lane_idx], 1'b1}
                 + {(fx2_significand_se[lane_idx] ^ {32{fx2_logical_subtract[lane_idx]}}), carry_in};
 
             always_ff @(posedge clk)
             begin
-                fx3_result_is_inf[lane_idx] <= fx2_result_is_inf[lane_idx];
-                fx3_result_is_nan[lane_idx] <= fx2_result_is_nan[lane_idx];
+                fx3_result_inf[lane_idx] <= fx2_result_inf[lane_idx];
+                fx3_result_nan[lane_idx] <= fx2_result_nan[lane_idx];
                 fx3_ftoi_lshift[lane_idx] <= fx2_ftoi_lshift[lane_idx];
 
                 // Addition

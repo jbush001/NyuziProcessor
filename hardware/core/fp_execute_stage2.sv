@@ -44,8 +44,8 @@ module fp_execute_stage2(
     input decoded_instruction_t                 fx1_instruction,
     input local_thread_idx_t                    fx1_thread_idx,
     input subcycle_t                            fx1_subcycle,
-    input [NUM_VECTOR_LANES - 1:0]             fx1_result_is_inf,
-    input [NUM_VECTOR_LANES - 1:0]             fx1_result_is_nan,
+    input [NUM_VECTOR_LANES - 1:0]             fx1_result_inf,
+    input [NUM_VECTOR_LANES - 1:0]             fx1_result_nan,
     input [NUM_VECTOR_LANES - 1:0][5:0]        fx1_ftoi_lshift,
 
     // Floating point addition/subtraction
@@ -68,8 +68,8 @@ module fp_execute_stage2(
     output vector_lane_mask_t                   fx2_mask_value,
     output local_thread_idx_t                   fx2_thread_idx,
     output subcycle_t                           fx2_subcycle,
-    output logic[NUM_VECTOR_LANES - 1:0]       fx2_result_is_inf,
-    output logic[NUM_VECTOR_LANES - 1:0]       fx2_result_is_nan,
+    output logic[NUM_VECTOR_LANES - 1:0]       fx2_result_inf,
+    output logic[NUM_VECTOR_LANES - 1:0]       fx2_result_nan,
     output logic[NUM_VECTOR_LANES - 1:0][5:0]  fx2_ftoi_lshift,
 
     // Floating point addition/subtraction
@@ -87,9 +87,9 @@ module fp_execute_stage2(
     output logic[NUM_VECTOR_LANES - 1:0][7:0]   fx2_mul_exponent,
     output logic[NUM_VECTOR_LANES - 1:0]        fx2_mul_sign);
 
-    logic is_imulhs;
+    logic imulhs;
 
-    assign is_imulhs = fx1_instruction.alu_op == OP_MULH_I;
+    assign imulhs = fx1_instruction.alu_op == OP_MULH_I;
 
     genvar lane_idx;
     generate
@@ -108,9 +108,9 @@ module fp_execute_stage2(
             assign sticky = |sticky_bits;
 
             // Sign extend multiply operands
-            assign sext_multiplicand = {{32{fx1_multiplicand[lane_idx][31] && is_imulhs}},
+            assign sext_multiplicand = {{32{fx1_multiplicand[lane_idx][31] && imulhs}},
                 fx1_multiplicand[lane_idx]};
-            assign sext_multiplier = {{32{fx1_multiplier[lane_idx][31] && is_imulhs}},
+            assign sext_multiplier = {{32{fx1_multiplier[lane_idx][31] && imulhs}},
                 fx1_multiplier[lane_idx]};
 
             always_ff @(posedge clk)
@@ -125,8 +125,8 @@ module fp_execute_stage2(
                 fx2_sticky[lane_idx] <= sticky;
                 fx2_mul_exponent[lane_idx] <= fx1_mul_exponent[lane_idx];
                 fx2_mul_sign[lane_idx] <= fx1_mul_sign[lane_idx];
-                fx2_result_is_inf[lane_idx] <= fx1_result_is_inf[lane_idx];
-                fx2_result_is_nan[lane_idx] <= fx1_result_is_nan[lane_idx];
+                fx2_result_inf[lane_idx] <= fx1_result_inf[lane_idx];
+                fx2_result_nan[lane_idx] <= fx1_result_nan[lane_idx];
                 fx2_ftoi_lshift[lane_idx] <= fx1_ftoi_lshift[lane_idx];
 
                 // XXX Simple version. Should have a wallace tree here to collect partial products.

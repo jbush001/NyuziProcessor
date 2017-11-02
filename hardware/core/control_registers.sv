@@ -42,7 +42,7 @@ module control_registers
     output logic[`THREADS_PER_CORE - 1:0]   cr_interrupt_pending,
 
     // From int_execute_stage
-    input                                   ix_is_eret,
+    input                                   ix_eret,
     input local_thread_idx_t                ix_thread_idx,
 
     // From dcache_data_stage
@@ -133,9 +133,9 @@ module control_registers
 
             // A fault and eret are triggered from the same stage, so they
             // must not occur simultaneously (an eret can raise a fault if it
-            // is not in supervisor mode, but ix_is_eret should not be asserted
+            // is not in supervisor mode, but ix_eret should not be asserted
             // in that case)
-            assert(!(wb_trap && ix_is_eret));
+            assert(!(wb_trap && ix_eret));
 
             cycle_count <= cycle_count + 1;
 
@@ -167,7 +167,7 @@ module control_registers
                 if (wb_trap_cause.trap_type == TT_TLB_MISS)
                     cr_mmu_en[wb_trap_thread_idx] <= 0;
             end
-            else if (ix_is_eret)
+            else if (ix_eret)
             begin
                 // Copy from prev flags to current flags
                 cr_interrupt_en[ix_thread_idx] <= interrupt_en_saved[0][ix_thread_idx];

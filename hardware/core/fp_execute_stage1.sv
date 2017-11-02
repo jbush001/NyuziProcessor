@@ -58,8 +58,8 @@ module fp_execute_stage1(
     output vector_lane_mask_t                      fx1_mask_value,
     output local_thread_idx_t                      fx1_thread_idx,
     output subcycle_t                              fx1_subcycle,
-    output logic[NUM_VECTOR_LANES - 1:0]          fx1_result_is_inf,
-    output logic[NUM_VECTOR_LANES - 1:0]          fx1_result_is_nan,
+    output logic[NUM_VECTOR_LANES - 1:0]          fx1_result_inf,
+    output logic[NUM_VECTOR_LANES - 1:0]          fx1_result_nan,
     output logic[NUM_VECTOR_LANES - 1:0][5:0]     fx1_ftoi_lshift,
 
     // Floating point addition/subtraction
@@ -76,16 +76,16 @@ module fp_execute_stage1(
     output logic[NUM_VECTOR_LANES - 1:0][7:0]     fx1_mul_exponent,
     output logic[NUM_VECTOR_LANES - 1:0]          fx1_mul_sign);
 
-    logic is_fmul;
-    logic is_imul;
-    logic is_ftoi;
-    logic is_itof;
+    logic fmul;
+    logic imul;
+    logic ftoi;
+    logic itof;
 
-    assign is_fmul = of_instruction.alu_op == OP_MUL_F;
-    assign is_imul = of_instruction.alu_op == OP_MULL_I || of_instruction.alu_op == OP_MULH_U
+    assign fmul = of_instruction.alu_op == OP_MUL_F;
+    assign imul = of_instruction.alu_op == OP_MULL_I || of_instruction.alu_op == OP_MULH_U
         || of_instruction.alu_op == OP_MULH_I;
-    assign is_ftoi = of_instruction.alu_op == OP_FTOI;
-    assign is_itof = of_instruction.alu_op == OP_ITOF;
+    assign ftoi = of_instruction.alu_op == OP_FTOI;
+    assign itof = of_instruction.alu_op == OP_ITOF;
 
     genvar lane_idx;
     generate
@@ -97,16 +97,16 @@ module fp_execute_stage1(
             logic[FLOAT32_SIG_WIDTH:0] full_significand2;
             logic op1_hidden_bit;
             logic op2_hidden_bit;
-            logic op1_is_larger;
+            logic op1_larger;
             logic[FLOAT32_EXP_WIDTH - 1:0] exp_difference;
-            logic is_subtract;
+            logic subtract;
             logic[FLOAT32_EXP_WIDTH - 1:0] mul_exponent;
-            logic fop1_is_inf;
-            logic fop1_is_nan;
-            logic fop2_is_inf;
-            logic fop2_is_nan;
+            logic fop1_inf;
+            logic fop1_nan;
+            logic fop2_inf;
+            logic fop2_nan;
             logic logical_subtract;
-            logic result_is_nan;
+            logic result_nan;
             logic mul_exponent_underflow;
             logic mul_exponent_carry;
             logic[5:0] ftoi_rshift;
@@ -118,11 +118,11 @@ module fp_execute_stage1(
             assign op2_hidden_bit = fop2.exponent != 0;
             assign full_significand1 = {op1_hidden_bit, fop1.significand};
             assign full_significand2 = {op2_hidden_bit, fop2.significand};
-            assign is_subtract = of_instruction.alu_op != OP_ADD_F;    // This also include compares
-            assign fop1_is_inf = fop1.exponent == 8'hff && fop1.significand == 0;
-            assign fop1_is_nan = fop1.exponent == 8'hff && fop1.significand != 0;
-            assign fop2_is_inf = fop2.exponent == 8'hff && fop2.significand == 0;
-            assign fop2_is_nan = fop2.exponent == 8'hff && fop2.significand != 0;
+            assign subtract = of_instruction.alu_op != OP_ADD_F;    // This also include compares
+            assign fop1_inf = fop1.exponent == 8'hff && fop1.significand == 0;
+            assign fop1_nan = fop1.exponent == 8'hff && fop1.significand != 0;
+            assign fop2_inf = fop2.exponent == 8'hff && fop2.significand == 0;
+            assign fop2_nan = fop2.exponent == 8'hff && fop2.significand != 0;
 
             // Compute how much to shift the significand right to truncate
             // fractional digits
@@ -147,25 +147,25 @@ module fp_execute_stage1(
 
             always_comb
             begin
-                if (is_itof)
+                if (itof)
                     logical_subtract = of_operand2[lane_idx][31]; // Check high bit to see if this is negative
-                else if (is_ftoi)
+                else if (ftoi)
                     logical_subtract = fop2.sign; // If negative, inverter in stg 3 will convert to 2s complement
                 else
-                    logical_subtract = fop1.sign ^ fop2.sign ^ is_subtract;
+                    logical_subtract = fop1.sign ^ fop2.sign ^ subtract;
             end
 
             always_comb
             begin
-                if (is_itof)
-                    result_is_nan = 0;
-                else if (is_fmul)
-                    result_is_nan = fop1_is_nan || fop2_is_nan || (fop1_is_inf && of_operand2[lane_idx] == 0)
-                        || (fop2_is_inf && of_operand1[lane_idx] == 0);
-                else if (is_ftoi)
-                    result_is_nan = fop2_is_nan || fop2_is_inf || fop2.exponent >= 8'd159;
+                if (itof)
+                    result_nan = 0;
+                else if (fmul)
+                    result_nan = fop1_nan || fop2_nan || (fop1_inf && of_operand2[lane_idx] == 0)
+                        || (fop2_inf && of_operand1[lane_idx] == 0);
+                else if (ftoi)
+                    result_nan = fop2_nan || fop2_inf || fop2.exponent >= 8'd159;
                 else
-                    result_is_nan = fop1_is_nan || fop2_is_nan || (fop1_is_inf && fop2_is_inf && logical_subtract);
+                    result_nan = fop1_nan || fop2_nan || (fop1_inf && fop2_inf && logical_subtract);
             end
 
             // The result exponent for multiplication is the sum of the exponents. Convert these
@@ -176,30 +176,30 @@ module fp_execute_stage1(
 
             // Subtle: In the case where values are equal, leave operand1 in the _le slot. This properly
             // handles the sign for +/- zero.
-            assign op1_is_larger = fop1.exponent > fop2.exponent
+            assign op1_larger = fop1.exponent > fop2.exponent
                     || (fop1.exponent == fop2.exponent && full_significand1 >= full_significand2);
-            assign exp_difference = op1_is_larger ? fop1.exponent - fop2.exponent
+            assign exp_difference = op1_larger ? fop1.exponent - fop2.exponent
                 : fop2.exponent - fop1.exponent;
 
             always_ff @(posedge clk)
             begin
-                fx1_result_is_nan[lane_idx] <= result_is_nan;
-                fx1_result_is_inf[lane_idx] <= !is_itof && !result_is_nan && (fop1_is_inf || fop2_is_inf
-                    || (is_fmul && mul_exponent_carry && !mul_exponent_underflow));
+                fx1_result_nan[lane_idx] <= result_nan;
+                fx1_result_inf[lane_idx] <= !itof && !result_nan && (fop1_inf || fop2_inf
+                    || (fmul && mul_exponent_carry && !mul_exponent_underflow));
 
                 // Floating point addition pipeline.
                 // - If this is a float<->int conversion, the value goes down the small exponent path.
                 //   The large exponent is set to zero.
                 // - For addition/subtraction, sort into significand_le (the larger value) and
                 //   sigificand_se (the smaller).
-                if (op1_is_larger || is_ftoi || is_itof)
+                if (op1_larger || ftoi || itof)
                 begin
-                    if (is_ftoi || is_itof)
+                    if (ftoi || itof)
                         fx1_significand_le[lane_idx] <= 0;
                     else
                         fx1_significand_le[lane_idx] <= scalar_t'(full_significand1);
 
-                    if (is_itof)
+                    if (itof)
                     begin
                         // Convert int to float
                         fx1_significand_se[lane_idx] <= of_operand2[lane_idx];
@@ -220,13 +220,13 @@ module fp_execute_stage1(
                     fx1_significand_le[lane_idx] <= scalar_t'(full_significand2);
                     fx1_significand_se[lane_idx] <= scalar_t'(full_significand1);
                     fx1_add_exponent[lane_idx] <= fop2.exponent;
-                    fx1_add_result_sign[lane_idx] <= fop2.sign ^ is_subtract;
+                    fx1_add_result_sign[lane_idx] <= fop2.sign ^ subtract;
                 end
 
                 fx1_logical_subtract[lane_idx] <= logical_subtract;
-                if (is_itof)
+                if (itof)
                     fx1_se_align_shift[lane_idx] <= 0;
-                else if (is_ftoi)
+                else if (ftoi)
                 begin
                     // Shift to truncate fractional bits
                     fx1_se_align_shift[lane_idx] <= ftoi_rshift[5:0];
@@ -244,7 +244,7 @@ module fp_execute_stage1(
                 // Multiplication pipeline.
                 // XXX this is a pass through now. For a more optimal implementation, this could do
                 // booth encoding.
-                if (is_imul)
+                if (imul)
                 begin
                     // Unsigned multiply
                     fx1_multiplicand[lane_idx] <= of_operand1[lane_idx];

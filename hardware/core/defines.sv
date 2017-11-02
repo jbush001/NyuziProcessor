@@ -226,8 +226,8 @@ typedef enum logic [1:0] {
 } pipeline_sel_t;
 
 typedef struct packed {
-    logic is_dcache;
-    logic is_store;
+    logic dcache;
+    logic store;
     trap_type_t trap_type;
 } trap_cause_t;
 
@@ -250,25 +250,25 @@ typedef struct packed {
     logic has_vector2;
     register_idx_t vector_sel2;
     logic has_dest;
-    logic dest_is_vector;
+    logic dest_vector;
     register_idx_t dest_reg;
     alu_op_t alu_op;
     mask_src_t mask_src;
     op1_src_t op1_src;
     op2_src_t op2_src;
-    logic store_value_is_vector;
+    logic store_value_vector;
     scalar_t immediate_value;
-    logic is_branch;
+    logic branch;
     branch_type_t branch_type;
-    logic is_call;
+    logic call;
     pipeline_sel_t pipeline_sel;
-    logic is_memory_access;
+    logic memory_access;
     memory_op_t memory_access_type;
-    logic is_load;
-    logic is_compare;
+    logic load;
+    logic compare;
     subcycle_t last_subcycle;
     control_register_t creg_index;
-    logic is_cache_control;
+    logic cache_control;
     cache_op_t cache_control_op;
 } decoded_instruction_t;
 
@@ -379,7 +379,7 @@ typedef struct packed {
 
 // I/O bus request
 typedef struct packed {
-    logic is_store;
+    logic store;
     local_thread_idx_t thread_idx;
     scalar_t address;
     scalar_t value;

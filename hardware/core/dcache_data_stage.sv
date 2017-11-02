@@ -71,7 +71,7 @@ module dcache_data_stage(
     output scalar_t                           dd_rollback_pc,
     output cache_line_data_t                  dd_load_data,
     output logic                              dd_suspend_thread,
-    output logic                              dd_is_io_address,
+    output logic                              dd_io_access,
     output logic                              dd_fault,
     output trap_cause_t                       dd_fault_cause,
 
@@ -130,7 +130,7 @@ module dcache_data_stage(
     logic[$clog2(CACHE_LINE_WORDS) - 1:0] cache_lane_idx;
     cache_line_data_t endian_twiddled_data;
     scalar_t lane_store_value;
-    logic is_io_address;
+    logic io_access;
     logic[CACHE_LINE_WORDS - 1:0] cache_lane_mask;
     logic[CACHE_LINE_WORDS - 1:0] subcycle_mask;
     logic[`L1D_WAYS - 1:0] way_hit_oh;
@@ -142,20 +142,19 @@ module dcache_data_stage(
     logic cache_near_miss;
     logic dcache_store_en;
     logic io_access_en;
-    logic is_unaligned;
-    logic is_sync;
+    logic unaligned_address;
+    logic sync_access;
     logic cache_control_en;
     logic[$clog2(NUM_VECTOR_LANES) - 1:0] scgath_lane;
-    logic is_tlb_access;
-    logic is_tlb_update;
+    logic tlb_read;
+    logic tlb_update;
     logic supervisor_fault;
     logic alignment_fault;
-    logic creg_is_privileged;
     logic privilege_op_fault;
     logic write_fault;
     logic tlb_miss;
     logic page_fault;
-    logic is_store_fault;
+    logic store;
 
     // Unlike earlier stages, this commits instruction side effects like stores,
     // so it needs to check if there is a rollback (which would be for the
@@ -165,23 +164,23 @@ module dcache_data_stage(
     assign rollback_this_stage = wb_rollback_en
         && wb_rollback_thread_idx == dt_thread_idx
         && wb_rollback_pipeline == PIPE_MEM;
-    assign is_io_address = dt_request_paddr ==? 32'hffff????;
-    assign is_sync = dt_instruction.memory_access_type == MEM_SYNC;
+    assign io_access = dt_request_paddr ==? 32'hffff????;
+    assign sync_access = dt_instruction.memory_access_type == MEM_SYNC;
 
     // Determine if this instruction accesses the TLB (and thus will raise a TLB
     // miss if the entry is not present)
     always_comb
     begin
-        is_tlb_access = 0;
+        tlb_read = 0;
         if (dt_instruction_valid && !rollback_this_stage)
         begin
-            if (dt_instruction.is_memory_access)
-                is_tlb_access = dt_instruction.memory_access_type != MEM_CONTROL_REG;
-            else if (dt_instruction.is_cache_control)
+            if (dt_instruction.memory_access)
+                tlb_read = dt_instruction.memory_access_type != MEM_CONTROL_REG;
+            else if (dt_instruction.cache_control)
             begin
                 // Only these cache control opertions perform a virtual->physical
                 // address translation.
-                is_tlb_access = dt_instruction.cache_control_op == CACHE_DFLUSH
+                tlb_read = dt_instruction.cache_control_op == CACHE_DFLUSH
                     || dt_instruction.cache_control_op == CACHE_DINVALIDATE;
             end
         end
@@ -190,12 +189,12 @@ module dcache_data_stage(
     // L1 data cache or store buffer access
     assign dcache_access_en = dt_instruction_valid
         && !rollback_this_stage
-        && dt_instruction.is_memory_access
+        && dt_instruction.memory_access
         && dt_instruction.memory_access_type != MEM_CONTROL_REG
         && dt_tlb_hit
-        && !is_io_address;
-    assign dcache_load_en = dcache_access_en && dt_instruction.is_load;
-    assign dcache_store_en = dcache_access_en && !dt_instruction.is_load
+        && !io_access;
+    assign dcache_load_en = dcache_access_en && dt_instruction.load;
+    assign dcache_store_en = dcache_access_en && !dt_instruction.load
         && dd_store_mask != 0;
     assign dcache_request_addr = {dt_request_paddr[31:CACHE_LINE_OFFSET_WIDTH],
         {CACHE_LINE_OFFSET_WIDTH{1'b0}}};
@@ -203,9 +202,9 @@ module dcache_data_stage(
     assign dd_store_bypass_addr = dt_request_paddr[31:CACHE_LINE_OFFSET_WIDTH];
     assign dd_store_bypass_thread_idx = dt_thread_idx;
     assign dd_store_addr = dt_request_paddr[31:CACHE_LINE_OFFSET_WIDTH];
-    assign dd_store_sync = is_sync;
+    assign dd_store_sync = sync_access;
     assign dd_store_en = dcache_store_en
-        && !is_unaligned
+        && !unaligned_address
         && dt_tlb_writable
         && dt_tlb_present
         && !supervisor_fault;
@@ -214,17 +213,17 @@ module dcache_data_stage(
     // Noncached I/O memory access
     assign io_access_en = dt_instruction_valid
         && !rollback_this_stage
-        && dt_instruction.is_memory_access
+        && dt_instruction.memory_access
         && dt_instruction.memory_access_type != MEM_CONTROL_REG
         && dt_tlb_hit
         && dt_tlb_present
         && !supervisor_fault
-        && is_io_address;
+        && io_access;
     assign dd_io_write_en = io_access_en
-        && !dt_instruction.is_load
+        && !dt_instruction.load
         && dt_tlb_writable;
     assign dd_io_read_en = io_access_en
-        && dt_instruction.is_load;
+        && dt_instruction.load;
     assign dd_io_write_value = dt_store_value[0];
     assign dd_io_thread_idx = dt_thread_idx;
     assign dd_io_addr = {16'd0, dt_request_paddr[15:0]};
@@ -232,24 +231,24 @@ module dcache_data_stage(
     // Cache control
     assign cache_control_en = dt_instruction_valid
         && !rollback_this_stage
-        && dt_instruction.is_cache_control;
+        && dt_instruction.cache_control;
     assign dd_flush_en = cache_control_en
         && dt_instruction.cache_control_op == CACHE_DFLUSH
         && !supervisor_fault
         && dt_tlb_present
-        && !is_io_address; // XXX should a cache control of IO address raise exception?
+        && !io_access; // XXX should a cache control of IO address raise exception?
     assign dd_iinvalidate_en = cache_control_en
         && dt_instruction.cache_control_op == CACHE_IINVALIDATE
-        && !is_io_address;
+        && !io_access;
     assign dd_dinvalidate_en = cache_control_en
         && dt_instruction.cache_control_op == CACHE_DINVALIDATE
         && dt_tlb_hit
         && dt_tlb_present
-        && !is_io_address
+        && !io_access
         && cr_supervisor_en[dt_thread_idx];
     assign dd_membar_en = cache_control_en
         && dt_instruction.cache_control_op == CACHE_MEMBAR;
-    assign is_tlb_update = cache_control_en
+    assign tlb_update = cache_control_en
         && (dt_instruction.cache_control_op == CACHE_DTLB_INSERT
             || dt_instruction.cache_control_op == CACHE_ITLB_INSERT
             || dt_instruction.cache_control_op == CACHE_TLB_INVAL
@@ -258,11 +257,11 @@ module dcache_data_stage(
     // Control register access
     assign creg_access_en = dt_instruction_valid
         && !rollback_this_stage
-        && dt_instruction.is_memory_access
+        && dt_instruction.memory_access
         && dt_instruction.memory_access_type == MEM_CONTROL_REG;
-    assign dd_creg_write_en = creg_access_en && !dt_instruction.is_load
+    assign dd_creg_write_en = creg_access_en && !dt_instruction.load
         && cr_supervisor_en[dt_thread_idx];
-    assign dd_creg_read_en = creg_access_en && dt_instruction.is_load;
+    assign dd_creg_read_en = creg_access_en && dt_instruction.load;
     assign dd_creg_write_val = dt_store_value[0];
     assign dd_creg_index = dt_instruction.creg_index;
 
@@ -270,7 +269,7 @@ module dcache_data_stage(
     assign dd_perf_dcache_hit = cache_hit && dcache_load_en;
     assign dd_perf_dcache_miss = !cache_hit && dcache_load_en;
     assign dd_perf_store = dcache_store_en;
-    assign dd_perf_dtlb_miss = is_tlb_access && !dt_tlb_hit;
+    assign dd_perf_dtlb_miss = tlb_read && !dt_tlb_hit;
 
     //
     // Check for cache hit
@@ -286,7 +285,7 @@ module dcache_data_stage(
 
     // Treat a synchronized load as a cache miss the first time it occurs, because
     // it needs to send it to the L2 cache to register it.
-    assign cache_hit = |way_hit_oh && (!is_sync || dd_sync_load_pending[dt_thread_idx])
+    assign cache_hit = |way_hit_oh && (!sync_access || dd_sync_load_pending[dt_thread_idx])
         && dt_tlb_hit;
 
     //
@@ -392,10 +391,10 @@ module dcache_data_stage(
     always_comb
     begin
         case (dt_instruction.memory_access_type)
-            MEM_S, MEM_SX: is_unaligned = dt_request_paddr.offset[0];
-            MEM_L, MEM_SYNC, MEM_SCGATH, MEM_SCGATH_M: is_unaligned = |dt_request_paddr.offset[1:0];
-            MEM_BLOCK, MEM_BLOCK_M: is_unaligned = dt_request_paddr.offset != 0;
-            default: is_unaligned = 0;
+            MEM_S, MEM_SX: unaligned_address = dt_request_paddr.offset[0];
+            MEM_L, MEM_SYNC, MEM_SCGATH, MEM_SCGATH_M: unaligned_address = |dt_request_paddr.offset[1:0];
+            MEM_BLOCK, MEM_BLOCK_M: unaligned_address = dt_request_paddr.offset != 0;
+            default: unaligned_address = 0;
         endcase
     end
 
@@ -445,18 +444,18 @@ module dcache_data_stage(
         && |l2i_dtag_update_en_oh
         && l2i_dtag_update_set == dt_request_paddr.set_idx
         && l2i_dtag_update_tag == dt_request_paddr.tag
-        && !is_sync;
+        && !sync_access;
 
     assign dd_cache_miss = dcache_load_en
         && !cache_hit
         && dt_tlb_hit
         && !cache_near_miss
-        && !is_unaligned;
+        && !unaligned_address;
     assign dd_cache_miss_addr = dcache_request_addr[31:CACHE_LINE_OFFSET_WIDTH];
     assign dd_cache_miss_thread_idx = dt_thread_idx;
-    assign dd_cache_miss_sync = is_sync;
+    assign dd_cache_miss_sync = sync_access;
 
-    assign dd_update_lru_en = cache_hit && dcache_access_en && !is_unaligned;
+    assign dd_update_lru_en = cache_hit && dcache_access_en && !unaligned_address;
     assign dd_update_lru_way = way_hit_idx;
 
     // Always treat the first synchronized load as a cache miss, even if data is
@@ -475,7 +474,7 @@ module dcache_data_stage(
             begin
                 if (reset)
                     dd_sync_load_pending[thread_idx] <= 0;
-                else if (dcache_load_en && is_sync && dt_thread_idx == local_thread_idx_t'(thread_idx))
+                else if (dcache_load_en && sync_access && dt_thread_idx == local_thread_idx_t'(thread_idx))
                 begin
                     // Track if this is the first or restarted request.
                     dd_sync_load_pending[thread_idx] <= !dd_sync_load_pending[thread_idx];
@@ -485,21 +484,21 @@ module dcache_data_stage(
     endgenerate
 
     // Faults
-    assign alignment_fault = (dcache_load_en || dcache_store_en) && is_unaligned;
+    assign alignment_fault = (dcache_load_en || dcache_store_en) && unaligned_address;
     assign privilege_op_fault = !cr_supervisor_en[dt_thread_idx]
         && (creg_access_en
-            || is_tlb_update
+            || tlb_update
             || (cache_control_en && dt_instruction.cache_control_op == CACHE_DINVALIDATE));
     assign write_fault = !dt_tlb_writable
-        && (dcache_store_en || (io_access_en && !dt_instruction.is_load))
+        && (dcache_store_en || (io_access_en && !dt_instruction.load))
         && !supervisor_fault
         && dt_tlb_present;
-    assign tlb_miss = is_tlb_access && !dt_tlb_hit;
+    assign tlb_miss = tlb_read && !dt_tlb_hit;
     assign supervisor_fault = dt_tlb_supervisor && !cr_supervisor_en[dt_thread_idx]
         && dt_tlb_present;
     assign page_fault = (dcache_load_en || dcache_store_en) && !dt_tlb_present;
-    assign is_store_fault = dt_instruction.is_memory_access
-        && !dt_instruction.is_load;
+    assign store = dt_instruction.memory_access
+        && !dt_instruction.load;
 
     always_ff @(posedge clk)
     begin
@@ -509,19 +508,19 @@ module dcache_data_stage(
         dd_request_vaddr <= dt_request_vaddr;
         dd_subcycle <= dt_subcycle;
         dd_rollback_pc <= dt_instruction.pc;
-        dd_is_io_address <= is_io_address;
+        dd_io_access <= io_access;
 
         // Check for TLB miss first, since permission bits are not valid if
         // there is a TLB miss. The order of the remaining items should match
         // that in instruction_decode_stage for consistency.
         if (tlb_miss)
-            dd_fault_cause <= {1'b1, is_store_fault, TT_TLB_MISS};
+            dd_fault_cause <= {1'b1, store, TT_TLB_MISS};
         else if (page_fault)
-            dd_fault_cause <= {1'b1, is_store_fault, TT_PAGE_FAULT};
+            dd_fault_cause <= {1'b1, store, TT_PAGE_FAULT};
         else if (supervisor_fault)
-            dd_fault_cause <= {1'b1, is_store_fault, TT_SUPERVISOR_ACCESS};
+            dd_fault_cause <= {1'b1, store, TT_SUPERVISOR_ACCESS};
         else if (alignment_fault)
-            dd_fault_cause <= {1'b1, is_store_fault, TT_UNALIGNED_ACCESS};
+            dd_fault_cause <= {1'b1, store, TT_UNALIGNED_ACCESS};
         else if (privilege_op_fault)
             dd_fault_cause <= {2'b00, TT_PRIVILEGED_OP};
         else // write fault
@@ -561,7 +560,7 @@ module dcache_data_stage(
                 && dt_tlb_hit
                 && !cache_hit
                 && !cache_near_miss
-                && !is_unaligned;
+                && !unaligned_address;
 
             // Fault handling
             dd_fault <= alignment_fault || supervisor_fault || privilege_op_fault

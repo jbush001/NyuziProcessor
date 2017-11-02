@@ -52,8 +52,8 @@ module l2_axi_bus_interface(
     input                                  l2r_needs_writeback,
     input l2_tag_t                         l2r_writeback_tag,
     input cache_line_data_t                l2r_data,
-    input                                  l2r_is_l2_fill,
-    input                                  l2r_is_restarted_flush,
+    input                                  l2r_l2_fill,
+    input                                  l2r_restarted_flush,
     input                                  l2r_cache_hit,
     input                                  l2r_request_valid,
     input l2req_packet_t                   l2r_request,
@@ -73,7 +73,7 @@ module l2_axi_bus_interface(
     typedef struct packed {
         cache_line_index_t address;
         cache_line_data_t data;
-        logic is_flush;
+        logic flush;
         core_id_t core;
         l1_miss_entry_idx_t id;
     } writeback_queue_entry_t;
@@ -114,9 +114,9 @@ module l2_axi_bus_interface(
 
     assign miss_addr = l2r_request.address;
     assign enqueue_writeback_request = l2r_request_valid && l2r_needs_writeback
-        && ((l2r_request.packet_type == L2REQ_FLUSH && l2r_cache_hit && !l2r_is_restarted_flush)
-        || l2r_is_l2_fill);
-    assign enqueue_load_request = l2r_request_valid && !l2r_cache_hit && !l2r_is_l2_fill
+        && ((l2r_request.packet_type == L2REQ_FLUSH && l2r_cache_hit && !l2r_restarted_flush)
+        || l2r_l2_fill);
+    assign enqueue_load_request = l2r_request_valid && !l2r_cache_hit && !l2r_l2_fill
         && (l2r_request.packet_type == L2REQ_LOAD
         || l2r_request.packet_type == L2REQ_STORE
         || l2r_request.packet_type == L2REQ_LOAD_SYNC
@@ -133,7 +133,7 @@ module l2_axi_bus_interface(
 
     assign writeback_queue_in.address = {l2r_writeback_tag, miss_addr.set_idx}; // Old address
     assign writeback_queue_in.data = l2r_data; // Old line to writeback
-    assign writeback_queue_in.is_flush = l2r_request.packet_type == L2REQ_FLUSH;
+    assign writeback_queue_in.flush = l2r_request.packet_type == L2REQ_FLUSH;
     assign writeback_queue_in.core = l2r_request.core;
     assign writeback_queue_in.id = l2r_request.id;
 
@@ -266,7 +266,7 @@ module l2_axi_bus_interface(
                     if (burst_offset_ff == {BURST_OFFSET_WIDTH{1'b1}})
                     begin
                         writeback_complete = 1;
-                        restart_flush_request = writeback_queue_out.is_flush;
+                        restart_flush_request = writeback_queue_out.flush;
                         state_nxt = STATE_IDLE;
                     end
 

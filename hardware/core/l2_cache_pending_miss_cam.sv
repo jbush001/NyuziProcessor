@@ -42,7 +42,7 @@ module l2_cache_pending_miss_cam
     input                    request_valid,
     input cache_line_index_t request_addr,
     input                    enqueue_load_request,
-    input                    l2r_is_l2_fill,
+    input                    l2r_l2_fill,
     output logic             duplicate_request);
 
     logic[QUEUE_ADDR_WIDTH - 1:0] cam_hit_entry;
@@ -68,11 +68,11 @@ module l2_cache_pending_miss_cam
         .lookup_key(request_addr),
         .lookup_idx(cam_hit_entry),
         .lookup_hit(cam_hit),
-        .update_en(request_valid && (cam_hit ? l2r_is_l2_fill
+        .update_en(request_valid && (cam_hit ? l2r_l2_fill
             : enqueue_load_request)),
         .update_key(request_addr),
         .update_idx(cam_hit ? cam_hit_entry : next_empty),
-        .update_valid(cam_hit ? !l2r_is_l2_fill : enqueue_load_request));
+        .update_valid(cam_hit ? !l2r_l2_fill : enqueue_load_request));
 
     always_ff @(posedge clk, posedge reset)
     begin
@@ -81,7 +81,7 @@ module l2_cache_pending_miss_cam
 
         if (reset)
             empty_entries <= {QUEUE_SIZE{1'b1}};
-        else if (cam_hit & l2r_is_l2_fill)
+        else if (cam_hit & l2r_l2_fill)
             empty_entries[cam_hit_entry] <= 1'b1;
         else if (!cam_hit && enqueue_load_request)
             empty_entries[next_empty] <= 1'b0;

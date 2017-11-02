@@ -38,8 +38,8 @@ module fp_execute_stage4(
     input decoded_instruction_t                 fx3_instruction,
     input local_thread_idx_t                    fx3_thread_idx,
     input subcycle_t                            fx3_subcycle,
-    input [NUM_VECTOR_LANES - 1:0]             fx3_result_is_inf,
-    input [NUM_VECTOR_LANES - 1:0]             fx3_result_is_nan,
+    input [NUM_VECTOR_LANES - 1:0]             fx3_result_inf,
+    input [NUM_VECTOR_LANES - 1:0]             fx3_result_nan,
     input [NUM_VECTOR_LANES - 1:0][5:0]        fx3_ftoi_lshift,
 
     // Floating point addition/subtraction
@@ -59,8 +59,8 @@ module fp_execute_stage4(
     output vector_lane_mask_t                   fx4_mask_value,
     output local_thread_idx_t                   fx4_thread_idx,
     output subcycle_t                           fx4_subcycle,
-    output logic [NUM_VECTOR_LANES - 1:0]      fx4_result_is_inf,
-    output logic [NUM_VECTOR_LANES - 1:0]      fx4_result_is_nan,
+    output logic [NUM_VECTOR_LANES - 1:0]      fx4_result_inf,
+    output logic [NUM_VECTOR_LANES - 1:0]      fx4_result_nan,
 
     // Floating point addition/subtraction
     output logic[NUM_VECTOR_LANES - 1:0][7:0]  fx4_add_exponent,
@@ -74,9 +74,9 @@ module fp_execute_stage4(
     output logic[NUM_VECTOR_LANES - 1:0][7:0]  fx4_mul_exponent,
     output logic[NUM_VECTOR_LANES - 1:0]       fx4_mul_sign);
 
-    logic is_ftoi;
+    logic ftoi;
 
-    assign is_ftoi = fx3_instruction.alu_op == OP_FTOI;
+    assign ftoi = fx3_instruction.alu_op == OP_FTOI;
 
     genvar lane_idx;
     generate
@@ -132,15 +132,15 @@ module fp_execute_stage4(
             always_ff @(posedge clk)
             begin
                 fx4_add_significand[lane_idx] <= fx3_add_significand[lane_idx];
-                fx4_norm_shift[lane_idx] <= is_ftoi ? fx3_ftoi_lshift[lane_idx] : leading_zeroes;
+                fx4_norm_shift[lane_idx] <= ftoi ? fx3_ftoi_lshift[lane_idx] : leading_zeroes;
                 fx4_add_exponent[lane_idx] <= fx3_add_exponent[lane_idx];
                 fx4_add_result_sign[lane_idx] <= fx3_add_result_sign[lane_idx];
                 fx4_logical_subtract[lane_idx] <= fx3_logical_subtract[lane_idx];
                 fx4_significand_product[lane_idx] <= fx3_significand_product[lane_idx];
                 fx4_mul_exponent[lane_idx] <= fx3_mul_exponent[lane_idx];
                 fx4_mul_sign[lane_idx] <= fx3_mul_sign[lane_idx];
-                fx4_result_is_inf[lane_idx] <= fx3_result_is_inf[lane_idx];
-                fx4_result_is_nan[lane_idx] <= fx3_result_is_nan[lane_idx];
+                fx4_result_inf[lane_idx] <= fx3_result_inf[lane_idx];
+                fx4_result_nan[lane_idx] <= fx3_result_nan[lane_idx];
             end
         end
     endgenerate

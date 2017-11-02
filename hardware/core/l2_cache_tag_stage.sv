@@ -32,8 +32,8 @@ module l2_cache_tag_stage(
     input                                 l2a_request_valid,
     input l2req_packet_t                  l2a_request,
     input cache_line_data_t               l2a_data_from_memory,
-    input                                 l2a_is_l2_fill,
-    input                                 l2a_is_restarted_flush,
+    input                                 l2a_l2_fill,
+    input                                 l2a_restarted_flush,
 
     // From l2_cache_read_stage
     input [`L2_WAYS - 1:0]                l2r_update_dirty_en,
@@ -52,16 +52,16 @@ module l2_cache_tag_stage(
     output logic                          l2t_valid[`L2_WAYS],
     output l2_tag_t                       l2t_tag[`L2_WAYS],
     output logic                          l2t_dirty[`L2_WAYS],
-    output logic                          l2t_is_l2_fill,
+    output logic                          l2t_l2_fill,
     output l2_way_idx_t                   l2t_fill_way,
     output cache_line_data_t              l2t_data_from_memory,
-    output logic                          l2t_is_restarted_flush);
+    output logic                          l2t_restarted_flush);
 
     cache_lru #(
         .NUM_SETS(`L2_SETS),
         .NUM_WAYS(`L2_WAYS)
     ) cache_lru(
-        .fill_en(l2a_is_l2_fill),
+        .fill_en(l2a_l2_fill),
         .fill_set(l2a_request.address.set_idx),
         .fill_way(l2t_fill_way),    // Output to next stage
         .access_en(l2a_request_valid),
@@ -134,8 +134,8 @@ module l2_cache_tag_stage(
     begin
         l2t_data_from_memory <= l2a_data_from_memory;
         l2t_request <= l2a_request;
-        l2t_is_l2_fill <= l2a_is_l2_fill;
-        l2t_is_restarted_flush <= l2a_is_restarted_flush;
+        l2t_l2_fill <= l2a_l2_fill;
+        l2t_restarted_flush <= l2a_restarted_flush;
     end
 
     always_ff @(posedge clk, posedge reset)

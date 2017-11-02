@@ -58,7 +58,7 @@ module io_request_queue
     struct packed {
         logic valid;
         logic request_sent;
-        logic is_store;
+        logic store;
         scalar_t address;
         scalar_t value;
     } pending_request[`THREADS_PER_CORE];
@@ -94,7 +94,7 @@ module io_request_queue
                         begin
                             // Request initiated
                             pending_request[thread_idx].valid <= 1;
-                            pending_request[thread_idx].is_store <= dd_io_write_en;
+                            pending_request[thread_idx].store <= dd_io_write_en;
                             pending_request[thread_idx].address <= dd_io_addr;
                             pending_request[thread_idx].value <= dd_io_write_value;
                             pending_request[thread_idx].request_sent <= 0;
@@ -136,7 +136,7 @@ module io_request_queue
 
     // Send request
     assign ior_request_valid = |send_request;
-    assign ior_request.is_store = pending_request[send_grant_idx].is_store;
+    assign ior_request.store = pending_request[send_grant_idx].store;
     assign ior_request.address = pending_request[send_grant_idx].address;
     assign ior_request.value = pending_request[send_grant_idx].value;
     assign ior_request.thread_idx = send_grant_idx;

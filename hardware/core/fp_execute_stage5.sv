@@ -36,8 +36,8 @@ module fp_execute_stage5(
     input decoded_instruction_t             fx4_instruction,
     input local_thread_idx_t                fx4_thread_idx,
     input subcycle_t                        fx4_subcycle,
-    input [NUM_VECTOR_LANES - 1:0]         fx4_result_is_inf,
-    input [NUM_VECTOR_LANES - 1:0]         fx4_result_is_nan,
+    input [NUM_VECTOR_LANES - 1:0]         fx4_result_inf,
+    input [NUM_VECTOR_LANES - 1:0]         fx4_result_nan,
 
     // Floating point addition/subtraction
     input [NUM_VECTOR_LANES - 1:0][7:0]    fx4_add_exponent,
@@ -59,15 +59,15 @@ module fp_execute_stage5(
     output subcycle_t                       fx5_subcycle,
     output vector_t                         fx5_result);
 
-    logic is_fmul;
-    logic is_imull;
-    logic is_imulh;
-    logic is_ftoi;
+    logic fmul;
+    logic imull;
+    logic imulh;
+    logic ftoi;
 
-    assign is_fmul = fx4_instruction.alu_op == OP_MUL_F;
-    assign is_imull = fx4_instruction.alu_op == OP_MULL_I;
-    assign is_imulh = fx4_instruction.alu_op == OP_MULH_U || fx4_instruction.alu_op == OP_MULH_I;
-    assign is_ftoi = fx4_instruction.alu_op == OP_FTOI;
+    assign fmul = fx4_instruction.alu_op == OP_MUL_F;
+    assign imull = fx4_instruction.alu_op == OP_MULL_I;
+    assign imulh = fx4_instruction.alu_op == OP_MULH_U || fx4_instruction.alu_op == OP_MULH_I;
+    assign ftoi = fx4_instruction.alu_op == OP_FTOI;
 
     genvar lane_idx;
     generate
@@ -77,7 +77,7 @@ module fp_execute_stage5(
             logic[7:0] add_result_exponent;
             logic[7:0] adjusted_add_exponent;
             scalar_t shifted_significand;
-            logic add_is_subnormal;
+            logic add_subnormal;
             scalar_t add_result;
             logic add_round;
             logic mul_normalize_shift;
@@ -93,30 +93,30 @@ module fp_execute_stage5(
             logic mul_round_up;
             logic mul_do_round;
             logic compare_result;
-            logic sum_is_zero;
+            logic sum_zero;
             logic mul_hidden_bit;
             logic mul_round_overflow;
 
             assign adjusted_add_exponent = fx4_add_exponent[lane_idx]
                 - FLOAT32_EXP_WIDTH'(fx4_norm_shift[lane_idx]) + FLOAT32_EXP_WIDTH'(8);
-            assign add_is_subnormal = fx4_add_exponent[lane_idx] == 0 || fx4_add_significand[lane_idx] == 0;
+            assign add_subnormal = fx4_add_exponent[lane_idx] == 0 || fx4_add_significand[lane_idx] == 0;
             assign shifted_significand = fx4_add_significand[lane_idx] << fx4_norm_shift[lane_idx];
 
             // Because this can only shift one bit out, can only round to even here.
             // shifted_significand[7] is the guard bit. shifted_significand[8] indicates whether
             // the result is even or odd.
             assign add_round = shifted_significand[7] && shifted_significand[8] && !fx4_logical_subtract[lane_idx];
-            assign add_result_significand = add_is_subnormal ? fx4_add_significand[lane_idx][22:0]
+            assign add_result_significand = add_subnormal ? fx4_add_significand[lane_idx][22:0]
                 : (shifted_significand[30:8] + FLOAT32_SIG_WIDTH'(add_round));    // Round up using truncated bit
-            assign add_result_exponent = add_is_subnormal ? '0 : adjusted_add_exponent;
+            assign add_result_exponent = add_subnormal ? '0 : adjusted_add_exponent;
 
             always_comb
             begin
-                if (fx4_result_is_inf[lane_idx])
+                if (fx4_result_inf[lane_idx])
                     add_result = {fx4_add_result_sign[lane_idx], 8'hff, 23'd0};
-                else if (fx4_result_is_nan[lane_idx])
+                else if (fx4_result_nan[lane_idx])
                     add_result = {32'h7fffffff};
-                else if (add_result_significand == 0 && add_is_subnormal)
+                else if (add_result_significand == 0 && add_subnormal)
                 begin
                     // IEEE754-2008, 6.3: "When the sum of two operands with opposite signs
                     // (or the difference of two operands with like signs) is exactly zero,
@@ -128,18 +128,18 @@ module fp_execute_stage5(
                     add_result = {fx4_add_result_sign[lane_idx], add_result_exponent, add_result_significand};
             end
 
-            assign sum_is_zero = add_is_subnormal && add_result_significand == 0;
+            assign sum_zero = add_subnormal && add_result_significand == 0;
 
             // If the operation is unordered (either operand is NaN), treat the result as false
             always_comb
             begin
                 case (fx4_instruction.alu_op)
-                    OP_CMPGT_F: compare_result = !fx4_add_result_sign[lane_idx] && !sum_is_zero && !fx4_result_is_nan[lane_idx];
-                    OP_CMPGE_F: compare_result = (!fx4_add_result_sign[lane_idx] || sum_is_zero) && !fx4_result_is_nan[lane_idx];
-                    OP_CMPLT_F: compare_result = fx4_add_result_sign[lane_idx] && !sum_is_zero && !fx4_result_is_nan[lane_idx];
-                    OP_CMPLE_F: compare_result = (fx4_add_result_sign[lane_idx] || sum_is_zero) && !fx4_result_is_nan[lane_idx];
-                    OP_CMPEQ_F: compare_result = sum_is_zero && !fx4_result_is_nan[lane_idx];
-                    OP_CMPNE_F: compare_result = !sum_is_zero && !fx4_result_is_nan[lane_idx];
+                    OP_CMPGT_F: compare_result = !fx4_add_result_sign[lane_idx] && !sum_zero && !fx4_result_nan[lane_idx];
+                    OP_CMPGE_F: compare_result = (!fx4_add_result_sign[lane_idx] || sum_zero) && !fx4_result_nan[lane_idx];
+                    OP_CMPLT_F: compare_result = fx4_add_result_sign[lane_idx] && !sum_zero && !fx4_result_nan[lane_idx];
+                    OP_CMPLE_F: compare_result = (fx4_add_result_sign[lane_idx] || sum_zero) && !fx4_result_nan[lane_idx];
+                    OP_CMPEQ_F: compare_result = sum_zero && !fx4_result_nan[lane_idx];
+                    OP_CMPNE_F: compare_result = !sum_zero && !fx4_result_nan[lane_idx];
                     default: compare_result = 0;
                 endcase
             end
@@ -170,9 +170,9 @@ module fp_execute_stage5(
 
             always_comb
             begin
-                if (fx4_result_is_inf[lane_idx])
+                if (fx4_result_inf[lane_idx])
                     fmul_result = {fx4_mul_sign[lane_idx], 8'hff, 23'd0};
-                else if (fx4_result_is_nan[lane_idx])
+                else if (fx4_result_nan[lane_idx])
                     fmul_result = {32'h7fffffff};
                 else
                     fmul_result = {fx4_mul_sign[lane_idx], mul_exponent, mul_rounded_significand};
@@ -180,20 +180,20 @@ module fp_execute_stage5(
 
             always_ff @(posedge clk)
             begin
-                if (is_ftoi)
+                if (ftoi)
                 begin
-                    if (fx4_result_is_nan[lane_idx])
+                    if (fx4_result_nan[lane_idx])
                         fx5_result[lane_idx] <= 32'h80000000;    // nan signal indicates an invalid conversion
                     else
                         fx5_result[lane_idx] <= shifted_significand;
                 end
-                else if (fx4_instruction.is_compare)
+                else if (fx4_instruction.compare)
                     fx5_result[lane_idx] <= scalar_t'(compare_result);
-                else if (is_imull)
+                else if (imull)
                     fx5_result[lane_idx] <= fx4_significand_product[lane_idx][31:0];
-                else if (is_imulh)
+                else if (imulh)
                     fx5_result[lane_idx] <= fx4_significand_product[lane_idx][63:32];
-                else if (is_fmul)
+                else if (fmul)
                     fx5_result[lane_idx] <= fmul_result;
                 else
                     fx5_result[lane_idx] <= add_result;

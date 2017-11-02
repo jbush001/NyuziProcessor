@@ -45,16 +45,16 @@ module rr_arbiter
             grant_oh[grant_idx] = 0;
             for (int priority_idx = 0; priority_idx < NUM_REQUESTERS; priority_idx++)
             begin
-                logic is_granted;
+                logic granted;
 
-                is_granted = request[grant_idx] & priority_oh[priority_idx];
+                granted = request[grant_idx] & priority_oh[priority_idx];
                 for (logic[BIT_IDX_WIDTH - 1:0] bit_idx = priority_idx[BIT_IDX_WIDTH - 1:0];
                     bit_idx != grant_idx[BIT_IDX_WIDTH - 1:0]; bit_idx++)
                 begin
-                    is_granted &= !request[bit_idx];
+                    granted &= !request[bit_idx];
                 end
 
-                grant_oh[grant_idx] |= is_granted;
+                grant_oh[grant_idx] |= granted;
             end
         end
     end

@@ -86,8 +86,8 @@ module io_interconnect(
         end
     endgenerate
 
-    assign io_bus.write_en = |grant_oh && grant_request.is_store;
-    assign io_bus.read_en = |grant_oh && !grant_request.is_store;
+    assign io_bus.write_en = |grant_oh && grant_request.store;
+    assign io_bus.read_en = |grant_oh && !grant_request.store;
     assign io_bus.write_data = grant_request.value;
     assign io_bus.address = grant_request.address;
 

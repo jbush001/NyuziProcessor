@@ -39,8 +39,8 @@ module l2_cache_arb_stage(
     output logic                          l2a_request_valid,
     output l2req_packet_t                 l2a_request,
     output cache_line_data_t              l2a_data_from_memory,
-    output logic                          l2a_is_l2_fill,
-    output logic                          l2a_is_restarted_flush,
+    output logic                          l2a_l2_fill,
+    output logic                          l2a_restarted_flush,
 
     // From l2_axi_bus_interface
     input                                 l2bi_request_valid,
@@ -52,10 +52,10 @@ module l2_cache_arb_stage(
     logic can_accept_request;
     l2req_packet_t grant_request;
     logic[`NUM_CORES - 1:0] grant_oh;
-    logic is_restarted_flush;
+    logic restarted_flush;
 
     assign can_accept_request = !l2bi_request_valid && !l2bi_stall;
-    assign is_restarted_flush = l2bi_request.packet_type == L2REQ_FLUSH;
+    assign restarted_flush = l2bi_request.packet_type == L2REQ_FLUSH;
 
     genvar request_idx;
     generate
@@ -97,15 +97,15 @@ module l2_cache_arb_stage(
         begin
             // Restarted request from external bus interface
             l2a_request <= l2bi_request;
-            l2a_is_l2_fill <= !l2bi_collided_miss && !is_restarted_flush;
-            l2a_is_restarted_flush <= is_restarted_flush;
+            l2a_l2_fill <= !l2bi_collided_miss && !restarted_flush;
+            l2a_restarted_flush <= restarted_flush;
         end
         else
         begin
             // New request from a core
             l2a_request <= grant_request;
-            l2a_is_l2_fill <= 0;
-            l2a_is_restarted_flush <= 0;
+            l2a_l2_fill <= 0;
+            l2a_restarted_flush <= 0;
         end
     end
 

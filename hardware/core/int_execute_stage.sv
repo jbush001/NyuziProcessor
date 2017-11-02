@@ -61,7 +61,7 @@ module int_execute_stage(
     input                             cr_supervisor_en[`THREADS_PER_CORE],
 
     // To control_registers
-    output logic                      ix_is_eret,
+    output logic                      ix_eret,
 
     // To performance_counters
     output logic                      ix_perf_uncond_branch,
@@ -69,11 +69,11 @@ module int_execute_stage(
     output logic                      ix_perf_cond_branch_not_taken);
 
     vector_t vector_result;
-    logic is_eret;
+    logic eret;
     logic privileged_op_fault;
     logic branch_taken;
-    logic is_conditional_branch;
-    logic is_valid_instruction;
+    logic conditional_branch;
+    logic valid_instruction;
 
     genvar lane;
     generate
@@ -255,35 +255,35 @@ module int_execute_stage(
         end
     endgenerate
 
-    assign is_valid_instruction = of_instruction_valid
+    assign valid_instruction = of_instruction_valid
         && (!wb_rollback_en || wb_rollback_thread_idx != of_thread_idx)
         && of_instruction.pipeline_sel == PIPE_INT_ARITH;
-    assign is_eret = is_valid_instruction
-        && of_instruction.is_branch
+    assign eret = valid_instruction
+        && of_instruction.branch
         && of_instruction.branch_type == BRANCH_ERET;
-    assign privileged_op_fault = is_eret && !cr_supervisor_en[of_thread_idx];
+    assign privileged_op_fault = eret && !cr_supervisor_en[of_thread_idx];
 
     always_comb
     begin
         branch_taken = 0;
-        is_conditional_branch = 0;
+        conditional_branch = 0;
         ix_perf_uncond_branch = 0;
 
-        if (is_valid_instruction
-            && of_instruction.is_branch
+        if (valid_instruction
+            && of_instruction.branch
             && !privileged_op_fault)
         begin
             case (of_instruction.branch_type)
                 BRANCH_ZERO:
                 begin
                     branch_taken = of_operand1[0] == 0;
-                    is_conditional_branch = 1;
+                    conditional_branch = 1;
                 end
 
                 BRANCH_NOT_ZERO:
                 begin
                     branch_taken = of_operand1[0] != 0;
-                    is_conditional_branch = 1;
+                    conditional_branch = 1;
                 end
 
                 BRANCH_ALWAYS,
@@ -302,8 +302,8 @@ module int_execute_stage(
         end
     end
 
-    assign ix_perf_cond_branch_taken = is_conditional_branch && branch_taken;
-    assign ix_perf_cond_branch_not_taken = is_conditional_branch && !branch_taken;
+    assign ix_perf_cond_branch_taken = conditional_branch && branch_taken;
+    assign ix_perf_cond_branch_not_taken = conditional_branch && !branch_taken;
 
     always_ff @(posedge clk)
     begin
@@ -329,18 +329,18 @@ module int_execute_stage(
         begin
             /*AUTORESET*/
             // Beginning of autoreset for uninitialized flops
+            ix_eret <= '0;
             ix_instruction_valid <= '0;
-            ix_is_eret <= '0;
             ix_privileged_op_fault <= '0;
             ix_rollback_en <= '0;
             // End of automatics
         end
         else
         begin
-            if (is_valid_instruction)
+            if (valid_instruction)
             begin
                 ix_instruction_valid <= 1;
-                ix_is_eret <= is_eret && !privileged_op_fault;
+                ix_eret <= eret && !privileged_op_fault;
                 ix_privileged_op_fault <= privileged_op_fault;
                 ix_rollback_en <= branch_taken;
             end
@@ -348,7 +348,7 @@ module int_execute_stage(
             begin
                 ix_instruction_valid <= 0;
                 ix_rollback_en <= 0;
-                ix_is_eret <= 0;
+                ix_eret <= 0;
             end
         end
     end

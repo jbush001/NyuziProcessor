@@ -109,7 +109,7 @@ module l1_store_queue(
             logic can_write_combine;
             logic store_requested_this_entry;
             logic send_this_cycle;
-            logic is_restarted_sync_request;
+            logic restarted_sync_request;
             logic got_response_this_entry;
             logic membar_requested_this_entry;
             logic enqueue_cache_control;
@@ -131,12 +131,12 @@ module l1_store_queue(
                 && !dd_flush_en
                 && !dd_iinvalidate_en
                 && !dd_dinvalidate_en;
-            assign is_restarted_sync_request = pending_stores[thread_idx].valid
+            assign restarted_sync_request = pending_stores[thread_idx].valid
                 && pending_stores[thread_idx].response_received
                 && pending_stores[thread_idx].sync;
             assign update_store_entry = store_requested_this_entry
                 && (!pending_stores[thread_idx].valid || can_write_combine || got_response_this_entry)
-                && !is_restarted_sync_request;
+                && !restarted_sync_request;
             assign got_response_this_entry = storebuf_l2_response_valid
                 && storebuf_l2_response_idx == local_thread_idx_t'(thread_idx);
             assign sq_wake_bitmap[thread_idx] = got_response_this_entry
@@ -161,7 +161,7 @@ module l1_store_queue(
                     //   needing to handle the lost wakeup issue (like the near miss case
                     //   in the data cache)
                     if (dd_store_sync)
-                        rollback[thread_idx] = !is_restarted_sync_request;
+                        rollback[thread_idx] = !restarted_sync_request;
                     else if (pending_stores[thread_idx].valid && !can_write_combine
                         && !got_response_this_entry)
                         rollback[thread_idx] = 1;
@@ -205,7 +205,7 @@ module l1_store_queue(
                     begin
                         // Attempt to enqueue a new request. This may happen the same cycle
                         // an old request is satisfied. In this case, replace the old entry.
-                        if (is_restarted_sync_request)
+                        if (restarted_sync_request)
                         begin
                             // This is the restarted request after a synchronized load/store.
                             // Clear the entry.

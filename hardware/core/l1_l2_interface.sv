@@ -135,7 +135,7 @@ module l1_l2_interface
     logic[`L1I_WAYS - 1:0] ifill_way_oh;
     logic[`L1D_WAYS - 1:0] dupdate_way_oh;
     l1d_way_idx_t dupdate_way_idx;
-    logic is_ack_for_me;
+    logic ack_for_me;
     logic icache_update_en;
     logic dcache_update_en;
     logic dcache_l2_response_valid;
@@ -164,8 +164,8 @@ module l1_l2_interface
     l1d_tag_t dcache_tag_stage2;
     l1i_tag_t icache_tag_stage2;
     logic storebuf_l2_sync_success;
-    logic response_is_iinvalidate;
-    logic response_is_dinvalidate;
+    logic response_iinvalidate;
+    logic response_dinvalidate;
 
     /*AUTOLOGIC*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -299,39 +299,39 @@ module l1_l2_interface
         .index(ift_fill_lru),
         .one_hot(ifill_way_oh));
 
-    assign is_ack_for_me = response_stage2_valid && response_stage2.core == CORE_ID;
+    assign ack_for_me = response_stage2_valid && response_stage2.core == CORE_ID;
 
     //
     // Update data cache tag
     //
-    assign response_is_dinvalidate = response_stage2.packet_type == L2RSP_DINVALIDATE_ACK;
-    assign dcache_update_en = (is_ack_for_me && ((response_stage2.packet_type == L2RSP_LOAD_ACK
+    assign response_dinvalidate = response_stage2.packet_type == L2RSP_DINVALIDATE_ACK;
+    assign dcache_update_en = (ack_for_me && ((response_stage2.packet_type == L2RSP_LOAD_ACK
         && response_stage2.cache_type == CT_DCACHE) || response_stage2.packet_type == L2RSP_STORE_ACK))
-        || (response_stage2_valid && response_is_dinvalidate && |snoop_hit_way_oh);
+        || (response_stage2_valid && response_dinvalidate && |snoop_hit_way_oh);
     assign l2i_dtag_update_en_oh = dupdate_way_oh & {`L1D_WAYS{dcache_update_en}};
     assign l2i_dtag_update_tag = dcache_tag_stage2;
     assign l2i_dtag_update_set = dcache_set_stage2;
-    assign l2i_dtag_update_valid = !response_is_dinvalidate;
+    assign l2i_dtag_update_valid = !response_dinvalidate;
 
     //
     // Update instruction cache tag. For a fill, mark the line valid and update the tag.
     // For a invalidate, mark all ways for the selected set invalid
     //
-    assign response_is_iinvalidate = response_stage2_valid
+    assign response_iinvalidate = response_stage2_valid
         && response_stage2.packet_type == L2RSP_IINVALIDATE_ACK;
-    assign icache_update_en = (is_ack_for_me && response_stage2.cache_type == CT_ICACHE)
-        || response_is_iinvalidate;
-    assign l2i_itag_update_en = response_is_iinvalidate ? {`L1I_WAYS{1'b1}}
+    assign icache_update_en = (ack_for_me && response_stage2.cache_type == CT_ICACHE)
+        || response_iinvalidate;
+    assign l2i_itag_update_en = response_iinvalidate ? {`L1I_WAYS{1'b1}}
         : (ifill_way_oh & {`L1I_WAYS{icache_update_en}});
     assign l2i_itag_update_tag = icache_tag_stage2;
     assign l2i_itag_update_set = icache_set_stage2;
-    assign l2i_itag_update_valid = !response_is_iinvalidate;
+    assign l2i_itag_update_valid = !response_iinvalidate;
 
     // Wake up entries that have had their miss satisfied.
-    assign icache_l2_response_valid = is_ack_for_me && response_stage2.cache_type == CT_ICACHE;
-    assign dcache_l2_response_valid = is_ack_for_me && response_stage2.packet_type == L2RSP_LOAD_ACK
+    assign icache_l2_response_valid = ack_for_me && response_stage2.cache_type == CT_ICACHE;
+    assign dcache_l2_response_valid = ack_for_me && response_stage2.packet_type == L2RSP_LOAD_ACK
         && response_stage2.cache_type == CT_DCACHE;
-    assign storebuf_l2_response_valid = is_ack_for_me
+    assign storebuf_l2_response_valid = ack_for_me
         && (response_stage2.packet_type == L2RSP_STORE_ACK
         || response_stage2.packet_type == L2RSP_FLUSH_ACK
         || response_stage2.packet_type == L2RSP_IINVALIDATE_ACK

@@ -82,11 +82,11 @@ module core
     decoded_instruction_t dd_instruction;       // From dcache_data_stage of dcache_data_stage.v
     logic               dd_instruction_valid;   // From dcache_data_stage of dcache_data_stage.v
     scalar_t            dd_io_addr;             // From dcache_data_stage of dcache_data_stage.v
+    logic               dd_io_access;          // From dcache_data_stage of dcache_data_stage.v
     logic               dd_io_read_en;          // From dcache_data_stage of dcache_data_stage.v
     local_thread_idx_t  dd_io_thread_idx;       // From dcache_data_stage of dcache_data_stage.v
     logic               dd_io_write_en;         // From dcache_data_stage of dcache_data_stage.v
     scalar_t            dd_io_write_value;      // From dcache_data_stage of dcache_data_stage.v
-    logic               dd_is_io_address;       // From dcache_data_stage of dcache_data_stage.v
     vector_lane_mask_t  dd_lane_mask;           // From dcache_data_stage of dcache_data_stage.v
     cache_line_data_t   dd_load_data;           // From dcache_data_stage of dcache_data_stage.v
     logic               dd_membar_en;           // From dcache_data_stage of dcache_data_stage.v
@@ -149,8 +149,8 @@ module core
     logic [NUM_VECTOR_LANES-1:0] fx1_mul_sign;  // From fp_execute_stage1 of fp_execute_stage1.v
     logic [NUM_VECTOR_LANES-1:0] [31:0] fx1_multiplicand;// From fp_execute_stage1 of fp_execute_stage1.v
     logic [NUM_VECTOR_LANES-1:0] [31:0] fx1_multiplier;// From fp_execute_stage1 of fp_execute_stage1.v
-    logic [NUM_VECTOR_LANES-1:0] fx1_result_is_inf;// From fp_execute_stage1 of fp_execute_stage1.v
-    logic [NUM_VECTOR_LANES-1:0] fx1_result_is_nan;// From fp_execute_stage1 of fp_execute_stage1.v
+    logic [NUM_VECTOR_LANES-1:0] fx1_result_inf;// From fp_execute_stage1 of fp_execute_stage1.v
+    logic [NUM_VECTOR_LANES-1:0] fx1_result_nan;// From fp_execute_stage1 of fp_execute_stage1.v
     logic [NUM_VECTOR_LANES-1:0] [5:0] fx1_se_align_shift;// From fp_execute_stage1 of fp_execute_stage1.v
     scalar_t [NUM_VECTOR_LANES-1:0] fx1_significand_le;// From fp_execute_stage1 of fp_execute_stage1.v
     scalar_t [NUM_VECTOR_LANES-1:0] fx1_significand_se;// From fp_execute_stage1 of fp_execute_stage1.v
@@ -166,8 +166,8 @@ module core
     vector_lane_mask_t  fx2_mask_value;         // From fp_execute_stage2 of fp_execute_stage2.v
     logic [NUM_VECTOR_LANES-1:0] [7:0] fx2_mul_exponent;// From fp_execute_stage2 of fp_execute_stage2.v
     logic [NUM_VECTOR_LANES-1:0] fx2_mul_sign;  // From fp_execute_stage2 of fp_execute_stage2.v
-    logic [NUM_VECTOR_LANES-1:0] fx2_result_is_inf;// From fp_execute_stage2 of fp_execute_stage2.v
-    logic [NUM_VECTOR_LANES-1:0] fx2_result_is_nan;// From fp_execute_stage2 of fp_execute_stage2.v
+    logic [NUM_VECTOR_LANES-1:0] fx2_result_inf;// From fp_execute_stage2 of fp_execute_stage2.v
+    logic [NUM_VECTOR_LANES-1:0] fx2_result_nan;// From fp_execute_stage2 of fp_execute_stage2.v
     logic [NUM_VECTOR_LANES-1:0] fx2_round;     // From fp_execute_stage2 of fp_execute_stage2.v
     scalar_t [NUM_VECTOR_LANES-1:0] fx2_significand_le;// From fp_execute_stage2 of fp_execute_stage2.v
     logic [NUM_VECTOR_LANES-1:0] [63:0] fx2_significand_product;// From fp_execute_stage2 of fp_execute_stage2.v
@@ -185,8 +185,8 @@ module core
     vector_lane_mask_t  fx3_mask_value;         // From fp_execute_stage3 of fp_execute_stage3.v
     logic [NUM_VECTOR_LANES-1:0] [7:0] fx3_mul_exponent;// From fp_execute_stage3 of fp_execute_stage3.v
     logic [NUM_VECTOR_LANES-1:0] fx3_mul_sign;  // From fp_execute_stage3 of fp_execute_stage3.v
-    logic [NUM_VECTOR_LANES-1:0] fx3_result_is_inf;// From fp_execute_stage3 of fp_execute_stage3.v
-    logic [NUM_VECTOR_LANES-1:0] fx3_result_is_nan;// From fp_execute_stage3 of fp_execute_stage3.v
+    logic [NUM_VECTOR_LANES-1:0] fx3_result_inf;// From fp_execute_stage3 of fp_execute_stage3.v
+    logic [NUM_VECTOR_LANES-1:0] fx3_result_nan;// From fp_execute_stage3 of fp_execute_stage3.v
     logic [NUM_VECTOR_LANES-1:0] [63:0] fx3_significand_product;// From fp_execute_stage3 of fp_execute_stage3.v
     subcycle_t          fx3_subcycle;           // From fp_execute_stage3 of fp_execute_stage3.v
     local_thread_idx_t  fx3_thread_idx;         // From fp_execute_stage3 of fp_execute_stage3.v
@@ -200,8 +200,8 @@ module core
     logic [NUM_VECTOR_LANES-1:0] [7:0] fx4_mul_exponent;// From fp_execute_stage4 of fp_execute_stage4.v
     logic [NUM_VECTOR_LANES-1:0] fx4_mul_sign;  // From fp_execute_stage4 of fp_execute_stage4.v
     logic [NUM_VECTOR_LANES-1:0] [5:0] fx4_norm_shift;// From fp_execute_stage4 of fp_execute_stage4.v
-    logic [NUM_VECTOR_LANES-1:0] fx4_result_is_inf;// From fp_execute_stage4 of fp_execute_stage4.v
-    logic [NUM_VECTOR_LANES-1:0] fx4_result_is_nan;// From fp_execute_stage4 of fp_execute_stage4.v
+    logic [NUM_VECTOR_LANES-1:0] fx4_result_inf;// From fp_execute_stage4 of fp_execute_stage4.v
+    logic [NUM_VECTOR_LANES-1:0] fx4_result_nan;// From fp_execute_stage4 of fp_execute_stage4.v
     logic [NUM_VECTOR_LANES-1:0] [63:0] fx4_significand_product;// From fp_execute_stage4 of fp_execute_stage4.v
     subcycle_t          fx4_subcycle;           // From fp_execute_stage4 of fp_execute_stage4.v
     local_thread_idx_t  fx4_thread_idx;         // From fp_execute_stage4 of fp_execute_stage4.v
@@ -247,9 +247,9 @@ module core
     scalar_t            ior_read_value;         // From io_request_queue of io_request_queue.v
     logic               ior_rollback_en;        // From io_request_queue of io_request_queue.v
     local_thread_bitmap_t ior_wake_bitmap;      // From io_request_queue of io_request_queue.v
+    logic               ix_eret;                // From int_execute_stage of int_execute_stage.v
     decoded_instruction_t ix_instruction;       // From int_execute_stage of int_execute_stage.v
     logic               ix_instruction_valid;   // From int_execute_stage of int_execute_stage.v
-    logic               ix_is_eret;             // From int_execute_stage of int_execute_stage.v
     vector_lane_mask_t  ix_mask_value;          // From int_execute_stage of int_execute_stage.v
     logic               ix_perf_cond_branch_not_taken;// From int_execute_stage of int_execute_stage.v
     logic               ix_perf_cond_branch_taken;// From int_execute_stage of int_execute_stage.v
@@ -318,12 +318,12 @@ module core
     subcycle_t          wb_trap_subcycle;       // From writeback_stage of writeback_stage.v
     local_thread_idx_t  wb_trap_thread_idx;     // From writeback_stage of writeback_stage.v
     logic               wb_writeback_en;        // From writeback_stage of writeback_stage.v
-    logic               wb_writeback_is_last_subcycle;// From writeback_stage of writeback_stage.v
-    logic               wb_writeback_is_vector; // From writeback_stage of writeback_stage.v
+    logic               wb_writeback_last_subcycle;// From writeback_stage of writeback_stage.v
     vector_lane_mask_t  wb_writeback_mask;      // From writeback_stage of writeback_stage.v
     register_idx_t      wb_writeback_reg;       // From writeback_stage of writeback_stage.v
     local_thread_idx_t  wb_writeback_thread_idx;// From writeback_stage of writeback_stage.v
     vector_t            wb_writeback_value;     // From writeback_stage of writeback_stage.v
+    logic               wb_writeback_vector;    // From writeback_stage of writeback_stage.v
     // End of automatics
 
     //

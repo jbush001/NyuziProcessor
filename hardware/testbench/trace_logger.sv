@@ -36,7 +36,7 @@ module trace_logger(
 
     // From writeback stage
     input                            wb_writeback_en,
-    input                            wb_writeback_is_vector,
+    input                            wb_writeback_vector,
     input local_thread_idx_t         wb_writeback_thread_idx,
     input register_idx_t             wb_writeback_reg,
     input vector_t                   wb_writeback_value,
@@ -44,7 +44,7 @@ module trace_logger(
     input local_thread_idx_t         wb_rollback_thread_idx,
     input scalar_t                   wb_trap_pc,
     input scalar_t                   wb_rollback_pc,
-    input                            debug_is_sync_store,
+    input                            debug_sync_store,
     input pipeline_sel_t             debug_wb_pipeline,
     input scalar_t                   debug_wb_pc,
 
@@ -52,7 +52,7 @@ module trace_logger(
     input                            ix_instruction_valid,
     input                            ix_instruction_has_dest,
     input register_idx_t             ix_instruction_dest_reg,
-    input                            ix_instruction_dest_is_vector,
+    input                            ix_instruction_dest_vector,
     input scalar_t                   ix_instruction_pc,
     input                            ix_instruction_has_trap,
     input trap_cause_t               ix_instruction_trap_cause,
@@ -62,13 +62,13 @@ module trace_logger(
     input                            dd_instruction_valid,
     input                            dd_instruction_has_dest,
     input register_idx_t             dd_instruction_dest_reg,
-    input                            dd_instruction_dest_is_vector,
+    input                            dd_instruction_dest_vector,
     input                            dd_rollback_en,
     input scalar_t                   dd_instruction_pc,
     input                            dd_store_en,
     input [CACHE_LINE_BYTES - 1:0]   dd_store_mask,
     input vector_t                   dd_store_data,
-    input                            dd_instruction_is_load,
+    input                            dd_instruction_load,
     input memory_op_t                dd_instruction_memory_access_type,
     input scalar_t                   dt_instruction_pc,
     input local_thread_idx_t         dt_thread_idx,
@@ -160,7 +160,7 @@ module trace_logger(
 
             // Note that we only record the memory event for a synchronized store, not the register
             // success value.
-            if (wb_writeback_en && !debug_is_sync_store)
+            if (wb_writeback_en && !debug_sync_store)
             begin : dump_trace_event
                 int tindex;
 
@@ -172,7 +172,7 @@ module trace_logger(
                     tindex = 0;
 
                 assert(trace_reorder_queue[tindex + 1].event_type == EVENT_INVALID);
-                if (wb_writeback_is_vector)
+                if (wb_writeback_vector)
                     trace_reorder_queue[tindex].event_type <= EVENT_VWRITEBACK;
                 else
                     trace_reorder_queue[tindex].event_type <= EVENT_SWRITEBACK;
@@ -206,7 +206,7 @@ module trace_logger(
             // Invalidate the store instruction if a synchronized store failed
             if (dd_instruction_valid
                 && dd_instruction_memory_access_type == MEM_SYNC
-                && !dd_instruction_is_load
+                && !dd_instruction_load
                 && !sq_store_sync_success)
                 trace_reorder_queue[4].event_type <= EVENT_INVALID;
 
