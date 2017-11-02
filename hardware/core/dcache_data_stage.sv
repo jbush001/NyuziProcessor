@@ -31,7 +31,7 @@ module dcache_data_stage(
     input                                     reset,
 
     // To instruction_decode_stage
-    output local_thread_bitmap_t              dd_sync_load_pending,
+    output local_thread_bitmap_t              dd_load_sync_pending,
 
     // From dcache_tag_stage
     input                                     dt_instruction_valid,
@@ -285,7 +285,7 @@ module dcache_data_stage(
 
     // Treat a synchronized load as a cache miss the first time it occurs, because
     // it needs to send it to the L2 cache to register it.
-    assign cache_hit = |way_hit_oh && (!sync_access || dd_sync_load_pending[dt_thread_idx])
+    assign cache_hit = |way_hit_oh && (!sync_access || dd_load_sync_pending[dt_thread_idx])
         && dt_tlb_hit;
 
     //
@@ -462,7 +462,7 @@ module dcache_data_stage(
     // present. This is to register request with L2 cache. The second request will
     // not be a miss if the data is in the cache (there is a window where it could
     // be evicted before the thread can fetch it, in which case it will retry.
-    // sync_load_pending tracks if this is the first or second request.
+    // load_sync_pending tracks if this is the first or second request.
     //
     // Interrupts are different than rollbacks because they can occur in the middle
     // of a synchronized load/store. Detect these and cancel the operation.
@@ -473,11 +473,11 @@ module dcache_data_stage(
             always_ff @(posedge clk, posedge reset)
             begin
                 if (reset)
-                    dd_sync_load_pending[thread_idx] <= 0;
+                    dd_load_sync_pending[thread_idx] <= 0;
                 else if (dcache_load_en && sync_access && dt_thread_idx == local_thread_idx_t'(thread_idx))
                 begin
                     // Track if this is the first or restarted request.
-                    dd_sync_load_pending[thread_idx] <= !dd_sync_load_pending[thread_idx];
+                    dd_load_sync_pending[thread_idx] <= !dd_load_sync_pending[thread_idx];
                 end
             end
         end

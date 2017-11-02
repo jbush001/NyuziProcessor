@@ -107,7 +107,7 @@ module core
     local_thread_idx_t  dd_store_thread_idx;    // From dcache_data_stage of dcache_data_stage.v
     subcycle_t          dd_subcycle;            // From dcache_data_stage of dcache_data_stage.v
     logic               dd_suspend_thread;      // From dcache_data_stage of dcache_data_stage.v
-    local_thread_bitmap_t dd_sync_load_pending; // From dcache_data_stage of dcache_data_stage.v
+    local_thread_bitmap_t dd_load_sync_pending; // From dcache_data_stage of dcache_data_stage.v
     local_thread_idx_t  dd_thread_idx;          // From dcache_data_stage of dcache_data_stage.v
     logic               dd_update_lru_en;       // From dcache_data_stage of dcache_data_stage.v
     l1d_way_idx_t       dd_update_lru_way;      // From dcache_data_stage of dcache_data_stage.v
@@ -296,7 +296,7 @@ module core
     cache_line_data_t   sq_store_bypass_data;   // From l1_l2_interface of l1_l2_interface.v
     logic [CACHE_LINE_BYTES-1:0] sq_store_bypass_mask;// From l1_l2_interface of l1_l2_interface.v
     logic               sq_store_sync_success;  // From l1_l2_interface of l1_l2_interface.v
-    local_thread_bitmap_t sq_sync_store_pending;// From l1_l2_interface of l1_l2_interface.v
+    local_thread_bitmap_t sq_store_sync_pending;// From l1_l2_interface of l1_l2_interface.v
     local_thread_bitmap_t ts_fetch_en;          // From thread_select_stage of thread_select_stage.v
     decoded_instruction_t ts_instruction;       // From thread_select_stage of thread_select_stage.v
     logic               ts_instruction_valid;   // From thread_select_stage of thread_select_stage.v

@@ -135,7 +135,7 @@ module writeback_stage(
     // Used by testbench
     scalar_t __debug_wb_pc;
     pipeline_sel_t __debug_wb_pipeline;
-    logic __debug_sync_store;
+    logic __debug_store_sync;
 `endif
     logic[NUM_VECTOR_LANES - 1:0] scycle_vcompare_result;
     logic[NUM_VECTOR_LANES - 1:0] mcycle_vcompare_result;
@@ -540,7 +540,7 @@ module writeback_stage(
         end
 
         // Used by testbench for cosimulation output
-        __debug_sync_store <= dd_instruction_valid && !dd_instruction.load
+        __debug_store_sync <= dd_instruction_valid && !dd_instruction.load
             && memory_op == MEM_SYNC;
         case ({fx5_instruction_valid, ix_instruction_valid, dd_instruction_valid})
             3'b100:

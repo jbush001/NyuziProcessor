@@ -44,7 +44,7 @@ module trace_logger(
     input local_thread_idx_t         wb_rollback_thread_idx,
     input scalar_t                   wb_trap_pc,
     input scalar_t                   wb_rollback_pc,
-    input                            debug_sync_store,
+    input                            debug_store_sync,
     input pipeline_sel_t             debug_wb_pipeline,
     input scalar_t                   debug_wb_pc,
 
@@ -160,7 +160,7 @@ module trace_logger(
 
             // Note that we only record the memory event for a synchronized store, not the register
             // success value.
-            if (wb_writeback_en && !debug_sync_store)
+            if (wb_writeback_en && !debug_store_sync)
             begin : dump_trace_event
                 int tindex;
 

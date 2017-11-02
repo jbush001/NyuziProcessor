@@ -57,10 +57,10 @@ module instruction_decode_stage(
     input                         ifd_tlb_miss,
 
     // From dcache_data_stage
-    input local_thread_bitmap_t dd_sync_load_pending,
+    input local_thread_bitmap_t dd_load_sync_pending,
 
     // From l1_l2_interface
-    input local_thread_bitmap_t sq_sync_store_pending,
+    input local_thread_bitmap_t sq_store_sync_pending,
 
     // To thread_select_stage
     output decoded_instruction_t  id_instruction,
@@ -256,9 +256,9 @@ module instruction_decode_stage(
     // instruction updates internal state, bad things would happen if an
     // interrupt were dispatched between them. To avoid this, don't dispatch
     // an interrupt if the first instruction has been issued (indicated by
-    // dd_sync_load_pending, ior_pending, or sq_sync_store_pending).
+    // dd_load_sync_pending, ior_pending, or sq_store_sync_pending).
     assign masked_interrupt_flags = cr_interrupt_pending & cr_interrupt_en
-        & ~ior_pending & ~dd_sync_load_pending & ~sq_sync_store_pending;
+        & ~ior_pending & ~dd_load_sync_pending & ~sq_store_sync_pending;
     assign raise_interrupt = masked_interrupt_flags[ifd_thread_idx];
     assign decoded_instr_nxt.has_trap = has_trap;
 

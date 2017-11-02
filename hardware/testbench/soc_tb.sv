@@ -322,7 +322,7 @@ module soc_tb(
         .wb_writeback_thread_idx(`CORE0.wb_writeback_thread_idx),
         .wb_rollback_thread_idx(`CORE0.wb_rollback_thread_idx),
         .wb_rollback_pc(`CORE0.wb_rollback_pc),
-        .debug_sync_store(`CORE0.writeback_stage.__debug_sync_store),
+        .debug_store_sync(`CORE0.writeback_stage.__debug_store_sync),
         .debug_wb_pipeline(`CORE0.writeback_stage.__debug_wb_pipeline),
         .debug_wb_pc(`CORE0.writeback_stage.__debug_wb_pc),
         .ix_instruction_valid(`CORE0.ix_instruction_valid),
