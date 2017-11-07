@@ -15,6 +15,11 @@
 # limitations under the License.
 #
 
+#
+# This script may be run when the repository is first cloned to download
+# and build verilator and the toolchain.
+#
+
 function fail {
      echo $1
      exit 1
