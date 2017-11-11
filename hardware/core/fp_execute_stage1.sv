@@ -36,45 +36,45 @@ import defines::*;
 //
 
 module fp_execute_stage1(
-    input                                          clk,
-    input                                          reset,
+    input                                           clk,
+    input                                           reset,
 
     // From writeback_stage
-    input logic                                    wb_rollback_en,
-    input local_thread_idx_t                       wb_rollback_thread_idx,
+    input logic                                     wb_rollback_en,
+    input local_thread_idx_t                        wb_rollback_thread_idx,
 
     // From operand_fetch_stage
-    input vector_t                                 of_operand1,
-    input vector_t                                 of_operand2,
-    input vector_lane_mask_t                       of_mask_value,
-    input                                          of_instruction_valid,
-    input decoded_instruction_t                    of_instruction,
-    input local_thread_idx_t                       of_thread_idx,
-    input subcycle_t                               of_subcycle,
+    input vector_t                                  of_operand1,
+    input vector_t                                  of_operand2,
+    input vector_lane_mask_t                        of_mask_value,
+    input                                           of_instruction_valid,
+    input decoded_instruction_t                     of_instruction,
+    input local_thread_idx_t                        of_thread_idx,
+    input subcycle_t                                of_subcycle,
 
     // To fp_execute_stage2
-    output logic                                   fx1_instruction_valid,
-    output decoded_instruction_t                   fx1_instruction,
-    output vector_lane_mask_t                      fx1_mask_value,
-    output local_thread_idx_t                      fx1_thread_idx,
-    output subcycle_t                              fx1_subcycle,
-    output logic[NUM_VECTOR_LANES - 1:0]          fx1_result_inf,
-    output logic[NUM_VECTOR_LANES - 1:0]          fx1_result_nan,
-    output logic[NUM_VECTOR_LANES - 1:0][5:0]     fx1_ftoi_lshift,
+    output logic                                    fx1_instruction_valid,
+    output decoded_instruction_t                    fx1_instruction,
+    output vector_lane_mask_t                       fx1_mask_value,
+    output local_thread_idx_t                       fx1_thread_idx,
+    output subcycle_t                               fx1_subcycle,
+    output logic[NUM_VECTOR_LANES - 1:0]            fx1_result_inf,
+    output logic[NUM_VECTOR_LANES - 1:0]            fx1_result_nan,
+    output logic[NUM_VECTOR_LANES - 1:0][5:0]       fx1_ftoi_lshift,
 
     // Floating point addition/subtraction
-    output scalar_t[NUM_VECTOR_LANES - 1:0]       fx1_significand_le,  // Larger exponent
-    output scalar_t[NUM_VECTOR_LANES - 1:0]       fx1_significand_se,  // Smaller exponent
-    output logic[NUM_VECTOR_LANES - 1:0][5:0]     fx1_se_align_shift,
-    output logic[NUM_VECTOR_LANES - 1:0][7:0]     fx1_add_exponent,
-    output logic[NUM_VECTOR_LANES - 1:0]          fx1_logical_subtract,
-    output logic[NUM_VECTOR_LANES - 1:0]          fx1_add_result_sign,
+    output scalar_t[NUM_VECTOR_LANES - 1:0]         fx1_significand_le,  // Larger exponent
+    output scalar_t[NUM_VECTOR_LANES - 1:0]         fx1_significand_se,  // Smaller exponent
+    output logic[NUM_VECTOR_LANES - 1:0][5:0]       fx1_se_align_shift,
+    output logic[NUM_VECTOR_LANES - 1:0][7:0]       fx1_add_exponent,
+    output logic[NUM_VECTOR_LANES - 1:0]            fx1_logical_subtract,
+    output logic[NUM_VECTOR_LANES - 1:0]            fx1_add_result_sign,
 
     // Floating point multiplication
-    output logic[NUM_VECTOR_LANES - 1:0][31:0]    fx1_multiplicand,
-    output logic[NUM_VECTOR_LANES - 1:0][31:0]    fx1_multiplier,
-    output logic[NUM_VECTOR_LANES - 1:0][7:0]     fx1_mul_exponent,
-    output logic[NUM_VECTOR_LANES - 1:0]          fx1_mul_sign);
+    output logic[NUM_VECTOR_LANES - 1:0][31:0]      fx1_multiplicand,
+    output logic[NUM_VECTOR_LANES - 1:0][31:0]      fx1_multiplier,
+    output logic[NUM_VECTOR_LANES - 1:0][7:0]       fx1_mul_exponent,
+    output logic[NUM_VECTOR_LANES - 1:0]            fx1_mul_sign);
 
     logic fmul;
     logic imul;
