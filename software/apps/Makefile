@@ -21,6 +21,7 @@ all:
 	cd quakeview && make
 	cd rotozoom && make
 	cd sceneview && make
+	cd consoletest && make
 	#cd doom && make
 
 clean:
@@ -30,4 +31,5 @@ clean:
 	cd quakeview && make clean
 	cd rotozoom && make clean
 	cd sceneview && make clean
+	cd consoletest && make clean
 	#cd doom && make clean

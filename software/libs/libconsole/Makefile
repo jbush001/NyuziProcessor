@@ -1,5 +1,5 @@
 #
-# Copyright 2016 Jeff Bush
+# Copyright 2011-2015 Jeff Bush
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,18 +14,27 @@
 # limitations under the License.
 #
 
-all:
-	cd libc && make
-	cd librender && make
-	cd libos && make
-	cd compiler-rt && make
-	cd libconsole && make
+TOPDIR=../../../
+
+include $(TOPDIR)/build/target.mk
+
+CFLAGS+=-Wnon-virtual-dtor -Wold-style-cast -Wsign-conversion -fno-rtti -std=c++11 -ffast-math
+
+SRCS=console.cpp
+
+OBJS := $(SRCS_TO_OBJS)
+DEPS := $(SRCS_TO_DEPS)
+
+all: $(OBJ_DIR) libconsole.a
+
+libconsole.a: $(DEPS) $(OBJS)
+	$(AR) r $@ $(OBJS)
 
 clean:
-	cd libc && make clean
-	cd librender && make clean
-	cd libos && make clean
-	cd compiler-rt && make clean
-	cd libconsole && make clean
+	rm -rf $(OBJ_DIR)
+	rm -f libconsole.a
 
+$(OBJ_DIR):
+	mkdir -p $(OBJ_DIR)
 
+-include $(DEPS)
