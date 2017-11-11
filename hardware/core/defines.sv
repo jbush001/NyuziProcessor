@@ -49,7 +49,7 @@ typedef logic[$clog2(`THREADS_PER_CORE) - 1:0] local_thread_idx_t;
 typedef logic[`THREADS_PER_CORE - 1:0] local_thread_bitmap_t; // One bit per thread
 typedef logic[4:0] register_idx_t;
 typedef logic[$clog2(NUM_VECTOR_LANES) - 1:0] subcycle_t;
-typedef logic[NUM_VECTOR_LANES - 1:0] vector_lane_mask_t;
+typedef logic[NUM_VECTOR_LANES - 1:0] vector_mask_t;
 
 parameter CORE_ID_WIDTH = $clog2(`NUM_CORES);
 
@@ -63,8 +63,9 @@ parameter CORE_ID_WIDTH = $clog2(`NUM_CORES);
 // now that it is a parameter, but I haven't tested.
 typedef logic[3:0] core_id_t;
 
-// This should match the number of signals in the assignment to core_perf_events
-// in core.sv.
+// CORE_PERF_EVENTS should match the number of signals in the assignment to
+// core_perf_events in core.sv and L2_PERF_EVENTS must match the number of
+// signals in the assignment to l2_perf_events in l2_cache.sv.
 parameter CORE_PERF_EVENTS = 13;
 parameter L2_PERF_EVENTS = 3;
 parameter TOTAL_PERF_EVENTS = L2_PERF_EVENTS + CORE_PERF_EVENTS * `NUM_CORES;

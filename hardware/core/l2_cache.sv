@@ -111,6 +111,8 @@ module l2_cache(
 
     l2_axi_bus_interface l2_axi_bus_interface(.*);
 
+    // The number of signals in this assignment must match L2_PERF_EVENTS
+    // in defines.sv.
     assign l2_perf_events = {
         l2r_perf_l2_hit,
         l2r_perf_l2_miss,

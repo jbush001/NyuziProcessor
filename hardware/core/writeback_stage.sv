@@ -47,7 +47,7 @@ module writeback_stage(
     input                                 fx5_instruction_valid,
     input decoded_instruction_t           fx5_instruction,
     input vector_t                        fx5_result,
-    input vector_lane_mask_t              fx5_mask_value,
+    input vector_mask_t                   fx5_mask_value,
     input local_thread_idx_t              fx5_thread_idx,
     input subcycle_t                      fx5_subcycle,
 
@@ -56,7 +56,7 @@ module writeback_stage(
     input decoded_instruction_t           ix_instruction,
     input vector_t                        ix_result,
     input local_thread_idx_t              ix_thread_idx,
-    input vector_lane_mask_t              ix_mask_value,
+    input vector_mask_t                   ix_mask_value,
     input logic                           ix_rollback_en,
     input scalar_t                        ix_rollback_pc,
     input subcycle_t                      ix_subcycle,
@@ -65,7 +65,7 @@ module writeback_stage(
     // From dcache_data_stage (memory pipeline)
     input                                 dd_instruction_valid,
     input decoded_instruction_t           dd_instruction,
-    input vector_lane_mask_t              dd_lane_mask,
+    input vector_mask_t                   dd_lane_mask,
     input local_thread_idx_t              dd_thread_idx,
     input l1d_addr_t                      dd_request_vaddr,
     input subcycle_t                      dd_subcycle,
@@ -113,7 +113,7 @@ module writeback_stage(
     output local_thread_idx_t             wb_writeback_thread_idx,
     output logic                          wb_writeback_vector,
     output vector_t                       wb_writeback_value,
-    output vector_lane_mask_t             wb_writeback_mask,
+    output vector_mask_t                  wb_writeback_mask,
     output register_idx_t                 wb_writeback_reg,
     output logic                          wb_writeback_last_subcycle,
 
@@ -139,7 +139,7 @@ module writeback_stage(
 `endif
     logic[NUM_VECTOR_LANES - 1:0] scycle_vcompare_result;
     logic[NUM_VECTOR_LANES - 1:0] mcycle_vcompare_result;
-    vector_lane_mask_t dd_vector_lane_oh;
+    vector_mask_t dd_vector_lane_oh;
     cache_line_data_t bypassed_read_data;
     local_thread_bitmap_t thread_dd_oh;
     logic last_subcycle_dd;
@@ -149,7 +149,7 @@ module writeback_stage(
     local_thread_idx_t writeback_thread_idx_nxt;
     logic writeback_vector_nxt;
     vector_t writeback_value_nxt;
-    vector_lane_mask_t writeback_mask_nxt;
+    vector_mask_t writeback_mask_nxt;
     register_idx_t writeback_reg_nxt;
     logic writeback_last_subcycle_nxt;
 

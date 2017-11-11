@@ -40,7 +40,7 @@ module trace_logger(
     input local_thread_idx_t         wb_writeback_thread_idx,
     input register_idx_t             wb_writeback_reg,
     input vector_t                   wb_writeback_value,
-    input vector_lane_mask_t         wb_writeback_mask,
+    input vector_mask_t              wb_writeback_mask,
     input local_thread_idx_t         wb_rollback_thread_idx,
     input scalar_t                   wb_trap_pc,
     input scalar_t                   wb_rollback_pc,

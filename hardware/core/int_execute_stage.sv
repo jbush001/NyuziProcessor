@@ -35,7 +35,7 @@ module int_execute_stage(
     // From operand_fetch_stage
     input vector_t                    of_operand1,
     input vector_t                    of_operand2,
-    input vector_lane_mask_t          of_mask_value,
+    input vector_mask_t               of_mask_value,
     input                             of_instruction_valid,
     input decoded_instruction_t       of_instruction,
     input local_thread_idx_t          of_thread_idx,
@@ -49,7 +49,7 @@ module int_execute_stage(
     output logic                      ix_instruction_valid,
     output decoded_instruction_t      ix_instruction,
     output vector_t                   ix_result,
-    output vector_lane_mask_t         ix_mask_value,
+    output vector_mask_t              ix_mask_value,
     output local_thread_idx_t         ix_thread_idx,
     output logic                      ix_rollback_en,
     output scalar_t                   ix_rollback_pc,

@@ -36,7 +36,7 @@ module dcache_data_stage(
     // From dcache_tag_stage
     input                                     dt_instruction_valid,
     input decoded_instruction_t               dt_instruction,
-    input vector_lane_mask_t                  dt_mask_value,
+    input vector_mask_t                       dt_mask_value,
     input local_thread_idx_t                  dt_thread_idx,
     input l1d_addr_t                          dt_request_vaddr,
     input l1d_addr_t                          dt_request_paddr,
@@ -63,7 +63,7 @@ module dcache_data_stage(
     // To writeback_stage
     output logic                              dd_instruction_valid,
     output decoded_instruction_t              dd_instruction,
-    output vector_lane_mask_t                 dd_lane_mask,
+    output vector_mask_t                      dd_lane_mask,
     output local_thread_idx_t                 dd_thread_idx,
     output l1d_addr_t                         dd_request_vaddr,
     output subcycle_t                         dd_subcycle,
@@ -125,7 +125,7 @@ module dcache_data_stage(
 
     logic dcache_access_en;
     logic creg_access_en;
-    vector_lane_mask_t word_store_mask;
+    vector_mask_t word_store_mask;
     logic[3:0] byte_store_mask;
     logic[$clog2(CACHE_LINE_WORDS) - 1:0] cache_lane_idx;
     cache_line_data_t endian_twiddled_data;

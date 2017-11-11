@@ -33,7 +33,7 @@ module fp_execute_stage4(
     input                                       reset,
 
     // From fp_execute_stage3
-    input vector_lane_mask_t                    fx3_mask_value,
+    input vector_mask_t                         fx3_mask_value,
     input                                       fx3_instruction_valid,
     input decoded_instruction_t                 fx3_instruction,
     input local_thread_idx_t                    fx3_thread_idx,
@@ -56,7 +56,7 @@ module fp_execute_stage4(
     // To fp_execute_stage5
     output logic                                fx4_instruction_valid,
     output decoded_instruction_t                fx4_instruction,
-    output vector_lane_mask_t                   fx4_mask_value,
+    output vector_mask_t                        fx4_mask_value,
     output local_thread_idx_t                   fx4_thread_idx,
     output subcycle_t                           fx4_subcycle,
     output logic [NUM_VECTOR_LANES - 1:0]       fx4_result_inf,

@@ -36,7 +36,7 @@ module operand_fetch_stage(
     // To fp_execute_stage1/int_execute_stage/dcache_tag_stage
     output vector_t                   of_operand1,
     output vector_t                   of_operand2,
-    output vector_lane_mask_t         of_mask_value,
+    output vector_mask_t              of_mask_value,
     output vector_t                   of_store_value,
     output decoded_instruction_t      of_instruction,
     output logic                      of_instruction_valid,
@@ -50,7 +50,7 @@ module operand_fetch_stage(
     input local_thread_idx_t          wb_writeback_thread_idx,
     input                             wb_writeback_vector,
     input vector_t                    wb_writeback_value,
-    input vector_lane_mask_t          wb_writeback_mask,
+    input vector_mask_t               wb_writeback_mask,
     input register_idx_t              wb_writeback_reg);
 
     scalar_t scalar_val1;

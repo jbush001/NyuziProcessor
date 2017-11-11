@@ -46,7 +46,7 @@ module fp_execute_stage1(
     // From operand_fetch_stage
     input vector_t                                  of_operand1,
     input vector_t                                  of_operand2,
-    input vector_lane_mask_t                        of_mask_value,
+    input vector_mask_t                             of_mask_value,
     input                                           of_instruction_valid,
     input decoded_instruction_t                     of_instruction,
     input local_thread_idx_t                        of_thread_idx,
@@ -55,7 +55,7 @@ module fp_execute_stage1(
     // To fp_execute_stage2
     output logic                                    fx1_instruction_valid,
     output decoded_instruction_t                    fx1_instruction,
-    output vector_lane_mask_t                       fx1_mask_value,
+    output vector_mask_t                            fx1_mask_value,
     output local_thread_idx_t                       fx1_thread_idx,
     output subcycle_t                               fx1_subcycle,
     output logic[NUM_VECTOR_LANES - 1:0]            fx1_result_inf,

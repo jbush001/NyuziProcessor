@@ -81,14 +81,15 @@ module core
     logic               dd_iinvalidate_en;      // From dcache_data_stage of dcache_data_stage.v
     decoded_instruction_t dd_instruction;       // From dcache_data_stage of dcache_data_stage.v
     logic               dd_instruction_valid;   // From dcache_data_stage of dcache_data_stage.v
+    logic               dd_io_access;           // From dcache_data_stage of dcache_data_stage.v
     scalar_t            dd_io_addr;             // From dcache_data_stage of dcache_data_stage.v
-    logic               dd_io_access;          // From dcache_data_stage of dcache_data_stage.v
     logic               dd_io_read_en;          // From dcache_data_stage of dcache_data_stage.v
     local_thread_idx_t  dd_io_thread_idx;       // From dcache_data_stage of dcache_data_stage.v
     logic               dd_io_write_en;         // From dcache_data_stage of dcache_data_stage.v
     scalar_t            dd_io_write_value;      // From dcache_data_stage of dcache_data_stage.v
-    vector_lane_mask_t  dd_lane_mask;           // From dcache_data_stage of dcache_data_stage.v
+    vector_mask_t       dd_lane_mask;           // From dcache_data_stage of dcache_data_stage.v
     cache_line_data_t   dd_load_data;           // From dcache_data_stage of dcache_data_stage.v
+    local_thread_bitmap_t dd_load_sync_pending; // From dcache_data_stage of dcache_data_stage.v
     logic               dd_membar_en;           // From dcache_data_stage of dcache_data_stage.v
     logic               dd_perf_dcache_hit;     // From dcache_data_stage of dcache_data_stage.v
     logic               dd_perf_dcache_miss;    // From dcache_data_stage of dcache_data_stage.v
@@ -107,7 +108,6 @@ module core
     local_thread_idx_t  dd_store_thread_idx;    // From dcache_data_stage of dcache_data_stage.v
     subcycle_t          dd_subcycle;            // From dcache_data_stage of dcache_data_stage.v
     logic               dd_suspend_thread;      // From dcache_data_stage of dcache_data_stage.v
-    local_thread_bitmap_t dd_load_sync_pending; // From dcache_data_stage of dcache_data_stage.v
     local_thread_idx_t  dd_thread_idx;          // From dcache_data_stage of dcache_data_stage.v
     logic               dd_update_lru_en;       // From dcache_data_stage of dcache_data_stage.v
     l1d_way_idx_t       dd_update_lru_way;      // From dcache_data_stage of dcache_data_stage.v
@@ -118,7 +118,7 @@ module core
     logic               dt_invalidate_tlb_en;   // From dcache_tag_stage of dcache_tag_stage.v
     logic [ASID_WIDTH-1:0] dt_itlb_update_asid; // From dcache_tag_stage of dcache_tag_stage.v
     page_index_t        dt_itlb_vpage_idx;      // From dcache_tag_stage of dcache_tag_stage.v
-    vector_lane_mask_t  dt_mask_value;          // From dcache_tag_stage of dcache_tag_stage.v
+    vector_mask_t       dt_mask_value;          // From dcache_tag_stage of dcache_tag_stage.v
     l1d_addr_t          dt_request_paddr;       // From dcache_tag_stage of dcache_tag_stage.v
     l1d_addr_t          dt_request_vaddr;       // From dcache_tag_stage of dcache_tag_stage.v
     l1d_tag_t           dt_snoop_tag [`L1D_WAYS];// From dcache_tag_stage of dcache_tag_stage.v
@@ -144,7 +144,7 @@ module core
     decoded_instruction_t fx1_instruction;      // From fp_execute_stage1 of fp_execute_stage1.v
     logic               fx1_instruction_valid;  // From fp_execute_stage1 of fp_execute_stage1.v
     logic [NUM_VECTOR_LANES-1:0] fx1_logical_subtract;// From fp_execute_stage1 of fp_execute_stage1.v
-    vector_lane_mask_t  fx1_mask_value;         // From fp_execute_stage1 of fp_execute_stage1.v
+    vector_mask_t       fx1_mask_value;         // From fp_execute_stage1 of fp_execute_stage1.v
     logic [NUM_VECTOR_LANES-1:0] [7:0] fx1_mul_exponent;// From fp_execute_stage1 of fp_execute_stage1.v
     logic [NUM_VECTOR_LANES-1:0] fx1_mul_sign;  // From fp_execute_stage1 of fp_execute_stage1.v
     logic [NUM_VECTOR_LANES-1:0] [31:0] fx1_multiplicand;// From fp_execute_stage1 of fp_execute_stage1.v
@@ -163,7 +163,7 @@ module core
     decoded_instruction_t fx2_instruction;      // From fp_execute_stage2 of fp_execute_stage2.v
     logic               fx2_instruction_valid;  // From fp_execute_stage2 of fp_execute_stage2.v
     logic [NUM_VECTOR_LANES-1:0] fx2_logical_subtract;// From fp_execute_stage2 of fp_execute_stage2.v
-    vector_lane_mask_t  fx2_mask_value;         // From fp_execute_stage2 of fp_execute_stage2.v
+    vector_mask_t       fx2_mask_value;         // From fp_execute_stage2 of fp_execute_stage2.v
     logic [NUM_VECTOR_LANES-1:0] [7:0] fx2_mul_exponent;// From fp_execute_stage2 of fp_execute_stage2.v
     logic [NUM_VECTOR_LANES-1:0] fx2_mul_sign;  // From fp_execute_stage2 of fp_execute_stage2.v
     logic [NUM_VECTOR_LANES-1:0] fx2_result_inf;// From fp_execute_stage2 of fp_execute_stage2.v
@@ -182,7 +182,7 @@ module core
     decoded_instruction_t fx3_instruction;      // From fp_execute_stage3 of fp_execute_stage3.v
     logic               fx3_instruction_valid;  // From fp_execute_stage3 of fp_execute_stage3.v
     logic [NUM_VECTOR_LANES-1:0] fx3_logical_subtract;// From fp_execute_stage3 of fp_execute_stage3.v
-    vector_lane_mask_t  fx3_mask_value;         // From fp_execute_stage3 of fp_execute_stage3.v
+    vector_mask_t       fx3_mask_value;         // From fp_execute_stage3 of fp_execute_stage3.v
     logic [NUM_VECTOR_LANES-1:0] [7:0] fx3_mul_exponent;// From fp_execute_stage3 of fp_execute_stage3.v
     logic [NUM_VECTOR_LANES-1:0] fx3_mul_sign;  // From fp_execute_stage3 of fp_execute_stage3.v
     logic [NUM_VECTOR_LANES-1:0] fx3_result_inf;// From fp_execute_stage3 of fp_execute_stage3.v
@@ -196,7 +196,7 @@ module core
     decoded_instruction_t fx4_instruction;      // From fp_execute_stage4 of fp_execute_stage4.v
     logic               fx4_instruction_valid;  // From fp_execute_stage4 of fp_execute_stage4.v
     logic [NUM_VECTOR_LANES-1:0] fx4_logical_subtract;// From fp_execute_stage4 of fp_execute_stage4.v
-    vector_lane_mask_t  fx4_mask_value;         // From fp_execute_stage4 of fp_execute_stage4.v
+    vector_mask_t       fx4_mask_value;         // From fp_execute_stage4 of fp_execute_stage4.v
     logic [NUM_VECTOR_LANES-1:0] [7:0] fx4_mul_exponent;// From fp_execute_stage4 of fp_execute_stage4.v
     logic [NUM_VECTOR_LANES-1:0] fx4_mul_sign;  // From fp_execute_stage4 of fp_execute_stage4.v
     logic [NUM_VECTOR_LANES-1:0] [5:0] fx4_norm_shift;// From fp_execute_stage4 of fp_execute_stage4.v
@@ -207,7 +207,7 @@ module core
     local_thread_idx_t  fx4_thread_idx;         // From fp_execute_stage4 of fp_execute_stage4.v
     decoded_instruction_t fx5_instruction;      // From fp_execute_stage5 of fp_execute_stage5.v
     logic               fx5_instruction_valid;  // From fp_execute_stage5 of fp_execute_stage5.v
-    vector_lane_mask_t  fx5_mask_value;         // From fp_execute_stage5 of fp_execute_stage5.v
+    vector_mask_t       fx5_mask_value;         // From fp_execute_stage5 of fp_execute_stage5.v
     vector_t            fx5_result;             // From fp_execute_stage5 of fp_execute_stage5.v
     subcycle_t          fx5_subcycle;           // From fp_execute_stage5 of fp_execute_stage5.v
     local_thread_idx_t  fx5_thread_idx;         // From fp_execute_stage5 of fp_execute_stage5.v
@@ -250,7 +250,7 @@ module core
     logic               ix_eret;                // From int_execute_stage of int_execute_stage.v
     decoded_instruction_t ix_instruction;       // From int_execute_stage of int_execute_stage.v
     logic               ix_instruction_valid;   // From int_execute_stage of int_execute_stage.v
-    vector_lane_mask_t  ix_mask_value;          // From int_execute_stage of int_execute_stage.v
+    vector_mask_t       ix_mask_value;          // From int_execute_stage of int_execute_stage.v
     logic               ix_perf_cond_branch_not_taken;// From int_execute_stage of int_execute_stage.v
     logic               ix_perf_cond_branch_taken;// From int_execute_stage of int_execute_stage.v
     logic               ix_perf_uncond_branch;  // From int_execute_stage of int_execute_stage.v
@@ -286,7 +286,7 @@ module core
     l1d_set_idx_t       l2i_snoop_set;          // From l1_l2_interface of l1_l2_interface.v
     decoded_instruction_t of_instruction;       // From operand_fetch_stage of operand_fetch_stage.v
     logic               of_instruction_valid;   // From operand_fetch_stage of operand_fetch_stage.v
-    vector_lane_mask_t  of_mask_value;          // From operand_fetch_stage of operand_fetch_stage.v
+    vector_mask_t       of_mask_value;          // From operand_fetch_stage of operand_fetch_stage.v
     vector_t            of_operand1;            // From operand_fetch_stage of operand_fetch_stage.v
     vector_t            of_operand2;            // From operand_fetch_stage of operand_fetch_stage.v
     vector_t            of_store_value;         // From operand_fetch_stage of operand_fetch_stage.v
@@ -295,8 +295,8 @@ module core
     logic               sq_rollback_en;         // From l1_l2_interface of l1_l2_interface.v
     cache_line_data_t   sq_store_bypass_data;   // From l1_l2_interface of l1_l2_interface.v
     logic [CACHE_LINE_BYTES-1:0] sq_store_bypass_mask;// From l1_l2_interface of l1_l2_interface.v
-    logic               sq_store_sync_success;  // From l1_l2_interface of l1_l2_interface.v
     local_thread_bitmap_t sq_store_sync_pending;// From l1_l2_interface of l1_l2_interface.v
+    logic               sq_store_sync_success;  // From l1_l2_interface of l1_l2_interface.v
     local_thread_bitmap_t ts_fetch_en;          // From thread_select_stage of thread_select_stage.v
     decoded_instruction_t ts_instruction;       // From thread_select_stage of thread_select_stage.v
     logic               ts_instruction_valid;   // From thread_select_stage of thread_select_stage.v
@@ -319,7 +319,7 @@ module core
     local_thread_idx_t  wb_trap_thread_idx;     // From writeback_stage of writeback_stage.v
     logic               wb_writeback_en;        // From writeback_stage of writeback_stage.v
     logic               wb_writeback_last_subcycle;// From writeback_stage of writeback_stage.v
-    vector_lane_mask_t  wb_writeback_mask;      // From writeback_stage of writeback_stage.v
+    vector_mask_t       wb_writeback_mask;      // From writeback_stage of writeback_stage.v
     register_idx_t      wb_writeback_reg;       // From writeback_stage of writeback_stage.v
     local_thread_idx_t  wb_writeback_thread_idx;// From writeback_stage of writeback_stage.v
     vector_t            wb_writeback_value;     // From writeback_stage of writeback_stage.v
@@ -351,7 +351,7 @@ module core
     l1_l2_interface #(.CORE_ID(CORE_ID)) l1_l2_interface(.*);
     io_request_queue #(.CORE_ID(CORE_ID)) io_request_queue(.*);
 
-    // The number os signals in this assignment must match CORE_PERF_EVENTS
+    // The number of signals in this assignment must match CORE_PERF_EVENTS
     // in defines.sv.
     assign core_perf_events = {
         ix_perf_cond_branch_not_taken,

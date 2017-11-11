@@ -42,7 +42,7 @@ module dcache_tag_stage
 
     // From operand_fetch_stage
     input vector_t                              of_operand1,
-    input vector_lane_mask_t                    of_mask_value,
+    input vector_mask_t                         of_mask_value,
     input vector_t                              of_store_value,
     input                                       of_instruction_valid,
     input decoded_instruction_t                 of_instruction,
@@ -56,7 +56,7 @@ module dcache_tag_stage
     // To dcache_data_stage
     output logic                                dt_instruction_valid,
     output decoded_instruction_t                dt_instruction,
-    output vector_lane_mask_t                   dt_mask_value,
+    output vector_mask_t                        dt_mask_value,
     output local_thread_idx_t                   dt_thread_idx,
     output l1d_addr_t                           dt_request_vaddr,
     output l1d_addr_t                           dt_request_paddr,
