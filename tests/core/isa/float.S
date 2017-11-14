@@ -73,9 +73,7 @@ add_ops:
     .float 1.0, nan, nan
     .float nan, nan, nan
     .long 0x00800000, 0x80800000, 0 # Add underflow 2e-38 + -2e-38 = 0
-
-    # Failing cases
-    #.long 0x7f7fffff, 0x7f7fffff, 0x7f800000 # Issue #56: Add overflow: 1e+38 + 1e+38 = inf
+    .long 0x7f7fffff, 0x7f7fffff, 0x7f800000 # Add overflow: 1e+38 + 1e+38 = inf
 add_ops_end:
 
 sub_ops:
