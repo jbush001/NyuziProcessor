@@ -80,6 +80,7 @@ module fp_execute_stage5(
             logic add_subnormal;
             scalar_t add_result;
             logic add_round;
+            logic add_overflow;
             logic mul_normalize_shift;
             logic[22:0] mul_normalized_significand;
             logic[22:0] mul_rounded_significand;
@@ -109,10 +110,11 @@ module fp_execute_stage5(
             assign add_result_significand = add_subnormal ? fx4_add_significand[lane_idx][22:0]
                 : (shifted_significand[30:8] + FLOAT32_SIG_WIDTH'(add_round));    // Round up using truncated bit
             assign add_result_exponent = add_subnormal ? '0 : adjusted_add_exponent;
+            assign add_overflow = add_result_exponent == 8'hFF && !fx4_result_nan[lane_idx];
 
             always_comb
             begin
-                if (fx4_result_inf[lane_idx])
+                if (fx4_result_inf[lane_idx] || add_overflow)
                     add_result = {fx4_add_result_sign[lane_idx], 8'hff, 23'd0};
                 else if (fx4_result_nan[lane_idx])
                     add_result = {32'h7fffffff};
