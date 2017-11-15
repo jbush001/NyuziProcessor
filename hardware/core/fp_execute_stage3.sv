@@ -57,6 +57,7 @@ module fp_execute_stage3(
     // Floating point multiplication
     input [NUM_VECTOR_LANES - 1:0][63:0]        fx2_significand_product,
     input [NUM_VECTOR_LANES - 1:0][7:0]         fx2_mul_exponent,
+    input [NUM_VECTOR_LANES - 1:0]              fx2_mul_underflow,
     input [NUM_VECTOR_LANES - 1:0]              fx2_mul_sign,
 
     // To fp_execute_stage4
@@ -78,6 +79,7 @@ module fp_execute_stage3(
     // Floating point multiplication
     output logic[NUM_VECTOR_LANES - 1:0][63:0]  fx3_significand_product,
     output logic[NUM_VECTOR_LANES - 1:0][7:0]   fx3_mul_exponent,
+    output logic[NUM_VECTOR_LANES - 1:0]        fx3_mul_underflow,
     output logic[NUM_VECTOR_LANES - 1:0]        fx3_mul_sign);
 
     logic ftoi;
@@ -131,6 +133,7 @@ module fp_execute_stage3(
                 // Multiplication
                 fx3_significand_product[lane_idx] <= fx2_significand_product[lane_idx];
                 fx3_mul_exponent[lane_idx] <= fx2_mul_exponent[lane_idx];
+                fx3_mul_underflow[lane_idx] <= fx2_mul_underflow[lane_idx];
                 fx3_mul_sign[lane_idx] <= fx2_mul_sign[lane_idx];
             end
         end
