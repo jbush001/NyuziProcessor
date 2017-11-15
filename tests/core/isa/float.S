@@ -127,7 +127,5 @@ mul_ops:
     .float nan, 1, nan
     .float 1, nan, nan
     .long 0x7f7fffff, 0x40800000, 0x7f800000       # Mul overflow: 1e+38 * 4 = inf
-
-    # Failing cases
-    #.long 0x00800000, 0x2d000000, 0x0             # Issue #57: Mul underflow: 1e-38 * 1e-12 = 0
+    .long 0x00800000, 0x2d000000, 0x0              # Mul underflow: 1e-38 * 1e-12 = 0
 mul_ops_end:
