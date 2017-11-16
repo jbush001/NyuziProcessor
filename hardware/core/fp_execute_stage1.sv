@@ -74,6 +74,7 @@ module fp_execute_stage1(
     output logic[NUM_VECTOR_LANES - 1:0][31:0]      fx1_multiplicand,
     output logic[NUM_VECTOR_LANES - 1:0][31:0]      fx1_multiplier,
     output logic[NUM_VECTOR_LANES - 1:0][7:0]       fx1_mul_exponent,
+    output logic[NUM_VECTOR_LANES - 1:0]            fx1_mul_underflow,
     output logic[NUM_VECTOR_LANES - 1:0]            fx1_mul_sign);
 
     logic fmul;
@@ -186,6 +187,7 @@ module fp_execute_stage1(
                 fx1_result_nan[lane_idx] <= result_nan;
                 fx1_result_inf[lane_idx] <= !itof && !result_nan && (fop1_inf || fop2_inf
                     || (fmul && mul_exponent_carry && !mul_exponent_underflow));
+                fx1_mul_underflow[lane_idx] <= mul_exponent_underflow;
 
                 // Floating point addition pipeline.
                 // - If this is a float<->int conversion, the value goes down the small exponent path.

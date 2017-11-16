@@ -146,6 +146,7 @@ module core
     logic [NUM_VECTOR_LANES-1:0] fx1_logical_subtract;// From fp_execute_stage1 of fp_execute_stage1.v
     vector_mask_t       fx1_mask_value;         // From fp_execute_stage1 of fp_execute_stage1.v
     logic [NUM_VECTOR_LANES-1:0] [7:0] fx1_mul_exponent;// From fp_execute_stage1 of fp_execute_stage1.v
+    logic [NUM_VECTOR_LANES-1:0] fx1_mul_underflow;// From fp_execute_stage1 of fp_execute_stage1.v
     logic [NUM_VECTOR_LANES-1:0] fx1_mul_sign;  // From fp_execute_stage1 of fp_execute_stage1.v
     logic [NUM_VECTOR_LANES-1:0] [31:0] fx1_multiplicand;// From fp_execute_stage1 of fp_execute_stage1.v
     logic [NUM_VECTOR_LANES-1:0] [31:0] fx1_multiplier;// From fp_execute_stage1 of fp_execute_stage1.v
@@ -165,6 +166,7 @@ module core
     logic [NUM_VECTOR_LANES-1:0] fx2_logical_subtract;// From fp_execute_stage2 of fp_execute_stage2.v
     vector_mask_t       fx2_mask_value;         // From fp_execute_stage2 of fp_execute_stage2.v
     logic [NUM_VECTOR_LANES-1:0] [7:0] fx2_mul_exponent;// From fp_execute_stage2 of fp_execute_stage2.v
+    logic [NUM_VECTOR_LANES-1:0] fx2_mul_underflow;// From fp_execute_stage2 of fp_execute_stage2.v
     logic [NUM_VECTOR_LANES-1:0] fx2_mul_sign;  // From fp_execute_stage2 of fp_execute_stage2.v
     logic [NUM_VECTOR_LANES-1:0] fx2_result_inf;// From fp_execute_stage2 of fp_execute_stage2.v
     logic [NUM_VECTOR_LANES-1:0] fx2_result_nan;// From fp_execute_stage2 of fp_execute_stage2.v
@@ -184,6 +186,7 @@ module core
     logic [NUM_VECTOR_LANES-1:0] fx3_logical_subtract;// From fp_execute_stage3 of fp_execute_stage3.v
     vector_mask_t       fx3_mask_value;         // From fp_execute_stage3 of fp_execute_stage3.v
     logic [NUM_VECTOR_LANES-1:0] [7:0] fx3_mul_exponent;// From fp_execute_stage3 of fp_execute_stage3.v
+    logic [NUM_VECTOR_LANES-1:0] fx3_mul_underflow;// From fp_execute_stage3 of fp_execute_stage3.v
     logic [NUM_VECTOR_LANES-1:0] fx3_mul_sign;  // From fp_execute_stage3 of fp_execute_stage3.v
     logic [NUM_VECTOR_LANES-1:0] fx3_result_inf;// From fp_execute_stage3 of fp_execute_stage3.v
     logic [NUM_VECTOR_LANES-1:0] fx3_result_nan;// From fp_execute_stage3 of fp_execute_stage3.v
@@ -198,6 +201,7 @@ module core
     logic [NUM_VECTOR_LANES-1:0] fx4_logical_subtract;// From fp_execute_stage4 of fp_execute_stage4.v
     vector_mask_t       fx4_mask_value;         // From fp_execute_stage4 of fp_execute_stage4.v
     logic [NUM_VECTOR_LANES-1:0] [7:0] fx4_mul_exponent;// From fp_execute_stage4 of fp_execute_stage4.v
+    logic [NUM_VECTOR_LANES-1:0] fx4_mul_underflow;// From fp_execute_stage4 of fp_execute_stage4.v
     logic [NUM_VECTOR_LANES-1:0] fx4_mul_sign;  // From fp_execute_stage4 of fp_execute_stage4.v
     logic [NUM_VECTOR_LANES-1:0] [5:0] fx4_norm_shift;// From fp_execute_stage4 of fp_execute_stage4.v
     logic [NUM_VECTOR_LANES-1:0] fx4_result_inf;// From fp_execute_stage4 of fp_execute_stage4.v

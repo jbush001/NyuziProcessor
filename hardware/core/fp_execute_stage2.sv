@@ -61,6 +61,7 @@ module fp_execute_stage2(
     input [NUM_VECTOR_LANES - 1:0]              fx1_mul_sign,
     input [NUM_VECTOR_LANES - 1:0][31:0]        fx1_multiplicand,
     input [NUM_VECTOR_LANES - 1:0][31:0]        fx1_multiplier,
+    input [NUM_VECTOR_LANES - 1:0]              fx1_mul_underflow,
 
     // To fp_execute_stage3
     output logic                                fx2_instruction_valid,
@@ -85,6 +86,7 @@ module fp_execute_stage2(
     // Floating point multiplication
     output logic[NUM_VECTOR_LANES - 1:0][63:0]  fx2_significand_product,
     output logic[NUM_VECTOR_LANES - 1:0][7:0]   fx2_mul_exponent,
+    output logic[NUM_VECTOR_LANES - 1:0]        fx2_mul_underflow,
     output logic[NUM_VECTOR_LANES - 1:0]        fx2_mul_sign);
 
     logic imulhs;
@@ -124,6 +126,7 @@ module fp_execute_stage2(
                 fx2_round[lane_idx] <= round;
                 fx2_sticky[lane_idx] <= sticky;
                 fx2_mul_exponent[lane_idx] <= fx1_mul_exponent[lane_idx];
+                fx2_mul_underflow[lane_idx] <= fx1_mul_underflow[lane_idx];
                 fx2_mul_sign[lane_idx] <= fx1_mul_sign[lane_idx];
                 fx2_result_inf[lane_idx] <= fx1_result_inf[lane_idx];
                 fx2_result_nan[lane_idx] <= fx1_result_nan[lane_idx];
