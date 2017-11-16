@@ -49,6 +49,7 @@ module fp_execute_stage5(
     // Floating point multiplication
     input [NUM_VECTOR_LANES - 1:0][63:0]    fx4_significand_product,
     input [NUM_VECTOR_LANES - 1:0][7:0]     fx4_mul_exponent,
+    input [NUM_VECTOR_LANES - 1:0]          fx4_mul_underflow,
     input [NUM_VECTOR_LANES - 1:0]          fx4_mul_sign,
 
     // To writeback_stage
@@ -196,7 +197,7 @@ module fp_execute_stage5(
                 else if (imulh)
                     fx5_result[lane_idx] <= fx4_significand_product[lane_idx][63:32];
                 else if (fmul)
-                    fx5_result[lane_idx] <= fmul_result;
+                    fx5_result[lane_idx] <= fx4_mul_underflow[lane_idx] ? 32'h00000000 : fmul_result;
                 else
                     fx5_result[lane_idx] <= add_result;
             end
