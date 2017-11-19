@@ -120,6 +120,7 @@ struct processor
     uint32_t *memory;
     uint32_t memory_size;
     uint32_t interrupt_levels;
+    bool random_thread_sched;
     bool crashed;
     bool single_stepping;
     bool stop_on_fault;
@@ -231,9 +232,8 @@ struct processor *init_processor(uint32_t memory_size, uint32_t num_cores,
 
         if (randomize_memory)
         {
-            srand((unsigned int) time(NULL));
             for (address = 0; address < memory_size / 4; address++)
-                proc->memory[address] = (uint32_t) rand();
+                proc->memory[address] = (uint32_t) next_random();
         }
         else
             memset(proc->memory, 0, proc->memory_size);
@@ -269,9 +269,7 @@ struct processor *init_processor(uint32_t memory_size, uint32_t num_cores,
     proc->total_threads = threads_per_core * num_cores;
     proc->threads_per_core = threads_per_core;
     proc->num_cores = num_cores;
-    proc->crashed = false;
     proc->thread_enable_mask = 1;
-    proc->enable_tracing = false;
     gettimeofday(&tv, NULL);
     proc->start_cycle_count = (uint32_t)(tv.tv_sec * 50000000 + tv.tv_usec * 50);
 
@@ -281,6 +279,11 @@ struct processor *init_processor(uint32_t memory_size, uint32_t num_cores,
 void enable_tracing(struct processor *proc)
 {
     proc->enable_tracing = true;
+}
+
+void enable_random_thread_sched(struct processor *proc)
+{
+    proc->random_thread_sched = true;
 }
 
 int load_hex_file(struct processor *proc, const char *filename)
@@ -415,50 +418,56 @@ bool is_stopped_on_fault(const struct processor *proc)
     return proc->crashed;
 }
 
-bool execute_instructions(struct processor *proc, uint32_t thread_id,
-                          uint64_t total_instructions)
+bool execute_instructions(struct processor *proc, uint64_t total_instructions)
 {
     uint64_t instruction_count;
-    uint32_t local_thread_idx;
-    uint32_t core_id;
-    struct core *core;
+    uint32_t next_thread = 0;
 
     proc->single_stepping = false;
-    for (instruction_count = 0; instruction_count < total_instructions; instruction_count++)
+    if (proc->random_thread_sched)
     {
-        if (proc->thread_enable_mask == 0)
+        for (instruction_count = 0; instruction_count < total_instructions;
+            instruction_count++)
         {
-            printf("thread enable mask is now zero\n");
-            return false;
-        }
-
-        if (proc->crashed)
-            return false;
-
-        if (thread_id == ALL_THREADS)
-        {
-            // Cycle through threads round-robin
-            for (core_id = 0; core_id < proc->num_cores; core_id++)
+            if (proc->thread_enable_mask == 0)
             {
-                core = &proc->cores[core_id];
-                for (local_thread_idx = 0; local_thread_idx < proc->threads_per_core;
-                        local_thread_idx++)
-                {
-                    if (proc->thread_enable_mask & (1 << local_thread_idx))
-                    {
-                        if (!execute_instruction(&core->threads[local_thread_idx]))
-                            return false;  // Hit breakpoint
-                    }
-                }
+                printf("thread enable mask is now zero\n");
+                return false;
             }
-        }
-        else
-        {
-            if (!execute_instruction(get_thread(proc, thread_id)))
-                return false;  // Hit breakpoint
-        }
 
-        timer_tick(proc);
+            if (proc->crashed)
+                return false;
+
+            next_thread = next_set_bit(proc->thread_enable_mask,
+                (uint32_t) next_random() % proc->total_threads);
+            if (!execute_instruction(get_thread(proc, next_thread)))
+                return false;  // Hit breakpoint
+
+            timer_tick(proc);
+        }
+    }
+    else
+    {
+        // Round robin execution (faster than random execution)
+        for (instruction_count = 0; instruction_count < total_instructions;
+            instruction_count++)
+        {
+            if (proc->thread_enable_mask == 0)
+            {
+                printf("thread enable mask is now zero\n");
+                return false;
+            }
+
+            if (proc->crashed)
+                return false;
+
+            next_thread = next_set_bit(proc->thread_enable_mask,
+                ((next_thread + 31) & 31));
+            if (!execute_instruction(get_thread(proc, next_thread)))
+                return false;  // Hit breakpoint
+
+            timer_tick(proc);
+        }
     }
 
     return true;

@@ -108,5 +108,22 @@ static inline bool can_read_file_descriptor(int fd)
 
 int parse_hex_vector(const char *str, uint32_t *vector_values, bool endian_swap);
 
+// Return the index of the next lowest set bit at or below index (with 0
+// being the least signficant bit). If there is no set bits below the index,
+// wrap around and search from the the most significand bit position.
+// The result is undefined if bitmask is 0
+static inline uint32_t next_set_bit(uint32_t bitmask, uint32_t index)
+{
+    const uint32_t lower_mask = ((1 << (index + 1)) - 1) & bitmask;
+    if (lower_mask)
+        return 31 - (uint32_t) __builtin_clz(lower_mask);
+
+    // Couldn't find a set bit, search from topmost bit
+    return 31 - (uint32_t) __builtin_clz(bitmask);
+}
+
+void seed_random(uint64_t value);
+uint64_t next_random(void);
+
 #endif
 

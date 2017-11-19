@@ -41,7 +41,7 @@ clean:
 # Run in emulator. Dump rendered framebuffer to a file 'output.png'.
 run: $(OBJ_DIR)/program.hex
 	@rm -f $(OBJ_DIR)/output.bin output.png
-	$(EMULATOR) -d $(OBJ_DIR)/output.bin,0x200000,0x12C000 $(OBJ_DIR)/program.hex
+	$(EMULATOR) -a -d $(OBJ_DIR)/output.bin,0x200000,0x12C000 $(OBJ_DIR)/program.hex
 	@convert -depth 8 -size 640x480 rgba:$(OBJ_DIR)/output.bin output.png
 
 # Run in verilator. Dump rendered framebuffer to a file 'output.png'.
@@ -54,7 +54,7 @@ verirun: $(OBJ_DIR)/program.hex
 # value in Makefile. If they do not match, return an error.
 test: $(OBJ_DIR)/program.hex
 	@rm -f $(OBJ_DIR)/output.bin output.png
-	$(EMULATOR) -d $(OBJ_DIR)/output.bin,0x200000,0x12C000 $(OBJ_DIR)/program.hex
+	$(EMULATOR) -a -d $(OBJ_DIR)/output.bin,0x200000,0x12C000 $(OBJ_DIR)/program.hex
 	@shasum $(OBJ_DIR)/output.bin | awk '{if ($$1!=$(IMAGE_CHECKSUM)) {print "FAIL: bad checksum, expected " $(IMAGE_CHECKSUM) " got " $$1; exit 1}}'
 	@echo "PASS"
 

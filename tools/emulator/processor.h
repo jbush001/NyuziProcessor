@@ -22,7 +22,6 @@
 
 #define NUM_REGISTERS 32
 #define NUM_VECTOR_LANES 16
-#define ALL_THREADS 0xffffffff
 #define CACHE_LINE_LENGTH 64u
 #define CACHE_LINE_MASK (CACHE_LINE_LENGTH - 1)
 
@@ -30,7 +29,18 @@ struct processor *init_processor(uint32_t memsize, uint32_t num_cores,
                                  uint32_t threads_per_core,
                                  bool randomize_memory,
                                  const char *shared_memory_file);
+
+// Calling this function will cause this to print all instruction side
+// effects to standard out.
 void enable_tracing(struct processor*);
+
+// Will cause threads to be scheduled in random order (instead of the default
+// which steps through them in order). This is slower, but gives better test
+// coverage by exposing more potential race conditions.
+void enable_random_thread_sched(struct processor*);
+
+// Open a file formatted in the Verilog $readmemh format into memory starting
+// address 0.
 int load_hex_file(struct processor*, const char *filename);
 void write_memory_to_file(const struct processor*, const char *filename,
                           uint32_t base_address, uint32_t length);
@@ -48,7 +58,7 @@ bool is_stopped_on_fault(const struct processor*);
 // Return false if this hit a breakpoint or crashed
 // thread_id of ALL_THREADS means run all threads in a round robin fashion.
 // Otherwise, run just the indicated thread.
-bool execute_instructions(struct processor*, uint32_t thread_id,
+bool execute_instructions(struct processor*,
                           uint64_t instructions);
 
 uint32_t dbg_get_pc(struct processor*, uint32_t thread_id);

@@ -200,6 +200,7 @@ def run_program(
 
     if environment == 'emulator':
         args = [BIN_DIR + 'emulator']
+        args += [ '-a' ] # Enable thread scheduling randomization by default
         if block_device:
             args += ['-b', block_device]
 

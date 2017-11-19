@@ -14,12 +14,7 @@
 // limitations under the License.
 //
 
-#include <assert.h>
-#include <fcntl.h>
 #include <stdio.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <unistd.h>
 #include "processor.h"
 #include "device.h"
 #include "fbwindow.h"

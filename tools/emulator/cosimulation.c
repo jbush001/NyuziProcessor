@@ -156,7 +156,7 @@ int run_cosimulation(struct processor *proc, bool verbose)
     expected_event = EVENT_NONE;
     while (!is_proc_halted(proc))
     {
-        execute_instructions(proc, ALL_THREADS, 1);
+        execute_instructions(proc, 1);
         if (cosim_mismatch)
             return -1;
     }

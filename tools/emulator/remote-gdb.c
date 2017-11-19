@@ -136,13 +136,11 @@ static void send_formatted_response(const char *format, ...)
     send_response_packet(buf);
 }
 
-// thread_id of ALL_THREADS means run all threads.  Otherwise, run just the
-// indicated thread.
-static void run_until_interrupt(struct processor *proc, uint32_t thread_id, bool enable_fb_window)
+static void run_until_interrupt(struct processor *proc, bool enable_fb_window)
 {
     while (true)
     {
-        if (!execute_instructions(proc, thread_id, screen_refresh_rate))
+        if (!execute_instructions(proc, screen_refresh_rate))
             break;
 
         if (enable_fb_window)
@@ -265,7 +263,7 @@ void remote_gdb_main_loop(struct processor *proc, bool enable_fb_window)
                 // Continue
                 case 'c':
                 case 'C':
-                    run_until_interrupt(proc, ALL_THREADS, enable_fb_window);
+                    run_until_interrupt(proc, enable_fb_window);
                     last_signals[current_thread] = TRAP_SIGNAL;
                     send_formatted_response("S%02x", last_signals[current_thread]);
                     break;
@@ -505,7 +503,7 @@ void remote_gdb_main_loop(struct processor *proc, bool enable_fb_window)
                         }
                         else
                         {
-                            run_until_interrupt(proc, ALL_THREADS, enable_fb_window);
+                            run_until_interrupt(proc, enable_fb_window);
                             last_signals[current_thread] = TRAP_SIGNAL;
                             send_formatted_response("S%02x", last_signals[current_thread]);
                         }
