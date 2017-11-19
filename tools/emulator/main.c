@@ -24,8 +24,6 @@
 #include <string.h>
 #include <sys/resource.h>
 #include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/types.h>
 #include <unistd.h>
 #include "processor.h"
 #include "cosimulation.h"
@@ -316,7 +314,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    seed_random((uint64_t) time(NULL));
+    seed_random(current_time_us());
 
     // Don't randomize memory for cosimulation mode, because
     // memory is checked against the hardware model to ensure a match

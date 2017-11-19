@@ -125,5 +125,7 @@ static inline uint32_t next_set_bit(uint32_t bitmask, uint32_t index)
 void seed_random(uint64_t value);
 uint64_t next_random(void);
 
+uint64_t current_time_us(void);
+
 #endif
 

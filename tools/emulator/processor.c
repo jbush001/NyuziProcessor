@@ -22,9 +22,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <time.h>
 #include <unistd.h>
 #include "processor.h"
 #include "cosimulation.h"
@@ -186,7 +183,6 @@ struct processor *init_processor(uint32_t memory_size, uint32_t num_cores,
     struct processor *proc;
     struct core *core;
     int i;
-    struct timeval tv;
     int shared_memory_fd;
 
     // Limited by enable mask
@@ -270,8 +266,7 @@ struct processor *init_processor(uint32_t memory_size, uint32_t num_cores,
     proc->threads_per_core = threads_per_core;
     proc->num_cores = num_cores;
     proc->thread_enable_mask = 1;
-    gettimeofday(&tv, NULL);
-    proc->start_cycle_count = (uint32_t)(tv.tv_sec * 50000000 + tv.tv_usec * 50);
+    proc->start_cycle_count = (uint32_t) current_time_us() * (SIM_CLOCK_MHZ / 1000000);
 
     return proc;
 }
@@ -1663,11 +1658,9 @@ static void execute_control_register_inst(struct thread *thread, uint32_t instru
 
             case CR_CYCLE_COUNT:
             {
-                // Make clock appear to be running at 50Mhz real time, independent
+                // Make clock appear to be running at real time, independent
                 // of the instruction rate of the emulator.
-                struct timeval tv;
-                gettimeofday(&tv, NULL);
-                value = (uint32_t)(tv.tv_sec * 50000000 + tv.tv_usec * 50)
+                value = (uint32_t) current_time_us() * (SIM_CLOCK_MHZ / 1000000)
                         - thread->core->proc->start_cycle_count;
                 break;
             }

@@ -15,6 +15,9 @@
 //
 
 #include <stdio.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <time.h>
 #include "processor.h"
 #include "util.h"
 
@@ -80,3 +83,11 @@ uint64_t next_random(void)
 	random_state[1] = x ^ y ^ (x >> 17) ^ (y >> 26);
 	return random_state[1] + y;
 }
+
+uint64_t current_time_us(void)
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (uint64_t) tv.tv_sec * 1000000 + (uint64_t) tv.tv_usec;
+}
+

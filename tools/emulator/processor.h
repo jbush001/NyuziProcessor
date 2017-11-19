@@ -20,6 +20,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#define SIM_CLOCK_MHZ 50000000
 #define NUM_REGISTERS 32
 #define NUM_VECTOR_LANES 16
 #define CACHE_LINE_LENGTH 64u

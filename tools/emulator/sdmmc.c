@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include "device.h"
 #include "sdmmc.h"
+#include "util.h"
 
 // Read only SD/MMC interface, SPI mode.
 // https://www.sdcard.org/downloads/pls/part1_410.pdf
@@ -154,7 +155,7 @@ static void process_command(const uint8_t *command)
 
             read_offset = read_little_endian(command + 1) * block_length;
             current_state = STATE_WAIT_READ_RESPONSE;
-            state_delay = rand() & 0xf;	// Wait a random amount of time
+            state_delay = next_random() & 0xf; // Wait a random amount of time
             response_value = 0;
             break;
     }
