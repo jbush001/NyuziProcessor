@@ -318,7 +318,6 @@ int main(int argc, char *argv[])
 
     // Don't randomize memory for cosimulation mode, because
     // memory is checked against the hardware model to ensure a match
-
     proc = init_processor(memory_size, num_cores, threads_per_core,
                           mode != MODE_COSIMULATION, shared_memory_file);
     if (proc == NULL)

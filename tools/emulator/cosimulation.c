@@ -23,7 +23,7 @@
 #include "util.h"
 
 //
-// Cosimulation runs as follows:
+// Cosimulation works as follows:
 // 1. The main loop (run_cosimulation) reads and parses the next instruction
 //    side effect from the Verilator model (piped to this process via stdin).
 //    It stores the value in the expected_xXX global variables.
@@ -37,7 +37,11 @@
 //
 
 static void print_cosim_expected(void);
+
+// Returns true if the event matched, false if it did not.
 static bool run_until_next_event(struct processor*, uint32_t thread_id);
+
+// Returns true if the masked values match, false otherwise
 static bool masked_vectors_equal(uint32_t mask, const uint32_t *values1, const uint32_t *values2);
 
 static enum
@@ -56,8 +60,6 @@ static uint32_t expected_thread;
 static bool cosim_mismatch;
 static bool cosim_event_triggered;
 
-// Read events from standard in.  Step each emulator thread in lockstep
-// and ensure the side effects match.
 int run_cosimulation(struct processor *proc, bool verbose)
 {
     char line[1024];
@@ -309,7 +311,6 @@ static void print_cosim_expected(void)
     }
 }
 
-// Returns true if the event matched, false if it did not.
 static bool run_until_next_event(struct processor *proc, uint32_t thread_id)
 {
     int count = 0;
@@ -328,7 +329,6 @@ static bool run_until_next_event(struct processor *proc, uint32_t thread_id)
     return cosim_event_triggered && !cosim_mismatch;
 }
 
-// Returns 1 if the masked values match, 0 otherwise
 static bool masked_vectors_equal(uint32_t mask, const uint32_t *values1, const uint32_t *values2)
 {
     int lane;

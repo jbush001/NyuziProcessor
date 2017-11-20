@@ -51,14 +51,14 @@ void print_registers(const struct processor*, uint32_t thread_id);
 void enable_cosimulation(struct processor*);
 void raise_interrupt(struct processor*, uint32_t int_bitmap);
 void clear_interrupt(struct processor*, uint32_t int_bitmap);
+
+// Called when the verilog model in cosimulation indicates an interrupt.
 void cosim_interrupt(struct processor*, uint32_t thread_id, uint32_t pc);
 uint32_t get_total_threads(const struct processor*);
 bool is_proc_halted(const struct processor*);
 bool is_stopped_on_fault(const struct processor*);
 
 // Return false if this hit a breakpoint or crashed
-// thread_id of ALL_THREADS means run all threads in a round robin fashion.
-// Otherwise, run just the indicated thread.
 bool execute_instructions(struct processor*,
                           uint64_t instructions);
 

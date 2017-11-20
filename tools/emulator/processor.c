@@ -44,12 +44,11 @@
 
 #define INVALID_ADDR 0xfffffffful
 
-
 // When a breakpoint is set, this instruction replaces the one at the
 // breakpoint address. It is invalid, because it uses a reserved format
 // type. The interpreter only performs a breakpoint lookup when it sees
-// this instruction as an optimization.
-// This is different than the native 'breakpoint' instruction.
+// this instruction (instead of for every instruction it executes) as an
+// optimization. This is different than the native 'breakpoint' instruction.
 #define BREAKPOINT_INST 0x707fffff
 
 struct thread
@@ -156,6 +155,10 @@ static uint32_t get_pending_interrupts(struct thread*);
 static const char *get_trap_name(enum trap_type);
 static void raise_trap(struct thread*, uint32_t address, enum trap_type type, bool is_store,
                        bool is_data_cache);
+
+// Translate addresses using the translation lookaside buffer. Returns true
+// if there was a valid translation, false otherwise (in the latter case, it
+// will also raise a trap or print an error as a side effect).
 static bool translate_address(struct thread*, uint32_t virtual_address, uint32_t
                               *physical_address, bool is_store, bool is_data_cache);
 static uint32_t scalar_arithmetic_op(enum arithmetic_op, uint32_t value1, uint32_t value2);
@@ -170,6 +173,9 @@ static void execute_control_register_inst(struct thread*, uint32_t instruction);
 static void execute_memory_access_inst(struct thread*, uint32_t instruction);
 static void execute_branch_inst(struct thread*, uint32_t instruction);
 static void execute_cache_control_inst(struct thread*, uint32_t instruction);
+
+// Returns false if this hit a breakpoint and should break out of execution
+// loop.
 static bool execute_instruction(struct thread*);
 static void timer_tick(struct processor *proc);
 
@@ -378,7 +384,6 @@ void clear_interrupt(struct processor *proc, uint32_t int_bitmap)
     proc->interrupt_levels &= ~int_bitmap;
 }
 
-// Called when the verilog model in cosimulation indicates an interrupt.
 void cosim_interrupt(struct processor *proc, uint32_t thread_id, uint32_t pc)
 {
     struct thread *thread = get_thread(proc, thread_id);
@@ -507,7 +512,7 @@ void dbg_set_vector_reg(struct processor *proc, uint32_t thread_id,
 }
 
 // XXX This does not perform address translation.
-// We can't handle TLB misses properly when the fault is caued by debugger.
+// We can't handle TLB misses properly when the fault is caused by debugger.
 // Should either do a best effort, returning nothing if the TLB entry is missing,
 // or return an error if memory translation is enabled.
 uint32_t dbg_read_memory_byte(const struct processor *proc, uint32_t address)
@@ -810,9 +815,6 @@ static void raise_trap(struct thread *thread, uint32_t trap_address, enum trap_t
     thread->enable_supervisor = true;
 }
 
-// Translate addresses using the translation lookaside buffer. Returns true
-// if there was a valid translation, false otherwise (in the latter case, it
-// will also raise a trap or print an error as a side effect).
 static bool translate_address(struct thread *thread, uint32_t virtual_address,
                               uint32_t *out_physical_address, bool is_store,
                               bool is_data_access)
@@ -1997,8 +1999,6 @@ static void execute_cache_control_inst(struct thread *thread, uint32_t instructi
     }
 }
 
-// Returns 0 if this hit a breakpoint and should break out of execution
-// loop.
 static bool execute_instruction(struct thread *thread)
 {
     uint32_t instruction;

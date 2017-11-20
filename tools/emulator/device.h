@@ -19,6 +19,7 @@
 
 #include <stdint.h>
 
+// Memory mapped peripheral register addresses
 #define REG_HOST_INTERRUPT  0xffff0018
 #define REG_SERIAL_STATUS   0xffff0040
 #define REG_SERIAL_OUTPUT   0xffff0048
@@ -34,6 +35,7 @@
 #define REG_VGA_BASE        0xffff0188
 #define REG_TIMER_INT       0xffff0240
 
+// Interrupt bitmask
 #define INT_COSIM 0x00000001
 #define INT_TIMER 0x00000002
 #define INT_UART_RX 0x00000004

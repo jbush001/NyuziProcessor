@@ -106,6 +106,7 @@ static inline bool can_read_file_descriptor(int fd)
     return result != 0;
 }
 
+// Returns 0 if successful, -1 if there was a format error in the string.
 int parse_hex_vector(const char *str, uint32_t *vector_values, bool endian_swap);
 
 // Return the index of the next lowest set bit at or below index (with 0

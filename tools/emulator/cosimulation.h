@@ -19,8 +19,16 @@
 
 #include "processor.h"
 
-// Returns -1 on error, 0 if successful.
+// Execute code in cosimulation until the processor halts.
+// This reads events from standard in and calls into the core emulator loop to
+// step each emulator thread in lockstep, ensuring the side effects match.
+// Returns -1 if there is a mismatch between the hardware implementation and
+// emulator, 0 if they matched.
 int run_cosimulation(struct processor*, bool verbose);
+
+// These functions are called by the emulator loop as a side effect of executing
+// emulated instrucitons. The emulator compares these actions to the hardware actions
+// read from stdin.
 void cosim_check_set_scalar_reg(struct processor*, uint32_t pc, uint32_t reg, uint32_t value);
 void cosim_check_set_vector_reg(struct processor*, uint32_t pc, uint32_t reg, uint32_t mask,
                                 const uint32_t *value);
