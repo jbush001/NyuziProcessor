@@ -17,8 +17,11 @@
 all:
 	cd hash && make
 	cd membench && make
+	cd dhrystone && make
 
 clean:
 	cd hash && make clean
 	cd membench && make clean
+	cd dhrystone && make clean
+
 
