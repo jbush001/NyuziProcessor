@@ -132,7 +132,6 @@ struct processor
 #endif
     uint32_t current_timer_count;
     int64_t total_instructions;
-    uint32_t start_cycle_count;
 };
 
 struct breakpoint
@@ -272,7 +271,6 @@ struct processor *init_processor(uint32_t memory_size, uint32_t num_cores,
     proc->threads_per_core = threads_per_core;
     proc->num_cores = num_cores;
     proc->thread_enable_mask = 1;
-    proc->start_cycle_count = (uint32_t) current_time_us() * (SIM_CLOCK_MHZ / 1000000);
 
     return proc;
 }
@@ -1659,13 +1657,8 @@ static void execute_control_register_inst(struct thread *thread, uint32_t instru
                 break;
 
             case CR_CYCLE_COUNT:
-            {
-                // Make clock appear to be running at real time, independent
-                // of the instruction rate of the emulator.
-                value = (uint32_t) current_time_us() * (SIM_CLOCK_MHZ / 1000000)
-                        - thread->core->proc->start_cycle_count;
+                value = (uint32_t) thread->core->proc->total_instructions;
                 break;
-            }
 
             case CR_TLB_MISS_HANDLER:
                 value = thread->core->tlb_miss_handler_pc;

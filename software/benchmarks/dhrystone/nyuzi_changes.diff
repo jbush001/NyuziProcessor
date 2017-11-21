@@ -1,0 +1,77 @@
+diff --git a/software/benchmarks/dhrystone/dhry_1.c b/software/benchmarks/dhrystone/dhry_1.c
+index 848fc5be..3e54a952 100644
+--- a/software/benchmarks/dhrystone/dhry_1.c
++++ b/software/benchmarks/dhrystone/dhry_1.c
+@@ -114,6 +114,9 @@ main ()
+     printf ("Program compiled without 'register' attribute\n");
+     printf ("\n");
+   }
++#ifdef __NYUZI__
++    Number_Of_Runs = 2000;
++#else
+   printf ("Please give the number of runs through the benchmark: ");
+   {
+     int n;
+@@ -121,6 +124,7 @@ main ()
+     Number_Of_Runs = n;
+   }
+   printf ("\n");
++#endif
+
+   printf ("Execution starts, %d runs through Dhrystone\n", Number_Of_Runs);
+
+@@ -128,6 +132,9 @@ main ()
+   /* Start timer */
+   /***************/
+
++#ifdef __NYUZI__
++  Begin_Time = get_cycle_count();
++#else
+ #ifdef TIMES
+   times (&time_info);
+   Begin_Time = (long) time_info.tms_utime;
+@@ -135,6 +142,7 @@ main ()
+ #ifdef TIME
+   Begin_Time = time ( (long *) 0);
+ #endif
++#endif
+
+   for (Run_Index = 1; Run_Index <= Number_Of_Runs; ++Run_Index)
+   {
+@@ -186,6 +194,9 @@ main ()
+   /* Stop timer */
+   /**************/
+
++#ifdef __NYUZI__
++  End_Time = get_cycle_count();
++#else
+ #ifdef TIMES
+   times (&time_info);
+   End_Time = (long) time_info.tms_utime;
+@@ -193,6 +204,7 @@ main ()
+ #ifdef TIME
+   End_Time = time ( (long *) 0);
+ #endif
++#endif
+
+   printf ("Execution ends\n");
+   printf ("\n");
+@@ -249,6 +261,11 @@ main ()
+
+   User_Time = End_Time - Begin_Time;
+
++#ifdef __NYUZI__
++  // Compute DMIPS/Mhz, per https://en.wikipedia.org/wiki/Dhrystone#Results
++  printf ("%d total cycles %d runs\n", User_Time, Number_Of_Runs);
++  printf ("%g DMIPS/Mhz\n", 569.1519635742743 * Number_Of_Runs / User_Time);
++#else
+   if (User_Time < Too_Small_Time)
+   {
+     printf ("Measured time too small to obtain meaningful results\n");
+@@ -273,7 +290,7 @@ main ()
+     printf ("%6.1f \n", Dhrystones_Per_Second);
+     printf ("\n");
+   }
+-
++#endif // #ifdef __NYUZI__
+ }
