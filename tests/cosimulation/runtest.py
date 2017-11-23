@@ -66,9 +66,9 @@ def run_cosimulation_test(source_file):
             break
 
         if verbose:
-            print(str(got))
+            print(got.decode())
         else:
-            output += str(got)
+            output += got.decode()
 
     p2.wait()
     time.sleep(1)  # Give verilator a chance to clean up
