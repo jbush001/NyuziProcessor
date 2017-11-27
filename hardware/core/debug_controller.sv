@@ -68,14 +68,14 @@ module debug_controller
         .*);
 
     typedef enum logic[3:0] {
-        INST_IDCODE = 0,
-        INST_EXTEST = 1,
-        INST_INTEST = 2,
-        INST_CONTROL = 3,
-        INST_INJECT_INST = 4,
-        INST_READ_DATA = 5,
-        INST_WRITE_DATA = 6,
-        INST_BYPASS = 15
+        INST_IDCODE = 4'd0,
+        INST_EXTEST = 4'd1,
+        INST_INTEST = 4'd2,
+        INST_CONTROL = 4'd3,
+        INST_INJECT_INST = 4'd4,
+        INST_READ_DATA = 4'd5,
+        INST_WRITE_DATA = 4'd6,
+        INST_BYPASS = 4'd15
     } instruction_t;
 
     assign data_shift_val = data_shift_reg[0];

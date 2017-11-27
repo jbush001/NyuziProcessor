@@ -87,7 +87,7 @@ module ifetch_data_stage(
     output logic                     ifd_perf_itlb_miss,
 
     // from core
-    output logic                     core_selected_debug,
+    input                            core_selected_debug,
 
     // From debug_controller
     input                            dbg_halt,
