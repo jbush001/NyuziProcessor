@@ -41,7 +41,7 @@ module debug_controller
     output scalar_t                 dbg_data_from_host,
     input scalar_t                  data_to_host);
 
-    localparam JTAG_ID = 32'h00000000;
+    localparam JTAG_ID = 32'h20e129f4;  // XXX arbitrary value for testing
 
     logic data_shift_val;
     /*AUTOLOGIC*/
@@ -78,13 +78,14 @@ module debug_controller
         .*);
 
     typedef enum logic[3:0] {
-        INST_EXTEST = 4'b0000,
-        INST_IDCODE = 4'b0001,
-        INST_CONTROL = 4'b0010,
-        INST_INJECT_INST = 4'b0011,
-        INST_READ_DATA = 4'b0100,
-        INST_WRITE_DATA = 4'b0101,
-        INST_BYPASS = 4'b1111
+        INST_IDCODE = 0,
+        INST_EXTEST = 1,
+        INST_INTEST = 2,
+        INST_CONTROL = 3,
+        INST_INJECT_INST = 4,
+        INST_READ_DATA = 5,
+        INST_WRITE_DATA = 6,
+        INST_BYPASS = 15
     } instruction_t;
 
     assign data_shift_val = data_shift_reg[0];
@@ -93,16 +94,14 @@ module debug_controller
     always @(posedge clk, posedge reset)
     begin
         if (reset)
-        begin
-            /*AUTORESET*/
-            // Beginning of autoreset for uninitialized flops
             control <= '0;
-            data_shift_reg <= '0;
-            dbg_data_from_host <= '0;
-            dbg_instruction_inject <= '0;
-            // End of automatics
-        end
-        else if (capture_dr)
+        else if (update_dr && instruction == INST_CONTROL)
+            control <= debug_control_t'(data_shift_reg);
+    end
+
+    always @(posedge clk)
+    begin
+        if (capture_dr)
         begin
             case (instruction)
                 INST_IDCODE: data_shift_reg <= JTAG_ID;
@@ -114,7 +113,7 @@ module debug_controller
         else if (shift_dr)
         begin
             case (instruction)
-                INST_BYPASS: data_shift_reg <= 32'({ jtag.tdi });
+                INST_BYPASS: data_shift_reg <= 32'(jtag.tdi);
                 INST_CONTROL: data_shift_reg <= 32'({ jtag.tdi, data_shift_reg[$bits(debug_control_t) - 1:1] });
                 // Default covers any 32 bit transfer (most instructions)
                 default: data_shift_reg <= 32'({ jtag.tdi, data_shift_reg[31:1] });
@@ -124,8 +123,6 @@ module debug_controller
         begin
             if (instruction == INST_WRITE_DATA)
                 dbg_data_from_host <= data_shift_reg;
-            else if (instruction == INST_CONTROL)
-                control <= debug_control_t'(data_shift_reg);
             else if (instruction == INST_INJECT_INST)
                 dbg_instruction_inject <= data_shift_reg;
         end

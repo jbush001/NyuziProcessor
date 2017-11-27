@@ -19,7 +19,8 @@
 import defines::*;
 
 //
-// JTAG interface.
+// JTAG Test Access Point (TAP) controller.
+// This contains the JTAG state machine logic.
 //
 
 module jtag_tap_controller
@@ -160,7 +161,6 @@ module jtag_tap_controller
     assign update_dr = state_ff == JTAG_UPDATE_DR && jtag_rising_edge;
     assign shift_dr = state_ff == JTAG_SHIFT_DR && jtag_rising_edge;
     assign capture_dr = state_ff == JTAG_CAPTURE_DR && jtag_rising_edge;
-
 
     always_ff @(posedge clk, posedge reset)
     begin

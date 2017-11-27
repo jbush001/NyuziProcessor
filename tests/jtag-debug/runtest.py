@@ -27,15 +27,18 @@ import test_harness
 
 DEBUG = False
 CONTROL_PORT = 8541
+INSTRUCTION_LENGTH = 4
+EXPECTED_IDCODE = 0x20e129f4
 
 # JTAG instructions
-INST_EXTEST = 0
-INST_IDCODE = 1
-INST_CONTROL = 2
-INST_INJECT_INST = 3
-INST_READ_DATA = 4
-INST_WRITE_DATA = 5
-INST_BYPASS = 6
+INST_IDCODE = 0
+INST_EXTEST = 1
+INST_INTEST = 2
+INST_CONTROL = 3
+INST_INJECT_INST = 4
+INST_READ_DATA = 5
+INST_WRITE_DATA = 6
+INST_BYPASS = 15
 
 class VerilatorProcess(object):
 
@@ -100,11 +103,11 @@ class DebugConnection(object):
     def __exit__(self, *unused):
         self.sock.close()
 
-    def jtag_transfer(self, instruction_length, instruction, data_length, data):
+    def jtag_transfer(self, instruction, data_length, data):
         if DEBUG:
             print('Sending JTAG command 0x{:x} data 0x{:x}'.format(instruction, data))
 
-        self.sock.send(struct.pack('<BIBQ', instruction_length, instruction,
+        self.sock.send(struct.pack('<BIBQ', INSTRUCTION_LENGTH, instruction,
                                    data_length, data))
         data_val = struct.unpack('<Q', self.sock.recv(8))[0] & ((1 << data_length) - 1)
         if DEBUG:
@@ -113,18 +116,33 @@ class DebugConnection(object):
         return data_val
 
 @test_harness.test
-def jtag(_):
+def jtag_id(_):
     hexfile = test_harness.build_program(['test_program.S'])
-
     with VerilatorProcess(hexfile), DebugConnection() as conn:
-        conn.jtag_transfer(4, INST_CONTROL, 7, 0x1)
-        conn.jtag_transfer(4, INST_WRITE_DATA, 32, 0x3b643e9a)  # First value to transfer
-        conn.jtag_transfer(4, INST_INJECT_INST, 32, 0xac0000b2) # getcr s5, 18
-        conn.jtag_transfer(4, INST_WRITE_DATA, 32, 0xd1dc20a3)  # Second value to transfer
-        conn.jtag_transfer(4, INST_INJECT_INST, 32, 0xac0000d2) # getcr s6, 18
-        conn.jtag_transfer(4, INST_INJECT_INST, 32, 0xc03300e5) # xor s7, s5, s6
-        conn.jtag_transfer(4, INST_INJECT_INST, 32, 0x8c0000f2) # setcr s7, 18
-        if conn.jtag_transfer(4, INST_READ_DATA, 32, 0) != 0xeab81e39:
-            raise test_harness.TestException('read value mismatch');
+        idcode = conn.jtag_transfer(INST_IDCODE, 32, 0xffffffff)
+        test_harness.assert_equal(EXPECTED_IDCODE, idcode)
+
+# Bypass is currently broken
+#@test_harness.test
+#def jtag_bypass(_):
+#    hexfile = test_harness.build_program(['test_program.S'])
+#    with VerilatorProcess(hexfile), DebugConnection() as conn:
+#        VALUE = 0x267521cf
+#        shifted = conn.jtag_transfer(INST_BYPASS, 32, VALUE)
+#        test_harness.assert_equal(EXPECTED_IDCODE, VALUE)
+
+# XXX todo: test with multiple threads
+@test_harness.test
+def jtag_inject(_):
+    hexfile = test_harness.build_program(['test_program.S'])
+    with VerilatorProcess(hexfile), DebugConnection() as conn:
+        conn.jtag_transfer(INST_CONTROL, 7, 0x1)
+        conn.jtag_transfer(INST_WRITE_DATA, 32, 0x3b643e9a)  # First value to transfer
+        conn.jtag_transfer(INST_INJECT_INST, 32, 0xac0000b2) # getcr s5, 18
+        conn.jtag_transfer(INST_WRITE_DATA, 32, 0xd1dc20a3)  # Second value to transfer
+        conn.jtag_transfer(INST_INJECT_INST, 32, 0xac0000d2) # getcr s6, 18
+        conn.jtag_transfer(INST_INJECT_INST, 32, 0xc03300e5) # xor s7, s5, s6
+        conn.jtag_transfer(INST_INJECT_INST, 32, 0x8c0000f2) # setcr s7, 18
+        test_harness.assert_equal(conn.jtag_transfer(INST_READ_DATA, 32, 0), 0xeab81e39)
 
 test_harness.execute_tests()
