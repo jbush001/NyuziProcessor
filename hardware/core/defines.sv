@@ -180,7 +180,8 @@ typedef enum logic [4:0] {
     CR_INTERRUPT_MASK       = 5'd14,
     CR_INTERRUPT_ACK        = 5'd15,
     CR_INTERRUPT_PENDING    = 5'd16,
-    CR_INTERRUPT_TRIGGER    = 5'd17
+    CR_INTERRUPT_TRIGGER    = 5'd17,
+    CR_JTAG_DATA            = 5'd18
 } control_register_t;
 
 // Trap type encodings
@@ -459,6 +460,17 @@ interface axi4_interface;
         m_arlen, m_arvalid, m_rready, m_awsize, m_awburst, m_wstrb, m_arsize, m_arburst,
         m_awcache, m_arcache,
         output s_awready, s_wready, s_bvalid, s_arready, s_rvalid, s_rdata);
+endinterface
+
+interface jtag_interface;
+    logic tck;
+    logic trst;
+    logic tdi;
+    logic tdo;
+    logic tms;
+
+    modport master(input tdi, output tck, trst, tdo, tms);
+    modport slave(input tck, trst, tdi, tms, output tdo);
 endinterface
 
 `endif

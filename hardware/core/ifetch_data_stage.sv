@@ -84,7 +84,16 @@ module ifetch_data_stage(
     // To performance_counters
     output logic                     ifd_perf_icache_hit,
     output logic                     ifd_perf_icache_miss,
-    output logic                     ifd_perf_itlb_miss);
+    output logic                     ifd_perf_itlb_miss,
+
+    // from core
+    output logic                     core_selected_debug,
+
+    // From debug_controller
+    input                            dbg_halt,
+    input scalar_t                   dbg_instruction_inject,
+    input logic                      dbg_instruction_inject_en,
+    input local_thread_idx_t         dbg_thread);
 
     logic cache_hit;
     logic[`L1I_WAYS - 1:0] way_hit_oh;
@@ -155,7 +164,9 @@ module ifetch_data_stage(
 
     assign cache_lane_idx = ~ifd_pc[CACHE_LINE_OFFSET_WIDTH - 1:2];
     assign fetched_word = fetched_cache_line[32 * cache_lane_idx+:32];
-    assign ifd_instruction = {fetched_word[7:0], fetched_word[15:8], fetched_word[23:16], fetched_word[31:24]};
+    assign ifd_instruction = dbg_halt
+        ? dbg_instruction_inject
+        : {fetched_word[7:0], fetched_word[15:8], fetched_word[23:16], fetched_word[31:24]};
 
     assign ifd_update_lru_en = cache_hit && ift_instruction_requested;
     assign ifd_update_lru_way = way_hit_idx;
@@ -165,7 +176,7 @@ module ifetch_data_stage(
     always_ff @(posedge clk)
     begin
         ifd_pc <= ift_pc_vaddr;
-        ifd_thread_idx <= ift_thread_idx;
+        ifd_thread_idx <= dbg_halt ? dbg_thread : ift_thread_idx;
     end
 
     always_ff @(posedge clk, posedge reset)
@@ -188,8 +199,9 @@ module ifetch_data_stage(
             // if an instruction wasn't requested).
             assert(!ift_instruction_requested || $onehot0(way_hit_oh));
 
-            ifd_instruction_valid <= ift_instruction_requested && !rollback_this_stage
-                && cache_hit && ift_tlb_hit && !alignment_fault;
+            ifd_instruction_valid <= (ift_instruction_requested && !rollback_this_stage
+                && cache_hit && ift_tlb_hit && !alignment_fault)
+                || (dbg_instruction_inject_en && core_selected_debug);
             ifd_alignment_fault <= ift_instruction_requested && !rollback_this_stage
                 && alignment_fault;
             ifd_supervisor_fault <= ift_instruction_requested && ift_tlb_supervisor

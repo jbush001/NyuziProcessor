@@ -49,6 +49,9 @@ module soc_tb(
     logic sd_sclk;
     io_bus_interface peripheral_io_bus[NUM_PERIPHERALS - 1:0]();
     io_bus_interface nyuzi_io_bus();
+    jtag_interface host_jtag();
+    jtag_interface target_jtag();
+    logic data_shift_val;
     scalar_t peripheral_read_data[NUM_PERIPHERALS];
 `ifdef VCS
     enum logic[$clog2(NUM_PERIPHERALS) - 1:0] {
@@ -136,6 +139,7 @@ module soc_tb(
             uart_rx_interrupt,
             timer_interrupt,
             cosim_interrupt}),
+        .jtag(target_jtag),
         .*);
 
     //
@@ -201,6 +205,23 @@ module soc_tb(
     timer #(.BASE_ADDRESS('h240)) timer(
         .io_bus(peripheral_io_bus[IO_TIMER]),
         .*);
+
+`ifdef VERILATOR
+    sim_jtag sim_jtag(
+        .jtag(host_jtag),
+        .*);
+
+    assign host_jtag.tdi = target_jtag.tdo;
+    assign target_jtag.tdi = host_jtag.tdo;
+    assign target_jtag.tck = host_jtag.tck;
+    assign target_jtag.trst = host_jtag.trst;
+    assign target_jtag.tms = host_jtag.tms;
+`else
+    target_jtag.tdi = 0;
+    target_jtag.tck = 0;
+    target_jtag.trst = 0;
+    target_jtag.tms = 0;
+`endif
 
 `ifdef SIMULATE_VGA
    // There is no automated test for VGA currently, so I test as follows:

@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include "Vsoc_tb.h"
 #include "verilated.h"
+#include "verilated_vpi.h"
 #if VM_TRACE
 #include <verilated_vcd_c.h>
 #endif

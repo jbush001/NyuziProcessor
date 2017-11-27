@@ -34,7 +34,7 @@ endif
 all: $(BINDIR) $(TARGET)
 
 $(TARGET): $(BINDIR) test_verilator_version
-	verilator $(VERILATOR_OPTIONS) --cc testbench/soc_tb.sv --exe testbench/verilator_main.cpp
+	verilator $(VERILATOR_OPTIONS) --cc testbench/soc_tb.sv --exe testbench/verilator_main.cpp testbench/jtag_socket.cpp
 	make CXXFLAGS=-Wno-parentheses-equality OPT_FAST="-Os"  -C obj/ -f Vsoc_tb.mk Vsoc_tb
 	cp obj/Vsoc_tb $(TARGET)
 

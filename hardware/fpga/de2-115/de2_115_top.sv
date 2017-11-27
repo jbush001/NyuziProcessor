@@ -89,6 +89,7 @@ module de2_115_top(
     scalar_t peripheral_read_data[NUM_PERIPHERALS];
     io_bus_interface peripheral_io_bus[NUM_PERIPHERALS - 1:0]();
     io_bus_interface nyuzi_io_bus();
+    jtag_interface jtag();
     enum logic[$clog2(NUM_PERIPHERALS) - 1:0] {
         IO_UART,
         IO_SDCARD,
@@ -110,6 +111,7 @@ module de2_115_top(
             1'b0}),
         .axi_bus(axi_bus_m[0]),
         .io_bus(nyuzi_io_bus),
+        .jtag(jtag),
         .*);
 
     axi_interconnect #(.M1_BASE_ADDRESS(BOOT_ROM_BASE)) axi_interconnect(
@@ -259,4 +261,11 @@ module de2_115_top(
             assign peripheral_read_data[io_idx] = peripheral_io_bus[io_idx].read_data;
         end
     endgenerate
+
+    // XXX Jtag is currently stubbed out. Could expose this to external pins,
+    // but would require a synchronizer.
+    assign jtag.tdi = 0;
+    assign jtag.tck = 0;
+    assign jtag.tms = 0;
+    assign jtag.trst = 0;
 endmodule

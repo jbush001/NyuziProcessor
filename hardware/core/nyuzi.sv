@@ -31,6 +31,7 @@ module nyuzi
     input                           reset,
     axi4_interface.master           axi_bus,
     io_bus_interface.master         io_bus,
+    jtag_interface.slave            jtag,
     output logic                    processor_halt,
     input [NUM_INTERRUPTS - 1:0]    interrupt_req);
 
@@ -46,9 +47,17 @@ module nyuzi
     } io_read_source;
     logic[`NUM_CORES - 1:0] ior_request_valid;
     logic[TOTAL_THREADS - 1:0] thread_en;
+    scalar_t cr_data_to_host[`NUM_CORES];
+    scalar_t data_to_host;
 
     /*AUTOLOGIC*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
+    core_id_t           dbg_core;               // From debug_controller of debug_controller.v
+    scalar_t            dbg_data_from_host;     // From debug_controller of debug_controller.v
+    logic               dbg_halt;               // From debug_controller of debug_controller.v
+    scalar_t            dbg_instruction_inject; // From debug_controller of debug_controller.v
+    logic               dbg_instruction_inject_en;// From debug_controller of debug_controller.v
+    local_thread_idx_t  dbg_thread;             // From debug_controller of debug_controller.v
     logic               ii_ready [`NUM_CORES];  // From io_interconnect of io_interconnect.v
     iorsp_packet_t      ii_response;            // From io_interconnect of io_interconnect.v
     logic               ii_response_valid;      // From io_interconnect of io_interconnect.v
@@ -126,6 +135,17 @@ module nyuzi
         .io_bus(perf_io_bus),
         .*);
 
+    debug_controller debug_controller(
+        .jtag(jtag),
+        .*);
+
+    generate
+        if (`NUM_CORES > 1)
+            assign data_to_host = cr_data_to_host[CORE_ID_WIDTH'(dbg_core)];
+        else
+            assign data_to_host = cr_data_to_host[0];
+    endgenerate
+
     genvar core_idx;
     generate
         for (core_idx = 0; core_idx < `NUM_CORES; core_idx++)
@@ -143,6 +163,7 @@ module nyuzi
                 .ior_request(ior_request[core_idx]),
                 .ii_ready(ii_ready[core_idx]),
                 .ii_response(ii_response),
+                .cr_data_to_host(cr_data_to_host[core_idx]),
                 .core_perf_events(perf_events[L2_PERF_EVENTS + CORE_PERF_EVENTS * core_idx+:CORE_PERF_EVENTS]),
                 .*);
         end

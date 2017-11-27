@@ -67,7 +67,11 @@ module control_registers
     output local_thread_bitmap_t            cr_interrupt_en,
     output subcycle_t                       cr_eret_subcycle[`THREADS_PER_CORE],
     output scalar_t                         cr_trap_handler,
-    output scalar_t                         cr_tlb_miss_handler);
+    output scalar_t                         cr_tlb_miss_handler,
+
+    // To/From debug controller
+    input scalar_t                          dbg_data_from_host,
+    output scalar_t                         cr_data_to_host);
 
     // We support one level of nested traps, so there are two of
     // each of these trap state arrays.
@@ -119,6 +123,7 @@ module control_registers
 
             /*AUTORESET*/
             // Beginning of autoreset for uninitialized flops
+            cr_data_to_host <= '0;
             cr_interrupt_en <= '0;
             cr_tlb_miss_handler <= '0;
             cr_trap_handler <= '0;
@@ -216,6 +221,7 @@ module control_registers
                     CR_PAGE_DIR:          page_dir_base[dt_thread_idx] <= dd_creg_write_val;
                     CR_INTERRUPT_MASK:    interrupt_mask[dt_thread_idx] <= dd_creg_write_val[NUM_INTERRUPTS - 1:0];
                     CR_INTERRUPT_TRIGGER: int_trigger_type <= dd_creg_write_val[NUM_INTERRUPTS - 1:0];
+                    CR_JTAG_DATA:         cr_data_to_host <= dd_creg_write_val;
                     default:
                         ;
                 endcase
@@ -313,6 +319,7 @@ module control_registers
                 CR_CURRENT_ASID:      cr_creg_read_val <= scalar_t'(cr_current_asid[dt_thread_idx]);
                 CR_PAGE_DIR:          cr_creg_read_val <= page_dir_base[dt_thread_idx];
                 CR_INTERRUPT_PENDING: cr_creg_read_val <= scalar_t'(interrupt_pending[dt_thread_idx]);
+                CR_JTAG_DATA:         cr_creg_read_val <= dbg_data_from_host;
                 default:              cr_creg_read_val <= 32'hffffffff;
             endcase
         end
