@@ -41,9 +41,15 @@ module debug_controller
     output scalar_t                 dbg_data_from_host,
     input scalar_t                  data_to_host);
 
-    localparam JTAG_ID = 32'h20e129f4;  // XXX arbitrary value for testing
+    typedef struct packed {
+        core_id_t core;
+        local_thread_idx_t thread;
+        logic halt;
+    } debug_control_t;
 
     logic data_shift_val;
+    logic[31:0] data_shift_reg;
+    debug_control_t control;
     /*AUTOLOGIC*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
     logic               capture_dr;             // From jtag_tap_controller of jtag_tap_controller.v
@@ -52,22 +58,6 @@ module debug_controller
     logic               update_dr;              // From jtag_tap_controller of jtag_tap_controller.v
     logic               update_ir;              // From jtag_tap_controller of jtag_tap_controller.v
     // End of automatics
-
-    typedef struct packed {
-        core_id_t core;
-        local_thread_idx_t thread;
-        logic halt;
-    } debug_control_t;
-
-    assign dbg_halt = 0;
-    assign dbg_thread = 0;
-    assign dbg_core = 0;
-    assign dbg_instruction_inject = 0;
-    assign dbg_instruction_inject_en = 0;
-    assign dbg_data_from_host = 0;
-
-    logic[31:0] data_shift_reg;
-    debug_control_t control;
 
     assign dbg_halt = control.halt;
     assign dbg_thread = control.thread;
@@ -104,7 +94,7 @@ module debug_controller
         if (capture_dr)
         begin
             case (instruction)
-                INST_IDCODE: data_shift_reg <= JTAG_ID;
+                INST_IDCODE: data_shift_reg <= `JTAG_ID;
                 INST_CONTROL: data_shift_reg <= 32'(control);
                 INST_READ_DATA: data_shift_reg <= data_to_host;
                 default: data_shift_reg <= '0;

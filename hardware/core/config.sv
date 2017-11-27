@@ -48,4 +48,7 @@
 `define DTLB_ENTRIES 64
 `define TLB_WAYS 4
 
+// XXX arbitrary value for testing
+`define JTAG_ID 32'h20e129f4
+
 `endif
