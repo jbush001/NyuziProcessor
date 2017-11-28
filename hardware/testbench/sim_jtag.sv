@@ -69,9 +69,11 @@ module sim_jtag
 
     initial
     begin
-	// XXX workaround: if jtag_port is less than 64 bits, the
-	// generated program will crash with a stack clobber assert.
-	// This happens even if jtag port is a module level variable.
+        // XXX workaround: Due to a bug in Verilator 3.906, $value$plusargs
+        // clobbers the stack. Making jtag_port be 64 bits avoids
+        // an assertion by padding it. This is fixed in upstream verilator
+        // change 00a502942e956ed (which unfortunately breaks other things,
+        // so I can't integrate it just yet).
         logic[63:0] jtag_port;
         if ($value$plusargs("jtag_port=%d", jtag_port) != 0)
             control_port_open = init_jtag_socket(32'(jtag_port));
