@@ -143,6 +143,21 @@ def jtag_inject(_):
         conn.jtag_transfer(INST_INJECT_INST, 32, 0xac0000d2) # getcr s6, 18
         conn.jtag_transfer(INST_INJECT_INST, 32, 0xc03300e5) # xor s7, s5, s6
         conn.jtag_transfer(INST_INJECT_INST, 32, 0x8c0000f2) # setcr s7, 18
-        test_harness.assert_equal(conn.jtag_transfer(INST_READ_DATA, 32, 0), 0xeab81e39)
+        test_harness.assert_equal(0xeab81e39, conn.jtag_transfer(INST_READ_DATA, 32, 0))
+
+# Transfer a bunch of messages. The JTAG test harness stub randomizes the
+# path through the state machine, so this will help get better coverage.
+@test_harness.test
+def jtag_stress(_):
+    hexfile = test_harness.build_program(['test_program.S'])
+    with VerilatorProcess(hexfile), DebugConnection() as conn:
+        conn.jtag_transfer(INST_CONTROL, 7, 0x1)
+        conn.jtag_transfer(INST_INJECT_INST, 32, 0x0f3ab800) # move s0, 0xeae
+        conn.jtag_transfer(INST_INJECT_INST, 32, 0x0f48d020) # move s1, 0x1234
+        for x in range(40):
+            conn.jtag_transfer(INST_INJECT_INST, 32, 0x8c000012) # setcr s0, 18
+            test_harness.assert_equal(0xeae, conn.jtag_transfer(INST_READ_DATA, 32, 0))
+            conn.jtag_transfer(INST_INJECT_INST, 32, 0x8c000032) # setcr s1, 18
+            test_harness.assert_equal(0x1234, conn.jtag_transfer(INST_READ_DATA, 32, 0))
 
 test_harness.execute_tests()

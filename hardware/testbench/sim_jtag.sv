@@ -33,8 +33,7 @@ module sim_jtag
     typedef enum int {
         JTAG_RESET,
         JTAG_IDLE,
-        JTAG_SELECT_DR_SCAN1,
-        JTAG_SELECT_DR_SCAN2,
+        JTAG_SELECT_DR_SCAN,
         JTAG_CAPTURE_DR,
         JTAG_SHIFT_DR,
         JTAG_EXIT1_DR,
@@ -66,6 +65,8 @@ module sim_jtag
     jtag_state_t state_nxt;
     int divider_count;
     logic tms_nxt;
+    logic need_ir_shift;
+    logic need_dr_shift;
 
     initial
     begin
@@ -108,21 +109,31 @@ module sim_jtag
     always @(posedge jtag.tck, posedge reset)
     begin
         if (reset)
+        begin
             state_ff <= JTAG_RESET;
+            need_ir_shift <= 0;
+            need_dr_shift <= 0;
+        end
         else
         begin
+            if (control_port_open != 0 && !need_ir_shift && !need_dr_shift)
+            begin
+                // Check if we have a new messsage request in the socket
+                // from the test harness
+                if (poll_jtag_message(instruction_length, instruction,
+                    data_length, data) != 0)
+                begin
+                    need_ir_shift <= 1;
+                    need_dr_shift <= 1;
+                end
+            end
+
             state_ff <= state_nxt;
             case (state_ff)
                 JTAG_CAPTURE_DR:
                 begin
                     shift_count <= data_length;
                     data_shift <= data;
-                end
-
-                JTAG_CAPTURE_IR:
-                begin
-                    shift_count <= instruction_length;
-                    instruction_shift <= instruction;
                 end
 
                 JTAG_SHIFT_DR:
@@ -132,6 +143,18 @@ module sim_jtag
                     shift_count <= shift_count - 1;
                 end
 
+                JTAG_UPDATE_DR:
+                begin
+                    send_jtag_response(data_shift);
+                    need_dr_shift <= 0;
+                end
+
+                JTAG_CAPTURE_IR:
+                begin
+                    shift_count <= instruction_length;
+                    instruction_shift <= instruction;
+                end
+
                 JTAG_SHIFT_IR:
                 begin
                     instruction_shift <= (instruction_shift >> 1)
@@ -139,9 +162,17 @@ module sim_jtag
                         << (instruction_length - 1));
                     shift_count <= shift_count - 1;
                 end
+
+                JTAG_UPDATE_IR:
+                    need_ir_shift <= 0;
             endcase
         end
     end
+
+    // The FSM is structured so it will always make progress if this returns 0.
+    function random_transition();
+        random_transition = ($random() & 1) == 0;
+    endfunction
 
     always_comb
     begin
@@ -157,44 +188,52 @@ module sim_jtag
 
             JTAG_IDLE:
             begin
-                if (control_port_open != 0)
+                // We may be here because already shifted the IR and
+                // randomly returned to idle, or because we haven't shifted
+                // the IR yet.
+                if (need_ir_shift || need_dr_shift)
                 begin
-                    if (poll_jtag_message(instruction_length, instruction, data_length, data) != 0)
-                    begin
-                        state_nxt = JTAG_SELECT_DR_SCAN1;
-                        tms_nxt = 1;
-                    end
-                    else
-                        tms_nxt = 0;
+                    state_nxt = JTAG_SELECT_DR_SCAN;
+                    tms_nxt = 1;
                 end
                 else
                     tms_nxt = 0;
             end
 
-            // First time we go through this state, we jump to IR scan to load
-            // the instruction
-            JTAG_SELECT_DR_SCAN1:
+            JTAG_SELECT_DR_SCAN:
             begin
-                state_nxt = JTAG_SELECT_IR_SCAN;
-                tms_nxt = 1;
-            end
-
-            // Go through this state again and go through the DR load
-            JTAG_SELECT_DR_SCAN2:
-            begin
-                state_nxt = JTAG_CAPTURE_DR;
-                tms_nxt = 0;
+                if (need_ir_shift)
+                begin
+                    // Have to shift IR first
+                    state_nxt = JTAG_SELECT_IR_SCAN;
+                    tms_nxt = 1;
+                end
+                else
+                begin
+                    // IR is already shifted, need to shift DR
+                    // Note that need_dr_shift should always be set here.
+                    state_nxt = JTAG_CAPTURE_DR;
+                    tms_nxt = 0;
+                end
             end
 
             JTAG_CAPTURE_DR:
             begin
-                state_nxt = JTAG_SHIFT_DR;
-                tms_nxt = 0;
+                if (random_transition())
+                begin
+                    tms_nxt = 1;
+                    state_nxt = JTAG_EXIT1_DR;
+                end
+                else
+                begin
+                    tms_nxt = 0;
+                    state_nxt = JTAG_SHIFT_DR;
+                end
             end
 
             JTAG_SHIFT_DR:
             begin
-                if (shift_count == 1)
+                if (shift_count == 1 || random_transition())
                 begin
                     tms_nxt = 1;
                     state_nxt = JTAG_EXIT1_DR;
@@ -205,26 +244,49 @@ module sim_jtag
 
             JTAG_EXIT1_DR:
             begin
-                tms_nxt = 0;
-                state_nxt = JTAG_PAUSE_DR;
+                if (shift_count == 0 && !random_transition())
+                begin
+                    tms_nxt = 1;
+                    state_nxt = JTAG_UPDATE_DR;
+                end
+                else
+                begin
+                    tms_nxt = 0;
+                    state_nxt = JTAG_PAUSE_DR;
+                end
             end
 
             JTAG_PAUSE_DR:
             begin
-                tms_nxt = 1;
-                state_nxt = JTAG_EXIT2_DR;
+                if (random_transition())
+                    tms_nxt = 0;
+                else
+                begin
+                    tms_nxt = 1;
+                    state_nxt = JTAG_EXIT2_DR;
+                end
             end
 
             JTAG_EXIT2_DR:
             begin
-                tms_nxt = 1;
-                state_nxt = JTAG_UPDATE_DR;
+                if (shift_count != 0)
+                begin
+                    tms_nxt = 0;
+                    state_nxt = JTAG_SHIFT_DR;
+                end
+                else
+                begin
+                    tms_nxt = 1;
+                    state_nxt = JTAG_UPDATE_DR;
+                end
             end
 
             JTAG_UPDATE_DR:
             begin
+                // XXX Since we always shift DR last and won't check for a new
+                // message until back in idle, we always have to go back to idle.
+                // This does not exercise the transition back to DR_SCAN.
                 tms_nxt = 0;
-                send_jtag_response(data_shift);
                 state_nxt = JTAG_IDLE;
             end
 
@@ -236,13 +298,21 @@ module sim_jtag
 
             JTAG_CAPTURE_IR:
             begin
-                tms_nxt = 0;
-                state_nxt = JTAG_SHIFT_IR;
+                if (random_transition())
+                begin
+                    tms_nxt = 1;
+                    state_nxt = JTAG_EXIT1_IR;
+                end
+                else
+                begin
+                    tms_nxt = 0;
+                    state_nxt = JTAG_SHIFT_IR;
+                end
             end
 
             JTAG_SHIFT_IR:
             begin
-                if (shift_count == 1)
+                if (shift_count == 1 || random_transition())
                 begin
                     tms_nxt = 1;
                     state_nxt = JTAG_EXIT1_IR;
@@ -253,26 +323,55 @@ module sim_jtag
 
             JTAG_EXIT1_IR:
             begin
-                tms_nxt = 0;
-                state_nxt = JTAG_PAUSE_IR;
+                if (shift_count == 0 && !random_transition())
+                begin
+                    tms_nxt = 1;
+                    state_nxt = JTAG_UPDATE_IR;
+                end
+                else
+                begin
+                    tms_nxt = 0;
+                    state_nxt = JTAG_PAUSE_IR;
+                end
             end
 
             JTAG_PAUSE_IR:
             begin
-                tms_nxt = 1;
-                state_nxt = JTAG_EXIT2_IR;
+                if (random_transition())
+                    tms_nxt = 0;
+                else
+                begin
+                    tms_nxt = 1;
+                    state_nxt = JTAG_EXIT2_IR;
+                end
             end
 
             JTAG_EXIT2_IR:
             begin
-                tms_nxt = 1;
-                state_nxt = JTAG_UPDATE_IR;
+                if (shift_count != 0)
+                begin
+                    tms_nxt = 0;
+                    state_nxt = JTAG_SHIFT_IR;
+                end
+                else
+                begin
+                    tms_nxt = 1;
+                    state_nxt = JTAG_UPDATE_IR;
+                end
             end
 
             JTAG_UPDATE_IR:
             begin
-                tms_nxt = 1;
-                state_nxt = JTAG_SELECT_DR_SCAN2;
+                if (random_transition())
+                begin
+                    tms_nxt = 0;
+                    state_nxt = JTAG_IDLE;
+                end
+                else
+                begin
+                    tms_nxt = 1;
+                    state_nxt = JTAG_SELECT_DR_SCAN;
+                end
             end
 
             default:
