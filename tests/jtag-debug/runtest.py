@@ -28,7 +28,7 @@ import test_harness
 DEBUG = False
 CONTROL_PORT = 8541
 INSTRUCTION_LENGTH = 4
-EXPECTED_IDCODE = 0x20e129f4
+EXPECTED_IDCODE = 0x20e129f4    # Matches value in hardware/core/config.sv
 
 # JTAG instructions
 INST_IDCODE = 0
