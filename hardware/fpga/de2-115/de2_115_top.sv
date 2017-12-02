@@ -271,7 +271,7 @@ module de2_115_top(
 `ifdef VENDOR_ALTERA
     // Altera's virtual JTAG megafunction.
     sld_virtual_jtag #(
-        .SLD_IR_WIDTH(4)
+        .sld_ir_width(4)
     )virtual_jtag(
         .tdo(jtag.tdo),
         .tck(virt_tck),
