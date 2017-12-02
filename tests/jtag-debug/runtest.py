@@ -40,6 +40,10 @@ INST_READ_DATA = 5
 INST_WRITE_DATA = 6
 INST_BYPASS = 15
 
+# XXX need to test that the TAP powers up with the proper instruction (BYPASS)
+
+# XXX The process classes are very similar to those found in LLDB. Can these be made
+# more general and moved into test_harness.py
 class VerilatorProcess(object):
 
     """
@@ -61,6 +65,8 @@ class VerilatorProcess(object):
             self.hexfile
         ]
 
+        # XXX in the event of an error, would like to capture the output of verilator
+        # and report in exception.
         if DEBUG:
             self.output = None
         else:
