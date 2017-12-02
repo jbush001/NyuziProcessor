@@ -24,14 +24,15 @@
 
 #define CLOCK_RATE 50000000
 #define DEFAULT_UART_BAUD 921600
+#define BLINK_DELAY 100000
 
 enum register_index
 {
-    REG_RED_LED             = 0x00 / 4,
-    REG_UART_STATUS         = 0x40 / 4,
-    REG_UART_RX             = 0x44 / 4,
-    REG_UART_TX             = 0x48 / 4,
-    REG_UART_DIVISOR        = 0x4c / 4
+    REG_GREEN_LED = 0x04 / 4,
+    REG_UART_STATUS = 0x40 / 4,
+    REG_UART_RX = 0x44 / 4,
+    REG_UART_TX = 0x48 / 4,
+    REG_UART_DIVISOR = 0x4c / 4
 };
 
 void *memset(void *_dest, int value, unsigned int length);
@@ -40,15 +41,26 @@ static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff
 
 unsigned int read_serial_byte(void)
 {
+    int delay_counter = 0;
+    int led_value = 0;
+
     while ((REGISTERS[REG_UART_STATUS] & 2) == 0)
-        ;
+    {
+        // Blink the LED while waiting to show signs of life.
+        if (delay_counter++ > BLINK_DELAY)
+        {
+            delay_counter = 0;
+            led_value = !led_value;
+            REGISTERS[REG_GREEN_LED] = led_value;
+        }
+    }
 
     return REGISTERS[REG_UART_RX];
 }
 
 void write_serial_byte(unsigned int ch)
 {
-    while ((REGISTERS[REG_UART_STATUS] & 1) == 0)	// Wait for ready
+    while ((REGISTERS[REG_UART_STATUS] & 1) == 0)	// Wait for space
         ;
 
     REGISTERS[REG_UART_TX] = ch;
@@ -73,9 +85,6 @@ void write_serial_long(unsigned int value)
 
 int main()
 {
-    // Turn on red LED to indicate bootloader is waiting
-    REGISTERS[REG_RED_LED] = 0x1;
-
     // Initialize UART speed
     REGISTERS[REG_UART_DIVISOR] = (CLOCK_RATE / DEFAULT_UART_BAUD) - 1;
 
@@ -112,7 +121,7 @@ int main()
 
             case EXECUTE_REQ:
             {
-                REGISTERS[REG_RED_LED] = 0;	// Turn off LED
+                REGISTERS[REG_GREEN_LED] = 0;	// Turn off LED
                 write_serial_byte(EXECUTE_ACK);
                 return 0;	// Break out of main
             }
