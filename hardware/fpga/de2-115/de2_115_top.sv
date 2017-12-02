@@ -70,7 +70,6 @@ module de2_115_top(
     parameter  bootrom = "../../../software/bootrom/boot.hex";
 
     localparam BOOT_ROM_BASE = 32'hfffee000;
-    localparam CLOCK_RATE = 50000000;
     localparam NUM_PERIPHERALS = 5;
 
     /*AUTOLOGIC*/
@@ -99,6 +98,10 @@ module de2_115_top(
     } io_bus_source;
     logic uart_rx_interrupt;
     logic ps2_rx_interrupt;
+    logic virt_tdo;
+    logic virt_tck;
+    logic virt_tdi;
+    logic virt_tms;
 
     assign clk = clk50;
 
@@ -262,10 +265,24 @@ module de2_115_top(
         end
     endgenerate
 
-    // XXX Jtag is currently stubbed out. Could expose this to external pins,
-    // but would require a synchronizer.
-    assign jtag.tdi = 0;
-    assign jtag.tck = 0;
-    assign jtag.tms = 0;
+// Using ifdef VENDOR_ALTERA seems a bit strange, because this file is necessarily
+// altera specific, but it lets Verilator use its lint-only option to check for
+// errors in this module.
+`ifdef VENDOR_ALTERA
+    // Altera's virtual JTAG megafunction.
+    sld_virtual_jtag #(
+        .SLD_IR_WIDTH(4)
+    )virtual_jtag(
+        .tdo(jtag.tdo),
+        .tck(virt_tck),
+        .tdi(virt_tdi),
+        .tms(virt_tms));
+`endif
+
+    synchronizer #(.WIDTH(3)) jtag_sync(
+        .data_i({virt_tck, virt_tms, virt_tdi}),
+        .data_o({jtag.tck, jtag.tms, jtag.tdi}),
+        .*);
+
     assign jtag.trst = 0;
 endmodule
