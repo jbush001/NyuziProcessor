@@ -97,9 +97,9 @@ module writeback_stage(
     output logic                          wb_trap,
     output trap_cause_t                   wb_trap_cause,
     output scalar_t                       wb_trap_pc,
-    output local_thread_idx_t             wb_trap_thread_idx,
     output scalar_t                       wb_trap_access_vaddr,
     output subcycle_t                     wb_trap_subcycle,
+    output logic                          wb_eret,
 
     // Rollback signals to all stages
     output logic                          wb_rollback_en,
@@ -167,9 +167,6 @@ module writeback_stage(
     //
     always_comb
     begin
-        // XXX wb_trap_thread_idx seems to be the same as wb_rollback_thread_idx.
-        // Should these be combined?
-
         wb_rollback_en = 0;
         wb_rollback_pc = 0;
         wb_rollback_thread_idx = 0;
@@ -179,8 +176,8 @@ module writeback_stage(
         wb_rollback_subcycle = 0;
         wb_trap_pc = 0;
         wb_trap_access_vaddr = 0;
-        wb_trap_thread_idx = 0;
         wb_trap_subcycle = dd_subcycle;
+        wb_eret = 0;
 
         if (ix_instruction_valid && (ix_instruction.has_trap
             || ix_privileged_op_fault))
@@ -203,7 +200,6 @@ module writeback_stage(
 
             wb_trap_pc = ix_instruction.pc;
             wb_trap_access_vaddr = ix_instruction.pc;
-            wb_trap_thread_idx = ix_thread_idx;
             wb_trap_subcycle = ix_subcycle;
         end
         else if (dd_instruction_valid && dd_fault)
@@ -221,7 +217,6 @@ module writeback_stage(
             wb_trap_cause = dd_fault_cause;
             wb_trap_pc = dd_instruction.pc;
             wb_trap_access_vaddr = dd_request_vaddr;
-            wb_trap_thread_idx = dd_thread_idx;
         end
         else if (ix_instruction_valid && ix_rollback_en)
         begin
@@ -232,7 +227,10 @@ module writeback_stage(
             wb_rollback_thread_idx = ix_thread_idx;
             wb_rollback_pipeline = PIPE_INT_ARITH;
             if (ix_instruction.branch_type == BRANCH_ERET)
+            begin
+                wb_eret = 1;
                 wb_rollback_subcycle = cr_eret_subcycle[ix_thread_idx];
+            end
             else
                 wb_rollback_subcycle = ix_subcycle;
         end

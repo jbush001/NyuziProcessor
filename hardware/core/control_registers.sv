@@ -41,10 +41,6 @@ module control_registers
     // To instruction_decode_stage
     output logic[`THREADS_PER_CORE - 1:0]   cr_interrupt_pending,
 
-    // From int_execute_stage
-    input                                   ix_eret,
-    input local_thread_idx_t                ix_thread_idx,
-
     // From dcache_data_stage
     // dd_xxx signals are unregistered. dt_thread_idx represents thread going into
     // dcache_data_stage)
@@ -56,10 +52,11 @@ module control_registers
 
     // From writeback_stage
     input                                   wb_trap,
+    input                                   wb_eret,
     input trap_cause_t                      wb_trap_cause,
     input scalar_t                          wb_trap_pc,
     input scalar_t                          wb_trap_access_vaddr,
-    input local_thread_idx_t                wb_trap_thread_idx,
+    input local_thread_idx_t                wb_rollback_thread_idx,
     input subcycle_t                        wb_trap_subcycle,
 
     // To writeback_stage
@@ -134,7 +131,7 @@ module control_registers
             // must not occur simultaneously (an eret can raise a fault if it
             // is not in supervisor mode, but ix_eret should not be asserted
             // in that case)
-            assert(!(wb_trap && ix_eret));
+            assert(!(wb_trap && wb_eret));
 
             cycle_count <= cycle_count + 1;
 
@@ -142,24 +139,24 @@ module control_registers
             begin
                 // Copy trap state
                 for (int level = 0; level < TRAP_LEVELS - 1; level++)
-                    trap_state[wb_trap_thread_idx][level + 1] <= trap_state[wb_trap_thread_idx][level];
+                    trap_state[wb_rollback_thread_idx][level + 1] <= trap_state[wb_rollback_thread_idx][level];
 
                 // Dispatch fault
-                trap_state[wb_trap_thread_idx][0].trap_cause <= wb_trap_cause;
-                trap_state[wb_trap_thread_idx][0].trap_pc <= wb_trap_pc;
-                trap_state[wb_trap_thread_idx][0].trap_access_addr <= wb_trap_access_vaddr;
-                trap_state[wb_trap_thread_idx][0].trap_subcycle <= wb_trap_subcycle;
-                trap_state[wb_trap_thread_idx][0].flags.interrupt_en <= 0;    // Disable interrupts for this thread
-                trap_state[wb_trap_thread_idx][0].flags.supervisor_en <= 1;
+                trap_state[wb_rollback_thread_idx][0].trap_cause <= wb_trap_cause;
+                trap_state[wb_rollback_thread_idx][0].trap_pc <= wb_trap_pc;
+                trap_state[wb_rollback_thread_idx][0].trap_access_addr <= wb_trap_access_vaddr;
+                trap_state[wb_rollback_thread_idx][0].trap_subcycle <= wb_trap_subcycle;
+                trap_state[wb_rollback_thread_idx][0].flags.interrupt_en <= 0;    // Disable interrupts for this thread
+                trap_state[wb_rollback_thread_idx][0].flags.supervisor_en <= 1;
                 if (wb_trap_cause.trap_type == TT_TLB_MISS)
-                    trap_state[wb_trap_thread_idx][0].flags.mmu_en <= 0;
+                    trap_state[wb_rollback_thread_idx][0].flags.mmu_en <= 0;
             end
 
-            if (ix_eret)
+            if (wb_eret)
             begin
                 // Restore nested interrupt state
                 for (int level = 0; level < TRAP_LEVELS - 1; level++)
-                    trap_state[ix_thread_idx][level] <= trap_state[ix_thread_idx][level + 1];
+                    trap_state[wb_rollback_thread_idx][level] <= trap_state[wb_rollback_thread_idx][level + 1];
             end
 
             //

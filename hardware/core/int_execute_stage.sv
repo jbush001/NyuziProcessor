@@ -60,9 +60,6 @@ module int_execute_stage(
     input scalar_t                    cr_eret_address[`THREADS_PER_CORE],
     input                             cr_supervisor_en[`THREADS_PER_CORE],
 
-    // To control_registers
-    output logic                      ix_eret,
-
     // To performance_counters
     output logic                      ix_perf_uncond_branch,
     output logic                      ix_perf_cond_branch_taken,
@@ -329,7 +326,6 @@ module int_execute_stage(
         begin
             /*AUTORESET*/
             // Beginning of autoreset for uninitialized flops
-            ix_eret <= '0;
             ix_instruction_valid <= '0;
             ix_privileged_op_fault <= '0;
             ix_rollback_en <= '0;
@@ -340,7 +336,6 @@ module int_execute_stage(
             if (valid_instruction)
             begin
                 ix_instruction_valid <= 1;
-                ix_eret <= eret && !privileged_op_fault;
                 ix_privileged_op_fault <= privileged_op_fault;
                 ix_rollback_en <= branch_taken;
             end
@@ -348,7 +343,6 @@ module int_execute_stage(
             begin
                 ix_instruction_valid <= 0;
                 ix_rollback_en <= 0;
-                ix_eret <= 0;
             end
         end
     end

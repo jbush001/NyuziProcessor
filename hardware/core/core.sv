@@ -262,7 +262,6 @@ module core
     scalar_t            ior_read_value;         // From io_request_queue of io_request_queue.v
     logic               ior_rollback_en;        // From io_request_queue of io_request_queue.v
     local_thread_bitmap_t ior_wake_bitmap;      // From io_request_queue of io_request_queue.v
-    logic               ix_eret;                // From int_execute_stage of int_execute_stage.v
     decoded_instruction_t ix_instruction;       // From int_execute_stage of int_execute_stage.v
     logic               ix_instruction_valid;   // From int_execute_stage of int_execute_stage.v
     vector_mask_t       ix_mask_value;          // From int_execute_stage of int_execute_stage.v
@@ -318,6 +317,7 @@ module core
     logic               ts_perf_instruction_issue;// From thread_select_stage of thread_select_stage.v
     subcycle_t          ts_subcycle;            // From thread_select_stage of thread_select_stage.v
     local_thread_idx_t  ts_thread_idx;          // From thread_select_stage of thread_select_stage.v
+    logic               wb_eret;                // From writeback_stage of writeback_stage.v
     logic               wb_perf_instruction_retire;// From writeback_stage of writeback_stage.v
     logic               wb_perf_store_rollback; // From writeback_stage of writeback_stage.v
     logic               wb_rollback_en;         // From writeback_stage of writeback_stage.v
@@ -331,7 +331,6 @@ module core
     trap_cause_t        wb_trap_cause;          // From writeback_stage of writeback_stage.v
     scalar_t            wb_trap_pc;             // From writeback_stage of writeback_stage.v
     subcycle_t          wb_trap_subcycle;       // From writeback_stage of writeback_stage.v
-    local_thread_idx_t  wb_trap_thread_idx;     // From writeback_stage of writeback_stage.v
     logic               wb_writeback_en;        // From writeback_stage of writeback_stage.v
     logic               wb_writeback_last_subcycle;// From writeback_stage of writeback_stage.v
     vector_mask_t       wb_writeback_mask;      // From writeback_stage of writeback_stage.v
