@@ -73,16 +73,27 @@ module control_registers
     input scalar_t                          dbg_data_from_host,
     output scalar_t                         cr_data_to_host);
 
-    // We support one level of nested traps, so there are two of
-    // each of these trap state arrays.
-    scalar_t trap_access_addr[2][`THREADS_PER_CORE];
-    trap_cause_t trap_cause[2][`THREADS_PER_CORE];
-    scalar_t eret_address[2][`THREADS_PER_CORE];
-    logic interrupt_en_saved[2][`THREADS_PER_CORE];
-    logic mmu_en_saved[2][`THREADS_PER_CORE];
-    logic supervisor_en_saved[2][`THREADS_PER_CORE];
-    subcycle_t subcycle_saved[2][`THREADS_PER_CORE];
-    scalar_t scratchpad[2][`THREADS_PER_CORE * 2];
+    localparam TRAP_LEVELS = 3;
+
+    typedef struct packed {
+        logic supervisor_en;
+        logic mmu_en;
+        logic interrupt_en;
+    } flags_t;
+
+    typedef struct packed {
+        flags_t flags;
+        scalar_t scratchpad0;
+        scalar_t scratchpad1;
+
+        // Information about last trap
+        trap_cause_t trap_cause;
+        scalar_t trap_pc;
+        scalar_t trap_access_addr;
+        subcycle_t trap_subcycle;
+    } trap_state_t;
+
+    trap_state_t trap_state[`THREADS_PER_CORE][TRAP_LEVELS];
     scalar_t page_dir_base[`THREADS_PER_CORE];
     scalar_t cycle_count;
     logic[NUM_INTERRUPTS - 1:0] interrupt_mask[`THREADS_PER_CORE];
@@ -92,44 +103,27 @@ module control_registers
     logic[NUM_INTERRUPTS - 1:0] interrupt_req_prev;
     logic[NUM_INTERRUPTS - 1:0] interrupt_edge;
 
-    assign cr_eret_subcycle = subcycle_saved[0];
-    assign cr_eret_address = eret_address[0];
-
     always_ff @(posedge clk, posedge reset)
     begin
         if (reset)
         begin
             for (int thread_idx = 0; thread_idx < `THREADS_PER_CORE; thread_idx++)
             begin
-                for (int trap_level = 0; trap_level < 2; trap_level++)
-                begin
-                    trap_cause[trap_level][thread_idx] <= {2'b00, TT_RESET};
-                    trap_access_addr[trap_level][thread_idx] <= '0;
-                    subcycle_saved[trap_level][thread_idx] <= '0;
-                    interrupt_en_saved[trap_level][thread_idx] <= 0;
-                    supervisor_en_saved[trap_level][thread_idx] <= 1;
-                    mmu_en_saved[trap_level][thread_idx] <= 0;
-                    eret_address[trap_level][thread_idx] <= '0;
-                    scratchpad[trap_level][thread_idx] <= '0;
-                    scratchpad[trap_level][thread_idx + `THREADS_PER_CORE] <= '0;
-                end
-
-                cr_mmu_en[thread_idx] <= 0;
-                cr_supervisor_en[thread_idx] <= 1;    // Threads start in supervisor mode
+                trap_state[thread_idx][0] <= '0;
+                trap_state[thread_idx][0].flags.supervisor_en <= 1'b1;
                 cr_current_asid[thread_idx] <= '0;
                 page_dir_base[thread_idx] <= '0;
                 interrupt_mask[thread_idx] <= '0;
             end
 
-            /*AUTORESET*/
-            // Beginning of autoreset for uninitialized flops
+            // Warning: AUTORESET gets confused by all of the structure accesses
+            // below, so the resets are all manual here. Be sure to add all registers
+            // accessed below here.
             cr_data_to_host <= '0;
-            cr_interrupt_en <= '0;
             cr_tlb_miss_handler <= '0;
             cr_trap_handler <= '0;
             cycle_count <= '0;
             int_trigger_type <= '0;
-            // End of automatics
         end
         else
         begin
@@ -146,49 +140,26 @@ module control_registers
 
             if (wb_trap)
             begin
-                // For nested traps, copy saved flags into second slot
-                trap_access_addr[1][wb_trap_thread_idx] <= trap_access_addr[0][wb_trap_thread_idx];
-                trap_cause[1][wb_trap_thread_idx] <= trap_cause[0][wb_trap_thread_idx];
-                eret_address[1][wb_trap_thread_idx] <= eret_address[0][wb_trap_thread_idx];
-                interrupt_en_saved[1][wb_trap_thread_idx] <= interrupt_en_saved[0][wb_trap_thread_idx];
-                mmu_en_saved[1][wb_trap_thread_idx] <= mmu_en_saved[0][wb_trap_thread_idx];
-                supervisor_en_saved[1][wb_trap_thread_idx] <= supervisor_en_saved[0][wb_trap_thread_idx];
-                subcycle_saved[1][wb_trap_thread_idx] <= subcycle_saved[0][wb_trap_thread_idx];
-                scratchpad[1][{1'b0, wb_trap_thread_idx}] <= scratchpad[0][{1'b0, wb_trap_thread_idx}];
-                scratchpad[1][{1'b1, wb_trap_thread_idx}] <= scratchpad[0][{1'b1, wb_trap_thread_idx}];
-
-                // Save current flags
-                interrupt_en_saved[0][wb_trap_thread_idx] <= cr_interrupt_en[wb_trap_thread_idx];
-                mmu_en_saved[0][wb_trap_thread_idx] <= cr_mmu_en[wb_trap_thread_idx];
-                supervisor_en_saved[0][wb_trap_thread_idx] <= cr_supervisor_en[wb_trap_thread_idx];
-                subcycle_saved[0][wb_trap_thread_idx] <= wb_trap_subcycle;
+                // Copy trap state
+                for (int level = 0; level < TRAP_LEVELS - 1; level++)
+                    trap_state[wb_trap_thread_idx][level + 1] <= trap_state[wb_trap_thread_idx][level];
 
                 // Dispatch fault
-                trap_cause[0][wb_trap_thread_idx] <= wb_trap_cause;
-                eret_address[0][wb_trap_thread_idx] <= wb_trap_pc;
-                trap_access_addr[0][wb_trap_thread_idx] <= wb_trap_access_vaddr;
-                cr_interrupt_en[wb_trap_thread_idx] <= 0;    // Disable interrupts for this thread
-                cr_supervisor_en[wb_trap_thread_idx] <= 1; // Enter supervisor mode on fault
+                trap_state[wb_trap_thread_idx][0].trap_cause <= wb_trap_cause;
+                trap_state[wb_trap_thread_idx][0].trap_pc <= wb_trap_pc;
+                trap_state[wb_trap_thread_idx][0].trap_access_addr <= wb_trap_access_vaddr;
+                trap_state[wb_trap_thread_idx][0].trap_subcycle <= wb_trap_subcycle;
+                trap_state[wb_trap_thread_idx][0].flags.interrupt_en <= 0;    // Disable interrupts for this thread
+                trap_state[wb_trap_thread_idx][0].flags.supervisor_en <= 1;
                 if (wb_trap_cause.trap_type == TT_TLB_MISS)
-                    cr_mmu_en[wb_trap_thread_idx] <= 0;
+                    trap_state[wb_trap_thread_idx][0].flags.mmu_en <= 0;
             end
-            else if (ix_eret)
-            begin
-                // Copy from prev flags to current flags
-                cr_interrupt_en[ix_thread_idx] <= interrupt_en_saved[0][ix_thread_idx];
-                cr_mmu_en[ix_thread_idx] <= mmu_en_saved[0][ix_thread_idx];
-                cr_supervisor_en[ix_thread_idx] <= supervisor_en_saved[0][ix_thread_idx];
 
-                // Restore nested interrupt stage
-                trap_access_addr[0][ix_thread_idx] <= trap_access_addr[1][ix_thread_idx];
-                trap_cause[0][ix_thread_idx] <= trap_cause[1][ix_thread_idx];
-                eret_address[0][ix_thread_idx] <= eret_address[1][ix_thread_idx];
-                interrupt_en_saved[0][ix_thread_idx] <= interrupt_en_saved[1][ix_thread_idx];
-                mmu_en_saved[0][ix_thread_idx] <= mmu_en_saved[1][ix_thread_idx];
-                supervisor_en_saved[0][ix_thread_idx] <= supervisor_en_saved[1][ix_thread_idx];
-                subcycle_saved[0][ix_thread_idx] <= subcycle_saved[1][ix_thread_idx];
-                scratchpad[0][{1'b0, ix_thread_idx}] <= scratchpad[1][{1'b0, ix_thread_idx}];
-                scratchpad[0][{1'b1, ix_thread_idx}] <= scratchpad[1][{1'b1, ix_thread_idx}];
+            if (ix_eret)
+            begin
+                // Restore nested interrupt state
+                for (int level = 0; level < TRAP_LEVELS - 1; level++)
+                    trap_state[ix_thread_idx][level] <= trap_state[ix_thread_idx][level + 1];
             end
 
             //
@@ -197,26 +168,14 @@ module control_registers
             if (dd_creg_write_en)
             begin
                 case (dd_creg_index)
-                    CR_FLAGS:
-                    begin
-                        cr_supervisor_en[dt_thread_idx] <= dd_creg_write_val[2];
-                        cr_mmu_en[dt_thread_idx] <= dd_creg_write_val[1];
-                        cr_interrupt_en[dt_thread_idx] <= dd_creg_write_val[0];
-                    end
-
-                    CR_SAVED_FLAGS:
-                    begin
-                        supervisor_en_saved[0][dt_thread_idx] <= dd_creg_write_val[2];
-                        mmu_en_saved[0][dt_thread_idx] <= dd_creg_write_val[1];
-                        interrupt_en_saved[0][dt_thread_idx] <= dd_creg_write_val[0];
-                    end
-
-                    CR_TRAP_PC:           eret_address[0][dt_thread_idx] <= dd_creg_write_val;
+                    CR_FLAGS:             trap_state[dt_thread_idx][0].flags <= flags_t'(dd_creg_write_val);
+                    CR_SAVED_FLAGS:       trap_state[dt_thread_idx][1].flags <= flags_t'(dd_creg_write_val);
+                    CR_TRAP_PC:           trap_state[dt_thread_idx][0].trap_pc <= dd_creg_write_val;
                     CR_TRAP_HANDLER:      cr_trap_handler <= dd_creg_write_val;
                     CR_TLB_MISS_HANDLER:  cr_tlb_miss_handler <= dd_creg_write_val;
-                    CR_SCRATCHPAD0:       scratchpad[0][{1'b0, dt_thread_idx}] <= dd_creg_write_val;
-                    CR_SCRATCHPAD1:       scratchpad[0][{1'b1, dt_thread_idx}] <= dd_creg_write_val;
-                    CR_SUBCYCLE:          subcycle_saved[0][dt_thread_idx] <= subcycle_t'(dd_creg_write_val);
+                    CR_SCRATCHPAD0:       trap_state[dt_thread_idx][0].scratchpad0 <= dd_creg_write_val;
+                    CR_SCRATCHPAD1:       trap_state[dt_thread_idx][0].scratchpad1 <= dd_creg_write_val;
+                    CR_SUBCYCLE:          trap_state[dt_thread_idx][0].trap_subcycle <= subcycle_t'(dd_creg_write_val);
                     CR_CURRENT_ASID:      cr_current_asid[dt_thread_idx] <= dd_creg_write_val[ASID_WIDTH - 1:0];
                     CR_PAGE_DIR:          page_dir_base[dt_thread_idx] <= dd_creg_write_val;
                     CR_INTERRUPT_MASK:    interrupt_mask[dt_thread_idx] <= dd_creg_write_val[NUM_INTERRUPTS - 1:0];
@@ -252,6 +211,11 @@ module control_registers
                 && dd_creg_index == CR_INTERRUPT_ACK;
             assign interrupt_ack = {NUM_INTERRUPTS{do_interrupt_ack}}
                 & dd_creg_write_val[NUM_INTERRUPTS - 1:0];
+            assign cr_interrupt_en[thread_idx] = trap_state[thread_idx][0].flags.interrupt_en;
+            assign cr_supervisor_en[thread_idx] = trap_state[thread_idx][0].flags.supervisor_en;
+            assign cr_mmu_en[thread_idx] = trap_state[thread_idx][0].flags.mmu_en;
+            assign cr_eret_subcycle[thread_idx] = trap_state[thread_idx][0].trap_subcycle;
+            assign cr_eret_address[thread_idx] = trap_state[thread_idx][0].trap_pc;
 
             // interrupt_edge_latched is set when a [positive] edge triggered
             // interrupt occurs.
@@ -288,34 +252,18 @@ module control_registers
         if (dd_creg_read_en)
         begin
             case (dd_creg_index)
-                CR_FLAGS:
-                begin
-                    cr_creg_read_val <= scalar_t'({
-                        cr_supervisor_en[dt_thread_idx],
-                        cr_mmu_en[dt_thread_idx],
-                        cr_interrupt_en[dt_thread_idx]
-                    });
-                end
-
-                CR_SAVED_FLAGS:
-                begin
-                    cr_creg_read_val <= scalar_t'({
-                        supervisor_en_saved[0][dt_thread_idx],
-                        mmu_en_saved[0][dt_thread_idx],
-                        interrupt_en_saved[0][dt_thread_idx]
-                    });
-                end
-
+                CR_FLAGS:             cr_creg_read_val <= scalar_t'(trap_state[dt_thread_idx][0].flags);
+                CR_SAVED_FLAGS:       cr_creg_read_val <= scalar_t'(trap_state[dt_thread_idx][1].flags);
                 CR_THREAD_ID:         cr_creg_read_val <= scalar_t'({CORE_ID, dt_thread_idx});
-                CR_TRAP_PC:           cr_creg_read_val <= eret_address[0][dt_thread_idx];
-                CR_TRAP_CAUSE:        cr_creg_read_val <= scalar_t'(trap_cause[0][dt_thread_idx]);
+                CR_TRAP_PC:           cr_creg_read_val <= trap_state[dt_thread_idx][0].trap_pc;
+                CR_TRAP_CAUSE:        cr_creg_read_val <= scalar_t'(trap_state[dt_thread_idx][0].trap_cause);
                 CR_TRAP_HANDLER:      cr_creg_read_val <= cr_trap_handler;
-                CR_TRAP_ADDRESS:      cr_creg_read_val <= trap_access_addr[0][dt_thread_idx];
+                CR_TRAP_ADDRESS:      cr_creg_read_val <= trap_state[dt_thread_idx][0].trap_access_addr;
                 CR_TLB_MISS_HANDLER:  cr_creg_read_val <= cr_tlb_miss_handler;
                 CR_CYCLE_COUNT:       cr_creg_read_val <= cycle_count;
-                CR_SCRATCHPAD0:       cr_creg_read_val <= scratchpad[0][{1'b0, dt_thread_idx}];
-                CR_SCRATCHPAD1:       cr_creg_read_val <= scratchpad[0][{1'b1, dt_thread_idx}];
-                CR_SUBCYCLE:          cr_creg_read_val <= scalar_t'(subcycle_saved[0][dt_thread_idx]);
+                CR_SCRATCHPAD0:       cr_creg_read_val <= trap_state[dt_thread_idx][0].scratchpad0;
+                CR_SCRATCHPAD1:       cr_creg_read_val <= trap_state[dt_thread_idx][0].scratchpad1;
+                CR_SUBCYCLE:          cr_creg_read_val <= scalar_t'(trap_state[dt_thread_idx][0].trap_subcycle);
                 CR_CURRENT_ASID:      cr_creg_read_val <= scalar_t'(cr_current_asid[dt_thread_idx]);
                 CR_PAGE_DIR:          cr_creg_read_val <= page_dir_base[dt_thread_idx];
                 CR_INTERRUPT_PENDING: cr_creg_read_val <= scalar_t'(interrupt_pending[dt_thread_idx]);
