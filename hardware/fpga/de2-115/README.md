@@ -69,9 +69,9 @@ The build system is command line based and does not use the Quartus GUI.
 
         sudo killall -9 jtagd
 
-3. Press 'key 0' on the lower right hand of the board to reset the processor. LED 0
-   will light up on the board to indicate the bootloader is waiting to receive a
-   program over the serial port.
+3. Press 'key 0' on the lower right hand of the board to reset the processor.
+   Green LED 0 will start blinking, indicating the bootloader is waiting to
+   receive a program over the serial port.
 
 4. Load program into memory and execute it:
 
