@@ -41,9 +41,8 @@ INST_WRITE_DATA = 6
 INST_BYPASS = 15
 
 # XXX need to test that the TAP powers up with the proper instruction (BYPASS)
+# This may require a different mode that only shifts the data bits.
 
-# XXX The process classes are very similar to those found in LLDB. Can these be made
-# more general and moved into test_harness.py
 class VerilatorProcess(object):
 
     """
@@ -109,7 +108,6 @@ class DebugConnection(object):
     def __exit__(self, *unused):
         self.sock.close()
 
-    # XXX needs a timeout
     def jtag_transfer(self, instruction, data_length, data):
         if DEBUG:
             print('Sending JTAG command 0x{:x} data 0x{:x}'.format(instruction, data))
