@@ -265,26 +265,8 @@ module de2_115_top(
         end
     endgenerate
 
-// Using ifdef VENDOR_ALTERA seems a bit strange, because this file is necessarily
-// altera specific, but it lets Verilator use its lint-only option to check for
-// errors in this module.
-`ifdef VENDOR_ALTERA
-    // Altera's virtual JTAG megafunction.
-    sld_virtual_jtag #(
-	.sld_auto_instance_index("NO"),
-	.sld_instance_index(0),
-        .sld_ir_width(4)
-    )virtual_jtag(
-        .tdo(jtag.tdo),
-        .tck(virt_tck),
-        .tdi(virt_tdi),
-        .tms(virt_tms));
-`endif
-
-    synchronizer #(.WIDTH(3)) jtag_sync(
-        .data_i({virt_tck, virt_tms, virt_tdi}),
-        .data_o({jtag.tck, jtag.tms, jtag.tdi}),
-        .*);
-
+    assign jtag.tck = 0;
+    assign jtag.tdi = 0;
+    assign jtag.tms = 0;
     assign jtag.trst = 0;
 endmodule
