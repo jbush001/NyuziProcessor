@@ -64,8 +64,8 @@ module jtag_tap_controller
     jtag_state_t state_ff;
     jtag_state_t state_nxt;
     logic last_tck;
-    logic jtag_rising_edge;
-    logic jtag_falling_edge;
+    logic tck_rising_edge;
+    logic tck_falling_edge;
 
     always_comb
     begin
@@ -148,19 +148,22 @@ module jtag_tap_controller
                 else
                     state_nxt = JTAG_IDLE;
 
-            default:    // Includes JTAG_RESET
+            JTAG_RESET:
                 if (!jtag.tms)
                     state_nxt = JTAG_IDLE;
+
+            default:
+                state_nxt = JTAG_RESET;
         endcase
     end
 
-    assign jtag_rising_edge = !last_tck && jtag.tck;
-    assign jtag_falling_edge = last_tck && !jtag.tck;
+    assign tck_rising_edge = !last_tck && jtag.tck;
+    assign tck_falling_edge = last_tck && !jtag.tck;
 
-    assign update_ir = state_ff == JTAG_UPDATE_IR && jtag_rising_edge;
-    assign capture_dr = state_ff == JTAG_CAPTURE_DR && jtag_rising_edge;
-    assign shift_dr = state_ff == JTAG_SHIFT_DR && jtag_rising_edge;
-    assign update_dr = state_ff == JTAG_UPDATE_DR && jtag_rising_edge;
+    assign update_ir = state_ff == JTAG_UPDATE_IR && tck_rising_edge;
+    assign capture_dr = state_ff == JTAG_CAPTURE_DR && tck_rising_edge;
+    assign shift_dr = state_ff == JTAG_SHIFT_DR && tck_rising_edge;
+    assign update_dr = state_ff == JTAG_UPDATE_DR && tck_rising_edge;
 
     always_ff @(posedge clk, posedge reset)
     begin
@@ -179,13 +182,13 @@ module jtag_tap_controller
         else
         begin
             last_tck <= jtag.tck;
-            if (jtag_rising_edge)
+            if (tck_rising_edge)
             begin
                 state_ff <= state_nxt;
                 if (state_ff == JTAG_SHIFT_IR)
                     instruction <= { jtag.tdi, instruction[INSTRUCTION_WIDTH - 1:1] };
             end
-            else if (jtag_falling_edge)
+            else if (tck_falling_edge)
                 jtag.tdo <= state_ff == JTAG_SHIFT_IR ? instruction[0] : data_shift_val;
         end
     end

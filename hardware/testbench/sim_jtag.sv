@@ -14,8 +14,9 @@
 // limitations under the License.
 //
 
-import "DPI-C" function int init_jtag_socket(input int port);
-import "DPI-C" function int poll_jtag_message(output bit[31:0] instructionLength,
+// Native functions defined in jtag_socket.cpp
+import "DPI-C" function int open_jtag_socket(input int port);
+import "DPI-C" function int poll_jtag_request(output bit[31:0] instructionLength,
     output bit[31:0] instruction, output bit[31:0] dataLength, output bit[63:0] data);
 import "DPI-C" function int send_jtag_response(input bit[63:0] data);
 
@@ -77,7 +78,7 @@ module sim_jtag
         // so I can't integrate it just yet).
         logic[63:0] jtag_port;
         if ($value$plusargs("jtag_port=%d", jtag_port) != 0)
-            control_port_open = init_jtag_socket(32'(jtag_port));
+            control_port_open = open_jtag_socket(32'(jtag_port));
         else
             control_port_open = 0;
     end
@@ -120,7 +121,7 @@ module sim_jtag
             begin
                 // Check if we have a new messsage request in the socket
                 // from the test harness
-                if (poll_jtag_message(instruction_length, instruction,
+                if (poll_jtag_request(instruction_length, instruction,
                     data_length, data) != 0)
                 begin
                     need_ir_shift <= 1;
