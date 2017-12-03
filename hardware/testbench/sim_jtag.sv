@@ -112,8 +112,14 @@ module sim_jtag
         if (reset)
         begin
             state_ff <= JTAG_RESET;
-            need_ir_shift <= 0;
-            need_dr_shift <= 0;
+            /*AUTORESET*/
+            // Beginning of autoreset for uninitialized flops
+            data_shift <= '0;
+            instruction_shift <= '0;
+            need_dr_shift <= '0;
+            need_ir_shift <= '0;
+            shift_count <= '0;
+            // End of automatics
         end
         else
         begin
@@ -142,6 +148,7 @@ module sim_jtag
                     data_shift <= (data_shift >> 1) | (MAX_DATA_LEN'(jtag.tdi)
                         << (data_length - 1));
                     shift_count <= shift_count - 1;
+                    assert(shift_count > 0);
                 end
 
                 JTAG_UPDATE_DR:
@@ -162,6 +169,7 @@ module sim_jtag
                         | (MAX_INSTRUCTION_LEN'(jtag.tdi)
                         << (instruction_length - 1));
                     shift_count <= shift_count - 1;
+                    assert(shift_count > 0);
                 end
 
                 JTAG_UPDATE_IR:
