@@ -136,19 +136,41 @@ def jtag_id(_):
 #        shifted = conn.jtag_transfer(INST_BYPASS, 32, VALUE)
 #        test_harness.assert_equal(EXPECTED_IDCODE, VALUE)
 
-# XXX todo: test with multiple threads
 @test_harness.test
 def jtag_inject(_):
     hexfile = test_harness.build_program(['test_program.S'])
     with VerilatorProcess(hexfile), DebugConnection() as conn:
+        # Enable second thread
         conn.jtag_transfer(INST_CONTROL, 7, 0x1)
+        conn.jtag_transfer(INST_WRITE_DATA, 32, 0xffff0100)  # Address of thread resume register
+        conn.jtag_transfer(INST_INJECT_INST, 32, 0xac000012) # getcr s0, 18
+        conn.jtag_transfer(INST_INJECT_INST, 32, 0x0f000c20) # move s1, 3
+        conn.jtag_transfer(INST_INJECT_INST, 32, 0x88000020) # store s1, (s0)
+
+        # Load register values in thread 0
         conn.jtag_transfer(INST_WRITE_DATA, 32, 0x3b643e9a)  # First value to transfer
         conn.jtag_transfer(INST_INJECT_INST, 32, 0xac0000b2) # getcr s5, 18
         conn.jtag_transfer(INST_WRITE_DATA, 32, 0xd1dc20a3)  # Second value to transfer
         conn.jtag_transfer(INST_INJECT_INST, 32, 0xac0000d2) # getcr s6, 18
+
+        # Load register values in thread 1
+        conn.jtag_transfer(INST_CONTROL, 7, 0x3)
+        conn.jtag_transfer(INST_WRITE_DATA, 32, 0xa6532328)  # First value to transfer
+        conn.jtag_transfer(INST_INJECT_INST, 32, 0xac0000b2) # getcr s5, 18
+        conn.jtag_transfer(INST_WRITE_DATA, 32, 0xf01839a0)  # Second value to transfer
+        conn.jtag_transfer(INST_INJECT_INST, 32, 0xac0000d2) # getcr s6, 18
+
+        # Perform operation on thread 0
+        conn.jtag_transfer(INST_CONTROL, 7, 0x1)
         conn.jtag_transfer(INST_INJECT_INST, 32, 0xc03300e5) # xor s7, s5, s6
         conn.jtag_transfer(INST_INJECT_INST, 32, 0x8c0000f2) # setcr s7, 18
         test_harness.assert_equal(0xeab81e39, conn.jtag_transfer(INST_READ_DATA, 32, 0))
+
+        # Perform operation on thread 1
+        conn.jtag_transfer(INST_CONTROL, 7, 0x3)
+        conn.jtag_transfer(INST_INJECT_INST, 32, 0xc03300e5) # xor s7, s5, s6
+        conn.jtag_transfer(INST_INJECT_INST, 32, 0x8c0000f2) # setcr s7, 18
+        test_harness.assert_equal(0x564b1a88, conn.jtag_transfer(INST_READ_DATA, 32, 0))
 
 # Transfer a bunch of messages. The JTAG test harness stub randomizes the
 # path through the state machine, so this will help get better coverage.
