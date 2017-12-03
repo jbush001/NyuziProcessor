@@ -70,6 +70,7 @@ module control_registers
     input scalar_t                          dbg_data_from_host,
     output scalar_t                         cr_data_to_host);
 
+    // One is for current state. Maximum nested traps is TRAP_LEVELS - 1.
     localparam TRAP_LEVELS = 3;
 
     typedef struct packed {
@@ -113,7 +114,7 @@ module control_registers
                 interrupt_mask[thread_idx] <= '0;
             end
 
-            // Warning: AUTORESET gets confused by all of the structure accesses
+            // AUTORESET gets confused by all of the structure accesses
             // below, so the resets are all manual here. Be sure to add all registers
             // accessed below here.
             cr_data_to_host <= '0;
@@ -129,7 +130,7 @@ module control_registers
 
             // A fault and eret are triggered from the same stage, so they
             // must not occur simultaneously (an eret can raise a fault if it
-            // is not in supervisor mode, but ix_eret should not be asserted
+            // is not in supervisor mode, but wb_eret should not be asserted
             // in that case)
             assert(!(wb_trap && wb_eret));
 
@@ -195,7 +196,6 @@ module control_registers
 
     assign interrupt_edge = interrupt_req & ~interrupt_req_prev;
 
-    // Interrupt handling
     genvar thread_idx;
     generate
         for (thread_idx = 0; thread_idx < `THREADS_PER_CORE; thread_idx++)

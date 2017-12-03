@@ -183,7 +183,7 @@ module writeback_stage(
             || ix_privileged_op_fault))
         begin
             // Fault piggybacked on instruction, which goes through the
-            // integer pipeline.
+            // integer pipeline, or fault detected in integer pipeline.
             wb_rollback_en = 1;
             if (ix_instruction.trap_cause.trap_type == TT_TLB_MISS)
                 wb_rollback_pc = cr_tlb_miss_handler;
@@ -220,8 +220,7 @@ module writeback_stage(
         end
         else if (ix_instruction_valid && ix_rollback_en)
         begin
-            // Check for rollback from integer pipeline. This happens
-            // because of a branch.
+            // Branch rollback from integer pipeline.
             wb_rollback_en = 1;
             wb_rollback_pc = ix_rollback_pc;
             wb_rollback_thread_idx = ix_thread_idx;
@@ -236,9 +235,8 @@ module writeback_stage(
         end
         else if (dd_instruction_valid && (dd_rollback_en || sq_rollback_en || ior_rollback_en))
         begin
-            // Check for rollback from memory pipeline. This happens because
-            // of a data cache miss, store queue full, or when an IO request
-            // is sent.
+            // Rollback from memory pipeline because of a data cache miss,
+            // store queue full, or when an IO request is sent.
             wb_rollback_en = 1;
             wb_rollback_pc = dd_rollback_pc;
             wb_rollback_thread_idx = dd_thread_idx;

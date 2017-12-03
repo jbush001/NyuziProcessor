@@ -30,7 +30,7 @@ module jtag_tap_controller
     input                                   reset,
 
     // JTAG interface.
-    // XXX for now, this assumes these are sampled into the clock domain.
+    // XXX for now, this assumes these are sychronized into this clock domain.
     jtag_interface.slave                    jtag,
 
     // Controller interface. data_shift_val is the value to be sent out
@@ -158,9 +158,9 @@ module jtag_tap_controller
     assign jtag_falling_edge = last_tck && !jtag.tck;
 
     assign update_ir = state_ff == JTAG_UPDATE_IR && jtag_rising_edge;
-    assign update_dr = state_ff == JTAG_UPDATE_DR && jtag_rising_edge;
-    assign shift_dr = state_ff == JTAG_SHIFT_DR && jtag_rising_edge;
     assign capture_dr = state_ff == JTAG_CAPTURE_DR && jtag_rising_edge;
+    assign shift_dr = state_ff == JTAG_SHIFT_DR && jtag_rising_edge;
+    assign update_dr = state_ff == JTAG_UPDATE_DR && jtag_rising_edge;
 
     always_ff @(posedge clk, posedge reset)
     begin
@@ -181,16 +181,12 @@ module jtag_tap_controller
             last_tck <= jtag.tck;
             if (jtag_rising_edge)
             begin
-                // Rising edge of JTAG clock
                 state_ff <= state_nxt;
                 if (state_ff == JTAG_SHIFT_IR)
                     instruction <= { jtag.tdi, instruction[INSTRUCTION_WIDTH - 1:1] };
             end
             else if (jtag_falling_edge)
-            begin
-                // Falling edge of JTAG clock
                 jtag.tdo <= state_ff == JTAG_SHIFT_IR ? instruction[0] : data_shift_val;
-            end
         end
     end
 endmodule

@@ -109,6 +109,7 @@ class DebugConnection(object):
     def __exit__(self, *unused):
         self.sock.close()
 
+    # XXX needs a timeout
     def jtag_transfer(self, instruction, data_length, data):
         if DEBUG:
             print('Sending JTAG command 0x{:x} data 0x{:x}'.format(instruction, data))
