@@ -60,7 +60,7 @@ module thread_select_stage(
     input pipeline_sel_t               wb_rollback_pipeline,
     input subcycle_t                   wb_rollback_subcycle,
 
-    // From interrupt_controller
+    // From nyuzi
     input local_thread_bitmap_t        thread_en,
 
     // From dcache_data_stage
