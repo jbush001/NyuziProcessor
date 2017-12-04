@@ -103,6 +103,7 @@ module ifetch_data_stage(
     logic[$clog2(CACHE_LINE_WORDS) - 1:0] cache_lane_idx;
     logic alignment_fault;
     logic rollback_this_stage;
+    logic dbg_halt_latched;
 
     //
     // Check for cache hit
@@ -164,7 +165,7 @@ module ifetch_data_stage(
 
     assign cache_lane_idx = ~ifd_pc[CACHE_LINE_OFFSET_WIDTH - 1:2];
     assign fetched_word = fetched_cache_line[32 * cache_lane_idx+:32];
-    assign ifd_instruction = dbg_halt
+    assign ifd_instruction = dbg_halt_latched
         ? dbg_instruction_inject
         : {fetched_word[7:0], fetched_word[15:8], fetched_word[23:16], fetched_word[31:24]};
 
@@ -199,19 +200,31 @@ module ifetch_data_stage(
             // if an instruction wasn't requested).
             assert(!ift_instruction_requested || $onehot0(way_hit_oh));
 
-            ifd_instruction_valid <= (ift_instruction_requested && !rollback_this_stage
-                && cache_hit && ift_tlb_hit && !alignment_fault)
-                || (dbg_instruction_inject_en && core_selected_debug);
-            ifd_alignment_fault <= ift_instruction_requested && !rollback_this_stage
-                && alignment_fault;
-            ifd_supervisor_fault <= ift_instruction_requested && ift_tlb_supervisor
-                && !cr_supervisor_en[ift_thread_idx];
-            ifd_tlb_miss <= ift_instruction_requested && !rollback_this_stage
-                && !ift_tlb_hit;
-            ifd_page_fault <= ift_instruction_requested && !rollback_this_stage
-                && !ift_tlb_present;
-            ifd_executable_fault <= ift_instruction_requested && !rollback_this_stage
-                && !ift_tlb_executable;
+            dbg_halt_latched <= dbg_halt;
+            if (dbg_halt)
+            begin
+                ifd_instruction_valid <= dbg_instruction_inject_en && core_selected_debug;
+                ifd_alignment_fault <= 0;
+                ifd_supervisor_fault <= 0;
+                ifd_tlb_miss <= 0;
+                ifd_page_fault <= 0;
+                ifd_executable_fault <= 0;
+            end
+            else
+            begin
+                ifd_instruction_valid <= ift_instruction_requested && !rollback_this_stage
+                    && cache_hit && ift_tlb_hit && !alignment_fault;
+                ifd_alignment_fault <= ift_instruction_requested && !rollback_this_stage
+                    && alignment_fault;
+                ifd_supervisor_fault <= ift_instruction_requested && ift_tlb_supervisor
+                    && !cr_supervisor_en[ift_thread_idx];
+                ifd_tlb_miss <= ift_instruction_requested && !rollback_this_stage
+                    && !ift_tlb_hit;
+                ifd_page_fault <= ift_instruction_requested && !rollback_this_stage
+                    && !ift_tlb_present;
+                ifd_executable_fault <= ift_instruction_requested && !rollback_this_stage
+                    && !ift_tlb_executable;
+            end
         end
     end
 endmodule
