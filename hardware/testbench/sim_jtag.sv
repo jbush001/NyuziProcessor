@@ -130,6 +130,8 @@ module sim_jtag
                 if (poll_jtag_request(instruction_length, instruction,
                     data_length, data) != 0)
                 begin
+                    assert(instruction_length > 0 && instruction_length < 32);
+                    assert(data_length > 0 && data_length < MAX_DATA_LEN);
                     need_ir_shift <= 1;
                     need_dr_shift <= 1;
                 end
@@ -153,6 +155,7 @@ module sim_jtag
 
                 JTAG_UPDATE_DR:
                 begin
+                    assert(shift_count == 0);
                     send_jtag_response(data_shift);
                     need_dr_shift <= 0;
                 end
@@ -173,7 +176,10 @@ module sim_jtag
                 end
 
                 JTAG_UPDATE_IR:
+                begin
+                    assert(shift_count == 0);
                     need_ir_shift <= 0;
+                end
             endcase
         end
     end

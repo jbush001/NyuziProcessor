@@ -71,8 +71,23 @@ int main(int argc, char **argv, char **env)
         Verilated::randReset(0);
 
     Vsoc_tb* testbench = new Vsoc_tb;
-    testbench->reset = 1;
+
+    // As with real hardware, reset is a bit tricky. In order for the
+    // reset blocks to execute, there must be a rising edge on reset.
+    // Previously, I did this in the main loop, but if there is a rising
+    // edge on clock before reset occurs, the processor would be in an
+    // undefined state (because we randomized all of the flops with
+    // randReset above), and often trip assertions. Instead, I assert and
+    // deassert reset before toggling clock. This also ensures it has
+    // proper asynchronous behavior, since, in previously, the reset
+    // block would execute synchronously on the next clock edge.
+    testbench->reset = 0;
     testbench->clk = 0;
+    testbench->eval();
+    testbench->reset = 1;
+    testbench->eval();
+    testbench->reset = 0;
+    testbench->eval();
 
 #if VM_TRACE // If verilator was invoked with --trace
     Verilated::traceEverOn(true);
@@ -84,10 +99,6 @@ int main(int argc, char **argv, char **env)
 
     while (!Verilated::gotFinish())
     {
-        if (currentTime > 10)
-            testbench->reset = 0;   // Deassert reset
-
-        // Toggle clock
         testbench->clk = !testbench->clk;
         testbench->eval();
 #if VM_TRACE
