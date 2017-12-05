@@ -268,5 +268,5 @@ module de2_115_top(
     assign jtag.tck = 0;
     assign jtag.tdi = 0;
     assign jtag.tms = 0;
-    assign jtag.trst = 0;
+    assign jtag.trst_n = 0;
 endmodule
