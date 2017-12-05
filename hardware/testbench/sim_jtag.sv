@@ -192,11 +192,11 @@ module sim_jtag
     always_comb
     begin
         state_nxt = state_ff;
-        jtag.trst = 0;
+        jtag.trst_n = 1;
         case (state_ff)
             JTAG_RESET:
             begin
-                jtag.trst = 1;
+                jtag.trst_n = 0;
                 state_nxt = JTAG_IDLE;
                 tms_nxt = 0;  // Go to idle state
             end

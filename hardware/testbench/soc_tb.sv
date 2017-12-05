@@ -214,7 +214,7 @@ module soc_tb(
     assign host_jtag.tdi = target_jtag.tdo;
     assign target_jtag.tdi = host_jtag.tdo;
     assign target_jtag.tck = host_jtag.tck;
-    assign target_jtag.trst = host_jtag.trst;
+    assign target_jtag.trst_n = host_jtag.trst_n;
     assign target_jtag.tms = host_jtag.tms;
 `else
     target_jtag.tdi = 0;

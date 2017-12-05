@@ -177,8 +177,16 @@ module jtag_tap_controller
             last_tck <= '0;
             // End of automatics
         end
-        else if (jtag.trst)
+        else if (!jtag.trst_n)
+        begin
             state_ff <= JTAG_RESET;
+            /*AUTORESET*/
+            // Beginning of autoreset for uninitialized flops
+            instruction <= '0;
+            jtag.tdo <= '0;
+            last_tck <= '0;
+            // End of automatics
+        end
         else
         begin
             last_tck <= jtag.tck;

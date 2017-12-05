@@ -464,13 +464,13 @@ endinterface
 
 interface jtag_interface;
     logic tck;
-    logic trst;
+    logic trst_n;
     logic tdi;
     logic tdo;
     logic tms;
 
-    modport master(input tdi, output tck, trst, tdo, tms);
-    modport slave(input tck, trst, tdi, tms, output tdo);
+    modport master(input tdi, output tck, trst_n, tdo, tms);
+    modport slave(input tck, trst_n, tdi, tms, output tdo);
 endinterface
 
 `endif
