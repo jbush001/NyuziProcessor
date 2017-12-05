@@ -127,14 +127,13 @@ def jtag_id(_):
         idcode = conn.jtag_transfer(INST_IDCODE, 32, 0xffffffff)
         test_harness.assert_equal(EXPECTED_IDCODE, idcode)
 
-# Bypass is currently broken
-#@test_harness.test
-#def jtag_bypass(_):
-#    hexfile = test_harness.build_program(['test_program.S'])
-#    with VerilatorProcess(hexfile), DebugConnection() as conn:
-#        VALUE = 0x267521cf
-#        shifted = conn.jtag_transfer(INST_BYPASS, 32, VALUE)
-#        test_harness.assert_equal(EXPECTED_IDCODE, VALUE)
+@test_harness.test
+def jtag_bypass(_):
+    hexfile = test_harness.build_program(['test_program.S'])
+    with VerilatorProcess(hexfile), DebugConnection() as conn:
+        VALUE = 0x267521cf
+        shifted = conn.jtag_transfer(INST_BYPASS, 32, VALUE)
+        test_harness.assert_equal(VALUE << 1, shifted)
 
 @test_harness.test
 def jtag_inject(_):
