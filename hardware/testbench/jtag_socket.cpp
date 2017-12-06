@@ -36,9 +36,12 @@
 // uint8_t instructionLength;   // Number of bits in instruction
 // uint32_t instruction;        // Instruction value (aligned to LSB)
 // uint8_t dataLength;          // Number of bits in data
-// uint64_t data;               // Data value (aligned to LSB)
+// uint64_t data;               // Send data value (aligned to LSB)
 //
 // 14 bytes total
+//
+// This will respond to each rewquest with 8 bytes, which are the value that
+// was shifted out of TDO from the target.
 //
 
 namespace
