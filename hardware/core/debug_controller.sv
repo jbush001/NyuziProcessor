@@ -24,6 +24,34 @@ import defines::*;
 // a core's instruction pipeline, and allows bidirectional data transfer
 // between the host and target.
 //
+// This is experimental and a work in progress.
+//
+// This supports a few instructions
+//   INST_CONTROL     - Consists of a few fields:
+//        ------f       If this bit is set to 1, all threads will halt.
+//        ----nn-       Thread number. The inject instruction targets this thread.
+//        cccc---       Core number, same as above
+//   INST_READ_DATA   - Any value that software writes to the "JTAG data"
+//                      control register will be scanned out here.
+//   INST_WRITE_DATA  - Any value scanned into this data register can
+//                      be read by software in the JTAG data control register.
+//   INST_INJECT_INST - the 32-bit data register value will be sent into
+//                      the pipeline as an instruction, running on the thread
+//                      and core indicated in the control register.
+//
+//  Limitations:
+//  - If an instruction has to be rolled back (for example, cache miss), this
+//    has no way of automatically restarting it.
+//  - If the instruction queue is full when this attempts to send it, the
+//    instruction will be lost.
+//  - When the halt signal is asserted, the processor will stop fetching new
+//    instructions, but any instructions already in the pipeline or in instruction
+//    queues will complete over subsequent cycles.
+//  - There's no way to immediately halt and trap when an exception occurs.
+//  - There's no provision for single stepping.
+//  - This can't execute in "monitor mode," as the processor must be halted for it
+//    to work.
+//
 
 module debug_controller
     (input                          clk,
@@ -104,9 +132,9 @@ module debug_controller
         begin
             case (instruction)
                 INST_BYPASS: data_shift_reg <= 32'(jtag.tdi);
-                INST_CONTROL: data_shift_reg <= 32'({ jtag.tdi, data_shift_reg[$bits(debug_control_t) - 1:1] });
+                INST_CONTROL: data_shift_reg <= 32'({jtag.tdi, data_shift_reg[$bits(debug_control_t) - 1:1]});
                 // Default covers any 32 bit transfer (most instructions)
-                default: data_shift_reg <= 32'({ jtag.tdi, data_shift_reg[31:1] });
+                default: data_shift_reg <= 32'({jtag.tdi, data_shift_reg[31:1]});
             endcase
         end
         else if (update_dr)

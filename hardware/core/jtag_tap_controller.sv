@@ -194,7 +194,7 @@ module jtag_tap_controller
             begin
                 state_ff <= state_nxt;
                 if (state_ff == JTAG_SHIFT_IR)
-                    instruction <= { jtag.tdi, instruction[INSTRUCTION_WIDTH - 1:1] };
+                    instruction <= {jtag.tdi, instruction[INSTRUCTION_WIDTH - 1:1]};
             end
             else if (tck_falling_edge)
                 jtag.tdo <= state_ff == JTAG_SHIFT_IR ? instruction[0] : data_shift_val;
