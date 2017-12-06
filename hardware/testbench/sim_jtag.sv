@@ -55,8 +55,10 @@ module sim_jtag
     localparam CLOCK_DIVISOR = 7;
 
     int control_port_open;
+    bit[31:0] next_instruction_length;
     bit[31:0] instruction_length;
     bit[MAX_INSTRUCTION_LEN - 1:0] instruction;
+    bit[MAX_INSTRUCTION_LEN - 1:0] next_instruction;
     bit[31:0] data_length;
     bit[MAX_DATA_LEN - 1:0] data;
     bit[MAX_INSTRUCTION_LEN - 1:0] instruction_shift;
@@ -81,6 +83,8 @@ module sim_jtag
             control_port_open = open_jtag_socket(32'(jtag_port));
         else
             control_port_open = 0;
+
+        instruction_length = 0;
     end
 
     always @(posedge clk, posedge reset)
@@ -127,12 +131,26 @@ module sim_jtag
             begin
                 // Check if we have a new messsage request in the socket
                 // from the test harness
-                if (poll_jtag_request(instruction_length, instruction,
+                if (poll_jtag_request(next_instruction_length, next_instruction,
                     data_length, data) != 0)
                 begin
-                    assert(instruction_length > 0 && instruction_length <= 32);
+                    assert(next_instruction_length > 0 && next_instruction_length <= 32);
                     assert(data_length > 0 && data_length <= MAX_DATA_LEN);
-                    need_ir_shift <= 1;
+
+                    // If the instruction is the same as the last one, we skip
+                    // sending it, which is what we'd expect a real JTAG unit
+                    // to do.
+                    if (next_instruction_length != instruction_length
+                        || next_instruction != instruction)
+                    begin
+                        need_ir_shift <= 1;
+                        instruction <= next_instruction;
+                        instruction_length <= next_instruction_length;
+                    end
+
+                    // The data register is always shifted in, even if it is the
+                    // same, since loading it may trigger actions as a side effect
+                    // of the update_dr state.
                     need_dr_shift <= 1;
                 end
             end
