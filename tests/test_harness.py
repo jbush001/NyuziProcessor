@@ -529,11 +529,6 @@ def endian_swap(value):
             | ((value << 8) & 0xff0000) | (value << 24))
 
 
-def assert_equal(expected, got):
-    if got != expected:
-        raise TestException('assert_equal failed, expected {} got {}'
-            .format(expected, got))
-
 def _run_generic_test(name):
     """
     Name is the filename of a source file. This will compile it, run it,
