@@ -20,7 +20,6 @@ import subprocess
 import sys
 import time
 import struct
-import os
 from threading import Thread
 
 sys.path.insert(0, '..')
@@ -60,6 +59,7 @@ class JTAGTestFixture(object):
         self.sock = None
         self.output = ''
         self.reader_thread = None
+        self.last_response = 0
 
     def __enter__(self):
         verilator_args = [
@@ -73,7 +73,6 @@ class JTAGTestFixture(object):
                                         stderr=subprocess.STDOUT)
 
         # Retry loop
-        connected = False
         for _ in range(10):
             try:
                 time.sleep(0.3)
@@ -98,11 +97,8 @@ class JTAGTestFixture(object):
             self.reader_thread.join(0.5)
 
         self.process.kill()
-        try:
-            if self.sock:
-                self.sock.close()
-        except:
-            pass
+        if self.sock:
+            self.sock.close()
 
     def jtag_transfer(self, instruction, data_length, data):
         if DEBUG:
@@ -115,7 +111,7 @@ class JTAGTestFixture(object):
         response_data = self.sock.recv(8)
 
         # Read output from program to check for errors
-        if len(response_data) == 0:
+        if not response_data:
             raise test_harness.TestException(
                 'socket closed prematurely:\n' + self.get_program_output())
 
@@ -141,7 +137,7 @@ class JTAGTestFixture(object):
     def expect_response(self, expected):
         if self.last_response != expected:
             raise test_harness.TestException('unexpected JTAG response. Wanted {} got {}:\n{}'
-                                             .format(self.expected, self.last_response,
+                                             .format(expected, self.last_response,
                                              self.get_program_output()))
 
     def _read_output(self):
@@ -239,7 +235,7 @@ def jtag_stress(_):
                               0x0f3ab800)  # move s0, 0xeae
         fixture.jtag_transfer(INST_INJECT_INST, 32,
                               0x0f48d020)  # move s1, 0x1234
-        for x in range(40):
+        for _ in range(40):
             fixture.jtag_transfer(INST_INJECT_INST, 32,
                                   0x8c000012)  # setcr s0, 18
             fixture.jtag_transfer(INST_READ_DATA, 32, 0)
