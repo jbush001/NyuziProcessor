@@ -15,11 +15,17 @@
 # limitations under the License.
 #
 
+'''
+Validate hardware JTAG debugging implementation. The Verilator model has a
+stub module that simulates a JTAG host. This test communicates with it over
+a socket, which allows sending and receiving data.
+'''
+
 import socket
+import struct
 import subprocess
 import sys
 import time
-import struct
 from threading import Thread
 
 sys.path.insert(0, '..')
@@ -47,11 +53,11 @@ INST_BYPASS = 15
 
 class JTAGTestFixture(object):
 
-    """
+    '''
     Spawns the Verilator model and opens a socket to communicate with it
     Supports __enter__ and __exit__ methods so it can be used in the 'with'
     construct to automatically clean up after itself.
-    """
+    '''
 
     def __init__(self, hexfile):
         self.hexfile = hexfile
@@ -72,7 +78,8 @@ class JTAGTestFixture(object):
         self.process = subprocess.Popen(verilator_args, stdout=subprocess.PIPE,
                                         stderr=subprocess.STDOUT)
 
-        # Retry loop
+        # The process may take a little time to start listening for incoming
+        # connections so retry a few times if it isn't ready yet.
         for _ in range(10):
             try:
                 time.sleep(0.3)
@@ -93,9 +100,6 @@ class JTAGTestFixture(object):
         return self
 
     def __exit__(self, *unused):
-        if self.reader_thread.isAlive():
-            self.reader_thread.join(0.5)
-
         self.process.kill()
         if self.sock:
             self.sock.close()
@@ -109,11 +113,9 @@ class JTAGTestFixture(object):
                                    data_length, data))
 
         response_data = self.sock.recv(8)
-
-        # Read output from program to check for errors
         if not response_data:
             raise test_harness.TestException(
-                'socket closed prematurely:\n' + self.get_program_output())
+                'error reading response:\n' + self.get_program_output())
 
         self.last_response = struct.unpack('<Q', response_data)[
             0] & ((1 << data_length) - 1)
@@ -125,10 +127,11 @@ class JTAGTestFixture(object):
     def get_program_output(self):
         '''
         Return everything verilator printed to stdout before exiting.
-        This won't return anything if the program was killed (which is the
-        common case if the program didn't die with an assertion)
+        This won't read anything if the program was killed (which is the
+        common case if the program didn't die with an assertion), but
+        we usually call in the case that it has exited with an error.
         '''
-
+        # Give the reader thread time to finish reading responses.
         if self.reader_thread:
             self.reader_thread.join(0.5)
 
@@ -138,7 +141,7 @@ class JTAGTestFixture(object):
         if self.last_response != expected:
             raise test_harness.TestException('unexpected JTAG response. Wanted {} got {}:\n{}'
                                              .format(expected, self.last_response,
-                                             self.get_program_output()))
+                                                     self.get_program_output()))
 
     def _read_output(self):
         '''
@@ -159,6 +162,9 @@ class JTAGTestFixture(object):
 
 @test_harness.test
 def jtag_id(_):
+    '''
+    Validating response to IDCODE request
+    '''
     hexfile = test_harness.build_program(['test_program.S'])
     with JTAGTestFixture(hexfile) as fixture:
         fixture.jtag_transfer(INST_IDCODE, 32, 0xffffffff)
@@ -167,6 +173,10 @@ def jtag_id(_):
 
 @test_harness.test
 def jtag_bypass(_):
+    '''
+    Validate BYPASS instruction, which is a single bit data register
+    We should get what we send, shifted by one bit.
+    '''
     hexfile = test_harness.build_program(['test_program.S'])
     with JTAGTestFixture(hexfile) as fixture:
         value = 0x267521cf
@@ -176,6 +186,9 @@ def jtag_bypass(_):
 
 @test_harness.test
 def jtag_inject(_):
+    '''
+    Test instruction injection, with multiple threads
+    '''
     hexfile = test_harness.build_program(['test_program.S'])
     with JTAGTestFixture(hexfile) as fixture:
         # Enable second thread
@@ -223,11 +236,10 @@ def jtag_inject(_):
 
 @test_harness.test
 def jtag_stress(_):
-    """
+    '''
     Transfer a bunch of messages. The JTAG test harness stub randomizes the
     path through the state machine, so this will help get better coverage.
-    """
-
+    '''
     hexfile = test_harness.build_program(['test_program.S'])
     with JTAGTestFixture(hexfile) as fixture:
         fixture.jtag_transfer(INST_CONTROL, 7, 0x1)
