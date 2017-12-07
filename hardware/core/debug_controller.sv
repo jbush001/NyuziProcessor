@@ -26,19 +26,6 @@ import defines::*;
 //
 // This is experimental and a work in progress.
 //
-// This supports a few instructions
-//   INST_CONTROL     - Consists of a few fields:
-//        ------f       If this bit is set to 1, all threads will halt.
-//        ----nn-       Thread number. The inject instruction targets this thread.
-//        cccc---       Core number, same as above
-//   INST_READ_DATA   - Any value that software writes to the "JTAG data"
-//                      control register will be scanned out here.
-//   INST_WRITE_DATA  - Any value scanned into this data register can
-//                      be read by software in the JTAG data control register.
-//   INST_INJECT_INST - the 32-bit data register value will be sent into
-//                      the pipeline as an instruction, running on the thread
-//                      and core indicated in the control register.
-//
 //  Limitations:
 //  - If an instruction has to be rolled back (for example, cache miss), this
 //    has no way of automatically restarting it.
@@ -67,6 +54,7 @@ module debug_controller
     output scalar_t                 dbg_instruction_inject,
     output logic                    dbg_instruction_inject_en,
     output scalar_t                 dbg_data_from_host,
+    output logic                    dbg_data_update,
     input scalar_t                  data_to_host);
 
     typedef struct packed {
@@ -101,8 +89,7 @@ module debug_controller
         INST_INTEST = 4'd2,
         INST_CONTROL = 4'd3,
         INST_INJECT_INST = 4'd4,
-        INST_READ_DATA = 4'd5,
-        INST_WRITE_DATA = 4'd6,
+        INST_TRANSFER_DATA = 4'd5,
         INST_BYPASS = 4'd15
     } instruction_t;
 
@@ -117,6 +104,12 @@ module debug_controller
             control <= debug_control_t'(data_shift_reg);
     end
 
+    // When dbg_data_update is asserted, the JTAG_DATA control register
+    // will receive the value that was shifted into the TRANSFER_DATA
+    // JTAG register.
+    assign dbg_data_from_host = data_shift_reg;
+    assign dbg_data_update = update_dr && instruction == INST_TRANSFER_DATA;
+
     always @(posedge clk)
     begin
         if (capture_dr)
@@ -124,7 +117,7 @@ module debug_controller
             case (instruction)
                 INST_IDCODE: data_shift_reg <= `JTAG_ID;
                 INST_CONTROL: data_shift_reg <= 32'(control);
-                INST_READ_DATA: data_shift_reg <= data_to_host;
+                INST_TRANSFER_DATA: data_shift_reg <= data_to_host;
                 default: data_shift_reg <= '0;
             endcase
         end
@@ -139,9 +132,7 @@ module debug_controller
         end
         else if (update_dr)
         begin
-            if (instruction == INST_WRITE_DATA)
-                dbg_data_from_host <= data_shift_reg;
-            else if (instruction == INST_INJECT_INST)
+            if (instruction == INST_INJECT_INST)
                 dbg_instruction_inject <= data_shift_reg;
         end
     end

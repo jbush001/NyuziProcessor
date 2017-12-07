@@ -68,6 +68,7 @@ module control_registers
 
     // To/From debug controller
     input scalar_t                          dbg_data_from_host,
+    input                                   dbg_data_update,
     output scalar_t                         cr_data_to_host);
 
     // One is for current state. Maximum nested traps is TRAP_LEVELS - 1.
@@ -100,6 +101,9 @@ module control_registers
     logic[NUM_INTERRUPTS - 1:0] int_trigger_type;
     logic[NUM_INTERRUPTS - 1:0] interrupt_req_prev;
     logic[NUM_INTERRUPTS - 1:0] interrupt_edge;
+    scalar_t jtag_data;
+
+    assign cr_data_to_host = jtag_data;
 
     always_ff @(posedge clk, posedge reset)
     begin
@@ -117,7 +121,7 @@ module control_registers
             // AUTORESET gets confused by all of the structure accesses
             // below, so the resets are all manual here. Be sure to add all registers
             // accessed below here.
-            cr_data_to_host <= '0;
+            jtag_data <= '0;
             cr_tlb_miss_handler <= '0;
             cr_trap_handler <= '0;
             cycle_count <= '0;
@@ -178,11 +182,13 @@ module control_registers
                     CR_PAGE_DIR:          page_dir_base[dt_thread_idx] <= dd_creg_write_val;
                     CR_INTERRUPT_MASK:    interrupt_mask[dt_thread_idx] <= dd_creg_write_val[NUM_INTERRUPTS - 1:0];
                     CR_INTERRUPT_TRIGGER: int_trigger_type <= dd_creg_write_val[NUM_INTERRUPTS - 1:0];
-                    CR_JTAG_DATA:         cr_data_to_host <= dd_creg_write_val;
+                    CR_JTAG_DATA:         jtag_data <= dd_creg_write_val;
                     default:
                         ;
                 endcase
             end
+            else if (dbg_data_update)
+                jtag_data <= dbg_data_from_host;
         end
     end
 
@@ -264,7 +270,7 @@ module control_registers
                 CR_CURRENT_ASID:      cr_creg_read_val <= scalar_t'(cr_current_asid[dt_thread_idx]);
                 CR_PAGE_DIR:          cr_creg_read_val <= page_dir_base[dt_thread_idx];
                 CR_INTERRUPT_PENDING: cr_creg_read_val <= scalar_t'(interrupt_pending[dt_thread_idx]);
-                CR_JTAG_DATA:         cr_creg_read_val <= dbg_data_from_host;
+                CR_JTAG_DATA:         cr_creg_read_val <= jtag_data;
                 default:              cr_creg_read_val <= 32'hffffffff;
             endcase
         end

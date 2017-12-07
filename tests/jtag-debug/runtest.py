@@ -42,8 +42,7 @@ INST_EXTEST = 1
 INST_INTEST = 2
 INST_CONTROL = 3
 INST_INJECT_INST = 4
-INST_READ_DATA = 5
-INST_WRITE_DATA = 6
+INST_TRANSFER_DATA = 5
 INST_BYPASS = 15
 
 
@@ -185,6 +184,23 @@ def jtag_bypass(_):
 
 
 @test_harness.test
+def jtag_data_transfer(_):
+    '''
+    Validate bi-directional transfer. The TRANSFER_DATA instruction
+    returns the old value of the control register while shifting a new
+    one in, so we should see the previous value come out each time
+    we write a new one.
+    '''
+    hexfile = test_harness.build_program(['test_program.S'])
+    with JTAGTestFixture(hexfile) as fixture:
+        fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0x4be49e7c)
+        fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0xb282dc16)
+        fixture.expect_response(0x4be49e7c)
+        fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0x7ee4838)
+        fixture.expect_response(0xb282dc16)
+
+
+@test_harness.test
 def jtag_inject(_):
     '''
     Test instruction injection, with multiple threads
@@ -194,7 +210,7 @@ def jtag_inject(_):
         # Enable second thread
         fixture.jtag_transfer(INST_CONTROL, 7, 0x1)
         # Address of thread resume register
-        fixture.jtag_transfer(INST_WRITE_DATA, 32, 0xffff0100)
+        fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0xffff0100)
         fixture.jtag_transfer(INST_INJECT_INST, 32, 0xac000012)  # getcr s0, 18
         fixture.jtag_transfer(INST_INJECT_INST, 32, 0x0f000c20)  # move s1, 3
         fixture.jtag_transfer(INST_INJECT_INST, 32,
@@ -202,19 +218,19 @@ def jtag_inject(_):
 
         # Load register values in thread 0
         # First value to transfer
-        fixture.jtag_transfer(INST_WRITE_DATA, 32, 0x3b643e9a)
+        fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0x3b643e9a)
         fixture.jtag_transfer(INST_INJECT_INST, 32, 0xac0000b2)  # getcr s5, 18
         # Second value to transfer
-        fixture.jtag_transfer(INST_WRITE_DATA, 32, 0xd1dc20a3)
+        fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0xd1dc20a3)
         fixture.jtag_transfer(INST_INJECT_INST, 32, 0xac0000d2)  # getcr s6, 18
 
         # Load register values in thread 1
         fixture.jtag_transfer(INST_CONTROL, 7, 0x3)
         # First value to transfer
-        fixture.jtag_transfer(INST_WRITE_DATA, 32, 0xa6532328)
+        fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0xa6532328)
         fixture.jtag_transfer(INST_INJECT_INST, 32, 0xac0000b2)  # getcr s5, 18
         # Second value to transfer
-        fixture.jtag_transfer(INST_WRITE_DATA, 32, 0xf01839a0)
+        fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0xf01839a0)
         fixture.jtag_transfer(INST_INJECT_INST, 32, 0xac0000d2)  # getcr s6, 18
 
         # Perform operation on thread 0
@@ -222,7 +238,7 @@ def jtag_inject(_):
         fixture.jtag_transfer(INST_INJECT_INST, 32,
                               0xc03300e5)  # xor s7, s5, s6
         fixture.jtag_transfer(INST_INJECT_INST, 32, 0x8c0000f2)  # setcr s7, 18
-        fixture.jtag_transfer(INST_READ_DATA, 32, 0)
+        fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0)
         fixture.expect_response(0xeab81e39)
 
         # Perform operation on thread 1
@@ -230,7 +246,7 @@ def jtag_inject(_):
         fixture.jtag_transfer(INST_INJECT_INST, 32,
                               0xc03300e5)  # xor s7, s5, s6
         fixture.jtag_transfer(INST_INJECT_INST, 32, 0x8c0000f2)  # setcr s7, 18
-        fixture.jtag_transfer(INST_READ_DATA, 32, 0)
+        fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0)
         fixture.expect_response(0x564b1a88)
 
 
@@ -250,11 +266,11 @@ def jtag_stress(_):
         for _ in range(40):
             fixture.jtag_transfer(INST_INJECT_INST, 32,
                                   0x8c000012)  # setcr s0, 18
-            fixture.jtag_transfer(INST_READ_DATA, 32, 0)
+            fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0)
             fixture.expect_response(0xeae)
             fixture.jtag_transfer(INST_INJECT_INST, 32,
                                   0x8c000032)  # setcr s1, 18
-            fixture.jtag_transfer(INST_READ_DATA, 32, 0)
+            fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0)
             fixture.expect_response(0x1234)
 
 test_harness.execute_tests()

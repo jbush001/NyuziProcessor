@@ -54,6 +54,7 @@ module nyuzi
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
     core_id_t           dbg_core;               // From debug_controller of debug_controller.v
     scalar_t            dbg_data_from_host;     // From debug_controller of debug_controller.v
+    logic               dbg_data_update;        // From debug_controller of debug_controller.v
     logic               dbg_halt;               // From debug_controller of debug_controller.v
     scalar_t            dbg_instruction_inject; // From debug_controller of debug_controller.v
     logic               dbg_instruction_inject_en;// From debug_controller of debug_controller.v

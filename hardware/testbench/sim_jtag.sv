@@ -119,6 +119,8 @@ module sim_jtag
             /*AUTORESET*/
             // Beginning of autoreset for uninitialized flops
             data_shift <= '0;
+            instruction <= '0;
+            instruction_length <= '0;
             instruction_shift <= '0;
             need_dr_shift <= '0;
             need_ir_shift <= '0;

@@ -186,6 +186,7 @@ module ifetch_data_stage(
         begin
             /*AUTORESET*/
             // Beginning of autoreset for uninitialized flops
+            dbg_halt_latched <= '0;
             ifd_alignment_fault <= '0;
             ifd_executable_fault <= '0;
             ifd_instruction_valid <= '0;

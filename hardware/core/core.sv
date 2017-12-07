@@ -58,6 +58,7 @@ module core
     input scalar_t                         dbg_instruction_inject,
     input                                  dbg_instruction_inject_en,
     input scalar_t                         dbg_data_from_host,
+    input                                  dbg_data_update,
     output scalar_t                        cr_data_to_host,
 
     // To performance_counters
