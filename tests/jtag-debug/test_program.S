@@ -14,7 +14,22 @@
 // limitations under the License.
 //
 
-                .globl _start
-_start:         li s1, 0x853e7f7d
-1:              b 1b
+#include "../asm_macros.inc"
 
+                .globl _start
+_start:         li s0, REG_THREAD_RESUME
+                li s1, 3
+                store_32 s1, (s0)
+                getcr s0, CR_CURRENT_THREAD
+                shl s0, s0, 2
+                lea s1, jump_table
+                add_i s0, s0, s1
+                b s0
+                nop
+                nop
+                nop
+jump_table:
+1:              b 1b
+2:              b 2b
+3:              b 3b
+4:              b 4b

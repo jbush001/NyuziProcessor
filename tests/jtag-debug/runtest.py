@@ -207,14 +207,8 @@ def jtag_inject(_):
     '''
     hexfile = test_harness.build_program(['test_program.S'])
     with JTAGTestFixture(hexfile) as fixture:
-        # Enable second thread
+        # Halt
         fixture.jtag_transfer(INST_CONTROL, 7, 0x1)
-        # Address of thread resume register
-        fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0xffff0100)
-        fixture.jtag_transfer(INST_INJECT_INST, 32, 0xac000012)  # getcr s0, 18
-        fixture.jtag_transfer(INST_INJECT_INST, 32, 0x0f000c20)  # move s1, 3
-        fixture.jtag_transfer(INST_INJECT_INST, 32,
-                              0x88000020)  # store s1, (s0)
 
         # Load register values in thread 0
         # First value to transfer
@@ -251,26 +245,36 @@ def jtag_inject(_):
 
 
 @test_harness.test
-def jtag_stress(_):
+def jtag_read_write_pc(_):
     '''
-    Transfer a bunch of messages. The JTAG test harness stub randomizes the
-    path through the state machine, so this will help get better coverage.
+    Use the call instruction to read the program counter. The injection
+    logic is supposed to simulate each instruction having the PC of the
+    interrupted thread. Then ensure performing a branch will properly
+    update the PC of the selected thread.
     '''
     hexfile = test_harness.build_program(['test_program.S'])
     with JTAGTestFixture(hexfile) as fixture:
+        # Switch to thread 1, branch to new address
+        fixture.jtag_transfer(INST_CONTROL, 7, 0x3)
+        fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0x2000)
+        fixture.jtag_transfer(INST_INJECT_INST, 32, 0xac000012)  # getcr s0, 18
+        fixture.jtag_transfer(INST_INJECT_INST, 32, 0xf0000000)  # b s0
+
+        # Switch to thread 0, read PC to ensure it is read correctly
+        # and that the branch didn't affect it.
+        # (the return address will be the branch location + 4)
         fixture.jtag_transfer(INST_CONTROL, 7, 0x1)
-        fixture.jtag_transfer(INST_INJECT_INST, 32,
-                              0x0f3ab800)  # move s0, 0xeae
-        fixture.jtag_transfer(INST_INJECT_INST, 32,
-                              0x0f48d020)  # move s1, 0x1234
-        for _ in range(40):
-            fixture.jtag_transfer(INST_INJECT_INST, 32,
-                                  0x8c000012)  # setcr s0, 18
-            fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0)
-            fixture.expect_response(0xeae)
-            fixture.jtag_transfer(INST_INJECT_INST, 32,
-                                  0x8c000032)  # setcr s1, 18
-            fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0)
-            fixture.expect_response(0x1234)
+        fixture.jtag_transfer(INST_INJECT_INST, 32, 0xf8000000)  # call 0
+        fixture.jtag_transfer(INST_INJECT_INST, 32, 0x8c0003f2)  # setcr ra, 18
+        fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0)
+        fixture.expect_response(0x10d8)
+
+        # Switch back to thread 1, read back PC to ensure it is in the new
+        # location
+        fixture.jtag_transfer(INST_CONTROL, 7, 0x3)
+        fixture.jtag_transfer(INST_INJECT_INST, 32, 0xf8000000)  # call 0
+        fixture.jtag_transfer(INST_INJECT_INST, 32, 0x8c0003f2)  # setcr ra, 18
+        fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0)
+        fixture.expect_response(0x2004)
 
 test_harness.execute_tests()
