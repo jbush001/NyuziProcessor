@@ -27,18 +27,18 @@ convert results to a standard NaN representation (0x7fffffff)
 
 1. Download testfloat and softfloat projects
 
-    git clone https://github.com/ucb-bar/berkeley-testfloat-3.git
-    git clone https://github.com/ucb-bar/berkeley-softfloat-3.git
+        git clone https://github.com/ucb-bar/berkeley-testfloat-3.git
+        git clone https://github.com/ucb-bar/berkeley-softfloat-3.git
 
 2. Build (Linux and MacOS)
 
-    make -C berkeley-softfloat-3/build/Linux-x86_64-GCC
-    make -C berkeley-testfloat-3/build/Linux-x86_64-GCC
+        make -C berkeley-softfloat-3/build/Linux-x86_64-GCC
+        make -C berkeley-testfloat-3/build/Linux-x86_64-GCC
 
 3. Create test vectors
 
-    ./mk_testfloat_cases.sh
+        ./mk_testfloat_cases.sh
 
 4. Run test program as before
 
-    make test
+        make test
