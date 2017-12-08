@@ -30,6 +30,8 @@
 //
 // Receives instructions from an external test program over a socket. The JTAG
 // simulator Verilog module calls into this with DPI to get the next request.
+// Using a zero instruction or data length in the request will skip shifting
+// that register.
 //
 // Each socket request is (packed):
 //
@@ -40,8 +42,11 @@
 //
 // 14 bytes total
 //
-// This will respond to each rewquest with 8 bytes, which are the value that
-// was shifted out of TDO from the target.
+// This will respond to each request with:
+//
+// uint64_t shiftedData;            // shifted out tdo during data
+// uint32_t shiftedInstruction;     // shifted out tdo during instruction
+//
 //
 
 namespace
@@ -107,8 +112,8 @@ extern int open_jtag_socket(int port)
 // Returns 1 if the request was pending (as well as filling in the passed
 // pointers with the request contents), or 0 if no request is pending.
 //
-extern int poll_jtag_request(svBitVecVal* instructionLength, svBitVecVal* instruction,
-    svBitVecVal* dataLength, svBitVecVal* data)
+extern int poll_jtag_request(svBitVecVal *instructionLength, svBitVecVal *instruction,
+    svBitVecVal *dataLength, svBitVecVal *data)
 {
     int got;
 
@@ -165,9 +170,14 @@ extern int poll_jtag_request(svBitVecVal* instructionLength, svBitVecVal* instru
 
 // When the JTAG harness has finished shifting all data bits,
 // this sends the value that was shifted out of the device.
-extern int send_jtag_response(const svBitVecVal* data)
+extern int send_jtag_response(const svBitVecVal *instruction, const svBitVecVal *data)
 {
-    if (write(controlSocket, data, 8) < 0)
+    char response[12];
+
+    memcpy(response, instruction, 4);
+    memcpy(response + 4, data, 8);
+
+    if (write(controlSocket, response, 12) < 0)
         perror("send_jtag_response: error sending response (send)");
 
     return 0;

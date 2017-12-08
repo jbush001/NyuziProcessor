@@ -20,7 +20,7 @@ import defines::*;
 
 //
 // JTAG Test Access Point (TAP) controller.
-// This contains the JTAG state machine logic.
+// This contains the JTAG state machine logic. IEEE 1149.1-2001.
 //
 
 module jtag_tap_controller
@@ -178,17 +178,12 @@ module jtag_tap_controller
             // End of automatics
         end
         else if (!jtag.trst_n)
-        begin
             state_ff <= JTAG_RESET;
-            /*AUTORESET*/
-            // Beginning of autoreset for uninitialized flops
-            instruction <= '0;
-            jtag.tdo <= '0;
-            last_tck <= '0;
-            // End of automatics
-        end
         else
         begin
+            if (state_ff == JTAG_RESET)
+                instruction <= '0;
+
             last_tck <= jtag.tck;
             if (tck_rising_edge)
             begin

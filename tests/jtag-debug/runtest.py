@@ -45,9 +45,15 @@ INST_INJECT_INST = 4
 INST_TRANSFER_DATA = 5
 INST_BYPASS = 15
 
+# When set, does not reload instruction register
+INST_SAME = -1
 
-# XXX need to test that the TAP powers up with the proper instruction (BYPASS)
-# This may require a different mode that only shifts the data bits.
+# XXX does not test TRST signal
+# XXX need to test resuming from halt state
+
+
+def mask_value(value, num_bits):
+    return value & ((1 << num_bits) - 1)
 
 
 class JTAGTestFixture(object):
@@ -108,20 +114,39 @@ class JTAGTestFixture(object):
             print('Sending JTAG command 0x{:x} data 0x{:x}'.format(
                 instruction, data))
 
-        self.sock.send(struct.pack('<BIBQ', INSTRUCTION_LENGTH, instruction,
+        if instruction == INST_SAME:
+            instruction_length = 0
+            instruction = 0
+        else:
+            instruction_length = INSTRUCTION_LENGTH
+
+        self.sock.send(struct.pack('<BIBQ', instruction_length, instruction,
                                    data_length, data))
 
-        response_data = self.sock.recv(8)
+        response_data = self.sock.recv(12)
         if not response_data:
             raise test_harness.TestException(
                 'error reading response:\n' + self.get_program_output())
 
-        self.last_response = struct.unpack('<Q', response_data)[
-            0] & ((1 << data_length) - 1)
+        _, self.last_response = struct.unpack('<IQ', response_data)
+        self.last_response = mask_value(self.last_response, data_length)
         if DEBUG:
             print('received JTAG response 0x{:x}'.format(self.last_response))
 
-        return self.last_response
+    def test_instruction_shift(self, value):
+        # Send an instruction that is twice as long as the instruction register.
+        # The first bits shifted in should come right back out
+        self.sock.send(struct.pack('<BIBQ', INSTRUCTION_LENGTH * 2, value,
+                                   0, 0))
+        response_data = self.sock.recv(12)
+        if not response_data:
+            raise test_harness.TestException(
+                'error reading response:\n' + self.get_program_output())
+
+        instr_response, _ = struct.unpack('<IQ', response_data)
+        if instr_response != value << INSTRUCTION_LENGTH:
+            raise test_harness.TestException('invalid response: wanted {}, got {}'.format(
+                value, instr_response))
 
     def get_program_output(self):
         '''
@@ -136,10 +161,10 @@ class JTAGTestFixture(object):
 
         return self.output
 
-    def expect_response(self, expected):
-        if self.last_response != expected:
-            raise test_harness.TestException('unexpected JTAG response. Wanted {} got {}:\n{}'
-                                             .format(expected, self.last_response,
+    def expect_data(self, expected_data):
+        if self.last_response != expected_data:
+            raise test_harness.TestException('unexpected JTAG data response. Wanted {} got {}:\n{}'
+                                             .format(expected_data, self.self.last_response,
                                                      self.get_program_output()))
 
     def _read_output(self):
@@ -160,14 +185,40 @@ class JTAGTestFixture(object):
 
 
 @test_harness.test
-def jtag_id(_):
+def jtag_idcode(_):
     '''
     Validating response to IDCODE request
     '''
     hexfile = test_harness.build_program(['test_program.S'])
     with JTAGTestFixture(hexfile) as fixture:
+        # Ensure the default instruction after reset is IDCODE
+        fixture.jtag_transfer(INST_SAME, 32, 0xffffffff)
+        fixture.expect_data(EXPECTED_IDCODE)
+
+        # Explicitly shift the IDCODE instruction to make sure it is
+        # correct.
         fixture.jtag_transfer(INST_IDCODE, 32, 0xffffffff)
-        fixture.expect_response(EXPECTED_IDCODE)
+        fixture.expect_data(EXPECTED_IDCODE)
+
+
+@test_harness.test
+def jtag_reset(_):
+    '''
+    Test transition to reset state
+    '''
+    hexfile = test_harness.build_program(['test_program.S'])
+    with JTAGTestFixture(hexfile) as fixture:
+        # Load a different instruction
+        fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0x3b643e9a)
+
+        # Perform a reset (setting zero lengths)
+        fixture.jtag_transfer(INST_SAME, 0, 0)
+
+        # Perform data-only transfer. Ensure we get the idcode back.
+        # If we hadn't performed a reset, we would get data value
+        # that was shifted above.
+        fixture.jtag_transfer(INST_SAME, 32, 0xffffffff)
+        fixture.expect_data(EXPECTED_IDCODE)
 
 
 @test_harness.test
@@ -180,7 +231,23 @@ def jtag_bypass(_):
     with JTAGTestFixture(hexfile) as fixture:
         value = 0x267521cf
         fixture.jtag_transfer(INST_BYPASS, 32, value)
-        fixture.expect_response(value << 1)
+        fixture.expect_data(value << 1)
+
+
+@test_harness.test
+def test_instruction_shift(_):
+    '''
+    Ensure instruction bits shifted into TDI come out TDO. This is necessary
+    to properly chain JTAG devices together.
+    '''
+    hexfile = test_harness.build_program(['test_program.S'])
+    with JTAGTestFixture(hexfile) as fixture:
+        fixture.test_instruction_shift(0xf)
+        fixture.test_instruction_shift(0xa)
+        fixture.test_instruction_shift(0x5)
+        fixture.test_instruction_shift(0x3)
+        fixture.test_instruction_shift(0xc)
+        fixture.test_instruction_shift(0)
 
 
 @test_harness.test
@@ -194,10 +261,10 @@ def jtag_data_transfer(_):
     hexfile = test_harness.build_program(['test_program.S'])
     with JTAGTestFixture(hexfile) as fixture:
         fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0x4be49e7c)
-        fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0xb282dc16)
-        fixture.expect_response(0x4be49e7c)
-        fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0x7ee4838)
-        fixture.expect_response(0xb282dc16)
+        fixture.jtag_transfer(INST_SAME, 32, 0xb282dc16)
+        fixture.expect_data(0x4be49e7c)
+        fixture.jtag_transfer(INST_SAME, 32, 0x7ee4838)
+        fixture.expect_data(0xb282dc16)
 
 
 @test_harness.test
@@ -231,17 +298,17 @@ def jtag_inject(_):
         fixture.jtag_transfer(INST_CONTROL, 7, 0x1)
         fixture.jtag_transfer(INST_INJECT_INST, 32,
                               0xc03300e5)  # xor s7, s5, s6
-        fixture.jtag_transfer(INST_INJECT_INST, 32, 0x8c0000f2)  # setcr s7, 18
+        fixture.jtag_transfer(INST_SAME, 32, 0x8c0000f2)  # setcr s7, 18
         fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0)
-        fixture.expect_response(0xeab81e39)
+        fixture.expect_data(0xeab81e39)
 
         # Perform operation on thread 1
         fixture.jtag_transfer(INST_CONTROL, 7, 0x3)
         fixture.jtag_transfer(INST_INJECT_INST, 32,
                               0xc03300e5)  # xor s7, s5, s6
-        fixture.jtag_transfer(INST_INJECT_INST, 32, 0x8c0000f2)  # setcr s7, 18
+        fixture.jtag_transfer(INST_SAME, 32, 0x8c0000f2)  # setcr s7, 18
         fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0)
-        fixture.expect_response(0x564b1a88)
+        fixture.expect_data(0x564b1a88)
 
 
 @test_harness.test
@@ -258,23 +325,23 @@ def jtag_read_write_pc(_):
         fixture.jtag_transfer(INST_CONTROL, 7, 0x3)
         fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0x2000)
         fixture.jtag_transfer(INST_INJECT_INST, 32, 0xac000012)  # getcr s0, 18
-        fixture.jtag_transfer(INST_INJECT_INST, 32, 0xf0000000)  # b s0
+        fixture.jtag_transfer(INST_SAME, 32, 0xf0000000)  # b s0
 
         # Switch to thread 0, read PC to ensure it is read correctly
         # and that the branch didn't affect it.
         # (the return address will be the branch location + 4)
         fixture.jtag_transfer(INST_CONTROL, 7, 0x1)
         fixture.jtag_transfer(INST_INJECT_INST, 32, 0xf8000000)  # call 0
-        fixture.jtag_transfer(INST_INJECT_INST, 32, 0x8c0003f2)  # setcr ra, 18
+        fixture.jtag_transfer(INST_SAME, 32, 0x8c0003f2)  # setcr ra, 18
         fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0)
-        fixture.expect_response(0x10d8)
+        fixture.expect_data(0x10d8)
 
         # Switch back to thread 1, read back PC to ensure it is in the new
         # location
         fixture.jtag_transfer(INST_CONTROL, 7, 0x3)
         fixture.jtag_transfer(INST_INJECT_INST, 32, 0xf8000000)  # call 0
-        fixture.jtag_transfer(INST_INJECT_INST, 32, 0x8c0003f2)  # setcr ra, 18
+        fixture.jtag_transfer(INST_SAME, 32, 0x8c0003f2)  # setcr ra, 18
         fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0)
-        fixture.expect_response(0x2004)
+        fixture.expect_data(0x2004)
 
 test_harness.execute_tests()

@@ -18,7 +18,7 @@
 import "DPI-C" function int open_jtag_socket(input int port);
 import "DPI-C" function int poll_jtag_request(output bit[31:0] instructionLength,
     output bit[31:0] instruction, output bit[31:0] dataLength, output bit[63:0] data);
-import "DPI-C" function int send_jtag_response(input bit[63:0] data);
+import "DPI-C" function int send_jtag_response(input bit[31:0] instruction, input bit[63:0] data);
 
 //
 // This simulates a JTAG host. It proxies messages from an external test program
@@ -55,10 +55,8 @@ module sim_jtag
     localparam CLOCK_DIVISOR = 7;
 
     int control_port_open;
-    bit[31:0] next_instruction_length;
     bit[31:0] instruction_length;
     bit[MAX_INSTRUCTION_LEN - 1:0] instruction;
-    bit[MAX_INSTRUCTION_LEN - 1:0] next_instruction;
     bit[31:0] data_length;
     bit[MAX_DATA_LEN - 1:0] data;
     bit[MAX_INSTRUCTION_LEN - 1:0] instruction_shift;
@@ -70,6 +68,7 @@ module sim_jtag
     logic tms_nxt;
     logic need_ir_shift;
     logic need_dr_shift;
+    logic need_reset;
 
     initial
     begin
@@ -83,8 +82,6 @@ module sim_jtag
             control_port_open = open_jtag_socket(32'(jtag_port));
         else
             control_port_open = 0;
-
-        instruction_length = 0;
     end
 
     always @(posedge clk, posedge reset)
@@ -119,46 +116,51 @@ module sim_jtag
             /*AUTORESET*/
             // Beginning of autoreset for uninitialized flops
             data_shift <= '0;
-            instruction <= '0;
-            instruction_length <= '0;
             instruction_shift <= '0;
             need_dr_shift <= '0;
             need_ir_shift <= '0;
+            need_reset <= '0;
             shift_count <= '0;
             // End of automatics
         end
         else
         begin
-            if (control_port_open != 0 && !need_ir_shift && !need_dr_shift)
+            if (control_port_open != 0 && !need_ir_shift && !need_dr_shift && !need_reset)
             begin
                 // Check if we have a new messsage request in the socket
                 // from the test harness
-                if (poll_jtag_request(next_instruction_length, next_instruction,
+                if (poll_jtag_request(instruction_length, instruction,
                     data_length, data) != 0)
                 begin
-                    assert(next_instruction_length > 0 && next_instruction_length <= 32);
-                    assert(data_length > 0 && data_length <= MAX_DATA_LEN);
+                    // Ensure test harness doesn't send bad lengths (these are unsigned)
+                    assert(instruction_length <= 32);
+                    assert(data_length <= MAX_DATA_LEN);
 
-                    // If the instruction is the same as the last one, we skip
-                    // sending it, which is what we'd expect a real JTAG unit
-                    // to do.
-                    if (next_instruction_length != instruction_length
-                        || next_instruction != instruction)
-                    begin
+                    // Specifying a zero length will cause the corresponding register
+                    // not to be shifted.
+                    if (instruction_length != 0)
                         need_ir_shift <= 1;
-                        instruction <= next_instruction;
-                        instruction_length <= next_instruction_length;
-                    end
 
-                    // The data register is always shifted in, even if it is the
-                    // same, since loading it may trigger actions as a side effect
-                    // of the update_dr state.
-                    need_dr_shift <= 1;
+                    if (data_length != 0)
+                        need_dr_shift <= 1;
+
+                    if (instruction_length == 0 && data_length == 0)
+                        need_reset <= 1;
                 end
             end
 
+            // Should not have need_reset set if there is a rest to send an IR
+            // or DR register.
+            assert(!need_reset || !(need_ir_shift || need_dr_shift));
+
             state_ff <= state_nxt;
             case (state_ff)
+                JTAG_SELECT_DR_SCAN:
+                begin
+                    // Should not enter this state unless we have something to do.
+                    assert(need_ir_shift || need_dr_shift || need_reset);
+                end
+
                 JTAG_CAPTURE_DR:
                 begin
                     shift_count <= data_length;
@@ -170,14 +172,29 @@ module sim_jtag
                     data_shift <= (data_shift >> 1) | (MAX_DATA_LEN'(jtag.tdi)
                         << (data_length - 1));
                     shift_count <= shift_count - 1;
+                    assert(need_dr_shift);
                     assert(shift_count > 0);
                 end
 
                 JTAG_UPDATE_DR:
                 begin
                     assert(shift_count == 0);
-                    send_jtag_response(data_shift);
+                    send_jtag_response(instruction_shift, data_shift);
                     need_dr_shift <= 0;
+                end
+
+                JTAG_SELECT_IR_SCAN:
+                begin
+                    // Shouldn't get to this state unless we are about
+                    // to shift in a new IR or going to reset state.
+                    assert(need_ir_shift || need_reset);
+                    assert(!(need_ir_shift && need_reset));
+
+                    if (need_reset)
+                    begin
+                        need_reset <= 0;
+                        send_jtag_response(0, 0);
+                    end
                 end
 
                 JTAG_CAPTURE_IR:
@@ -192,6 +209,7 @@ module sim_jtag
                         | (MAX_INSTRUCTION_LEN'(jtag.tdi)
                         << (instruction_length - 1));
                     shift_count <= shift_count - 1;
+                    assert(need_ir_shift);
                     assert(shift_count > 0);
                 end
 
@@ -199,6 +217,11 @@ module sim_jtag
                 begin
                     assert(shift_count == 0);
                     need_ir_shift <= 0;
+                    if (!need_dr_shift)
+                    begin
+                        // There was an instruction, but no data
+                        send_jtag_response(instruction_shift, 0);
+                    end
                 end
             endcase
         end
@@ -226,7 +249,7 @@ module sim_jtag
                 // We may be here because already shifted the IR and
                 // randomly returned to idle, or because we haven't shifted
                 // the IR yet.
-                if (need_ir_shift || need_dr_shift)
+                if (need_ir_shift || need_dr_shift || need_reset)
                 begin
                     state_nxt = JTAG_SELECT_DR_SCAN;
                     tms_nxt = 1;
@@ -237,7 +260,7 @@ module sim_jtag
 
             JTAG_SELECT_DR_SCAN:
             begin
-                if (need_ir_shift)
+                if (need_ir_shift || need_reset)
                 begin
                     // Have to shift IR first
                     state_nxt = JTAG_SELECT_IR_SCAN;
@@ -245,8 +268,6 @@ module sim_jtag
                 end
                 else
                 begin
-                    // IR is already shifted, need to shift DR
-                    // Note that need_dr_shift should always be set here.
                     state_nxt = JTAG_CAPTURE_DR;
                     tms_nxt = 0;
                 end
@@ -327,8 +348,18 @@ module sim_jtag
 
             JTAG_SELECT_IR_SCAN:
             begin
-                tms_nxt = 0;
-                state_nxt = JTAG_CAPTURE_IR;
+                if (need_ir_shift)
+                begin
+                    tms_nxt = 0;
+                    state_nxt = JTAG_CAPTURE_IR;
+                end
+                else
+                begin
+                    // Reset
+                    tms_nxt = 1;
+                    state_nxt = JTAG_RESET;
+
+                end
             end
 
             JTAG_CAPTURE_IR:
@@ -397,7 +428,7 @@ module sim_jtag
 
             JTAG_UPDATE_IR:
             begin
-                if (random_transition())
+                if (!need_dr_shift || random_transition())
                 begin
                     tms_nxt = 0;
                     state_nxt = JTAG_IDLE;
