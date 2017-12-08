@@ -15,11 +15,11 @@
 # limitations under the License.
 #
 
-'''
+"""
 Validate hardware JTAG debugging implementation. The Verilator model has a
 stub module that simulates a JTAG host. This test communicates with it over
-a socket, which allows sending and receiving data.
-'''
+a socket, which allows sending and receiving data and instructions.
+"""
 
 import socket
 import struct
@@ -45,11 +45,10 @@ INST_INJECT_INST = 4
 INST_TRANSFER_DATA = 5
 INST_BYPASS = 15
 
-# When set, does not reload instruction register
+# When passed, does not shift instruction register
 INST_SAME = -1
 
 # XXX does not test TRST signal
-# XXX need to test resuming from halt state
 
 
 def mask_value(value, num_bits):
@@ -58,11 +57,11 @@ def mask_value(value, num_bits):
 
 class JTAGTestFixture(object):
 
-    '''
+    """
     Spawns the Verilator model and opens a socket to communicate with it
     Supports __enter__ and __exit__ methods so it can be used in the 'with'
     construct to automatically clean up after itself.
-    '''
+    """
 
     def __init__(self, hexfile):
         self.hexfile = hexfile
@@ -110,6 +109,13 @@ class JTAGTestFixture(object):
             self.sock.close()
 
     def jtag_transfer(self, instruction, data_length, data):
+        """
+        Shift an instruction and/or data to the target.
+        If instruction is set to INST_SAME, this will not shift an instruction
+        If data_length is zero, it will not shift any data. If both are set to
+        not transfer, it will initiate a reset of the target.
+        """
+
         if DEBUG:
             print('Sending JTAG command 0x{:x} data 0x{:x}'.format(
                 instruction, data))
@@ -134,8 +140,14 @@ class JTAGTestFixture(object):
             print('received JTAG response 0x{:x}'.format(self.last_response))
 
     def test_instruction_shift(self, value):
+        """
+        Shift a value through the instruction register, then capture
+        the bits that are shifted out and check that they match.
+        """
+
         # Send an instruction that is twice as long as the instruction register.
-        # The first bits shifted in should come right back out
+        # The first bits shifted in should come right back out in the high
+        # bits of the result.
         self.sock.send(struct.pack('<BIBQ', INSTRUCTION_LENGTH * 2, value,
                                    0, 0))
         response_data = self.sock.recv(12)
@@ -149,12 +161,12 @@ class JTAGTestFixture(object):
                 value, instr_response))
 
     def get_program_output(self):
-        '''
+        """
         Return everything verilator printed to stdout before exiting.
         This won't read anything if the program was killed (which is the
         common case if the program didn't die with an assertion), but
         we usually call in the case that it has exited with an error.
-        '''
+        """
         # Give the reader thread time to finish reading responses.
         if self.reader_thread:
             self.reader_thread.join(0.5)
@@ -162,17 +174,22 @@ class JTAGTestFixture(object):
         return self.output
 
     def expect_data(self, expected_data):
+        """
+        Throw an exception if the bits shifted out of TDO during the last data
+        transfer do not match the passed value
+        """
         if self.last_response != expected_data:
             raise test_harness.TestException('unexpected JTAG data response. Wanted {} got {}:\n{}'
-                                             .format(expected_data, self.self.last_response,
+                                             .format(expected_data, self.last_response,
                                                      self.get_program_output()))
 
     def _read_output(self):
-        '''
-        Need to read output on a separate thread, otherwise this will lock
-        up until the process exits. This seems to be the only way to do it
-        portably in python.
-        '''
+        """
+        Read text that is printed by the verilator process to standard out.
+        This needs to happen on a separate thread to avoid blocking the
+        main thread. This seems to be the only way to do it portably in
+        python.
+        """
         while True:
             got = self.process.stdout.read(0x100)
             if not got:
@@ -186,9 +203,9 @@ class JTAGTestFixture(object):
 
 @test_harness.test
 def jtag_idcode(_):
-    '''
-    Validating response to IDCODE request
-    '''
+    """
+    Validate response to IDCODE request
+    """
     hexfile = test_harness.build_program(['test_program.S'])
     with JTAGTestFixture(hexfile) as fixture:
         # Ensure the default instruction after reset is IDCODE
@@ -203,9 +220,9 @@ def jtag_idcode(_):
 
 @test_harness.test
 def jtag_reset(_):
-    '''
+    """
     Test transition to reset state
-    '''
+    """
     hexfile = test_harness.build_program(['test_program.S'])
     with JTAGTestFixture(hexfile) as fixture:
         # Load a different instruction
@@ -223,10 +240,10 @@ def jtag_reset(_):
 
 @test_harness.test
 def jtag_bypass(_):
-    '''
+    """
     Validate BYPASS instruction, which is a single bit data register
     We should get what we send, shifted by one bit.
-    '''
+    """
     hexfile = test_harness.build_program(['test_program.S'])
     with JTAGTestFixture(hexfile) as fixture:
         value = 0x267521cf
@@ -236,10 +253,10 @@ def jtag_bypass(_):
 
 @test_harness.test
 def test_instruction_shift(_):
-    '''
+    """
     Ensure instruction bits shifted into TDI come out TDO. This is necessary
     to properly chain JTAG devices together.
-    '''
+    """
     hexfile = test_harness.build_program(['test_program.S'])
     with JTAGTestFixture(hexfile) as fixture:
         fixture.test_instruction_shift(0xf)
@@ -252,12 +269,12 @@ def test_instruction_shift(_):
 
 @test_harness.test
 def jtag_data_transfer(_):
-    '''
+    """
     Validate bi-directional transfer. The TRANSFER_DATA instruction
     returns the old value of the control register while shifting a new
     one in, so we should see the previous value come out each time
     we write a new one.
-    '''
+    """
     hexfile = test_harness.build_program(['test_program.S'])
     with JTAGTestFixture(hexfile) as fixture:
         fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0x4be49e7c)
@@ -269,9 +286,9 @@ def jtag_data_transfer(_):
 
 @test_harness.test
 def jtag_inject(_):
-    '''
+    """
     Test instruction injection, with multiple threads
-    '''
+    """
     hexfile = test_harness.build_program(['test_program.S'])
     with JTAGTestFixture(hexfile) as fixture:
         # Halt
@@ -313,17 +330,18 @@ def jtag_inject(_):
 
 @test_harness.test
 def jtag_read_write_pc(_):
-    '''
+    """
     Use the call instruction to read the program counter. The injection
     logic is supposed to simulate each instruction having the PC of the
     interrupted thread. Then ensure performing a branch will properly
-    update the PC of the selected thread.
-    '''
+    update the PC of the selected thread. This then resumes the thread
+    to ensure it operates properly.
+    """
     hexfile = test_harness.build_program(['test_program.S'])
     with JTAGTestFixture(hexfile) as fixture:
         # Switch to thread 1, branch to new address
         fixture.jtag_transfer(INST_CONTROL, 7, 0x3)
-        fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0x2000)
+        fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0x10e4)   # `jump_target`
         fixture.jtag_transfer(INST_INJECT_INST, 32, 0xac000012)  # getcr s0, 18
         fixture.jtag_transfer(INST_SAME, 32, 0xf0000000)  # b s0
 
@@ -342,6 +360,21 @@ def jtag_read_write_pc(_):
         fixture.jtag_transfer(INST_INJECT_INST, 32, 0xf8000000)  # call 0
         fixture.jtag_transfer(INST_SAME, 32, 0x8c0003f2)  # setcr ra, 18
         fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0)
-        fixture.expect_data(0x2004)
+        fixture.expect_data(0x10e8)
+
+        # Resume the thread. It should now execute the instruction to
+        # load a new value into s0
+        fixture.jtag_transfer(INST_CONTROL, 7, 0x0)
+
+        # Dummy transaction that ensures the processor has time to execute
+        # the instructions
+        fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0)
+
+        # Halt again and verify register value.
+        fixture.jtag_transfer(INST_CONTROL, 7, 0x3)
+        fixture.jtag_transfer(INST_INJECT_INST, 32, 0x8c000012)  # setcr s0, 18
+        fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0)
+        fixture.expect_data(0x6bee68ca)
+
 
 test_harness.execute_tests()

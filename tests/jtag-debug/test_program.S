@@ -33,3 +33,6 @@ jump_table:
 2:              b 2b
 3:              b 3b
 4:              b 4b
+
+jump_target:    li s0, 0x6bee68ca
+5:              b 5b
