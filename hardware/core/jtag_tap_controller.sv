@@ -39,8 +39,6 @@ module jtag_tap_controller
     (input                                  clk,
     input                                   reset,
 
-    // JTAG interface.
-    // XXX for now, this assumes these are sychronized into this clock domain.
     jtag_interface.target                   jtag,
 
     // Controller interface. data_shift_val is the value to be sent out

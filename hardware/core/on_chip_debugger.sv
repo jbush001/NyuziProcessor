@@ -52,8 +52,7 @@ module on_chip_debugger
     (input                          clk,
     input                           reset,
 
-    // JTAG interface
-    jtag_interface.target            jtag,
+    jtag_interface.target           jtag,
 
     // To/From Cores
     output logic                    dbg_halt,
