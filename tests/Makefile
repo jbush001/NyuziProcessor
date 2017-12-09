@@ -35,11 +35,12 @@ PYTHON=python3
 #  fpga/          - These only run in the FPGA environment and validate things
 #                   specific to the dev board (the test target only assembles them)
 #  kernel/
-#     crash/      - The following are omitted because they take a long time
+#     crash/      - Intermittently timing out, potentially because of a bug
 #     globalinit/
 #     hello/
 #     panic/
 #     user_copy_fault/
+#     initdata/
 #
 #     multiprocess/ - These do not have automated harnesses and are not easy to
 #     threads/        automate for a number of reasons.
@@ -66,7 +67,6 @@ test:
 	cd compiler && USE_VERILATOR=1 $(PYTHON) ./runtest.py
 	cd compiler && $(PYTHON) ./runtest.py *noverilator.*
 	cd cosimulation && $(PYTHON) ./runtest.py
-	cd kernel/initdata && $(PYTHON) ./runtest.py
 	cd fpga && make
 	cd render && make test
 
