@@ -19,33 +19,41 @@
 import defines::*;
 
 //
-// The debug controller acts as an interface between an external
-// host and the cores. It allows the host to inject instructions into
-// a core's instruction pipeline, and allows bidirectional data transfer
-// between the host and target.
+// On chip debugger (OCD) controller.
+//
+// This acts as an interface between an external host and the cores and exposes
+// debugging functionality like reading and writing memory and registers.
+// It works by allowing the host to inject instructions into a core's
+// instruction pipeline, and enabling bidirectional data transfer between the
+// host and target.
 //
 // This is experimental and a work in progress.
 //
 //  Limitations:
 //  - If an instruction has to be rolled back (for example, cache miss), this
-//    has no way of automatically restarting it.
-//  - If the instruction queue is full when this attempts to send it, the
+//    will not automatically restart it. There is no way for the host to know
+//    this has happened.
+//  - If the instruction queue is full when this attempts to inject one, the
 //    instruction will be lost.
 //  - When the halt signal is asserted, the processor will stop fetching new
 //    instructions, but any instructions already in the pipeline or in instruction
 //    queues will complete over subsequent cycles.
-//  - There's no way to immediately halt and trap when an exception occurs.
+//  - As such, there's no way to immediately halt when an exception occurs.
 //  - There's no provision for single stepping.
 //  - This can't execute in "monitor mode," as the processor must be halted for it
 //    to work.
+//  - Halting between two issues of an uninterruptable instruction (sync memory op,
+//    or I/O memory transfer), can put the processor into a bad state.
+//  - Halting during a multi-cycle instruction (scatter/gather memory access)
+//    causes undefined behavior.
 //
 
-module debug_controller
+module on_chip_debugger
     (input                          clk,
     input                           reset,
 
     // JTAG interface
-    jtag_interface.slave            jtag,
+    jtag_interface.target            jtag,
 
     // To/From Cores
     output logic                    dbg_halt,

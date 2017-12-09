@@ -469,8 +469,8 @@ interface jtag_interface;
     logic tdo;
     logic tms;
 
-    modport master(input tdi, output tck, trst_n, tdo, tms);
-    modport slave(input tck, trst_n, tdi, tms, output tdo);
+    modport host(input tdi, output tck, trst_n, tdo, tms);
+    modport target(input tck, trst_n, tdi, tms, output tdo);
 endinterface
 
 `endif

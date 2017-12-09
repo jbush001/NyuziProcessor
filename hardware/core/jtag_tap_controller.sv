@@ -31,7 +31,7 @@ module jtag_tap_controller
 
     // JTAG interface.
     // XXX for now, this assumes these are sychronized into this clock domain.
-    jtag_interface.slave                    jtag,
+    jtag_interface.target                   jtag,
 
     // Controller interface. data_shift_val is the value to be sent out
     // do when in data mode.

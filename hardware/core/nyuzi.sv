@@ -31,7 +31,7 @@ module nyuzi
     input                           reset,
     axi4_interface.master           axi_bus,
     io_bus_interface.master         io_bus,
-    jtag_interface.slave            jtag,
+    jtag_interface.target           jtag,
     output logic                    processor_halt,
     input [NUM_INTERRUPTS - 1:0]    interrupt_req);
 
@@ -52,13 +52,13 @@ module nyuzi
 
     /*AUTOLOGIC*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
-    core_id_t           dbg_core;               // From debug_controller of debug_controller.v
-    scalar_t            dbg_data_from_host;     // From debug_controller of debug_controller.v
-    logic               dbg_data_update;        // From debug_controller of debug_controller.v
-    logic               dbg_halt;               // From debug_controller of debug_controller.v
-    scalar_t            dbg_instruction_inject; // From debug_controller of debug_controller.v
-    logic               dbg_instruction_inject_en;// From debug_controller of debug_controller.v
-    local_thread_idx_t  dbg_thread;             // From debug_controller of debug_controller.v
+    core_id_t           dbg_core;               // From on_chip_debugger of on_chip_debugger.v
+    scalar_t            dbg_data_from_host;     // From on_chip_debugger of on_chip_debugger.v
+    logic               dbg_data_update;        // From on_chip_debugger of on_chip_debugger.v
+    logic               dbg_halt;               // From on_chip_debugger of on_chip_debugger.v
+    scalar_t            dbg_instruction_inject; // From on_chip_debugger of on_chip_debugger.v
+    logic               dbg_instruction_inject_en;// From on_chip_debugger of on_chip_debugger.v
+    local_thread_idx_t  dbg_thread;             // From on_chip_debugger of on_chip_debugger.v
     logic               ii_ready [`NUM_CORES];  // From io_interconnect of io_interconnect.v
     iorsp_packet_t      ii_response;            // From io_interconnect of io_interconnect.v
     logic               ii_response_valid;      // From io_interconnect of io_interconnect.v
@@ -136,7 +136,7 @@ module nyuzi
         .io_bus(perf_io_bus),
         .*);
 
-    debug_controller debug_controller(
+    on_chip_debugger on_chip_debugger(
         .jtag(jtag),
         .*);
 
