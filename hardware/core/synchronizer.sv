@@ -15,7 +15,8 @@
 //
 
 //
-// Transfer a signal into a clock domain, avoiding metastability.
+// Transfer a signal into a clock domain, avoiding metastability and
+// race conditions due to propagation delay.
 //
 
 module synchronizer
