@@ -48,7 +48,10 @@
 `define DTLB_ENTRIES 64
 `define TLB_WAYS 4
 
-// XXX arbitrary value for testing
-`define JTAG_ID 32'h20e129f4
+// Picked random part version and number to have unique pattern to verify.
+// The manufacturer ID is chosen to be the last possible ID.
+`define JTAG_PART_VERSION 4
+`define JTAG_PART_NUMBER 'hd20d
+`define JTAG_MANUFACTURER_ID {4'b1111,  7'b1111101}
 
 `endif

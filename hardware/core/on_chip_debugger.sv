@@ -64,6 +64,13 @@ module on_chip_debugger
     output logic                    dbg_data_update,
     input scalar_t                  data_to_host);
 
+    localparam JTAG_IDCODE = {
+        4'(`JTAG_PART_VERSION),
+        16'(`JTAG_PART_NUMBER),
+        11'(`JTAG_MANUFACTURER_ID),
+        1'b1
+    };
+
     typedef struct packed {
         core_id_t core;
         local_thread_idx_t thread;
@@ -122,7 +129,7 @@ module on_chip_debugger
         if (capture_dr)
         begin
             case (instruction)
-                INST_IDCODE: data_shift_reg <= `JTAG_ID;
+                INST_IDCODE: data_shift_reg <= JTAG_IDCODE;
                 INST_CONTROL: data_shift_reg <= 32'(control);
                 INST_TRANSFER_DATA: data_shift_reg <= data_to_host;
                 default: data_shift_reg <= '0;
