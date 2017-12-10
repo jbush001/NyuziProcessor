@@ -66,8 +66,8 @@ module l2_cache_tag_stage(
         .fill_way(l2t_fill_way),    // Output to next stage
         .access_en(l2a_request_valid),
         .access_set(l2a_request.address.set_idx),
-        .access_update_en(l2r_update_lru_en),
-        .access_update_way(l2r_update_lru_hit_way),
+        .update_en(l2r_update_lru_en),
+        .update_way(l2r_update_lru_hit_way),
         .*);
 
     //

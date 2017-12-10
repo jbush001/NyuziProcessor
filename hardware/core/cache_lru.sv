@@ -22,11 +22,10 @@ import defines::*;
 // Maintains a least recently used list for each cache set. Used to determine
 // which cache way to load new cache lines into.
 //
-// There are two interfaces that update the LRU. The client must assert
-// access_en a cycle before updating to fetch the old LRU value.
+// There are two interfaces that update the LRU:
 //
 // Fill:
-// The cache asserts fill_en and fill_set when it fills a cache line.
+// The cache asserts fill_en and fill_set when it needs to load a cache line.
 // One cycle later, this module sets fill_way to the least recently used way
 // (which the cache will replace) and moves that way to the most recently used
 // position.
@@ -34,12 +33,16 @@ import defines::*;
 // Access:
 // During the first cycle of a cache loads, the client asserts access_en and
 // access_set. If there was a cache hit, it asserts update_en and update_way
-// one cycle later to update the accessed way to the MRU position.
+// one cycle later to update the accessed way to the MRU position. This
+// must not assert update_en without having asserted access_en in the previous
+// cycle, as the former fetches the old LRU value.
 //
-// If the client asserts fill_en and access_en simultaneously, fill wins. This
-// is important to avoid evicting recently loaded lines when there are many
-// fills back to back. It also avoids livelock where two threads evict each
-// other's lines back and forth.
+// If the client asserts fill_en and access_en simultaneously, which is legal,
+// fill will take precedence. This is important:
+// - To avoid evicting recently loaded lines when there are many fills back to
+//   back, which would be inefficient.
+// - To avoids livelock where two threads evict each other's lines back and
+//   forth forever.
 //
 
 module cache_lru
@@ -59,8 +62,8 @@ module cache_lru
     // it has been accessed.
     input                                 access_en,
     input [SET_INDEX_WIDTH - 1:0]         access_set,
-    input                                 access_update_en,
-    input [WAY_INDEX_WIDTH - 1:0]         access_update_way);
+    input                                 update_en,
+    input [WAY_INDEX_WIDTH - 1:0]         update_way);
 
     localparam LRU_FLAG_BITS =
         NUM_WAYS == 1 ? 1 :
@@ -82,11 +85,12 @@ module cache_lru
 
     assign read_en = access_en || fill_en;
     assign read_set = fill_en ? fill_set : access_set;
-    assign new_mru = was_fill ? fill_way : access_update_way;
-    assign update_lru_en = was_fill || access_update_en;
+    assign new_mru = was_fill ? fill_way : update_way;
+    assign update_lru_en = was_fill || update_en;
 
     // This uses a pseudo-LRU algorithm
-    // The current state of each set is represented by 3 bits. Imagine a tree:
+    // Assuming four sets, the current state of each set is represented by
+    // three bits. Imagine a tree:
     //
     //        b
     //      /   \
@@ -97,7 +101,10 @@ module cache_lru
     // The leaves 0-3 represent ways, and the letters a, b, and c represent the 3 bits
     // which indicate a path to the *least recently used* way. A 0 stored in a interior
     // node indicates the  left node and a 1 the right. Each time an element is moved
-    // to the MRU, the bits along its path are set to the opposite direction.
+    // to the MRU, the bits along its path are set to the opposite direction. This means
+    // it will take at least two cycles for a node in the MRU to move to the LRU and
+    // be evicted. A strict LRU would take three cycles for the node to move to the
+    // LRU. So, this is close enough to LRU to work well, but much simpler to implement.
     //
     sram_1r1w #(
         .DATA_WIDTH(LRU_FLAG_BITS),
@@ -215,7 +222,7 @@ module cache_lru
         else
         begin
             // Can't update when the last cycle didn't perform an access.
-            assert(!(access_update_en && !was_access));
+            assert(!(update_en && !was_access));
             was_access <= access_en;    // Debug only
         end
     end

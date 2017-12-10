@@ -293,8 +293,8 @@ module dcache_tag_stage
         .fill_way(dt_fill_lru),
         .access_en(instruction_valid),
         .access_set(request_addr_nxt.set_idx),
-        .access_update_en(dd_update_lru_en),
-        .access_update_way(dd_update_lru_way),
+        .update_en(dd_update_lru_en),
+        .update_way(dd_update_lru_way),
         .*);
 
     always_ff @(posedge clk)

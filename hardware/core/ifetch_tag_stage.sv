@@ -273,8 +273,8 @@ module ifetch_tag_stage
         .fill_way(ift_fill_lru),
         .access_en(cache_fetch_en),
         .access_set(pc_to_fetch.set_idx),
-        .access_update_en(ifd_update_lru_en),
-        .access_update_way(ifd_update_lru_way),
+        .update_en(ifd_update_lru_en),
+        .update_way(ifd_update_lru_way),
         .*);
 
     //
