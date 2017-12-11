@@ -22,15 +22,14 @@ import defines::*;
 // JTAG Test Access Point (TAP) controller.
 // This contains the JTAG state machine logic.
 //
-// This doesn't have a separate clock domain for the the JTAG clock (TCK).
-// It instead samples TCK, TDI, and TMS into the system clock domain.
-// When it detects a change of TCK beween two samples, it updates the state
-// machine. This means the sample may be delayed up to one system clock
-// period after the TCK edge. Per IEEE 1149.1-2001, rule 4.5.1a, "Changes
-// in the state of the signal driven through TDO shall occur only on the
-// falling edge of TCK," so, as long as the JTAG clock frequency is lower
-// than 1/4 the system clock frequency, this should read the correct value.
-// (likewise for driving TDO).
+// The JTAG clock (TCK) is not a separate clock domain. This instead samples
+// TCK, TDI, and TMS on the rising edge of the system clock, which simplifies
+// the logic. When this detects a change of TCK beween two samples, it reads
+// the data signals. Thus it may read them up to one system clock period after
+// the TCK edge. IEEE 1149.1-2001 requires signal to be driven on the falling
+// edge of TCK and sampled on the rising edge. So the JTAG clock frequency must
+// be lower than a submultiple  of the system clock frequency (probably a maximum
+// of 1/8).
 //
 
 module jtag_tap_controller
@@ -41,8 +40,8 @@ module jtag_tap_controller
 
     jtag_interface.target                   jtag,
 
-    // Controller interface. data_shift_val is the value to be sent out
-    // do when in data mode.
+    // data_shift_val is the value to be sent out TDO when
+    // shifting a data register.
     input                                   data_shift_val,
     output logic                            capture_dr,
     output logic                            shift_dr,

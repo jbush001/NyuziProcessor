@@ -21,11 +21,11 @@ import defines::*;
 //
 // On chip debugger (OCD) controller.
 //
-// This acts as an interface between an external host and the cores and exposes
-// debugging functionality like reading and writing memory and registers.
-// It works by allowing the host to inject instructions into a core's
-// instruction pipeline, and enabling bidirectional data transfer between the
-// host and target.
+// This acts as an interface between an external JTAG host and the cores
+// and exposes debugging functionality like reading and writing memory
+// and registers. It works by allowing the host to inject instructions
+// into a core's instruction pipeline, and facilitating bidirectional data
+// transfer between the host and target.
 //
 // This is experimental and a work in progress.
 //
