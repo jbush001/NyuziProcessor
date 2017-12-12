@@ -72,21 +72,21 @@ int main(int argc, char **argv, char **env)
 
     Vsoc_tb* testbench = new Vsoc_tb;
 
-    // As with real hardware, reset is a bit tricky. In order for the
-    // reset blocks to execute, there must be a rising edge on reset.
-    // Previously, I did this in the main loop, but if there is a rising
-    // edge on clock before reset occurs, the processor would be in an
-    // undefined state (because we randomized all of the flops with
-    // randReset above), and often trip assertions. Instead, I assert and
-    // deassert reset before toggling clock. This also ensures it has
-    // proper asynchronous behavior, since, in previously, the reset
-    // block would execute synchronously on the next clock edge.
-    testbench->reset = 0;
-    testbench->clk = 0;
-    testbench->eval();
+    // As with real hardware, reset is a bit tricky.
+    // - Most assertions will fail before the design has been reset.
+    // - Assertions are not tested while reset is asserted.
+    // BUT:
+    // - Many blocks require a positive edge on reset to trigger
+    //   (not all, any block that also triggers on clock will synchronously
+    //   reset if it is asserted).
+    //
+    // This is a bit of a hack, set the 'last' state of reset to zero and reset to one.
+    // This will cause a positive edge event on the next eval() that will trigger
+    // all reset blocks. Reset will be deasserted in the main loop below.
+    //
+    testbench->__Vclklast__TOP__reset = 0;
     testbench->reset = 1;
-    testbench->eval();
-    testbench->reset = 0;
+    testbench->clk = 0;
     testbench->eval();
 
 #if VM_TRACE // If verilator was invoked with --trace
@@ -99,6 +99,11 @@ int main(int argc, char **argv, char **env)
 
     while (!Verilated::gotFinish())
     {
+        // Allow it to run for a few clock cycles with reset asserted. This allows
+        // flops that are not reset to settle on valid values so assertions don't trip.
+        if (currentTime == 4)
+            testbench->reset = 0;
+
         testbench->clk = !testbench->clk;
         testbench->eval();
 #if VM_TRACE
