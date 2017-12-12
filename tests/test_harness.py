@@ -15,7 +15,7 @@
 #
 
 """
-Utility functions for unit tests. This is imported into test runner scripts
+Utility functions for functional tests. This is imported into test runner scripts
 in subdirectories under this one.
 """
 
