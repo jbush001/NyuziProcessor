@@ -29,12 +29,10 @@ sys.path.insert(0, '..')
 import test_harness
 
 DRIVER_PATH='obj/driver.cpp'
-DRIVER_SRC1 = '''
+DRIVER_SRC = '''
 #include <iostream>
 #include <stdlib.h>
-#include "V'''
-
-DRIVER_SRC2 = '''.h"
+#include "V$MODULE$.h"
 #include "verilated.h"
 #include "verilated_vpi.h"
 #if VM_TRACE
@@ -61,9 +59,9 @@ int main(int argc, char **argv, char **env)
     time_t t1;
     time(&t1);
     srand48((long) t1);
-'''
 
-DRIVER_SRC3 = '''
+    V$MODULE$ *testbench = new V$MODULE$;
+
     testbench->__Vclklast__TOP__reset = 0;
     testbench->reset = 1;
     testbench->clk = 0;
@@ -98,7 +96,8 @@ DRIVER_SRC3 = '''
     delete testbench;
 
     return 0;
-}'''
+}
+'''
 
 def run_unit_test(filename):
 
@@ -125,8 +124,7 @@ def run_unit_test(filename):
         raise test_harness.TestException('Verilation failed:\n' + exc.output.decode())
 
     with open(DRIVER_PATH, 'w') as output_file:
-        output_file.write(DRIVER_SRC1 + modulename + DRIVER_SRC2 + 'V' + modulename
-            + '* testbench = new V' + modulename + ';' + DRIVER_SRC3)
+        output_file.write(DRIVER_SRC.replace('$MODULE$', modulename))
 
     make_args = [
         'make',

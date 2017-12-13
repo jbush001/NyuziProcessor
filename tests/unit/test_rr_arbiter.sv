@@ -40,11 +40,11 @@ module test_rr_arbiter(input clk, input reset);
                 // Make all inputs request
                 0:
                 begin
-                    request <= 15;
+                    request <= 4'b1111;
                     update_lru <= 1;
                 end
 
-                // Test that it cycles through all of them
+                // Test that it cycles through all bits
                 1:  assert(grant_oh == 4'b0001);
                 2:  assert(grant_oh == 4'b0010);
                 3:  assert(grant_oh == 4'b0100);
@@ -67,6 +67,7 @@ module test_rr_arbiter(input clk, input reset);
                     request <= 4'b0101;
                 end
 
+                // Test with two bits set
                 10: assert(grant_oh == 4'b0100);
                 11: assert(grant_oh == 4'b0001);
                 12: assert(grant_oh == 4'b0100);
@@ -78,17 +79,27 @@ module test_rr_arbiter(input clk, input reset);
 
                 14: assert(grant_oh == 4'b0010);
                 15: assert(grant_oh == 4'b1000);
-                16: assert(grant_oh == 4'b0010);
-                17:
+                16:
                 begin
-                    assert(grant_oh == 4'b1000);
+                    assert(grant_oh == 4'b0010);
+                    request <= 4'b0100;
+                end
+
+                // One bit set
+                17: assert(grant_oh == 4'b0100);
+                18: assert(grant_oh == 4'b0100);
+
+                19:
+                begin
+                    assert(grant_oh == 4'b0100);
                     request <= 4'b0000;
                 end
 
                 // No requestors
-                18: assert(grant_oh == 4'b0000);
+                20: assert(grant_oh == 4'b0000);
+                21: assert(grant_oh == 4'b0000);
 
-                19:
+                22:
                 begin
                     $display("PASS");
                     $finish;
