@@ -88,7 +88,7 @@ module cam
     // Check for duplicate entries
     always_ff @(posedge clk, posedge reset)
     begin
-        if (!reset && update_en)
+        if (!reset && update_en && update_valid)
         begin : test
             for (int i = 0; i < NUM_ENTRIES; i++)
             begin
