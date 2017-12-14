@@ -28,6 +28,7 @@ import shutil
 sys.path.insert(0, '..')
 import test_harness
 
+DUMP_WAVEFORM = True
 DRIVER_PATH='obj/driver.cpp'
 DRIVER_SRC = '''
 #include <iostream>
@@ -117,6 +118,9 @@ def run_unit_test(filename):
         '-cc', filename,
         '--exe', DRIVER_PATH
     ]
+
+    if DUMP_WAVEFORM:
+        verilator_args.append('--trace')
 
     try:
         subprocess.call(verilator_args, stderr=subprocess.STDOUT)
