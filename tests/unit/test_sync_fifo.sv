@@ -25,7 +25,7 @@ module test_sync_fifo(input clk, input reset);
     localparam FIFO_SIZE = 8;
     localparam ALMOST_FULL_THRESHOLD = 6;
     localparam ALMOST_EMPTY_THRESHOLD = 2;
-    localparam TOTAL_VALUES = 10;
+    localparam TOTAL_VALUES = 15;
 
     logic flush_en;
     logic full;
@@ -37,13 +37,16 @@ module test_sync_fifo(input clk, input reset);
     logic dequeue_en;
     logic[WIDTH - 1:0] value_o;
     enum {
-        FILLING,
+        FILL1,
         EMPTY1,
         PAUSE1,
         EMPTY2,
         PAUSE2,
-        EMPTY3
-    } state = FILLING;
+        EMPTY3,
+        FILL2,
+        FLUSH,
+        DONE
+    } state = FILL1;
     int enqueue_index;
     int dequeue_index;
     logic[WIDTH - 1:0] values[TOTAL_VALUES];
@@ -79,9 +82,11 @@ module test_sync_fifo(input clk, input reset);
             assert(almost_empty == expected_fifo_count <= ALMOST_EMPTY_THRESHOLD);
             assert(full == 1'(expected_fifo_count == FIFO_SIZE));
             assert(empty == 1'(expected_fifo_count == 0));
-            assert(expected_fifo_count < 1 || value_o == expected_value_o);
+            assert(expected_fifo_count == 0 || value_o == expected_value_o);
 
-            if (dequeue_en && !enqueue_en)
+            if (flush_en)
+                expected_fifo_count <= 0;
+            else if (dequeue_en && !enqueue_en)
                 expected_fifo_count <= expected_fifo_count - 1;
             else if (enqueue_en && !dequeue_en)
                 expected_fifo_count <= expected_fifo_count + 1;
@@ -99,7 +104,7 @@ module test_sync_fifo(input clk, input reset);
             end
 
             case (state)
-                FILLING:
+                FILL1:
                 begin
                     if (expected_fifo_count == FIFO_SIZE - 1)
                         state <= EMPTY1;
@@ -140,14 +145,29 @@ module test_sync_fifo(input clk, input reset);
                 EMPTY3:
                 begin
                     if (expected_fifo_count == 1)
-                    begin
-                        $display("PASS");
-                        $finish;
-                    end
+                        state <= FILL2;
                     else
-                    begin
                         dequeue_en <= 1;
-                    end
+                end
+
+                FILL2:
+                begin
+                    if (expected_fifo_count == 4)
+                        state <= FLUSH;
+                    else
+                        enqueue_en <= 1;
+                end
+
+                FLUSH:
+                begin
+                    flush_en <= 1;
+                    state <= DONE;
+                end
+
+                DONE:
+                begin
+                    $display("PASS");
+                    $finish;
                 end
             endcase
 
