@@ -185,18 +185,22 @@ module sram_1r1w
             if (READ_DURING_WRITE == "NEW_DATA")
                 read_data <= write_data;    // Bypass
             else
-                read_data <= {DATA_WIDTH{1'bx}};    // This will be randomized by Verilator
+                read_data <= DATA_WIDTH'($random()); // ensure it is really "don't care"
         end
         else if (read_en)
             read_data <= data[read_addr];
         else
-            read_data <= {DATA_WIDTH{1'bx}};
+            read_data <= DATA_WIDTH'($random());
     end
 
     initial
     begin
+        // Initialize RAM with random values. This is redundant on Verilator
+        // (which already does randomizes memory), but is necessary on
+        // 4-state simulators because memory is initially filled with Xs.
+        // This was causing x-propagation bugs in some modules previously.
         for (int i = 0; i < SIZE; i++)
-            data[i] = '0;
+            data[i] = DATA_WIDTH'($random());
 
         if ($test$plusargs("dumpmems") != 0)
             $display("sram1r1w %d %d", DATA_WIDTH, SIZE);
