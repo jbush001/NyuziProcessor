@@ -18,6 +18,11 @@ module test_cam(input clk, input reset);
     localparam NUM_ENTRIES = 8;
     localparam KEY_WIDTH = 32;
     localparam INDEX_WIDTH = $clog2(NUM_ENTRIES);
+    localparam KEY0 = 32'h8893e3a2;
+    localparam KEY1 = 32'h598b0b6e;
+    localparam KEY2 = 32'h2b673373;
+    localparam KEY3 = 32'h72c2b435;
+    localparam KEY4 = 32'h5774490b;
 
     logic [KEY_WIDTH - 1:0] lookup_key;
     logic[INDEX_WIDTH - 1:0] lookup_idx;
@@ -33,12 +38,6 @@ module test_cam(input clk, input reset);
         .KEY_WIDTH(KEY_WIDTH),
         .INDEX_WIDTH(INDEX_WIDTH)
     ) cam(.*);
-
-    localparam KEY0 = 32'h8893e3a2;
-    localparam KEY1 = 32'h598b0b6e;
-    localparam KEY2 = 32'h2b673373;
-    localparam KEY3 = 32'h72c2b435;
-    localparam KEY4 = 32'h5774490b;
 
     always @(posedge clk, posedge reset)
     begin

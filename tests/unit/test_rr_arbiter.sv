@@ -15,7 +15,6 @@
 //
 
 module test_rr_arbiter(input clk, input reset);
-
     localparam NUM_REQUESTERS = 4;
 
     logic[NUM_REQUESTERS - 1:0] request;
