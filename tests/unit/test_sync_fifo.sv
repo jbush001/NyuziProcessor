@@ -36,8 +36,6 @@ module test_sync_fifo(input clk, input reset);
     logic almost_empty;
     logic dequeue_en;
     logic[WIDTH - 1:0] value_o;
-    int expected_fifo_count;
-    int next_fifo_count;
     enum {
         FILLING,
         EMPTY1,
@@ -48,8 +46,9 @@ module test_sync_fifo(input clk, input reset);
     } state = FILLING;
     int enqueue_index;
     int dequeue_index;
-    logic[31:0] values[TOTAL_VALUES];
-    logic last_dequeue;
+    logic[WIDTH - 1:0] values[TOTAL_VALUES];
+    int expected_fifo_count;
+    logic[WIDTH - 1:0] expected_value_o;
 
     sync_fifo #(
         .WIDTH(32),
@@ -58,17 +57,14 @@ module test_sync_fifo(input clk, input reset);
         .ALMOST_EMPTY_THRESHOLD(ALMOST_EMPTY_THRESHOLD)
     ) sync_fifo(.*);
 
-    assign value_i = values[enqueue_index];
-
     always @(posedge clk, posedge reset)
     begin
         if (reset)
         begin
             expected_fifo_count <= 0;
-            next_fifo_count <= 0;
+            expected_value_o <= 0;
             enqueue_index <= 0;
             dequeue_index <= 0;
-            last_dequeue <= 0;
             for (int i = 0; i < TOTAL_VALUES; i++)
                 values[i] <= $random();
         end
@@ -79,38 +75,44 @@ module test_sync_fifo(input clk, input reset);
             enqueue_en <= 0;
             dequeue_en <= 0;
 
-            last_dequeue <= 0;
-            expected_fifo_count <= next_fifo_count;
-
             assert(almost_full == expected_fifo_count >= ALMOST_FULL_THRESHOLD);
             assert(almost_empty == expected_fifo_count <= ALMOST_EMPTY_THRESHOLD);
             assert(full == 1'(expected_fifo_count == FIFO_SIZE));
             assert(empty == 1'(expected_fifo_count == 0));
-            assert(!last_dequeue || value_o == values[dequeue_index]);
+            assert(expected_fifo_count < 1 || value_o == expected_value_o);
+
+            if (dequeue_en && !enqueue_en)
+                expected_fifo_count <= expected_fifo_count - 1;
+            else if (enqueue_en && !dequeue_en)
+                expected_fifo_count <= expected_fifo_count + 1;
+
+            if (dequeue_en)
+            begin
+                dequeue_index <= dequeue_index + 1;
+                expected_value_o <= values[dequeue_index];
+            end
+
+            if (enqueue_en)
+            begin
+                value_i <= values[enqueue_index];
+                enqueue_index <= enqueue_index + 1;
+            end
 
             case (state)
                 FILLING:
                 begin
-                    if (next_fifo_count == FIFO_SIZE)
+                    if (expected_fifo_count == FIFO_SIZE - 1)
                         state <= EMPTY1;
                     else
-                    begin
                         enqueue_en <= 1;
-                        next_fifo_count <= next_fifo_count + 1;
-                        enqueue_index <= enqueue_index + 1;
-                    end
                 end
 
                 EMPTY1:
                 begin
-                    if (next_fifo_count == ALMOST_FULL_THRESHOLD)
+                    if (expected_fifo_count == ALMOST_FULL_THRESHOLD - 1)
                         state <= PAUSE1;
                     else
-                    begin
                         dequeue_en <= 1;
-                        next_fifo_count <= next_fifo_count - 1;
-                        dequeue_index <= dequeue_index + 1;
-                    end
                 end
 
                 PAUSE1:
@@ -122,14 +124,10 @@ module test_sync_fifo(input clk, input reset);
 
                 EMPTY2:
                 begin
-                    if (next_fifo_count == ALMOST_EMPTY_THRESHOLD)
+                    if (expected_fifo_count == ALMOST_EMPTY_THRESHOLD + 1)
                         state <= PAUSE2;
                     else
-                    begin
                         dequeue_en <= 1;
-                        next_fifo_count <= next_fifo_count - 1;
-                        dequeue_index <= dequeue_index + 1;
-                    end
                 end
 
                 PAUSE2:
@@ -141,7 +139,7 @@ module test_sync_fifo(input clk, input reset);
 
                 EMPTY3:
                 begin
-                    if (next_fifo_count == 0)
+                    if (expected_fifo_count == 1)
                     begin
                         $display("PASS");
                         $finish;
@@ -149,11 +147,11 @@ module test_sync_fifo(input clk, input reset);
                     else
                     begin
                         dequeue_en <= 1;
-                        next_fifo_count <= next_fifo_count - 1;
-                        dequeue_index <= dequeue_index + 1;
                     end
                 end
             endcase
+
+            // XXX test flush
         end
     end
 endmodule
