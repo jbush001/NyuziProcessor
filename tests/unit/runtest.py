@@ -28,7 +28,7 @@ import shutil
 sys.path.insert(0, '..')
 import test_harness
 
-DUMP_WAVEFORM = True
+DUMP_WAVEFORM = False
 DRIVER_PATH='obj/driver.cpp'
 DRIVER_SRC = '''
 #include <iostream>
@@ -147,6 +147,7 @@ def run_unit_test(filename):
         'obj/V' + modulename
     ]
 
+    # XXX Need timeout for executing this process...
     try:
         result = subprocess.check_output(model_args, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as exc:
