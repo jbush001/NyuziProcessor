@@ -57,10 +57,10 @@ module instruction_decode_stage(
     input                         ifd_tlb_miss,
 
     // From dcache_data_stage
-    input local_thread_bitmap_t dd_load_sync_pending,
+    input local_thread_bitmap_t   dd_load_sync_pending,
 
     // From l1_l2_interface
-    input local_thread_bitmap_t sq_store_sync_pending,
+    input local_thread_bitmap_t   sq_store_sync_pending,
 
     // To thread_select_stage
     output decoded_instruction_t  id_instruction,
@@ -68,11 +68,11 @@ module instruction_decode_stage(
     output local_thread_idx_t     id_thread_idx,
 
     // From io_request_queue
-    input local_thread_bitmap_t ior_pending,
+    input local_thread_bitmap_t   ior_pending,
 
     // From control_registers
-    input local_thread_bitmap_t cr_interrupt_en,
-    input local_thread_bitmap_t cr_interrupt_pending,
+    input local_thread_bitmap_t   cr_interrupt_en,
+    input local_thread_bitmap_t   cr_interrupt_pending,
 
     // From writeback_stage
     input                         wb_rollback_en,
