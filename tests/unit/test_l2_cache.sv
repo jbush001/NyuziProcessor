@@ -557,7 +557,40 @@ module test_l2_cache(input clk, input reset);
                     end
                 end
 
+                //////////////////////////////////////////////////////////////
+                // Send an L2REQ_IINVALIDATE. This is just a pass through
+                // that gets broadcasted to all cores.
+                //////////////////////////////////////////////////////////////
                 30:
+                begin
+                    assert(!l2_response_valid);
+                    l2i_request_valid <= 1;
+                    l2i_request[0].id <= 1;
+                    l2i_request[0].packet_type = L2REQ_IINVALIDATE;
+                    l2i_request[0].cache_type = CT_ICACHE;
+                    l2i_request[0].address = ADDR0;
+                    state <= state + 1;
+                end
+
+                // Check response
+                31:
+                begin
+                    assert(!axi_bus.m_arvalid);
+                    assert(!axi_bus.m_awvalid);
+                    assert(!axi_bus.m_wvalid);
+
+                    if (l2_response_valid)
+                    begin
+                        assert(l2_response.core == 0);
+                        assert(l2_response.id == 1);
+                        assert(l2_response.packet_type == L2RSP_IINVALIDATE_ACK);
+                        assert(l2_response.cache_type == CT_ICACHE);
+                        // XXX the address isn't set.
+                        state <= state + 1;
+                    end
+                end
+
+                32:
                 begin
                     $display("PASS");
                     $finish;
