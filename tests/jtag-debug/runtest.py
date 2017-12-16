@@ -328,7 +328,8 @@ def jtag_inject(_):
         fixture.expect_data(0x564b1a88)
 
 
-@test_harness.test
+# XXX currently disabled because of issue #128
+#@test_harness.test
 def jtag_read_write_pc(_):
     """
     Use the call instruction to read the program counter. The injection
