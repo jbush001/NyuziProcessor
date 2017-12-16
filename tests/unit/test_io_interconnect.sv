@@ -43,7 +43,7 @@ module test_io_interconnect(input clk, input reset);
         begin
             ior_request[0] <= '0;
 
-            case (state)
+            unique case (state)
                 // Issue a store request
                 0:
                 begin
@@ -56,7 +56,7 @@ module test_io_interconnect(input clk, input reset);
                     ior_request[0].address <= ADDR0;
                     ior_request[0].value <= DATA0;
                     ior_request_valid[0] <= 1;
-                    state <= 1;
+                    state <= state + 1;
                 end
 
                 // Request on I/O bus
@@ -71,10 +71,11 @@ module test_io_interconnect(input clk, input reset);
                     assert(io_bus.write_en);
                     assert(io_bus.address == ADDR0);
                     assert(io_bus.write_data == DATA0);
-                    state <= 2;
+                    state <= state + 1;
                 end
 
-                2:  state <= 3;
+                2: state <= state + 1;
+
 
                 // Response packet
                 3:
@@ -84,7 +85,7 @@ module test_io_interconnect(input clk, input reset);
                     assert(ii_response_valid);
                     assert(ii_response.core == 0);
                     assert(ii_response.thread_idx == 1);
-                    state <= 4;
+                    state <= state + 1;
                 end
 
                 // Issue a load request
@@ -98,7 +99,7 @@ module test_io_interconnect(input clk, input reset);
                     ior_request[0].thread_idx <= 2;
                     ior_request[0].address <= ADDR1;
                     ior_request_valid[0] <= 1;
-                    state <= 5;
+                    state <= state + 1;
                 end
 
                 // Load request on the I/O bus
@@ -112,7 +113,7 @@ module test_io_interconnect(input clk, input reset);
                     assert(io_bus.read_en);
                     assert(io_bus.read_en);
                     assert(io_bus.address == ADDR1);
-                    state <= 6;
+                    state <= state + 1;
                     io_bus.read_data <= DATA1;
                 end
 
@@ -127,7 +128,7 @@ module test_io_interconnect(input clk, input reset);
                     assert(ii_response.core == 0);
                     assert(ii_response.thread_idx == 2);
                     assert(ii_response.read_value == DATA1);
-                    state <= 8;
+                    state <= state + 1;
                 end
 
                 8:

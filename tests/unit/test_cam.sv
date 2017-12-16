@@ -53,7 +53,7 @@ module test_cam(input clk, input reset);
         else
         begin
             count <= count + 1;
-            case (count)
+            unique case (count)
                 // Insert a few entries
                 0:
                 begin

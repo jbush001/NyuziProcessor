@@ -61,7 +61,7 @@ module test_l2_cache_atomic(input clk, input reset);
             // default values
             l2i_request_valid <= '0;
 
-            case (state)
+            unique case (state)
                 /////////////////////////////////////////////////////////////
                 // Do an initial load miss so a cache line is resident.
                 /////////////////////////////////////////////////////////////

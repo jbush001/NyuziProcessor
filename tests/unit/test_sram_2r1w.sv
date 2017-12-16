@@ -86,7 +86,7 @@ module test_sram_1r1w(input clk, input reset);
             read2_en <= 0;
 
             count <= count + 1;
-            case (count)
+            unique0 case (count)
                 // Write some values
                 0:
                 begin

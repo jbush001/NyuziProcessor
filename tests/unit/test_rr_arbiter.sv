@@ -35,7 +35,7 @@ module test_rr_arbiter(input clk, input reset);
         else
         begin
             count <= count + 1;
-            case (count)
+            unique case (count)
                 // Make all inputs request
                 0:
                 begin

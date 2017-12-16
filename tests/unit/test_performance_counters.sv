@@ -83,7 +83,7 @@ module test_performance_counters(input clk, input reset);
             io_bus.read_en <= 0;
             perf_events <= '0;
 
-            case (state)
+            unique case (state)
                 // Write to configuration register to select counters
                 SELECT_COUNTER:
                 begin

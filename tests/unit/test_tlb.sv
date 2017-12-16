@@ -104,7 +104,7 @@ module test_tlb(input clk, input reset);
             invalidate_all_en <= 0;
 
             count <= count + 1;
-            case (count)
+            unique0 case (count)
                 // Insert entries into table
                 0: update_page(VPAGE1, PPAGE1, 0, 1, 0, 1, 1);
                 1: update_page(VPAGE2, PPAGE2, 0, 0, 0, 0, 0);
@@ -270,7 +270,7 @@ module test_tlb(input clk, input reset);
                 end
 
                 // Searching for all pages, ensure they've been blown away
-                31:
+                32:
                 begin
                     invalidate_all_en <= 0;
                     lookup_page(VPAGE2, 0);

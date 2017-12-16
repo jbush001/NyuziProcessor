@@ -103,7 +103,7 @@ module test_sync_fifo(input clk, input reset);
                 enqueue_index <= enqueue_index + 1;
             end
 
-            case (state)
+            unique case (state)
                 FILL1:
                 begin
                     if (expected_fifo_count == FIFO_SIZE - 1)
