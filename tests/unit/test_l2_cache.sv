@@ -58,6 +58,7 @@ module test_l2_cache(input clk, input reset);
     int state;
     cache_line_data_t axi_data;
     int axi_burst_offset;
+    l1_miss_entry_idx_t last_id;
 
     l2_cache l2_cache(.*);
 
@@ -68,12 +69,28 @@ module test_l2_cache(input clk, input reset);
     assign axi_bus.s_awready = 1;
     assign axi_bus.s_wready = 1;
 
+    task send_l2_request(input l2req_packet_type_t packet_type,
+        input l2_addr_t address,
+        input logic[CACHE_LINE_BYTES - 1:0] store_mask = 0,
+        input cache_line_data_t data = 0);
+
+        l2i_request_valid <= 1;
+        l2i_request[0].id <= last_id + 1;   // Change ID every cycle
+        l2i_request[0].packet_type = packet_type;
+        l2i_request[0].address = address;
+        l2i_request[0].store_mask = store_mask;
+        l2i_request[0].data = data;
+        last_id <= last_id + 1;
+    endtask
+
     always @(posedge clk, posedge reset)
     begin
         if (reset)
         begin
             state <= 0;
             l2i_request[0].core <= 0;
+            last_id <= 0;
+            l2i_request[0].cache_type <= CT_DCACHE;
         end
         else
         begin
@@ -89,11 +106,7 @@ module test_l2_cache(input clk, input reset);
                 0:
                 begin
                     assert(!l2_response_valid);
-                    l2i_request_valid <= 1;
-                    l2i_request[0].id <= 1;
-                    l2i_request[0].packet_type = L2REQ_LOAD;
-                    l2i_request[0].cache_type = CT_DCACHE;
-                    l2i_request[0].address = ADDR0;
+                    send_l2_request(L2REQ_LOAD, ADDR0);
                     axi_data <= DATA0;
                     state <= state + 1;
                 end
@@ -132,7 +145,7 @@ module test_l2_cache(input clk, input reset);
                     if (l2_response_valid)
                     begin
                         assert(l2_response.core == 0);
-                        assert(l2_response.id == 1);
+                        assert(l2_response.id == last_id);
                         assert(l2_response.packet_type == L2RSP_LOAD_ACK);
                         assert(l2_response.cache_type == CT_DCACHE);
                         assert(l2_response.address == ADDR0);
@@ -147,13 +160,7 @@ module test_l2_cache(input clk, input reset);
                 4:
                 begin
                     assert(!l2_response_valid);
-                    l2i_request_valid <= 1;
-                    l2i_request[0].id <= 2;
-                    l2i_request[0].packet_type = L2REQ_STORE;
-                    l2i_request[0].cache_type = CT_DCACHE;
-                    l2i_request[0].address = ADDR1;
-                    l2i_request[0].data = STORE_DATA1;
-                    l2i_request[0].store_mask = STORE_MASK1;
+                    send_l2_request(L2REQ_STORE, ADDR1, STORE_MASK1, STORE_DATA1);
                     axi_data <= DATA1;
                     state <= state + 1;
                 end
@@ -192,7 +199,7 @@ module test_l2_cache(input clk, input reset);
                     if (l2_response_valid)
                     begin
                         assert(l2_response.core == 0);
-                        assert(l2_response.id == 2);
+                        assert(l2_response.id == last_id);
                         assert(l2_response.packet_type == L2RSP_STORE_ACK);
                         assert(l2_response.cache_type == CT_DCACHE);
                         assert(l2_response.address == ADDR1);
@@ -208,11 +215,7 @@ module test_l2_cache(input clk, input reset);
                 8:
                 begin
                     assert(!l2_response_valid);
-                    l2i_request_valid <= 1;
-                    l2i_request[0].id <= 3;
-                    l2i_request[0].packet_type = L2REQ_LOAD;
-                    l2i_request[0].cache_type = CT_DCACHE;
-                    l2i_request[0].address = ADDR1;
+                    send_l2_request(L2REQ_LOAD, ADDR1);
                     axi_data <= DATA0;
                     state <= state + 1;
                 end
@@ -242,13 +245,7 @@ module test_l2_cache(input clk, input reset);
                 10:
                 begin
                     assert(!l2_response_valid);
-                    l2i_request_valid <= 1;
-                    l2i_request[0].id <= 0;
-                    l2i_request[0].packet_type <= L2REQ_STORE;
-                    l2i_request[0].cache_type <= CT_DCACHE;
-                    l2i_request[0].address <= ADDR0;
-                    l2i_request[0].data <= STORE_DATA2;
-                    l2i_request[0].store_mask = STORE_MASK2;
+                    send_l2_request(L2REQ_STORE, ADDR0, STORE_MASK2, STORE_DATA2);
                     state <= state + 1;
                 end
 
@@ -277,11 +274,7 @@ module test_l2_cache(input clk, input reset);
                 12:
                 begin
                     assert(!l2_response_valid);
-                    l2i_request_valid <= 1;
-                    l2i_request[0].id <= 1;
-                    l2i_request[0].packet_type = L2REQ_LOAD;
-                    l2i_request[0].cache_type = CT_DCACHE;
-                    l2i_request[0].address = ADDR3;
+                    send_l2_request(L2REQ_LOAD, ADDR3);
                     axi_data <= DATA3;
                     state <= state + 1;
                 end
@@ -301,11 +294,7 @@ module test_l2_cache(input clk, input reset);
                     assert(!axi_bus.m_awvalid);
                     assert(!axi_bus.m_wvalid);
 
-                    l2i_request_valid <= 1;
-                    l2i_request[0].id <= 2;
-                    l2i_request[0].packet_type = L2REQ_LOAD;
-                    l2i_request[0].cache_type = CT_DCACHE;
-                    l2i_request[0].address = ADDR3;
+                    send_l2_request(L2REQ_LOAD, ADDR3);
                     state <= state + 1;
                 end
 
@@ -347,7 +336,7 @@ module test_l2_cache(input clk, input reset);
                     if (l2_response_valid)
                     begin
                         assert(l2_response.core == 0);
-                        assert(l2_response.id == 1);
+                        assert(l2_response.id == last_id - 1);
                         assert(l2_response.packet_type == L2RSP_LOAD_ACK);
                         assert(l2_response.cache_type == CT_DCACHE);
                         assert(l2_response.address == ADDR3);
@@ -367,7 +356,7 @@ module test_l2_cache(input clk, input reset);
                     if (l2_response_valid)
                     begin
                         assert(l2_response.core == 0);
-                        assert(l2_response.id == 2);
+                        assert(l2_response.id == last_id);
                         assert(l2_response.packet_type == L2RSP_LOAD_ACK);
                         assert(l2_response.cache_type == CT_DCACHE);
                         assert(l2_response.address == ADDR3);
@@ -382,11 +371,7 @@ module test_l2_cache(input clk, input reset);
                 18:
                 begin
                     assert(!l2_response_valid);
-                    l2i_request_valid <= 1;
-                    l2i_request[0].id <= 0;
-                    l2i_request[0].packet_type = L2REQ_FLUSH;
-                    l2i_request[0].cache_type = CT_DCACHE;
-                    l2i_request[0].address = ADDR1;
+                    send_l2_request(L2REQ_FLUSH, ADDR1);
                     state <= state + 1;
                 end
 
@@ -430,7 +415,7 @@ module test_l2_cache(input clk, input reset);
                     if (l2_response_valid)
                     begin
                         assert(l2_response.core == 0);
-                        assert(l2_response.id == 0);
+                        assert(l2_response.id == last_id);
                         assert(l2_response.packet_type == L2RSP_FLUSH_ACK);
                         assert(l2_response.cache_type == CT_DCACHE);
                         // XXX the address isn't set.
@@ -444,11 +429,7 @@ module test_l2_cache(input clk, input reset);
                 22:
                 begin
                     assert(!l2_response_valid);
-                    l2i_request_valid <= 1;
-                    l2i_request[0].id <= 1;
-                    l2i_request[0].packet_type = L2REQ_FLUSH;
-                    l2i_request[0].cache_type = CT_DCACHE;
-                    l2i_request[0].address = ADDR3;
+                    send_l2_request(L2REQ_FLUSH, ADDR3);
                     state <= state + 1;
                 end
 
@@ -461,7 +442,7 @@ module test_l2_cache(input clk, input reset);
                     if (l2_response_valid)
                     begin
                         assert(l2_response.core == 0);
-                        assert(l2_response.id == 1);
+                        assert(l2_response.id == last_id);
                         assert(l2_response.packet_type == L2RSP_FLUSH_ACK);
                         assert(l2_response.cache_type == CT_DCACHE);
                         // XXX the address isn't set.
@@ -475,11 +456,7 @@ module test_l2_cache(input clk, input reset);
                 24:
                 begin
                     assert(!l2_response_valid);
-                    l2i_request_valid <= 1;
-                    l2i_request[0].id <= 1;
-                    l2i_request[0].packet_type = L2REQ_FLUSH;
-                    l2i_request[0].cache_type = CT_DCACHE;
-                    l2i_request[0].address = ADDR5;
+                    send_l2_request(L2REQ_FLUSH, ADDR5);
                     state <= state + 1;
                 end
 
@@ -492,7 +469,7 @@ module test_l2_cache(input clk, input reset);
                     if (l2_response_valid)
                     begin
                         assert(l2_response.core == 0);
-                        assert(l2_response.id == 1);
+                        assert(l2_response.id == last_id);
                         assert(l2_response.packet_type == L2RSP_FLUSH_ACK);
                         assert(l2_response.cache_type == CT_DCACHE);
                         // XXX the address isn't set.
@@ -509,12 +486,7 @@ module test_l2_cache(input clk, input reset);
                 26:
                 begin
                     assert(!l2_response_valid);
-                    l2i_request_valid <= 1;
-                    l2i_request[0].id <= 0;
-                    l2i_request[0].packet_type = L2REQ_STORE;
-                    l2i_request[0].address = ADDR6;
-                    l2i_request[0].data = STORE_DATA6;
-                    l2i_request[0].store_mask = STORE_MASK6;
+                    send_l2_request(L2REQ_STORE, ADDR6, STORE_MASK6, STORE_DATA6);
                     state <= state + 1;
                 end
 
@@ -527,7 +499,7 @@ module test_l2_cache(input clk, input reset);
                     if (l2_response_valid)
                     begin
                         assert(l2_response.core == 0);
-                        assert(l2_response.id == 0);
+                        assert(l2_response.id == last_id);
                         assert(l2_response.packet_type == L2RSP_STORE_ACK);
                         assert(l2_response.cache_type == CT_DCACHE);
                         assert(l2_response.address == ADDR6);
@@ -540,11 +512,7 @@ module test_l2_cache(input clk, input reset);
                 28:
                 begin
                     assert(!l2_response_valid);
-                    l2i_request_valid <= 1;
-                    l2i_request[0].id <= 0;
-                    l2i_request[0].packet_type = L2REQ_LOAD;
-                    l2i_request[0].cache_type = CT_DCACHE;
-                    l2i_request[0].address = ADDR6;
+                    send_l2_request(L2REQ_LOAD, ADDR6);
                     state <= state + 1;
                 end
 
@@ -558,7 +526,7 @@ module test_l2_cache(input clk, input reset);
                     if (l2_response_valid)
                     begin
                         assert(l2_response.core == 0);
-                        assert(l2_response.id == 0);
+                        assert(l2_response.id == last_id);
                         assert(l2_response.packet_type == L2RSP_LOAD_ACK);
                         assert(l2_response.cache_type == CT_DCACHE);
                         assert(l2_response.address == ADDR6);
@@ -573,11 +541,7 @@ module test_l2_cache(input clk, input reset);
                 30:
                 begin
                     assert(!l2_response_valid);
-                    l2i_request_valid <= 1;
-                    l2i_request[0].id <= 2;
-                    l2i_request[0].packet_type = L2REQ_DINVALIDATE;
-                    l2i_request[0].cache_type = CT_DCACHE;
-                    l2i_request[0].address = ADDR0;
+                    send_l2_request(L2REQ_DINVALIDATE, ADDR0);
                     state <= state + 1;
                 end
 
@@ -590,7 +554,7 @@ module test_l2_cache(input clk, input reset);
                     if (l2_response_valid)
                     begin
                         assert(l2_response.core == 0);
-                        assert(l2_response.id == 2);
+                        assert(l2_response.id == last_id);
                         assert(l2_response.packet_type == L2RSP_DINVALIDATE_ACK);
                         assert(l2_response.cache_type == CT_DCACHE);
                         // XXX the address isn't set.
@@ -603,11 +567,7 @@ module test_l2_cache(input clk, input reset);
                 32:
                 begin
                     assert(!l2_response_valid);
-                    l2i_request_valid <= 1;
-                    l2i_request[0].id <= 1;
-                    l2i_request[0].packet_type = L2REQ_LOAD;
-                    l2i_request[0].cache_type = CT_DCACHE;
-                    l2i_request[0].address = ADDR0;
+                    send_l2_request(L2REQ_LOAD, ADDR0);
                     state <= state + 1;
                 end
 
@@ -651,7 +611,7 @@ module test_l2_cache(input clk, input reset);
                     if (l2_response_valid)
                     begin
                         assert(l2_response.core == 0);
-                        assert(l2_response.id == 1);
+                        assert(l2_response.id == last_id);
                         assert(l2_response.packet_type == L2RSP_LOAD_ACK);
                         assert(l2_response.cache_type == CT_DCACHE);
                         assert(l2_response.address == ADDR0);
@@ -667,11 +627,7 @@ module test_l2_cache(input clk, input reset);
                 36:
                 begin
                     assert(!l2_response_valid);
-                    l2i_request_valid <= 1;
-                    l2i_request[0].id <= 1;
-                    l2i_request[0].packet_type = L2REQ_IINVALIDATE;
-                    l2i_request[0].cache_type = CT_ICACHE;
-                    l2i_request[0].address = ADDR0;
+                    send_l2_request(L2REQ_IINVALIDATE, ADDR0);
                     state <= state + 1;
                 end
 
@@ -685,9 +641,9 @@ module test_l2_cache(input clk, input reset);
                     if (l2_response_valid)
                     begin
                         assert(l2_response.core == 0);
-                        assert(l2_response.id == 1);
+                        assert(l2_response.id == last_id);
                         assert(l2_response.packet_type == L2RSP_IINVALIDATE_ACK);
-                        assert(l2_response.cache_type == CT_ICACHE);
+                        assert(l2_response.cache_type == CT_DCACHE);
                         // XXX the address isn't set.
                         state <= state + 1;
                     end
