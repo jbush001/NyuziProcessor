@@ -146,7 +146,7 @@ module instruction_decode_stage(
     // tools just turn this into random logic. Should revisit this at some point.
     always_comb
     begin
-        casez (ifd_instruction[31:25])
+        unique casez (ifd_instruction[31:25])
             // Format R (register arithmetic)
             7'b110_000_?: dlut_out = {F, F, T, IMM_ZERO, SCLR1_4_0, SCLR2_19_15,   F, F, F, F, OP2_SRC_SCALAR2, MASK_SRC_ALL_ONES, F, F};
             7'b110_001_?: dlut_out = {F, T, T, IMM_ZERO, SCLR1_4_0, SCLR2_19_15,   T, F, F, T, OP2_SRC_SCALAR2, MASK_SRC_ALL_ONES, F, F};
@@ -275,7 +275,7 @@ module instruction_decode_stage(
         && !has_trap && !unary_arith;
     always_comb
     begin
-        case (dlut_out.scalar1_loc)
+        unique case (dlut_out.scalar1_loc)
             SCLR1_14_10: decoded_instr_nxt.scalar_sel1 = ifd_instruction[14:10];
             default: decoded_instr_nxt.scalar_sel1 = ifd_instruction[4:0]; //  src1
         endcase
@@ -288,7 +288,7 @@ module instruction_decode_stage(
     // other blocks read it. Added another signal to work around this.
     always_comb
     begin
-        case (dlut_out.scalar2_loc)
+        unique case (dlut_out.scalar2_loc)
             SCLR2_14_10: scalar_sel2 = ifd_instruction[14:10];
             SCLR2_19_15: scalar_sel2 = ifd_instruction[19:15];
             SCLR2_9_5: scalar_sel2 = ifd_instruction[9:5];
@@ -341,7 +341,7 @@ module instruction_decode_stage(
 
     always_comb
     begin
-        case (dlut_out.imm_loc)
+        unique case (dlut_out.imm_loc)
             IMM_EXT_19: decoded_instr_nxt.immediate_value = { ifd_instruction[23:10], ifd_instruction[4:0], 13'd0 };
             IMM_23_15: decoded_instr_nxt.immediate_value = scalar_t'($signed(ifd_instruction[23:15]));
             IMM_23_10: decoded_instr_nxt.immediate_value = scalar_t'($signed(ifd_instruction[23:10]));

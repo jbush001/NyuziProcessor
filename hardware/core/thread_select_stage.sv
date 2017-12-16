@@ -288,7 +288,7 @@ module thread_select_stage(
             begin
                 // There can be a writeback conflict even if the instruction doesn't
                 // write back to a register (if it cause a rollback, for example)
-                case (thread_instr[thread_idx].pipeline_sel)
+                unique case (thread_instr[thread_idx].pipeline_sel)
                     PIPE_INT_ARITH: writeback_conflict = writeback_allocate[0];
                     PIPE_MEM: writeback_conflict = writeback_allocate[1];
                     default: writeback_conflict = 0;
@@ -369,7 +369,7 @@ module thread_select_stage(
         writeback_allocate_nxt = {1'b0, writeback_allocate[WRITEBACK_ALLOC_STAGES - 1:1]};
         if (|thread_issue_oh)
         begin
-            case (issue_instr.pipeline_sel)
+            unique case (issue_instr.pipeline_sel)
                 PIPE_FLOAT_ARITH: writeback_allocate_nxt[3] = 1'b1;
                 PIPE_MEM: writeback_allocate_nxt[0] = 1'b1;
                 default:

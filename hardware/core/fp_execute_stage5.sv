@@ -136,7 +136,7 @@ module fp_execute_stage5(
             // If the operation is unordered (either operand is NaN), treat the result as false
             always_comb
             begin
-                case (fx4_instruction.alu_op)
+                unique case (fx4_instruction.alu_op)
                     OP_CMPGT_F: compare_result = !fx4_add_result_sign[lane_idx] && !sum_zero && !fx4_result_nan[lane_idx];
                     OP_CMPGE_F: compare_result = (!fx4_add_result_sign[lane_idx] || sum_zero) && !fx4_result_nan[lane_idx];
                     OP_CMPLT_F: compare_result = fx4_add_result_sign[lane_idx] && !sum_zero && !fx4_result_nan[lane_idx];

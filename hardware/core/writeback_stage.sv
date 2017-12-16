@@ -274,7 +274,7 @@ module writeback_stage(
     // Byte memory load aligner.
     always_comb
     begin
-        case (dd_request_vaddr.offset[1:0])
+        unique case (dd_request_vaddr.offset[1:0])
             2'd0: byte_aligned = mem_load_lane[31:24];
             2'd1: byte_aligned = mem_load_lane[23:16];
             2'd2: byte_aligned = mem_load_lane[15:8];
@@ -286,7 +286,7 @@ module writeback_stage(
     // Halfword memory load aligner.
     always_comb
     begin
-        case (dd_request_vaddr.offset[1])
+        unique case (dd_request_vaddr.offset[1])
             1'd0: half_aligned = {mem_load_lane[23:16], mem_load_lane[31:24]};
             1'd1: half_aligned = {mem_load_lane[7:0], mem_load_lane[15:8]};
             default: half_aligned = '0;
@@ -346,7 +346,7 @@ module writeback_stage(
         // wb_rollback_en is derived combinatorially from the instruction
         // that is about to retire, so this doesn't need to check
         // wb_rollback_thread_idx like other places.
-        case ({fx5_instruction_valid, ix_instruction_valid, dd_instruction_valid})
+        unique case ({fx5_instruction_valid, ix_instruction_valid, dd_instruction_valid})
             //
             // Floating point pipeline result
             //
@@ -538,7 +538,7 @@ module writeback_stage(
         // Used by testbench for cosimulation output
         __debug_store_sync <= dd_instruction_valid && !dd_instruction.load
             && memory_op == MEM_SYNC;
-        case ({fx5_instruction_valid, ix_instruction_valid, dd_instruction_valid})
+        unique case ({fx5_instruction_valid, ix_instruction_valid, dd_instruction_valid})
             3'b100:
             begin
                 __debug_wb_pc <= fx5_instruction.pc;

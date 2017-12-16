@@ -257,7 +257,7 @@ module l2_cache_read_stage(
             if (l2t_request_valid && (cache_hit || l2t_l2_fill))
             begin
                 // Track synchronized load/stores
-                case (l2t_request.packet_type)
+                unique case (l2t_request.packet_type)
                     L2REQ_LOAD_SYNC:
                     begin
                         load_sync_address[request_sync_slot] <= {l2t_request.address.tag, l2t_request.address.set_idx};

@@ -77,7 +77,7 @@ module l2_cache_update_stage(
     // Response packet type
     always_comb
     begin
-        case (l2r_request.packet_type)
+        unique case (l2r_request.packet_type)
             L2REQ_LOAD,
             L2REQ_LOAD_SYNC:
                 response_type = L2RSP_LOAD_ACK;

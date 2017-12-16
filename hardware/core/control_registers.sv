@@ -169,7 +169,7 @@ module control_registers
             //
             if (dd_creg_write_en)
             begin
-                case (dd_creg_index)
+                unique case (dd_creg_index)
                     CR_FLAGS:             trap_state[dt_thread_idx][0].flags <= flags_t'(dd_creg_write_val);
                     CR_SAVED_FLAGS:       trap_state[dt_thread_idx][1].flags <= flags_t'(dd_creg_write_val);
                     CR_TRAP_PC:           trap_state[dt_thread_idx][0].trap_pc <= dd_creg_write_val;
@@ -254,7 +254,7 @@ module control_registers
         //
         if (dd_creg_read_en)
         begin
-            case (dd_creg_index)
+            unique case (dd_creg_index)
                 CR_FLAGS:             cr_creg_read_val <= scalar_t'(trap_state[dt_thread_idx][0].flags);
                 CR_SAVED_FLAGS:       cr_creg_read_val <= scalar_t'(trap_state[dt_thread_idx][1].flags);
                 CR_THREAD_ID:         cr_creg_read_val <= scalar_t'({CORE_ID, dt_thread_idx});

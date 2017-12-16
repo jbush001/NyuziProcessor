@@ -128,7 +128,7 @@ module on_chip_debugger
     begin
         if (capture_dr)
         begin
-            case (instruction)
+            unique case (instruction)
                 INST_IDCODE: data_shift_reg <= JTAG_IDCODE;
                 INST_CONTROL: data_shift_reg <= 32'(control);
                 INST_TRANSFER_DATA: data_shift_reg <= data_to_host;
@@ -137,7 +137,7 @@ module on_chip_debugger
         end
         else if (shift_dr)
         begin
-            case (instruction)
+            unique case (instruction)
                 INST_BYPASS: data_shift_reg <= 32'(jtag.tdi);
                 INST_CONTROL: data_shift_reg <= 32'({jtag.tdi, data_shift_reg[$bits(debug_control_t) - 1:1]});
                 // Default covers any 32 bit transfer (most instructions)

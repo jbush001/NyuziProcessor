@@ -104,7 +104,7 @@ module int_execute_stage(
             // Count leading zeroes
             always_comb
             begin
-                casez (lane_operand2)
+                unique casez (lane_operand2)
                     32'b1???????????????????????????????: lz = 0;
                     32'b01??????????????????????????????: lz = 1;
                     32'b001?????????????????????????????: lz = 2;
@@ -145,7 +145,7 @@ module int_execute_stage(
             // Count trailing zeroes
             always_comb
             begin
-                casez (lane_operand2)
+                unique casez (lane_operand2)
                     32'b00000000000000000000000000000000: tz = 32;
                     32'b10000000000000000000000000000000: tz = 31;
                     32'b?1000000000000000000000000000000: tz = 30;
@@ -217,7 +217,7 @@ module int_execute_stage(
 
             always_comb
             begin
-                case (of_instruction.alu_op)
+                unique case (of_instruction.alu_op)
                     OP_ASHR,
                     OP_SHR: lane_result = rshift;
                     OP_SHL: lane_result = lane_operand1 << lane_operand2[4:0];
@@ -270,7 +270,7 @@ module int_execute_stage(
             && of_instruction.branch
             && !privileged_op_fault)
         begin
-            case (of_instruction.branch_type)
+            unique case (of_instruction.branch_type)
                 BRANCH_ZERO:
                 begin
                     branch_taken = of_operand1[0] == 0;
@@ -311,7 +311,7 @@ module int_execute_stage(
         ix_subcycle <= of_subcycle;
 
         // Branch handling
-        case (of_instruction.branch_type)
+        unique case (of_instruction.branch_type)
             BRANCH_CALL_REGISTER,
             BRANCH_REGISTER: ix_rollback_pc <= of_operand1[0];
             BRANCH_ERET: ix_rollback_pc <= cr_eret_address[of_thread_idx];

@@ -120,18 +120,18 @@ module operand_fetch_stage(
 
     always_comb
     begin
-        case (of_instruction.op1_src)
+        unique case (of_instruction.op1_src)
             OP1_SRC_VECTOR1: of_operand1 = vector_val1;
             default:         of_operand1 = {NUM_VECTOR_LANES{scalar_val1}};    // OP_SRC_SCALAR1
         endcase
 
-        case (of_instruction.op2_src)
+        unique case (of_instruction.op2_src)
             OP2_SRC_SCALAR2: of_operand2 = {NUM_VECTOR_LANES{scalar_val2}};
             OP2_SRC_VECTOR2: of_operand2 = vector_val2;
             default:         of_operand2 = {NUM_VECTOR_LANES{of_instruction.immediate_value}}; // OP2_SRC_IMMEDIATE
         endcase
 
-        case (of_instruction.mask_src)
+        unique case (of_instruction.mask_src)
             MASK_SRC_SCALAR1: of_mask_value = scalar_val1[NUM_VECTOR_LANES - 1:0];
             MASK_SRC_SCALAR2: of_mask_value = scalar_val2[NUM_VECTOR_LANES - 1:0];
             default:          of_mask_value = {NUM_VECTOR_LANES{1'b1}};    // MASK_SRC_ALL_ONES

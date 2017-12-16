@@ -81,7 +81,7 @@ module nyuzi
         begin
             if (io_bus.write_en)
             begin
-                case (io_bus.address)
+                unique0 case (io_bus.address)
                     // Thread enable flag handling. This is limited to 32 threads.
                     'h100: // resume thread
                         thread_en <= thread_en | io_bus.write_data[TOTAL_THREADS - 1:0];

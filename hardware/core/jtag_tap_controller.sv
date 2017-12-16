@@ -81,7 +81,7 @@ module jtag_tap_controller
     always_comb
     begin
         state_nxt = state_ff;
-        case (state_ff)
+        unique case (state_ff)
             JTAG_IDLE:
                 if (tms_sync)
                     state_nxt = JTAG_SELECT_DR_SCAN;
