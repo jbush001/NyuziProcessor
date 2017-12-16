@@ -42,6 +42,12 @@ module test_l2_cache(input clk, input reset);
 
     parameter DATA4 = 512'h593a8014753f107e6c5dab5bfad7b4057f22fde149e423c629160878ca4a8f91a3af3fdd0c57221dd753d3f237a3b3662a5504b6fda0dbc9440e8c6db7b0f083;
 
+    parameter ADDR5 = 'h20;
+
+    parameter ADDR6 = 'h2a;
+    parameter STORE_DATA6 = 512'hf5a858e020ac522f948f1a87be22855701e6bab71499e63a735aaf5e08cd797f3f2a1860f76c70ac8ad598e39ce771bd5e3de27cfe05f7646f06841420ec7830;
+    parameter STORE_MASK6 = 64'hffffffffffffffff;
+
     logic[`NUM_CORES - 1:0] l2i_request_valid;
     l2req_packet_t l2i_request[`NUM_CORES];
     logic l2_ready[`NUM_CORES];
@@ -76,7 +82,7 @@ module test_l2_cache(input clk, input reset);
             if (l2i_request_valid)
                 assert(l2_ready[0]);
 
-            case (state)
+            unique case (state)
                 //////////////////////////////////////////////////
                 // Load miss
                 //////////////////////////////////////////////////
@@ -405,7 +411,6 @@ module test_l2_cache(input clk, input reset);
                     assert(!l2_response_valid);
                     if (axi_bus.m_wvalid)
                     begin
-                        $display("m_wdata = %x", axi_bus.m_wdata);
                         assert(axi_bus.m_wdata == 32'(STORE_RESULT1 >> ((15 - axi_burst_offset) * 32)));
 
                         if (axi_burst_offset == 15)
@@ -465,9 +470,107 @@ module test_l2_cache(input clk, input reset);
                 end
 
                 //////////////////////////////////////////////////////////////
-                // Invalidate (we stored to ADDR0 earlier, so this is dirty)
+                // Flush a line that isn't cached at all. Should do nothing.
                 //////////////////////////////////////////////////////////////
                 24:
+                begin
+                    assert(!l2_response_valid);
+                    l2i_request_valid <= 1;
+                    l2i_request[0].id <= 1;
+                    l2i_request[0].packet_type = L2REQ_FLUSH;
+                    l2i_request[0].cache_type = CT_DCACHE;
+                    l2i_request[0].address = ADDR5;
+                    state <= state + 1;
+                end
+
+                // Ensure we get the response after with no AXI transaction.
+                25:
+                begin
+                    assert(!axi_bus.m_arvalid);
+                    assert(!axi_bus.m_awvalid);
+                    assert(!axi_bus.m_wvalid);
+                    if (l2_response_valid)
+                    begin
+                        assert(l2_response.core == 0);
+                        assert(l2_response.id == 1);
+                        assert(l2_response.packet_type == L2RSP_FLUSH_ACK);
+                        assert(l2_response.cache_type == CT_DCACHE);
+                        // XXX the address isn't set.
+                        state <= state + 1;
+                    end
+                end
+
+                //////////////////////////////////////////////////////////////
+                // Perform a write that fills an entire line and misses the
+                // cache. There is an optimization in the cache to not do
+                // a load in this case. We'll read it back to ensure it
+                // is properly cached.
+                //////////////////////////////////////////////////////////////
+                26:
+                begin
+                    assert(!l2_response_valid);
+                    l2i_request_valid <= 1;
+                    l2i_request[0].id <= 0;
+                    l2i_request[0].packet_type = L2REQ_STORE;
+                    l2i_request[0].address = ADDR6;
+                    l2i_request[0].data = STORE_DATA6;
+                    l2i_request[0].store_mask = STORE_MASK6;
+                    state <= state + 1;
+                end
+
+                // Wait for L2 response. Ensure there is no AXI transfer
+                27:
+                begin
+                    assert(!axi_bus.m_arvalid);
+                    assert(!axi_bus.m_awvalid);
+                    assert(!axi_bus.m_wvalid);
+                    if (l2_response_valid)
+                    begin
+                        assert(l2_response.core == 0);
+                        assert(l2_response.id == 0);
+                        assert(l2_response.packet_type == L2RSP_STORE_ACK);
+                        assert(l2_response.cache_type == CT_DCACHE);
+                        assert(l2_response.address == ADDR6);
+                        assert(l2_response.data == STORE_DATA6);
+                        state <= state + 1;
+                    end
+                end
+
+                // Perform a load transaction to ensure the data is cached.
+                28:
+                begin
+                    assert(!l2_response_valid);
+                    l2i_request_valid <= 1;
+                    l2i_request[0].id <= 0;
+                    l2i_request[0].packet_type = L2REQ_LOAD;
+                    l2i_request[0].cache_type = CT_DCACHE;
+                    l2i_request[0].address = ADDR6;
+                    state <= state + 1;
+                end
+
+                // As above, we should get the response immediately with no
+                // AXI transfer.
+                29:
+                begin
+                    assert(!axi_bus.m_arvalid);
+                    assert(!axi_bus.m_awvalid);
+                    assert(!axi_bus.m_wvalid);
+                    if (l2_response_valid)
+                    begin
+                        assert(l2_response.core == 0);
+                        assert(l2_response.id == 0);
+                        assert(l2_response.packet_type == L2RSP_LOAD_ACK);
+                        assert(l2_response.cache_type == CT_DCACHE);
+                        assert(l2_response.address == ADDR6);
+                        assert(l2_response.data == STORE_DATA6);
+                        state <= state + 1;
+                    end
+                end
+
+                //////////////////////////////////////////////////////////////
+                // Invalidate (we stored to ADDR0 earlier, so this is dirty)
+                //////////////////////////////////////////////////////////////
+                30:
                 begin
                     assert(!l2_response_valid);
                     l2i_request_valid <= 1;
@@ -479,7 +582,7 @@ module test_l2_cache(input clk, input reset);
                 end
 
                 // Response comes back with no AXI write
-                25:
+                31:
                 begin
                     assert(!axi_bus.m_arvalid);
                     assert(!axi_bus.m_awvalid);
@@ -497,7 +600,7 @@ module test_l2_cache(input clk, input reset);
 
                 // try to reload this address, ensure it attempts a read (confirming
                 // it was invalidated).
-                26:
+                32:
                 begin
                     assert(!l2_response_valid);
                     l2i_request_valid <= 1;
@@ -509,7 +612,7 @@ module test_l2_cache(input clk, input reset);
                 end
 
                 // wait for address
-                27:
+                33:
                 begin
                     assert(!l2_response_valid);
                     assert(!axi_bus.m_awvalid);
@@ -525,7 +628,7 @@ module test_l2_cache(input clk, input reset);
                 end
 
                 // Transfer data
-                28:
+                34:
                 begin
                     assert(!l2_response_valid);
                     if (axi_bus.m_rready)
@@ -539,7 +642,7 @@ module test_l2_cache(input clk, input reset);
 
                 // End of transaction, verify data in response is the new data
                 // read from memory and not what was written there previously
-                29:
+                35:
                 begin
                     assert(!axi_bus.m_arvalid);
                     assert(!axi_bus.m_awvalid);
@@ -561,7 +664,7 @@ module test_l2_cache(input clk, input reset);
                 // Send an L2REQ_IINVALIDATE. This is just a pass through
                 // that gets broadcasted to all cores.
                 //////////////////////////////////////////////////////////////
-                30:
+                36:
                 begin
                     assert(!l2_response_valid);
                     l2i_request_valid <= 1;
@@ -573,7 +676,7 @@ module test_l2_cache(input clk, input reset);
                 end
 
                 // Check response
-                31:
+                37:
                 begin
                     assert(!axi_bus.m_arvalid);
                     assert(!axi_bus.m_awvalid);
@@ -590,7 +693,7 @@ module test_l2_cache(input clk, input reset);
                     end
                 end
 
-                32:
+                38:
                 begin
                     $display("PASS");
                     $finish;
