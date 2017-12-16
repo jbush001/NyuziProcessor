@@ -60,7 +60,7 @@ module test_l2_cache_pending_miss_cam(input clk, input reset);
             request_valid <= 0;
 
             count <= count + 1;
-            case (count)
+            unique0 case (count)
                 // Enqueue a few load request
                 0: enqueue_request(ADDR1, 1, 0);
                 1:
@@ -111,7 +111,7 @@ module test_l2_cache_pending_miss_cam(input clk, input reset);
                     enqueue_request(ADDR4, 0, 0);
                 end
 
-                5:
+                7:
                 begin
                     assert(!duplicate_request);
 
@@ -120,7 +120,7 @@ module test_l2_cache_pending_miss_cam(input clk, input reset);
                     enqueue_request(ADDR4, 1, 0);
                 end
 
-                6:
+                8:
                 begin
                     assert(!duplicate_request);
 
@@ -129,16 +129,16 @@ module test_l2_cache_pending_miss_cam(input clk, input reset);
                 end
 
                 // Need to wait a for next clock cycle for this to take effect
-                7:  assert(!duplicate_request);
+                9:  assert(!duplicate_request);
 
-                8:
+                10:
                 begin
                     // Validate request was completed by reissuing and insuring it
                     // is not marked as a dup.
                     enqueue_request(ADDR2, 1, 0);
                 end
 
-                8:
+                11:
                 begin
                     assert(!duplicate_request);
 
@@ -148,9 +148,9 @@ module test_l2_cache_pending_miss_cam(input clk, input reset);
                 end
 
                 // Check entry. This should still be a dup.
-                9:  enqueue_request(ADDR3, 1, 0);
+                12:  enqueue_request(ADDR3, 1, 0);
 
-                10:
+                13:
                 begin
                     assert(duplicate_request);
                     $display("PASS");

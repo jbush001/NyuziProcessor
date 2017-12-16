@@ -57,7 +57,7 @@ module l2_cache_pending_miss_cam
         .one_hot(next_empty_oh),
         .index(next_empty));
 
-    assign duplicate_request = cam_hit;
+    assign duplicate_request = cam_hit && !l2r_l2_fill;
 
     cam #(
         .NUM_ENTRIES(QUEUE_SIZE),
