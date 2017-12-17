@@ -59,7 +59,7 @@ int main(int argc, const char *argv[])
         100, 200,	// PERF_INSTRUCTION_RETIRED
         100, 200,	// PERF_INSTRUCTION_ISSUED
         0, 5,		// PERF_ICACHE_MISS
-        400, 500,	// PERF_ICACHE_HIT
+        390, 500,	// PERF_ICACHE_HIT
         0, 0,		// PERF_ITLB_MISS
         0, 0,		// PERF_DCACHE_MISS
         10, 30,		// PERF_DCACHE_HIT
