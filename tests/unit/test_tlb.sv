@@ -48,7 +48,7 @@ module test_tlb(input clk, input reset);
     logic lookup_present;
     logic lookup_exe_writable;
     logic lookup_supervisor;
-    int count;
+    int cycle;
 
     tlb #(.NUM_ENTRIES(16)) tlb(.*);
 
@@ -82,7 +82,7 @@ module test_tlb(input clk, input reset);
     begin
         if (reset)
         begin
-            count <= 0;
+            cycle <= 0;
             lookup_en <= 0;
             update_en <= 0;
             invalidate_en <= 0;
@@ -103,8 +103,8 @@ module test_tlb(input clk, input reset);
             invalidate_en <= 0;
             invalidate_all_en <= 0;
 
-            count <= count + 1;
-            unique0 case (count)
+            cycle <= cycle + 1;
+            unique0 case (cycle)
                 // Insert entries into table
                 0: update_page(VPAGE1, PPAGE1, 0, 1, 0, 1, 1);
                 1: update_page(VPAGE2, PPAGE2, 0, 0, 0, 0, 0);

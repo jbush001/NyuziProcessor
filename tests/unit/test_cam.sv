@@ -31,7 +31,7 @@ module test_cam(input clk, input reset);
     logic [KEY_WIDTH - 1:0] update_key;
     logic [INDEX_WIDTH - 1:0] update_idx;
     logic update_valid;
-    int count;
+    int cycle;
 
     cam #(
         .NUM_ENTRIES(NUM_ENTRIES),
@@ -43,7 +43,7 @@ module test_cam(input clk, input reset);
     begin
         if (reset)
         begin
-            count <= 0;
+            cycle <= 0;
             lookup_key <= '0;
             update_en <= 0;
             update_key <= 0;
@@ -52,8 +52,8 @@ module test_cam(input clk, input reset);
         end
         else
         begin
-            count <= count + 1;
-            unique case (count)
+            cycle <= cycle + 1;
+            unique case (cycle)
                 // Insert a few entries
                 0:
                 begin

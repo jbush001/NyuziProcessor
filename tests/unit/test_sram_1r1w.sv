@@ -36,7 +36,7 @@ module test_sram_1r1w(input clk, input reset);
     localparam DATA3 = 'h47b06ea2;
     localparam DATA4 = 'hdff64bb1;
 
-    int count;
+    int cycle;
 
     // These signals are shared between both memories
     logic write_en;
@@ -70,15 +70,15 @@ module test_sram_1r1w(input clk, input reset);
     always @(posedge clk, posedge reset)
     begin
         if (reset)
-            count <= 0;
+            cycle <= 0;
         else
         begin
             // Default values
             write_en <= 0;
             read_en <= 0;
 
-            count <= count + 1;
-            unique0 case (count)
+            cycle <= cycle + 1;
+            unique0 case (cycle)
                 // Write some values
                 0:
                 begin

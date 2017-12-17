@@ -20,7 +20,7 @@ module test_rr_arbiter(input clk, input reset);
     logic[NUM_REQUESTERS - 1:0] request;
     logic update_lru;
     logic[NUM_REQUESTERS - 1:0] grant_oh;
-    int count;
+    int cycle;
 
     rr_arbiter #(.NUM_REQUESTERS(4)) rr_arbiter(.*);
 
@@ -28,14 +28,14 @@ module test_rr_arbiter(input clk, input reset);
     begin
         if (reset)
         begin
-            count <= 0;
+            cycle <= 0;
             request <= 0;
             update_lru <= 0;
         end
         else
         begin
-            count <= count + 1;
-            unique case (count)
+            cycle <= cycle + 1;
+            unique case (cycle)
                 // Make all inputs request
                 0:
                 begin

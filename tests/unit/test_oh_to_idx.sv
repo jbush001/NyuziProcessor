@@ -24,7 +24,7 @@ module test_oh_to_idx(input clk, input reset);
     logic[2:0] index0;
     logic[2:0] index1;
     logic[NUM_SIGNALS - 1:0] one_hot;
-    int counter;
+    int cycle;
 
     oh_to_idx #(
         .NUM_SIGNALS(NUM_SIGNALS),
@@ -43,21 +43,21 @@ module test_oh_to_idx(input clk, input reset);
     always @(posedge clk, posedge reset)
     begin
         if (reset)
-            counter <= 0;
+            cycle <= 0;
         else
         begin
-            if (counter == 8)
+            if (cycle == 8)
             begin
                 $display("PASS");
                 $finish;
             end
 
-            one_hot <= 1 << counter;
-            counter <= counter + 1;
-            if (counter > 0)
+            one_hot <= 1 << cycle;
+            cycle <= cycle + 1;
+            if (cycle > 0)
             begin
-                assert(index0 == 3'(counter - 1));
-                assert(index1 == 3'(8 - counter));
+                assert(index0 == 3'(cycle - 1));
+                assert(index1 == 3'(8 - cycle));
             end
         end
     end

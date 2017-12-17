@@ -20,7 +20,7 @@ import defines::*;
 
 module test_scoreboard(input clk, input reset);
     decoded_instruction_t next_instruction;
-    int counter;
+    int cycle;
     logic scoreboard_can_issue;
     logic will_issue;
     logic writeback_en;
@@ -65,7 +65,7 @@ module test_scoreboard(input clk, input reset);
     always @(posedge clk, posedge reset)
     begin
         if (reset)
-            counter <= 0;
+            cycle <= 0;
         else
         begin
             // By default, clear all instruction fields
@@ -74,8 +74,8 @@ module test_scoreboard(input clk, input reset);
             writeback_en <= 0;
             rollback_en <= 0;
 
-            counter <= counter + 1;
-            unique0 case (counter)
+            cycle <= cycle + 1;
+            unique0 case (cycle)
                 // Test setting and clearing scoreboard bits during instruction
                 // issue/retire
                 0:
