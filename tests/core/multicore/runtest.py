@@ -26,10 +26,10 @@ sys.path.insert(0, '../..')
 import test_harness
 
 
-@test_harness.test
-def multicore(_):
+@test_harness.test(['verilator'])
+def multicore(_, target):
     test_harness.build_program(['multicore.c'])
-    result = test_harness.run_program(environment='verilator')
+    result = test_harness.run_program(target)
     if '012345678910111213141516171819202122232425262728293031' not in result.replace('\n', ''):
         raise test_harness.TestException('Output mismatch:\n' + result)
 

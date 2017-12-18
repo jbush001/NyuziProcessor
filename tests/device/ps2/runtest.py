@@ -23,10 +23,10 @@ sys.path.insert(0, '../..')
 import test_harness
 
 
-@test_harness.test
-def ps2(_):
+@test_harness.test(['verilator'])
+def ps2(_, target):
     test_harness.build_program(['ps2.c'])
-    result = test_harness.run_program(environment='verilator')
+    result = test_harness.run_program(target)
     if 'PASS' not in result:
         raise test_harness.TestException(
             'program did not indicate pass\n' + result)

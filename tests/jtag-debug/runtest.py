@@ -201,8 +201,8 @@ class JTAGTestFixture(object):
             self.output += got.decode()
 
 
-@test_harness.test
-def jtag_idcode(_):
+@test_harness.test(['verilator'])
+def jtag_idcode(_, target):
     """
     Validate response to IDCODE request
     """
@@ -218,8 +218,8 @@ def jtag_idcode(_):
         fixture.expect_data(EXPECTED_IDCODE)
 
 
-@test_harness.test
-def jtag_reset(_):
+@test_harness.test(['verilator'])
+def jtag_reset(_, target):
     """
     Test transition to reset state
     """
@@ -238,8 +238,8 @@ def jtag_reset(_):
         fixture.expect_data(EXPECTED_IDCODE)
 
 
-@test_harness.test
-def jtag_bypass(_):
+@test_harness.test(['verilator'])
+def jtag_bypass(_, target):
     """
     Validate BYPASS instruction, which is a single bit data register
     We should get what we send, shifted by one bit.
@@ -251,8 +251,8 @@ def jtag_bypass(_):
         fixture.expect_data(value << 1)
 
 
-@test_harness.test
-def test_instruction_shift(_):
+@test_harness.test(['verilator'])
+def test_instruction_shift(_, target):
     """
     Ensure instruction bits shifted into TDI come out TDO. This is necessary
     to properly chain JTAG devices together.
@@ -267,8 +267,8 @@ def test_instruction_shift(_):
         fixture.test_instruction_shift(0)
 
 
-@test_harness.test
-def jtag_data_transfer(_):
+@test_harness.test(['verilator'])
+def jtag_data_transfer(_, target):
     """
     Validate bi-directional transfer. The TRANSFER_DATA instruction
     returns the old value of the control register while shifting a new
@@ -284,8 +284,8 @@ def jtag_data_transfer(_):
         fixture.expect_data(0xb282dc16)
 
 
-@test_harness.test
-def jtag_inject(_):
+@test_harness.test(['verilator'])
+def jtag_inject(_, target):
     """
     Test instruction injection, with multiple threads
     """
@@ -329,8 +329,8 @@ def jtag_inject(_):
 
 
 # XXX currently disabled because of issue #128
-#@test_harness.test
-def jtag_read_write_pc(_):
+#@test_harness.test(['verilator'])
+def jtag_read_write_pc(_, target):
     """
     Use the call instruction to read the program counter. The injection
     logic is supposed to simulate each instruction having the PC of the

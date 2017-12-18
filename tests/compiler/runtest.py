@@ -23,32 +23,25 @@ sys.path.insert(0, '..')
 import test_harness
 
 
-def run_verilator_test(source_file):
-    test_harness.build_program([source_file])
-    result = test_harness.run_program(environment='verilator')
-    test_harness.check_result(source_file, result)
-
-
-def run_host_test(source_file):
-    subprocess.check_call(['c++', '-w', source_file, '-o', 'obj/a.out'])
-    result = subprocess.check_output('obj/a.out')
-    test_harness.check_result(source_file, result)
-
-
-def run_emulator_test(source_file):
-    test_harness.build_program([source_file])
-    result = test_harness.run_program(environment='emulator')
-    test_harness.check_result(source_file, result)
+def run_compiler_test(source_file, target):
+    if target == 'host':
+        subprocess.check_call(['c++', '-w', source_file, '-o', 'obj/a.out'])
+        result = subprocess.check_output('obj/a.out')
+        test_harness.check_result(source_file, result)
+    else:
+        test_harness.build_program([source_file])
+        result = test_harness.run_program(target)
+        test_harness.check_result(source_file, result)
 
 test_list = [fname for fname in test_harness.find_files(
     ('.c', '.cpp')) if not fname.startswith('_')]
 
-if 'USE_VERILATOR' in os.environ:
-    test_list = [fname for fname in test_list if 'noverilator' not in fname]
-    test_harness.register_tests(run_verilator_test, test_list)
-elif 'USE_HOSTCC' in os.environ:
-    test_harness.register_tests(run_host_test, test_list)
-else:
-    test_harness.register_tests(run_emulator_test, test_list)
+both_targets = [fname for fname in test_list if 'noverilator' not in fname]
+test_harness.register_tests(run_compiler_test, both_targets, ['emulator', 'verilator'])
+
+emulator_only = [fname for fname in test_list if 'noverilator' in fname]
+test_harness.register_tests(run_compiler_test, emulator_only, ['emulator'])
+
+# XXX does not add host tests, need to do that explicitly
 
 test_harness.execute_tests()

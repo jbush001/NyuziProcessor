@@ -27,11 +27,11 @@ sys.path.insert(0, '../..')
 import test_harness
 
 
-@test_harness.test
-def atomic(_):
+@test_harness.test(['verilator'])
+def atomic(_, target):
     test_harness.build_program(['atomic.S'])
     test_harness.run_program(
-        environment='verilator',
+        target=target,
         dump_file='obj/vmem.bin',
         dump_base=0x100000,
         dump_length=0x800,

@@ -65,7 +65,7 @@ test:
 	cd device/uart && $(PYTHON) ./runtest.py
 	cd libc && $(PYTHON) ./runtest.py
 	cd compiler-rt && $(PYTHON) ./runtest.py
-	cd compiler && USE_VERILATOR=1 $(PYTHON) ./runtest.py
+	cd compiler && $(PYTHON) ./runtest.py --target verilator
 	cd compiler && $(PYTHON) ./runtest.py *noverilator.*
 	cd cosimulation && $(PYTHON) ./runtest.py
 	cd fpga && make

@@ -22,8 +22,8 @@ sys.path.insert(0, '..')
 import test_harness
 
 
-@test_harness.test
-def filesystem(_):
+@test_harness.test(['emulator'])
+def filesystem(_, target):
     '''
     Filesystem tests. This creates a filesystem image with the test file fstest.txt
     in it, the compiles the program fs.c to perform operations on it. The program
@@ -34,16 +34,16 @@ def filesystem(_):
     subprocess.check_output(
         [test_harness.PROJECT_TOP + '/bin/mkfs', 'obj/fsimage.bin',
          'fstest.txt'], stderr=subprocess.STDOUT)
-    result = test_harness.run_program(environment='emulator',
+    result = test_harness.run_program(target='emulator',
                                       block_device='obj/fsimage.bin')
     if 'PASS' not in result:
         raise test_harness.TestException(
             'test program did not indicate pass\n' + result)
 
 
-def run_emulator_test(source_file):
+def run_test(source_file, target):
     test_harness.build_program([source_file])
-    result = test_harness.run_program(environment='emulator')
+    result = test_harness.run_program(target)
     test_harness.check_result(source_file, result)
 
 # hack: register all source files in this directory except for fs test,
@@ -51,5 +51,5 @@ def run_emulator_test(source_file):
 test_list = [fname for fname in test_harness.find_files(
     ('.c', '.cpp')) if not fname.startswith('_')]
 test_list.remove('fs.c')
-test_harness.register_tests(run_emulator_test, test_list)
+test_harness.register_tests(run_test, test_list, ['emulator'])
 test_harness.execute_tests()

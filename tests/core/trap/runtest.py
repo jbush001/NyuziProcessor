@@ -25,16 +25,10 @@ sys.path.insert(0, '../..')
 import test_harness
 
 
-@test_harness.test_all_envs
-def run_io_interrupt(name):
-    underscore = name.rfind('_')
-    if underscore == -1:
-        raise test_harness.TestException(
-            'Internal error: run_io_interrupt did not have type')
-
-    environment = name[underscore + 1:]
+@test_harness.test
+def run_io_interrupt(name, target):
     test_harness.build_program(['io_interrupt.S'])
-    result = test_harness.run_program(environment=environment)
+    result = test_harness.run_program(target)
     lines = result.split('\n')
     output = None
 
@@ -73,8 +67,8 @@ RECV_PIPE_NAME = '/tmp/nyuzi_emulator_recvint'
 SEND_PIPE_NAME = '/tmp/nyuzi_emulator_sendint'
 
 
-@test_harness.test
-def recv_host_interrupt(_):
+@test_harness.test(['emulator'])
+def recv_host_interrupt(_, target):
     try:
         os.remove(RECV_PIPE_NAME)
     except OSError:
@@ -114,8 +108,8 @@ def recv_host_interrupt(_):
 # XXX A number of error cases do not clean up resources
 
 
-@test_harness.test
-def send_host_interrupt(_):
+@test_harness.test(['emulator'])
+def send_host_interrupt(_, target):
     try:
         os.remove(SEND_PIPE_NAME)
     except OSError:

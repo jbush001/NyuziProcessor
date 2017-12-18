@@ -100,8 +100,7 @@ int main(int argc, char **argv, char **env)
 }
 '''
 
-def run_unit_test(filename):
-
+def run_unit_test(filename, target):
     shutil.rmtree(path='obj/', ignore_errors=True)
 
     filestem, _ = os.path.splitext(filename)
@@ -157,7 +156,7 @@ def run_unit_test(filename):
         raise test_harness.TestException('test failed:\n' + result.decode());
 
 test_harness.register_tests(run_unit_test,
-                            test_harness.find_files(('.sv', '.v')))
+                            test_harness.find_files(('.sv', '.v')), ['verilator'])
 test_harness.execute_tests()
 
 

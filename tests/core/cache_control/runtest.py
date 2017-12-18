@@ -29,11 +29,11 @@ import test_harness
 BASE_ADDRESS = 0x400000
 
 
-@test_harness.test
-def dflush(_):
+@test_harness.test(['verilator'])
+def dflush(name, target):
     test_harness.build_program(['dflush.S'])
     test_harness.run_program(
-        environment='verilator',
+        target=target,
         dump_file='obj/vmem.bin',
         dump_base=BASE_ADDRESS,
         dump_length=0x40000)
@@ -50,11 +50,11 @@ def dflush(_):
                     BASE_ADDRESS + (index * 4)) + ' want ' + str(expected) + ' got ' + str(num_val))
 
 
-@test_harness.test
-def dinvalidate(_):
+@test_harness.test(['verilator'])
+def dinvalidate(_, target):
     test_harness.build_program(['dinvalidate.S'])
     result = test_harness.run_program(
-        environment='verilator',
+        target=target,
         dump_file='obj/vmem.bin',
         dump_base=0x2000,
         dump_length=4,
@@ -75,18 +75,18 @@ def dinvalidate(_):
                 'memory contents were incorrect: ' + hex(num_val))
 
 
-@test_harness.test
-def dflush_wait(_):
+@test_harness.test(['verilator'])
+def dflush_wait(_, target):
     test_harness.build_program(['dflush_wait.S'])
-    output = test_harness.run_program(environment='verilator')
+    output = test_harness.run_program(target)
     if 'PASS' not in output:
         raise test_harness.TestException('Test did not signal pass: ' + output)
 
 
-@test_harness.test
-def iinvalidate(_):
+@test_harness.test(['verilator'])
+def iinvalidate(_, target):
     test_harness.build_program(['iinvalidate.S'])
-    output = test_harness.run_program(environment='verilator')
+    output = test_harness.run_program(target)
     if 'PASS' not in output:
         raise test_harness.TestException('Test did not signal pass: ' + output)
 

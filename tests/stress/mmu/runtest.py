@@ -32,11 +32,11 @@ PAGE_SIZE = 0x1000
 MEMORY_SIZE = 0x20000   # Size of mapped region per thread
 DUMP_BASE = 0x10000     # Physical address, is 4k in virtual address space
 
-@test_harness.test
-def random_access_mmu_stress(_):
+@test_harness.test(['verilator'])
+def random_access_mmu_stress(_, target):
     test_harness.build_program(['random_access.S'])
     test_harness.run_program(
-        environment='verilator',
+        target=target,
         dump_file='obj/vmem.bin',
         dump_base=DUMP_BASE,
         dump_length=MEMORY_SIZE * NUM_THREADS,

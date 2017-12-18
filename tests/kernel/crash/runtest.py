@@ -21,16 +21,10 @@ sys.path.insert(0, '../..')
 import test_harness
 
 
-@test_harness.test_all_envs
-def kernel_crash(name):
-    underscore = name.rfind('_')
-    if underscore == -1:
-        raise test_harness.TestException(
-            'Internal error: unknown environment')
-
-    environment = name[underscore + 1:]
+@test_harness.test
+def kernel_crash(name, target):
     test_harness.build_program(['crash.c'], image_type='user')
-    result = test_harness.run_kernel(environment=environment, timeout=240)
+    result = test_harness.run_kernel(target=target, timeout=240)
     test_harness.check_result('crash.c', result)
 
 test_harness.execute_tests()

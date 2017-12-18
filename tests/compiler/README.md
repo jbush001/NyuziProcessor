@@ -17,13 +17,16 @@ To run a specific test:
 
     ./runtest.py *program names*
 
+To run only on emulator:
+
+    ./runtest.py --target emulator *program names*
+
 * The test script skips filenames that begin with underscore, which is
   useful for known failing cases.
-* Set the environment variable USE_VERILATOR to run the program under hardware
-  simulation instead of the emulator. This skips tests with "noverilator" in
-  the filename (used for tests that take too long to run in verilator).
-* Set USE_HOSTCC to run on the host. This is useful for checking that the test
-  is valid. Some tests fail in this configuration because they use intrinsics
+* This skips tests with "noverilator" in the filename (used for tests that
+  take too long to run in verilator).
+* Modify runtest.py to enable 'host' target, which will run on host machine.
+  Some tests fail in this configuration because they use intrinsics
   that exist only for Nyuzi. TODO: should make this output CHECK comments with
   appropriate strings.
 * The Csmith random generation tool generated The csmith* tests:

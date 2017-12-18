@@ -144,8 +144,8 @@ def parse_stack_crawl(response):
     return stack_info
 
 
-@test_harness.test
-def lldb(_):
+@test_harness.test(['emulator'])
+def lldb(_, target):
     """This mainly validates that LLDB is reading symbols correctly."""
 
     hexfile = test_harness.build_program(

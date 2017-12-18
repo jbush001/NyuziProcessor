@@ -58,8 +58,8 @@ def sharedmem_transact(memory, value):
 
     return read_shared_memory(memory, VALUE_ADDR)
 
-@test_harness.test
-def shared_memory(_):
+@test_harness.test(['emulator'])
+def shared_memory(_, target):
     """See coprocessor.c for an explanation of this test"""
 
     test_harness.build_program(['coprocessor.c'])

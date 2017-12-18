@@ -35,8 +35,8 @@ VERSION_RE = re.compile(r'csmith (?P<version>[0-9\.]+)')
 CHECKSUM_RE = re.compile(r'checksum = (?P<checksum>[0-9A-Fa-f]+)')
 
 
-@test_harness.test
-def run_csmith_test(_):
+@test_harness.test(['emulator'])
+def run_csmith_test(_, target):
     # Find version of csmith
     result = subprocess.check_output(['csmith', '-v']).decode()
     got = VERSION_RE.search(result)
@@ -71,7 +71,7 @@ def run_csmith_test(_):
 
         # Compile and run under emulator
         test_harness.build_program([source_file], cflags=[csmith_include])
-        result = test_harness.run_program(environment='emulator')
+        result = test_harness.run_program(target)
         got = CHECKSUM_RE.search(result)
         if not got:
             raise test_harness.TestException('no checksum in host output')

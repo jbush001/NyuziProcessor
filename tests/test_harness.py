@@ -20,6 +20,7 @@ in subdirectories under this one.
 """
 
 from __future__ import print_function
+import argparse
 import binascii
 import os
 import re
@@ -164,7 +165,7 @@ def _run_test_with_timeout(args, timeout):
 
 
 def run_program(
-        environment='emulator',
+        target='emulator',
         block_device=None,
         dump_file=None,
         dump_base=None,
@@ -178,7 +179,7 @@ def run_program(
     This uses the hex file produced by build_program.
 
     Args:
-            environment: Which environment to execute in. Can be 'verilator'
+            target: Which target will run the program. Can be 'verilator'
                or 'emulator'.
             block_device: Relative path to a file that contains a filesystem image.
                If passed, contents will appear as a virtual SDMMC device.
@@ -198,7 +199,7 @@ def run_program(
     if not executable:
         executable = HEX_FILE
 
-    if environment == 'emulator':
+    if target == 'emulator':
         args = [BIN_DIR + 'emulator']
         args += [ '-a' ] # Enable thread scheduling randomization by default
         if block_device:
@@ -210,7 +211,7 @@ def run_program(
 
         args += [executable]
         return _run_test_with_timeout(args, timeout)
-    elif environment == 'verilator':
+    elif target == 'verilator':
         args = [BIN_DIR + 'verilator_model']
         if block_device:
             args += ['+block=' + block_device]
@@ -233,11 +234,11 @@ def run_program(
 
         return output
     else:
-        raise TestException('Unknown execution environment')
+        raise TestException('Unknown execution target')
 
 
 def run_kernel(
-        environment='emulator',
+        target='emulator',
         timeout=60):
     """Run test program as a user space program under the kernel.
 
@@ -246,7 +247,7 @@ def run_kernel(
     with that image automatically.
 
     Args:
-            environment: Which environment to execute in. Can be 'verilator'
+            target: Which target to execute on. Can be 'verilator'
                or 'emulator'.
 
     Returns:
@@ -260,7 +261,7 @@ def run_kernel(
     subprocess.check_output([BIN_DIR + 'mkfs', block_file, ELF_FILE],
                             stderr=subprocess.STDOUT)
 
-    return run_program(environment=environment, block_device=block_file,
+    return run_program(target=target, block_device=block_file,
         timeout=timeout, executable=PROJECT_TOP + '/software/kernel/kernel.hex')
 
 def assert_files_equal(file1, file2, error_msg='file mismatch'):
@@ -327,7 +328,7 @@ def assert_files_equal(file1, file2, error_msg='file mismatch'):
 registered_tests = []
 
 
-def register_tests(func, names):
+def register_tests(func, names, targets=['emulator', 'verilator']):
     """Add a list of tests to be run when execute_tests is called.
 
     This function can be called multiple times, it will append passed
@@ -346,26 +347,22 @@ def register_tests(func, names):
      """
 
     global registered_tests
-    registered_tests += [(func, name) for name in names]
+    registered_tests += [(func, name, targets) for name in names]
 
 
-def test(func):
-    """decorator @test automatically registers test to be run
-    This will call the function, with its name as a parameter
+def test(targets=['emulator', 'verilator']):
     """
-    register_tests(func, [func.__name__])
-
-
-def test_all_envs(func):
-    """decorator @test_both registers this test to be run twice,
-    Once with _emulator appended and once with _verilator appended
+    decorator @test automatically registers test to be run
+    pass an optional list of targets that are valid for this test
     """
-    register_tests(func, [func.__name__ + '_emulator',
-                          func.__name__ + '_verilator'])
 
+    def register_func(func):
+        register_tests(func, [func.__name__], targets)
+
+    return register_func
 
 def find_files(extensions):
-    """Find files in the current directory that have certain extensions
+    """Return all files in the current directory that have the passed extensions
 
     Args:
             extensions: list of extensions, each starting with a dot. For example
@@ -383,11 +380,13 @@ def find_files(extensions):
 COLOR_RED = '[\x1b[31m'
 COLOR_GREEN = '[\x1b[32m'
 COLOR_NONE = '\x1b[0m]'
-OUTPUT_ALIGN = 40
+OUTPUT_ALIGN = 50
 
 
 def execute_tests():
-    """Run all tests that have been registered with the register_tests functions
+    """
+    *All tests are called from here*
+    Run all tests that have been registered with the register_tests functions
     and report results. If this fails, it will call sys.exit with a non-zero status.
 
     Args:
@@ -400,13 +399,18 @@ def execute_tests():
             Nothing
     """
 
-    if len(sys.argv) > 1:
-        # Filter test list based on command line requests
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--target', dest='target', help='restrict to only executing tests on this target')
+    parser.add_argument('names', nargs='*')
+    args = parser.parse_args()
+
+    # Filter based on names and targets
+    if args.names:
         tests_to_run = []
-        for requested in sys.argv[1:]:
-            for func, param in registered_tests:
+        for requested in args.names:
+            for func, param, targets in registered_tests:
                 if param == requested:
-                    tests_to_run += [(func, param)]
+                    tests_to_run += [(func, param, targets)]
                     break
             else:
                 print('Unknown test ' + requested)
@@ -415,21 +419,26 @@ def execute_tests():
         tests_to_run = registered_tests
 
     failing_tests = []
-    for func, param in tests_to_run:
-        print(param + (' ' * (OUTPUT_ALIGN - len(param))), end='')
-        sys.stdout.flush()
-        try:
-            func(param)
-            print(COLOR_GREEN + 'PASS' + COLOR_NONE)
-        except KeyboardInterrupt:
-            sys.exit(1)
-        except TestException as exc:
-            print(COLOR_RED + 'FAIL' + COLOR_NONE)
-            failing_tests += [(param, exc.args[0])]
-        except Exception as exc: # pylint: disable=W0703
-            print(COLOR_RED + 'FAIL' + COLOR_NONE)
-            failing_tests += [(param, 'Test threw exception:\n' +
-                               traceback.format_exc())]
+    for func, param, targets in tests_to_run:
+        for target in targets:
+            if args.target and args.target != target:
+                continue
+
+            label = param + ' (' + target + ')'
+            print(label + (' ' * (OUTPUT_ALIGN - len(label))), end='')
+            try:
+                sys.stdout.flush()
+                func(param, target)
+                print(COLOR_GREEN + 'PASS' + COLOR_NONE)
+            except KeyboardInterrupt:
+                sys.exit(1)
+            except TestException as exc:
+                print(COLOR_RED + 'FAIL' + COLOR_NONE)
+                failing_tests += [(param, exc.args[0])]
+            except Exception as exc: # pylint: disable=W0703
+                print(COLOR_RED + 'FAIL' + COLOR_NONE)
+                failing_tests += [(param, 'Test threw exception:\n' +
+                                   traceback.format_exc())]
 
     if failing_tests:
         print('Failing tests:')
@@ -529,27 +538,20 @@ def endian_swap(value):
             | ((value << 8) & 0xff0000) | (value << 24))
 
 
-def _run_generic_test(name):
+def _run_generic_test(name, target):
     """
     Name is the filename of a source file. This will compile it, run it,
     and call check_result, which will match expected strings in the source
     file with the programs output.
     """
 
-    underscore = name.rfind('_')
-    if underscore == -1:
-        raise TestException(
-            'Internal error: _run_generic_test did not have type')
-
-    environment = name[underscore + 1:]
-    basename = name[0:underscore]
-    build_program([basename + '.c'])
-    result = run_program(environment=environment)
-    check_result(basename + '.c', result)
+    build_program([name + '.c'])
+    result = run_program(target)
+    check_result(name + '.c', result)
 
 
 # XXX make this take a list of names
-def register_generic_test(name):
+def register_generic_test(name, targets=['emulator', 'verilator']):
     """Allows registering a test without having to create a test handler
     function. This will compile the passed filename, then use
     check_result to validate it against comment strings embedded in the file.
@@ -564,28 +566,20 @@ def register_generic_test(name):
     Raises:
             Nothing
     """
-    register_tests(_run_generic_test, [name + '_verilator'])
-    register_tests(_run_generic_test, [name + '_emulator'])
+    register_tests(_run_generic_test, name, targets)
 
 
-def _run_generic_assembly_test(name):
-    underscore = name.rfind('_')
-    if underscore == -1:
-        raise TestException(
-            'Internal error: _run_generic_test did not have type')
+def _run_generic_assembly_test(name, target):
+    build_program([name + '.S'])
+    result = run_program(target)
 
-    environment = name[underscore + 1:]
-    basename = name[0:underscore]
-
-    build_program([basename + '.S'])
-    result = run_program(environment=environment)
     if 'PASS' not in result or 'FAIL' in result:
         raise TestException('Test failed ' + result)
 
 # XXX should this somehow be combined with register_generic_test?
 
 
-def register_generic_assembly_tests(tests):
+def register_generic_assembly_tests(tests, targets=['emulator', 'verilator']):
     """Allows registering an assembly only test without having to
     create a test handler function. This will assemble the passed
     program, then look for PASS or FAIL strings.
@@ -600,6 +594,4 @@ def register_generic_assembly_tests(tests):
     Raises:
             Nothing
     """
-    for name in tests:
-        register_tests(_run_generic_assembly_test, [name + '_verilator'])
-        register_tests(_run_generic_assembly_test, [name + '_emulator'])
+    register_tests(_run_generic_assembly_test, tests, targets)

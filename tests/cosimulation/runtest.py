@@ -53,7 +53,7 @@ if verbose:
     emulator_args += ['-v']
 
 
-def run_cosimulation_test(source_file):
+def run_cosimulation_test(source_file, target):
     hexfile = test_harness.build_program([source_file])
     p1 = subprocess.Popen(
         verilator_args + ['+bin=' + hexfile], stdout=subprocess.PIPE)
@@ -81,6 +81,6 @@ def run_cosimulation_test(source_file):
                                     'final memory contents to not match')
 
 test_harness.register_tests(run_cosimulation_test,
-                            test_harness.find_files(('.s', '.S')))
+                            test_harness.find_files(('.s', '.S')), ['cosimulation'])
 
 test_harness.execute_tests()

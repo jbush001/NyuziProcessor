@@ -28,15 +28,15 @@ SOURCE_BLOCK_DEV = 'bdevimage.bin'
 MEMDUMP = 'memory.bin'
 
 
-@test_harness.test_all_envs
-def sdmmc_read(name):
+@test_harness.test
+def sdmmc_read(name, target):
     # Create random file
     with open(SOURCE_BLOCK_DEV, 'wb') as randfile:
         randfile.write(os.urandom(FILE_SIZE))
 
     test_harness.build_program(['sdmmc_read.c'])
     test_harness.run_program(
-        environment='emulator' if name.endswith('_emulator') else 'verilator',
+        target=target,
         block_device=SOURCE_BLOCK_DEV,
         dump_file=MEMDUMP,
         dump_base=0x200000,

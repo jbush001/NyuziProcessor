@@ -21,16 +21,10 @@ sys.path.insert(0, '../..')
 import test_harness
 
 
-@test_harness.test_all_envs
-def kernel_globalinit(name):
-    underscore = name.rfind('_')
-    if underscore == -1:
-        raise test_harness.TestException(
-            'Internal error: unknown environment')
-
-    environment = name[underscore + 1:]
+@test_harness.test
+def kernel_globalinit(name, target):
     test_harness.build_program(['constructor.cpp'], image_type='user')
-    result = test_harness.run_kernel(environment=environment, timeout=240)
+    result = test_harness.run_kernel(target=target, timeout=240)
     test_harness.check_result('constructor.cpp', result)
 
 test_harness.execute_tests()
