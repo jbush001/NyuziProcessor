@@ -37,6 +37,8 @@ BIN_DIR = PROJECT_TOP + '/bin/'
 OBJ_DIR = 'obj/'
 ELF_FILE = OBJ_DIR + 'program.elf'
 HEX_FILE = OBJ_DIR + 'program.hex'
+ALL_TARGETS = ['verilator', 'emulator']
+DEFAULT_TARGETS = ['verilator', 'emulator']
 
 
 class TestException(Exception):
@@ -328,7 +330,7 @@ def assert_files_equal(file1, file2, error_msg='file mismatch'):
 registered_tests = []
 
 
-def register_tests(func, names, targets=['emulator', 'verilator']):
+def register_tests(func, names, targets=ALL_TARGETS):
     """Add a list of tests to be run when execute_tests is called.
 
     This function can be called multiple times, it will append passed
@@ -350,7 +352,7 @@ def register_tests(func, names, targets=['emulator', 'verilator']):
     registered_tests += [(func, name, targets) for name in names]
 
 
-def test(targets=['emulator', 'verilator']):
+def test(targets=ALL_TARGETS):
     """
     decorator @test automatically registers test to be run
     pass an optional list of targets that are valid for this test
@@ -404,6 +406,11 @@ def execute_tests():
     parser.add_argument('names', nargs='*')
     args = parser.parse_args()
 
+    if args.target:
+        targets_to_run = [ args.target ]
+    else:
+        targets_to_run = DEFAULT_TARGETS
+
     # Filter based on names and targets
     if args.names:
         tests_to_run = []
@@ -421,7 +428,7 @@ def execute_tests():
     failing_tests = []
     for func, param, targets in tests_to_run:
         for target in targets:
-            if args.target and args.target != target:
+            if target not in targets_to_run:
                 continue
 
             label = param + ' (' + target + ')'
@@ -545,13 +552,13 @@ def _run_generic_test(name, target):
     file with the programs output.
     """
 
-    build_program([name + '.c'])
+    build_program([name])
     result = run_program(target)
-    check_result(name + '.c', result)
+    check_result(name, result)
 
 
 # XXX make this take a list of names
-def register_generic_test(name, targets=['emulator', 'verilator']):
+def register_generic_test(name, targets=ALL_TARGETS):
     """Allows registering a test without having to create a test handler
     function. This will compile the passed filename, then use
     check_result to validate it against comment strings embedded in the file.
@@ -566,20 +573,20 @@ def register_generic_test(name, targets=['emulator', 'verilator']):
     Raises:
             Nothing
     """
+
     register_tests(_run_generic_test, name, targets)
 
 
 def _run_generic_assembly_test(name, target):
-    build_program([name + '.S'])
+    build_program([name])
     result = run_program(target)
-
     if 'PASS' not in result or 'FAIL' in result:
         raise TestException('Test failed ' + result)
 
 # XXX should this somehow be combined with register_generic_test?
 
 
-def register_generic_assembly_tests(tests, targets=['emulator', 'verilator']):
+def register_generic_assembly_tests(tests, targets=ALL_TARGETS):
     """Allows registering an assembly only test without having to
     create a test handler function. This will assemble the passed
     program, then look for PASS or FAIL strings.

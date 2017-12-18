@@ -81,6 +81,6 @@ def run_cosimulation_test(source_file, target):
                                     'final memory contents to not match')
 
 test_harness.register_tests(run_cosimulation_test,
-                            test_harness.find_files(('.s', '.S')), ['cosimulation'])
+                            test_harness.find_files(('.s', '.S')), ['verilator'])
 
 test_harness.execute_tests()

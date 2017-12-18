@@ -20,15 +20,5 @@ import sys
 sys.path.insert(0, '../..')
 import test_harness
 
-test_harness.register_generic_assembly_tests([
-    'int_arithmetic',
-    'branch',
-    'compare',
-    'shuffle',
-    'load_store',
-    'atomic',
-    'float_ops',
-    'float'
-])
-
+test_harness.register_generic_assembly_tests(find_files(('.s', '.S')))
 test_harness.execute_tests()

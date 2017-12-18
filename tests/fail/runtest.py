@@ -46,8 +46,8 @@ def files_not_equal(_, target):
 def exception(_, target):
     raise Exception('some exception')
 
-test_harness.register_generic_test('crash', [''])
-test_harness.register_generic_test('check', [''])
-test_harness.register_generic_test('checkn', [''])
-test_harness.register_generic_test('compile_error', [''])
+test_harness.register_generic_test('crash.c', [''])
+test_harness.register_generic_test('check.c', [''])
+test_harness.register_generic_test('checkn.c', [''])
+test_harness.register_generic_test('compile_error.c', [''])
 test_harness.execute_tests()

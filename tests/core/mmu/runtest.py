@@ -23,32 +23,5 @@ import test_harness
 # XXX need test to dump memory contents and ensure they are written out
 # properly
 
-test_harness.register_generic_assembly_tests([
-    'data_page_fault_read',
-    'data_page_fault_write',
-    'data_supervisor_fault_read',
-    'data_supervisor_fault_write',
-    'dflush_tlb_miss',
-    'dinvalidate_tlb_miss',
-    'dtlb_insert_user',
-    'asid',
-    'execute_fault',
-    'instruction_page_fault',
-    'instruction_super_fault',
-    'write_fault',
-    'tlb_invalidate',
-    'tlb_invalidate_all',
-    'tlb_invalidate_user',
-    'tlb_invalidate_all_user',
-    'synonym',
-    'duplicate_tlb_insert',
-    'itlb_insert_user',
-    'io_supervisor_fault_read',
-    'io_supervisor_fault_write',
-    'io_write_fault',
-    'io_map',
-    'nested_fault',
-    'instruction_translate'
-])
-
+test_harness.register_generic_assembly_tests(find_files(('.s', '.S')))
 test_harness.execute_tests()

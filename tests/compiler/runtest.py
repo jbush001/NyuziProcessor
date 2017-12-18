@@ -25,9 +25,10 @@ import test_harness
 
 def run_compiler_test(source_file, target):
     if target == 'host':
-        subprocess.check_call(['c++', '-w', source_file, '-o', 'obj/a.out'])
+        subprocess.check_call(['cc', source_file, '-o', 'obj/a.out'],
+                              stderr=subprocess.STDOUT)
         result = subprocess.check_output('obj/a.out')
-        test_harness.check_result(source_file, result)
+        test_harness.check_result(source_file, result.decode())
     else:
         test_harness.build_program([source_file])
         result = test_harness.run_program(target)
@@ -36,12 +37,10 @@ def run_compiler_test(source_file, target):
 test_list = [fname for fname in test_harness.find_files(
     ('.c', '.cpp')) if not fname.startswith('_')]
 
-both_targets = [fname for fname in test_list if 'noverilator' not in fname]
-test_harness.register_tests(run_compiler_test, both_targets, ['emulator', 'verilator'])
+all_targets = [fname for fname in test_list if 'noverilator' not in fname]
+test_harness.register_tests(run_compiler_test, all_targets, ['emulator', 'verilator', 'host'])
 
-emulator_only = [fname for fname in test_list if 'noverilator' in fname]
-test_harness.register_tests(run_compiler_test, emulator_only, ['emulator'])
-
-# XXX does not add host tests, need to do that explicitly
+noverilator_targets = [fname for fname in test_list if 'noverilator' in fname]
+test_harness.register_tests(run_compiler_test, noverilator_targets, ['emulator', 'host'])
 
 test_harness.execute_tests()

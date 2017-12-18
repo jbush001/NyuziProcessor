@@ -20,11 +20,5 @@ import sys
 sys.path.insert(0, '..')
 import test_harness
 
-
-def run_emulator_test(source_file, target):
-    test_harness.build_program([source_file])
-    result = test_harness.run_program(target)
-    test_harness.check_result(source_file, result)
-
-test_harness.register_tests(run_emulator_test, ['compiler-rt.c'], ['emulator'])
+test_harness.register_generic_test(find_files(('.c')), ['emulator'])
 test_harness.execute_tests()
