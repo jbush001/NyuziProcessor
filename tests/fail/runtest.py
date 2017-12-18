@@ -26,28 +26,25 @@ sys.path.insert(0, '..')
 import test_harness
 
 
-@test_harness.test
+@test_harness.test(['emulator', 'verilator'])
 def timeout(_, target):
     test_harness.build_program(['timeout.c'])
     test_harness.run_program(target=target, timeout=3)
 
 
-@test_harness.test([''])
+@test_harness.test(['emulator'])
 def assemble_error(_, target):
     test_harness.build_program(['assemble_error.s'])
 
 
-@test_harness.test([''])
+@test_harness.test(['emulator'])
 def files_not_equal(_, target):
     test_harness.assert_files_equal('compare_file1', 'compare_file2')
 
 
-@test_harness.test([''])
+@test_harness.test(['emulator'])
 def exception(_, target):
     raise Exception('some exception')
 
-test_harness.register_generic_test('crash.c', [''])
-test_harness.register_generic_test('check.c', [''])
-test_harness.register_generic_test('checkn.c', [''])
-test_harness.register_generic_test('compile_error.c', [''])
+test_harness.register_generic_test(['crash.c', 'check.c', 'checknc', 'compile_error.c'], ['emulator'])
 test_harness.execute_tests()

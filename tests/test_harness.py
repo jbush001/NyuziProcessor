@@ -166,6 +166,16 @@ def _run_test_with_timeout(args, timeout):
     return output.decode()
 
 
+def reset_fpga():
+    """
+    Reset the processor running on the attached FPGA board
+    For now, this just asks the user to do it, but it could be done with
+    a virtual JTAG command in the future.
+    """
+
+    input('Reset FPGA board and press enter')
+
+
 def run_program(
         target='emulator',
         block_device=None,
@@ -203,7 +213,7 @@ def run_program(
 
     if target == 'emulator':
         args = [BIN_DIR + 'emulator']
-        args += [ '-a' ] # Enable thread scheduling randomization by default
+        args += ['-a']  # Enable thread scheduling randomization by default
         if block_device:
             args += ['-b', block_device]
 
@@ -235,6 +245,29 @@ def run_program(
             raise TestException(output + '\nProgram did not halt normally')
 
         return output
+    elif target == 'fpga':
+        if block_device:
+            args += [block_device]
+
+        if dump_file:
+            raise TestException('dump file is not supported on FPGA')
+
+        if flush_l2:
+            raise TestException('flush_l2 is not supported on FPGA')
+
+        if 'SERIAL_PORT' not in os.environ:
+            raise TestException(
+                'Need to set SERIAL_PORT to device path in environment')
+
+        args = [
+            BIN_DIR + 'serial_boot',
+            os.environ['SERIAL_PORT'],
+            executable
+        ]
+
+        reset_fpga()
+
+        return _run_test_with_timeout(args, timeout)
     else:
         raise TestException('Unknown execution target')
 
@@ -264,7 +297,8 @@ def run_kernel(
                             stderr=subprocess.STDOUT)
 
     return run_program(target=target, block_device=block_file,
-        timeout=timeout, executable=PROJECT_TOP + '/software/kernel/kernel.hex')
+                       timeout=timeout, executable=PROJECT_TOP + '/software/kernel/kernel.hex')
+
 
 def assert_files_equal(file1, file2, error_msg='file mismatch'):
     """Read two files and throw a TestException if they are not the same
@@ -363,6 +397,7 @@ def test(targets=ALL_TARGETS):
 
     return register_func
 
+
 def find_files(extensions):
     """Return all files in the current directory that have the passed extensions
 
@@ -402,12 +437,13 @@ def execute_tests():
     """
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--target', dest='target', help='restrict to only executing tests on this target')
+    parser.add_argument('--target', dest='target',
+                        help='restrict to only executing tests on this target')
     parser.add_argument('names', nargs='*')
     args = parser.parse_args()
 
     if args.target:
-        targets_to_run = [ args.target ]
+        targets_to_run = [args.target]
     else:
         targets_to_run = DEFAULT_TARGETS
 
@@ -442,7 +478,7 @@ def execute_tests():
             except TestException as exc:
                 print(COLOR_RED + 'FAIL' + COLOR_NONE)
                 failing_tests += [(param, exc.args[0])]
-            except Exception as exc: # pylint: disable=W0703
+            except Exception as exc:  # pylint: disable=W0703
                 print(COLOR_RED + 'FAIL' + COLOR_NONE)
                 failing_tests += [(param, 'Test threw exception:\n' +
                                    traceback.format_exc())]

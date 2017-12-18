@@ -55,7 +55,7 @@ def run_csmith_test(_, target):
         # Disable longlong to avoid incompatibilities between 32-bit Nyuzi
         # and 64-bit hosts.
         subprocess.check_call(['csmith', '-o', source_file, '--no-longlong',
-            '--no-packed-struct'])
+                               '--no-packed-struct'])
 
         # Compile and run on host
         subprocess.check_call(

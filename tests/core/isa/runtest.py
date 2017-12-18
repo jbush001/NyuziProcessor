@@ -20,5 +20,6 @@ import sys
 sys.path.insert(0, '../..')
 import test_harness
 
-test_harness.register_generic_assembly_tests(find_files(('.s', '.S')))
+test_harness.register_generic_assembly_tests(
+    test_harness.find_files(('.s', '.S')), ['emulator', 'verilator', 'fpga'])
 test_harness.execute_tests()

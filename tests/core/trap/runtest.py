@@ -55,7 +55,7 @@ def run_io_interrupt(name, target):
     # Remove all asterisks (interrupts) and make sure string is intact
     stripped = output.replace('*', '')
     if stripped != '0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`' \
-        'abcdefghijklmnopqrstuvwxyz' * 10:
+            'abcdefghijklmnopqrstuvwxyz' * 10:
         raise test_harness.TestException(
             'Base string does not match:\n' + stripped)
 
@@ -148,6 +148,6 @@ test_harness.register_generic_assembly_tests([
     'unaligned_data_fault.S',
     'multicycle.S',
     'illegal_instruction.S'
-])
+], , ['emulator', 'verilator', 'fpga'])
 
 test_harness.execute_tests()

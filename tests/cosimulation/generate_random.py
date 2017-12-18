@@ -128,10 +128,11 @@ UNARY_OPS = [
     'movehi',
     'sext_8',
     'sext_16',
-# See note above about floating point
-#    'itof',
-#    'ftoi'
+    # See note above about floating point
+    #    'itof',
+    #    'ftoi'
 ]
+
 
 def generate_unary_arith(outfile):
     """Write a single unary arithmetic instruction to a file"""
@@ -140,7 +141,8 @@ def generate_unary_arith(outfile):
     dest = generate_arith_reg()
     rega = generate_arith_reg()
     if mnemonic == 'movehi':
-        outfile.write('\t\tmovehi s{}, {}\n'.format(dest, random.randint(0, 0x7ffff)))
+        outfile.write('\t\tmovehi s{}, {}\n'.format(
+            dest, random.randint(0, 0x7ffff)))
     else:
         fmt = random.randint(0, 3)
         if mnemonic == 'move' and random.randint(0, 1) == 0:
@@ -151,10 +153,10 @@ def generate_unary_arith(outfile):
                               (mnemonic, dest, maskreg, random.randint(-0xff, 0xff)))
             elif fmt == 1:
                 outfile.write('\t\t{} v{}, {}\n'.format(mnemonic, dest,
-                    random.randint(-0xff, 0xff)))
+                                                        random.randint(-0xff, 0xff)))
             else:
                 outfile.write('\t\t{} s{}, {}\n'.format(mnemonic, dest,
-                    random.randint(-0x1fff, 0x1fff)))
+                                                        random.randint(-0x1fff, 0x1fff)))
         else:
             if fmt == 0:
                 maskreg = generate_arith_reg()

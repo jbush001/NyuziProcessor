@@ -16,39 +16,6 @@
 
 PYTHON=python3
 
-#
-# The following tests are not run as part of the 'test' target:
-#
-#  stress/mmu/    - Takes a while to run, skipped to keep continuous integration
-#                   tests quick.
-#  lldb/          - LLDB is not installed in the CI environment's container.
-#  core/multicore/- Requires modifying hardware model to have 8 cores and rebuilding.
-#  csmith/        - Running on a 64-bit host produces different checksums than the
-#                   program running on Nyuzi because of differences in native
-#                   word width. Can still be useful to detect compiler crashes.
-#  fail/          - These test cases validate the test harness itself and are meant
-#                   to produce failure results.
-#  float/         - Floating point conformance tests. There are still bugs in the
-#                   hardware implementation that need to be fixed, and there are
-#                   tweaks required to the test vectors to find canonical values
-#                   where the spec is lenient.
-#  fpga/          - These only run in the FPGA environment and validate things
-#                   specific to the dev board (the test target only assembles them)
-#  kernel/
-#     crash/      - Intermittently timing out, potentially because of a bug
-#     globalinit/
-#     hello/
-#     panic/
-#     user_copy_fault/
-#     initdata/
-#
-#     multiprocess/ - These do not have automated harnesses and are not easy to
-#     threads/        automate for a number of reasons.
-#     vga/
-#  render/          - These only run under the emulator (they support verilator, but
-#                     they take a long time to run)
-#
-
 test:
 	cd unit && $(PYTHON) ./runtest.py
 	cd remote-gdb && $(PYTHON) ./runtest.py

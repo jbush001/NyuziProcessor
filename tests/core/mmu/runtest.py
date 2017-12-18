@@ -23,5 +23,6 @@ import test_harness
 # XXX need test to dump memory contents and ensure they are written out
 # properly
 
-test_harness.register_generic_assembly_tests(find_files(('.s', '.S')))
+test_harness.register_generic_assembly_tests(
+    test_harness.find_files(('.s', '.S')), ['emulator', 'verilator', 'fpga'])
 test_harness.execute_tests()

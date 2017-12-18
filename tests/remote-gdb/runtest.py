@@ -343,7 +343,7 @@ def gdb_read_write_register(_, target):
         # order...)
         conn.expect('g1', '7d7f3e85')
         conn.expect('g20', 'f13403ef9d08309993f7819954ae4b3f7aeaa28f538fecbd95'
-            '36f59c6d7251269525ee70d26e8d34f48912639c86ae5dba426c83aa8455e1e2dbba4b41a4f321')
+                    '36f59c6d7251269525ee70d26e8d34f48912639c86ae5dba426c83aa8455e1e2dbba4b41a4f321')
 
         tests = [
             (0, 'd3839b18'),

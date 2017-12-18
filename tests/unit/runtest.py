@@ -29,7 +29,7 @@ sys.path.insert(0, '..')
 import test_harness
 
 DUMP_WAVEFORM = False
-DRIVER_PATH='obj/driver.cpp'
+DRIVER_PATH = 'obj/driver.cpp'
 DRIVER_SRC = '''
 #include <iostream>
 #include <stdlib.h>
@@ -100,6 +100,7 @@ int main(int argc, char **argv, char **env)
 }
 '''
 
+
 def run_unit_test(filename, target):
     shutil.rmtree(path='obj/', ignore_errors=True)
 
@@ -124,7 +125,8 @@ def run_unit_test(filename, target):
     try:
         subprocess.call(verilator_args, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as exc:
-        raise test_harness.TestException('Verilation failed:\n' + exc.output.decode())
+        raise test_harness.TestException(
+            'Verilation failed:\n' + exc.output.decode())
 
     with open(DRIVER_PATH, 'w') as output_file:
         output_file.write(DRIVER_SRC.replace('$MODULE$', modulename))
@@ -140,7 +142,8 @@ def run_unit_test(filename, target):
     try:
         subprocess.check_output(make_args, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as exc:
-        raise test_harness.TestException('Build failed:\n' + exc.output.decode())
+        raise test_harness.TestException(
+            'Build failed:\n' + exc.output.decode())
 
     model_args = [
         'obj/V' + modulename
@@ -150,14 +153,12 @@ def run_unit_test(filename, target):
     try:
         result = subprocess.check_output(model_args, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as exc:
-        raise test_harness.TestException('Build failed:\n' + exc.output.decode())
+        raise test_harness.TestException(
+            'Build failed:\n' + exc.output.decode())
 
     if result.decode().find('PASS') == -1:
-        raise test_harness.TestException('test failed:\n' + result.decode());
+        raise test_harness.TestException('test failed:\n' + result.decode())
 
 test_harness.register_tests(run_unit_test,
                             test_harness.find_files(('.sv', '.v')), ['verilator'])
 test_harness.execute_tests()
-
-
-

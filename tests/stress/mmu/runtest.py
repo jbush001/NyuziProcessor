@@ -32,6 +32,7 @@ PAGE_SIZE = 0x1000
 MEMORY_SIZE = 0x20000   # Size of mapped region per thread
 DUMP_BASE = 0x10000     # Physical address, is 4k in virtual address space
 
+
 @test_harness.test(['verilator'])
 def random_access_mmu_stress(_, target):
     test_harness.build_program(['random_access.S'])
@@ -50,14 +51,16 @@ def random_access_mmu_stress(_, target):
                 for page_offset in range(0, PAGE_SIZE, 4):
                     val = memfile.read(4)
                     if len(val) < 4:
-                        raise test_harness.TestException('output file is truncated')
+                        raise test_harness.TestException(
+                            'output file is truncated')
 
                     num_val, = struct.unpack('<L', val)
-                    va = page_num * PAGE_SIZE + page_offset + int(DUMP_BASE / 4)
+                    va = page_num * PAGE_SIZE + \
+                        page_offset + int(DUMP_BASE / 4)
                     expected = (thread_id << 24) | va
                     if num_val != expected:
                         raise test_harness.TestException(
                             'FAIL: mismatch @{:x} : got {:x} expected {:x}'.format((page_num * 4 + thread_id) * PAGE_SIZE,
-                                num_val, expected))
+                                                                                   num_val, expected))
 
 test_harness.execute_tests()

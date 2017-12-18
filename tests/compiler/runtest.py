@@ -38,9 +38,11 @@ test_list = [fname for fname in test_harness.find_files(
     ('.c', '.cpp')) if not fname.startswith('_')]
 
 all_targets = [fname for fname in test_list if 'noverilator' not in fname]
-test_harness.register_tests(run_compiler_test, all_targets, ['emulator', 'verilator', 'host'])
+test_harness.register_tests(run_compiler_test, all_targets, [
+                            'emulator', 'verilator', 'host'])
 
 noverilator_targets = [fname for fname in test_list if 'noverilator' in fname]
-test_harness.register_tests(run_compiler_test, noverilator_targets, ['emulator', 'host'])
+test_harness.register_tests(
+    run_compiler_test, noverilator_targets, ['emulator', 'host'])
 
 test_harness.execute_tests()
