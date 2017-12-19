@@ -22,7 +22,7 @@ import test_harness
 
 
 @test_harness.test
-def kernel_hello(name, target):
+def kernel_hello(_, target):
     test_harness.build_program(['hello.c'], image_type='user')
     result = test_harness.run_kernel(target=target, timeout=240)
     test_harness.check_result('hello.c', result)

@@ -22,7 +22,7 @@ import test_harness
 
 
 @test_harness.test
-def kernel_initdata(name, target):
+def kernel_initdata(_, target):
     test_harness.build_program(['initdata.c'], image_type='user')
     result = test_harness.run_kernel(target=target, timeout=240)
     test_harness.check_result('initdata.c', result)

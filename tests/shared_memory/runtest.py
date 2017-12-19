@@ -15,6 +15,12 @@
 # limitations under the License.
 #
 
+"""
+This test validates a feature where the emulator can map its
+system memory as a shared memory file that can be mapped into
+other emulators or test programs representing a host processor.
+"""
+
 import mmap
 import random
 import struct

@@ -36,7 +36,7 @@ def filesystem(_, target):
          'fstest.txt'], stderr=subprocess.STDOUT)
     result = test_harness.run_program(target='emulator',
                                       block_device='obj/fsimage.bin')
-    if 'PASS' not in result:
+    if 'PASS' not in result or 'FAIL' in result:
         raise test_harness.TestException(
             'test program did not indicate pass\n' + result)
 

@@ -46,6 +46,15 @@ class TestException(Exception):
     """This exception is raised for test failures"""
     pass
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--target', dest='target',
+                    help='restrict to only executing tests on this target',
+                    nargs=1)
+parser.add_argument('--debug', action='store_true',
+                    help='enable verbose output to debug test failures')
+parser.add_argument('names', nargs=argparse.REMAINDER,
+                    help='names of specific tests to run')
+args = parser.parse_args()
 
 def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags=None):
     """Compile/assemble one or more files.
@@ -208,7 +217,8 @@ def run_program(
             dump_length: number of bytes of memory to write to dump_file
 
     Returns:
-            Output from program, anything written to virtual serial device
+            Output from program, anything written to virtual serial device,
+            as a string.
 
     Raises:
             TestException if emulated program crashes or the program cannot
@@ -228,7 +238,7 @@ def run_program(
                      hex(dump_base) + ',' + hex(dump_length)]
 
         args += [executable]
-        return run_test_with_timeout(args, timeout)
+        output = run_test_with_timeout(args, timeout)
     elif target == 'verilator':
         args = [BIN_DIR + 'verilator_model']
         if block_device:
@@ -249,8 +259,6 @@ def run_program(
         output = run_test_with_timeout(args, timeout)
         if '***HALTED***' not in output:
             raise TestException(output + '\nProgram did not halt normally')
-
-        return output
     elif target == 'fpga':
         if block_device:
             args += [block_device]
@@ -273,9 +281,14 @@ def run_program(
 
         reset_fpga()
 
-        return run_test_with_timeout(args, timeout)
+        output = run_test_with_timeout(args, timeout)
     else:
         raise TestException('Unknown execution target')
+
+    if DEBUG:
+        print('Program Output:\n' + output)
+
+    return output
 
 
 def run_kernel(
@@ -302,8 +315,13 @@ def run_kernel(
     subprocess.check_output([BIN_DIR + 'mkfs', block_file, ELF_FILE],
                             stderr=subprocess.STDOUT)
 
-    return run_program(target=target, block_device=block_file,
+    output = run_program(target=target, block_device=block_file,
                        timeout=timeout, executable=PROJECT_TOP + '/software/kernel/kernel.hex')
+
+    if DEBUG:
+        print('Program Output:\n' + output)
+
+    return output
 
 
 def assert_files_equal(file1, file2, error_msg='file mismatch'):
@@ -449,16 +467,6 @@ def execute_tests():
 
     global DEBUG
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--target', dest='target',
-                        help='restrict to only executing tests on this target',
-                        nargs=1)
-    parser.add_argument('--debug', action='store_true',
-                        help='enable verbose output to debug test failures')
-    parser.add_argument('names', nargs=argparse.REMAINDER,
-                        help='names of specific tests to run')
-    args = parser.parse_args()
-
     DEBUG = args.debug
     if args.target:
         targets_to_run = args.target
@@ -544,6 +552,10 @@ def check_result(source_file, program_output):
             if chkoffs != -1:
                 found_check_lines = True
                 expected = line[chkoffs + len(CHECK_PREFIX):].strip()
+                if DEBUG:
+                    print('searching for pattern "' + expected + '", line '
+                          + str(line_num))
+
                 regexp = re.compile(expected)
                 got = regexp.search(program_output, output_offset)
                 if got:
@@ -559,6 +571,9 @@ def check_result(source_file, program_output):
                 if chkoffs != -1:
                     found_check_lines = True
                     nexpected = line[chkoffs + len(CHECKN_PREFIX):].strip()
+                    print('ensuring absence of pattern "' + nexpected +
+                          '", line ' + str(line_num))
+
                     regexp = re.compile(nexpected)
                     got = regexp.search(program_output, output_offset)
                     if got:
@@ -611,7 +626,6 @@ def _run_generic_test(name, target):
     check_result(name, result)
 
 
-# XXX make this take a list of names
 def register_generic_test(name, targets=None):
     """Allows registering a test without having to create a test handler
     function. This will compile the passed filename, then use
@@ -619,7 +633,7 @@ def register_generic_test(name, targets=None):
     It runs it both in verilator and emulator configurations.
 
     Args:
-            name: base name of source file (without extension)
+            names: list of source file names
 
     Returns:
             Nothing
@@ -639,17 +653,16 @@ def _run_generic_assembly_test(name, target):
     if 'PASS' not in result or 'FAIL' in result:
         raise TestException('Test failed ' + result)
 
-# XXX should this somehow be combined with register_generic_test?
-
 
 def register_generic_assembly_tests(tests, targets=None):
-    """Allows registering an assembly only test without having to
+    """
+    Allows registering an assembly only test without having to
     create a test handler function. This will assemble the passed
     program, then look for PASS or FAIL strings.
     It runs it both in verilator and emulator configurations.
 
     Args:
-            list: list of base names of source file (without extension)
+            list: list of source file names
 
     Returns:
             Nothing

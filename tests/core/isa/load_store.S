@@ -139,7 +139,7 @@ _start:    lea s1, testvar1
 1:
 
             # Gather load. Now that we've proved load_v works, can use that
-            # To load values.
+            # to load indices.
 1:          lea s0, shuffle_idx1
             load_v v4, (s0)
             lea s0, shuffle_idx2

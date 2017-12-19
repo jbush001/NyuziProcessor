@@ -22,7 +22,7 @@ import test_harness
 
 
 @test_harness.test
-def kernel_crash(name, target):
+def kernel_crash(_, target):
     test_harness.build_program(['crash.c'], image_type='user')
     result = test_harness.run_kernel(target=target, timeout=240)
     test_harness.check_result('crash.c', result)

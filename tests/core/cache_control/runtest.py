@@ -30,7 +30,7 @@ BASE_ADDRESS = 0x400000
 
 
 @test_harness.test(['verilator'])
-def dflush(name, target):
+def dflush(_, target):
     test_harness.build_program(['dflush.S'])
     test_harness.run_program(
         target=target,

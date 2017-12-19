@@ -26,7 +26,7 @@ import test_harness
 
 
 @test_harness.test
-def run_io_interrupt(name, target):
+def run_io_interrupt(_, target):
     test_harness.build_program(['io_interrupt.S'])
     result = test_harness.run_program(target)
     lines = result.split('\n')

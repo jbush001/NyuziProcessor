@@ -15,14 +15,10 @@
 //
 
 //
-// This test validates a feature where the emulator can map its
-// system memory as a shared memory file that can be mapped into
-// other emulators or test programs representing a host processor.
-//
 // For each transfer:
 // 1. Host sets the value it wants to transform and sets owner
 //    to 1 (coprocessor)
-// 2. Client polls on owner. When it sees it is 1, it reads
+// 2. Client (this file) polls on owner. When it sees it is 1, it reads
 //    the value, complements it (xor with 0xffffffff) and writes it back.
 // 3. Client sets the owner field back to 0.
 // 4. Host polls on owner field. When it sees it is 0, it reads the value.

@@ -27,8 +27,6 @@ import test_harness
 VERILATOR_MEM_DUMP = 'obj/vmem.bin'
 EMULATOR_MEM_DUMP = 'obj/mmem.bin'
 
-if 'RANDSEED' in os.environ:
-    verilator_args += ['+randseed=' + os.environ['RANDSEED']]
 
 def run_cosimulation_test(source_file, target):
     verilator_args = [
@@ -40,6 +38,10 @@ def run_cosimulation_test(source_file, target):
         '+memdumplen=400000',
         '+autoflushl2'
     ]
+
+    # XXX this should probably be a command line option in test_harness.py
+    if 'RANDSEED' in os.environ:
+        verilator_args += ['+randseed=' + os.environ['RANDSEED']]
 
     emulator_args = [
         '../../bin/emulator',
