@@ -413,18 +413,23 @@ def register_tests(func, names, targets=None):
     registered_tests += [(func, name, targets) for name in names]
 
 
-def test(targets=None):
+def test(param=None):
     """
     decorator @test automatically registers test to be run
     pass an optional list of targets that are valid for this test
     """
-    if not targets:
-        targets = ALL_TARGETS[:]
+    if callable(param):
+        # If the test decorator is used without a target list,
+        # this will just pass the function as the parameter.
+        # Run all targtes
+        register_tests(param, [param.__name__], ALL_TARGETS)
+    else:
+        # decorator is called with a list of targets. Return
+        # a fuction that will be called on the actual function.
+        def register_func(func):
+            register_tests(func, [func.__name__], param)
 
-    def register_func(func):
-        register_tests(func, [func.__name__], targets)
-
-    return register_func
+        return register_func
 
 
 def find_files(extensions):
