@@ -22,7 +22,7 @@ sys.path.insert(0, '..')
 import test_harness
 
 
-@test_harness.test(['emulator'])
+@test_harness.test(['emulator', 'fpga'])
 def filesystem(_, target):
     '''
     Filesystem tests. This creates a filesystem image with the test file fstest.txt
@@ -51,5 +51,5 @@ def run_test(source_file, target):
 test_list = [fname for fname in test_harness.find_files(
     ('.c', '.cpp')) if not fname.startswith('_')]
 test_list.remove('fs.c')
-test_harness.register_tests(run_test, test_list, ['emulator'])
+test_harness.register_tests(run_test, test_list, ['emulator', 'fpga'])
 test_harness.execute_tests()

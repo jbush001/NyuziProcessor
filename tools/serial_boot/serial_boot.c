@@ -330,8 +330,10 @@ void do_console_mode(int serial_fd)
     int ready_fds;
     char read_buffer[256];
     ssize_t got;
+    int i;
+    int done = 0;
 
-    while (1)
+    while (!done)
     {
         FD_ZERO(&set);
         FD_SET(serial_fd, &set);
@@ -352,6 +354,11 @@ void do_console_mode(int serial_fd)
                 perror("read");
                 return;
             }
+
+            // A ^D will terminate the exit console mode.
+            for (i = 0; i < got; i++)
+                if (read_buffer[i] == 4)
+                    done = 1;
 
             if (write(STDIN_FILENO, read_buffer, (unsigned int) got) < got)
             {

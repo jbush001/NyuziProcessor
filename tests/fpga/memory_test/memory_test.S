@@ -14,14 +14,15 @@
 # limitations under the License.
 #
 
+#include "../../asm_macros.inc"
 
 #
 # This validates the memory subsystem by writing a pseudorandom memory pattern
 # across all of SDRAM, then reading it back to verify it is unchanged.  It
-# assumes 128MB of SDRAM, starting at address 0. It skips the first 4k, which
+# assumes 128MB of SDRAM, starting at address 0. It skips the first 8k, which
 # contains this code. The test takes around 30 seconds to run, during which
-# there isn't any feedback.  When it completes, it will light up all of the
-# green LEDs to indicate success and all of the red LEDs to indicate failure.
+# there isn't any feedback.  When it completes, it will print PASS or FAIL
+# to the serial port.
 #
 
 #define BASE_ADDR 0x2000
@@ -64,18 +65,9 @@ check_loop:     load_32 s5, (s0)
                 add_i       s2, s2, s4
 
                 # Increment and loop
-                add_i s0, s0, 4      # Increment pionter
+                add_i s0, s0, 4      # Increment pointer
                 sub_i s1, s1, 4      # Decrement count
                 bnz s1, check_loop
+                call pass_test
 
-success:        li s0, DEVICE_BASE
-                li s1, -1
-                store_32 s1, 4(s0)          # Green LEDs
-1:              b 1b
-
-error:          li s0, DEVICE_BASE
-                li s1, -1
-                store_32 s1, 0(s0)          # Red LEDs
-1:              b 1b
-
-
+error:          call fail_test

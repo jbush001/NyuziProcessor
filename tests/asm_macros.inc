@@ -127,19 +127,22 @@
                 call fail_test
 .endm
 
-// Print failure message and halt
+// Print failure message and halt. The \x04 (^D) will cause the serial console
+// to exit, triggering the end of the test on the FPGA target.
                 .align 4, 0xff
 fail_test:      lea s0, failstr
                 print_string
                 halt_all_threads
-failstr:        .asciz "FAIL"
+failstr:        .ascii "FAIL"
+                .byte 4, 0
 
 // Print success message and halt
                 .align 4, 0xff
 pass_test:      lea s0, passstr
                 print_string
                 halt_all_threads
-passstr:        .asciz "PASS"
+passstr:        .ascii "PASS"
+                .byte 4, 0
 
                 .align 4, 0xff
 

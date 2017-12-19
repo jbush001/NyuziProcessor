@@ -75,7 +75,7 @@ def dinvalidate(_, target):
                 'memory contents were incorrect: ' + hex(num_val))
 
 
-@test_harness.test(['verilator'])
+@test_harness.test(['verilator', 'fpga'])
 def dflush_wait(_, target):
     test_harness.build_program(['dflush_wait.S'])
     output = test_harness.run_program(target)
@@ -83,7 +83,7 @@ def dflush_wait(_, target):
         raise test_harness.TestException('Test did not signal pass: ' + output)
 
 
-@test_harness.test(['verilator'])
+@test_harness.test(['verilator', 'fpga'])
 def iinvalidate(_, target):
     test_harness.build_program(['iinvalidate.S'])
     output = test_harness.run_program(target)

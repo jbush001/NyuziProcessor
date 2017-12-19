@@ -74,6 +74,10 @@ do_main:            move s0, 0    # Set argc to 0
                     # Call atexit functions
                     call call_atexit_functions
 
+                    # Send ^D to terminate serial console program on FPGA
+                    move s0, 4
+                    call write_uart
+
                     #  Halt all threads.
                     move s0, -1
                     li s1, 0xffff0104   # thread halt register

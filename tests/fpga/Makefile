@@ -17,14 +17,12 @@
 # We can't run these automated, but make sure they build
 all:
 	cd blinky && make
-	cd memory_test && make
 	cd sdmmc_dump && make
 	cd sdmmc_native && make
 	cd uart_chargen && make
 
 clean:
 	cd blinky && make clean
-	cd memory_test && make clean
 	cd sdmmc_dump && make clean
 	cd sdmmc_native && make clean
 	cd uart_chargen && make clean
