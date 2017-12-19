@@ -27,33 +27,31 @@ import test_harness
 VERILATOR_MEM_DUMP = 'obj/vmem.bin'
 EMULATOR_MEM_DUMP = 'obj/mmem.bin'
 
-verilator_args = [
-    '../../bin/verilator_model',
-    '+trace',
-    '+simcycles=2000000',
-    '+memdumpfile=' + VERILATOR_MEM_DUMP,
-    '+memdumpbase=800000',
-    '+memdumplen=400000',
-    '+autoflushl2'
-]
-
 if 'RANDSEED' in os.environ:
     verilator_args += ['+randseed=' + os.environ['RANDSEED']]
 
-emulator_args = [
-    '../../bin/emulator',
-    '-m',
-    'cosim',
-    '-d',
-    'obj/mmem.bin,0x800000,0x400000'
-]
-
-verbose = 'VERBOSE' in os.environ
-if verbose:
-    emulator_args += ['-v']
-
-
 def run_cosimulation_test(source_file, target):
+    verilator_args = [
+        '../../bin/verilator_model',
+        '+trace',
+        '+simcycles=2000000',
+        '+memdumpfile=' + VERILATOR_MEM_DUMP,
+        '+memdumpbase=800000',
+        '+memdumplen=400000',
+        '+autoflushl2'
+    ]
+
+    emulator_args = [
+        '../../bin/emulator',
+        '-m',
+        'cosim',
+        '-d',
+        'obj/mmem.bin,0x800000,0x400000'
+    ]
+
+    if test_harness.DEBUG:
+        emulator_args += ['-v']
+
     hexfile = test_harness.build_program([source_file])
     p1 = subprocess.Popen(
         verilator_args + ['+bin=' + hexfile], stdout=subprocess.PIPE)
@@ -65,7 +63,7 @@ def run_cosimulation_test(source_file, target):
         if not got:
             break
 
-        if verbose:
+        if test_harness.DEBUG:
             print(got.decode())
         else:
             output += got.decode()

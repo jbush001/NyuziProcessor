@@ -31,7 +31,6 @@ from threading import Thread
 sys.path.insert(0, '..')
 import test_harness
 
-DEBUG = False
 CONTROL_PORT = 8541
 INSTRUCTION_LENGTH = 4
 EXPECTED_IDCODE = 0x4d20dffb  # Derived from settings in hardware/core/config.sv
@@ -116,7 +115,7 @@ class JTAGTestFixture(object):
         not transfer, it will initiate a reset of the target.
         """
 
-        if DEBUG:
+        if test_harness.DEBUG:
             print('Sending JTAG command 0x{:x} data 0x{:x}'.format(
                 instruction, data))
 
@@ -136,7 +135,7 @@ class JTAGTestFixture(object):
 
         _, self.last_response = struct.unpack('<IQ', response_data)
         self.last_response = mask_value(self.last_response, data_length)
-        if DEBUG:
+        if test_harness.DEBUG:
             print('received JTAG response 0x{:x}'.format(self.last_response))
 
     def test_instruction_shift(self, value):
@@ -195,7 +194,7 @@ class JTAGTestFixture(object):
             if not got:
                 break
 
-            if DEBUG:
+            if test_harness.DEBUG:
                 print(got)
 
             self.output += got.decode()

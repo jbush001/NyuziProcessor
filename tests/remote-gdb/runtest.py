@@ -29,11 +29,6 @@ sys.path.insert(0, '..')
 import test_harness
 
 
-# Setting this to true will print all GDB commands and responses
-# to the console and will also print all output from the emulator.
-DEBUG = False
-
-
 class DebugConnection(object):
 
     """
@@ -68,7 +63,7 @@ class DebugConnection(object):
         in a packet and add the checksum.
         """
 
-        if DEBUG:
+        if test_harness.DEBUG:
             print('SEND: ' + body)
 
         self.sock.send(str.encode('$' + body + '#'))
@@ -105,8 +100,8 @@ class DebugConnection(object):
         # Checksum
         self.sock.recv(2)
 
-        if DEBUG:
-            print('RECV: ' + body)
+        if test_harness.DEBUG:
+            print('RECV: ' + body.decode())
 
         return body
 
@@ -147,7 +142,7 @@ class EmulatorProcess(object):
             self.hexfile
         ]
 
-        if DEBUG:
+        if test_harness.DEBUG:
             self.output = None
         else:
             self.output = open(os.devnull, 'w')

@@ -28,9 +28,9 @@ can generate a listing file like this:
 
     usr/local/llvm-nyuzi/bin/llvm-objdump --disassemble obj/test.elf > test.dis
 
-The program will print all events if you set the VERBOSE environment variable:
+The --debug flag will print all events
 
-    VERBOSE=1 ./runtest.py ...
+    ./runtest.py --debug ...
 
 For example:
 

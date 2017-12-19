@@ -39,6 +39,7 @@ ELF_FILE = OBJ_DIR + 'program.elf'
 HEX_FILE = OBJ_DIR + 'program.hex'
 ALL_TARGETS = ['verilator', 'emulator']
 DEFAULT_TARGETS = ['verilator', 'emulator']
+DEBUG = False
 
 
 class TestException(Exception):
@@ -436,12 +437,19 @@ def execute_tests():
             Nothing
     """
 
+    global DEBUG
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--target', dest='target',
-                        help='restrict to only executing tests on this target')
-    parser.add_argument('names', nargs='*')
+                        help='restrict to only executing tests on this target',
+                        nargs=1)
+    parser.add_argument('--debug', action='store_true',
+                        help='enable verbose output to debug test failures')
+    parser.add_argument('names', nargs=argparse.REMAINDER,
+                        help='names of specific tests to run')
     args = parser.parse_args()
 
+    DEBUG = args.debug
     if args.target:
         targets_to_run = [args.target]
     else:

@@ -16,6 +16,9 @@ are supported by the test. This can be restricted to a specific target with the
 
     ./runtest.py --target emulator aes.c
 
+The --debug flag will enable printing test specific diagonostic output to the
+console.
+
 There is an experimental 'fpga' target in progress, but is not fully functional'
 
 Invoking the top level Makefile with the test target will run tests in subprojects.
@@ -86,4 +89,7 @@ does not, respectively. Check patterns can be embedded in comments. This is usua
 on the output of the program. For example:
 
     printf("s1a 0x%08x\n", s1.a); // CHECK: s1a 0x12345678
+
+If you'd like to add additional debugging output to a test, check the global DEBUG
+flag, which will be set to true if the user adds --debug to the command line.
 

@@ -23,9 +23,6 @@ import sys
 sys.path.insert(0, '..')
 import test_harness
 
-DEBUG = False
-
-
 class EmulatorProcess(object):
 
     """
@@ -53,7 +50,7 @@ class EmulatorProcess(object):
             self.hexfile
         ]
 
-        if DEBUG:
+        if test_harness.DEBUG:
             self.output = None
         else:
             self.output = open(os.devnull, 'w')
@@ -84,7 +81,7 @@ class EmulatorProcess(object):
         self.lldb_proc.kill()
 
     def send_command(self, cmd):
-        if DEBUG:
+        if test_harness.DEBUG:
             print('LLDB send: ' + cmd)
 
         self.outstr.write(str.encode(cmd + '\n'))
@@ -98,7 +95,7 @@ class EmulatorProcess(object):
             if response.endswith('^done'):
                 break
 
-        if DEBUG:
+        if test_harness.DEBUG:
             print('LLDB recv: ' + response)
 
         return response
@@ -109,7 +106,7 @@ class EmulatorProcess(object):
             inchar = self.instr.read(1).decode('utf-8')
             current_line += inchar
             if inchar == '\n':
-                if DEBUG:
+                if test_harness.DEBUG:
                     print('LLDB recv: ' + current_line[:-1])
 
                 if current_line.startswith('*stopped'):
