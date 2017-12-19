@@ -160,7 +160,12 @@ class TimedProcessRunner(threading.Thread):
             self.process.kill()
 
 
-def _run_test_with_timeout(args, timeout):
+def run_test_with_timeout(args, timeout):
+    """
+    Run the program specified by args. If it does not complete
+    in 'timeout' seconds, throw a TestException.
+    """
+
     process = subprocess.Popen(args, stdout=subprocess.PIPE,
                                stderr=subprocess.STDOUT)
     output, _ = TimedProcessRunner().communicate(process, timeout)
@@ -223,7 +228,7 @@ def run_program(
                      hex(dump_base) + ',' + hex(dump_length)]
 
         args += [executable]
-        return _run_test_with_timeout(args, timeout)
+        return run_test_with_timeout(args, timeout)
     elif target == 'verilator':
         args = [BIN_DIR + 'verilator_model']
         if block_device:
@@ -241,7 +246,7 @@ def run_program(
             args += ['+trace']
 
         args += ['+bin=' + executable]
-        output = _run_test_with_timeout(args, timeout)
+        output = run_test_with_timeout(args, timeout)
         if '***HALTED***' not in output:
             raise TestException(output + '\nProgram did not halt normally')
 
@@ -268,7 +273,7 @@ def run_program(
 
         reset_fpga()
 
-        return _run_test_with_timeout(args, timeout)
+        return run_test_with_timeout(args, timeout)
     else:
         raise TestException('Unknown execution target')
 

@@ -101,7 +101,7 @@ int main(int argc, char **argv, char **env)
 '''
 
 
-def run_unit_test(filename, target):
+def run_unit_test(filename, _):
     shutil.rmtree(path='obj/', ignore_errors=True)
 
     filestem, _ = os.path.splitext(filename)
@@ -149,15 +149,14 @@ def run_unit_test(filename, target):
         'obj/V' + modulename
     ]
 
-    # XXX Need timeout for executing this process...
     try:
-        result = subprocess.check_output(model_args, stderr=subprocess.STDOUT)
+        result = test_harness.run_test_with_timeout(model_args, 60)
     except subprocess.CalledProcessError as exc:
         raise test_harness.TestException(
             'Build failed:\n' + exc.output.decode())
 
-    if result.decode().find('PASS') == -1:
-        raise test_harness.TestException('test failed:\n' + result.decode())
+    if result.find('PASS') == -1:
+        raise test_harness.TestException('test failed:\n' + result)
 
 test_harness.register_tests(run_unit_test,
                             test_harness.find_files(('.sv', '.v')), ['verilator'])
