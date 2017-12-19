@@ -20,5 +20,5 @@ import sys
 sys.path.insert(0, '..')
 import test_harness
 
-test_harness.register_generic_test(find_files(('.c')), ['emulator'])
+test_harness.register_generic_test(test_harness.find_files(('.c')), ['emulator'])
 test_harness.execute_tests()

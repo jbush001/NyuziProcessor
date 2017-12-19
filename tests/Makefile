@@ -33,7 +33,7 @@ test:
 	cd libc && $(PYTHON) ./runtest.py
 	cd compiler-rt && $(PYTHON) ./runtest.py
 	cd compiler && $(PYTHON) ./runtest.py --target verilator
-	cd compiler && $(PYTHON) ./runtest.py *noverilator.*
+	cd compiler && $(PYTHON) ./runtest.py --target emulator *noverilator.*
 	cd cosimulation && $(PYTHON) ./runtest.py
 	cd fpga && make
 	cd render && make test
