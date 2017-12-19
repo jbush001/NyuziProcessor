@@ -370,7 +370,7 @@ def assert_files_equal(file1, file2, error_msg='file mismatch'):
 registered_tests = []
 
 
-def register_tests(func, names, targets=ALL_TARGETS):
+def register_tests(func, names, targets=None):
     """Add a list of tests to be run when execute_tests is called.
 
     This function can be called multiple times, it will append passed
@@ -389,14 +389,19 @@ def register_tests(func, names, targets=ALL_TARGETS):
      """
 
     global registered_tests
+    if not targets:
+        targets = ALL_TARGETS[:]
+
     registered_tests += [(func, name, targets) for name in names]
 
 
-def test(targets=ALL_TARGETS):
+def test(targets=None):
     """
     decorator @test automatically registers test to be run
     pass an optional list of targets that are valid for this test
     """
+    if not targets:
+        targets = ALL_TARGETS[:]
 
     def register_func(func):
         register_tests(func, [func.__name__], targets)
@@ -456,7 +461,7 @@ def execute_tests():
 
     DEBUG = args.debug
     if args.target:
-        targets_to_run = [args.target]
+        targets_to_run = args.target
     else:
         targets_to_run = DEFAULT_TARGETS
 
@@ -607,7 +612,7 @@ def _run_generic_test(name, target):
 
 
 # XXX make this take a list of names
-def register_generic_test(name, targets=ALL_TARGETS):
+def register_generic_test(name, targets=None):
     """Allows registering a test without having to create a test handler
     function. This will compile the passed filename, then use
     check_result to validate it against comment strings embedded in the file.
@@ -622,6 +627,8 @@ def register_generic_test(name, targets=ALL_TARGETS):
     Raises:
             Nothing
     """
+    if not targets:
+        targets = ALL_TARGETS[:]
 
     register_tests(_run_generic_test, name, targets)
 
@@ -635,7 +642,7 @@ def _run_generic_assembly_test(name, target):
 # XXX should this somehow be combined with register_generic_test?
 
 
-def register_generic_assembly_tests(tests, targets=ALL_TARGETS):
+def register_generic_assembly_tests(tests, targets=None):
     """Allows registering an assembly only test without having to
     create a test handler function. This will assemble the passed
     program, then look for PASS or FAIL strings.
@@ -650,4 +657,8 @@ def register_generic_assembly_tests(tests, targets=ALL_TARGETS):
     Raises:
             Nothing
     """
+
+    if not targets:
+        targets = ALL_TARGETS[:]
+
     register_tests(_run_generic_assembly_test, tests, targets)
