@@ -360,7 +360,7 @@ void do_console_mode(int serial_fd)
                 if (read_buffer[i] == 4)
                     done = 1;
 
-            if (write(STDIN_FILENO, read_buffer, (unsigned int) got) < got)
+            if (write(STDOUT_FILENO, read_buffer, (unsigned int) got) < got)
             {
                 perror("write");
                 return;
