@@ -28,7 +28,6 @@ import shutil
 sys.path.insert(0, '..')
 import test_harness
 
-DUMP_WAVEFORM = False
 DRIVER_PATH = 'obj/driver.cpp'
 DRIVER_SRC = '''
 #include <iostream>
@@ -119,7 +118,7 @@ def run_unit_test(filename, _):
         '--exe', DRIVER_PATH
     ]
 
-    if DUMP_WAVEFORM:
+    if test_harness.DEBUG:
         verilator_args.append('--trace')
 
     try:
