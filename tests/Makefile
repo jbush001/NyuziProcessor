@@ -38,6 +38,14 @@ test:
 	cd fpga && make
 	cd render && make test
 
+fpgatest:
+	cd core/cache_control/ && $(PYTHON) ./runtest.py --target fpga
+	cd core/isa/ && $(PYTHON) ./runtest.py
+	cd core/mmu && $(PYTHON) ./runtest.py --target fpga
+	cd core/trap && $(PYTHON) ./runtest.py --target fpga
+	cd fpga/memory_test && $(PYTHON) ./runtest.py --target fpga
+	cd compiler && $(PYTHON) ./runtest.py --target fpga
+
 # For this target to work, pylint must be installed (https://www.pylint.org/)
 pylint:
 	PYTHONPATH=$(CURDIR) find . -iname "*.py" -exec echo {} \; -exec pylint {} \;

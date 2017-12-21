@@ -188,7 +188,7 @@ def reset_fpga():
     a virtual JTAG command in the future.
     """
 
-    input('Reset FPGA board and press enter')
+    input('\nReset FPGA board and press enter')
 
 
 def run_program(
