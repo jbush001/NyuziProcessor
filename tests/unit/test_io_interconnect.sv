@@ -19,7 +19,6 @@
 import defines::*;
 
 module test_io_interconnect(input clk, input reset);
-
     localparam ADDR0 = 32'h1234;
     localparam ADDR1 = 32'h5678;
     localparam DATA0 = 32'h5f168902;

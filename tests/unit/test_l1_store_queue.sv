@@ -27,7 +27,6 @@ import defines::*;
 //
 
 module test_l1_store_queue(input clk, input reset);
-
     // XXX Ideally MASK0 would be non-zero, so when we write combined with MASK2/DATA2, we could
     // ensure new mask bits were set. However, there is a mismatch when checking DATA0, since
     // the store buffer only updates lines that are masked.

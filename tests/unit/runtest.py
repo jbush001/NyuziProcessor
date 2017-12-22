@@ -154,7 +154,7 @@ def run_unit_test(filename, _):
         raise test_harness.TestException(
             'Build failed:\n' + exc.output.decode())
 
-    if 'PASS' not in result or 'FAIL' in result:
+    if 'PASS' not in result:
         raise test_harness.TestException('test failed:\n' + result)
 
 test_harness.register_tests(run_unit_test,
