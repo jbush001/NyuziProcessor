@@ -36,7 +36,7 @@ module test_load_miss_queue(input clk, input reset);
     logic l2_response_valid;
     l1_miss_entry_idx_t l2_response_idx;
     local_thread_bitmap_t wake_bitmap;
-    int state;
+    int cycle;
     l1_miss_entry_idx_t saved_request_idx0;
     l1_miss_entry_idx_t saved_request_idx1;
     logic l2_requests_in_order;
@@ -47,7 +47,7 @@ module test_load_miss_queue(input clk, input reset);
     begin
         if (reset)
         begin
-            state <= 0;
+            cycle <= 0;
         end
         else
         begin
@@ -56,7 +56,8 @@ module test_load_miss_queue(input clk, input reset);
             dequeue_ack <= 0;
             l2_response_valid <= 0;
 
-            unique case (state)
+            cycle <= cycle + 1;
+            unique case (cycle)
                 ////////////////////////////////////////////////////////////
                 // Basic request flow and load combining
                 ////////////////////////////////////////////////////////////
@@ -71,7 +72,6 @@ module test_load_miss_queue(input clk, input reset);
                     cache_miss_addr <= ADDR0;
                     cache_miss_thread_idx <= 0;
                     cache_miss_sync <= 0;
-                    state <= state + 1;
                 end
 
                 // Enqueue a load miss, thread 1. This will not be
@@ -85,7 +85,6 @@ module test_load_miss_queue(input clk, input reset);
                     cache_miss_addr <= ADDR1;
                     cache_miss_thread_idx <= 1;
                     cache_miss_sync <= 0;
-                    state <= state + 1;
                 end
 
                 // Check that the request is pending from the queue and acknowledge
@@ -95,7 +94,6 @@ module test_load_miss_queue(input clk, input reset);
                 begin
                     assert(dequeue_ready);
                     dequeue_ack <= 1;
-                    state <= state + 1;
                 end
 
                 // Check dequeue values
@@ -118,7 +116,6 @@ module test_load_miss_queue(input clk, input reset);
 
                     assert(!dequeue_sync);
                     assert(wake_bitmap == 0);
-                    state <= state + 1;
                 end
 
                 // Create another request for the second address from thread 2
@@ -131,14 +128,12 @@ module test_load_miss_queue(input clk, input reset);
                     cache_miss_addr <= ADDR1;
                     cache_miss_thread_idx <= 2;
                     cache_miss_sync <= 0;
-                    state <= state + 1;
                 end
 
                 5:
                 begin
                     assert(dequeue_ready);
                     dequeue_ack <= 1;
-                    state <= state + 1;
                 end
 
                 6:
@@ -156,7 +151,6 @@ module test_load_miss_queue(input clk, input reset);
                     end
                     assert(!dequeue_sync);
                     assert(wake_bitmap == 0);
-                    state <= state + 1;
                 end
 
                 7:
@@ -166,7 +160,6 @@ module test_load_miss_queue(input clk, input reset);
                     assert(wake_bitmap == 0);
                     l2_response_valid <= 1;
                     l2_response_idx <= saved_request_idx0;
-                    state <= state + 1;
                 end
 
                 // Check that wake bitmap is asserted.
@@ -174,7 +167,6 @@ module test_load_miss_queue(input clk, input reset);
                 begin
                     assert(!dequeue_ready);
                     assert(wake_bitmap == 4'b0001);
-                    state <= state + 1;
                 end
 
                 // Wake bitmap should be deasserted
@@ -182,7 +174,6 @@ module test_load_miss_queue(input clk, input reset);
                 begin
                     assert(!dequeue_ready);
                     assert(wake_bitmap == 0);
-                    state <= state + 1;
                 end
 
                 // Send L2 response for second request
@@ -192,7 +183,6 @@ module test_load_miss_queue(input clk, input reset);
                     assert(wake_bitmap == 0);
                     l2_response_valid <= 1;
                     l2_response_idx <= saved_request_idx1;
-                    state <= state + 1;
                 end
 
                 // Check that wake bitmap is asserted for two combined
@@ -201,7 +191,6 @@ module test_load_miss_queue(input clk, input reset);
                 begin
                     assert(!dequeue_ready);
                     assert(wake_bitmap == 4'b0110);
-                    state <= state + 1;
                 end
 
                 // Wake bitmap should be deasserted
@@ -209,7 +198,6 @@ module test_load_miss_queue(input clk, input reset);
                 begin
                     assert(!dequeue_ready);
                     assert(wake_bitmap == 0);
-                    state <= state + 1;
                 end
 
                 ////////////////////////////////////////////////////////////
@@ -223,7 +211,6 @@ module test_load_miss_queue(input clk, input reset);
                     cache_miss_addr <= ADDR2;
                     cache_miss_thread_idx <= 0;
                     cache_miss_sync <= 1;
-                    state <= state + 1;
                 end
 
                 // Unsynchronized miss
@@ -233,7 +220,6 @@ module test_load_miss_queue(input clk, input reset);
                     cache_miss_addr <= ADDR2;
                     cache_miss_thread_idx <= 1;
                     cache_miss_sync <= 0;
-                    state <= state + 1;
                     dequeue_ack <= 1;
                 end
 
@@ -254,7 +240,6 @@ module test_load_miss_queue(input clk, input reset);
                     end
 
                     dequeue_ack <= 1;
-                    state <= state + 1;
                 end
 
                 // Get second request
@@ -272,8 +257,6 @@ module test_load_miss_queue(input clk, input reset);
                         assert(dequeue_sync);
                         assert(dequeue_idx == saved_request_idx0);
                     end
-
-                    state <= state + 1;
                 end
 
                 // First response
@@ -281,7 +264,6 @@ module test_load_miss_queue(input clk, input reset);
                 begin
                     l2_response_valid <= 1;
                     l2_response_idx <= saved_request_idx0;
-                    state <= state + 1;
                 end
 
                 // Second response
@@ -291,13 +273,11 @@ module test_load_miss_queue(input clk, input reset);
 
                     l2_response_valid <= 1;
                     l2_response_idx <= saved_request_idx1;
-                    state <= state + 1;
                 end
 
                 19:
                 begin
                     assert(wake_bitmap == 4'b0010);
-                    state <= state + 1;
                 end
 
                 //
@@ -312,7 +292,6 @@ module test_load_miss_queue(input clk, input reset);
                     cache_miss_addr <= ADDR2;
                     cache_miss_thread_idx <= 2;
                     cache_miss_sync <= 0;
-                    state <= state + 1;
                 end
 
                 // Synchronized miss
@@ -322,7 +301,6 @@ module test_load_miss_queue(input clk, input reset);
                     cache_miss_addr <= ADDR2;
                     cache_miss_thread_idx <= 3;
                     cache_miss_sync <= 1;
-                    state <= state + 1;
                     dequeue_ack <= 1;
                 end
 
@@ -343,7 +321,6 @@ module test_load_miss_queue(input clk, input reset);
                     end
 
                     dequeue_ack <= 1;
-                    state <= state + 1;
                 end
 
                 // Get second request
@@ -361,8 +338,6 @@ module test_load_miss_queue(input clk, input reset);
                         saved_request_idx0 <= dequeue_idx;
                         assert(!dequeue_sync);
                     end
-
-                    state <= state + 1;
                 end
 
                 // First response
@@ -370,7 +345,6 @@ module test_load_miss_queue(input clk, input reset);
                 begin
                     l2_response_valid <= 1;
                     l2_response_idx <= saved_request_idx0;
-                    state <= state + 1;
                 end
 
                 // Second response
@@ -380,13 +354,11 @@ module test_load_miss_queue(input clk, input reset);
 
                     l2_response_valid <= 1;
                     l2_response_idx <= saved_request_idx1;
-                    state <= state + 1;
                 end
 
                 26:
                 begin
                     assert(wake_bitmap == 4'b1000);
-                    state <= state + 1;
                 end
 
                 27:
