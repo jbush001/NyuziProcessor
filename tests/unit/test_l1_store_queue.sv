@@ -20,6 +20,10 @@ import defines::*;
 
 //
 // Some basic l1_store_queue scenarios. Lots of edge and normal cases not covered.
+// Not tested:
+// - Send a request the same cycle the L2 responds. Should replace entry to avoid
+//   a rollback.
+// - Sending cache control commands (flush, invalidate)
 //
 
 module test_l1_store_queue(input clk, input reset);
@@ -40,6 +44,12 @@ module test_l1_store_queue(input clk, input reset);
     localparam ADDR3 = 'h928;
     localparam MASK3 = 64'hffffffff_ffffffff;
     localparam DATA3 = 512'hcf01cb29d7b525268e5182db49872b1987a8565026b935cbaa1ca1af0c0e1d38f658119af5322b0870a678910fd04faf1591bae8c654c5ebc0ac5728bc879d6d;
+    localparam ADDR4 = 'h108;
+    localparam DATA4 = 512'h9a4a5591ca5bbed51472cf95121b2e8b817e6edafa6be26be4415d65a99234690957fdc95fda469fd7ece9e8ac49b06a00329f891ba90ec784d8ef233e030180;
+    localparam MASK4 = 64'hffffffff_ffffffff;
+    localparam ADDR5 = 'h644;
+    localparam DATA5 = 512'hb1c5638548125874ab562243b62795971335ff2ac0ca0f82b60c56d864187e3bf3c1b94666fdf4701ea826f113c137b4969908a193cbf17d96b653d01d09eba3;
+    localparam MASK5 = 64'hffffffff_ffffffff;
 
     local_thread_bitmap_t sq_store_sync_pending;
     logic dd_store_en;
@@ -93,6 +103,11 @@ module test_l1_store_queue(input clk, input reset);
             storebuf_l2_response_valid <= 0;
 
             unique case (state)
+                ////////////////////////////////////////////////////////////
+                // Normal store request, write combine, bypass,
+                // rollback on store buffer full, wakeup
+                ////////////////////////////////////////////////////////////
+
                 // Queue a store request
                 0:
                 begin
@@ -152,6 +167,7 @@ module test_l1_store_queue(input clk, input reset);
                 // Check that the data was bypassed correctly
                 5:
                 begin
+                    assert(!sq_rollback_en);
                     assert(sq_wake_bitmap == 4'd0);
                     assert(sq_store_bypass_mask == MASK0);
                     assert(sq_store_bypass_data == DATA0);
@@ -329,15 +345,224 @@ module test_l1_store_queue(input clk, input reset);
                     state <= state + 1;
                 end
 
-                // Wait a cycle
+                // Wait a cycle. There's no wakeup, because a thread was not rolled back.
                 21, 22:
                 begin
                     assert(sq_wake_bitmap == 4'd0);
                     state <= state + 1;
                 end
 
+                ////////////////////////////////////////////////////////////
+                // Synchronized store request
+                ////////////////////////////////////////////////////////////
 
+                // Send a synchronized store request.
                 23:
+                begin
+                    assert(sq_wake_bitmap == 4'd0);
+                    assert(!sq_dequeue_ready);
+                    dd_store_en <= 1;
+                    dd_store_addr <= ADDR4;
+                    dd_store_mask <= MASK4;
+                    dd_store_data <= DATA4;
+                    dd_store_thread_idx <= 0;
+                    dd_store_sync <= 1;
+                    state <= state + 1;
+                end
+
+                // Wait a cycle
+                24:
+                begin
+                    assert(sq_wake_bitmap == 4'd0);
+                    state <= state + 1;
+                end
+
+                // On the first pass, this should be rolled back to
+                // wait for an L2 response
+                25:
+                begin
+                    assert(sq_wake_bitmap == 4'd0);
+                    assert(sq_rollback_en);
+                    state <= state + 1;
+                end
+
+                // Check the request and acknowledge it
+                26:
+                begin
+                    assert(sq_dequeue_ready);
+                    assert(sq_dequeue_addr == ADDR4);
+                    assert(sq_dequeue_mask == MASK4);
+                    assert(sq_dequeue_data == DATA4);
+                    assert(sq_dequeue_sync);
+                    assert(!sq_dequeue_flush);
+                    assert(!sq_dequeue_iinvalidate);
+                    assert(!sq_dequeue_dinvalidate);
+                    saved_request_idx <= sq_dequeue_idx;
+                    sq_dequeue_ack <= 1;
+                    state <= state + 1;
+                end
+
+                // Wait a cycle
+                27:
+                begin
+                    assert(sq_wake_bitmap == 4'd0);
+                    state <= state + 1;
+                end
+
+                // L2 response
+                28:
+                begin
+                    storebuf_l2_response_valid <= 1;
+                    storebuf_l2_response_idx <= saved_request_idx;
+                    storebuf_l2_sync_success <= 1;
+                    state <= state + 1;
+                end
+
+                // Wakeup from store buffer.
+                29:
+                begin
+                    assert(sq_wake_bitmap == 4'b0001);
+                    state <= state + 1;
+                end
+
+                30:
+                begin
+                    assert(sq_wake_bitmap == 4'd0);
+
+                    // Resend synchronized store request
+                    dd_store_en <= 1;
+                    dd_store_addr <= ADDR4;
+                    dd_store_mask <= MASK4;
+                    dd_store_data <= DATA4;
+                    dd_store_thread_idx <= 0;
+                    dd_store_sync <= 1;
+                    state <= state + 1;
+                end
+
+                // Wait a cycle
+                31:
+                begin
+                    assert(sq_wake_bitmap == 4'd0);
+                    state <= state + 1;
+                end
+
+                // Check that this was not rolled back
+                32:
+                begin
+                    assert(!sq_rollback_en);
+                    assert(sq_wake_bitmap == 4'd0);
+                    assert(sq_store_sync_success);
+                    state <= state + 1;
+                end
+
+                ////////////////////////////////////////////////////////////
+                // Memory barrier
+                ////////////////////////////////////////////////////////////
+
+                // Send memory barrier when nothing is pending. This should
+                // not roll back.
+                33:
+                begin
+                    assert(sq_wake_bitmap == 4'd0);
+                    dd_membar_en <= 1;
+                    dd_store_thread_idx <= 2;
+                    state <= state + 1;
+                end
+
+                // Wait a cycle
+                34:
+                begin
+                    assert(sq_wake_bitmap == 4'd0);
+                    assert(!sq_rollback_en);
+                    state <= state + 1;
+                end
+
+                // Ensure there isn't a rollback
+                35:
+                begin
+                    assert(sq_wake_bitmap == 4'd0);
+                    assert(!sq_rollback_en);
+                    state <= state + 1;
+                end
+
+                // Queue a pending store request
+                36:
+                begin
+                    assert(sq_wake_bitmap == 4'd0);
+                    assert(!sq_dequeue_ready);
+                    dd_store_en <= 1;
+                    dd_store_addr <= ADDR5;
+                    dd_store_mask <= MASK5;
+                    dd_store_data <= DATA5;
+                    dd_store_thread_idx <= 2;
+                    state <= state + 1;
+                end
+
+                // Then send a memory barrier again.
+                37:
+                begin
+                    assert(sq_wake_bitmap == 4'd0);
+                    dd_membar_en <= 1;
+                    dd_store_thread_idx <= 2;
+                    state <= state + 1;
+                end
+
+                // Wait a cycle
+                38:
+                begin
+                    assert(sq_wake_bitmap == 4'd0);
+                    assert(!sq_rollback_en);
+                    state <= state + 1;
+                end
+
+                // This time there should be a rollback
+                39:
+                begin
+                    assert(sq_wake_bitmap == 4'd0);
+                    assert(sq_rollback_en);
+                    state <= state + 1;
+                end
+
+                // Check the request and acknowledge it
+                40:
+                begin
+                    assert(sq_dequeue_ready);
+                    assert(sq_dequeue_addr == ADDR5);
+                    assert(sq_dequeue_mask == MASK5);
+                    assert(sq_dequeue_data == DATA5);
+                    assert(!sq_dequeue_sync);
+                    assert(!sq_dequeue_flush);
+                    assert(!sq_dequeue_iinvalidate);
+                    assert(!sq_dequeue_dinvalidate);
+                    saved_request_idx <= sq_dequeue_idx;
+                    sq_dequeue_ack <= 1;
+                    state <= state + 1;
+                end
+
+                // Wait a cycle
+                41:
+                begin
+                    assert(sq_wake_bitmap == 4'd0);
+                    state <= state + 1;
+                end
+
+                // L2 response
+                42:
+                begin
+                    storebuf_l2_response_valid <= 1;
+                    storebuf_l2_response_idx <= saved_request_idx;
+                    storebuf_l2_sync_success <= 1;
+                    state <= state + 1;
+                end
+
+                // Wakeup from store buffer.
+                43:
+                begin
+                    assert(sq_wake_bitmap == 4'b0100);
+                    state <= state + 1;
+                end
+
+                44:
                 begin
                     $display("PASS");
                     $finish;
