@@ -70,9 +70,7 @@ void register_interrupt_handler(int interrupt, interrupt_handler_t handler)
 
 static void handle_interrupt(struct interrupt_frame *frame)
 {
-    int hwthid = current_hw_thread();
-    unsigned int interrupt_bitmap = __builtin_nyuzi_read_control_reg(CR_INTERRUPT_PENDING)
-                                    & enabled_interrupts[hwthid];
+    unsigned int interrupt_bitmap = __builtin_nyuzi_read_control_reg(CR_INTERRUPT_PENDING);
 
     (void) frame;
     while (interrupt_bitmap)

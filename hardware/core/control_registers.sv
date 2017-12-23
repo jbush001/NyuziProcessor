@@ -269,7 +269,8 @@ module control_registers
                 CR_SUBCYCLE:          cr_creg_read_val <= scalar_t'(trap_state[dt_thread_idx][0].trap_subcycle);
                 CR_CURRENT_ASID:      cr_creg_read_val <= scalar_t'(cr_current_asid[dt_thread_idx]);
                 CR_PAGE_DIR:          cr_creg_read_val <= page_dir_base[dt_thread_idx];
-                CR_INTERRUPT_PENDING: cr_creg_read_val <= scalar_t'(interrupt_pending[dt_thread_idx]);
+                CR_INTERRUPT_PENDING: cr_creg_read_val <= scalar_t'(interrupt_pending[dt_thread_idx]
+                                                          & interrupt_mask[dt_thread_idx]);
                 CR_JTAG_DATA:         cr_creg_read_val <= jtag_data;
                 default:              cr_creg_read_val <= 32'hffffffff;
             endcase

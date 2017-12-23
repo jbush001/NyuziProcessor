@@ -18,10 +18,6 @@
 
 import defines::*;
 
-//
-// Test trap handling, ensure exception state is saved and restored correctly.
-//
-
 module test_control_registers(input clk, input reset);
     localparam SCRATCHPAD0_0 = 32'h47aef111;
     localparam SCRATCHPAD1_0 = 32'hb74b7b47;
@@ -29,6 +25,7 @@ module test_control_registers(input clk, input reset);
     localparam SCRATCHPAD1_1 = 32'h35c1e57c;
     localparam SCRATCHPAD0_2 = 32'h826109b1;
     localparam SCRATCHPAD1_2 = 32'h91f13a15;
+    localparam OTHER_THREAD_SCRATCHPAD = 32'h75458549;
     localparam PC0 = 32'h2ad98;
     localparam PC1 = 32'h167c8;
     localparam PC2 = 32'h6340;
@@ -100,6 +97,7 @@ module test_control_registers(input clk, input reset);
         begin
             cycle <= 0;
             dt_thread_idx <= 0;
+            interrupt_req <= '0;
         end
         else
         begin
@@ -109,10 +107,16 @@ module test_control_registers(input clk, input reset);
             wb_trap <= 0;
             wb_eret <= 0;
             dbg_data_update <= 0;
-            interrupt_req <= '0;
 
+            // There are deliberately gaps in the cycle count sequences below
+            // to make it easier to add new actions to the test.
             cycle <= cycle + 1;
             unique0 case (cycle)
+                ////////////////////////////////////////////////////////////
+                // Test taking and returning from traps, ensuring state is
+                // saved and restored correctly.
+                ////////////////////////////////////////////////////////////
+
                 0:
                 begin
                     // Check that everything comes up in the correct state
@@ -133,24 +137,34 @@ module test_control_registers(input clk, input reset);
                 // Set scratchpad registers
                 1: write_creg(CR_SCRATCHPAD0, SCRATCHPAD0_0);
                 2: write_creg(CR_SCRATCHPAD1, SCRATCHPAD1_0);
+                3:
+                begin
+                    // Set another threads scratchpad to ensure the
+                    // subsequent operations don't affect it.
+                    dt_thread_idx <= 1;
+                    write_creg(CR_SCRATCHPAD0, OTHER_THREAD_SCRATCHPAD);
+                end
 
                 // Enable the MMU, switch to user mode.
-                3: write_creg(CR_FLAGS, FLAGS0);
+                4:
+                begin
+                    dt_thread_idx <= 0;
+                    write_creg(CR_FLAGS, FLAGS0);
+                end
                 // Wait cycle
 
-                5:
+                6:
                 begin
                     assert(cr_interrupt_en[0]);
                     assert(cr_mmu_en[0]);
                     assert(!cr_supervisor_en[0]);
                 end
 
-                // Now take a trap
-                6: raise_trap(TRAP_CAUSE0, PC0, TRAP_SUBCYCLE0);
+                // Take a trap
+                8: raise_trap(TRAP_CAUSE0, PC0, TRAP_SUBCYCLE0);
+                // wait cycle
 
-                // wait cycle 7
-
-                8:
+                10:
                 begin
                     // The trap will turn off interrupts and switch to
                     // supervisor mode.
@@ -170,52 +184,69 @@ module test_control_registers(input clk, input reset);
                     assert(!cr_interrupt_en[3]);
                 end
 
-                9: read_creg(CR_TRAP_PC);
+                11: read_creg(CR_TRAP_PC);
                 // wait a cycle
 
-                11:
+                13:
                 begin
                     assert(cr_creg_read_val == PC0);
                     read_creg(CR_FLAGS);
                 end
                 // wait a cycle
 
-                13:
+                15:
                 begin
                     assert(cr_creg_read_val == FLAGS1);
                     read_creg(CR_TRAP_CAUSE);
                 end
                 // wait a cycle
 
-                15:
+                17:
                 begin
                     assert(cr_creg_read_val == 32'(TRAP_CAUSE0));
                     read_creg(CR_SAVED_FLAGS);
                 end
                 // wait a cycle
 
-                17:
+                19:
                 begin
                     assert(cr_creg_read_val == FLAGS0);
                     read_creg(CR_SUBCYCLE);
                 end
                 // wait a cycle
 
-                19:
+                21:
                 begin
                     // Check subcycle
                     assert(cr_creg_read_val == 32'(TRAP_SUBCYCLE0));
                 end
 
                 // set scratchpad registers again
-                20: write_creg(CR_SCRATCHPAD0, SCRATCHPAD0_1);
-                21: write_creg(CR_SCRATCHPAD1, SCRATCHPAD1_1);
+                23: write_creg(CR_SCRATCHPAD0, SCRATCHPAD0_1);
+                24: write_creg(CR_SCRATCHPAD1, SCRATCHPAD1_1);
+
+                // read the other threads scratchpad to ensure it is
+                // preserved.
+                25:
+                begin
+                    dt_thread_idx <= 1;
+                    read_creg(CR_SCRATCHPAD0);
+                end
+                // wait cycle
+
+                27:
+                begin
+                    assert(cr_creg_read_val == OTHER_THREAD_SCRATCHPAD);
+                    dt_thread_idx <= 0;
+                end
+
+
 
                 // take a TLB miss trap
-                22: raise_trap(TRAP_CAUSE1, PC1, TRAP_SUBCYCLE1);
+                40: raise_trap(TRAP_CAUSE1, PC1, TRAP_SUBCYCLE1);
                 // Wait cycle
 
-                24:
+                42:
                 begin
                     // A TLB miss will turn off the MMU and switch to
                     // supervisor mode.
@@ -239,14 +270,14 @@ module test_control_registers(input clk, input reset);
                 end
                 // wait cycle
 
-                26:
+                44:
                 begin
                     assert(cr_creg_read_val == PC1);
                     read_creg(CR_FLAGS);
                 end
                 // wait cycle
 
-                28:
+                46:
                 begin
                     // flags reflect interrupt/super values from above
                     assert(cr_creg_read_val == FLAGS2);
@@ -254,47 +285,47 @@ module test_control_registers(input clk, input reset);
                 end
                 // wait cycle
 
-                30:
+                48:
                 begin
                     assert(cr_creg_read_val == 32'(TRAP_CAUSE1));
                     read_creg(CR_SAVED_FLAGS);
                 end
                 // wait cycle
 
-                32:
+                50:
                 begin
                     assert(cr_creg_read_val == FLAGS1);
                     read_creg(CR_SUBCYCLE);
                 end
                 // wait cycle
 
-                34:
+                52:
                 begin
                     assert(cr_creg_read_val == 32'(TRAP_SUBCYCLE1));
                 end
 
                 // set scratchpad registers
-                35: write_creg(CR_SCRATCHPAD0, SCRATCHPAD0_2);
-                36: write_creg(CR_SCRATCHPAD1, SCRATCHPAD1_2);
+                53: write_creg(CR_SCRATCHPAD0, SCRATCHPAD0_2);
+                54: write_creg(CR_SCRATCHPAD1, SCRATCHPAD1_2);
 
                 // read back scratchpad registers
-                37: read_creg(CR_SCRATCHPAD0);
+                56: read_creg(CR_SCRATCHPAD0);
                 // wait cycle
 
-                39:
+                58:
                 begin
                     assert(cr_creg_read_val == SCRATCHPAD0_2);
                     read_creg(CR_SCRATCHPAD1);
                 end
                 // wait cycle
 
-                41: assert(cr_creg_read_val == SCRATCHPAD1_2);
+                60: assert(cr_creg_read_val == SCRATCHPAD1_2);
 
                 // eret from TLB miss
-                42: wb_eret <= 1;
+                70: wb_eret <= 1;
                 // wait cycle
 
-                44:
+                72:
                 begin
                     // Old flags are restored, MMU is enabled again
                     assert(!cr_interrupt_en[0]);
@@ -313,39 +344,53 @@ module test_control_registers(input clk, input reset);
                     assert(!cr_interrupt_en[3]);
                 end
 
+                // read the other threads scratchpad to ensure it is
+                // preserved.
+                74:
+                begin
+                    dt_thread_idx <= 1;
+                    read_creg(CR_SCRATCHPAD0);
+                end
+                // wait cycle
 
-                45: read_creg(CR_TRAP_PC);
+                76:
+                begin
+                    assert(cr_creg_read_val == OTHER_THREAD_SCRATCHPAD);
+                    dt_thread_idx <= 0;
+                end
+
+                77: read_creg(CR_TRAP_PC);
                 // wait a cycle
 
-                47:
+                79:
                 begin
                     assert(cr_creg_read_val == PC0);
                     read_creg(CR_FLAGS);
                 end
                 // wait a cycle
 
-                49:
+                81:
                 begin
                     assert(cr_creg_read_val == FLAGS1);
                     read_creg(CR_TRAP_CAUSE);
                 end
                 // wait a cycle
 
-                51:
+                83:
                 begin
                     assert(cr_creg_read_val == 32'(TRAP_CAUSE0));
                     read_creg(CR_SAVED_FLAGS);
                 end
                 // wait a cycle
 
-                53:
+                85:
                 begin
                     assert(cr_creg_read_val == FLAGS0);
                     read_creg(CR_SUBCYCLE);
                 end
                 // wait a cycle
 
-                55:
+                87:
                 begin
                     // Check subcycle
                     assert(cr_creg_read_val == 32'(TRAP_SUBCYCLE0));
@@ -353,20 +398,20 @@ module test_control_registers(input clk, input reset);
                 end
                 // wait cycle
 
-                57:
+                89:
                 begin
                     assert(cr_creg_read_val == SCRATCHPAD0_1);
                     read_creg(CR_SCRATCHPAD1);
                 end
                 // wait cycle
 
-                59: assert(cr_creg_read_val == SCRATCHPAD1_1);
+                91: assert(cr_creg_read_val == SCRATCHPAD1_1);
 
                 // eret from trap
-                60: wb_eret <= 1;
+                100: wb_eret <= 1;
                 // wait cycle
 
-                62:
+                102:
                 begin
                     // Old flags are restored
                     assert(cr_interrupt_en[0]);
@@ -385,31 +430,125 @@ module test_control_registers(input clk, input reset);
                     assert(!cr_interrupt_en[3]);
                 end
 
-                64: read_creg(CR_FLAGS);
+                104: read_creg(CR_FLAGS);
                 // wait a cycle
 
-                66:
+                106:
                 begin
                     assert(cr_creg_read_val == FLAGS0);
                     read_creg(CR_SCRATCHPAD0);
                 end
                 // wait cycle
 
-                68:
+                108:
                 begin
                     assert(cr_creg_read_val == SCRATCHPAD0_0);
                     read_creg(CR_SCRATCHPAD1);
                 end
                 // wait cycle
 
-                70: assert(cr_creg_read_val == SCRATCHPAD1_0);
+                110: assert(cr_creg_read_val == SCRATCHPAD1_0);
 
-                71:
+                ////////////////////////////////////////////////////////////
+                // Test interrupt latching
+                ////////////////////////////////////////////////////////////
+
+                // int 0: level triggered, interrupt enabled, active (result 1)
+                // int 1: edge triggered, interrupt enabled, active  (result 1)
+                // int 3: edge triggered, interrupt enabled, not active (result 0)
+                // int 4: edge triggered, interrupt not enabled, active (result 0)
+                // int 5: default config, active (result 0)
+                120: write_creg(CR_INTERRUPT_MASK, 32'b0111);
+                121: write_creg(CR_INTERRUPT_TRIGGER, 32'b0001);  // 0 is edge, 1 is level
+                122: interrupt_req <= 16'b11011;
+                123: interrupt_req <= 16'b10001;   // Keep level triggered high
+                // wait cycle
+                125:
+                begin
+                    assert(cr_interrupt_pending[0] == 1);
+                    assert(cr_interrupt_pending[1] == 0);
+
+                    read_creg(CR_INTERRUPT_PENDING);
+                end
+                // wait cycle
+
+                127:
+                begin
+                    $display("pending ints %b", cr_creg_read_val);
+                    assert(cr_creg_read_val == 32'b0011);
+                    interrupt_req <= 16'b0000;
+                end
+                // wait cycle
+
+                129:
+                begin
+                    assert(cr_interrupt_pending[0] == 1);
+
+                    read_creg(CR_INTERRUPT_PENDING);
+                end
+                // wait cycle
+
+                131:
+                begin
+                    // The level triggered interrupt goes to zero, but
+                    // the edge triggered is still active
+                    assert(cr_creg_read_val == 32'b0010);
+
+                    write_creg(CR_INTERRUPT_ACK, 32'b1111);
+                end
+                // wait cycle
+
+                133:
+                begin
+                    // no interrupts pending
+                    assert(cr_interrupt_pending[0] == 0);
+
+                    read_creg(CR_INTERRUPT_PENDING);
+                end
+                // wait cycle
+
+                // Edge triggered interrupt should be cleared by ack.
+                135: assert(cr_creg_read_val == 32'b0000);
+
+                ////////////////////////////////////////////////////////////
+                // Other misc tests
+                ////////////////////////////////////////////////////////////
+                150: read_creg(CR_THREAD_ID);
+                // wait cycle
+                152:
+                begin
+                    assert(cr_creg_read_val == 0);
+
+                    dt_thread_idx <= 1;
+                    read_creg(CR_THREAD_ID);
+                end
+                // wait cycle
+
+                154:
+                begin
+                    assert(cr_creg_read_val == 1);
+
+                    dt_thread_idx <= 2;
+                    read_creg(CR_THREAD_ID);
+                end
+                // wait cycle
+
+                156:
+                begin
+                    assert(cr_creg_read_val == 2);
+
+                    dt_thread_idx <= 3;
+                    read_creg(CR_THREAD_ID);
+                end
+                // wait cycle
+
+                158: assert(cr_creg_read_val == 3);
+
+                160:
                 begin
                     $display("PASS");
                     $finish;
                 end
-
             endcase
         end
     end

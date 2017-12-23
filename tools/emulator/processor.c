@@ -1677,7 +1677,7 @@ static void execute_control_register_inst(struct thread *thread, uint32_t instru
                 break;
 
             case CR_INTERRUPT_PENDING:
-                value = get_pending_interrupts(thread);
+                value = get_pending_interrupts(thread) & thread->interrupt_mask;
                 break;
         }
 
