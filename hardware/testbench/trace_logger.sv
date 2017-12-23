@@ -44,9 +44,9 @@ module trace_logger(
     input local_thread_idx_t         wb_rollback_thread_idx,
     input scalar_t                   wb_trap_pc,
     input scalar_t                   wb_rollback_pc,
-    input                            debug_store_sync,
-    input pipeline_sel_t             debug_wb_pipeline,
-    input scalar_t                   debug_wb_pc,
+
+    // From floating point pipeline
+    input scalar_t                   fx5_instruction_pc,
 
     // From integer pipeline
     input                            ix_instruction_valid,
@@ -98,11 +98,20 @@ module trace_logger(
 
     trace_event_t trace_reorder_queue[TRACE_REORDER_QUEUE_LEN];
     bit trace_en;
+    logic writeback_sync_store;
+    scalar_t fx5_instruction_pc_latched;
+    scalar_t dd_instruction_pc_latched;
+    scalar_t ix_instruction_pc_latched;
+    logic ix_instruction_valid_latched;
+    logic dd_instruction_valid_latched;
 
     initial
     begin
         trace_en = $test$plusargs("trace") != 0;
     end
+
+    assign writeback_sync_store = dd_instruction_valid && !dd_instruction_load
+            && dd_instruction_memory_access_type == MEM_SYNC;
 
     always_ff @(posedge clk, posedge reset)
     begin
@@ -113,6 +122,13 @@ module trace_logger(
         end
         else if (trace_en)
         begin
+            // Remember these for when the writeback comes a cycle later.
+            ix_instruction_pc_latched <= ix_instruction_pc;
+            dd_instruction_pc_latched <= dd_instruction_pc;
+            fx5_instruction_pc_latched <= fx5_instruction_pc;
+            ix_instruction_valid_latched <= ix_instruction_valid;
+            dd_instruction_valid_latched <= dd_instruction_valid;
+
             case (trace_reorder_queue[0].event_type)
                 EVENT_VWRITEBACK:
                 begin
@@ -160,16 +176,28 @@ module trace_logger(
 
             // Note that we only record the memory event for a synchronized store, not the register
             // success value.
-            if (wb_writeback_en && !debug_store_sync)
+            if (wb_writeback_en && !writeback_sync_store)
             begin : dump_trace_event
                 int tindex;
 
-                if (debug_wb_pipeline == PIPE_INT_ARITH)
+                if (ix_instruction_valid_latched)
+                begin
+                    // Integer pipeline result
                     tindex = 4;
-                else if (debug_wb_pipeline == PIPE_MEM)
+                    trace_reorder_queue[tindex].pc <= ix_instruction_pc_latched;
+                end
+                else if (dd_instruction_valid_latched)
+                begin
+                    // Memory pipeline result
                     tindex = 3;
-                else // Multicycle arithmetic
+                    trace_reorder_queue[tindex].pc <= dd_instruction_pc_latched;
+                end
+                else
+                begin
+                    // Floating point pipeline result
                     tindex = 0;
+                    trace_reorder_queue[tindex].pc <= fx5_instruction_pc_latched;
+                end
 
                 assert(trace_reorder_queue[tindex + 1].event_type == EVENT_INVALID);
                 if (wb_writeback_vector)
@@ -177,7 +205,6 @@ module trace_logger(
                 else
                     trace_reorder_queue[tindex].event_type <= EVENT_SWRITEBACK;
 
-                trace_reorder_queue[tindex].pc <= debug_wb_pc;
                 trace_reorder_queue[tindex].thread_idx <= wb_writeback_thread_idx;
                 trace_reorder_queue[tindex].writeback_reg <= wb_writeback_reg;
                 trace_reorder_queue[tindex].mask <= {{CACHE_LINE_BYTES - NUM_VECTOR_LANES{1'b0}},

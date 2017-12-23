@@ -131,12 +131,6 @@ module writeback_stage(
     logic[31:0] swapped_word_value;
     memory_op_t memory_op;
     cache_line_data_t endian_twiddled_data;
-`ifdef SIMULATION
-    // Used by testbench
-    scalar_t __debug_wb_pc;
-    pipeline_sel_t __debug_wb_pipeline;
-    logic __debug_store_sync;
-`endif
     logic[NUM_VECTOR_LANES - 1:0] scycle_vcompare_result;
     logic[NUM_VECTOR_LANES - 1:0] mcycle_vcompare_result;
     vector_mask_t dd_vector_lane_oh;
@@ -534,32 +528,6 @@ module writeback_stage(
                 wb_trap_cause, wb_trap_pc);
             $finish;
         end
-
-        // Used by testbench for cosimulation output
-        __debug_store_sync <= dd_instruction_valid && !dd_instruction.load
-            && memory_op == MEM_SYNC;
-        unique case ({fx5_instruction_valid, ix_instruction_valid, dd_instruction_valid})
-            3'b100:
-            begin
-                __debug_wb_pc <= fx5_instruction.pc;
-                __debug_wb_pipeline <= PIPE_FLOAT_ARITH;
-            end
-
-            3'b010:
-            begin
-                __debug_wb_pc <= ix_instruction.pc;
-                __debug_wb_pipeline <= PIPE_INT_ARITH;
-            end
-
-            3'b001:
-            begin
-                __debug_wb_pc <= dd_instruction.pc;
-                __debug_wb_pipeline <= PIPE_MEM;
-            end
-
-            default:
-                ;
-        endcase
     end
 `endif
 endmodule
