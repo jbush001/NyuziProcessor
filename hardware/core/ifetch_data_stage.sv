@@ -217,14 +217,24 @@ module ifetch_data_stage(
                     && cache_hit && ift_tlb_hit;
                 ifd_alignment_fault <= ift_instruction_requested && !rollback_this_stage
                     && alignment_fault;
-                ifd_supervisor_fault <= ift_instruction_requested && ift_tlb_supervisor
+                ifd_supervisor_fault <= ift_instruction_requested && ift_tlb_hit
+                    && ift_tlb_present && ift_tlb_supervisor
                     && !cr_supervisor_en[ift_thread_idx];
                 ifd_tlb_miss <= ift_instruction_requested && !rollback_this_stage
                     && !ift_tlb_hit;
                 ifd_page_fault <= ift_instruction_requested && !rollback_this_stage
-                    && !ift_tlb_present;
+                    && ift_tlb_hit && !ift_tlb_present;
                 ifd_executable_fault <= ift_instruction_requested && !rollback_this_stage
-                    && !ift_tlb_executable;
+                    && ift_tlb_hit && ift_tlb_present && !ift_tlb_executable;
+
+                // These faults can't occur together. The first require
+                // a TLB entry to read the bits, the second require a page to be present.
+                assert(!ifd_tlb_miss || !ifd_supervisor_fault);
+                assert(!ifd_tlb_miss || !ifd_page_fault);
+                assert(!ifd_tlb_miss || !ifd_executable_fault);
+                assert(!ifd_tlb_miss || !ifd_instruction_valid);
+                assert(!ifd_page_fault || !ifd_supervisor_fault);
+                assert(!ifd_page_fault || !ifd_executable_fault);
             end
         end
     end

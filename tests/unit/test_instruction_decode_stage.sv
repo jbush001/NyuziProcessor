@@ -512,7 +512,67 @@ module test_instruction_decode_stage(input clk, input reset);
 
                 64: assert(id_instruction_valid);
 
+                ////////////////////////////////////////////////////////////
+                // Fault priorities. It's possible for two fault conditions
+                // to occur at once (for example, unaligned access to
+                // non-executable, supervisor page).  Ensure these
+                // are prioritized corectly.
+                ////////////////////////////////////////////////////////////
                 70:
+                begin
+                    ifd_alignment_fault <= 1;
+                    ifd_tlb_miss <= 1;
+                end
+
+                // wait a cycle
+                71: assert(!id_instruction_valid);
+
+                72:
+                begin
+                    assert(id_instruction_valid);
+                    assert(id_instruction.trap_cause == {2'b00, TT_TLB_MISS});
+
+                    ifd_page_fault <= 1;
+                    ifd_alignment_fault <= 1;
+                    ifd_supervisor_fault <= 1;
+                    ifd_executable_fault <= 1;
+                end
+
+                // wait a cycle
+                73: assert(!id_instruction_valid);
+
+                74:
+                begin
+                    assert(id_instruction_valid);
+                    assert(id_instruction.trap_cause == {2'b00, TT_PAGE_FAULT});
+
+                    ifd_alignment_fault <= 1;
+                    ifd_supervisor_fault <= 1;
+                    ifd_executable_fault <= 1;
+                end
+
+                // wait a cycle
+                75: assert(!id_instruction_valid);
+
+                76:
+                begin
+                    assert(id_instruction_valid);
+                    assert(id_instruction.trap_cause == {2'b00, TT_SUPERVISOR_ACCESS});
+
+                    ifd_alignment_fault <= 1;
+                    ifd_executable_fault <= 1;
+                end
+
+                // wait a cycle
+                77: assert(!id_instruction_valid);
+
+                78:
+                begin
+                    assert(id_instruction_valid);
+                    assert(id_instruction.trap_cause == {2'b00, TT_UNALIGNED_ACCESS});
+                end
+
+                80:
                 begin
                     $display("PASS");
                     $finish;
