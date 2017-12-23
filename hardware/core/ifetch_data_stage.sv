@@ -214,7 +214,7 @@ module ifetch_data_stage(
             else
             begin
                 ifd_instruction_valid <= ift_instruction_requested && !rollback_this_stage
-                    && cache_hit && ift_tlb_hit && !alignment_fault;
+                    && cache_hit && ift_tlb_hit;
                 ifd_alignment_fault <= ift_instruction_requested && !rollback_this_stage
                     && alignment_fault;
                 ifd_supervisor_fault <= ift_instruction_requested && ift_tlb_supervisor

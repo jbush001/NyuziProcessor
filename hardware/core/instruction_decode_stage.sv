@@ -219,9 +219,11 @@ module instruction_decode_stage(
     assign syscall = fmt_r && ifd_instruction[25:20] == OP_SYSCALL;
     assign breakpoint = fmt_r && ifd_instruction[25:20] == OP_BREAKPOINT;
     assign nop = ifd_instruction == INSTRUCTION_NOP;
-    assign has_trap = dlut_out.illegal || ifd_alignment_fault || ifd_tlb_miss
-        || ifd_supervisor_fault || raise_interrupt || syscall
-        || breakpoint || ifd_page_fault || ifd_executable_fault;
+    assign has_trap = (ifd_instruction_valid
+        && (dlut_out.illegal || syscall || breakpoint || raise_interrupt))
+        || ifd_alignment_fault || ifd_tlb_miss
+        || ifd_supervisor_fault
+        || ifd_page_fault || ifd_executable_fault;
 
     // Check for TLB miss first, since permission bits are not valid if there
     // is a TLB miss. The order of the remaining faults should match that in
@@ -436,7 +438,7 @@ module instruction_decode_stage(
         begin
             // Piggyback ifetch faults and TLB misses inside instructions, marking
             // the instruction valid if these conditions occur
-            id_instruction_valid <= (ifd_instruction_valid || ifd_tlb_miss || ifd_alignment_fault)
+            id_instruction_valid <= (ifd_instruction_valid || has_trap)
                 && (!wb_rollback_en || wb_rollback_thread_idx != ifd_thread_idx);
         end
     end
