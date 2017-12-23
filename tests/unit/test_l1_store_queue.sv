@@ -66,7 +66,7 @@ module test_l1_store_queue(input clk, input reset);
     logic [CACHE_LINE_BYTES - 1:0] sq_store_bypass_mask;
     cache_line_data_t sq_store_bypass_data;
     logic sq_store_sync_success;
-    logic sq_dequeue_ack;
+    logic storebuf_dequeue_ack;
     logic storebuf_l2_response_valid;
     l1_miss_entry_idx_t storebuf_l2_response_idx;
     logic storebuf_l2_sync_success;
@@ -98,7 +98,7 @@ module test_l1_store_queue(input clk, input reset);
             dd_iinvalidate_en <= 0;
             dd_dinvalidate_en <= 0;
             dd_store_sync <= 0;
-            sq_dequeue_ack <= 0;
+            storebuf_dequeue_ack <= 0;
             storebuf_l2_response_valid <= 0;
             cycle <= cycle + 1;
 
@@ -264,7 +264,7 @@ module test_l1_store_queue(input clk, input reset);
                     assert(!sq_rollback_en);
 
                     // Accept from the L2 interface
-                    sq_dequeue_ack <= 1;
+                    storebuf_dequeue_ack <= 1;
                 end
 
                 // Wait a cycle...
@@ -303,7 +303,7 @@ module test_l1_store_queue(input clk, input reset);
                 19:
                 begin
                     assert(sq_wake_bitmap == 4'd0);
-                    sq_dequeue_ack <= 1;
+                    storebuf_dequeue_ack <= 1;
                 end
 
                 // Check that the request is correct.
@@ -373,7 +373,7 @@ module test_l1_store_queue(input clk, input reset);
                     assert(!sq_dequeue_iinvalidate);
                     assert(!sq_dequeue_dinvalidate);
                     saved_request_idx <= sq_dequeue_idx;
-                    sq_dequeue_ack <= 1;
+                    storebuf_dequeue_ack <= 1;
                 end
 
                 // Wait a cycle
@@ -496,7 +496,7 @@ module test_l1_store_queue(input clk, input reset);
                     assert(!sq_dequeue_iinvalidate);
                     assert(!sq_dequeue_dinvalidate);
                     saved_request_idx <= sq_dequeue_idx;
-                    sq_dequeue_ack <= 1;
+                    storebuf_dequeue_ack <= 1;
                 end
 
                 // Wait a cycle

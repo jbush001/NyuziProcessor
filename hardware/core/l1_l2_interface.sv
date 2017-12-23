@@ -145,7 +145,7 @@ module l1_l2_interface
     logic storebuf_l2_response_valid;
     l1_miss_entry_idx_t storebuf_l2_response_idx;
     local_thread_bitmap_t dcache_miss_wake_bitmap;
-    logic sq_dequeue_ack;
+    logic storebuf_dequeue_ack;
     logic icache_dequeue_ready;
     logic icache_dequeue_ack;
     logic dcache_dequeue_ready;
@@ -393,7 +393,7 @@ module l1_l2_interface
     begin
         l2i_request_valid = 0;
         l2i_request = 0;
-        sq_dequeue_ack = 0;
+        storebuf_dequeue_ack = 0;
         icache_dequeue_ack = 0;
         dcache_dequeue_ack = 0;
 
@@ -448,7 +448,7 @@ module l1_l2_interface
             else if (icache_dequeue_ready)
                 icache_dequeue_ack = 1;
             else if (sq_dequeue_ready)
-                sq_dequeue_ack = 1;
+                storebuf_dequeue_ack = 1;
         end
     end
 endmodule
