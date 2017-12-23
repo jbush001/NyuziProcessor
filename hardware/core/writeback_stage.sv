@@ -488,7 +488,6 @@ module writeback_stage(
             // Only one pipeline should attempt to retire an instruction per cycle
             assert($onehot0({ix_instruction_valid, dd_instruction_valid, fx5_instruction_valid}));
 
-`ifdef SIMULATION
             if (dd_instruction_valid && !dd_instruction.cache_control)
             begin
                 if (dd_instruction.load)
@@ -513,7 +512,6 @@ module writeback_stage(
                     assert(dd_instruction.has_dest && !dd_instruction.dest_vector);
                 end
             end
-`endif
 
             wb_writeback_en <= writeback_en_nxt;
         end
