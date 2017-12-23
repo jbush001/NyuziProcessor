@@ -60,7 +60,8 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
 1:              b 1b
 
 
-message:        .asciz "PASS"
+message:        .ascii "PASS"
+                .byte 4, 0
 
                 .align 4, 0xff
 itlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT | TLB_EXECUTABLE

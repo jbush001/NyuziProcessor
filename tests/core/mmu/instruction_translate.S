@@ -42,7 +42,8 @@ dtlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT | TLB_SUPERVISOR
                 .long 0xffff0000, 0xffff0000 | TLB_PRESENT | TLB_SUPERVISOR | TLB_WRITABLE
                 .long 0xffffffff, 0xffffffff
 
-                message:        .asciz "PASS"
+                message:        .ascii "PASS"
+                                .byte 4, 0
 
                 .align 0x1000, 0xff
 
