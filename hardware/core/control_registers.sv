@@ -40,6 +40,7 @@ module control_registers
 
     // To instruction_decode_stage
     output logic[`THREADS_PER_CORE - 1:0]   cr_interrupt_pending,
+    output local_thread_bitmap_t            cr_interrupt_en,
 
     // From dcache_data_stage
     // dd_xxx signals are unregistered. dt_thread_idx represents thread going into
@@ -61,7 +62,6 @@ module control_registers
 
     // To writeback_stage
     output scalar_t                         cr_creg_read_val,
-    output local_thread_bitmap_t            cr_interrupt_en,
     output subcycle_t                       cr_eret_subcycle[`THREADS_PER_CORE],
     output scalar_t                         cr_trap_handler,
     output scalar_t                         cr_tlb_miss_handler,
