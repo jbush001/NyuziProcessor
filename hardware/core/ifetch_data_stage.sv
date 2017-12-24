@@ -139,7 +139,8 @@ module ifetch_data_stage(
     assign ifd_cache_miss = !cache_hit
         && ift_tlb_hit
         && ift_instruction_requested
-        && !ifd_near_miss;
+        && !ifd_near_miss
+        && !rollback_this_stage;
     assign ifd_cache_miss_paddr = {ift_pc_paddr.tag, ift_pc_paddr.set_idx};
     assign ifd_cache_miss_thread_idx = ift_thread_idx;
     assign ifd_perf_icache_hit = cache_hit && ift_instruction_requested;
@@ -213,12 +214,14 @@ module ifetch_data_stage(
             end
             else
             begin
+                // ifd_instruction_valid should be ignored if any of the other
+                // fault signals are set.
                 ifd_instruction_valid <= ift_instruction_requested && !rollback_this_stage
                     && cache_hit && ift_tlb_hit;
                 ifd_alignment_fault <= ift_instruction_requested && !rollback_this_stage
                     && alignment_fault;
-                ifd_supervisor_fault <= ift_instruction_requested && ift_tlb_hit
-                    && ift_tlb_present && ift_tlb_supervisor
+                ifd_supervisor_fault <= ift_instruction_requested && !rollback_this_stage
+                    && ift_tlb_hit && ift_tlb_present && ift_tlb_supervisor
                     && !cr_supervisor_en[ift_thread_idx];
                 ifd_tlb_miss <= ift_instruction_requested && !rollback_this_stage
                     && !ift_tlb_hit;
