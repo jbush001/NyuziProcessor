@@ -285,9 +285,9 @@ module de2_115_top(
     // state.
     //
     sld_virtual_jtag #(
-        .SLD_AUTO_INSTANCE_INDEX("NO"),
-        .SLD_INSTANCE_INDEX(0),
-        .SLD_IR_WIDTH(4)
+        .sld_auto_instance_index("NO"),
+        .sld_instance_index(0),
+        .sld_ir_width(4)
     ) virtual_jtag(
         .tck(virt_tck),
         .tdi(virt_tdi),
