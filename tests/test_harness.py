@@ -182,13 +182,9 @@ def run_test_with_timeout(args, timeout):
 
 
 def reset_fpga():
-    """
-    Reset the processor running on the attached FPGA board
-    For now, this just asks the user to do it, but it could be done with
-    a virtual JTAG command in the future.
-    """
-
-    input('\nReset FPGA board and press enter')
+    tcl_command = 'device_virtual_dr_shift -instance-index 0 -dr-value {} -length 1'
+    subprocess.check_command(['quartus_stp', tcl_command.format(1)])
+    subprocess.check_command(['quartus_stp', tcl_command.format(0)])
 
 
 def run_program(

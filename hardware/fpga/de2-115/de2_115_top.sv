@@ -101,7 +101,8 @@ module de2_115_top(
     logic virt_tdo;
     logic virt_tck;
     logic virt_tdi;
-    logic virt_tms;
+    logic virt_data_reg;
+    logic virt_reset;
 
     assign clk = clk50;
 
@@ -122,11 +123,14 @@ module de2_115_top(
         .axi_bus_m(axi_bus_m),
         .*);
 
+    // Synchronize from two asynchronous sources, reset_btn is the
+    // pushbutton on the dev board (which goes low when pressed),
+    // and virt_reset comes from the virtual JTAG.
     synchronizer reset_synchronizer(
         .clk(clk),
         .reset(0),
         .data_o(reset),
-        .data_i(!reset_btn));    // Reset button goes low when pressed
+        .data_i(!reset_btn || virt_reset));
 
     // Boot ROM.  Execution starts here. The boot ROM path is relative
     // to the directory that the synthesis tool is invoked from (this
@@ -269,4 +273,35 @@ module de2_115_top(
     assign jtag.tdi = 0;
     assign jtag.tms = 0;
     assign jtag.trst_n = 0;
+
+// It's a little weird to have this in a VENDOR_ALTERA ifdef, since this file
+// is Altera specific, but this is done so Verilator can still run a lint pass
+// on this file to check for errors in CI.
+`ifdef VENDOR_ALTERA
+    //
+    // This virtual JTAG block is independent of the JTAG OCD interface on Nyuzi.
+    // It's used only to be able to reset the processor from the test harness.
+    // It only has one data register, with one bit, which contains the reset
+    // state.
+    //
+    sld_virtual_jtag #(
+        .SLD_AUTO_INSTANCE_INDEX("NO"),
+        .SLD_INSTANCE_INDEX(0),
+        .SLD_IR_WIDTH(4)
+    ) virtual_jtag(
+        .tck(virt_tck),
+        .tdi(virt_tdi),
+        .tdo(virt_data_reg),
+        .virtual_state_sdr(virt_sdr),   // Shift data register
+        .virtual_state_udr(virt_udr)    // Update data register
+    );
+
+    always @(posedge virt_tck)
+    begin
+        if (virt_sdr)
+            virt_data_reg <= virt_tdi;
+        else if (virt_udr)
+            virt_reset <= virt_data_reg;
+    end
+`endif
 endmodule
