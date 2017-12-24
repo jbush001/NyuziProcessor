@@ -160,9 +160,9 @@ module dcache_tag_stage
 
     initial
     begin
-        if (`L1D_SETS > 64 && `HAS_MMU)
+        if (`L1D_SETS > 64)
         begin
-            $display("Cannot use more than 64 dcache sets with MMU enabled");
+            $display("Cannot use more than 64 dcache sets");
             $finish;
         end
     end
@@ -231,7 +231,6 @@ module dcache_tag_stage
         end
     endgenerate
 
-`ifdef HAS_MMU
     tlb #(
         .NUM_ENTRIES(`DTLB_ENTRIES),
         .NUM_WAYS(`TLB_WAYS)
@@ -276,13 +275,6 @@ module dcache_tag_stage
             ppage_idx = fetched_addr[31-:PAGE_NUM_BITS];
         end
     end
-`else
-    // If MMU is disabled, identity map addresses
-    assign dt_tlb_hit = 1;
-    assign dt_tlb_writable = 1;
-    assign dt_tlb_present = 1;
-    assign ppage_idx = fetched_addr[31-:PAGE_NUM_BITS];
-`endif
 
     cache_lru #(
         .NUM_WAYS(`L1D_WAYS),

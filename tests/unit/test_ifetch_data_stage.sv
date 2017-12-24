@@ -114,6 +114,10 @@ module test_ifetch_data_stage(input clk, input reset);
 
             cycle <= cycle + 1;
             unique0 case (cycle)
+                ////////////////////////////////////////////////////////////
+                // Test fault handling
+                ////////////////////////////////////////////////////////////
+
                 // Cache hit, user thread accessing a user page
                 0:
                 begin

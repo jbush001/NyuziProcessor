@@ -210,7 +210,6 @@ module ifetch_tag_stage
         end
     endgenerate
 
-`ifdef HAS_MMU
     tlb #(
         .NUM_ENTRIES(`DTLB_ENTRIES),
         .NUM_WAYS(`TLB_WAYS)
@@ -247,7 +246,7 @@ module ifetch_tag_stage
         end
         else
         begin
-            // MMU disabled, identity map.
+            // Address translation disabled, use identity mapping.
             ift_tlb_hit = 1;
             ift_tlb_present = 1;
             ift_tlb_executable = 1;
@@ -255,14 +254,6 @@ module ifetch_tag_stage
             ppage_idx = last_selected_pc[31-:PAGE_NUM_BITS];
         end
     end
-`else
-    // If MMU is disabled, identity map addresses
-    assign ift_tlb_hit = 1;
-    assign ift_tlb_present = 1;
-    assign ift_executable = 1;
-    assign ift_tlb_supervisor = 0;
-    assign ppage_idx = last_selected_pc[31-:PAGE_NUM_BITS];
-`endif
 
     cache_lru #(
         .NUM_WAYS(`L1D_WAYS),

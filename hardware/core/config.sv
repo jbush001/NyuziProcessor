@@ -27,11 +27,10 @@
 // - NUM_CORES must be 1-16. To synthesize more cores, increase the
 //   width of core_id_t in defines.sv (as above, comments there describe why).
 // - The size of a cache is sets * ways * cache line size (64 bytes)
-// - L1D_SETS sets must be 64 or fewer (page size / cache line size) if
-//   virtual address translation is enabled. This avoids aliasing in the
-//   virtually indexed/physically tagged L1 cache by preventing the
-//   same physical address from appearing in different cache sets
-//   (see dcache_tag_stage)
+// - L1D_SETS sets must be 64 or fewer (page size / cache line size). This
+//   avoids aliasing in the virtually indexed/physically tagged L1 cache by
+//   preventing the same physical address from appearing in different cache
+//   sets (see dcache_tag_stage).
 //
 
 `define NUM_CORES 1
@@ -43,7 +42,6 @@
 `define L2_WAYS 8
 `define L2_SETS 256        // 128k
 `define AXI_DATA_WIDTH 32
-`define HAS_MMU 1
 `define ITLB_ENTRIES 64
 `define DTLB_ENTRIES 64
 `define TLB_WAYS 4
