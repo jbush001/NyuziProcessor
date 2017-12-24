@@ -19,11 +19,7 @@
 import defines::*;
 
 //
-// Some basic l1_store_queue scenarios. Lots of edge and normal cases not covered.
-// Not tested:
-// - Send a request the same cycle the L2 responds. Should replace entry to avoid
-//   a rollback.
-// - Sending cache control commands (flush, invalidate)
+// Some basic l1_store_queue scenarios.
 //
 
 module test_l1_store_queue(input clk, input reset);
@@ -86,6 +82,15 @@ module test_l1_store_queue(input clk, input reset);
 
     l1_store_queue l1_store_queue(.*);
 
+    task store_request(input cache_line_index_t address, input logic[CACHE_LINE_BYTES - 1:0] mask,
+        input cache_line_data_t data);
+        dd_store_en <= 1;
+        dd_store_addr <= address;
+        dd_store_mask <= mask;
+        dd_store_data <= data;
+        dd_store_thread_idx <= 0;
+    endtask
+
     always @(posedge clk, posedge reset)
     begin
         if (reset)
@@ -102,7 +107,7 @@ module test_l1_store_queue(input clk, input reset);
             storebuf_l2_response_valid <= 0;
             cycle <= cycle + 1;
 
-            unique case (cycle)
+            unique0 case (cycle)
                 ////////////////////////////////////////////////////////////
                 // Normal store request, write combine, bypass,
                 // rollback on store buffer full, wakeup
@@ -113,11 +118,7 @@ module test_l1_store_queue(input clk, input reset);
                 begin
                     assert(sq_wake_bitmap == 4'd0);
                     assert(!sq_dequeue_ready);
-                    dd_store_en <= 1;
-                    dd_store_addr <= ADDR0;
-                    dd_store_mask <= MASK0;
-                    dd_store_data <= DATA0;
-                    dd_store_thread_idx <= 0;
+                    store_request(ADDR0, MASK0, DATA0);
                 end
 
                 // One cycle delay
@@ -202,11 +203,7 @@ module test_l1_store_queue(input clk, input reset);
 
                     // Try to enqueue another store request for the same address.
                     // This should be write combined.
-                    dd_store_en <= 1;
-                    dd_store_addr <= ADDR0;
-                    dd_store_mask <= MASK2;
-                    dd_store_data <= DATA2;
-                    dd_store_thread_idx <= 0;
+                    store_request(ADDR0, MASK2, DATA2);
                 end
 
                 // Wait a cycle...
@@ -237,11 +234,7 @@ module test_l1_store_queue(input clk, input reset);
                 begin
                     assert(sq_wake_bitmap == 4'd0);
 
-                    dd_store_en <= 1;
-                    dd_store_addr <= ADDR3;
-                    dd_store_mask <= MASK3;
-                    dd_store_data <= DATA3;
-                    dd_store_thread_idx <= 0;
+                    store_request(ADDR3, MASK3, DATA3);
                 end
 
                 // Wait a cycle...
@@ -292,11 +285,7 @@ module test_l1_store_queue(input clk, input reset);
 
                     // Now try to send that store request that caused the
                     // rollback again.
-                    dd_store_en <= 1;
-                    dd_store_addr <= ADDR3;
-                    dd_store_mask <= MASK3;
-                    dd_store_data <= DATA3;
-                    dd_store_thread_idx <= 0;
+                    store_request(ADDR3, MASK3, DATA3);
                 end
 
                 // Wait a cycle
@@ -339,11 +328,7 @@ module test_l1_store_queue(input clk, input reset);
                 begin
                     assert(sq_wake_bitmap == 4'd0);
                     assert(!sq_dequeue_ready);
-                    dd_store_en <= 1;
-                    dd_store_addr <= ADDR4;
-                    dd_store_mask <= MASK4;
-                    dd_store_data <= DATA4;
-                    dd_store_thread_idx <= 0;
+                    store_request(ADDR4, MASK4, DATA4);
                     dd_store_sync <= 1;
                 end
 
@@ -401,11 +386,7 @@ module test_l1_store_queue(input clk, input reset);
                     assert(sq_wake_bitmap == 4'd0);
 
                     // Resend synchronized store request
-                    dd_store_en <= 1;
-                    dd_store_addr <= ADDR4;
-                    dd_store_mask <= MASK4;
-                    dd_store_data <= DATA4;
-                    dd_store_thread_idx <= 0;
+                    store_request(ADDR4, MASK4, DATA4);
                     dd_store_sync <= 1;
                 end
 
@@ -455,10 +436,7 @@ module test_l1_store_queue(input clk, input reset);
                 begin
                     assert(sq_wake_bitmap == 4'd0);
                     assert(!sq_dequeue_ready);
-                    dd_store_en <= 1;
-                    dd_store_addr <= ADDR5;
-                    dd_store_mask <= MASK5;
-                    dd_store_data <= DATA5;
+                    store_request(ADDR5, MASK5, DATA5);
                     dd_store_thread_idx <= 2;
                 end
 
@@ -519,7 +497,122 @@ module test_l1_store_queue(input clk, input reset);
                     assert(sq_wake_bitmap == 4'b0100);
                 end
 
-                44:
+                ////////////////////////////////////////////////////////////
+                // L2 responds same cycle a new entry is sent. This is a
+                // special case to avoid the thread hanging.
+                ////////////////////////////////////////////////////////////
+                60:
+                begin
+                    // Put an entry into the store buffer
+                    store_request(ADDR4, MASK4, DATA4);
+                end
+                // wait a cycle
+
+                62:
+                begin
+                    // Accept request from L2 cache
+                    saved_request_idx <= sq_dequeue_idx;
+                    storebuf_dequeue_ack <= 1;
+                end
+
+                63:
+                begin
+                    // Second request. Would normally block, but L2 acknowledges the
+                    // same cycle.
+                    store_request(ADDR5, MASK5, DATA5);
+                    storebuf_l2_response_valid <= 1;
+                    storebuf_l2_response_idx <= saved_request_idx;
+                end
+                // wait cycle
+
+                65:
+                begin
+                    // Check that there isn't a rollback and the new request is
+                    // pending.
+                    assert(!sq_rollback_en);
+                    assert(sq_dequeue_ready);
+                    assert(sq_dequeue_addr == ADDR5);
+                    assert(sq_dequeue_mask == MASK5);
+                    assert(sq_dequeue_data == DATA5);
+
+                    // Acknowledge it to get back to known state
+                    saved_request_idx <= sq_dequeue_idx;
+                    storebuf_dequeue_ack <= 1;
+                end
+
+                66:
+                begin
+                    storebuf_l2_response_valid <= 1;
+                    storebuf_l2_response_idx <= saved_request_idx;
+                end
+
+                ////////////////////////////////////////////////////////////
+                // Cache control commands
+                ////////////////////////////////////////////////////////////
+                70: dd_flush_en <= 1;
+                // wait a cycle
+
+                72:
+                begin
+                    assert(!sq_rollback_en);
+                    assert(sq_dequeue_ready);
+                    assert(sq_dequeue_flush);
+                    assert(!sq_dequeue_iinvalidate);
+                    assert(!sq_dequeue_dinvalidate);
+
+                    storebuf_dequeue_ack <= 1;
+                end
+
+                73:
+                begin
+                    storebuf_l2_response_valid <= 1;
+                    storebuf_l2_response_idx <= sq_dequeue_idx;
+                end
+                // wait a cycle
+
+
+                75: dd_iinvalidate_en <= 1;
+                // wait a cycle
+
+                77:
+                begin
+                    assert(!sq_rollback_en);
+                    assert(sq_dequeue_ready);
+                    assert(!sq_dequeue_flush);
+                    assert(sq_dequeue_iinvalidate);
+                    assert(!sq_dequeue_dinvalidate);
+
+                    storebuf_dequeue_ack <= 1;
+                end
+
+                78:
+                begin
+                    storebuf_l2_response_valid <= 1;
+                    storebuf_l2_response_idx <= sq_dequeue_idx;
+                end
+                // wait a cycle
+
+                80: dd_dinvalidate_en <= 1;
+                // wait a cycle
+
+                82:
+                begin
+                    assert(!sq_rollback_en);
+                    assert(sq_dequeue_ready);
+                    assert(!sq_dequeue_flush);
+                    assert(!sq_dequeue_iinvalidate);
+                    assert(sq_dequeue_dinvalidate);
+
+                    storebuf_dequeue_ack <= 1;
+                end
+
+                83:
+                begin
+                    storebuf_l2_response_valid <= 1;
+                    storebuf_l2_response_idx <= sq_dequeue_idx;
+                end
+
+                85:
                 begin
                     $display("PASS");
                     $finish;

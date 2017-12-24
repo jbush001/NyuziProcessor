@@ -144,7 +144,10 @@ module ifetch_data_stage(
     assign ifd_cache_miss_paddr = {ift_pc_paddr.tag, ift_pc_paddr.set_idx};
     assign ifd_cache_miss_thread_idx = ift_thread_idx;
     assign ifd_perf_icache_hit = cache_hit && ift_instruction_requested;
-    assign ifd_perf_icache_miss = !cache_hit && ift_tlb_hit && ift_instruction_requested;
+    assign ifd_perf_icache_miss = !cache_hit
+        && ift_tlb_hit
+        && ift_instruction_requested
+        && !rollback_this_stage;
     assign ifd_perf_itlb_miss = ift_instruction_requested && !ift_tlb_hit;
     assign alignment_fault = ift_pc_paddr[1:0] != 0;
 

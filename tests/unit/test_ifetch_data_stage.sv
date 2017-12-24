@@ -23,6 +23,8 @@ module test_ifetch_data_stage(input clk, input reset);
     localparam PADDR0 = 32'h1000;
     localparam PADDR1 = 32'h2000;
     localparam VADDR1 = 32'h1004;
+    localparam DATA0 = 512'h83446817260a43b3d3743b840a149153270d38e5cd1e777b002d772a8e3c5fb0323ed0210b94bc832f1d36e60873ca9cdf4819f9998ae61a6b6320876ca341b;
+    localparam INJECT_INST = 32'h51407de1;
 
     logic ift_instruction_requested;
     l1i_addr_t ift_pc_paddr;
@@ -68,6 +70,9 @@ module test_ifetch_data_stage(input clk, input reset);
     logic dbg_instruction_inject_en;
     local_thread_idx_t dbg_thread;
     int cycle;
+    int cache_hit_count;
+    int cache_miss_count;
+    int tlb_miss_count;
 
     ifetch_data_stage ifetch_data_stage(.*);
 
@@ -86,6 +91,27 @@ module test_ifetch_data_stage(input clk, input reset);
         ift_tag[0] <= l1i_tag_t'(paddr >> (32 - ICACHE_TAG_BITS));
     endtask
 
+    // Performace counters
+    always @(posedge clk, posedge reset)
+    begin
+        if (reset)
+        begin
+            cache_hit_count <= 0;
+            cache_miss_count <= 0;
+            tlb_miss_count <= 0;
+        end
+        else
+        begin
+            if (ifd_perf_icache_hit)
+                cache_hit_count <= cache_hit_count + 1;
+
+            if (ifd_perf_icache_miss)
+                cache_miss_count <= cache_miss_count + 1;
+
+            if (ifd_perf_itlb_miss)
+                tlb_miss_count <= tlb_miss_count + 1;
+        end
+    end
 
     always @(posedge clk, posedge reset)
     begin
@@ -96,6 +122,8 @@ module test_ifetch_data_stage(input clk, input reset);
             cr_supervisor_en[1] <= 0;
             cr_supervisor_en[2] <= 0;
             cr_supervisor_en[3] <= 0;
+            dbg_halt <= 0;
+            core_selected_debug <= 0;
         end
         else
         begin
@@ -105,7 +133,6 @@ module test_ifetch_data_stage(input clk, input reset);
             l2i_itag_update_en <= 0;
             wb_rollback_en <= 0;
             core_selected_debug <= 0;
-            dbg_halt <= 0;
             dbg_instruction_inject_en <= 0;
             ift_tlb_hit <= 0;
             ift_tlb_present <= 0;
@@ -136,7 +163,7 @@ module test_ifetch_data_stage(input clk, input reset);
                 end
 
                 // Cache miss is asserted combinationally the same cycle it
-                // receives a request.
+                // receives a request. Check that it isn't asserted here.
                 1: assert (!ifd_cache_miss);
 
                 2:
@@ -188,6 +215,7 @@ module test_ifetch_data_stage(input clk, input reset);
                     assert(!ifd_supervisor_fault);
                     assert(!ifd_page_fault);
                     assert(!ifd_executable_fault);
+                    assert(tlb_miss_count == 1);
 
                     // Page fault
                     cache_hit(VADDR0, PADDR0);
@@ -290,7 +318,7 @@ module test_ifetch_data_stage(input clk, input reset);
                 // Test rollbacks
                 // When a rollback occurs, this should not raise any traps.
                 ////////////////////////////////////////////////////////////
-                17:
+                20:
                 begin
                     // Cache miss
                     // Modify tag to make this a miss
@@ -299,9 +327,9 @@ module test_ifetch_data_stage(input clk, input reset);
                     wb_rollback_en <= 1;
                 end
 
-                18: assert(!ifd_cache_miss);
+                21: assert(!ifd_cache_miss);
 
-                19:
+                22:
                 begin
                     assert(!ifd_instruction_valid);
 
@@ -313,9 +341,9 @@ module test_ifetch_data_stage(input clk, input reset);
                     wb_rollback_en <= 1;
                 end
 
-                20: assert(!ifd_cache_miss);
+                23: assert(!ifd_cache_miss);
 
-                21:
+                24:
                 begin
                     assert(!ifd_instruction_valid);
                     assert(!ifd_tlb_miss);
@@ -326,9 +354,9 @@ module test_ifetch_data_stage(input clk, input reset);
                     wb_rollback_en <= 1;
                 end
 
-                22: assert(!ifd_cache_miss);
+                25: assert(!ifd_cache_miss);
 
-                23:
+                26:
                 begin
                     assert(!ifd_instruction_valid);
                     assert(!ifd_page_fault);
@@ -338,9 +366,9 @@ module test_ifetch_data_stage(input clk, input reset);
                     ift_tlb_supervisor <= 1;
                 end
 
-                24: assert(!ifd_cache_miss);
+                27: assert(!ifd_cache_miss);
 
-                25:
+                28:
                 begin
                     assert(!ifd_instruction_valid);
                     assert(!ifd_supervisor_fault);
@@ -349,15 +377,90 @@ module test_ifetch_data_stage(input clk, input reset);
                     ift_tlb_executable <= 0;
                 end
 
-                26: assert(!ifd_cache_miss);
+                29: assert(!ifd_cache_miss);
 
-                27:
+                30:
                 begin
                     assert(!ifd_instruction_valid);
                     assert(!ifd_executable_fault);
                 end
 
-                28:
+                ////////////////////////////////////////////////////////////
+                // Debug instruction injection
+                ////////////////////////////////////////////////////////////
+                40:
+                begin
+                    // Load some data into a cache line
+                    l2i_idata_update_en <= 1;
+                    l2i_idata_update_way <= 0;
+                    l2i_idata_update_set <= 0;
+                    l2i_idata_update_data <= DATA0;
+                    dbg_instruction_inject <= 'hcccccccc;
+                end
+
+                41:
+                begin
+                    // Asserting halt the same cycle an instruction comes in
+                    // exposes a potential race condition in debug injection.
+                    // Ensure this works properly.
+                    cache_hit(VADDR0, PADDR0);
+                end
+
+                42: dbg_halt <= 1;
+
+                43:
+                begin
+                    assert(ifd_instruction_valid);
+
+                    // This is the endian-swapped first word of DATA0
+                    assert(ifd_instruction == {DATA0[487:480], DATA0[495:488], DATA0[503:496], DATA0[511:504]});
+                end
+
+                44:
+                begin
+                    // Ensure nothing happens this cycle
+                    assert(!ifd_instruction_valid);
+
+                    // Now try to insert an instruction to another core. Ensure this
+                    // ignores it.
+                    core_selected_debug <= 0;
+                    dbg_instruction_inject_en <= 1;
+                    dbg_instruction_inject <= INJECT_INST;
+                end
+                // wait a cycle
+
+                46:
+                begin
+                    // No instruction
+                    assert(!ifd_instruction_valid);
+
+                    // Inject an instruction for this core
+                    core_selected_debug <= 1;
+                    dbg_instruction_inject_en <= 1;
+                    dbg_instruction_inject <= INJECT_INST;
+                end
+                // wait a cycle
+
+                48:
+                begin
+                    assert(ifd_instruction_valid);
+                    assert(ifd_instruction == INJECT_INST);
+
+                    // Some final checks
+
+                    // An easy way to count: places where ifd_instruction_valid,
+                    // ifd_supervisor_fault, ifd_page_fault, or ifd_executable_fault
+                    // are true, minus debug injected instructions.
+                    assert(cache_hit_count == 7);
+
+                    // Should match places where ifd_cache_miss or ifd_near_miss are true
+                    assert(cache_miss_count == 2);
+
+                    // Places where ift_tlb_hit is set to zero
+                    assert(tlb_miss_count == 2);
+                end
+
+                49:
                 begin
                     $display("PASS");
                     $finish;

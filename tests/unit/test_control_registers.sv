@@ -36,8 +36,14 @@ module test_control_registers(input clk, input reset);
     localparam FLAGS0 = 32'b011;    // user mode, mmu enable, interrupt enable
     localparam FLAGS1 = 32'b110;    // supervisor, mmu enable, disable interrupt
     localparam FLAGS2 = 32'b100;    // supervisor, no mmu, disable interrupt
-
+    localparam TRAP_VADDR0 = 32'h494d1bcb;
+    localparam TRAP_VADDR1 = 32'hf8a8428a;
     localparam NUM_INTERRUPTS = 16;
+    localparam TRAP_HANDLER_VAL = 32'h71d09fec;
+    localparam TLB_MISS_HANDLER_VAL = 32'h20685cad;
+    localparam ASID_VAL = 8'd15;
+    localparam JTAG_DATA_VAL0 = 32'hfc982951;
+    localparam JTAG_DATA_VAL1 = 32'h7fc44607;
 
     logic [NUM_INTERRUPTS - 1:0] interrupt_req;
     scalar_t cr_eret_address[`THREADS_PER_CORE];
@@ -83,12 +89,14 @@ module test_control_registers(input clk, input reset);
         dd_creg_index <= index;
     endtask
 
-    task raise_trap(input trap_type_t trap_type, input int pc, input subcycle_t subcycle);
+    task raise_trap(input trap_type_t trap_type, input int pc, input subcycle_t subcycle,
+            input scalar_t access_addr);
         wb_trap <= 1;
         wb_trap_cause <= 6'(trap_type);
         wb_trap_pc <= pc;
         wb_rollback_thread_idx <= 0;
         wb_trap_subcycle <= subcycle;
+        wb_trap_access_vaddr <= access_addr;
     endtask
 
     always_ff @(posedge clk, posedge reset)
@@ -161,7 +169,7 @@ module test_control_registers(input clk, input reset);
                 end
 
                 // Take a trap
-                8: raise_trap(TRAP_CAUSE0, PC0, TRAP_SUBCYCLE0);
+                8: raise_trap(TRAP_CAUSE0, PC0, TRAP_SUBCYCLE0, TRAP_VADDR0);
                 // wait cycle
 
                 10:
@@ -171,6 +179,7 @@ module test_control_registers(input clk, input reset);
                     assert(!cr_interrupt_en[0]);
                     assert(cr_mmu_en[0]);
                     assert(cr_supervisor_en[0]);
+                    assert(cr_eret_subcycle[0] == TRAP_SUBCYCLE0);
 
                     // Ensure other flags are unaffected
                     assert(!cr_mmu_en[1]);
@@ -219,31 +228,33 @@ module test_control_registers(input clk, input reset);
                 begin
                     // Check subcycle
                     assert(cr_creg_read_val == 32'(TRAP_SUBCYCLE0));
+                    read_creg(CR_TRAP_ADDRESS);
                 end
+                // wait a cycle
+
+                23: assert(cr_creg_read_val == TRAP_VADDR0);
 
                 // set scratchpad registers again
-                23: write_creg(CR_SCRATCHPAD0, SCRATCHPAD0_1);
-                24: write_creg(CR_SCRATCHPAD1, SCRATCHPAD1_1);
+                24: write_creg(CR_SCRATCHPAD0, SCRATCHPAD0_1);
+                25: write_creg(CR_SCRATCHPAD1, SCRATCHPAD1_1);
 
                 // read the other threads scratchpad to ensure it is
                 // preserved.
-                25:
+                26:
                 begin
                     dt_thread_idx <= 1;
                     read_creg(CR_SCRATCHPAD0);
                 end
                 // wait cycle
 
-                27:
+                28:
                 begin
                     assert(cr_creg_read_val == OTHER_THREAD_SCRATCHPAD);
                     dt_thread_idx <= 0;
                 end
 
-
-
                 // take a TLB miss trap
-                40: raise_trap(TRAP_CAUSE1, PC1, TRAP_SUBCYCLE1);
+                40: raise_trap(TRAP_CAUSE1, PC1, TRAP_SUBCYCLE1, TRAP_VADDR1);
                 // Wait cycle
 
                 42:
@@ -253,6 +264,7 @@ module test_control_registers(input clk, input reset);
                     assert(!cr_interrupt_en[0]);
                     assert(!cr_mmu_en[0]);
                     assert(cr_supervisor_en[0]);
+                    assert(cr_eret_subcycle[0] == TRAP_SUBCYCLE1);
 
                     // Ensure other flags are unaffected
                     assert(!cr_mmu_en[1]);
@@ -302,24 +314,28 @@ module test_control_registers(input clk, input reset);
                 52:
                 begin
                     assert(cr_creg_read_val == 32'(TRAP_SUBCYCLE1));
+                    read_creg(CR_TRAP_ADDRESS);
                 end
-
-                // set scratchpad registers
-                53: write_creg(CR_SCRATCHPAD0, SCRATCHPAD0_2);
-                54: write_creg(CR_SCRATCHPAD1, SCRATCHPAD1_2);
-
-                // read back scratchpad registers
-                56: read_creg(CR_SCRATCHPAD0);
                 // wait cycle
 
-                58:
+                54: assert(cr_creg_read_val == TRAP_VADDR1);
+
+                // set scratchpad registers
+                55: write_creg(CR_SCRATCHPAD0, SCRATCHPAD0_2);
+                56: write_creg(CR_SCRATCHPAD1, SCRATCHPAD1_2);
+
+                // read back scratchpad registers
+                57: read_creg(CR_SCRATCHPAD0);
+                // wait cycle
+
+                59:
                 begin
                     assert(cr_creg_read_val == SCRATCHPAD0_2);
                     read_creg(CR_SCRATCHPAD1);
                 end
                 // wait cycle
 
-                60: assert(cr_creg_read_val == SCRATCHPAD1_2);
+                61: assert(cr_creg_read_val == SCRATCHPAD1_2);
 
                 // eret from TLB miss
                 70: wb_eret <= 1;
@@ -331,6 +347,7 @@ module test_control_registers(input clk, input reset);
                     assert(!cr_interrupt_en[0]);
                     assert(cr_mmu_en[0]);
                     assert(cr_supervisor_en[0]);
+                    assert(cr_eret_subcycle[0] == TRAP_SUBCYCLE0);
 
                     // Ensure other flags are unaffected
                     assert(!cr_mmu_en[1]);
@@ -405,7 +422,14 @@ module test_control_registers(input clk, input reset);
                 end
                 // wait cycle
 
-                91: assert(cr_creg_read_val == SCRATCHPAD1_1);
+                91:
+                begin
+                    assert(cr_creg_read_val == SCRATCHPAD1_1);
+                    read_creg(CR_TRAP_ADDRESS);
+                end
+                // wait cycle
+
+                93: assert(cr_creg_read_val == TRAP_VADDR0);
 
                 // eret from trap
                 100: wb_eret <= 1;
@@ -474,7 +498,6 @@ module test_control_registers(input clk, input reset);
 
                 127:
                 begin
-                    $display("pending ints %b", cr_creg_read_val);
                     assert(cr_creg_read_val == 32'b0011);
                     interrupt_req <= 16'b0000;
                 end
@@ -513,6 +536,8 @@ module test_control_registers(input clk, input reset);
                 ////////////////////////////////////////////////////////////
                 // Other misc tests
                 ////////////////////////////////////////////////////////////
+
+                // Read thread ID registers for all threads
                 150: read_creg(CR_THREAD_ID);
                 // wait cycle
                 152:
@@ -542,9 +567,47 @@ module test_control_registers(input clk, input reset);
                 end
                 // wait cycle
 
-                158: assert(cr_creg_read_val == 3);
+                158:
+                begin
+                    assert(cr_creg_read_val == 3);
+                    dt_thread_idx <= 0;
+                end
 
-                160:
+                // Set trap handler
+                159: write_creg(CR_TRAP_HANDLER, TRAP_HANDLER_VAL);
+                160: write_creg(CR_TLB_MISS_HANDLER, TLB_MISS_HANDLER_VAL);
+                // wait cycle
+
+                162:
+                begin
+                    assert(cr_trap_handler == TRAP_HANDLER_VAL);
+                    assert(cr_tlb_miss_handler == TLB_MISS_HANDLER_VAL);
+                end
+
+                163: write_creg(CR_CURRENT_ASID, 32'(ASID_VAL));
+                // wait cycle
+
+                165:
+                begin
+                    assert(cr_current_asid[0] == ASID_VAL);
+                    write_creg(CR_JTAG_DATA, JTAG_DATA_VAL0);
+                end
+                // wait cycle
+
+                167:
+                begin
+                    assert(cr_data_to_host == JTAG_DATA_VAL0);
+                    dbg_data_from_host <= JTAG_DATA_VAL1;
+                    dbg_data_update <= 1;
+                end
+                // wait cycle
+
+                169: read_creg(CR_JTAG_DATA);
+                // wait cycle
+
+                171: assert(cr_creg_read_val == JTAG_DATA_VAL1);
+
+                172:
                 begin
                     $display("PASS");
                     $finish;
