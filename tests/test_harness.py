@@ -182,9 +182,12 @@ def run_test_with_timeout(args, timeout):
 
 
 def reset_fpga():
-    tcl_command = 'device_virtual_dr_shift -instance-index 0 -dr-value {} -length 1'
-    subprocess.check_command(['quartus_stp', tcl_command.format(1)])
-    subprocess.check_command(['quartus_stp', tcl_command.format(0)])
+    args = ['quartus_stp', '-t', PROJECT_TOP + '/tests/reset_altera.tcl']
+
+    try:
+        subprocess.check_output(args)
+    except subprocess.CalledProcessError as exc:
+        raise TestException('Failed to reset dev board:\n' + exc.output.decode())
 
 
 def run_program(
