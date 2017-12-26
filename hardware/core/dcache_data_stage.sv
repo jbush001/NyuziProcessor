@@ -138,7 +138,7 @@ module dcache_data_stage(
     logic cache_hit;
     logic dcache_load_en;
     scalar_t dcache_request_addr;
-    logic rollback_this_stage;
+    logic squash_instruction;
     logic cache_near_miss;
     logic dcache_store_en;
     logic io_access_en;
@@ -159,9 +159,9 @@ module dcache_data_stage(
     // Unlike earlier stages, this commits instruction side effects like stores,
     // so it needs to check if there is a rollback (which would be for the
     // instruction issued immediately before this one) and avoid updates if so.
-    // rollback_this_stage indicates a rollback is requested from the previous
+    // squash_instruction indicates a rollback is requested from the previous
     // instruction, but it does not get set when this stage requests a rollback.
-    assign rollback_this_stage = wb_rollback_en
+    assign squash_instruction = wb_rollback_en
         && wb_rollback_thread_idx == dt_thread_idx
         && wb_rollback_pipeline == PIPE_MEM;
     assign io_access = dt_request_paddr ==? 32'hffff????;
@@ -172,7 +172,7 @@ module dcache_data_stage(
     always_comb
     begin
         tlb_read = 0;
-        if (dt_instruction_valid && !rollback_this_stage)
+        if (dt_instruction_valid)
         begin
             if (dt_instruction.memory_access)
                 tlb_read = dt_instruction.memory_access_type != MEM_CONTROL_REG;
@@ -188,7 +188,7 @@ module dcache_data_stage(
 
     // L1 data cache or store buffer access
     assign dcache_access_en = dt_instruction_valid
-        && !rollback_this_stage
+        && !squash_instruction
         && dt_instruction.memory_access
         && dt_instruction.memory_access_type != MEM_CONTROL_REG
         && dt_tlb_hit
@@ -212,7 +212,7 @@ module dcache_data_stage(
 
     // Noncached I/O memory access
     assign io_access_en = dt_instruction_valid
-        && !rollback_this_stage
+        && !squash_instruction
         && dt_instruction.memory_access
         && dt_instruction.memory_access_type != MEM_CONTROL_REG
         && dt_tlb_hit
@@ -230,7 +230,7 @@ module dcache_data_stage(
 
     // Cache control
     assign cache_control_en = dt_instruction_valid
-        && !rollback_this_stage
+        && !squash_instruction
         && dt_instruction.cache_control;
     assign dd_flush_en = cache_control_en
         && dt_instruction.cache_control_op == CACHE_DFLUSH
@@ -256,7 +256,7 @@ module dcache_data_stage(
 
     // Control register access
     assign creg_access_en = dt_instruction_valid
-        && !rollback_this_stage
+        && !squash_instruction
         && dt_instruction.memory_access
         && dt_instruction.memory_access_type == MEM_CONTROL_REG;
     assign dd_creg_write_en = creg_access_en && !dt_instruction.load
@@ -549,7 +549,7 @@ module dcache_data_stage(
                 dd_flush_en, dd_iinvalidate_en, dd_dinvalidate_en, dd_membar_en,
                 dd_creg_write_en, dd_creg_read_en}));
 
-            dd_instruction_valid <= dt_instruction_valid && !rollback_this_stage;
+            dd_instruction_valid <= dt_instruction_valid && !squash_instruction;
 
             // Rollback on cache miss
             dd_rollback_en <= dcache_load_en && !cache_hit && dt_tlb_hit;

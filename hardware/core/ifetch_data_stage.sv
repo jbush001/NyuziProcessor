@@ -102,8 +102,11 @@ module ifetch_data_stage(
     scalar_t fetched_word;
     logic[$clog2(CACHE_LINE_WORDS) - 1:0] cache_lane_idx;
     logic alignment_fault;
-    logic rollback_this_stage;
+    logic squash_instruction;
     logic dbg_halt_latched;
+
+    assign squash_instruction = wb_rollback_en && wb_rollback_thread_idx
+        == ift_thread_idx;
 
     //
     // Check for cache hit
@@ -140,14 +143,14 @@ module ifetch_data_stage(
         && ift_tlb_hit
         && ift_instruction_requested
         && !ifd_near_miss
-        && !rollback_this_stage;
+        && !squash_instruction;
     assign ifd_cache_miss_paddr = {ift_pc_paddr.tag, ift_pc_paddr.set_idx};
     assign ifd_cache_miss_thread_idx = ift_thread_idx;
     assign ifd_perf_icache_hit = cache_hit && ift_instruction_requested;
     assign ifd_perf_icache_miss = !cache_hit
         && ift_tlb_hit
         && ift_instruction_requested
-        && !rollback_this_stage;
+        && !squash_instruction;
     assign ifd_perf_itlb_miss = ift_instruction_requested && !ift_tlb_hit;
     assign alignment_fault = ift_pc_paddr[1:0] != 0;
 
@@ -175,8 +178,6 @@ module ifetch_data_stage(
 
     assign ifd_update_lru_en = cache_hit && ift_instruction_requested;
     assign ifd_update_lru_way = way_hit_idx;
-    assign rollback_this_stage = wb_rollback_en && wb_rollback_thread_idx
-        == ift_thread_idx;
 
     always_ff @(posedge clk)
     begin
@@ -219,18 +220,18 @@ module ifetch_data_stage(
             begin
                 // ifd_instruction_valid should be ignored if any of the other
                 // fault signals are set.
-                ifd_instruction_valid <= ift_instruction_requested && !rollback_this_stage
+                ifd_instruction_valid <= ift_instruction_requested && !squash_instruction
                     && cache_hit && ift_tlb_hit;
-                ifd_alignment_fault <= ift_instruction_requested && !rollback_this_stage
+                ifd_alignment_fault <= ift_instruction_requested && !squash_instruction
                     && alignment_fault;
-                ifd_supervisor_fault <= ift_instruction_requested && !rollback_this_stage
+                ifd_supervisor_fault <= ift_instruction_requested && !squash_instruction
                     && ift_tlb_hit && ift_tlb_present && ift_tlb_supervisor
                     && !cr_supervisor_en[ift_thread_idx];
-                ifd_tlb_miss <= ift_instruction_requested && !rollback_this_stage
+                ifd_tlb_miss <= ift_instruction_requested && !squash_instruction
                     && !ift_tlb_hit;
-                ifd_page_fault <= ift_instruction_requested && !rollback_this_stage
+                ifd_page_fault <= ift_instruction_requested && !squash_instruction
                     && ift_tlb_hit && !ift_tlb_present;
-                ifd_executable_fault <= ift_instruction_requested && !rollback_this_stage
+                ifd_executable_fault <= ift_instruction_requested && !squash_instruction
                     && ift_tlb_hit && ift_tlb_present && !ift_tlb_executable;
 
                 // These faults can't occur together. The first require
