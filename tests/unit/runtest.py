@@ -120,6 +120,8 @@ def run_unit_test(filename, _):
 
     if test_harness.DEBUG:
         verilator_args.append('--trace')
+        verilator_args.append('--trace-structs')
+
 
     try:
         subprocess.call(verilator_args, stderr=subprocess.STDOUT)

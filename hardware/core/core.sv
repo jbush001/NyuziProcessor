@@ -87,8 +87,8 @@ module core
     logic               dd_creg_write_en;       // From dcache_data_stage of dcache_data_stage.v
     scalar_t            dd_creg_write_val;      // From dcache_data_stage of dcache_data_stage.v
     logic               dd_dinvalidate_en;      // From dcache_data_stage of dcache_data_stage.v
-    logic               dd_fault;               // From dcache_data_stage of dcache_data_stage.v
-    trap_cause_t        dd_fault_cause;         // From dcache_data_stage of dcache_data_stage.v
+    logic               dd_trap;               // From dcache_data_stage of dcache_data_stage.v
+    trap_cause_t        dd_trap_cause;         // From dcache_data_stage of dcache_data_stage.v
     logic               dd_flush_en;            // From dcache_data_stage of dcache_data_stage.v
     logic               dd_iinvalidate_en;      // From dcache_data_stage of dcache_data_stage.v
     decoded_instruction_t dd_instruction;       // From dcache_data_stage of dcache_data_stage.v

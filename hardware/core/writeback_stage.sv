@@ -74,8 +74,8 @@ module writeback_stage(
     input cache_line_data_t               dd_load_data,
     input                                 dd_suspend_thread,
     input                                 dd_io_access,
-    input logic                           dd_fault,
-    input trap_cause_t                    dd_fault_cause,
+    input logic                           dd_trap,
+    input trap_cause_t                    dd_trap_cause,
 
     // From l1_store_queue
     input [CACHE_LINE_BYTES - 1:0]        sq_store_bypass_mask,
@@ -196,11 +196,11 @@ module writeback_stage(
             wb_trap_access_vaddr = ix_instruction.pc;
             wb_trap_subcycle = ix_subcycle;
         end
-        else if (dd_instruction_valid && dd_fault)
+        else if (dd_instruction_valid && dd_trap)
         begin
             // Memory access fault
             wb_rollback_en = 1'b1;
-            if (dd_fault_cause.trap_type == TT_TLB_MISS)
+            if (dd_trap_cause.trap_type == TT_TLB_MISS)
                 wb_rollback_pc = cr_tlb_miss_handler;
             else
                 wb_rollback_pc = cr_trap_handler;
@@ -208,7 +208,7 @@ module writeback_stage(
             wb_rollback_thread_idx = dd_thread_idx;
             wb_rollback_pipeline = PIPE_MEM;
             wb_trap = 1;
-            wb_trap_cause = dd_fault_cause;
+            wb_trap_cause = dd_trap_cause;
             wb_trap_pc = dd_instruction.pc;
             wb_trap_access_vaddr = dd_request_vaddr;
         end
