@@ -582,10 +582,10 @@ module dcache_data_stage(
         begin
             /*AUTORESET*/
             // Beginning of autoreset for uninitialized flops
-            dd_trap <= '0;
             dd_instruction_valid <= '0;
             dd_rollback_en <= '0;
             dd_suspend_thread <= '0;
+            dd_trap <= '0;
             // End of automatics
         end
         else

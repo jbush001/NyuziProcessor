@@ -71,8 +71,8 @@ module ifetch_tag_stage
     // From dcache_tag_stage
     input                               dt_invalidate_tlb_en,
     input                               dt_invalidate_tlb_all_en,
-    input [ASID_WIDTH - 1:0]            dt_itlb_update_asid,
-    input page_index_t                  dt_itlb_vpage_idx,
+    input [ASID_WIDTH - 1:0]            dt_update_itlb_asid,
+    input page_index_t                  dt_update_itlb_vpage_idx,
     input                               dt_update_itlb_en,
     input                               dt_update_itlb_supervisor,
     input                               dt_update_itlb_global,
@@ -110,6 +110,8 @@ module ifetch_tag_stage
     logic tlb_supervisor;
     logic tlb_present;
     logic tlb_executable;
+    page_index_t request_vpage_idx;
+    logic[ASID_WIDTH - 1:0] request_asid;
 
     //
     // Pick which thread to fetch next.
@@ -210,6 +212,21 @@ module ifetch_tag_stage
         end
     endgenerate
 
+    // TLB inputs
+    always_comb
+    begin
+        if (dt_update_itlb_en)
+        begin
+            request_vpage_idx = dt_update_itlb_vpage_idx;
+            request_asid = dt_update_itlb_asid;
+        end
+        else
+        begin
+            request_vpage_idx = pc_to_fetch[31-:PAGE_NUM_BITS];
+            request_asid = cr_current_asid[selected_thread_idx];
+        end
+    end
+
     tlb #(
         .NUM_ENTRIES(`DTLB_ENTRIES),
         .NUM_WAYS(`TLB_WAYS)
@@ -222,8 +239,6 @@ module ifetch_tag_stage
         .update_global(dt_update_itlb_global),
         .invalidate_en(dt_invalidate_tlb_en),
         .invalidate_all_en(dt_invalidate_tlb_all_en),
-        .request_vpage_idx(cache_fetch_en ? pc_to_fetch[31-:PAGE_NUM_BITS] : dt_itlb_vpage_idx),
-        .request_asid(cache_fetch_en ? cr_current_asid[selected_thread_idx] : dt_itlb_update_asid),
         .update_ppage_idx(dt_update_itlb_ppage_idx),
         .lookup_ppage_idx(tlb_ppage_idx),
         .lookup_hit(tlb_hit),
