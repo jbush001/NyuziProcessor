@@ -345,12 +345,6 @@ module dcache_data_stage(
     assign dd_membar_en = membar_req
         && dt_instruction.cache_control_op == CACHE_MEMBAR;
 
-    // Performance events
-    assign dd_perf_dcache_hit = cached_load_req && !any_fault && !tlb_miss && cache_hit;
-    assign dd_perf_dcache_miss = cached_load_req && !any_fault && !tlb_miss && !cache_hit;
-    assign dd_perf_store = dd_store_en;
-    assign dd_perf_dtlb_miss = tlb_miss;
-
     //
     // Check for cache hit
     //
@@ -583,6 +577,10 @@ module dcache_data_stage(
             /*AUTORESET*/
             // Beginning of autoreset for uninitialized flops
             dd_instruction_valid <= '0;
+            dd_perf_dcache_hit <= '0;
+            dd_perf_dcache_miss <= '0;
+            dd_perf_dtlb_miss <= '0;
+            dd_perf_store <= '0;
             dd_rollback_en <= '0;
             dd_suspend_thread <= '0;
             dd_trap <= '0;
@@ -613,6 +611,14 @@ module dcache_data_stage(
                 && !any_fault;
 
             dd_trap <= any_fault || tlb_miss;
+
+            // Perf events
+            dd_perf_dcache_hit <= cached_load_req && !any_fault && !tlb_miss
+                 && cache_hit;
+            dd_perf_dcache_miss <= cached_load_req && !any_fault && !tlb_miss
+                && !cache_hit;
+            dd_perf_store <= dd_store_en;
+            dd_perf_dtlb_miss <= tlb_miss;
         end
     end
 endmodule

@@ -129,8 +129,6 @@ module l2_axi_bus_interface(
         .request_addr({miss_addr.tag, miss_addr.set_idx}),
         .*);
 
-    assign l2bi_perf_l2_writeback = enqueue_writeback_request && !writeback_queue_almost_full;
-
     assign writeback_queue_in.address = {l2r_writeback_tag, miss_addr.set_idx}; // Old address
     assign writeback_queue_in.data = l2r_data; // Old line to writeback
     assign writeback_queue_in.flush = l2r_request.packet_type == L2REQ_FLUSH;
@@ -341,6 +339,7 @@ module l2_axi_bus_interface(
             axi_bus.m_wlast <= '0;
             axi_bus.m_wvalid <= '0;
             burst_offset_ff <= '0;
+            l2bi_perf_l2_writeback <= '0;
             wait_axi_write_response <= '0;
             // End of automatics
         end
@@ -363,6 +362,8 @@ module l2_axi_bus_interface(
             axi_bus.m_wlast <= state_nxt == STATE_WRITE_TRANSFER
                 && axi_bus.s_wready
                 && burst_offset_ff == BURST_OFFSET_WIDTH'(BURST_BEATS) - 2;
+            l2bi_perf_l2_writeback <= enqueue_writeback_request
+                && !writeback_queue_almost_full;
         end
     end
 

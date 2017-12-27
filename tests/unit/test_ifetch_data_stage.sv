@@ -215,7 +215,6 @@ module test_ifetch_data_stage(input clk, input reset);
                     assert(!ifd_supervisor_fault);
                     assert(!ifd_page_fault);
                     assert(!ifd_executable_fault);
-                    assert(tlb_miss_count == 1);
 
                     // Page fault
                     cache_hit(VADDR0, PADDR0);
@@ -445,22 +444,18 @@ module test_ifetch_data_stage(input clk, input reset);
                 begin
                     assert(ifd_instruction_valid);
                     assert(ifd_instruction == INJECT_INST);
-
-                    // Some final checks
-
-                    // An easy way to count: places where ifd_instruction_valid,
-                    // ifd_supervisor_fault, ifd_page_fault, or ifd_executable_fault
-                    // are true, minus debug injected instructions.
-                    assert(cache_hit_count == 7);
-
-                    // Should match places where ifd_cache_miss or ifd_near_miss are true
-                    assert(cache_miss_count == 2);
-
-                    // Places where ift_tlb_hit is set to zero
-                    assert(tlb_miss_count == 2);
                 end
 
                 49:
+                begin
+                    // Some final checks
+
+                    assert(cache_hit_count == 12);
+                    assert(cache_miss_count == 2);
+                    assert(tlb_miss_count == 2);
+                end
+
+                50:
                 begin
                     $display("PASS");
                     $finish;

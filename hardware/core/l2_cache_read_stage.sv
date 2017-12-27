@@ -210,11 +210,10 @@ module l2_cache_read_stage(
         && load_sync_address_valid[request_sync_slot]
         && l2t_request.packet_type == L2REQ_STORE_SYNC;
 
-    // Performance events
-    assign hit_or_miss = l2t_request_valid && (l2t_request.packet_type == L2REQ_STORE || can_store_sync
+    // Used for perf counters below
+    assign hit_or_miss = l2t_request_valid
+        && (l2t_request.packet_type == L2REQ_STORE || can_store_sync
         || l2t_request.packet_type == L2REQ_LOAD ) && !l2t_l2_fill;
-    assign l2r_perf_l2_miss = hit_or_miss && !(|hit_way_oh);
-    assign l2r_perf_l2_hit = hit_or_miss && |hit_way_oh;
 
     always_ff @(posedge clk)
     begin
@@ -240,6 +239,8 @@ module l2_cache_read_stage(
 
             /*AUTORESET*/
             // Beginning of autoreset for uninitialized flops
+            l2r_perf_l2_hit <= '0;
+            l2r_perf_l2_miss <= '0;
             l2r_request_valid <= '0;
             l2r_store_sync_success <= '0;
             // End of automatics
@@ -288,6 +289,10 @@ module l2_cache_read_stage(
             end
             else
                 l2r_store_sync_success <= 0;
+
+            // Perf events
+            l2r_perf_l2_miss <= hit_or_miss && !(|hit_way_oh);
+            l2r_perf_l2_hit <= hit_or_miss && |hit_way_oh;
         end
     end
 endmodule

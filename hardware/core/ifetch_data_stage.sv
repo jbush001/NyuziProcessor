@@ -146,12 +146,6 @@ module ifetch_data_stage(
         && !squash_instruction;
     assign ifd_cache_miss_paddr = {ift_pc_paddr.tag, ift_pc_paddr.set_idx};
     assign ifd_cache_miss_thread_idx = ift_thread_idx;
-    assign ifd_perf_icache_hit = cache_hit && ift_instruction_requested;
-    assign ifd_perf_icache_miss = !cache_hit
-        && ift_tlb_hit
-        && ift_instruction_requested
-        && !squash_instruction;
-    assign ifd_perf_itlb_miss = ift_instruction_requested && !ift_tlb_hit;
     assign alignment_fault = ift_pc_paddr[1:0] != 0;
 
     //
@@ -196,6 +190,9 @@ module ifetch_data_stage(
             ifd_executable_fault <= '0;
             ifd_instruction_valid <= '0;
             ifd_page_fault <= '0;
+            ifd_perf_icache_hit <= '0;
+            ifd_perf_icache_miss <= '0;
+            ifd_perf_itlb_miss <= '0;
             ifd_supervisor_fault <= '0;
             ifd_tlb_miss <= '0;
             // End of automatics
@@ -242,6 +239,14 @@ module ifetch_data_stage(
                 assert(!ifd_tlb_miss || !ifd_instruction_valid);
                 assert(!ifd_page_fault || !ifd_supervisor_fault);
                 assert(!ifd_page_fault || !ifd_executable_fault);
+
+                // Perf counters
+                ifd_perf_icache_hit <= cache_hit && ift_instruction_requested;
+                ifd_perf_icache_miss <= !cache_hit
+                    && ift_tlb_hit
+                    && ift_instruction_requested
+                    && !squash_instruction;
+                ifd_perf_itlb_miss <= ift_instruction_requested && !ift_tlb_hit;
             end
         end
     end

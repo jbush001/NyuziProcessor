@@ -185,7 +185,6 @@ module test_dcache_data_stage(input clk, input reset);
                 1:
                 begin
                     assert(dd_update_lru_en);
-                    assert(dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
 
                     // These are registered, so they wouldn't be asserted even if
@@ -200,9 +199,11 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_iinvalidate_en);
                     assert(!dd_dinvalidate_en);
                     assert(!dd_cache_miss);
+                    assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
                     assert(!dd_perf_store);
-                    assert(!dd_trap);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 2:
@@ -212,6 +213,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 ////////////////////////////////////////////////////////////
@@ -224,7 +229,6 @@ module test_dcache_data_stage(input clk, input reset);
                 4:
                 begin
                     assert(dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_io_write_en);
                     assert(!dd_io_read_en);
@@ -236,9 +240,11 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_iinvalidate_en);
                     assert(!dd_dinvalidate_en);
                     assert(!dd_cache_miss);
-                    assert(!dd_perf_dcache_miss);
-                    assert(dd_perf_store);
                     assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 5:
@@ -248,6 +254,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 ////////////////////////////////////////////////////////////
@@ -261,7 +271,6 @@ module test_dcache_data_stage(input clk, input reset);
                 7:
                 begin
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(dd_io_read_en);
                     assert(!dd_io_write_en);
@@ -273,9 +282,11 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_iinvalidate_en);
                     assert(!dd_dinvalidate_en);
                     assert(!dd_cache_miss);
+                    assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
                     assert(!dd_perf_store);
-                    assert(!dd_trap);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 8:
@@ -285,6 +296,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 ////////////////////////////////////////////////////////////
@@ -297,7 +312,6 @@ module test_dcache_data_stage(input clk, input reset);
                 begin
                     assert(!dd_cache_miss);
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_io_read_en);
                     assert(dd_io_write_en);
@@ -309,9 +323,11 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_iinvalidate_en);
                     assert(!dd_dinvalidate_en);
                     assert(!dd_cache_miss);
+                    assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
                     assert(!dd_perf_store);
-                    assert(!dd_trap);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 11:
@@ -321,6 +337,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 ////////////////////////////////////////////////////////////
@@ -332,7 +352,6 @@ module test_dcache_data_stage(input clk, input reset);
                 13:
                 begin
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(dd_cache_miss);
 
@@ -347,9 +366,11 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_membar_en);
                     assert(!dd_iinvalidate_en);
                     assert(!dd_dinvalidate_en);
-                    assert(dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 14:
@@ -358,6 +379,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(dd_suspend_thread);
                     assert(dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 // Since this is write through, there is no such thing
@@ -383,10 +408,7 @@ module test_dcache_data_stage(input clk, input reset);
                 // Ensure no update side effects
                 21:
                 begin
-                    assert(dd_perf_dtlb_miss);
-
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
 
                     // These are registered, so they wouldn't be asserted even if
@@ -401,9 +423,11 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_iinvalidate_en);
                     assert(!dd_dinvalidate_en);
                     assert(!dd_cache_miss);
+                    assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
                     assert(!dd_perf_store);
-                    assert(!dd_trap);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 // Check that the TLB miss fault is raised
@@ -415,6 +439,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en); // This is only for cache misses
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(dd_perf_dtlb_miss);
                 end
 
                 // Same thing, except with a store, cached address
@@ -430,10 +458,7 @@ module test_dcache_data_stage(input clk, input reset);
                 // Ensure no update side effects
                 24:
                 begin
-                    assert(dd_perf_dtlb_miss);
-
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
 
                     // These are registered, so they wouldn't be asserted even if
@@ -448,9 +473,11 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_iinvalidate_en);
                     assert(!dd_dinvalidate_en);
                     assert(!dd_cache_miss);
+                    assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
                     assert(!dd_perf_store);
-                    assert(!dd_trap);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 // Check that the TLB miss fault is raised
@@ -462,6 +489,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en); // This is only for cache misses
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(dd_perf_dtlb_miss);
                 end
 
                 // Load, to I/O address. Ensure it raises a trap the same way
@@ -477,9 +508,7 @@ module test_dcache_data_stage(input clk, input reset);
 
                 27:
                 begin
-                    assert(dd_perf_dtlb_miss);
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_io_write_en);
                     assert(!dd_io_read_en);
@@ -491,9 +520,11 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_iinvalidate_en);
                     assert(!dd_dinvalidate_en);
                     assert(!dd_cache_miss);
+                    assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
                     assert(!dd_perf_store);
-                    assert(!dd_trap);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 // Check that the TLB miss fault is raised
@@ -505,6 +536,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en); // This is only for cache misses
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(dd_perf_dtlb_miss);
                 end
 
                 // Same thing, except with a store, uncached (I/O) address
@@ -519,9 +554,7 @@ module test_dcache_data_stage(input clk, input reset);
 
                 30:
                 begin
-                    assert(dd_perf_dtlb_miss);
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_io_write_en);
                     assert(!dd_io_read_en);
@@ -533,9 +566,11 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_iinvalidate_en);
                     assert(!dd_dinvalidate_en);
                     assert(!dd_cache_miss);
+                    assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
                     assert(!dd_perf_store);
-                    assert(!dd_trap);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 // Check that the TLB miss fault is raised
@@ -547,6 +582,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en); // This is only for cache misses
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(dd_perf_dtlb_miss);
                 end
 
                 // Load, but unmasked vector lane. Ignore TLB access (gather store)
@@ -559,15 +598,17 @@ module test_dcache_data_stage(input clk, input reset);
                     cr_supervisor_en[0] <= 1;
                     dt_mask_value <= 0;
                     dt_instruction.memory_access_type <= MEM_SCGATH_M;
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 33:
                 begin
                     assert(!dd_trap);
                     assert(!dd_instruction_valid);
-                    assert(!dd_perf_dtlb_miss);
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_io_write_en);
                     assert(!dd_io_read_en);
                     assert(!dd_creg_write_en);
@@ -578,8 +619,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_iinvalidate_en);
                     assert(!dd_dinvalidate_en);
                     assert(!dd_cache_miss);
+                    assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
                     assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 // Check that the TLB miss fault is not raised
@@ -590,6 +633,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en); // This is only for cache misses
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 // Store, but unmasked vector lane. Ignore TLB access (scatter store)
@@ -606,9 +653,7 @@ module test_dcache_data_stage(input clk, input reset);
 
                 36:
                 begin
-                    assert(!dd_perf_dtlb_miss);
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_io_write_en);
                     assert(!dd_io_read_en);
@@ -620,9 +665,11 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_iinvalidate_en);
                     assert(!dd_dinvalidate_en);
                     assert(!dd_cache_miss);
+                    assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
                     assert(!dd_perf_store);
-                    assert(!dd_trap);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 // Check that the TLB miss fault is not raised
@@ -633,6 +680,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 ////////////////////////////////////////////////////////////
@@ -650,12 +701,14 @@ module test_dcache_data_stage(input clk, input reset);
 
                 41:
                 begin
-                    assert(!dd_perf_dtlb_miss);
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_cache_miss);
                     assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 42:
@@ -666,6 +719,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 // Store cached
@@ -680,12 +737,14 @@ module test_dcache_data_stage(input clk, input reset);
 
                 44:
                 begin
-                    assert(!dd_perf_dtlb_miss);
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_cache_miss);
                     assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 45:
@@ -696,6 +755,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 // Load uncached (I/O)
@@ -709,12 +772,14 @@ module test_dcache_data_stage(input clk, input reset);
 
                 47:
                 begin
-                    assert(!dd_perf_dtlb_miss);
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_cache_miss);
                     assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 48:
@@ -725,6 +790,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 // Store uncached (I/O)
@@ -739,12 +808,14 @@ module test_dcache_data_stage(input clk, input reset);
 
                 50:
                 begin
-                    assert(!dd_perf_dtlb_miss);
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_cache_miss);
                     assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 51:
@@ -755,6 +826,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 // Load cached, except with lane not enabled in vector mask
@@ -771,12 +846,14 @@ module test_dcache_data_stage(input clk, input reset);
 
                 53:
                 begin
-                    assert(!dd_perf_dtlb_miss);
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_cache_miss);
                     assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 54:
@@ -786,6 +863,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 // Store cached, with lane not enabled
@@ -802,12 +883,14 @@ module test_dcache_data_stage(input clk, input reset);
 
                 56:
                 begin
-                    assert(!dd_perf_dtlb_miss);
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_cache_miss);
                     assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 57:
@@ -817,6 +900,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 ////////////////////////////////////////////////////////////
@@ -832,12 +919,14 @@ module test_dcache_data_stage(input clk, input reset);
 
                 61:
                 begin
-                    assert(!dd_perf_dtlb_miss);
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_cache_miss);
                     assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 62:
@@ -848,6 +937,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 // store
@@ -861,12 +954,14 @@ module test_dcache_data_stage(input clk, input reset);
 
                 64:
                 begin
-                    assert(!dd_perf_dtlb_miss);
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_cache_miss);
                     assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 65:
@@ -877,6 +972,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 // I/O address load
@@ -889,12 +988,14 @@ module test_dcache_data_stage(input clk, input reset);
 
                 67:
                 begin
-                    assert(!dd_perf_dtlb_miss);
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_cache_miss);
                     assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 68:
@@ -918,12 +1019,14 @@ module test_dcache_data_stage(input clk, input reset);
 
                 70:
                 begin
-                    assert(!dd_perf_dtlb_miss);
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_cache_miss);
                     assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 71:
@@ -934,6 +1037,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 // Load with mask disabled
@@ -949,12 +1056,14 @@ module test_dcache_data_stage(input clk, input reset);
 
                 73:
                 begin
-                    assert(!dd_perf_dtlb_miss);
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_cache_miss);
                     assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 74:
@@ -964,6 +1073,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 // Store with mask disabled
@@ -979,12 +1092,14 @@ module test_dcache_data_stage(input clk, input reset);
 
                 76:
                 begin
-                    assert(!dd_perf_dtlb_miss);
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_cache_miss);
                     assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 77:
@@ -994,6 +1109,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 ////////////////////////////////////////////////////////////
@@ -1004,12 +1123,14 @@ module test_dcache_data_stage(input clk, input reset);
 
                 81:
                 begin
-                    assert(!dd_perf_dtlb_miss);
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_cache_miss);
                     assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 82:
@@ -1020,6 +1141,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 // Store
@@ -1031,12 +1156,14 @@ module test_dcache_data_stage(input clk, input reset);
 
                 84:
                 begin
-                    assert(!dd_perf_dtlb_miss);
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_cache_miss);
                     assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 85:
@@ -1047,6 +1174,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 // Load cached, but mask is zero.
@@ -1059,12 +1190,14 @@ module test_dcache_data_stage(input clk, input reset);
 
                 87:
                 begin
-                    assert(!dd_perf_dtlb_miss);
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_cache_miss);
                     assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 88:
@@ -1086,12 +1219,14 @@ module test_dcache_data_stage(input clk, input reset);
 
                 90:
                 begin
-                    assert(!dd_perf_dtlb_miss);
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_cache_miss);
                     assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 91:
@@ -1122,7 +1257,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_creg_read_en);
                     assert(!dd_cache_miss);
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_io_read_en);
                     assert(!dd_io_write_en);
@@ -1133,9 +1267,11 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_iinvalidate_en);
                     assert(!dd_dinvalidate_en);
                     assert(!dd_cache_miss);
+                    assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
                     assert(!dd_perf_store);
-                    assert(!dd_trap);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 102:
@@ -1146,6 +1282,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 // Control register write from user mode.
@@ -1163,7 +1303,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_creg_read_en);
                     assert(!dd_cache_miss);
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_io_read_en);
                     assert(!dd_io_write_en);
@@ -1174,9 +1313,11 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_iinvalidate_en);
                     assert(!dd_dinvalidate_en);
                     assert(!dd_cache_miss);
+                    assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
                     assert(!dd_perf_store);
-                    assert(!dd_trap);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 105:
@@ -1187,6 +1328,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 // DTLB update from user mode
@@ -1203,7 +1348,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_creg_read_en);
                     assert(!dd_cache_miss);
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_io_read_en);
                     assert(!dd_io_write_en);
@@ -1214,9 +1358,11 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_iinvalidate_en);
                     assert(!dd_dinvalidate_en);
                     assert(!dd_cache_miss);
+                    assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
                     assert(!dd_perf_store);
-                    assert(!dd_trap);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 108:
@@ -1227,6 +1373,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 // ITLB update from user mode
@@ -1243,7 +1393,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_creg_read_en);
                     assert(!dd_cache_miss);
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_io_read_en);
                     assert(!dd_io_write_en);
@@ -1254,9 +1403,11 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_iinvalidate_en);
                     assert(!dd_dinvalidate_en);
                     assert(!dd_cache_miss);
+                    assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
                     assert(!dd_perf_store);
-                    assert(!dd_trap);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 111:
@@ -1267,6 +1418,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 // TLB Invalidate
@@ -1283,7 +1438,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_creg_read_en);
                     assert(!dd_cache_miss);
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_io_read_en);
                     assert(!dd_io_write_en);
@@ -1294,9 +1448,11 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_iinvalidate_en);
                     assert(!dd_dinvalidate_en);
                     assert(!dd_cache_miss);
+                    assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
                     assert(!dd_perf_store);
-                    assert(!dd_trap);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 114:
@@ -1307,6 +1463,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 // TLB Invalidate All
@@ -1323,7 +1483,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_creg_read_en);
                     assert(!dd_cache_miss);
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_io_read_en);
                     assert(!dd_io_write_en);
@@ -1334,9 +1493,11 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_iinvalidate_en);
                     assert(!dd_dinvalidate_en);
                     assert(!dd_cache_miss);
+                    assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
                     assert(!dd_perf_store);
-                    assert(!dd_trap);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 117:
@@ -1347,6 +1508,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 ////////////////////////////////////////////////////////////
@@ -1360,12 +1525,14 @@ module test_dcache_data_stage(input clk, input reset);
 
                 131:
                 begin
-                    assert(!dd_perf_dtlb_miss);
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_cache_miss);
                     assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 132:
@@ -1376,6 +1543,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 // I/O address
@@ -1387,12 +1558,14 @@ module test_dcache_data_stage(input clk, input reset);
 
                 134:
                 begin
-                    assert(!dd_perf_dtlb_miss);
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_cache_miss);
                     assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 135:
@@ -1403,6 +1576,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 // Lane is masked off
@@ -1416,12 +1593,14 @@ module test_dcache_data_stage(input clk, input reset);
 
                 137:
                 begin
-                    assert(!dd_perf_dtlb_miss);
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_cache_miss);
                     assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 138:
@@ -1431,6 +1610,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 ////////////////////////////////////////////////////////////
@@ -1451,7 +1634,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_creg_read_en);
                     assert(!dd_cache_miss);
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_io_read_en);
                     assert(!dd_io_write_en);
@@ -1462,9 +1644,11 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_iinvalidate_en);
                     assert(!dd_dinvalidate_en);
                     assert(!dd_cache_miss);
+                    assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
                     assert(!dd_perf_store);
-                    assert(!dd_trap);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 152:
@@ -1474,6 +1658,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 // Control register write
@@ -1492,7 +1680,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_creg_read_en);
                     assert(!dd_cache_miss);
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_io_read_en);
                     assert(!dd_io_write_en);
@@ -1502,9 +1689,11 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_iinvalidate_en);
                     assert(!dd_dinvalidate_en);
                     assert(!dd_cache_miss);
+                    assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
                     assert(!dd_perf_store);
-                    assert(!dd_trap);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 155:
@@ -1514,6 +1703,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 ////////////////////////////////////////////////////////////
@@ -1531,7 +1724,6 @@ module test_dcache_data_stage(input clk, input reset);
                 171:
                 begin
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_io_write_en);
                     assert(!dd_io_read_en);
@@ -1543,9 +1735,11 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_iinvalidate_en);
                     assert(!dd_dinvalidate_en);
                     assert(!dd_cache_miss);
+                    assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
                     assert(!dd_perf_store);
-                    assert(!dd_trap);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 172:
@@ -1555,6 +1749,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 ////////////////////////////////////////////////////////////
@@ -1572,7 +1770,6 @@ module test_dcache_data_stage(input clk, input reset);
                 181:
                 begin
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_io_write_en);
                     assert(!dd_io_read_en);
@@ -1584,9 +1781,11 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_iinvalidate_en);
                     assert(!dd_dinvalidate_en);
                     assert(!dd_cache_miss);
+                    assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
                     assert(!dd_perf_store);
-                    assert(!dd_trap);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 182:
@@ -1596,6 +1795,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 ////////////////////////////////////////////////////////////
@@ -1614,7 +1817,6 @@ module test_dcache_data_stage(input clk, input reset);
 
                 191:
                 begin
-                    assert(!dd_perf_dtlb_miss);
                     assert(!dd_update_lru_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
@@ -1628,9 +1830,11 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_iinvalidate_en);
                     assert(!dd_dinvalidate_en);
                     assert(!dd_cache_miss);
+                    assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
                     assert(!dd_perf_store);
-                    assert(!dd_trap);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 192:
@@ -1640,6 +1844,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en); // This is only for cache misses
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 ////////////////////////////////////////////////////////////
@@ -1656,12 +1864,15 @@ module test_dcache_data_stage(input clk, input reset);
 
                 201:
                 begin
-                    assert(!dd_perf_dtlb_miss);
                     assert(!dd_update_lru_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_cache_miss);
                     assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 202:
@@ -1671,6 +1882,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 ////////////////////////////////////////////////////////////
@@ -1688,7 +1903,6 @@ module test_dcache_data_stage(input clk, input reset);
                 211:
                 begin
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_io_write_en);
                     assert(!dd_io_read_en);
@@ -1700,9 +1914,11 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_iinvalidate_en);
                     assert(!dd_dinvalidate_en);
                     assert(!dd_cache_miss);
+                    assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
                     assert(!dd_perf_store);
-                    assert(!dd_trap);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 212:
@@ -1712,6 +1928,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 ////////////////////////////////////////////////////////////
@@ -1729,7 +1949,6 @@ module test_dcache_data_stage(input clk, input reset);
                 221:
                 begin
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_io_write_en);
                     assert(!dd_io_read_en);
@@ -1741,9 +1960,11 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_iinvalidate_en);
                     assert(!dd_dinvalidate_en);
                     assert(!dd_cache_miss);
+                    assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
                     assert(!dd_perf_store);
-                    assert(!dd_trap);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 222:
@@ -1753,6 +1974,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 ////////////////////////////////////////////////////////////
@@ -1772,11 +1997,14 @@ module test_dcache_data_stage(input clk, input reset);
                 231:
                 begin
                     assert(dd_store_en);
-                    assert(!dd_perf_dtlb_miss);
                     assert(dd_update_lru_en);
                     assert(!dd_instruction_valid);
                     assert(!dd_cache_miss);
                     assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 232:
@@ -1786,6 +2014,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 ////////////////////////////////////////////////////////////
@@ -1805,7 +2037,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_cache_miss);
 
                     assert(!dd_update_lru_en);
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_io_write_en);
                     assert(!dd_io_read_en);
@@ -1816,9 +2047,11 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_membar_en);
                     assert(!dd_iinvalidate_en);
                     assert(!dd_dinvalidate_en);
-                    assert(dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 242:
@@ -1829,6 +2062,10 @@ module test_dcache_data_stage(input clk, input reset);
 
                     assert(!dd_trap);
                     assert(dd_instruction_valid);
+                    assert(!dd_perf_dcache_hit);
+                    assert(dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 ////////////////////////////////////////////////////////////
@@ -1846,9 +2083,7 @@ module test_dcache_data_stage(input clk, input reset);
                 begin
                     // This will force it to send to the L2 cache
                     assert(dd_cache_miss);
-                    assert(dd_perf_dcache_miss);
 
-                    assert(!dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_io_write_en);
                     assert(!dd_io_read_en);
@@ -1858,8 +2093,11 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_membar_en);
                     assert(!dd_iinvalidate_en);
                     assert(!dd_dinvalidate_en);
-                    assert(!dd_perf_store);
                     assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 // We get an initial rollback to wait for L2 response
@@ -1871,6 +2109,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_suspend_thread);
                     assert(dd_rollback_en);
                     assert(dd_load_sync_pending == 4'b0001);
+                    assert(!dd_perf_dcache_hit);
+                    assert(dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 // Pretend we got woken up, pick up the result...
@@ -1883,7 +2125,6 @@ module test_dcache_data_stage(input clk, input reset);
                 254:
                 begin
                     assert(dd_update_lru_en);
-                    assert(dd_perf_dcache_hit);
                     assert(!dd_instruction_valid);
                     assert(!dd_io_write_en);
                     assert(!dd_io_read_en);
@@ -1894,9 +2135,11 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_iinvalidate_en);
                     assert(!dd_dinvalidate_en);
                     assert(!dd_cache_miss);
+                    assert(!dd_trap);
+                    assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
                     assert(!dd_perf_store);
-                    assert(!dd_trap);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 // Doesn't get suspended
@@ -1908,6 +2151,10 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_suspend_thread);
                     assert(!dd_rollback_en);
                     assert(dd_load_sync_pending == 4'b0000);
+                    assert(dd_perf_dcache_hit);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_perf_dtlb_miss);
                 end
 
                 256:

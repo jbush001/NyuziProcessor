@@ -147,10 +147,6 @@ module writeback_stage(
     register_idx_t writeback_reg_nxt;
     logic writeback_last_subcycle_nxt;
 
-    assign wb_perf_instruction_retire = fx5_instruction_valid || ix_instruction_valid
-        || dd_instruction_valid;
-    assign wb_perf_store_rollback = sq_rollback_en;
-
     //
     // Rollback control logic
     //
@@ -514,6 +510,9 @@ module writeback_stage(
             end
 
             wb_writeback_en <= writeback_en_nxt;
+            wb_perf_instruction_retire <= fx5_instruction_valid || ix_instruction_valid
+                || dd_instruction_valid;
+            wb_perf_store_rollback <= sq_rollback_en;
         end
     end
 

@@ -264,7 +264,6 @@ module int_execute_stage(
     begin
         branch_taken = 0;
         conditional_branch = 0;
-        ix_perf_uncond_branch = 0;
 
         if (valid_instruction
             && of_instruction.branch
@@ -290,7 +289,6 @@ module int_execute_stage(
                 BRANCH_ERET:
                 begin
                     branch_taken = 1;
-                    ix_perf_uncond_branch = 1;
                 end
 
                 default:
@@ -299,8 +297,6 @@ module int_execute_stage(
         end
     end
 
-    assign ix_perf_cond_branch_taken = conditional_branch && branch_taken;
-    assign ix_perf_cond_branch_not_taken = conditional_branch && !branch_taken;
 
     always_ff @(posedge clk)
     begin
@@ -327,6 +323,9 @@ module int_execute_stage(
             /*AUTORESET*/
             // Beginning of autoreset for uninitialized flops
             ix_instruction_valid <= '0;
+            ix_perf_cond_branch_not_taken <= '0;
+            ix_perf_cond_branch_taken <= '0;
+            ix_perf_uncond_branch <= '0;
             ix_privileged_op_fault <= '0;
             ix_rollback_en <= '0;
             // End of automatics
@@ -344,6 +343,10 @@ module int_execute_stage(
                 ix_instruction_valid <= 0;
                 ix_rollback_en <= 0;
             end
+
+            ix_perf_uncond_branch <= !conditional_branch && branch_taken;
+            ix_perf_cond_branch_taken <= conditional_branch && branch_taken;
+            ix_perf_cond_branch_not_taken <= conditional_branch && !branch_taken;
         end
     end
 endmodule

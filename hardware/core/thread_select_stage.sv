@@ -245,7 +245,6 @@ module thread_select_stage(
         .index(issue_thread_idx));
 
     assign issue_instr = thread_instr[issue_thread_idx];
-    assign ts_perf_instruction_issue = |thread_issue_oh;
 
     always_ff @(posedge clk)
     begin
@@ -262,6 +261,7 @@ module thread_select_stage(
             // Beginning of autoreset for uninitialized flops
             thread_blocked <= '0;
             ts_instruction_valid <= '0;
+            ts_perf_instruction_issue <= '0;
             writeback_allocate <= '0;
             // End of automatics
         end
@@ -294,6 +294,7 @@ module thread_select_stage(
                 & ~(l2i_dcache_wake_bitmap | ior_wake_bitmap);
 
             writeback_allocate <= writeback_allocate_nxt;
+            ts_perf_instruction_issue <= |thread_issue_oh;
         end
     end
 endmodule
