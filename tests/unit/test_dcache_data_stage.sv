@@ -18,10 +18,6 @@
 
 import defines::*;
 
-//
-// Todo:
-// Ensure sync_load_pending is properly asserted
-//
 module test_dcache_data_stage(input clk, input reset);
     localparam NORMAL_ADDR = 'h80000020;
     localparam IO_ADDR = 'hffff0010;
@@ -1678,10 +1674,92 @@ module test_dcache_data_stage(input clk, input reset);
                 end
 
                 ////////////////////////////////////////////////////////////
+                // Rollback during I/O load
+                ////////////////////////////////////////////////////////////
+                210:
+                begin
+                    cache_hit(IO_ADDR, 1);
+                    wb_rollback_en <= 1;
+                    wb_rollback_thread_idx <= 0;
+                    dt_thread_idx <= 0;
+                    wb_rollback_pipeline <= PIPE_MEM;
+                end
+
+                211:
+                begin
+                    assert(!dd_update_lru_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_instruction_valid);
+                    assert(!dd_io_write_en);
+                    assert(!dd_io_read_en);
+                    assert(!dd_creg_write_en);
+                    assert(!dd_creg_read_en);
+                    assert(!dd_store_en);
+                    assert(!dd_flush_en);
+                    assert(!dd_membar_en);
+                    assert(!dd_iinvalidate_en);
+                    assert(!dd_dinvalidate_en);
+                    assert(!dd_cache_miss);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_trap);
+                end
+
+                212:
+                begin
+                    assert(!dd_trap);
+                    assert(!dd_cache_miss);
+                    assert(!dd_instruction_valid);
+                    assert(!dd_suspend_thread);
+                    assert(!dd_rollback_en);
+                end
+
+                ////////////////////////////////////////////////////////////
+                // Rollback during I/O store
+                ////////////////////////////////////////////////////////////
+                220:
+                begin
+                    cache_hit(IO_ADDR, 0);
+                    wb_rollback_en <= 1;
+                    wb_rollback_thread_idx <= 0;
+                    dt_thread_idx <= 0;
+                    wb_rollback_pipeline <= PIPE_MEM;
+                end
+
+                221:
+                begin
+                    assert(!dd_update_lru_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_instruction_valid);
+                    assert(!dd_io_write_en);
+                    assert(!dd_io_read_en);
+                    assert(!dd_creg_write_en);
+                    assert(!dd_creg_read_en);
+                    assert(!dd_store_en);
+                    assert(!dd_flush_en);
+                    assert(!dd_membar_en);
+                    assert(!dd_iinvalidate_en);
+                    assert(!dd_dinvalidate_en);
+                    assert(!dd_cache_miss);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_trap);
+                end
+
+                222:
+                begin
+                    assert(!dd_trap);
+                    assert(!dd_cache_miss);
+                    assert(!dd_instruction_valid);
+                    assert(!dd_suspend_thread);
+                    assert(!dd_rollback_en);
+                end
+
+                ////////////////////////////////////////////////////////////
                 // Check that a masked lane is properly stored with a
                 // scatter access.
                 ////////////////////////////////////////////////////////////
-                210:
+                230:
                 begin
                     cache_hit(32'h80000000, 0);
                     wb_rollback_pipeline <= PIPE_MEM;
@@ -1691,7 +1769,7 @@ module test_dcache_data_stage(input clk, input reset);
                     dt_subcycle <= 15;
                 end
 
-                211:
+                231:
                 begin
                     assert(dd_store_en);
                     assert(!dd_perf_dtlb_miss);
@@ -1701,7 +1779,7 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                 end
 
-                212:
+                232:
                 begin
                     assert(!dd_trap);
                     assert(!dd_cache_miss);
@@ -1710,7 +1788,129 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                 end
 
-                230:
+                ////////////////////////////////////////////////////////////
+                // Cache near miss
+                ////////////////////////////////////////////////////////////
+                240:
+                begin
+                    cache_miss(NORMAL_ADDR, 1);
+                    l2i_dtag_update_en_oh <= 1;
+                    l2i_dtag_update_set <= l1d_set_idx_t'(NORMAL_ADDR >> CACHE_LINE_OFFSET_WIDTH);
+                    l2i_dtag_update_tag <= l1d_tag_t'(NORMAL_ADDR >> (32 - DCACHE_TAG_BITS));
+                end
+
+                241:
+                begin
+                    // Cache miss is not marked because this was just filled
+                    assert(!dd_cache_miss);
+
+                    assert(!dd_update_lru_en);
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_instruction_valid);
+                    assert(!dd_io_write_en);
+                    assert(!dd_io_read_en);
+                    assert(!dd_creg_write_en);
+                    assert(!dd_creg_read_en);
+                    assert(!dd_store_en);
+                    assert(!dd_flush_en);
+                    assert(!dd_membar_en);
+                    assert(!dd_iinvalidate_en);
+                    assert(!dd_dinvalidate_en);
+                    assert(dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_trap);
+                end
+
+                242:
+                begin
+                    // This is the key combination: a rollback without a suspend
+                    assert(!dd_suspend_thread);
+                    assert(dd_rollback_en);
+
+                    assert(!dd_trap);
+                    assert(dd_instruction_valid);
+                end
+
+                ////////////////////////////////////////////////////////////
+                // Synchronized access
+                ////////////////////////////////////////////////////////////
+
+                // Sync load
+                250:
+                begin
+                    cache_hit(NORMAL_ADDR, 1);
+                    dt_instruction.memory_access_type <= MEM_SYNC;
+                end
+
+                251:
+                begin
+                    // This will force it to send to the L2 cache
+                    assert(dd_cache_miss);
+                    assert(dd_perf_dcache_miss);
+
+                    assert(!dd_perf_dcache_hit);
+                    assert(!dd_instruction_valid);
+                    assert(!dd_io_write_en);
+                    assert(!dd_io_read_en);
+                    assert(!dd_creg_write_en);
+                    assert(!dd_creg_read_en);
+                    assert(!dd_flush_en);
+                    assert(!dd_membar_en);
+                    assert(!dd_iinvalidate_en);
+                    assert(!dd_dinvalidate_en);
+                    assert(!dd_perf_store);
+                    assert(!dd_trap);
+                end
+
+                // We get an initial rollback to wait for L2 response
+                252:
+                begin
+                    assert(!dd_trap);
+                    assert(!dd_cache_miss);
+                    assert(dd_instruction_valid);
+                    assert(dd_suspend_thread);
+                    assert(dd_rollback_en);
+                    assert(dd_load_sync_pending == 4'b0001);
+                end
+
+                // Pretend we got woken up, pick up the result...
+                253:
+                begin
+                    cache_hit(NORMAL_ADDR, 1);
+                    dt_instruction.memory_access_type <= MEM_SYNC;
+                end
+
+                254:
+                begin
+                    assert(dd_update_lru_en);
+                    assert(dd_perf_dcache_hit);
+                    assert(!dd_instruction_valid);
+                    assert(!dd_io_write_en);
+                    assert(!dd_io_read_en);
+                    assert(!dd_creg_write_en);
+                    assert(!dd_creg_read_en);
+                    assert(!dd_flush_en);
+                    assert(!dd_membar_en);
+                    assert(!dd_iinvalidate_en);
+                    assert(!dd_dinvalidate_en);
+                    assert(!dd_cache_miss);
+                    assert(!dd_perf_dcache_miss);
+                    assert(!dd_perf_store);
+                    assert(!dd_trap);
+                end
+
+                // Doesn't get suspended
+                255:
+                begin
+                    assert(!dd_trap);
+                    assert(!dd_cache_miss);
+                    assert(dd_instruction_valid);
+                    assert(!dd_suspend_thread);
+                    assert(!dd_rollback_en);
+                    assert(dd_load_sync_pending == 4'b0000);
+                end
+
+                256:
                 begin
                     $display("PASS");
                     $finish;
