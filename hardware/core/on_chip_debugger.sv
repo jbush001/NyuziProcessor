@@ -31,8 +31,8 @@ import defines::*;
 //
 //  Limitations:
 //  - If an instruction has to be rolled back (for example, cache miss), this
-//    will not automatically restart it. There is no way for the host to know
-//    this has happened.
+//    will not automatically restart it. The debugger should query the
+//    status of the instruction and reissue it.
 //  - If the instruction queue is full when this attempts to inject one, the
 //    instruction will be lost.
 //  - When the halt signal is asserted, the processor will stop fetching new
