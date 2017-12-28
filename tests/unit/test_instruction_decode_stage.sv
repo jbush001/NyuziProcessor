@@ -25,6 +25,7 @@ import defines::*;
 module test_instruction_decode_stage(input clk, input reset);
     logic ifd_instruction_valid;
     scalar_t ifd_instruction;
+    logic ifd_inst_injected;
     scalar_t ifd_pc;
     local_thread_idx_t ifd_thread_idx;
     logic ifd_alignment_fault;
@@ -42,6 +43,7 @@ module test_instruction_decode_stage(input clk, input reset);
     local_thread_bitmap_t cr_interrupt_pending;
     logic wb_rollback_en;
     local_thread_idx_t wb_rollback_thread_idx;
+    logic ocd_halt;
     int cycle;
 
     instruction_decode_stage instruction_decode_stage(.*);
@@ -70,6 +72,8 @@ module test_instruction_decode_stage(input clk, input reset);
             cr_interrupt_en <= 0;
             cr_interrupt_pending <= 0;
             wb_rollback_en <= 0;
+            ifd_inst_injected <= 0;
+            ocd_halt <= 0;
 
             cycle <= cycle + 1;
             unique0 case (cycle)
@@ -114,7 +118,7 @@ module test_instruction_decode_stage(input clk, input reset);
                     assert(!id_instruction.has_vector2);
                     assert(id_instruction.trap_cause == {2'b00, TT_SUPERVISOR_ACCESS});
 
-                    // Next fault
+                    // Page fault
                     ifd_thread_idx <= ifd_thread_idx + 1;
                     ifd_pc <= ifd_pc + 4;
                     ifd_page_fault <= 1;
@@ -136,7 +140,7 @@ module test_instruction_decode_stage(input clk, input reset);
                     assert(!id_instruction.has_vector2);
                     assert(id_instruction.trap_cause == {2'b00, TT_PAGE_FAULT});
 
-                    // Next fault
+                    // Executable fault
                     ifd_thread_idx <= ifd_thread_idx + 1;
                     ifd_pc <= ifd_pc + 4;
                     ifd_executable_fault <= 1;
@@ -259,6 +263,7 @@ module test_instruction_decode_stage(input clk, input reset);
                 20:
                 begin
                     // Can't take an interrupt, because a sync load is pending
+                    ifd_instruction_valid <= 1;
                     ifd_thread_idx <= 1;
                     dd_load_sync_pending <= 4'b0010;
                     cr_interrupt_pending <= 4'b0010;
@@ -270,7 +275,8 @@ module test_instruction_decode_stage(input clk, input reset);
 
                 22:
                 begin
-                    assert(!id_instruction_valid);
+                    assert(id_instruction_valid);
+                    assert(!id_instruction.has_trap);
 
                     // Can't take an interrupt, because a sync store is pending
                     ifd_instruction_valid <= 1;
@@ -316,6 +322,22 @@ module test_instruction_decode_stage(input clk, input reset);
                     assert(id_instruction_valid);
                     assert(!id_instruction.has_trap);
 
+                    // Don't take an interrupt while halted by on-chip-debugger
+                    ifd_instruction_valid <= 1;
+                    ocd_halt <= 1;
+                    ifd_thread_idx <= 1;
+                    cr_interrupt_pending <= 4'b0010;
+                    cr_interrupt_en <= 4'b0010;
+                end
+
+                // wait a cycle
+                29: assert(!id_instruction_valid);
+
+                30:
+                begin
+                    assert(id_instruction_valid);
+                    assert(!id_instruction.has_trap);
+
                     // can take an interrupt
                     cr_interrupt_pending <= 4'b0010;
                     cr_interrupt_en <= 4'b0010;
@@ -329,9 +351,9 @@ module test_instruction_decode_stage(input clk, input reset);
                 end
 
                 // wait a cycle
-                29: assert(!id_instruction_valid);
+                31: assert(!id_instruction_valid);
 
-                30:
+                32:
                 begin
                     assert(id_instruction_valid);
                     assert(id_thread_idx == 1);
@@ -344,22 +366,30 @@ module test_instruction_decode_stage(input clk, input reset);
                     assert(!id_instruction.has_vector1);
                     assert(!id_instruction.has_vector2);
                     assert(id_instruction.trap_cause == {2'b00, TT_INTERRUPT});
+                end
 
-                    // Normal integer instruction (or s1, s2, s3)
+                ////////////////////////////////////////////////////////////
+                // Test normal instruction scenarios
+                ////////////////////////////////////////////////////////////
+
+                33:
+                begin
+                    // Integer instruction (or s1, s2, s3)
                     ifd_instruction_valid <= 1;
                     ifd_instruction <= 32'hc0018022;
                 end
 
                 // wait a cycle
-                31: assert(!id_instruction_valid);
+                34: assert(!id_instruction_valid);
 
-                32:
+                35:
                 begin
                     assert(id_instruction_valid);
                     assert(!id_instruction.has_trap);
                     assert(id_instruction.pc == ifd_pc);
                     assert(id_instruction.pipeline_sel == PIPE_INT_ARITH);
                     assert(id_instruction.last_subcycle == 0);
+                    assert(!id_instruction.injected);
 
                     // Long latency instruction (mull_i s6, s7, s8)
                     ifd_instruction_valid <= 1;
@@ -367,15 +397,16 @@ module test_instruction_decode_stage(input clk, input reset);
                 end
 
                 // wait a cycle
-                33: assert(!id_instruction_valid);
+                36: assert(!id_instruction_valid);
 
-                34:
+                37:
                 begin
                     assert(id_instruction_valid);
                     assert(!id_instruction.has_trap);
                     assert(id_instruction.pc == ifd_pc);
                     assert(id_instruction.pipeline_sel == PIPE_FLOAT_ARITH);
                     assert(id_instruction.last_subcycle == 0);
+                    assert(!id_instruction.injected);
 
                     // Multicycle instruction (load_gath v4, 312(v5))
                     ifd_instruction_valid <= 1;
@@ -383,26 +414,29 @@ module test_instruction_decode_stage(input clk, input reset);
                 end
 
                 // wait a cycle
-                35: assert(!id_instruction_valid);
+                38: assert(!id_instruction_valid);
 
-                36:
+                39:
                 begin
                     assert(id_instruction_valid);
                     assert(!id_instruction.has_trap);
                     assert(id_instruction.pc == ifd_pc);
                     assert(id_instruction.pipeline_sel == PIPE_MEM);
                     assert(id_instruction.last_subcycle == 15);
+                end
 
+                40:
+                begin
                     // nop
                     ifd_instruction_valid <= 1;
                     ifd_instruction <= 32'h00000000;
                 end
 
                 // wait a cycle
-                37: assert(!id_instruction_valid);
+                41: assert(!id_instruction_valid);
 
                 // Nop is special in that it doesn't have any side effects
-                38:
+                42:
                 begin
                     assert(id_instruction_valid);
                     assert(!id_instruction.has_trap);
@@ -572,7 +606,34 @@ module test_instruction_decode_stage(input clk, input reset);
                     assert(id_instruction.trap_cause == {2'b00, TT_UNALIGNED_ACCESS});
                 end
 
+                ////////////////////////////////////////////////////////////
+                // On-chip debugger injected instruction
+                ////////////////////////////////////////////////////////////
                 80:
+                begin
+                    ifd_instruction_valid <= 1;
+                    ifd_instruction <= 32'hc0018022;
+                    ifd_inst_injected <= 1;
+                end
+
+                // wait a cycle
+                81: assert(!id_instruction_valid);
+
+                82:
+                begin
+                    assert(id_instruction_valid);
+                    assert(!id_instruction.has_trap);
+                    assert(id_instruction.pc == ifd_pc);
+                    assert(id_instruction.pipeline_sel == PIPE_INT_ARITH);
+                    assert(id_instruction.last_subcycle == 0);
+                    assert(id_instruction.injected);
+
+                    // Long latency instruction (mull_i s6, s7, s8)
+                    ifd_instruction_valid <= 1;
+                    ifd_instruction <= 32'hc07400c7;
+                end
+
+                83:
                 begin
                     $display("PASS");
                     $finish;

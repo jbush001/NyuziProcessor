@@ -49,16 +49,18 @@ module nyuzi
     logic[TOTAL_THREADS - 1:0] thread_en;
     scalar_t cr_data_to_host[`NUM_CORES];
     scalar_t data_to_host;
+    logic[`NUM_CORES - 1:0] core_injected_complete;
+    logic[`NUM_CORES - 1:0] core_injected_rollback;
 
     /*AUTOLOGIC*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
-    core_id_t           dbg_core;               // From on_chip_debugger of on_chip_debugger.v
-    scalar_t            dbg_data_from_host;     // From on_chip_debugger of on_chip_debugger.v
-    logic               dbg_data_update;        // From on_chip_debugger of on_chip_debugger.v
-    logic               dbg_halt;               // From on_chip_debugger of on_chip_debugger.v
-    scalar_t            dbg_instruction_inject; // From on_chip_debugger of on_chip_debugger.v
-    logic               dbg_instruction_inject_en;// From on_chip_debugger of on_chip_debugger.v
-    local_thread_idx_t  dbg_thread;             // From on_chip_debugger of on_chip_debugger.v
+    core_id_t           ocd_core;               // From on_chip_debugger of on_chip_debugger.v
+    scalar_t            ocd_data_from_host;     // From on_chip_debugger of on_chip_debugger.v
+    logic               ocd_data_update;        // From on_chip_debugger of on_chip_debugger.v
+    logic               ocd_halt;               // From on_chip_debugger of on_chip_debugger.v
+    logic               ocd_inject_en;          // From on_chip_debugger of on_chip_debugger.v
+    scalar_t            ocd_inject_inst;        // From on_chip_debugger of on_chip_debugger.v
+    local_thread_idx_t  ocd_thread;             // From on_chip_debugger of on_chip_debugger.v
     logic               ii_ready [`NUM_CORES];  // From io_interconnect of io_interconnect.v
     iorsp_packet_t      ii_response;            // From io_interconnect of io_interconnect.v
     logic               ii_response_valid;      // From io_interconnect of io_interconnect.v
@@ -88,7 +90,7 @@ module nyuzi
 
                     'h104: // halt thread
                         thread_en <= thread_en & ~io_bus.write_data[TOTAL_THREADS - 1:0];
-  
+
                     default:
                         ;
                 endcase
@@ -141,11 +143,13 @@ module nyuzi
 
     on_chip_debugger on_chip_debugger(
         .jtag(jtag),
+        .injected_complete(|core_injected_complete),
+        .injected_rollback(|core_injected_rollback),
         .*);
 
     generate
         if (`NUM_CORES > 1)
-            assign data_to_host = cr_data_to_host[CORE_ID_WIDTH'(dbg_core)];
+            assign data_to_host = cr_data_to_host[CORE_ID_WIDTH'(ocd_core)];
         else
             assign data_to_host = cr_data_to_host[0];
     endgenerate
@@ -169,6 +173,8 @@ module nyuzi
                 .ii_response(ii_response),
                 .cr_data_to_host(cr_data_to_host[core_idx]),
                 .core_perf_events(perf_events[L2_PERF_EVENTS + CORE_PERF_EVENTS * core_idx+:CORE_PERF_EVENTS]),
+                .injected_complete(core_injected_complete[core_idx]),
+                .injected_rollback(core_injected_rollback[core_idx]),
                 .*);
         end
     endgenerate

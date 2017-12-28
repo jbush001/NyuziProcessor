@@ -52,13 +52,15 @@ module core
     output ioreq_packet_t                  ior_request,
 
     // From debug_controller
-    input                                  dbg_halt,
-    input local_thread_idx_t               dbg_thread,
-    input core_id_t                        dbg_core,
-    input scalar_t                         dbg_instruction_inject,
-    input                                  dbg_instruction_inject_en,
-    input scalar_t                         dbg_data_from_host,
-    input                                  dbg_data_update,
+    input                                  ocd_halt,
+    input local_thread_idx_t               ocd_thread,
+    input core_id_t                        ocd_core,
+    input scalar_t                         ocd_inject_inst,
+    input                                  ocd_inject_en,
+    output logic                           injected_complete,
+    output logic                           injected_rollback,
+    input scalar_t                         ocd_data_from_host,
+    input                                  ocd_data_update,
     output scalar_t                        cr_data_to_host,
 
     // To performance_counters
@@ -235,6 +237,7 @@ module core
     cache_line_index_t  ifd_cache_miss_paddr;   // From ifetch_data_stage of ifetch_data_stage.v
     local_thread_idx_t  ifd_cache_miss_thread_idx;// From ifetch_data_stage of ifetch_data_stage.v
     logic               ifd_executable_fault;   // From ifetch_data_stage of ifetch_data_stage.v
+    logic               ifd_inst_injected;      // From ifetch_data_stage of ifetch_data_stage.v
     scalar_t            ifd_instruction;        // From ifetch_data_stage of ifetch_data_stage.v
     logic               ifd_instruction_valid;  // From ifetch_data_stage of ifetch_data_stage.v
     logic               ifd_near_miss;          // From ifetch_data_stage of ifetch_data_stage.v
@@ -319,6 +322,7 @@ module core
     subcycle_t          ts_subcycle;            // From thread_select_stage of thread_select_stage.v
     local_thread_idx_t  ts_thread_idx;          // From thread_select_stage of thread_select_stage.v
     logic               wb_eret;                // From writeback_stage of writeback_stage.v
+    logic               wb_inst_injected;       // From writeback_stage of writeback_stage.v
     logic               wb_perf_instruction_retire;// From writeback_stage of writeback_stage.v
     logic               wb_perf_store_rollback; // From writeback_stage of writeback_stage.v
     logic               wb_rollback_en;         // From writeback_stage of writeback_stage.v
@@ -366,7 +370,13 @@ module core
     l1_l2_interface #(.CORE_ID(CORE_ID)) l1_l2_interface(.*);
     io_request_queue #(.CORE_ID(CORE_ID)) io_request_queue(.*);
 
-    assign core_selected_debug = CORE_ID == dbg_core;
+    assign core_selected_debug = CORE_ID == ocd_core;
+
+    always @(posedge clk)
+    begin
+        injected_complete <= wb_inst_injected & !wb_rollback_en;
+        injected_rollback <= wb_inst_injected & wb_rollback_en;
+    end
 
     // The number of signals in this assignment must match CORE_PERF_EVENTS
     // in defines.sv.

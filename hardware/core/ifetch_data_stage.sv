@@ -76,6 +76,7 @@ module ifetch_data_stage(
     output logic                     ifd_supervisor_fault,
     output logic                     ifd_page_fault,
     output logic                     ifd_executable_fault,
+    output logic                     ifd_inst_injected,
 
     // From writeback_stage
     input                            wb_rollback_en,
@@ -90,10 +91,10 @@ module ifetch_data_stage(
     input                            core_selected_debug,
 
     // From debug_controller
-    input                            dbg_halt,
-    input scalar_t                   dbg_instruction_inject,
-    input logic                      dbg_instruction_inject_en,
-    input local_thread_idx_t         dbg_thread);
+    input                            ocd_halt,
+    input scalar_t                   ocd_inject_inst,
+    input logic                      ocd_inject_en,
+    input local_thread_idx_t         ocd_thread);
 
     logic cache_hit;
     logic[`L1I_WAYS - 1:0] way_hit_oh;
@@ -103,7 +104,7 @@ module ifetch_data_stage(
     logic[$clog2(CACHE_LINE_WORDS) - 1:0] cache_lane_idx;
     logic alignment_fault;
     logic squash_instruction;
-    logic dbg_halt_latched;
+    logic ocd_halt_latched;
 
     assign squash_instruction = wb_rollback_en && wb_rollback_thread_idx
         == ift_thread_idx;
@@ -166,8 +167,8 @@ module ifetch_data_stage(
 
     assign cache_lane_idx = ~ifd_pc[CACHE_LINE_OFFSET_WIDTH - 1:2];
     assign fetched_word = fetched_cache_line[32 * cache_lane_idx+:32];
-    assign ifd_instruction = dbg_halt_latched
-        ? dbg_instruction_inject
+    assign ifd_instruction = ocd_halt_latched
+        ? ocd_inject_inst
         : {fetched_word[7:0], fetched_word[15:8], fetched_word[23:16], fetched_word[31:24]};
 
     assign ifd_update_lru_en = cache_hit && ift_instruction_requested;
@@ -176,7 +177,7 @@ module ifetch_data_stage(
     always_ff @(posedge clk)
     begin
         ifd_pc <= ift_pc_vaddr;
-        ifd_thread_idx <= dbg_halt ? dbg_thread : ift_thread_idx;
+        ifd_thread_idx <= ocd_halt ? ocd_thread : ift_thread_idx;
     end
 
     always_ff @(posedge clk, posedge reset)
@@ -185,9 +186,10 @@ module ifetch_data_stage(
         begin
             /*AUTORESET*/
             // Beginning of autoreset for uninitialized flops
-            dbg_halt_latched <= '0;
+            ocd_halt_latched <= '0;
             ifd_alignment_fault <= '0;
             ifd_executable_fault <= '0;
+            ifd_inst_injected <= '0;
             ifd_instruction_valid <= '0;
             ifd_page_fault <= '0;
             ifd_perf_icache_hit <= '0;
@@ -203,10 +205,11 @@ module ifetch_data_stage(
             // if an instruction wasn't requested).
             assert(!ift_instruction_requested || $onehot0(way_hit_oh));
 
-            dbg_halt_latched <= dbg_halt;
-            if (dbg_halt)
+            ocd_halt_latched <= ocd_halt;
+            if (ocd_halt)
             begin
-                ifd_instruction_valid <= dbg_instruction_inject_en && core_selected_debug;
+                ifd_instruction_valid <= ocd_inject_en && core_selected_debug;
+                ifd_inst_injected <= 1;
                 ifd_alignment_fault <= 0;
                 ifd_supervisor_fault <= 0;
                 ifd_tlb_miss <= 0;
@@ -219,6 +222,7 @@ module ifetch_data_stage(
                 // fault signals are set.
                 ifd_instruction_valid <= ift_instruction_requested && !squash_instruction
                     && cache_hit && ift_tlb_hit;
+                ifd_inst_injected <= 0;
                 ifd_alignment_fault <= ift_instruction_requested && !squash_instruction
                     && alignment_fault;
                 ifd_supervisor_fault <= ift_instruction_requested && !squash_instruction

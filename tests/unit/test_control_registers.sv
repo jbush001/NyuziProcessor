@@ -68,8 +68,8 @@ module test_control_registers(input clk, input reset);
     subcycle_t cr_eret_subcycle[`THREADS_PER_CORE];
     scalar_t cr_trap_handler;
     scalar_t cr_tlb_miss_handler;
-    scalar_t dbg_data_from_host;
-    logic dbg_data_update;
+    scalar_t ocd_data_from_host;
+    logic ocd_data_update;
     scalar_t cr_data_to_host;
     int cycle;
 
@@ -114,7 +114,7 @@ module test_control_registers(input clk, input reset);
             dd_creg_read_en <= 0;
             wb_trap <= 0;
             wb_eret <= 0;
-            dbg_data_update <= 0;
+            ocd_data_update <= 0;
 
             // There are deliberately gaps in the cycle count sequences below
             // to make it easier to add new actions to the test.
@@ -597,8 +597,8 @@ module test_control_registers(input clk, input reset);
                 167:
                 begin
                     assert(cr_data_to_host == JTAG_DATA_VAL0);
-                    dbg_data_from_host <= JTAG_DATA_VAL1;
-                    dbg_data_update <= 1;
+                    ocd_data_from_host <= JTAG_DATA_VAL1;
+                    ocd_data_update <= 1;
                 end
                 // wait cycle
 

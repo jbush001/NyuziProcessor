@@ -89,8 +89,8 @@ module ifetch_tag_stage
     input local_thread_bitmap_t         ts_fetch_en,
 
     // From debug_controller
-    input                               dbg_halt,
-    input local_thread_idx_t            dbg_thread);
+    input                               ocd_halt,
+    input local_thread_idx_t            ocd_thread);
 
     scalar_t next_program_counter[`THREADS_PER_CORE];
     local_thread_idx_t selected_thread_idx;
@@ -128,7 +128,7 @@ module ifetch_tag_stage
     // address, so skip instruction fetch this cycle.
     assign cache_fetch_en = |can_fetch_thread_bitmap && !dt_update_itlb_en
         && !dt_invalidate_tlb_en && !dt_invalidate_tlb_all_en
-        && !dbg_halt;
+        && !ocd_halt;
 
     rr_arbiter #(.NUM_REQUESTERS(`THREADS_PER_CORE)) thread_select_arbiter(
         .request(can_fetch_thread_bitmap),
@@ -161,7 +161,7 @@ module ifetch_tag_stage
         end
     endgenerate
 
-    assign pc_to_fetch = next_program_counter[dbg_halt ? dbg_thread : selected_thread_idx];
+    assign pc_to_fetch = next_program_counter[ocd_halt ? ocd_thread : selected_thread_idx];
 
     //
     // Cache way metadata

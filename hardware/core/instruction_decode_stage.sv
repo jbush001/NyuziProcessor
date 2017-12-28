@@ -48,6 +48,7 @@ module instruction_decode_stage(
     // From ifetch_data_stage
     input                         ifd_instruction_valid,
     input scalar_t                ifd_instruction,
+    input                         ifd_inst_injected,
     input scalar_t                ifd_pc,
     input local_thread_idx_t      ifd_thread_idx,
     input                         ifd_alignment_fault,
@@ -73,6 +74,9 @@ module instruction_decode_stage(
     // From control_registers
     input local_thread_bitmap_t   cr_interrupt_en,
     input local_thread_bitmap_t   cr_interrupt_pending,
+
+    // From on_chip_debugger
+    input                         ocd_halt,
 
     // From writeback_stage
     input                         wb_rollback_en,
@@ -252,6 +256,8 @@ module instruction_decode_stage(
             decoded_instr_nxt.trap_cause = {2'b00, TT_RESET};
     end
 
+    assign decoded_instr_nxt.injected = ifd_inst_injected;
+
     // Subtle: Certain instructions need to be issued twice, including I/O
     // requests and synchronized memory accesses. The first queues the
     // transaction and the second collects the result. Because the first
@@ -261,7 +267,7 @@ module instruction_decode_stage(
     // dd_load_sync_pending, ior_pending, or sq_store_sync_pending).
     assign masked_interrupt_flags = cr_interrupt_pending & cr_interrupt_en
         & ~ior_pending & ~dd_load_sync_pending & ~sq_store_sync_pending;
-    assign raise_interrupt = masked_interrupt_flags[ifd_thread_idx];
+    assign raise_interrupt = masked_interrupt_flags[ifd_thread_idx] && !ocd_halt;
     assign decoded_instr_nxt.has_trap = has_trap;
 
     assign unary_arith = fmt_r && (alu_op == OP_CLZ

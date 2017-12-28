@@ -120,6 +120,9 @@ module writeback_stage(
     // To thread_select_stage
     output local_thread_bitmap_t          wb_suspend_thread_oh,
 
+    // to on_chip_debugger
+    output logic                          wb_inst_injected,
+
     // To performance_counters
     output logic                          wb_perf_instruction_retire,
     output logic                          wb_perf_store_rollback);
@@ -233,6 +236,19 @@ module writeback_stage(
             wb_rollback_pipeline = PIPE_MEM;
             wb_rollback_subcycle = dd_subcycle;
         end
+    end
+
+    // Return if this instruction was injected by the on chip debugger.
+    always_comb
+    begin
+        if (ix_instruction_valid)
+            wb_inst_injected = ix_instruction.injected;
+        else if (dd_instruction_valid)
+            wb_inst_injected = dd_instruction.injected;
+        else if (fx5_instruction_valid)
+            wb_inst_injected = fx5_instruction.injected;
+        else
+            wb_inst_injected = 0;
     end
 
     idx_to_oh #(

@@ -67,8 +67,8 @@ module control_registers
     output scalar_t                         cr_tlb_miss_handler,
 
     // To/From debug controller
-    input scalar_t                          dbg_data_from_host,
-    input                                   dbg_data_update,
+    input scalar_t                          ocd_data_from_host,
+    input                                   ocd_data_update,
     output scalar_t                         cr_data_to_host);
 
     // One is for current state. Maximum nested traps is TRAP_LEVELS - 1.
@@ -187,8 +187,8 @@ module control_registers
                         ;
                 endcase
             end
-            else if (dbg_data_update)
-                jtag_data <= dbg_data_from_host;
+            else if (ocd_data_update)
+                jtag_data <= ocd_data_from_host;
         end
     end
 

@@ -238,6 +238,9 @@ typedef logic[3:0] interrupt_id_t;
 typedef struct packed {
     scalar_t pc;
 
+    // Was this instruction injected by the on-chip debugger
+    logic injected;
+
     // Piggybacked exceptions
     logic has_trap;
     trap_cause_t trap_cause;

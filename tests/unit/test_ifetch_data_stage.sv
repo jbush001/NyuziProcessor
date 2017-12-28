@@ -59,16 +59,17 @@ module test_ifetch_data_stage(input clk, input reset);
     logic ifd_supervisor_fault;
     logic ifd_page_fault;
     logic ifd_executable_fault;
+    logic ifd_inst_injected;
     logic wb_rollback_en;
     local_thread_idx_t wb_rollback_thread_idx;
     logic ifd_perf_icache_hit;
     logic ifd_perf_icache_miss;
     logic ifd_perf_itlb_miss;
     logic core_selected_debug;
-    logic dbg_halt;
-    scalar_t dbg_instruction_inject;
-    logic dbg_instruction_inject_en;
-    local_thread_idx_t dbg_thread;
+    logic ocd_halt;
+    scalar_t ocd_inject_inst;
+    logic ocd_inject_en;
+    local_thread_idx_t ocd_thread;
     int cycle;
     int cache_hit_count;
     int cache_miss_count;
@@ -122,7 +123,7 @@ module test_ifetch_data_stage(input clk, input reset);
             cr_supervisor_en[1] <= 0;
             cr_supervisor_en[2] <= 0;
             cr_supervisor_en[3] <= 0;
-            dbg_halt <= 0;
+            ocd_halt <= 0;
             core_selected_debug <= 0;
         end
         else
@@ -133,7 +134,7 @@ module test_ifetch_data_stage(input clk, input reset);
             l2i_itag_update_en <= 0;
             wb_rollback_en <= 0;
             core_selected_debug <= 0;
-            dbg_instruction_inject_en <= 0;
+            ocd_inject_en <= 0;
             ift_tlb_hit <= 0;
             ift_tlb_present <= 0;
             ift_tlb_executable <= 0;
@@ -176,6 +177,7 @@ module test_ifetch_data_stage(input clk, input reset);
                     assert(!ifd_supervisor_fault);
                     assert(!ifd_page_fault);
                     assert(!ifd_executable_fault);
+                    assert(!ifd_inst_injected);
 
                     // Cache miss
                     // Modify tag to make this a miss
@@ -250,6 +252,7 @@ module test_ifetch_data_stage(input clk, input reset);
                     assert(ifd_supervisor_fault);
                     assert(!ifd_page_fault);
                     assert(!ifd_executable_fault);
+                    assert(!ifd_inst_injected);
 
                     // Page not executable (valid, tag, and paddr flags are retained
                     // from above).
@@ -268,6 +271,7 @@ module test_ifetch_data_stage(input clk, input reset);
                     assert(!ifd_supervisor_fault);
                     assert(!ifd_page_fault);
                     assert(ifd_executable_fault);
+                    assert(!ifd_inst_injected);
 
                     // Page is supervisor, but we are also in supervisor mode. This
                     // shoudn't raise a fault.
@@ -290,6 +294,7 @@ module test_ifetch_data_stage(input clk, input reset);
                     assert(!ifd_supervisor_fault);
                     assert(!ifd_page_fault);
                     assert(ifd_executable_fault);
+                    assert(!ifd_inst_injected);
 
                     // Cache near miss. The response for the missed line
                     // comes the same cycle the miss occurs.
@@ -394,7 +399,7 @@ module test_ifetch_data_stage(input clk, input reset);
                     l2i_idata_update_way <= 0;
                     l2i_idata_update_set <= 0;
                     l2i_idata_update_data <= DATA0;
-                    dbg_instruction_inject <= 'hcccccccc;
+                    ocd_inject_inst <= 'hcccccccc;
                 end
 
                 41:
@@ -405,7 +410,7 @@ module test_ifetch_data_stage(input clk, input reset);
                     cache_hit(VADDR0, PADDR0);
                 end
 
-                42: dbg_halt <= 1;
+                42: ocd_halt <= 1;
 
                 43:
                 begin
@@ -423,8 +428,8 @@ module test_ifetch_data_stage(input clk, input reset);
                     // Now try to insert an instruction to another core. Ensure this
                     // ignores it.
                     core_selected_debug <= 0;
-                    dbg_instruction_inject_en <= 1;
-                    dbg_instruction_inject <= INJECT_INST;
+                    ocd_inject_en <= 1;
+                    ocd_inject_inst <= INJECT_INST;
                 end
                 // wait a cycle
 
@@ -435,15 +440,17 @@ module test_ifetch_data_stage(input clk, input reset);
 
                     // Inject an instruction for this core
                     core_selected_debug <= 1;
-                    dbg_instruction_inject_en <= 1;
-                    dbg_instruction_inject <= INJECT_INST;
+                    ocd_inject_en <= 1;
+                    ocd_inject_inst <= INJECT_INST;
                 end
                 // wait a cycle
 
                 48:
                 begin
+                    // Check that the injected instruction comes out
                     assert(ifd_instruction_valid);
                     assert(ifd_instruction == INJECT_INST);
+                    assert(ifd_inst_injected);
                 end
 
                 49:

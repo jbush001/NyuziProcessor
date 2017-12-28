@@ -42,7 +42,12 @@ INST_INTEST = 2
 INST_CONTROL = 3
 INST_INJECT_INST = 4
 INST_TRANSFER_DATA = 5
+INST_STATUS = 6
 INST_BYPASS = 15
+
+STATUS_READY = 0
+STATUS_ISSUED = 1
+STATUS_ROLLED_BACK = 2
 
 # When passed, does not shift instruction register
 INST_SAME = -1
@@ -297,24 +302,37 @@ def jtag_inject(_, target):
         # First value to transfer
         fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0x3b643e9a)
         fixture.jtag_transfer(INST_INJECT_INST, 32, 0xac0000b2)  # getcr s5, 18
+        fixture.jtag_transfer(INST_STATUS, 2, 0)
+        fixture.expect_data(STATUS_READY)
+
         # Second value to transfer
         fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0xd1dc20a3)
         fixture.jtag_transfer(INST_INJECT_INST, 32, 0xac0000d2)  # getcr s6, 18
+        fixture.jtag_transfer(INST_STATUS, 2, 0)
+        fixture.expect_data(STATUS_READY)
 
         # Load register values in thread 1
         fixture.jtag_transfer(INST_CONTROL, 7, 0x3)
         # First value to transfer
         fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0xa6532328)
         fixture.jtag_transfer(INST_INJECT_INST, 32, 0xac0000b2)  # getcr s5, 18
+        fixture.jtag_transfer(INST_STATUS, 2, 0)
+        fixture.expect_data(STATUS_READY)
+
         # Second value to transfer
         fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0xf01839a0)
         fixture.jtag_transfer(INST_INJECT_INST, 32, 0xac0000d2)  # getcr s6, 18
+        fixture.jtag_transfer(INST_STATUS, 2, 0)
+        fixture.expect_data(STATUS_READY)
 
         # Perform operation on thread 0
         fixture.jtag_transfer(INST_CONTROL, 7, 0x1)
         fixture.jtag_transfer(INST_INJECT_INST, 32,
                               0xc03300e5)  # xor s7, s5, s6
         fixture.jtag_transfer(INST_SAME, 32, 0x8c0000f2)  # setcr s7, 18
+        fixture.jtag_transfer(INST_STATUS, 2, 0)
+        fixture.expect_data(STATUS_READY)
+
         fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0)
         fixture.expect_data(0xeab81e39)
 
@@ -323,8 +341,33 @@ def jtag_inject(_, target):
         fixture.jtag_transfer(INST_INJECT_INST, 32,
                               0xc03300e5)  # xor s7, s5, s6
         fixture.jtag_transfer(INST_SAME, 32, 0x8c0000f2)  # setcr s7, 18
+        fixture.jtag_transfer(INST_STATUS, 2, 0)
+        fixture.expect_data(STATUS_READY)
+
         fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0)
         fixture.expect_data(0x564b1a88)
+
+
+@test_harness.test(['verilator'])
+def jtag_inject_rollback(_, target):
+    """
+    Test reading status register. I put in an instruction that will miss the
+    cache, so I know it will roll back.
+    """
+    hexfile = test_harness.build_program(['test_program.S'])
+    with JTAGTestFixture(hexfile) as fixture:
+        # Halt
+        fixture.jtag_transfer(INST_CONTROL, 7, 0x1)
+
+        # Load register values in thread 0
+        # First value to transfer
+        fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0x10000)  # High address, not cached
+        fixture.jtag_transfer(INST_INJECT_INST, 32, 0xac000012)  # getcr s0, 18
+        fixture.jtag_transfer(INST_STATUS, 2, 0)
+        fixture.expect_data(STATUS_READY)
+        fixture.jtag_transfer(INST_INJECT_INST, 32, 0xa8000000)  # load_32 s0, (s0)
+        fixture.jtag_transfer(INST_STATUS, 2, 0)
+        fixture.expect_data(STATUS_ROLLED_BACK)
 
 
 # XXX currently disabled because of issue #128
