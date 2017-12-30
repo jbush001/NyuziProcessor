@@ -526,8 +526,9 @@ module writeback_stage(
             end
 
             wb_writeback_en <= writeback_en_nxt;
-            wb_perf_instruction_retire <= fx5_instruction_valid || ix_instruction_valid
-                || dd_instruction_valid;
+            wb_perf_instruction_retire <= (fx5_instruction_valid || ix_instruction_valid
+                || dd_instruction_valid) && (!wb_rollback_en
+                || (ix_instruction_valid && ix_instruction.branch));
             wb_perf_store_rollback <= sq_rollback_en;
         end
     end
