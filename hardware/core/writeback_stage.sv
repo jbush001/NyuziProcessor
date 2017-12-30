@@ -352,130 +352,123 @@ module writeback_stage(
         // wb_rollback_en is derived combinatorially from the instruction
         // that is about to retire, so this doesn't need to check
         // wb_rollback_thread_idx like other places.
-        unique case ({fx5_instruction_valid, ix_instruction_valid, dd_instruction_valid})
+        if (fx5_instruction_valid)
+        begin
             //
             // Floating point pipeline result
             //
-            3'b100:
-            begin
-                if (fx5_instruction.has_dest && !wb_rollback_en)
-                    writeback_en_nxt = 1;
+            if (fx5_instruction.has_dest && !wb_rollback_en)
+                writeback_en_nxt = 1;
 
-                writeback_thread_idx_nxt = fx5_thread_idx;
-                writeback_mask_nxt = fx5_mask_value;
-                if (fx5_instruction.compare)
-                    writeback_value_nxt = vector_t'(mcycle_vcompare_result);
-                else
-                    writeback_value_nxt = fx5_result;
+            writeback_thread_idx_nxt = fx5_thread_idx;
+            writeback_mask_nxt = fx5_mask_value;
+            if (fx5_instruction.compare)
+                writeback_value_nxt = vector_t'(mcycle_vcompare_result);
+            else
+                writeback_value_nxt = fx5_result;
 
-                writeback_vector_nxt = fx5_instruction.dest_vector;
-                writeback_reg_nxt = fx5_instruction.dest_reg;
-                writeback_last_subcycle_nxt = last_subcycle_mx;
-            end
-
+            writeback_vector_nxt = fx5_instruction.dest_vector;
+            writeback_reg_nxt = fx5_instruction.dest_reg;
+            writeback_last_subcycle_nxt = last_subcycle_mx;
+        end
+        else if (ix_instruction_valid)
+        begin
             //
             // Integer pipeline result
             //
-            3'b010:
+            if (ix_instruction.branch
+                && (ix_instruction.branch_type == BRANCH_CALL_OFFSET
+                || ix_instruction.branch_type == BRANCH_CALL_REGISTER))
             begin
-                if (ix_instruction.branch
-                    && (ix_instruction.branch_type == BRANCH_CALL_OFFSET
-                    || ix_instruction.branch_type == BRANCH_CALL_REGISTER))
-                begin
-                    // Call is a special case: it both rolls back and writes
-                    // back a register (ra)
-                    writeback_en_nxt = 1;
-                end
-                else if (ix_instruction.has_dest && !wb_rollback_en)
-                begin
-                    // This is a normal, non-rolled-back instruction
-                    writeback_en_nxt = 1;
-                end
-
-                writeback_thread_idx_nxt = ix_thread_idx;
-                writeback_mask_nxt = ix_mask_value;
-                if (ix_instruction.call)
-                    writeback_value_nxt = vector_t'(ix_instruction.pc + 32'd4);
-                else if (ix_instruction.compare)
-                    writeback_value_nxt = vector_t'(scycle_vcompare_result);
-                else
-                    writeback_value_nxt = ix_result;
-
-                writeback_vector_nxt = ix_instruction.dest_vector;
-                writeback_reg_nxt = ix_instruction.dest_reg;
-                writeback_last_subcycle_nxt = last_subcycle_sx;
+                // Call is a special case: it both rolls back and writes
+                // back a register (ra)
+                writeback_en_nxt = 1;
+            end
+            else if (ix_instruction.has_dest && !wb_rollback_en)
+            begin
+                // This is a normal, non-rolled-back instruction
+                writeback_en_nxt = 1;
             end
 
+            writeback_thread_idx_nxt = ix_thread_idx;
+            writeback_mask_nxt = ix_mask_value;
+            if (ix_instruction.call)
+                writeback_value_nxt = vector_t'(ix_instruction.pc + 32'd4);
+            else if (ix_instruction.compare)
+                writeback_value_nxt = vector_t'(scycle_vcompare_result);
+            else
+                writeback_value_nxt = ix_result;
+
+            writeback_vector_nxt = ix_instruction.dest_vector;
+            writeback_reg_nxt = ix_instruction.dest_reg;
+            writeback_last_subcycle_nxt = last_subcycle_sx;
+        end
+        else if (dd_instruction_valid)
+        begin
             //
             // Memory pipeline result
             //
-            3'b001:
+            writeback_en_nxt = dd_instruction.has_dest && !wb_rollback_en;
+            writeback_thread_idx_nxt = dd_thread_idx;
+            if (!dd_instruction.cache_control)
             begin
-                writeback_en_nxt = dd_instruction.has_dest && !wb_rollback_en;
-                writeback_thread_idx_nxt = dd_thread_idx;
-                if (!dd_instruction.cache_control)
+                if (dd_instruction.load)
                 begin
-                    if (dd_instruction.load)
-                    begin
-                        unique case (memory_op)
-                            MEM_B:      writeback_value_nxt[0] = scalar_t'(byte_aligned);
-                            MEM_BX:     writeback_value_nxt[0] = scalar_t'($signed(byte_aligned));
-                            MEM_S:      writeback_value_nxt[0] = scalar_t'(half_aligned);
-                            MEM_SX:     writeback_value_nxt[0] = scalar_t'($signed(half_aligned));
-                            MEM_SYNC:   writeback_value_nxt[0] = swapped_word_value;
-                            MEM_L:
-                            begin
-                                // Scalar Load
-                                if (dd_io_access)
-                                begin
-                                    writeback_mask_nxt = {NUM_VECTOR_LANES{1'b1}};
-                                    writeback_value_nxt[0] = ior_read_value;
-                                end
-                                else
-                                begin
-                                    writeback_mask_nxt = {NUM_VECTOR_LANES{1'b1}};
-                                    writeback_value_nxt[0] = swapped_word_value;
-                                end
-                            end
-
-                            MEM_CONTROL_REG:
+                    unique case (memory_op)
+                        MEM_B:      writeback_value_nxt[0] = scalar_t'(byte_aligned);
+                        MEM_BX:     writeback_value_nxt[0] = scalar_t'($signed(byte_aligned));
+                        MEM_S:      writeback_value_nxt[0] = scalar_t'(half_aligned);
+                        MEM_SX:     writeback_value_nxt[0] = scalar_t'($signed(half_aligned));
+                        MEM_SYNC:   writeback_value_nxt[0] = swapped_word_value;
+                        MEM_L:
+                        begin
+                            // Scalar Load
+                            if (dd_io_access)
                             begin
                                 writeback_mask_nxt = {NUM_VECTOR_LANES{1'b1}};
-                                writeback_value_nxt[0] = cr_creg_read_val;
+                                writeback_value_nxt[0] = ior_read_value;
                             end
-
-                            MEM_BLOCK,
-                            MEM_BLOCK_M:
+                            else
                             begin
-                                writeback_mask_nxt = dd_lane_mask;
-                                writeback_value_nxt = endian_twiddled_data;
+                                writeback_mask_nxt = {NUM_VECTOR_LANES{1'b1}};
+                                writeback_value_nxt[0] = swapped_word_value;
                             end
+                        end
 
-                            default:
-                            begin
-                                // Gather load
-                                // Grab the appropriate lane.
-                                writeback_mask_nxt = dd_vector_lane_oh & dd_lane_mask;
-                                writeback_value_nxt = {NUM_VECTOR_LANES{swapped_word_value}};
-                            end
-                        endcase
-                    end
-                    else if (memory_op == MEM_SYNC)
-                    begin
-                        // Synchronized stores are special because they write
-                        // back (whether they were successful).
-                        writeback_value_nxt[0] = scalar_t'(sq_store_sync_success);
-                    end
+                        MEM_CONTROL_REG:
+                        begin
+                            writeback_mask_nxt = {NUM_VECTOR_LANES{1'b1}};
+                            writeback_value_nxt[0] = cr_creg_read_val;
+                        end
+
+                        MEM_BLOCK,
+                        MEM_BLOCK_M:
+                        begin
+                            writeback_mask_nxt = dd_lane_mask;
+                            writeback_value_nxt = endian_twiddled_data;
+                        end
+
+                        default:
+                        begin
+                            // Gather load
+                            // Grab the appropriate lane.
+                            writeback_mask_nxt = dd_vector_lane_oh & dd_lane_mask;
+                            writeback_value_nxt = {NUM_VECTOR_LANES{swapped_word_value}};
+                        end
+                    endcase
                 end
-
-                writeback_vector_nxt = dd_instruction.dest_vector;
-                writeback_reg_nxt = dd_instruction.dest_reg;
-                writeback_last_subcycle_nxt = last_subcycle_dd;
+                else if (memory_op == MEM_SYNC)
+                begin
+                    // Synchronized stores are special because they write
+                    // back (whether they were successful).
+                    writeback_value_nxt[0] = scalar_t'(sq_store_sync_success);
+                end
             end
 
-            default:
-                ;
-        endcase
+            writeback_vector_nxt = dd_instruction.dest_vector;
+            writeback_reg_nxt = dd_instruction.dest_reg;
+            writeback_last_subcycle_nxt = last_subcycle_dd;
+        end
     end
 
     always_ff @(posedge clk)
