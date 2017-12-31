@@ -22,6 +22,7 @@ all:
 	cd rotozoom && make
 	cd sceneview && make
 	cd consoletest && make
+	cd shadow_map && make
 	#cd doom && make
 
 clean:
@@ -32,4 +33,5 @@ clean:
 	cd rotozoom && make clean
 	cd sceneview && make clean
 	cd consoletest && make clean
+	cd shadow_map && make clean
 	#cd doom && make clean

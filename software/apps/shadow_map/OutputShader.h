@@ -101,9 +101,7 @@ public:
         sampler[0]->readPixels(inParams[4] * 0.5 + 0.5, inParams[5] * 0.5 + 0.5, mask,
             shadowMapValue);
 #if ENABLE_SHADOW
-        // The multiplier here must be the inverse of the one in
-        // ShadowMapShader.
-        vecf16_t depth = -shadowMapValue[0] * 10;
+        vecf16_t depth = shadowMapValue[0];
         vmask_t inShadow = __builtin_nyuzi_mask_cmpf_gt(depth - inParams[6],
             (vecf16_t) kShadowBias);
 #else

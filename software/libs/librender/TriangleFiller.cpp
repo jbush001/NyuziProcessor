@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-
+#include <assert.h>
 #include <stdio.h>
 #include "TriangleFiller.h"
 
@@ -182,36 +182,54 @@ void TriangleFiller::fillMasked(int left, int top, vmask_t mask)
     fState->fShader->shadePixels(color, interpolatedParams, fState->fUniforms, fState->fTextures,
                                  mask);
 
-    // Convert color channels to 8bpp
-    vecu16_t rS = __builtin_convertvector(clamp(color[kColorR], 0.0, 1.0) * 255.0f, vecu16_t);
-    vecu16_t gS = __builtin_convertvector(clamp(color[kColorG], 0.0, 1.0) * 255.0f, vecu16_t);
-    vecu16_t bS = __builtin_convertvector(clamp(color[kColorB], 0.0, 1.0) * 255.0f, vecu16_t);
 
     vecu16_t pixelValues;
 
-    // If all pixels are fully opaque, don't bother trying to blend them.
-    if (fState->fEnableBlend
-            && (__builtin_nyuzi_mask_cmpf_lt(color[kColorA], vecf16_t(1.0f)) & mask) != 0)
+    Surface *destSurface = fTarget->getColorBuffer();
+    switch (destSurface->getColorSpace())
     {
-        vecu16_t aS = __builtin_convertvector(clamp(color[kColorA], 0.0, 1.0) * 255.0f, vecu16_t)
-                      & 0xff;
-        vecu16_t oneMinusAS = 255 - aS;
+        case Surface::RGBA8888:
+        {
+            // Convert color channels to 8bpp
+            vecu16_t rS = __builtin_convertvector(clamp(color[kColorR], 0.0, 1.0) * 255.0f, vecu16_t);
+            vecu16_t gS = __builtin_convertvector(clamp(color[kColorG], 0.0, 1.0) * 255.0f, vecu16_t);
+            vecu16_t bS = __builtin_convertvector(clamp(color[kColorB], 0.0, 1.0) * 255.0f, vecu16_t);
 
-        vecu16_t destColors = vecu16_t(fTarget->getColorBuffer()->readBlock(left, top));
-        vecu16_t rD = destColors & 0xff;
-        vecu16_t gD = (destColors >> 8) & 0xff;
-        vecu16_t bD = (destColors >> 16) & 0xff;
+            // If all pixels are fully opaque, don't bother trying to blend them.
+            if (fState->fEnableBlend
+                    && (__builtin_nyuzi_mask_cmpf_lt(color[kColorA], vecf16_t(1.0f)) & mask) != 0)
+            {
+                vecu16_t aS = __builtin_convertvector(clamp(color[kColorA], 0.0, 1.0) * 255.0f, vecu16_t)
+                              & 0xff;
+                vecu16_t oneMinusAS = 255 - aS;
 
-        // Premultiplied alpha
-        vecu16_t newR = saturate(((rS << 8) + (rD * oneMinusAS)) >> 8, 255);
-        vecu16_t newG = saturate(((gS << 8) + (gD * oneMinusAS)) >> 8, 255);
-        vecu16_t newB = saturate(((bS << 8) + (bD * oneMinusAS)) >> 8, 255);
-        pixelValues = 0xff000000 | newR | (newG << 8) | (newB << 16);
+                vecu16_t destColors = vecu16_t(fTarget->getColorBuffer()->readBlock(left, top));
+                vecu16_t rD = destColors & 0xff;
+                vecu16_t gD = (destColors >> 8) & 0xff;
+                vecu16_t bD = (destColors >> 16) & 0xff;
+
+                // Premultiplied alpha
+                vecu16_t newR = saturate(((rS << 8) + (rD * oneMinusAS)) >> 8, 255);
+                vecu16_t newG = saturate(((gS << 8) + (gD * oneMinusAS)) >> 8, 255);
+                vecu16_t newB = saturate(((bS << 8) + (bD * oneMinusAS)) >> 8, 255);
+                pixelValues = 0xff000000 | newR | (newG << 8) | (newB << 16);
+            }
+            else
+                pixelValues = 0xff000000 | rS | (gS << 8) | (bS << 16);
+
+            break;
+        }
+
+        case Surface::FLOAT:
+            // Just store channel 0 as a floating point value. Hack?
+            pixelValues = vecu16_t(color[0]);
+            break;
+
+        default:
+            assert(0);  // Not supported yet
     }
-    else
-        pixelValues = 0xff000000 | rS | (gS << 8) | (bS << 16);
 
-    fTarget->getColorBuffer()->writeBlockMasked(left, top, mask, vecu16_t(pixelValues));
+    destSurface->writeBlockMasked(left, top, mask, vecu16_t(pixelValues));
 }
 
 } // namespace librender

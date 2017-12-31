@@ -70,8 +70,8 @@ int main()
     // which wastes some memory and limits the depth resolution to 256.
     // It would also be ideal to bind the texture as the depth buffer so
     // we didn't need a color buffer.
-    Surface *lightMapSurface = new Surface(kLightmapSize, kLightmapSize);
-    Surface *lightDepthBuffer = new Surface(kLightmapSize, kLightmapSize);
+    Surface *lightMapSurface = new Surface(kLightmapSize, kLightmapSize, Surface::FLOAT);
+    Surface *lightDepthBuffer = new Surface(kLightmapSize, kLightmapSize, Surface::FLOAT);
     RenderTarget *lightMapTarget = new RenderTarget();
     lightMapTarget->setColorBuffer(lightMapSurface);
     lightMapTarget->setDepthBuffer(lightDepthBuffer);
@@ -82,8 +82,8 @@ int main()
 
     // Output framebuffer target
     RenderTarget *outputTarget = new RenderTarget();
-    Surface *colorBuffer = new Surface(FB_WIDTH, FB_HEIGHT, frameBuffer);
-    Surface *depthBuffer = new Surface(FB_WIDTH, FB_HEIGHT);
+    Surface *colorBuffer = new Surface(FB_WIDTH, FB_HEIGHT, Surface::RGBA8888, frameBuffer);
+    Surface *depthBuffer = new Surface(FB_WIDTH, FB_HEIGHT, Surface::FLOAT);
     outputTarget->setColorBuffer(colorBuffer);
     outputTarget->setDepthBuffer(depthBuffer);
 #if !SHOW_SHADOW_MAP
@@ -105,8 +105,8 @@ int main()
     Matrix modelMatrix;
 #if !SHOW_SHADOW_MAP
     Matrix projectionMatrix = Matrix::getProjectionMatrix(FB_WIDTH, FB_HEIGHT);
-    Matrix viewMatrix = Matrix::lookAt(Vec3(-1.2, 1.4, 0.1), Vec3(0, 0, 0), Vec3(0, 0, 1));
 #endif
+    Matrix viewMatrix = Matrix::lookAt(Vec3(-1.2, 1.4, 0.1), Vec3(0, 0, 0), Vec3(0, 0, 1));
 
     outputUniforms.fDirectional = 0.6f;
     outputUniforms.fAmbient = 0.2f;

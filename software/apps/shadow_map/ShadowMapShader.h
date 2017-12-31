@@ -57,13 +57,7 @@ public:
                      const void *, const Texture * const * ,
                      vmask_t) const override
     {
-        // Need to squeeze value into 0.0-1.0 to fit in texture
-        // The 0.1 is arbitrary and probably depends on the scene.
-        vecf16_t depthval = -inParams[0] * 0.1;
-        outColor[kColorR] = depthval;
-        outColor[kColorG] = depthval;
-        outColor[kColorB] = depthval;
-        outColor[kColorA] = 1.0;
+        outColor[0] = inParams[0];  // Copy depth value
     }
 };
 

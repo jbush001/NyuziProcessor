@@ -175,6 +175,11 @@ public:
         return fYStep;
     }
 
+    ColorSpace getColorSpace() const
+    {
+        return fColorSpace;
+    }
+
 private:
     void initializeOffsetVectors();
     void slowClearTile(int left, int top, unsigned int value);
