@@ -50,8 +50,9 @@ int main()
 
     RenderContext *context = new RenderContext();
     RenderTarget *renderTarget = new RenderTarget();
-    Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, frameBuffer);
-    Surface *depthBuffer = new Surface(kFbWidth, kFbHeight);
+    Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, Surface::RGBA8888,
+        frameBuffer);
+    Surface *depthBuffer = new Surface(kFbWidth, kFbHeight, Surface::FLOAT);
     renderTarget->setColorBuffer(colorBuffer);
     renderTarget->setDepthBuffer(depthBuffer);
     context->bindTarget(renderTarget);
@@ -63,7 +64,8 @@ int main()
     context->bindVertexAttrs(&kVertices);
 
     Texture *texture = new Texture();
-    texture->setMipSurface(0, new Surface(128, 128, (void*) kTestTexture));
+    texture->setMipSurface(0, new Surface(128, 128, Surface::RGBA8888,
+        (void*) kTestTexture));
     texture->enableBilinearFiltering(true);
     context->bindTexture(0, texture);
 

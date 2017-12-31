@@ -20,13 +20,13 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "SIMDMath.h"
 
 namespace librender
 {
 
 const int kCacheLineSize = 64;
-const int kBytesPerPixel = 4;
 const int kTileSize = 64;
 const int kVectorSize = 64;
 
@@ -42,12 +42,17 @@ static_assert(__builtin_clz(kTileSize) & 1, "Tile size must be power of four");
 class Surface
 {
 public:
-    // This allocates surface memory and frees it automatically.
-    Surface(int width, int height);
+    enum ColorSpace
+    {
+        RGBA8888,
+        FLOAT,
+        GRAY8
+    };
 
-    // This will use the passed pointer as surface memory and will
-    // not attempt to free it.
-    Surface(int width, int height, void *base);
+    // If base is not null, this will use it as surface memory and will
+    // not attempt to free it. Otherwise this will allocate its own
+    // memory to use.
+    Surface(int width, int height, ColorSpace, void *base = nullptr);
 
     ~Surface();
 
@@ -59,6 +64,7 @@ public:
     //   4  5  6  7
     //   8  9 10 11
     //  12 13 14 15
+    // XXX hardcoded for RGBA8888 color space
     void writeBlockMasked(int left, int top, vmask_t mask, vecu16_t values)
     {
         veci16_t ptrs = f4x4AtOrigin + left * 4 + top * fStride;
@@ -66,6 +72,7 @@ public:
     }
 
     // Read values from a 4x4 block, in same order as writeBlockMasked
+    // XXX hardcoded for RGBA8888 color space
     vecu16_t readBlock(int left, int top) const
     {
         veci16_t ptrs = f4x4AtOrigin + left * 4 + top * fStride;
@@ -75,11 +82,13 @@ public:
     // Set all 32-bit values in a tile to a predefined value.
     void clearTile(int left, int top, unsigned int value)
     {
-        if (kTileSize == 64 && fWidth - left >= 64 && fHeight - top >= 64)
+        if (kTileSize == 64 && fWidth - left >= 64 && fHeight - top >=
+            64 && (fColorSpace == RGBA8888 || fColorSpace == FLOAT))
         {
             // Fast clear using block stores
             vecu16_t vval = value;
-            vecu16_t *ptr = reinterpret_cast<vecu16_t*>(fBaseAddress + (left + top * fWidth) * kBytesPerPixel);
+            vecu16_t *ptr = reinterpret_cast<vecu16_t*>(fBaseAddress + (left + top * fWidth)
+                * fBytesPerPixel);
             const int kStride = fStride / kCacheLineSize;
             for (int y = 0; y < 64; y++)
             {
@@ -91,17 +100,43 @@ public:
             }
         }
         else
-            clearTileSlow(left, top, value);
+            slowClearTile(left, top, value);
     }
 
     // Push a tile from the L2 cache back to system memory
     void flushTile(int left, int top);
 
-    veci16_t readPixels(veci16_t tx, veci16_t ty, vmask_t mask) const
+    void readPixels(veci16_t tx, veci16_t ty, vmask_t mask, vecf16_t *outColor) const
     {
-        veci16_t pointers = (ty * fStride + tx * kBytesPerPixel)
+        veci16_t pointers = (ty * fStride + tx * fBytesPerPixel)
                             + fBaseAddress;
-        return __builtin_nyuzi_gather_loadi_masked(pointers, mask);
+        veci16_t packedColor = __builtin_nyuzi_gather_loadi_masked(pointers & ~3, mask);
+        const float kOneOver255 = 1.0 / 255.0;
+        switch (fColorSpace)
+        {
+            case RGBA8888:
+                outColor[0] = __builtin_convertvector(packedColor & 255, vecf16_t)
+                                    * kOneOver255;
+                outColor[1] = __builtin_convertvector((packedColor >> 8) & 255,
+                                    vecf16_t) * kOneOver255;
+                outColor[2] = __builtin_convertvector((packedColor >> 16) & 255,
+                                    vecf16_t) * kOneOver255;
+                outColor[3] = __builtin_convertvector((packedColor >> 24) & 255,
+                                    vecf16_t) * kOneOver255;
+                break;
+
+            case GRAY8:
+                packedColor = (packedColor >> ((pointers & 3) * 8)) & 0xff;
+                outColor[0] = __builtin_convertvector(packedColor, vecf16_t)
+                    * kOneOver255;
+                outColor[1] = outColor[2] = outColor[3];
+                break;
+
+            case FLOAT:
+                outColor[0] = reinterpret_cast<vecf16_t>(packedColor);
+                outColor[1] = outColor[2] = outColor[3];
+                break;
+        }
     }
 
     inline int getWidth() const
@@ -142,7 +177,7 @@ public:
 
 private:
     void initializeOffsetVectors();
-    void clearTileSlow(int left, int top, unsigned int value);
+    void slowClearTile(int left, int top, unsigned int value);
 
     veci16_t f4x4AtOrigin;
 
@@ -156,7 +191,8 @@ private:
     int fStride;
     int fBaseAddress;
     bool fOwnedPointer;
-
+    ColorSpace fColorSpace;
+    int fBytesPerPixel;
 };
 
 } // namespace librender

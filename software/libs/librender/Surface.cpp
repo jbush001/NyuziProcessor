@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-
+#include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include "Surface.h"
@@ -22,24 +22,39 @@
 namespace librender
 {
 
-Surface::Surface(int width, int height, void *base)
+Surface::Surface(int width, int height, ColorSpace colorSpace, void *base)
     : fWidth(width),
-      fHeight(height),
-      fStride(width * kBytesPerPixel),
-      fBaseAddress(reinterpret_cast<int>(base)),
-      fOwnedPointer(false)
+      fHeight(height)
 {
-    initializeOffsetVectors();
-}
+    fColorSpace = colorSpace;
+    switch (colorSpace)
+    {
+        case RGBA8888:
+        case FLOAT:
+            fBytesPerPixel = 4;
+            break;
 
-Surface::Surface(int width, int height)
-    : fWidth(width),
-      fHeight(height),
-      fStride(width * kBytesPerPixel),
-      fOwnedPointer(true)
-{
-    fBaseAddress = reinterpret_cast<int>(memalign(kCacheLineSize,
-                                         static_cast<size_t>(width * height * kBytesPerPixel)));
+        case GRAY8:
+            fBytesPerPixel = 1;
+            break;
+
+        default:
+            assert(0);
+    }
+
+    fStride = width * fBytesPerPixel;
+    if (base == nullptr)
+    {
+        fBaseAddress = reinterpret_cast<int>(memalign(kCacheLineSize,
+             static_cast<size_t>(width * height * fBytesPerPixel)));
+        fOwnedPointer = true;
+    }
+    else
+    {
+        fBaseAddress = reinterpret_cast<int>(base);
+        fOwnedPointer = false;
+    }
+
     initializeOffsetVectors();
 }
 
@@ -93,32 +108,55 @@ void Surface::initializeOffsetVectors()
     f4x4AtOrigin += widthOffset * fWidth + fBaseAddress;
 }
 
-void Surface::clearTileSlow(int left, int top, unsigned int value)
+void Surface::slowClearTile(int left, int top, unsigned int value)
 {
-    veci16_t *ptr = reinterpret_cast<veci16_t*>(fBaseAddress + (left + top * fWidth)
-                    * kBytesPerPixel);
-    const veci16_t kClearColor = veci16_t(value);
-    int right = min(kTileSize, fWidth - left);
-    int bottom = min(kTileSize, fHeight - top);
-    const int kStride = ((fWidth - right) * kBytesPerPixel / kVectorSize);
+    int width = min(kTileSize, fWidth - left);
+    int height = min(kTileSize, fHeight - top);
 
-    for (int y = 0; y < bottom; y++)
+    switch (fColorSpace)
     {
-        // XXX LLVM ends up turning this into memset
-        for (int x = 0; x < right; x += 16)
-            *ptr++ = kClearColor;
+        case RGBA8888:
+        case FLOAT:
+        {
+            const int kStride = (fStride - (width * fBytesPerPixel)) / 4;
+            uint32_t *ptr = reinterpret_cast<uint32_t*>(fBaseAddress + top * fStride
+                + left * fBytesPerPixel);
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                    *ptr++ = value;
 
-        ptr += kStride;
+                ptr += kStride;
+            }
+
+            break;
+        }
+
+        case GRAY8:
+        {
+            uint32_t *ptr = reinterpret_cast<uint32_t*>(fBaseAddress + (left + top * fWidth)
+                * fBytesPerPixel);
+            for (int y = 0; y < height; y++)
+            {
+                ::memset(ptr, static_cast<int>(value), static_cast<size_t>(width));
+                ptr += fStride;
+            }
+
+            break;
+        }
     }
+
+
 }
 
 // Push a NxN tile from the L2 cache back to system memory
+// XXX hard coded for 32 bpp
 void Surface::flushTile(int left, int top)
 {
-    int ptr = fBaseAddress + (left + top * fWidth) * kBytesPerPixel;
+    int ptr = fBaseAddress + (left + top * fWidth) * fBytesPerPixel;
     int right = min(kTileSize, fWidth - left);
     int bottom = min(kTileSize, fHeight - top);
-    const int kStride = (fWidth - right) * kBytesPerPixel;
+    const int kStride = (fWidth - right) * fBytesPerPixel;
     for (int y = 0; y < bottom; y++)
     {
         for (int x = 0; x < right; x += 16)

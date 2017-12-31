@@ -61,7 +61,8 @@ int main()
 
     RenderContext *context = new RenderContext();
     RenderTarget *renderTarget = new RenderTarget();
-    Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, frameBuffer);
+    Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, Surface::RGBA8888,
+        frameBuffer);
     renderTarget->setColorBuffer(colorBuffer);
     context->bindTarget(renderTarget);
     context->bindShader(new ColorShader());

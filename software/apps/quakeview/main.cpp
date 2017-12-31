@@ -191,8 +191,9 @@ int main()
     frameBuffer = init_vga(VGA_MODE_640x480);
     RenderContext *context = new RenderContext(0x1000000);
     RenderTarget *renderTarget = new RenderTarget();
-    Surface *colorBuffer = new Surface(FB_WIDTH, FB_HEIGHT, (void*) frameBuffer);
-    Surface *zBuffer = new Surface(FB_WIDTH, FB_HEIGHT);
+    Surface *colorBuffer = new Surface(FB_WIDTH, FB_HEIGHT, Surface::RGBA8888,
+        (void*) frameBuffer);
+    Surface *zBuffer = new Surface(FB_WIDTH, FB_HEIGHT, Surface::FLOAT);
     renderTarget->setColorBuffer(colorBuffer);
     renderTarget->setDepthBuffer(zBuffer);
     context->bindTarget(renderTarget);

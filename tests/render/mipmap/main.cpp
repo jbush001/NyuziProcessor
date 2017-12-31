@@ -61,7 +61,7 @@ Texture *makeMipMaps()
     for (int i = 0; i < 4; i++)
     {
         int mipSize = 512 >> i;
-        Surface *mipSurface = new Surface(mipSize, mipSize);
+        Surface *mipSurface = new Surface(mipSize, mipSize, Surface::RGBA8888);
         unsigned int *bits = static_cast<unsigned int*>(mipSurface->bits());
         unsigned int color = kColors[i];
         for (int y = 0; y < mipSize; y++)
@@ -99,7 +99,8 @@ int main()
 
     RenderContext *context = new RenderContext();
     RenderTarget *renderTarget = new RenderTarget();
-    Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, frameBuffer);
+    Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, Surface::RGBA8888,
+        frameBuffer);
     renderTarget->setColorBuffer(colorBuffer);
     context->bindTarget(renderTarget);
     context->clearColorBuffer();

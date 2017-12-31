@@ -115,7 +115,7 @@ Texture *createCheckerboardTexture()
         int mipSize = kTestTextureSize >> mipLevel;
         int subCheckerSize = kCheckerSize >> mipLevel;
         uint32_t checkerColor = kColors[mipLevel];
-        Surface *surface = new Surface(mipSize, mipSize);
+        Surface *surface = new Surface(mipSize, mipSize, Surface::RGBA8888);
         uint32_t *bits = (uint32_t*) surface->bits();
         for (int x = 0; x < mipSize; x++)
         {
@@ -173,7 +173,8 @@ int main()
         {
             int width = texHeader[textureIndex].width >> mipLevel;
             int height = texHeader[textureIndex].height >> mipLevel;
-            Surface *surface = new Surface(width, height, resourceData + offset);
+            Surface *surface = new Surface(width, height, Surface::RGBA8888,
+                resourceData + offset);
             textures[textureIndex]->setMipSurface(mipLevel, surface);
             offset += width * height * 4;
         }
@@ -195,8 +196,8 @@ int main()
     // Set up render state
     RenderContext *context = new RenderContext(0x1000000);
     RenderTarget *renderTarget = new RenderTarget();
-    Surface *colorBuffer = new Surface(FB_WIDTH, FB_HEIGHT, frameBuffer);
-    Surface *depthBuffer = new Surface(FB_WIDTH, FB_HEIGHT);
+    Surface *colorBuffer = new Surface(FB_WIDTH, FB_HEIGHT, Surface::RGBA8888, frameBuffer);
+    Surface *depthBuffer = new Surface(FB_WIDTH, FB_HEIGHT, Surface::FLOAT);
     renderTarget->setColorBuffer(colorBuffer);
     renderTarget->setDepthBuffer(depthBuffer);
     context->bindTarget(renderTarget);

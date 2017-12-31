@@ -63,8 +63,8 @@ int main()
 
     RenderContext *context = new RenderContext();
     RenderTarget *renderTarget = new RenderTarget();
-    Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, frameBuffer);
-    Surface *depthBuffer = new Surface(kFbWidth, kFbHeight);
+    Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, Surface::RGBA8888, frameBuffer);
+    Surface *depthBuffer = new Surface(kFbWidth, kFbHeight, Surface::FLOAT);
     renderTarget->setColorBuffer(colorBuffer);
     renderTarget->setDepthBuffer(depthBuffer);
     context->bindTarget(renderTarget);

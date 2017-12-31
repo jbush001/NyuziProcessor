@@ -247,7 +247,8 @@ void PakFile::loadTextureAtlas(const bspheader_t *bspHeader, const uint8_t *data
     Surface *atlasSurfaces[kNumMipLevels]; // One for each mip level
     for (int mipLevel = 0; mipLevel < kNumMipLevels; mipLevel++)
     {
-        atlasSurfaces[mipLevel] = new Surface(kAtlasSize >> mipLevel, kAtlasSize >> mipLevel);
+        atlasSurfaces[mipLevel] = new Surface(kAtlasSize >> mipLevel, kAtlasSize >> mipLevel,
+            Surface::RGBA8888);
         ::memset(atlasSurfaces[mipLevel]->bits(), 0, (kAtlasSize >> mipLevel) * (kAtlasSize >> mipLevel)
                  * 4);
     }
@@ -364,9 +365,9 @@ void PakFile::loadLightmaps(const bspheader_t *bspHeader, const uint8_t *data)
 
     fLightmapAtlasEntries = new AtlasEntry[numFaces];
 
-    Surface *lightmapSurface = new Surface(kLightmapSize, kLightmapSize);
-    memset(lightmapSurface->bits(), 0, kLightmapSize * kLightmapSize * 4);
-    uint32_t *destPtr = (uint32_t*) lightmapSurface->bits();
+    Surface *lightmapSurface = new Surface(kLightmapSize, kLightmapSize, Surface::GRAY8);
+    memset(lightmapSurface->bits(), 0, kLightmapSize * kLightmapSize);
+    uint8_t *destPtr = (uint8_t*) lightmapSurface->bits();
 
     // Put a dummy map in the upper left corner for faces that don't have a
     // lightmap (they are black)
@@ -445,7 +446,6 @@ void PakFile::loadLightmaps(const bspheader_t *bspHeader, const uint8_t *data)
         {
             for (int x = 0; x < lightmapPixelWidth; x++)
             {
-                // Only set lowest channel, others are unused
                 destPtr[(lightmapY + y) * kLightmapSize + lightmapX + x]
                     = *lightmapSrc++;;
             }

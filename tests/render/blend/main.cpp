@@ -65,7 +65,7 @@ int main()
     const RenderBuffer indexBuffer(kTriangleIndices, 6, 4);
     RenderContext *context = new RenderContext();
     RenderTarget *renderTarget = new RenderTarget();
-    Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, frameBuffer);
+    Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, Surface::RGBA8888, frameBuffer);
     renderTarget->setColorBuffer(colorBuffer);
     context->clearColorBuffer();
     context->bindTarget(renderTarget);

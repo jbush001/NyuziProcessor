@@ -27,22 +27,6 @@ namespace librender
 namespace
 {
 
-const float kOneOver255 = 1.0 / 255.0;
-
-// Convert a 32-bit RGBA color (packed in an integer) into four floating point (0.0 - 1.0)
-// color channels.
-void unpackRGBA(veci16_t packedColor, vecf16_t *outColor)
-{
-    outColor[kColorR] = __builtin_convertvector(packedColor & 255, vecf16_t)
-                        * kOneOver255;
-    outColor[kColorG] = __builtin_convertvector((packedColor >> 8) & 255,
-                        vecf16_t) * kOneOver255;
-    outColor[kColorB] = __builtin_convertvector((packedColor >> 16) & 255,
-                        vecf16_t) * kOneOver255;
-    outColor[kColorA] = __builtin_convertvector((packedColor >> 24) & 255,
-                        vecf16_t) * kOneOver255;
-}
-
 // Convert a number in the range -1.0 <= n <= 1.0 to 0.0 <= n < 1.0
 // If the number is less than 0, add 1 so it wraps around
 inline vecf16_t wrapfv(vecf16_t in)
@@ -130,10 +114,10 @@ void Texture::readPixels(vecf16_t u, vecf16_t v, vmask_t mask,
         veci16_t xPlusOne = wrapiv(tx + 1, mipWidth);
         veci16_t yPlusOne = wrapiv(ty + 1, mipHeight);
 
-        unpackRGBA(surface->readPixels(tx, ty, mask), tlColor);
-        unpackRGBA(surface->readPixels(tx, yPlusOne, mask), blColor);
-        unpackRGBA(surface->readPixels(xPlusOne, ty, mask), trColor);
-        unpackRGBA(surface->readPixels(xPlusOne, yPlusOne, mask), brColor);
+        surface->readPixels(tx, ty, mask, tlColor);
+        surface->readPixels(tx, yPlusOne, mask, blColor);
+        surface->readPixels(xPlusOne, ty, mask, trColor);
+        surface->readPixels(xPlusOne, yPlusOne, mask, brColor);
 
         // Compute weights
         vecf16_t wu = fracfv(uRaster);
@@ -155,7 +139,7 @@ void Texture::readPixels(vecf16_t u, vecf16_t v, vmask_t mask,
     else
     {
         // Nearest neighbor
-        unpackRGBA(surface->readPixels(tx, ty, mask), outColor);
+        surface->readPixels(tx, ty, mask, outColor);
     }
 }
 
