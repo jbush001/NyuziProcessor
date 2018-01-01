@@ -27,6 +27,7 @@ enum performance_event
     PERF_L2_WRITEBACK,
     PERF_L2_MISS,
     PERF_L2_HIT,
+    PERF_INTERRUPT,
     PERF_STORE_ROLLBACK,
     PERF_STORE,
     PERF_INSTRUCTION_RETIRED,
@@ -39,7 +40,7 @@ enum performance_event
     PERF_DTLB_MISS,
     PERF_UNCOND_BRANCH,
     PERF_COND_BRANCH_TAKEN,
-    PERF_COND_BRANCH_NOT_TAKEN
+    PERF_COND_BRANCH_NOT_TAKEN,
 };
 
 void set_perf_counter_event(int counter, enum performance_event event);

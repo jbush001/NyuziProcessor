@@ -324,6 +324,7 @@ module core
     logic               wb_eret;                // From writeback_stage of writeback_stage.v
     logic               wb_inst_injected;       // From writeback_stage of writeback_stage.v
     logic               wb_perf_instruction_retire;// From writeback_stage of writeback_stage.v
+    logic               wb_perf_interrupt;      // From writeback_stage of writeback_stage.v
     logic               wb_perf_store_rollback; // From writeback_stage of writeback_stage.v
     logic               wb_rollback_en;         // From writeback_stage of writeback_stage.v
     scalar_t            wb_rollback_pc;         // From writeback_stage of writeback_stage.v
@@ -393,6 +394,7 @@ module core
         ts_perf_instruction_issue,
         wb_perf_instruction_retire,
         dd_perf_store,
-        wb_perf_store_rollback
+        wb_perf_store_rollback,
+        wb_perf_interrupt
     };
 endmodule

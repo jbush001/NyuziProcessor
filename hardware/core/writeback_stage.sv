@@ -125,7 +125,8 @@ module writeback_stage(
 
     // To performance_counters
     output logic                          wb_perf_instruction_retire,
-    output logic                          wb_perf_store_rollback);
+    output logic                          wb_perf_store_rollback,
+    output logic                          wb_perf_interrupt);
 
     scalar_t mem_load_lane;
     logic[$clog2(CACHE_LINE_WORDS) - 1:0] mem_load_lane_idx;
@@ -523,6 +524,8 @@ module writeback_stage(
                 || dd_instruction_valid) && (!wb_rollback_en
                 || (ix_instruction_valid && ix_instruction.branch && !ix_privileged_op_fault));
             wb_perf_store_rollback <= sq_rollback_en;
+            wb_perf_interrupt <= ix_instruction_valid && ix_instruction.has_trap
+                && ix_instruction.trap_cause.trap_type == TT_INTERRUPT;
         end
     end
 

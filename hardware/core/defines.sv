@@ -66,7 +66,7 @@ typedef logic[3:0] core_id_t;
 // CORE_PERF_EVENTS should match the number of signals in the assignment to
 // core_perf_events in core.sv and L2_PERF_EVENTS must match the number of
 // signals in the assignment to l2_perf_events in l2_cache.sv.
-parameter CORE_PERF_EVENTS = 13;
+parameter CORE_PERF_EVENTS = 14;
 parameter L2_PERF_EVENTS = 3;
 parameter TOTAL_PERF_EVENTS = L2_PERF_EVENTS + CORE_PERF_EVENTS * `NUM_CORES;
 

@@ -54,12 +54,13 @@ int main(int argc, const char *argv[])
         0, 0,		// PERF_L2_WRITEBACK
         0, 7,		// PERF_L2_MISS
         2, 10,		// PERF_L2_HIT
+        0, 0,       // PERF_INTERRUPT
         0, 0,		// PERF_STORE_ROLLBACK
         5, 10,		// PERF_STORE
         100, 200,	// PERF_INSTRUCTION_RETIRED
         100, 200,	// PERF_INSTRUCTION_ISSUED
         0, 5,		// PERF_ICACHE_MISS
-        390, 500,	// PERF_ICACHE_HIT
+        350, 500,	// PERF_ICACHE_HIT
         0, 0,		// PERF_ITLB_MISS
         0, 0,		// PERF_DCACHE_MISS
         10, 30,		// PERF_DCACHE_HIT
