@@ -28,7 +28,7 @@ module test_l2_cache_pending_miss_cam(input clk, input reset);
 
     logic request_valid;
     cache_line_index_t request_addr;
-    logic enqueue_load_request;
+    logic enqueue_fill_request;
     logic l2r_l2_fill;
     logic duplicate_request;
     int cycle;
@@ -38,7 +38,7 @@ module test_l2_cache_pending_miss_cam(input clk, input reset);
     task enqueue_request(cache_line_index_t addr, logic load_request, logic l2_fill);
         request_valid <= 1;
         request_addr <= addr;
-        enqueue_load_request <= load_request;
+        enqueue_fill_request <= load_request;
         l2r_l2_fill <= l2_fill;
     endtask
 
@@ -49,13 +49,13 @@ module test_l2_cache_pending_miss_cam(input clk, input reset);
             cycle <= 0;
             request_valid <= 0;
             request_addr <= 0;
-            enqueue_load_request <= 0;
+            enqueue_fill_request <= 0;
             l2r_l2_fill <= 0;
         end
         else
         begin
             // Default values
-            enqueue_load_request <= 0;
+            enqueue_fill_request <= 0;
             l2r_l2_fill <= 0;
             request_valid <= 0;
 

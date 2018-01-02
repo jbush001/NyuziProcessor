@@ -163,7 +163,7 @@ module test_instruction_decode_stage(input clk, input reset);
                     assert(!id_instruction.has_vector2);
                     assert(id_instruction.trap_cause == {2'b00, TT_NOT_EXECUTABLE});
 
-                    // Next fault
+                    // TLB miss
                     ifd_thread_idx <= ifd_thread_idx + 1;
                     ifd_pc <= ifd_pc + 4;
                     ifd_tlb_miss <= 1;

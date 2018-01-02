@@ -24,6 +24,17 @@ import defines::*;
 // the instruction. The structure contains control fields will be
 // used later in the pipeline.
 //
+// This also handles interrupts. When an interrupt is pending, an existing
+// instruction is replaced with one that has the trap flag set. This works
+// similar to the way traps from earlier stages in the pipeline are handled
+// and is necessary to make sure interrupts are precise (from the software
+// perspective, the interrupt appears  to occur on a boundary between two
+// instructions, with every prior instruction executing, and every subsequent
+// instruction not). We must do it this way because:
+// - Instructions can retire out of order
+// - There may be pending instructions in the pipeline for the thread that
+//   will cause a rollback in a subsequent cycle.
+//
 // Register port to operand mapping
 //                                               store
 //       format           op1     op2    mask    value

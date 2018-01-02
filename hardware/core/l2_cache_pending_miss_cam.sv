@@ -19,7 +19,7 @@
 import defines::*;
 
 //
-// Tracks pending cache misses in the L2 cache pipeline.
+// Tracks pending cache misses (fills) in the L2 cache pipeline.
 // This module avoids duplicate loads/stores in the system memory request
 // queue. These not only waste memory bandwidth, but can cause data to be
 // overwritten.
@@ -41,7 +41,7 @@ module l2_cache_pending_miss_cam
     input                    reset,
     input                    request_valid,
     input cache_line_index_t request_addr,
-    input                    enqueue_load_request,
+    input                    enqueue_fill_request,
     input                    l2r_l2_fill,
     output logic             duplicate_request);
 
@@ -69,10 +69,10 @@ module l2_cache_pending_miss_cam
         .lookup_idx(cam_hit_entry),
         .lookup_hit(cam_hit),
         .update_en(request_valid && (cam_hit ? l2r_l2_fill
-            : enqueue_load_request)),
+            : enqueue_fill_request)),
         .update_key(request_addr),
         .update_idx(cam_hit ? cam_hit_entry : next_empty),
-        .update_valid(cam_hit ? !l2r_l2_fill : enqueue_load_request));
+        .update_valid(cam_hit ? !l2r_l2_fill : enqueue_fill_request));
 
     always_ff @(posedge clk, posedge reset)
     begin
@@ -83,7 +83,7 @@ module l2_cache_pending_miss_cam
             empty_entries <= {QUEUE_SIZE{1'b1}};
         else if (cam_hit & l2r_l2_fill)
             empty_entries[cam_hit_entry] <= 1'b1;
-        else if (!cam_hit && enqueue_load_request)
+        else if (!cam_hit && enqueue_fill_request)
             empty_entries[next_empty] <= 1'b0;
     end
 endmodule
