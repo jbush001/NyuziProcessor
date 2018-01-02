@@ -10,10 +10,10 @@ In addition to the packages listed in the top level README, this also requires
 ## Setup
 
 1. This loads programs onto the board over the serial port, so your development
-machine must be connected to the FPGA board with a serial cable.
+machine must be connected to the FPGA board with a serial cable.<sup>1</sup>
 
 2. Set the environment variable SERIAL_PORT to the path of the serial device.
-For a Prolific USB based dongle, for example, the path is.
+For example:
 
         export SERIAL_PORT="/dev/ttyUSB0"
 
@@ -52,6 +52,18 @@ Reboot or execute the following command:
 
     sudo udevadm control --reload
     sudo killall -9 jtagd
+
+<sup>1<sup> *Since most computers don't have native serial ports any more, this
+will probably require a USB to serial adapter. Almost all of the adapters you
+can buy use one of two chipsets, produced by either FTDI or Prolific. The
+Prolific chips are more... common, especially in cheaper adapters. But the
+OS drivers for these chips are unstable, especially when transferring large
+amounts of data like this project does. They often hang mid transfer or cause
+the host machine to reboot. I would recommend finding one with a FTDI based
+chipset. Unfortunately, most serial cables do not advertise which chipset
+they use, but you can sometimes tell by going to their website to download
+the drivers. Also, if you search for 'FTDI USB serial' on a retail site like
+Amazon, there are a number that do explicitly note the chipset type.*
 
 ## Synthesizing and Running Programs
 
