@@ -271,7 +271,7 @@ typedef struct packed {
     memory_op_t memory_access_type;
     logic load;
     logic compare;
-    subcycle_t last_subcycle;
+    subcycle_t last_subcycle; // count of last subcycle, not a boolean flag
     control_register_t creg_index;
     logic cache_control;
     cache_op_t cache_control_op;
