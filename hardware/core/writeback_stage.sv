@@ -141,8 +141,8 @@ module writeback_stage(
     cache_line_data_t bypassed_read_data;
     local_thread_bitmap_t thread_dd_oh;
     logic last_subcycle_dd;
-    logic last_subcycle_sx;
-    logic last_subcycle_mx;
+    logic last_subcycle_ix;
+    logic last_subcycle_fx;
     logic writeback_en_nxt;
     local_thread_idx_t writeback_thread_idx_nxt;
     logic writeback_vector_nxt;
@@ -337,8 +337,8 @@ module writeback_stage(
         .index(dd_subcycle));
 
     assign last_subcycle_dd = dd_subcycle == dd_instruction.last_subcycle;
-    assign last_subcycle_sx = ix_subcycle == ix_instruction.last_subcycle;
-    assign last_subcycle_mx = fx5_subcycle == fx5_instruction.last_subcycle;
+    assign last_subcycle_ix = ix_subcycle == ix_instruction.last_subcycle;
+    assign last_subcycle_fx = fx5_subcycle == fx5_instruction.last_subcycle;
 
     always_comb
     begin
@@ -370,7 +370,7 @@ module writeback_stage(
 
             writeback_vector_nxt = fx5_instruction.dest_vector;
             writeback_reg_nxt = fx5_instruction.dest_reg;
-            writeback_last_subcycle_nxt = last_subcycle_mx;
+            writeback_last_subcycle_nxt = last_subcycle_fx;
         end
         else if (ix_instruction_valid)
         begin
@@ -402,7 +402,7 @@ module writeback_stage(
 
             writeback_vector_nxt = ix_instruction.dest_vector;
             writeback_reg_nxt = ix_instruction.dest_reg;
-            writeback_last_subcycle_nxt = last_subcycle_sx;
+            writeback_last_subcycle_nxt = last_subcycle_ix;
         end
         else if (dd_instruction_valid)
         begin
