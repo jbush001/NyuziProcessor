@@ -53,7 +53,7 @@ Reboot or execute the following command:
     sudo udevadm control --reload
     sudo killall -9 jtagd
 
-<sup>1<sup> *Since most computers don't have native serial ports any more, this
+<sup>1</sup> *Since most computers don't have native serial ports any more, this
 will probably require a USB to serial adapter. Almost all of the adapters you
 can buy use one of two chipsets, produced by either FTDI or Prolific. The
 Prolific chips are more... common, especially in cheaper adapters. But the
