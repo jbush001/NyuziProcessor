@@ -39,6 +39,12 @@ module test_writeback_stage(input clk, input reset);
     localparam PC2 = 32'had261818;
     localparam PC3 = 32'hbb51be84;
     localparam PC4 = 32'h1cf54bf8;
+    localparam PC5 = 32'haa0a17c8;
+    localparam PC6 = 32'h95df7380;
+    localparam PC7 = 32'hc5346f44;
+    localparam PC8 = 32'he2fb8974;
+    localparam ACCESS_ADDR1 = 32'he814c094;
+    localparam ACCESS_ADDR2 = 32'h6ebf3224;
 
     logic fx5_instruction_valid;
     decoded_instruction_t fx5_instruction;
@@ -166,7 +172,6 @@ module test_writeback_stage(input clk, input reset);
                     ix_instruction_valid <= 1;
                     ix_instruction.has_dest <= 1;
                     ix_instruction.dest_reg <= 7;
-                    ix_instruction.last_subcycle <= 1;
                     ix_result <= RESULT0;
                 end
 
@@ -184,18 +189,19 @@ module test_writeback_stage(input clk, input reset);
 
                 2:
                 begin
-                    assert(wb_writeback_thread_idx == 3);
                     assert(!wb_trap);
                     assert(!wb_eret);
                     assert(!wb_rollback_en);
                     assert(wb_writeback_en);
-                    assert(wb_writeback_reg == 7);
+                    assert(wb_writeback_thread_idx == 3);
                     assert(!wb_writeback_vector);
+                    assert(wb_writeback_value == RESULT0);
+                    assert(wb_writeback_reg == 7);
+                    assert(wb_writeback_last_subcycle);
                     assert(wb_suspend_thread_oh == 0);
                     assert(!wb_inst_injected);
                     assert(wb_perf_instruction_retire);
                     assert(!wb_perf_store_rollback);
-                    assert(wb_writeback_value == RESULT0);
                     assert(!wb_perf_interrupt);
                 end
 
@@ -207,7 +213,6 @@ module test_writeback_stage(input clk, input reset);
                     ix_instruction_valid <= 1;
                     ix_instruction.has_dest <= 1;
                     ix_instruction.dest_reg <= 9;
-                    ix_instruction.last_subcycle <= 1;
                     ix_instruction.compare <= 1;
                     ix_result <= RESULT1;
                 end
@@ -226,13 +231,14 @@ module test_writeback_stage(input clk, input reset);
 
                 5:
                 begin
-                    assert(wb_writeback_thread_idx == 3);
                     assert(!wb_trap);
                     assert(!wb_eret);
                     assert(!wb_rollback_en);
                     assert(wb_writeback_en);
-                    assert(wb_writeback_reg == 9);
+                    assert(wb_writeback_thread_idx == 3);
                     assert(!wb_writeback_vector);
+                    assert(wb_writeback_reg == 9);
+                    assert(wb_writeback_last_subcycle);
                     assert(wb_suspend_thread_oh == 0);
                     assert(!wb_inst_injected);
                     assert(wb_perf_instruction_retire);
@@ -251,7 +257,6 @@ module test_writeback_stage(input clk, input reset);
                     fx5_instruction_valid <= 1;
                     fx5_instruction.has_dest <= 1;
                     fx5_instruction.dest_reg <= 7;
-                    fx5_instruction.last_subcycle <= 1;
                     fx5_result <= RESULT2;
                 end
 
@@ -268,18 +273,20 @@ module test_writeback_stage(input clk, input reset);
 
                 8:
                 begin
-                    assert(wb_writeback_thread_idx == 1);
                     assert(!wb_trap);
                     assert(!wb_eret);
                     assert(!wb_rollback_en);
                     assert(wb_writeback_en);
-                    assert(wb_writeback_reg == 7);
+                    assert(wb_writeback_thread_idx == 1);
                     assert(!wb_writeback_vector);
+                    assert(wb_writeback_value == RESULT2);
+                    assert(wb_writeback_reg == 7);
+                    assert(wb_writeback_last_subcycle);
                     assert(wb_suspend_thread_oh == 0);
                     assert(!wb_inst_injected);
                     assert(wb_perf_instruction_retire);
                     assert(!wb_perf_store_rollback);
-                    assert(wb_writeback_value == RESULT2);
+                    assert(!wb_perf_interrupt);
                 end
 
                 ////////////////////////////////////////////////////////////
@@ -290,7 +297,6 @@ module test_writeback_stage(input clk, input reset);
                     fx5_instruction_valid <= 1;
                     fx5_instruction.has_dest <= 1;
                     fx5_instruction.dest_reg <= 11;
-                    fx5_instruction.last_subcycle <= 1;
                     fx5_instruction.compare <= 1;
                     fx5_result <= RESULT3;
                 end
@@ -308,17 +314,19 @@ module test_writeback_stage(input clk, input reset);
 
                 11:
                 begin
-                    assert(wb_writeback_thread_idx == 1);
                     assert(!wb_trap);
                     assert(!wb_eret);
                     assert(!wb_rollback_en);
                     assert(wb_writeback_en);
-                    assert(wb_writeback_reg == 11);
+                    assert(wb_writeback_thread_idx == 1);
                     assert(!wb_writeback_vector);
+                    assert(wb_writeback_reg == 11);
+                    assert(wb_writeback_last_subcycle);
                     assert(wb_suspend_thread_oh == 0);
                     assert(!wb_inst_injected);
                     assert(wb_perf_instruction_retire);
                     assert(!wb_perf_store_rollback);
+                    assert(!wb_perf_interrupt);
 
                     // Ensure this compresses the lanes down to a bitmask
                     assert(wb_writeback_value[0][15:0] == BITMASK3);
@@ -332,7 +340,6 @@ module test_writeback_stage(input clk, input reset);
                     dd_instruction_valid <= 1;
                     dd_instruction.has_dest <= 1;
                     dd_instruction.dest_reg <= 3;
-                    dd_instruction.last_subcycle <= 1;
                     dd_instruction.memory_access_type <= MEM_S;
                     dd_instruction.load <= 1;
                     dd_load_data <= RESULT4;
@@ -352,17 +359,20 @@ module test_writeback_stage(input clk, input reset);
 
                 14:
                 begin
-                    assert(wb_writeback_thread_idx == 2);
                     assert(!wb_trap);
                     assert(!wb_eret);
                     assert(!wb_rollback_en);
                     assert(wb_writeback_en);
-                    assert(wb_writeback_reg == 3);
+                    assert(wb_writeback_thread_idx == 2);
                     assert(!wb_writeback_vector);
+                    assert(wb_writeback_reg == 3);
+                    assert(wb_writeback_last_subcycle);
                     assert(wb_suspend_thread_oh == 0);
                     assert(!wb_inst_injected);
                     assert(wb_perf_instruction_retire);
                     assert(!wb_perf_store_rollback);
+                    assert(!wb_perf_interrupt);
+
                     assert(wb_writeback_value[0][31:0] == 32'h0000d960);
                 end
 
@@ -374,20 +384,25 @@ module test_writeback_stage(input clk, input reset);
                     ix_instruction_valid <= 1;
                     ix_instruction.has_dest <= 1;
                     ix_instruction.dest_reg <= 7;
-                    ix_instruction.last_subcycle <= 1;
                     ix_instruction.has_trap <= 1;
                     ix_instruction.trap_cause <= TRAP_CAUSE1;
                     cr_trap_handler <= TRAP_HANDLER1;
+                    ix_instruction.pc <= PC5;
                 end
 
                 16:
                 begin
                     assert(wb_trap);
                     assert(wb_trap_cause == TRAP_CAUSE1);
-                    assert(wb_rollback_pc == TRAP_HANDLER1);
+                    assert(wb_trap_pc == PC5);
+                    assert(wb_trap_access_vaddr == PC5);
+                    assert(wb_trap_subcycle == 0);
                     assert(!wb_eret);
                     assert(wb_rollback_en);
                     assert(wb_rollback_thread_idx == 3);
+                    assert(wb_rollback_pc == TRAP_HANDLER1);
+                    assert(wb_rollback_pipeline == PIPE_INT_ARITH);
+                    assert(wb_rollback_subcycle == 0);
                     assert(!wb_writeback_en);
                     assert(wb_suspend_thread_oh == 0);
                     assert(!wb_inst_injected);
@@ -415,29 +430,35 @@ module test_writeback_stage(input clk, input reset);
                     dd_instruction_valid <= 1;
                     dd_instruction.has_dest <= 1;
                     dd_instruction.dest_reg <= 3;
-                    dd_instruction.last_subcycle <= 1;
                     dd_instruction.memory_access_type <= MEM_S;
                     dd_instruction.load <= 1;
+                    dd_instruction.pc <= PC5;
                     dd_trap <= 1;
                     dd_trap_cause <= TRAP_CAUSE2;
                     cr_trap_handler <= TRAP_HANDLER2;
+                    dd_request_vaddr <= ACCESS_ADDR2;
                 end
 
                 19:
                 begin
                     assert(wb_trap);
                     assert(wb_trap_cause == TRAP_CAUSE2);
-                    assert(wb_rollback_pc == TRAP_HANDLER2);
+                    assert(wb_trap_pc == PC5);
+                    assert(wb_trap_access_vaddr == ACCESS_ADDR2);
+                    assert(wb_trap_subcycle == 0);
                     assert(!wb_eret);
                     assert(wb_rollback_en);
                     assert(wb_rollback_thread_idx == 2);
+                    assert(wb_rollback_pc == TRAP_HANDLER2);
+                    assert(wb_rollback_pipeline == PIPE_MEM);
+                    assert(wb_rollback_subcycle == 0);
                     assert(!wb_writeback_en);
                     assert(wb_suspend_thread_oh == 0);
+                    assert(!wb_inst_injected);
                     assert(!wb_perf_instruction_retire);
                     assert(!wb_perf_store_rollback);
                     assert(!wb_perf_interrupt);
                 end
-
 
                 20:
                 begin
@@ -460,7 +481,6 @@ module test_writeback_stage(input clk, input reset);
                     dd_instruction_valid <= 1;
                     dd_instruction.has_dest <= 1;
                     dd_instruction.dest_reg <= 3;
-                    dd_instruction.last_subcycle <= 1;
                     dd_instruction.memory_access_type <= MEM_S;
                     dd_instruction.load <= 1;
                     dd_rollback_en <= 1;
@@ -474,8 +494,12 @@ module test_writeback_stage(input clk, input reset);
                     assert(!wb_eret);
                     assert(wb_rollback_en);
                     assert(wb_rollback_thread_idx == 2);
+                    assert(wb_rollback_pc == PC1);
+                    assert(wb_rollback_pipeline == PIPE_MEM);
+                    assert(wb_rollback_subcycle == 0);
                     assert(!wb_writeback_en);
                     assert(wb_suspend_thread_oh == 4'b0100);
+                    assert(!wb_inst_injected);
                     assert(!wb_perf_instruction_retire);
                     assert(!wb_perf_store_rollback);
                     assert(!wb_perf_interrupt);
@@ -495,31 +519,38 @@ module test_writeback_stage(input clk, input reset);
                 end
 
                 ////////////////////////////////////////////////////////////
-                // Rollback from memory pipeline because of TLB miss
+                // Trap from memory pipeline because of TLB miss
                 ////////////////////////////////////////////////////////////
                 24:
                 begin
                     dd_instruction_valid <= 1;
                     dd_instruction.has_dest <= 1;
                     dd_instruction.dest_reg <= 3;
-                    dd_instruction.last_subcycle <= 1;
                     dd_instruction.memory_access_type <= MEM_S;
                     dd_instruction.load <= 1;
+                    dd_instruction.pc <= PC6;
                     dd_trap <= 1;
                     dd_trap_cause <= TLB_MISS_CAUSE;
                     cr_tlb_miss_handler <= TRAP_HANDLER3;
+                    dd_request_vaddr <= ACCESS_ADDR1;
                 end
 
                 25:
                 begin
                     assert(wb_trap);
                     assert(wb_trap_cause == TLB_MISS_CAUSE);
-                    assert(wb_rollback_pc == TRAP_HANDLER3);
+                    assert(wb_trap_pc == PC6);
+                    assert(wb_trap_access_vaddr == ACCESS_ADDR1);
+                    assert(wb_trap_subcycle == 0);
                     assert(!wb_eret);
                     assert(wb_rollback_en);
                     assert(wb_rollback_thread_idx == 2);
+                    assert(wb_rollback_pc == TRAP_HANDLER3);
+                    assert(wb_rollback_pipeline == PIPE_MEM);
+                    assert(wb_rollback_subcycle == 0);
                     assert(!wb_writeback_en);
                     assert(wb_suspend_thread_oh == 0);
+                    assert(!wb_inst_injected);
                     assert(!wb_perf_instruction_retire);
                     assert(!wb_perf_store_rollback);
                     assert(!wb_perf_interrupt);
@@ -546,7 +577,6 @@ module test_writeback_stage(input clk, input reset);
                     ix_instruction_valid <= 1;
                     ix_instruction.has_dest <= 1;
                     ix_instruction.dest_reg <= 7;
-                    ix_instruction.last_subcycle <= 1;
                     ix_instruction.branch <= 1;
                     ix_instruction.branch_type <= BRANCH_ALWAYS;
                     ix_rollback_en <= 1;
@@ -556,12 +586,15 @@ module test_writeback_stage(input clk, input reset);
                 28:
                 begin
                     assert(!wb_trap);
-                    assert(wb_rollback_pc == PC2);
                     assert(!wb_eret);
                     assert(wb_rollback_en);
                     assert(wb_rollback_thread_idx == 3);
+                    assert(wb_rollback_pc == PC2);
+                    assert(wb_rollback_pipeline == PIPE_INT_ARITH);
+                    assert(wb_rollback_subcycle == 0);
                     assert(!wb_writeback_en);
                     assert(wb_suspend_thread_oh == 0);
+                    assert(!wb_inst_injected);
                     assert(!wb_perf_instruction_retire);
                     assert(!wb_perf_store_rollback);
                     assert(!wb_perf_interrupt);
@@ -588,7 +621,6 @@ module test_writeback_stage(input clk, input reset);
                     ix_instruction_valid <= 1;
                     ix_instruction.has_dest <= 1;
                     ix_instruction.dest_reg <= 7;
-                    ix_instruction.last_subcycle <= 1;
                     ix_instruction.branch <= 1;
                     ix_instruction.branch_type <= BRANCH_ERET;
                     ix_rollback_en <= 1;
@@ -598,12 +630,15 @@ module test_writeback_stage(input clk, input reset);
                 31:
                 begin
                     assert(!wb_trap);
-                    assert(wb_rollback_pc == PC2);
                     assert(wb_eret);
                     assert(wb_rollback_en);
                     assert(wb_rollback_thread_idx == 3);
+                    assert(wb_rollback_pc == PC2);
+                    assert(wb_rollback_pipeline == PIPE_INT_ARITH);
+                    assert(wb_rollback_subcycle == 0);
                     assert(!wb_writeback_en);
                     assert(wb_suspend_thread_oh == 0);
+                    assert(!wb_inst_injected);
                     assert(!wb_perf_instruction_retire);
                     assert(!wb_perf_store_rollback);
                     assert(!wb_perf_interrupt);
@@ -630,7 +665,6 @@ module test_writeback_stage(input clk, input reset);
                     ix_instruction_valid <= 1;
                     ix_instruction.has_dest <= 1;
                     ix_instruction.dest_reg <= 31;
-                    ix_instruction.last_subcycle <= 1;
                     ix_instruction.branch <= 1;
                     ix_instruction.branch_type <= BRANCH_CALL_OFFSET;
                     ix_instruction.pc <= PC4;
@@ -642,10 +676,13 @@ module test_writeback_stage(input clk, input reset);
                 34:
                 begin
                     assert(!wb_trap);
-                    assert(wb_rollback_pc == PC3);
                     assert(!wb_eret);
                     assert(wb_rollback_en);
                     assert(wb_rollback_thread_idx == 3);
+                    assert(wb_rollback_pc == PC3);
+                    assert(wb_rollback_pipeline == PIPE_INT_ARITH);
+                    assert(wb_rollback_subcycle == 0);
+                    assert(!wb_writeback_en);
                     assert(wb_suspend_thread_oh == 0);
                     assert(!wb_perf_instruction_retire);
                     assert(!wb_perf_store_rollback);
@@ -653,10 +690,19 @@ module test_writeback_stage(input clk, input reset);
 
                 35:
                 begin
+                    assert(!wb_trap);
+                    assert(!wb_rollback_en);
                     assert(wb_writeback_en);
-                    assert(wb_writeback_reg == 31);
+                    assert(wb_writeback_thread_idx == 3);
+                    assert(!wb_writeback_vector);
                     assert(wb_writeback_value[0] == PC4 + 4);
+                    assert(wb_writeback_reg == 31);
+                    assert(wb_writeback_last_subcycle);
+                    assert(wb_suspend_thread_oh == 0);
+                    assert(!wb_inst_injected);
                     assert(wb_perf_instruction_retire);
+                    assert(!wb_perf_store_rollback);
+                    assert(!wb_perf_interrupt);
                 end
 
                 ////////////////////////////////////////////////////////////
@@ -666,9 +712,9 @@ module test_writeback_stage(input clk, input reset);
                 begin
                     ix_instruction_valid <= 1;
                     ix_instruction.has_dest <= 1;
-                    ix_instruction.last_subcycle <= 1;
                     ix_instruction.branch <= 1;
                     ix_instruction.branch_type <= BRANCH_ERET;
+                    ix_instruction.pc <= PC7;
                     ix_rollback_en <= 1;
                     ix_privileged_op_fault <= 1;
                     cr_trap_handler <= TRAP_HANDLER4;
@@ -678,10 +724,14 @@ module test_writeback_stage(input clk, input reset);
                 begin
                     assert(wb_trap);
                     assert(wb_trap_cause == PRIVILEGED_OP_CAUSE);
-                    assert(wb_rollback_pc == TRAP_HANDLER4);
+                    assert(wb_trap_pc == PC7);
+                    assert(wb_trap_subcycle == 0);
                     assert(!wb_eret);
                     assert(wb_rollback_en);
                     assert(wb_rollback_thread_idx == 3);
+                    assert(wb_rollback_pc == TRAP_HANDLER4);
+                    assert(wb_rollback_pipeline == PIPE_INT_ARITH);
+                    assert(wb_rollback_subcycle == 0);
                     assert(!wb_writeback_en);
                     assert(wb_suspend_thread_oh == 0);
                     assert(!wb_inst_injected);
@@ -708,20 +758,24 @@ module test_writeback_stage(input clk, input reset);
                 begin
                     ix_instruction_valid <= 1;
                     ix_instruction.has_dest <= 1;
-                    ix_instruction.last_subcycle <= 1;
                     cr_trap_handler <= TRAP_HANDLER1;
                     ix_instruction.has_trap <= 1;
                     ix_instruction.trap_cause <= INTERRUPT_CAUSE;
+                    ix_instruction.pc <= PC8;
                 end
 
                 40:
                 begin
                     assert(wb_trap);
                     assert(wb_trap_cause == INTERRUPT_CAUSE);
-                    assert(wb_rollback_pc == TRAP_HANDLER1);
+                    assert(wb_trap_pc == PC8);
+                    assert(wb_trap_subcycle == 0);
                     assert(!wb_eret);
                     assert(wb_rollback_en);
                     assert(wb_rollback_thread_idx == 3);
+                    assert(wb_rollback_pc == TRAP_HANDLER1);
+                    assert(wb_rollback_pipeline == PIPE_INT_ARITH);
+                    assert(wb_rollback_subcycle == 0);
                     assert(!wb_writeback_en);
                     assert(wb_suspend_thread_oh == 0);
                     assert(!wb_inst_injected);
