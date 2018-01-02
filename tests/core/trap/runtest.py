@@ -144,7 +144,7 @@ test_harness.register_generic_assembly_tests([
     'dinvalidate_non_super.S',
     'syscall.S',
     'breakpoint.S',
-    'inst_align_fault.S',
+    'unaligned_inst_fault.S',
     'unaligned_data_fault.S',
     'multicycle.S',
     'illegal_instruction.S'
