@@ -19,7 +19,7 @@ VCSBUILD=$(BUILDDIR)/vcsbuild.pl
 
 BINDIR=../bin
 TARGET=$(BINDIR)/verilator_model
-MIN_VERILATOR_VERSION=880
+MIN_VERILATOR_VERSION=918
 VERILATOR_OPTIONS=--unroll-count 512 --assert \
 	-Wall -Wno-unused -Wno-pinconnectempty -Wno-undriven -Wno-declfilename \
 	-Icore -y testbench -y fpga/common -DSIMULATION=1 -Mdir obj
