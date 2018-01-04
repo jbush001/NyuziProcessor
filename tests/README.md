@@ -1,8 +1,10 @@
+This directory contains all tests for this project. This contains tests both
+for the core itself, as well as for tools and software libraries.
+
 # Running Tests
 
-This directory contains tests for all components in this repository. In most
-directories is a script called 'runtest.py'. Invoking this with no arguments
-will run all tests in that directory:
+In most directories is a script called 'runtest.py'. Invoking this with no
+arguments will run all tests in that directory:
 
     ./runtest.py
 
@@ -92,4 +94,45 @@ on the output of the program. For example:
 
 If you'd like to add additional debugging output to a test, check the global DEBUG
 flag, which will be set to true if the user adds --debug to the command line.
+
+# Test Approach
+
+The validation strategy for the hardware implementation is to use a variety
+of tests types to exercise it at different levels. Tests fall into the following
+categories:
+
+1. Module level hardware unit/integration tests (tests/unit)
+   These test individual verilog modules, or combinations of them. These are
+   not intended to be comprehensive (which would make them brittle).
+   Because they have visibility into internal signals, and cycle precise
+   timing control, they are useful for testing cases that are difficult to verify
+   at the software level, for example, that flushing a cache line clears its
+   dirty bit so it won't write it again.
+2. System level directed functional tests (tests/core)
+   These are intended to be comprehensive, covering all major instruction forms,
+   operations, exception types, etc. They are self checking and report a failure
+   or success message. These don't stress the system or catch race conditions
+   (most are single threaded), but validate functional correctness. These run both
+   in Verilog simulation and FPGA.
+3. Constrained random cosimulation (tests/cosimulation)
+   A test script generates random assembly programs. These are constrained,
+   both to produce valid programs that don't crash immediately and have better
+   coverage. Every instruction side effect is checked against the emulator model.
+   These are multithreaded and stress the design. They are useful for finding
+   race conditions and other hazards. But, since the emulator is not cycle
+   accurate, this can't validate timing sensitive use cases like synchronized
+   load/stores. These can only run in Verilog simulation. There is more detail
+   in the README in the cosimulation directory.
+4. Synthetic stress tests (tests/stress)
+   Complementary to the random tests, these validate operations that the former
+   cannot easily like atomic accessses or MMU operation. They often use an internal
+   pseudorandom number generator to control their operation. Checking is done
+   after the test as run, usually via a memory dump. These can run in Verilog
+   simulation or on FPGA.
+5. Whole program tests (tests/whole-program, tests/kernel, tests/render)
+   These are real-world programs that do something useful like compute a
+   cryptographic hash. The test harness verifies them by comparing their
+   output to expected values. These include everything from simple, single
+   threaded programs to a full fledged kernel. Most can run both in Verilog
+   simulation and on FPGA.
 
