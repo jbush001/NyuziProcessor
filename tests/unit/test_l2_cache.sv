@@ -422,17 +422,17 @@ module test_l2_cache(input clk, input reset);
                     end
                 end
 
-                ////////////////////////////////////////////////////////////
-                // Flush a clean line (nothing should be written to memory)
-                ////////////////////////////////////////////////////////////
+                ///////////////////////////////////////////////////////////
+                // Do a flush on the same address from above to ensure it
+                // cleared the dirty bit.
+                ///////////////////////////////////////////////////////////
                 22:
                 begin
                     assert(!l2_response_valid);
-                    send_l2_request(L2REQ_FLUSH, ADDR3);
+                    send_l2_request(L2REQ_FLUSH, ADDR1);
                     state <= state + 1;
                 end
 
-                // Ensure we get the response after with no AXI transaction.
                 23:
                 begin
                     assert(!axi_bus.m_arvalid);
@@ -449,13 +449,14 @@ module test_l2_cache(input clk, input reset);
                     end
                 end
 
-                //////////////////////////////////////////////////////////////
-                // Flush a line that isn't cached at all. Should do nothing.
-                //////////////////////////////////////////////////////////////
+                ////////////////////////////////////////////////////////////
+                // Flush a cached line that has never been written
+                // This should not cause a writeback.
+                ////////////////////////////////////////////////////////////
                 24:
                 begin
                     assert(!l2_response_valid);
-                    send_l2_request(L2REQ_FLUSH, ADDR5);
+                    send_l2_request(L2REQ_FLUSH, ADDR3);
                     state <= state + 1;
                 end
 
@@ -477,12 +478,39 @@ module test_l2_cache(input clk, input reset);
                 end
 
                 //////////////////////////////////////////////////////////////
+                // Flush a line that isn't cached at all. Should do nothing.
+                //////////////////////////////////////////////////////////////
+                26:
+                begin
+                    assert(!l2_response_valid);
+                    send_l2_request(L2REQ_FLUSH, ADDR5);
+                    state <= state + 1;
+                end
+
+                // Ensure we get the response after with no AXI transaction.
+                27:
+                begin
+                    assert(!axi_bus.m_arvalid);
+                    assert(!axi_bus.m_awvalid);
+                    assert(!axi_bus.m_wvalid);
+                    if (l2_response_valid)
+                    begin
+                        assert(l2_response.core == 0);
+                        assert(l2_response.id == last_id);
+                        assert(l2_response.packet_type == L2RSP_FLUSH_ACK);
+                        assert(l2_response.cache_type == CT_DCACHE);
+                        // XXX the address isn't set.
+                        state <= state + 1;
+                    end
+                end
+
+                //////////////////////////////////////////////////////////////
                 // Perform a write that fills an entire line and misses the
                 // cache. There is an optimization in the cache to not do
                 // a load in this case. We'll read it back to ensure it
                 // is properly cached.
                 //////////////////////////////////////////////////////////////
-                26:
+                28:
                 begin
                     assert(!l2_response_valid);
                     send_l2_request(L2REQ_STORE, ADDR6, STORE_MASK6, STORE_DATA6);
@@ -490,7 +518,7 @@ module test_l2_cache(input clk, input reset);
                 end
 
                 // Wait for L2 response. Ensure there is no AXI transfer
-                27:
+                29:
                 begin
                     assert(!axi_bus.m_arvalid);
                     assert(!axi_bus.m_awvalid);
@@ -508,7 +536,7 @@ module test_l2_cache(input clk, input reset);
                 end
 
                 // Perform a load transaction to ensure the data is cached.
-                28:
+                30:
                 begin
                     assert(!l2_response_valid);
                     send_l2_request(L2REQ_LOAD, ADDR6);
@@ -517,7 +545,7 @@ module test_l2_cache(input clk, input reset);
 
                 // As above, we should get the response immediately with no
                 // AXI transfer.
-                29:
+                31:
                 begin
                     assert(!axi_bus.m_arvalid);
                     assert(!axi_bus.m_awvalid);
@@ -537,7 +565,7 @@ module test_l2_cache(input clk, input reset);
                 //////////////////////////////////////////////////////////////
                 // Invalidate (we stored to ADDR0 earlier, so this is dirty)
                 //////////////////////////////////////////////////////////////
-                30:
+                32:
                 begin
                     assert(!l2_response_valid);
                     send_l2_request(L2REQ_DINVALIDATE, ADDR0);
@@ -545,7 +573,7 @@ module test_l2_cache(input clk, input reset);
                 end
 
                 // Response comes back with no AXI write
-                31:
+                33:
                 begin
                     assert(!axi_bus.m_arvalid);
                     assert(!axi_bus.m_awvalid);
@@ -563,7 +591,7 @@ module test_l2_cache(input clk, input reset);
 
                 // try to reload this address, ensure it attempts a read (confirming
                 // it was invalidated).
-                32:
+                34:
                 begin
                     assert(!l2_response_valid);
                     send_l2_request(L2REQ_LOAD, ADDR0);
@@ -571,7 +599,7 @@ module test_l2_cache(input clk, input reset);
                 end
 
                 // wait for address
-                33:
+                35:
                 begin
                     assert(!l2_response_valid);
                     assert(!axi_bus.m_awvalid);
@@ -587,7 +615,7 @@ module test_l2_cache(input clk, input reset);
                 end
 
                 // Transfer data
-                34:
+                36:
                 begin
                     assert(!l2_response_valid);
                     if (axi_bus.m_rready)
@@ -601,7 +629,7 @@ module test_l2_cache(input clk, input reset);
 
                 // End of transaction, verify data in response is the new data
                 // read from memory and not what was written there previously
-                35:
+                37:
                 begin
                     assert(!axi_bus.m_arvalid);
                     assert(!axi_bus.m_awvalid);
@@ -623,7 +651,7 @@ module test_l2_cache(input clk, input reset);
                 // Send an L2REQ_IINVALIDATE. This is just a pass through
                 // that gets broadcasted to all cores.
                 //////////////////////////////////////////////////////////////
-                36:
+                38:
                 begin
                     assert(!l2_response_valid);
                     send_l2_request(L2REQ_IINVALIDATE, ADDR0);
@@ -631,7 +659,7 @@ module test_l2_cache(input clk, input reset);
                 end
 
                 // Check response
-                37:
+                39:
                 begin
                     assert(!axi_bus.m_arvalid);
                     assert(!axi_bus.m_awvalid);
@@ -648,7 +676,7 @@ module test_l2_cache(input clk, input reset);
                     end
                 end
 
-                38:
+                40:
                 begin
                     $display("PASS");
                     $finish;
