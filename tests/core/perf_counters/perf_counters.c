@@ -55,7 +55,7 @@ int main(int argc, const char *argv[])
         0, 7,		// PERF_L2_MISS
         2, 10,		// PERF_L2_HIT
         0, 0,       // PERF_INTERRUPT
-        0, 0,		// PERF_STORE_ROLLBACK
+        0, 3,		// PERF_STORE_ROLLBACK
         5, 10,		// PERF_STORE
         100, 200,	// PERF_INSTRUCTION_RETIRED
         100, 200,	// PERF_INSTRUCTION_ISSUED

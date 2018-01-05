@@ -33,7 +33,7 @@ setjmp:         # Align s0 to a 64 byte boundary to do vector stores
                 store_32 s25, 0x184(s0)
                 store_32 s26, 0x188(s0)
                 store_32 s27, 0x18c(s0)
-                store_32 s28, 0x190(s0)
+                store_32 gp, 0x190(s0)
                 store_32 fp, 0x194(s0)
                 store_32 sp, 0x198(s0)
                 store_32 ra, 0x19c(s0)    # Will return to this address
@@ -59,7 +59,7 @@ longjmp:        # Align s0 to a 64 byte boundary to do vector loads
                 load_32 s25, 0x184(s0)
                 load_32 s26, 0x188(s0)
                 load_32 s27, 0x18c(s0)
-                load_32 s28, 0x190(s0)
+                load_32 gp, 0x190(s0)
                 load_32 fp, 0x194(s0)
                 load_32 sp, 0x198(s0)
                 load_32 s2, 0x19c(s0)   # Get return address

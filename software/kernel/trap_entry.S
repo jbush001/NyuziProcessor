@@ -84,7 +84,7 @@ save_frame:             getcr s0, CR_SCRATCHPAD0        // restore s0
                         store_32 s25, 100(sp)
                         store_32 s26, 104(sp)
                         store_32 s27, 108(sp)
-                        store_32 s28, 112(sp)
+                        store_32 gp, 112(sp)
                         // sp was already saved at 114 on entry
                         store_32 fp, 116(sp)
                         store_32 ra, 124(sp)
@@ -127,7 +127,7 @@ save_frame:             getcr s0, CR_SCRATCHPAD0        // restore s0
                         load_32 s25, 100(sp)
                         load_32 s26, 104(sp)
                         load_32 s27, 108(sp)
-                        load_32 s28, 112(sp)
+                        load_32 gp, 112(sp)
                         load_32 fp, 116(sp)
                         load_32 ra, 124(sp)
 

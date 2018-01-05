@@ -71,7 +71,7 @@ context_switch:     sub_i sp, sp, 0x840
                     store_32 s25, 0x804(sp)
                     store_32 s26, 0x808(sp)
                     store_32 s27, 0x80c(sp)
-                    store_32 s28, 0x810(sp)
+                    store_32 gp, 0x810(sp)
                     store_32 fp,  0x814(sp)
                     store_32 ra,  0x818(sp)
 
@@ -118,7 +118,7 @@ context_switch:     sub_i sp, sp, 0x840
                     load_32 s25, 0x804(sp)
                     load_32 s26, 0x808(sp)
                     load_32 s27, 0x80c(sp)
-                    load_32 s28, 0x810(sp)
+                    load_32 gp, 0x810(sp)
                     load_32 fp,  0x814(sp)
                     load_32 ra,  0x818(sp)
                     add_i sp, sp, 0x840
