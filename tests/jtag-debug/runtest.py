@@ -256,7 +256,7 @@ def jtag_bypass(_, target):
 
 
 @test_harness.test(['verilator'])
-def test_instruction_shift(_, target):
+def jtag_instruction_shift(_, target):
     """
     Ensure instruction bits shifted into TDI come out TDO. This is necessary
     to properly chain JTAG devices together.
