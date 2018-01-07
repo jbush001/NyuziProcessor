@@ -44,6 +44,10 @@ _start:
                     li sp, 0x200000         # Base of stacks
                     sub_i sp, sp, s0        # Compute stack address
 
+                    # Load global pointer
+                    movehi gp, hi(_GLOBAL_OFFSET_TABLE_)
+                    or gp, gp, lo(_GLOBAL_OFFSET_TABLE_)
+
                     # Only thread 0 does initialization.  Skip for other
                     # threads, which only arrive here after thread 0 has
                     # completed initialization and started them).
