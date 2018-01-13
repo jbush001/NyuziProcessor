@@ -68,7 +68,7 @@ generates continuous keypresses, but this will cause an infinite loop with this 
 3. Increase the size of the virtual SDMMC device to fit the resource files. In hardware/testbench/sim_sdmmc.sv,
 change MAX_BLOCK_DEVICE_SIZE to 'h2000000 (32 MB)
 
-4. Increase the amount of RAM configured in the FPGA configuration. In hardware/testbench/verilator_tb.sv,
+4. Increase the amount of RAM configured in the FPGA configuration. In hardware/testbench/soc_tb.sv,
 change MEM_SIZE to 'h4000000 (64 MB)
 
 5. Type make in the hardware directory to rebuild the verilator model

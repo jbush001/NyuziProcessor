@@ -59,7 +59,7 @@ loop, and will cause the worker threads to stop:
 2. Increase the size of the virtual SDMMC device to fit the resource files. In hardware/testbench/sim_sdmmc.sv,
 change MAX_BLOCK_DEVICE_SIZE to 'h2000000 (32 MB)
 
-3. Increase the amount of RAM configured in the FPGA configuration. In hardware/testbench/verilator_tb.sv,
+3. Increase the amount of RAM configured in the FPGA configuration. In hardware/testbench/soc_tb.sv,
 change MEM_SIZE to 'h3000000 (48 MB)
 
 4. Type make in the hardware directory to rebuild the verilator model
