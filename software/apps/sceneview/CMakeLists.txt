@@ -16,7 +16,7 @@
 
 include(nyuzi)
 
-# XXX need to create resource.bin
+set(OBJ_FILE dabrovik_sponza/sponza.obj)
 
 set_display_res(640 480)
 set(MEMORY_SIZE 0x8000000)
@@ -24,9 +24,17 @@ set(FS_IMAGE_FILES resource.bin)
 
 add_nyuzi_executable(sceneview
     sceneview.cpp)
+add_dependencies(sceneview resource_bin)
 
 target_link_libraries(sceneview
     render
     c
     os-bare
     compiler-rt)
+
+add_custom_command(OUTPUT resource.bin
+    COMMAND ./make_resource_file.py ${OBJ_FILE}
+    COMMENT "converting scene geometry files..."
+    DEPENDS ${OBJ_FILE})
+add_custom_target(resource_bin DEPENDS resource.bin)
+
