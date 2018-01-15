@@ -215,15 +215,15 @@ module ifetch_tag_stage
     // TLB inputs
     always_comb
     begin
-        if (dt_update_itlb_en)
-        begin
-            request_vpage_idx = dt_update_itlb_vpage_idx;
-            request_asid = dt_update_itlb_asid;
-        end
-        else
+        if (cache_fetch_en)
         begin
             request_vpage_idx = pc_to_fetch[31-:PAGE_NUM_BITS];
             request_asid = cr_current_asid[selected_thread_idx];
+        end
+        else
+        begin
+            request_vpage_idx = dt_update_itlb_vpage_idx;
+            request_asid = dt_update_itlb_asid;
         end
     end
 
