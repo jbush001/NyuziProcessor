@@ -14,8 +14,6 @@
 # limitations under the License.
 #
 
-cmake_minimum_required(VERSION 3.7)
-
 include(cline_tool)
 
 add_command_line_tool(serial_boot

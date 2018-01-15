@@ -14,8 +14,6 @@
 # limitations under the License.
 #
 
-cmake_minimum_required(VERSION 3.7)
-
 add_subdirectory(emulator)
 add_subdirectory(mkfs)
 add_subdirectory(serial_boot)
