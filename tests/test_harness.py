@@ -32,14 +32,23 @@ import traceback
 COMPILER_DIR = '/usr/local/llvm-nyuzi/bin/'
 PROJECT_TOP = os.path.normpath(
     os.path.dirname(os.path.abspath(__file__)) + '/../')
-LIB_DIR = PROJECT_TOP + '/software/libs/'
-BIN_DIR = PROJECT_TOP + '/bin/'
-OBJ_DIR = 'obj/'
+OBJ_DIR = 'obj/'     # XXX move to out-of-tree temp dir
 ELF_FILE = OBJ_DIR + 'program.elf'
 HEX_FILE = OBJ_DIR + 'program.hex'
 ALL_TARGETS = ['verilator', 'emulator']
 DEFAULT_TARGETS = ['verilator', 'emulator']
 DEBUG = False
+LIB_INCLUDE_BASE = PROJECT_TOP + '/software/libs/'
+
+if os.path.isdir(PROJECT_TOP + '/build'):
+    # Out-of-tree build
+    BIN_DIR = PROJECT_TOP + '/build/bin/'
+    LIB_DIR = PROJECT_TOP + '/build/software/libs/'
+else:
+    # In tree build
+    BIN_DIR = PROJECT_TOP + '/bin/'
+    LIB_DIR = PROJECT_TOP + '/software/libs/'
+
 VSIM_PATH = BIN_DIR + 'nyuzi_vsim'
 EMULATOR_PATH = BIN_DIR + 'nyuzi_emulator'
 
@@ -101,8 +110,8 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
     compiler_args += source_files
 
     if any(name.endswith(('.c', '.cpp')) for name in source_files):
-        compiler_args += ['-I' + LIB_DIR + 'libc/include',
-                          '-I' + LIB_DIR + 'libos',
+        compiler_args += ['-I' + LIB_INCLUDE_BASE + 'libc/include',
+                          '-I' + LIB_INCLUDE_BASE + 'libos',
                           LIB_DIR + 'libc/libc.a',
                           LIB_DIR + 'compiler-rt/libcompiler-rt.a']
         if image_type == 'user':

@@ -1,3 +1,18 @@
+#
+# Copyright 2018 Jeff Bush
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 
 macro(strict_warnings)
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
@@ -54,20 +69,21 @@ macro(add_nyuzi_executable name)
     # Create the HEX file
     add_custom_command(TARGET ${name}
         POST_BUILD
-        COMMAND ${COMPILER_BIN}/elf2hex ${ELF2HEX_ARGS} -o ${name}.hex $<TARGET_FILE:${name}>)
+        COMMAND ${COMPILER_BIN}/elf2hex ${ELF2HEX_ARGS} -o ${CMAKE_CURRENT_BINARY_DIR}/${name}.hex $<TARGET_FILE:${name}>)
 
     # Write a disassembly listing file
     add_custom_command(TARGET ${name}
         POST_BUILD
-        COMMAND ${COMPILER_BIN}/llvm-objdump -d $<TARGET_FILE:${name}> -source > ${name}.lst)
+        COMMAND ${COMPILER_BIN}/llvm-objdump -d $<TARGET_FILE:${name}> -source > ${CMAKE_CURRENT_BINARY_DIR}/${name}.lst)
 
     # If this has an associated FS image, create that now
     if(FS_IMAGE_FILES)
-        add_custom_command(OUTPUT fsimage.bin
-            COMMAND mkfs fsimage.bin ${FS_IMAGE_FILES}
+        add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/fsimage.bin
+            COMMAND mkfs ${CMAKE_CURRENT_BINARY_DIR}/fsimage.bin ${FS_IMAGE_FILES}
             DEPENDS mkfs ${FS_IMAGE_FILES}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
             COMMENT "Creating filesystem image")
-        add_custom_target(${name}_fsimage DEPENDS fsimage.bin)
+        add_custom_target(${name}_fsimage DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/fsimage.bin)
         add_dependencies(${name} ${name}_fsimage)
     endif()
 
@@ -80,7 +96,7 @@ macro(add_nyuzi_executable name)
     endif()
 
     if(FS_IMAGE_FILES)
-        set(EMULATOR_ARGS "${EMULATOR_ARGS} -b fsimage.bin")
+        set(EMULATOR_ARGS "${EMULATOR_ARGS} -b ${CMAKE_CURRENT_BINARY_DIR}/fsimage.bin")
     endif()
 
     if(MEMORY_SIZE)
@@ -89,25 +105,25 @@ macro(add_nyuzi_executable name)
 
     add_custom_command(TARGET ${name}
         POST_BUILD
-        COMMAND echo "$<TARGET_FILE:nyuzi_emulator> ${EMULATOR_ARGS} ${name}.hex" > run_emulator
+        COMMAND echo "$<TARGET_FILE:nyuzi_emulator> ${EMULATOR_ARGS} ${CMAKE_CURRENT_BINARY_DIR}/${name}.hex" > ${CMAKE_CURRENT_BINARY_DIR}/run_emulator
         COMMAND chmod +x run_emulator)
 
 #    add_custom_command(TARGET ${name}
 #        POST_BUILD
 #        COMMAND echo "$<TARGET_FILE:nyuzi_emulator> -m gdb ${EMULATOR_ARGS} ${name}.hex \&" > run_debug
-#        COMMAND echo "${COMPILER_BIN}/lldb --arch nyuzi $<TARGET_FILE:${name}> -o \"gdb-remote 8000\"" > run_debug
+#        COMMAND echo "${COMPILER_BIN}/lldb --arch nyuzi $<TARGET_FILE:${name}> -o \"gdb-remote 8000\"" > ${CMAKE_CURRENT_BINARY_DIR}/run_debug
 #        COMMAND chmod +x run_debug)
 
     #
     # Create verilator run script
     #
     if(FS_IMAGE_FILES)
-        set(VERILOG_ARGS "${VERILOG_ARGS} +block=fsimage.bin")
+        set(VERILOG_ARGS "${VERILOG_ARGS} +block=${CMAKE_CURRENT_BINARY_DIR}/fsimage.bin")
     endif()
 
     add_custom_command(TARGET ${name}
         POST_BUILD
-        COMMAND echo "${CMAKE_SOURCE_DIR}/bin/nyuzi_vsim ${VERILOG_ARGS} +bin=${name}.hex" > run_verilator
+        COMMAND echo "${CMAKE_SOURCE_DIR}/bin/nyuzi_vsim ${VERILOG_ARGS} +bin=${CMAKE_CURRENT_BINARY_DIR}/${name}.hex" > ${CMAKE_CURRENT_BINARY_DIR}/run_verilator
         COMMAND chmod +x run_verilator)
 
     #
@@ -115,19 +131,19 @@ macro(add_nyuzi_executable name)
     #
     add_custom_command(TARGET ${name}
         POST_BUILD
-        COMMAND echo "${CMAKE_SOURCE_DIR}/scripts/vcsrun.pl ${VERILOG_ARGS} +bin=${name}.hex" > run_vcs
+        COMMAND echo "${CMAKE_SOURCE_DIR}/scripts/vcsrun.pl ${VERILOG_ARGS} +bin=${CMAKE_CURRENT_BINARY_DIR}/${name}.hex" > ${CMAKE_CURRENT_BINARY_DIR}/run_vcs
         COMMAND chmod +x run_vcs)
 
     #
     # Create FPGA run script
     #
     if(FS_IMAGE_FILES)
-        set(${SERIAL_BOOT_FS} "fsimage.bin")
+        set(${SERIAL_BOOT_FS} "${CMAKE_CURRENT_BINARY_DIR}/fsimage.bin")
     endif()
 
     add_custom_command(TARGET ${name}
         POST_BUILD
-        COMMAND echo "$<TARGET_FILE:serial_boot> ${SERIAL_BOOT_ARGS} \\$$SERIAL_PORT ${name}.hex ${SERIAL_BOOT_FS}" > run_fpga
+        COMMAND echo "$<TARGET_FILE:serial_boot> ${SERIAL_BOOT_ARGS} \\$$SERIAL_PORT ${CMAKE_CURRENT_BINARY_DIR}/${name}.hex ${SERIAL_BOOT_FS}" > ${CMAKE_CURRENT_BINARY_DIR}/run_fpga
         COMMAND chmod +x run_fpga)
 endmacro(add_nyuzi_executable name)
 

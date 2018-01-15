@@ -21,8 +21,7 @@
 TOPDIR=../../../
 
 COMPILER_DIR=/usr/local/llvm-nyuzi/bin
-BINDIR=$(TOPDIR)/bin
-BUILDDIR=$(TOPDIR)/build
+SCRIPTDIR=$(TOPDIR)/build
 OBJ_DIR=obj
 
 CC=$(COMPILER_DIR)/clang
@@ -33,14 +32,23 @@ AS=$(COMPILER_DIR)/clang
 OBJDUMP=$(COMPILER_DIR)/llvm-objdump
 ELF2HEX=$(COMPILER_DIR)/elf2hex
 LLDB=$(COMPILER_DIR)/lldb
+VCSRUN=$(SCRIPTDIR)/vcsrun.pl
+CFLAGS=-O3 -I$(TOPDIR)/software/libs/libc/include -I$(TOPDIR)/software/libs/libos -Wall -W
+ifeq ($(wildcard $(TOPDIR)/build),)
+	# In-tree build
+	LIBDIR=$(TOPDIR)/software/libs/
+	BINDIR=$(TOPDIR)/bin
+else
+	# Out-of-tree build
+	LIBDIR=$(TOPDIR)/build/software/libs/
+	BINDIR=$(TOPDIR)/build/bin
+endif
+
+LDFLAGS=-L$(LIBDIR)/libc/ -L$(LIBDIR)/libos/bare-metal -L$(LIBDIR)/librender $(LIBDIR)/compiler-rt/libcompiler-rt.a
 EMULATOR=$(BINDIR)/nyuzi_emulator
 VERILATOR=$(BINDIR)/nyuzi_vsim
-VCSRUN=$(BUILDDIR)/vcsrun.pl
 SERIAL_BOOT=$(BINDIR)/serial_boot
 MKFS=$(BINDIR)/mkfs
-
-CFLAGS=-O3 -I$(TOPDIR)/software/libs/libc/include -I$(TOPDIR)/software/libs/libos -Wall -W
-LDFLAGS=-L$(TOPDIR)/software/libs/libc/ -L$(TOPDIR)/software/libs/libos/bare-metal -L$(TOPDIR)/software/libs/librender $(TOPDIR)/software/libs/compiler-rt/libcompiler-rt.a
 
 define SRCS_TO_OBJS
 	$(addprefix $(OBJ_DIR)/, $(addsuffix .o, $(foreach file, $(SRCS), $(basename $(notdir $(file))))))

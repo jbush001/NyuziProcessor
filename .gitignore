@@ -25,6 +25,7 @@ run_fpga
 obj/
 bin/
 generated/
+build/
 
 CLASSDIR
 hardware/fpga/de2-115/db/

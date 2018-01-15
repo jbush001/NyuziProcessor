@@ -17,7 +17,7 @@
 project(sceneview)
 include(nyuzi)
 
-set(OBJ_FILE dabrovik_sponza/sponza.obj)
+set(OBJ_FILE ${CMAKE_CURRENT_SOURCE_DIR}/dabrovik_sponza/sponza.obj)
 
 set_display_res(640 480)
 set(MEMORY_SIZE 0x8000000)
@@ -33,9 +33,10 @@ target_link_libraries(sceneview
     os-bare
     compiler-rt)
 
-add_custom_command(OUTPUT resource.bin
-    COMMAND ./make_resource_file.py ${OBJ_FILE}
-    COMMENT "converting scene geometry files..."
-    DEPENDS ${OBJ_FILE})
-add_custom_target(resource_bin DEPENDS resource.bin)
+add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/resource.bin
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/make_resource_file.py ${OBJ_FILE}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    DEPENDS ${OBJ_FILE}
+    COMMENT "converting scene geometry files...")
+add_custom_target(resource_bin DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/resource.bin)
 

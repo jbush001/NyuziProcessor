@@ -24,7 +24,13 @@
 ./generate_random.py -m 3)
 
 verilator --version
-cmake .
-make -j 8
+
+# Build out of tree
+mkdir build
+(cd build
+cmake ..
+make -j 8)
+
+# Run tests
 make -C tests/
 

@@ -18,7 +18,7 @@ project(bootrom)
 include(nyuzi)
 
 add_nyuzi_binary(bootrom)
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--script boot.ld -Wl,--oformat,binary")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--script ${CMAKE_CURRENT_SOURCE_DIR}/boot.ld -Wl,--oformat,binary")
 
 add_executable(bootrom
     start.s
@@ -29,4 +29,5 @@ target_link_libraries(bootrom
 
 add_custom_command(TARGET bootrom
     POST_BUILD
-    COMMAND ${CMAKE_SOURCE_DIR}/tools/misc/bin2hex.py $<TARGET_FILE:bootrom> > boot.hex)
+    COMMAND ${CMAKE_SOURCE_DIR}/tools/misc/bin2hex.py $<TARGET_FILE:bootrom> > boot.hex
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})

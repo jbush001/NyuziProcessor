@@ -32,7 +32,7 @@ def filesystem(_, target):
 
     test_harness.build_program(['fs.c'])
     subprocess.check_output(
-        [test_harness.PROJECT_TOP + '/bin/mkfs', 'obj/fsimage.bin',
+        [test_harness.BIN_DIR + 'mkfs', 'obj/fsimage.bin',
          'fstest.txt'], stderr=subprocess.STDOUT)
     result = test_harness.run_program(target='emulator',
                                       block_device='obj/fsimage.bin')
