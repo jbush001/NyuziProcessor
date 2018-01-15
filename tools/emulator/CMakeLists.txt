@@ -28,4 +28,6 @@ add_command_line_tool(emulator
 
 find_package(SDL2 REQUIRED)
 include_directories(${SDL2_INCLUDE_DIRS})
+string(STRIP ${SDL2_LIBRARIES} SDL2_LIBRARIES) # Work around Linux build error w/ trailing space
 target_link_libraries(emulator ${SDL2_LIBRARIES})
+

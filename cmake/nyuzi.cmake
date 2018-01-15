@@ -26,8 +26,8 @@ macro(add_nyuzi_binary name)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
 
     # LLD does not support these flags
-    string(REPLACE "-Wl,-search_paths_first" "" CMAKE_C_LINK_FLAGS ${CMAKE_C_LINK_FLAGS})
-    string(REPLACE "-Wl,-search_paths_first" "" CMAKE_CXX_LINK_FLAGS ${CMAKE_CXX_LINK_FLAGS})
+    string(REPLACE "-Wl,-search_paths_first" "" CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS}")
+    string(REPLACE "-Wl,-search_paths_first" "" CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS}")
 endmacro(add_nyuzi_binary)
 
 macro(create_fs_image name)
