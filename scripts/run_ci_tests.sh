@@ -26,5 +26,5 @@
 verilator --version
 cmake .
 make -j 8
-make -f tests/Makefile
+make -C tests/
 
