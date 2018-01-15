@@ -33,6 +33,7 @@ cp $TOOLCHAIN_DIR/clang-5.0 tmp/
 cp $TOOLCHAIN_DIR/elf2hex tmp/
 cp $TOOLCHAIN_DIR/lld tmp/
 cp $TOOLCHAIN_DIR/llvm-ar tmp/
+cp $TOOLCHAIN_DIR/llvm-ranlib tmp/
 cp $TOOLCHAIN_DIR/llvm-objdump tmp/
 
 cp -R /usr/local/share/verilator tmp/share_verilator

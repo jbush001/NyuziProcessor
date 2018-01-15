@@ -19,6 +19,7 @@ macro(add_nyuzi_binary name)
     set(CMAKE_C_COMPILER ${COMPILER_BIN}/clang)
     set(CMAKE_CXX_COMPILER ${COMPILER_BIN}/clang++)
     set(CMAKE_RANLIB ${COMPILER_BIN}/llvm-ranlib)
+    set(CMAKE_AR ${COMPILER_BIN}/llvm-ar)
     set(CMAKE_ASM_COMPILE ${COMPILER_BIN}/clang)
     enable_language(ASM)
 
