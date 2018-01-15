@@ -22,7 +22,6 @@ macro(add_nyuzi_binary name)
     set(CMAKE_AR ${COMPILER_BIN}/llvm-ar)
     set(CMAKE_ASM_COMPILE ${COMPILER_BIN}/clang)
     enable_language(ASM)
-
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++11")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
 
@@ -67,10 +66,12 @@ macro(add_nyuzi_executable name)
 
     # If this has an associated FS image, create that now
     if(FS_IMAGE_FILES)
-        add_custom_command(TARGET ${name}
-            POST_BUILD
+        add_custom_command(OUTPUT fsimage.bin
             COMMAND mkfs fsimage.bin ${FS_IMAGE_FILES}
-            DEPENDS mkfs)
+            DEPENDS mkfs ${FS_IMAGE_FILES}
+            COMMENT "Creating filesystem image")
+        add_custom_target(${name}_fsimage DEPENDS fsimage.bin)
+        add_dependencies(${name} ${name}_fsimage)
     endif()
 
     #
