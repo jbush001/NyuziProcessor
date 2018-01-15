@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+project(libs)
+
 add_subdirectory(libc)
 add_subdirectory(libos)
 add_subdirectory(librender)

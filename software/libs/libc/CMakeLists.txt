@@ -14,9 +14,13 @@
 # limitations under the License.
 #
 
+project(libc)
 include(nyuzi)
 
-include_directories(../libos)
+# libos-bare and libos-kern share headers, so this doesn't create a dependency
+# on one.
+include_directories($<TARGET_PROPERTY:os-bare,INCLUDE_DIRECTORIES>)
+
 add_nyuzi_library(c
     src/dlmalloc.c
     src/memcmp.c

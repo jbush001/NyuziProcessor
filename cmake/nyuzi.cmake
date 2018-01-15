@@ -14,7 +14,7 @@ macro(strict_warnings)
     endif()
 endmacro()
 
-macro(add_nyuzi_binary name)
+macro(add_nyuzi_binary)
     set(COMPILER_BIN /usr/local/llvm-nyuzi/bin/)
     set(CMAKE_C_COMPILER ${COMPILER_BIN}/clang)
     set(CMAKE_CXX_COMPILER ${COMPILER_BIN}/clang++)
@@ -22,7 +22,8 @@ macro(add_nyuzi_binary name)
     set(CMAKE_AR ${COMPILER_BIN}/llvm-ar)
     set(CMAKE_ASM_COMPILE ${COMPILER_BIN}/clang)
     enable_language(ASM)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++11")
+    set(CMAKE_CXX_STANDARD 11)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
 
     # LLD does not support these flags
@@ -30,17 +31,13 @@ macro(add_nyuzi_binary name)
     string(REPLACE "-Wl,-search_paths_first" "" CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS}")
 endmacro(add_nyuzi_binary)
 
-macro(create_fs_image name)
-    set(FS_IMAGE_FILES ${ARGV})
-endmacro()
-
 macro(set_display_res width height)
     set(DISPLAY_WIDTH ${width})
     set(DISPLAY_HEIGHT ${height})
 endmacro()
 
 macro(add_nyuzi_executable name)
-    add_nyuzi_binary(name)
+    add_nyuzi_binary()
 
     if(DISPLAY_WIDTH)
         add_definitions(-DFB_WIDTH=${DISPLAY_WIDTH})
@@ -92,12 +89,12 @@ macro(add_nyuzi_executable name)
 
     add_custom_command(TARGET ${name}
         POST_BUILD
-        COMMAND echo "$<TARGET_FILE:emulator> ${EMULATOR_ARGS} ${name}.hex" > run_emulator
+        COMMAND echo "$<TARGET_FILE:nyuzi_emulator> ${EMULATOR_ARGS} ${name}.hex" > run_emulator
         COMMAND chmod +x run_emulator)
 
 #    add_custom_command(TARGET ${name}
 #        POST_BUILD
-#        COMMAND echo "$<TARGET_FILE:emulator> -m gdb ${EMULATOR_ARGS} ${name}.hex \&" > run_debug
+#        COMMAND echo "$<TARGET_FILE:nyuzi_emulator> -m gdb ${EMULATOR_ARGS} ${name}.hex \&" > run_debug
 #        COMMAND echo "${COMPILER_BIN}/lldb --arch nyuzi $<TARGET_FILE:${name}> -o \"gdb-remote 8000\"" > run_debug
 #        COMMAND chmod +x run_debug)
 
@@ -110,7 +107,7 @@ macro(add_nyuzi_executable name)
 
     add_custom_command(TARGET ${name}
         POST_BUILD
-        COMMAND echo "${CMAKE_SOURCE_DIR}/bin/verilator_model ${VERILOG_ARGS} +bin=${name}.hex" > run_verilator
+        COMMAND echo "${CMAKE_SOURCE_DIR}/bin/nyuzi_vsim ${VERILOG_ARGS} +bin=${name}.hex" > run_verilator
         COMMAND chmod +x run_verilator)
 
     #
@@ -135,7 +132,7 @@ macro(add_nyuzi_executable name)
 endmacro(add_nyuzi_executable name)
 
 macro(add_nyuzi_library name)
-    add_nyuzi_binary(name)
+    add_nyuzi_binary()
 
     add_library(${name} ${ARGN})
 endmacro(add_nyuzi_library name)

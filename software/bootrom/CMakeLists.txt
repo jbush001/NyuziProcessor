@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+project(bootrom)
 include(nyuzi)
 
 add_nyuzi_binary(bootrom)

@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+project(rotozoom)
 include(nyuzi)
 
 set_display_res(640 480)

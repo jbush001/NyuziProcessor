@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+project(hello_world)
 include(nyuzi)
 
 add_nyuzi_executable(hello_world

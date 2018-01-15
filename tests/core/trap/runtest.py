@@ -78,7 +78,7 @@ def recv_host_interrupt(_, target):
 
     os.mknod(RECV_PIPE_NAME, stat.S_IFIFO | 0o666)
 
-    args = [test_harness.BIN_DIR + 'emulator',
+    args = [test_harness.EMULATOR_PATH,
             '-i', RECV_PIPE_NAME, test_harness.HEX_FILE]
     emulator_process = subprocess.Popen(args, stdout=subprocess.PIPE,
                                         stderr=subprocess.STDOUT)
@@ -119,7 +119,7 @@ def send_host_interrupt(_, target):
 
     os.mknod(SEND_PIPE_NAME, stat.S_IFIFO | 0o666)
 
-    args = [test_harness.BIN_DIR + 'emulator',
+    args = [test_harness.EMULATOR_PATH,
             '-o', SEND_PIPE_NAME, test_harness.HEX_FILE]
     emulator_process = subprocess.Popen(args, stdout=subprocess.PIPE,
                                         stderr=subprocess.STDOUT)

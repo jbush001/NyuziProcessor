@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+project(software)
+
 add_subdirectory(libs)
 add_subdirectory(apps)
 add_subdirectory(benchmarks)

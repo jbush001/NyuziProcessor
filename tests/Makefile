@@ -17,7 +17,7 @@
 PYTHON=python3
 
 test:
-	cd unit && $(PYTHON) ./runtest.py
+#	cd unit && $(PYTHON) ./runtest.py
 	cd remote-gdb && $(PYTHON) ./runtest.py
 	cd jtag-debug && $(PYTHON) ./runtest.py
 	cd core/isa/ && $(PYTHON) ./runtest.py

@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+project(de2_115)
+
 add_custom_target(synthesize
 	COMMAND quartus_map de2_115
 	COMMAND quartus_fit de2_115

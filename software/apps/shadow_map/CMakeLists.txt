@@ -14,11 +14,10 @@
 # limitations under the License.
 #
 
+project(shadow_map)
 include(nyuzi)
 
-add_definitions(-DFB_WIDTH=640)
-add_definitions(-DFB_HEIGHT=480)
-
+set_display_res(640 480)
 add_nyuzi_executable(shadow_map
     main.cpp)
 

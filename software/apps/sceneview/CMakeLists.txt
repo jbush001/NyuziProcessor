@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+project(sceneview)
 include(nyuzi)
 
 set(OBJ_FILE dabrovik_sponza/sponza.obj)

@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+project(kernel)
 include(nyuzi)
 
 set(IMAGE_BASE_ADDRESS 0xc0000000)
@@ -44,3 +45,6 @@ add_nyuzi_executable(kernel
 
 target_link_libraries(kernel
     compiler-rt)
+
+target_include_directories (kernel PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+

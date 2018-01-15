@@ -73,7 +73,7 @@ def shared_memory(_, target):
 
     # Start the emulator
     memory_file = tempfile.NamedTemporaryFile()
-    args = [test_harness.BIN_DIR + 'emulator', '-s',
+    args = [test_harness.EMULATOR_PATH, '-s',
             memory_file.name, test_harness.HEX_FILE]
     process = subprocess.Popen(args, stdout=subprocess.PIPE,
                                stderr=subprocess.STDOUT)

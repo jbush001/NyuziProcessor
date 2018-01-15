@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+project(dhrystone)
 include(nyuzi)
 
 add_definitions(-DTIME=1)

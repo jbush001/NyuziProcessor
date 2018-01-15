@@ -134,7 +134,7 @@ class EmulatorProcess(object):
 
     def __enter__(self):
         emulator_args = [
-            test_harness.BIN_DIR + 'emulator',
+            test_harness.EMULATOR_PATH,
             '-m',
             'gdb',
             '-p',

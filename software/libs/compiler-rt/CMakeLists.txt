@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+project(compiler-rt)
 include(nyuzi)
 
 add_nyuzi_library(compiler-rt

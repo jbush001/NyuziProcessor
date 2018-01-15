@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+project(hardware)
 add_subdirectory(fpga/de2-115)
 
 set(VERILATOR_GEN_DIR "generated")
@@ -27,12 +28,12 @@ endif()
 
 # XXX check verilator version
 
-add_custom_target(verilator_model ALL
+add_custom_target(nyuzi_vsim ALL
     COMMAND verilator ${VERILATOR_OPTIONS} --cc testbench/soc_tb.sv
         --exe testbench/verilator_main.cpp testbench/jtag_socket.cpp
     COMMAND make CXXFLAGS=-Wno-parentheses-equality OPT_FAST="-Os"  -C ${VERILATOR_GEN_DIR} -f Vsoc_tb.mk Vsoc_tb
-    COMMAND cp ${VERILATOR_GEN_DIR}/Vsoc_tb ${CMAKE_SOURCE_DIR}/bin/verilator_model
-    COMMENT "Generating verilator model")
+    COMMAND cp ${VERILATOR_GEN_DIR}/Vsoc_tb ${CMAKE_SOURCE_DIR}/bin/nyuzi_vsim
+    COMMENT "Generating hardware simulator")
 
 # This will delete the generated files when the clean target is run
 set_directory_properties(PROPERTY ADDITIONAL_MAKE_CLEAN_FILES

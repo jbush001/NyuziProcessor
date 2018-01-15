@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+project(benchmarks)
+
 add_subdirectory(hash)
 add_subdirectory(membench)
 add_subdirectory(dhrystone)

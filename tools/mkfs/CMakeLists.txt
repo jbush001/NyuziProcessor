@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+project(mkfs)
 include(cline_tool)
 
 add_command_line_tool(mkfs

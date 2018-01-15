@@ -14,9 +14,10 @@
 # limitations under the License.
 #
 
+project(nyuzi_emulator)
 include(cline_tool)
 
-add_command_line_tool(emulator
+add_command_line_tool(nyuzi_emulator
     cosimulation.c
     device.c
     fbwindow.c
@@ -29,5 +30,5 @@ add_command_line_tool(emulator
 find_package(SDL2 REQUIRED)
 include_directories(${SDL2_INCLUDE_DIRS})
 string(STRIP ${SDL2_LIBRARIES} SDL2_LIBRARIES) # Work around Linux build error w/ trailing space
-target_link_libraries(emulator ${SDL2_LIBRARIES})
+target_link_libraries(nyuzi_emulator ${SDL2_LIBRARIES})
 

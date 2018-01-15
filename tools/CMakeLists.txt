@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+project(tools)
+
 add_subdirectory(emulator)
 add_subdirectory(mkfs)
 add_subdirectory(serial_boot)

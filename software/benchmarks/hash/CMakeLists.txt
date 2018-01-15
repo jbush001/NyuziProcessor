@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+project(hash)
 include(nyuzi)
 
 add_nyuzi_executable(hash

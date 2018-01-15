@@ -14,10 +14,13 @@
 # limitations under the License.
 #
 
+project(librender)
 include(nyuzi)
 
-include_directories(../libos)
-include_directories(../libc/include)
+# libos-bare and libos-kern share headers, so this doesn't create a dependency
+# on one.
+include_directories($<TARGET_PROPERTY:os-bare,INCLUDE_DIRECTORIES>)
+include_directories($<TARGET_PROPERTY:c,INCLUDE_DIRECTORIES>)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wnon-virtual-dtor -Wold-style-cast -Wsign-conversion -fno-rtti -ffast-math -Werror")
 add_nyuzi_library(render

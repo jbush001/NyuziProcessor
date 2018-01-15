@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+project(membench)
 include(nyuzi)
 
 add_nyuzi_executable(membench

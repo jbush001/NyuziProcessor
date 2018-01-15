@@ -14,10 +14,13 @@
 # limitations under the License.
 #
 
+project(console)
 include(nyuzi)
 
-include_directories(../libos)
-include_directories(../libc/include)
+# libos-bare and libos-kern share headers, so this doesn't create a dependency
+# on one.
+include_directories($<TARGET_PROPERTY:os-bare,INCLUDE_DIRECTORIES>)
+include_directories($<TARGET_PROPERTY:c,INCLUDE_DIRECTORIES>)
 
 add_nyuzi_library(console
     console.cpp)

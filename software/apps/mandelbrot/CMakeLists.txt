@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+project(mandelbrot)
 include(nyuzi)
 
 add_nyuzi_executable(mandelbrot

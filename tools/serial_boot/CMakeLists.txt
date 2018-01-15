@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+project(serial_boot)
 include(cline_tool)
 
 add_command_line_tool(serial_boot

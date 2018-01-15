@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+project(consoletest)
 include(nyuzi)
 
 add_nyuzi_executable(consoletest

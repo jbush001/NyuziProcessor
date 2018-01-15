@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+project(software)
+
 add_subdirectory(plasma)
 add_subdirectory(consoletest)
 add_subdirectory(hello_world)

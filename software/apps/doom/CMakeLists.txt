@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+project(doom)
 include(nyuzi)
 
 set_display_res(640 400)
@@ -88,5 +89,3 @@ target_link_libraries(doom
     c
     os-bare
     compiler-rt)
-
-create_fs_image(doom doom.wad)

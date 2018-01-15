@@ -77,7 +77,7 @@ class JTAGTestFixture(object):
 
     def __enter__(self):
         verilator_args = [
-            test_harness.BIN_DIR + 'verilator_model',
+            test_harness.VSIM_PATH,
             '+bin=' + self.hexfile,
             '+jtag_port=' + str(CONTROL_PORT),
             self.hexfile

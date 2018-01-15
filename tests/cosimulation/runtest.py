@@ -30,7 +30,7 @@ EMULATOR_MEM_DUMP = 'obj/mmem.bin'
 
 def run_cosimulation_test(source_file, target):
     verilator_args = [
-        '../../bin/verilator_model',
+        test_harness.VSIM_PATH,
         '+trace',
         '+simcycles=2000000',
         '+memdumpfile=' + VERILATOR_MEM_DUMP,
@@ -44,7 +44,7 @@ def run_cosimulation_test(source_file, target):
         verilator_args += ['+randseed=' + os.environ['RANDSEED']]
 
     emulator_args = [
-        '../../bin/emulator',
+        test_harness.EMULATOR_PATH,
         '-m',
         'cosim',
         '-d',

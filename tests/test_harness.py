@@ -40,7 +40,8 @@ HEX_FILE = OBJ_DIR + 'program.hex'
 ALL_TARGETS = ['verilator', 'emulator']
 DEFAULT_TARGETS = ['verilator', 'emulator']
 DEBUG = False
-
+VSIM_PATH = BIN_DIR + 'nyuzi_vsim'
+EMULATOR_PATH = BIN_DIR + 'nyuzi_emulator'
 
 class TestException(Exception):
     """This exception is raised for test failures"""
@@ -225,7 +226,7 @@ def run_program(
         executable = HEX_FILE
 
     if target == 'emulator':
-        args = [BIN_DIR + 'emulator']
+        args = [EMULATOR_PATH]
         args += ['-a']  # Enable thread scheduling randomization by default
         if block_device:
             args += ['-b', block_device]
@@ -237,7 +238,7 @@ def run_program(
         args += [executable]
         output = run_test_with_timeout(args, timeout)
     elif target == 'verilator':
-        args = [BIN_DIR + 'verilator_model']
+        args = [VSIM_PATH]
         if block_device:
             args += ['+block=' + block_device]
 
