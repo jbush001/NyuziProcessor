@@ -103,13 +103,11 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
         compiler_args += ['-I' + LIB_DIR + 'libc/include',
                           '-I' + LIB_DIR + 'libos',
                           LIB_DIR + 'libc/libc.a',
-                          LIB_DIR + 'compiler-rt/compiler-rt.a']
+                          LIB_DIR + 'compiler-rt/libcompiler-rt.a']
         if image_type == 'user':
-            compiler_args += [LIB_DIR + 'libos/crt0-kern.o',
-                              LIB_DIR + 'libos/libos-kern.a']
+            compiler_args += [LIB_DIR + 'libos/kernel/libos-kern.a']
         else:
-            compiler_args += [LIB_DIR + 'libos/crt0-bare.o',
-                              LIB_DIR + 'libos/libos-bare.a']
+            compiler_args += [LIB_DIR + 'libos/bare-metal/libos-bare.a']
 
     try:
         subprocess.check_output(compiler_args, stderr=subprocess.STDOUT)

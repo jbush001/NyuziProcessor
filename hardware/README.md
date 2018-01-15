@@ -71,7 +71,10 @@ To write a waveform trace, set the environment variable DUMP_WAVEFORM
 and rebuild:
 
     make clean
-    DUMP_WAVEFORM=1 make
+	 cd ..
+    DUMP_WAVEFORM=1 cmake .
+	 cd hardware
+	 make
 
 The simulator writes a file called `trace.vcd` in
 "[value change dump](http://en.wikipedia.org/wiki/Value_change_dump)"
@@ -102,12 +105,12 @@ for both scripts (edit the file according to your site's installation).
 The Makefile in the hardware/ directory can be used to build the VCS model by
 executing:
 
-% make vcsbuild
+    % make vcsbuild
 
 Waveform dumping can be enabled by executing:
 
-% make clean
-% DUMP_WAVEFORM=1 make vcsbuild
+    % make clean
+    % DUMP_WAVEFORM=1 make vcsbuild
 
 If waveform dumping is enabled in VCS, the simulator writes a file called
 `trace.fsdb` which can be opened with Verdi.
@@ -117,8 +120,8 @@ mandelbrot, plasma, quakeview, rotozoom, sceneview. The Makefile for doom,
 hello_world, mandelbrot, quakeview, and sceneview support simulation with
 Verilator by executing:
 
-% make verirun
+    % ./run_verilator
 
 Similarly, the same apps support simulation with VCS by executing:
 
-% make vcsrun
+    % ./run_vcs

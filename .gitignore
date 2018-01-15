@@ -15,13 +15,20 @@ statetrace.txt
 a.out
 output.png
 *.traceconfig
+cmake_install.cmake
+CMakeFiles/
+CMakeCache.txt
+run_emulator
+run_verilator
+run_vcs
+run_fpga
+obj/
+bin/
+generated/
 
 CLASSDIR
-bin/
-obj/
 hardware/fpga/de2-115/db/
 hardware/fpga/de2-115/incremental_db/
 hardware/fpga/de2-115/output_files/
 tests/cosimulation/random*
-
 

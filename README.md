@@ -79,10 +79,12 @@ It will ask for your root password a few times to install stuff.
 
 Build everything else:
 
+    cmake .
     make
 
 Run tests:
 
+    cd tests
     make test
 
 _If you are on a Linux distribution that defaults to python3, you may run into build

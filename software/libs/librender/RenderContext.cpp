@@ -97,7 +97,7 @@ void RenderContext::_wireframeTile(void *_castToContext, int index)
 
 void RenderContext::finish()
 {
-    int kMaxTiles = fTileColumns * fTileRows;
+    unsigned int kMaxTiles = static_cast<unsigned int>(fTileColumns * fTileRows);
     fTiles = new (fAllocator) TriangleArray[kMaxTiles];
     for (int i = 0; i < kMaxTiles; i++)
         fTiles[i].setAllocator(&fAllocator);

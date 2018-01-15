@@ -35,7 +35,6 @@ test:
 	cd whole-program && $(PYTHON) ./runtest.py --target verilator
 	cd whole-program && $(PYTHON) ./runtest.py --target emulator *noverilator.*
 	cd cosimulation && $(PYTHON) ./runtest.py
-	cd fpga && make
 	cd render && make test
 
 fpgatest:

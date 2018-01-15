@@ -22,10 +22,10 @@ You can load other episodes/missions by changing this line in main.cpp:
 
 To run in emulator, type:
 
-    make run
+    ./run_emulator
 
-The default screen resolution is 640x480. To change this, update the variables
-FB_WIDTH and FB_HEIGHT in the Makefile.
+The default screen resolution is 640x480. To change this, update the parameters
+to the set_display_res call in CMakeLists.txt.
 
 ## Running on FPGA
 
@@ -34,12 +34,12 @@ serial port into a ramdisk in memory. This will take a while. The repak utility
 (tools/repak) can reduce the size of the PAK file. Move the original PAK file
 in a different directory, then:
 
-    ../../../bin/repak -o pak0.pak <original pak location> gfx/palette.lmp maps/e1m1.bsp
+    ../../../tools/repak/repak -o pak0.pak <original pak location> gfx/palette.lmp maps/e1m1.bsp
 
 If you want to load a different mission, it to the end of the repak command line (for example,
 maps/e1m2.bsp). You can list all files in the PAK file like this:
 
-    ../../../bin/repak -l pak0.pak
+    ../../../tools/repak/repak -l pak0.pak
 
 ## Running in Verilog Simulation
 

@@ -1,7 +1,7 @@
 This is a viewer for [Wavefront .OBJ files](http://en.wikipedia.org/wiki/Wavefront_.obj_file).
 It uses the 3D engine in librender. Run it in the emulator by typing:
 
-    make run
+    ./run_emulator
 
 To run on FPGA, type 'make fpgarun'. The makefile will transfer the data files
 over the serial port into a ramdisk in memory. This will take a while.

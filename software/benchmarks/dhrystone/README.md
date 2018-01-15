@@ -17,11 +17,11 @@ The first form runs this in the emulator. The cycle counter on the emulator
 represents it as a "perfect" machine that always issues one instruction per
 cycle, so this test really validates the compiler.
 
-    make run
+    ./run_emulator
 
 The second form runs it against the hardware model:
 
-    make verirun
+    ./run_verilator
 
 I've made modifications to the original sources to get them to run on Nyuzi.
 The changes are in the file nyuzi_changes.diff. They include:

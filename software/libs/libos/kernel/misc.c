@@ -18,8 +18,6 @@
 #include "unistd.h"
 #include "syscall.h"
 
-#define CLOCKS_PER_US 50
-
 int usleep(useconds_t delay)
 {
     (void) delay;
