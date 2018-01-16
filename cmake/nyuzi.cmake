@@ -103,48 +103,38 @@ macro(add_nyuzi_executable name)
         set(EMULATOR_ARGS "${EMULATOR_ARGS} -c ${MEMORY_SIZE}")
     endif()
 
-    add_custom_command(TARGET ${name}
-        POST_BUILD
-        COMMAND echo "$<TARGET_FILE:nyuzi_emulator> ${EMULATOR_ARGS} ${CMAKE_CURRENT_BINARY_DIR}/${name}.hex" > ${CMAKE_CURRENT_BINARY_DIR}/run_emulator
-        COMMAND chmod +x run_emulator)
+    # Create emulator run script
+    file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/run_emulator
+        CONTENT "$<TARGET_FILE:nyuzi_emulator> ${EMULATOR_ARGS} ${CMAKE_CURRENT_BINARY_DIR}/${name}.hex")
 
-#    add_custom_command(TARGET ${name}
-#        POST_BUILD
-#        COMMAND echo "$<TARGET_FILE:nyuzi_emulator> -m gdb ${EMULATOR_ARGS} ${name}.hex \&" > run_debug
-#        COMMAND echo "${COMPILER_BIN}/lldb --arch nyuzi $<TARGET_FILE:${name}> -o \"gdb-remote 8000\"" > ${CMAKE_CURRENT_BINARY_DIR}/run_debug
-#        COMMAND chmod +x run_debug)
+    # Create debugger run script
+    file(GENERATE OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/run_debug
+        CONTENT "$<TARGET_FILE:nyuzi_emulator> -m gdb ${EMULATOR_ARGS} ${name}.hex \&\n${COMPILER_BIN}/lldb --arch nyuzi $<TARGET_FILE:${name}> -o \"gdb-remote 8000\"")
 
-    #
     # Create verilator run script
-    #
     if(FS_IMAGE_FILES)
         set(VERILOG_ARGS "${VERILOG_ARGS} +block=${CMAKE_CURRENT_BINARY_DIR}/fsimage.bin")
     endif()
 
-    add_custom_command(TARGET ${name}
-        POST_BUILD
-        COMMAND echo "${CMAKE_SOURCE_DIR}/bin/nyuzi_vsim ${VERILOG_ARGS} +bin=${CMAKE_CURRENT_BINARY_DIR}/${name}.hex" > ${CMAKE_CURRENT_BINARY_DIR}/run_verilator
-        COMMAND chmod +x run_verilator)
+    file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/run_verilator
+        CONTENT "${CMAKE_SOURCE_DIR}/bin/nyuzi_vsim ${VERILOG_ARGS} +bin=${CMAKE_CURRENT_BINARY_DIR}/${name}.hex")
 
-    #
     # Create VCS run script (uses VERILOG_ARGS from above)
-    #
-    add_custom_command(TARGET ${name}
-        POST_BUILD
-        COMMAND echo "${CMAKE_SOURCE_DIR}/scripts/vcsrun.pl ${VERILOG_ARGS} +bin=${CMAKE_CURRENT_BINARY_DIR}/${name}.hex" > ${CMAKE_CURRENT_BINARY_DIR}/run_vcs
-        COMMAND chmod +x run_vcs)
+    file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/run_vcs
+        CONTENT "${CMAKE_SOURCE_DIR}/scripts/vcsrun.pl ${VERILOG_ARGS} +bin=${CMAKE_CURRENT_BINARY_DIR}/${name}.hex")
 
-    #
     # Create FPGA run script
-    #
     if(FS_IMAGE_FILES)
         set(${SERIAL_BOOT_FS} "${CMAKE_CURRENT_BINARY_DIR}/fsimage.bin")
     endif()
 
+    file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/run_fpga
+        CONTENT "$<TARGET_FILE:serial_boot> ${SERIAL_BOOT_ARGS} \\$$SERIAL_PORT ${CMAKE_CURRENT_BINARY_DIR}/${name}.hex ${SERIAL_BOOT_FS}")
+
+    # Kludge: file GENERATE doesn't allow setting permissions, so do it in the makefile
     add_custom_command(TARGET ${name}
         POST_BUILD
-        COMMAND echo "$<TARGET_FILE:serial_boot> ${SERIAL_BOOT_ARGS} \\$$SERIAL_PORT ${CMAKE_CURRENT_BINARY_DIR}/${name}.hex ${SERIAL_BOOT_FS}" > ${CMAKE_CURRENT_BINARY_DIR}/run_fpga
-        COMMAND chmod +x run_fpga)
+        COMMAND chmod +x run_*)
 endmacro(add_nyuzi_executable name)
 
 macro(add_nyuzi_library name)
