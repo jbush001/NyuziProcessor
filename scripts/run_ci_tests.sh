@@ -32,5 +32,6 @@ cmake ..
 make -j 8)
 
 # Run tests
-make -C tests/
+make tests
+
 

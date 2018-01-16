@@ -84,8 +84,7 @@ Build everything else:
 
 Run tests:
 
-    cd tests
-    make test
+    make tests
 
 _If you are on a Linux distribution that defaults to python3, you may run into build
 problems with the compiler. In tools/NyuziToolchain/tools/CMakeLists.txt, comment
