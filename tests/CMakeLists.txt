@@ -54,9 +54,6 @@ add_custom_command(TARGET tests
 add_custom_command(TARGET tests
     COMMAND ./runtest.py --target emulator *noverilator.*
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/whole-program)
-add_custom_command(TARGET tests
-    COMMAND make test
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/render)
 
 add_subdirectory(fpga/blinky)
 add_subdirectory(fpga/uart_chargen)
