@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 #
 # Copyright 2011-2015 Jeff Bush
 #
@@ -14,12 +15,11 @@
 # limitations under the License.
 #
 
+import sys
 
-TOPDIR=../../../
-SRCS=main.cpp
-IMAGE_CHECKSUM="2ec4cc681873bc5978617e347d46f3b38230a3a0"
+sys.path.insert(0, '../..')
+import test_harness
 
-include ../render-test.mk
-
-
-
+test_harness.register_render_test('render_blend', ['main.cpp'],
+    'fa00904c588512e8f5ec846fb0c2b711459639f2', targets=['emulator'])
+test_harness.execute_tests()

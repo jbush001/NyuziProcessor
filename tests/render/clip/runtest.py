@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 #
 # Copyright 2011-2015 Jeff Bush
 #
@@ -14,12 +15,11 @@
 # limitations under the License.
 #
 
+import sys
 
-TOPDIR=../../../
-SRCS=main.cpp
-IMAGE_CHECKSUM="86608d3314eaced1c44946344cfa96b5bfca3b77"
+sys.path.insert(0, '../..')
+import test_harness
 
-include ../render-test.mk
-
-
-
+test_harness.register_render_test('render_clip', ['main.cpp'],
+    '16684108bc9ff9918440c910d1aed7e311b41b7b', targets=['emulator'])
+test_harness.execute_tests()

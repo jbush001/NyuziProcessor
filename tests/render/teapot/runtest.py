@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 #
 # Copyright 2011-2015 Jeff Bush
 #
@@ -14,12 +15,11 @@
 # limitations under the License.
 #
 
+import sys
 
-TOPDIR=../../../
-SRCS=main.cpp
-IMAGE_CHECKSUM="ce84385b22052b3d3870ecd132b5b06802ac893d"
+sys.path.insert(0, '../..')
+import test_harness
 
-include ../render-test.mk
-
-
-
+test_harness.register_render_test('render_teapot', ['main.cpp'],
+    'd85c9d0742407583d2ccfc4f31522ce39498c925', targets=['emulator'])
+test_harness.execute_tests()

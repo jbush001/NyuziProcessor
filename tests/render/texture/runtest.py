@@ -1,5 +1,6 @@
+#!/usr/bin/env python3
 #
-# Copyright 2015 Jeff Bush
+# Copyright 2011-2015 Jeff Bush
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,15 +15,11 @@
 # limitations under the License.
 #
 
+import sys
 
+sys.path.insert(0, '../..')
+import test_harness
 
-test:
-	cd blend/ && make clean && make test
-	cd clip/ && make clean && make test
-	cd depthbuffer/ && make clean && make test
-	cd fill/ && make clean && make test
-	cd depthbuffer/ && make clean && make test
-	cd mipmap/ && make clean && make test
-	cd teapot/ && make clean && make test
-	cd texture/ && make clean && make test
-	cd triangle/ && make clean && make test
+test_harness.register_render_test('render_texture', ['main.cpp'],
+    '2ec4cc681873bc5978617e347d46f3b38230a3a0', targets=['emulator'])
+test_harness.execute_tests()

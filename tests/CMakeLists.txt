@@ -30,7 +30,15 @@ set(py_test_dirs
 	device/uart
 	libc
 	compiler-rt
-	cosimulation)
+	cosimulation
+    render/clip
+    render/fill
+    render/teapot
+    render/triangle
+    render/blend
+    render/depthbuffer
+    render/mipmap
+    render/texture)
 
 # This is called 'tests' because 'test' is reserved by cmake.
 add_custom_target(tests)

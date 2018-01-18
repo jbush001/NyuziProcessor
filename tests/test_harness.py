@@ -22,6 +22,7 @@ in subdirectories under this one.
 from __future__ import print_function
 import argparse
 import binascii
+import hashlib
 import os
 import re
 import subprocess
@@ -645,7 +646,8 @@ def register_generic_test(name, targets=None):
     It runs it both in verilator and emulator configurations.
 
     Args:
-            names: list of source file names
+            names: list of source file names. Each is compiled as a
+                   separate test.
 
     Returns:
             Nothing
@@ -674,7 +676,8 @@ def register_generic_assembly_tests(tests, targets=None):
     It runs it both in verilator and emulator configurations.
 
     Args:
-            list: list of source file names
+            tests: list of source file names. Each is assembled as a
+                   separate test.
 
     Returns:
             Nothing
@@ -687,3 +690,57 @@ def register_generic_assembly_tests(tests, targets=None):
         targets = ALL_TARGETS[:]
 
     register_tests(_run_generic_assembly_test, tests, targets)
+
+
+
+
+def register_render_test(name, source_files, expected_hash, targets=None):
+    """
+    The render test will compile the source files, run the program, then
+    generate a hash of memory starting at 2M, which is expected to
+    be a framebuffer with the format 640x480x32bpp. This hash will be
+    compared to a reference value to ensure the output is pixel accurate.
+
+    Args:
+        name: Display name of the test
+        source_files: List of source files to compile (note, unlike other
+                      calls, these are all compiled into one executable,
+                      this call only registers one test, not multiple).
+        expected_hash: this is an ASCII hex string of that the computed hash.
+
+    Returns:
+            Nothing
+
+    Raises:
+            Nothing
+    """
+
+    # This closure captures parameters source_files and
+    # expected_checksum.
+    def run_render_test(_, target):
+        render_cflags = [
+            '-I' + LIB_INCLUDE_BASE + 'librender',
+            LIB_DIR + 'librender/librender.a',
+            '-ffast-math'
+        ]
+
+        build_program(source_files=source_files,
+            cflags=render_cflags)
+        run_program(target=target,
+            dump_file='output.bin',
+            dump_base=0x200000,
+            dump_length=0x12c000,
+            flush_l2=True)
+        with open('output.bin', 'rb') as f:
+            contents = f.read()
+
+        sha = hashlib.sha1()
+        sha.update(contents)
+        actual_hash = sha.hexdigest()
+        if actual_hash != expected_hash:
+            subprocess.check_output(['convert', '-depth', '8', '-size',
+            '640x480', 'rgba:output.bin', 'actual-output.png'])
+            raise TestException('render test failed, bad checksum ' + str(actual_hash)
+                + ' output image written to actual-output.png')
+
+    register_tests(run_render_test, [name], targets)
