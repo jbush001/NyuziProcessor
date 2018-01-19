@@ -37,7 +37,7 @@ target_link_libraries(kernel_multiprocess_init
     os-kern
     compiler-rt)
 add_custom_command(TARGET kernel_multiprocess_init
-    COMMAND cp $<TARGET_FILE:kernel_multiprocess_init> ${CMAKE_CURRENT_BINARY_DIR}/program.elf)
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:kernel_multiprocess_init> ${CMAKE_CURRENT_BINARY_DIR}/program.elf)
 
 # Bundle everything into a filesystem image
 add_custom_target(kernel_multiprocess_test ALL

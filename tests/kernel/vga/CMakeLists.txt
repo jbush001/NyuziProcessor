@@ -29,7 +29,7 @@ target_link_libraries(kernel_vga
     os-kern
     compiler-rt)
 add_custom_command(TARGET kernel_vga
-    COMMAND cp $<TARGET_FILE:kernel_vga> ${CMAKE_CURRENT_BINARY_DIR}/program.elf
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:kernel_vga> ${CMAKE_CURRENT_BINARY_DIR}/program.elf
     DEPENDS ${name})
 
 # Bundle into a filesystem image

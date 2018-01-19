@@ -29,7 +29,7 @@ target_link_libraries(kernel_thread_test
 # Need to bundle executable into a filesystem that the kernel will boot
 # out of.
 add_custom_command(TARGET kernel_thread_test
-    COMMAND cp $<TARGET_FILE:kernel_thread_test> ${CMAKE_CURRENT_BINARY_DIR}/program.elf)
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:kernel_thread_test> ${CMAKE_CURRENT_BINARY_DIR}/program.elf)
 add_custom_command(TARGET kernel_thread_test
     COMMAND mkfs ${CMAKE_CURRENT_BINARY_DIR}/fsimage.bin ${CMAKE_CURRENT_BINARY_DIR}/program.elf
     DEPENDS mkfs
