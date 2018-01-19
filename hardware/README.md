@@ -38,7 +38,7 @@ efficiently).
 
 This project uses [Verilator](http://www.veripool.org/wiki/verilator) for
 simulation by default. Typing make in this directory compiles an executable
-'verilator_model' in the bin/ directory. It accepts the following command
+'nyuzi_vsim' in the bin/ directory. It accepts the following command
 line arguments (Verilog prefixes arguments with a plus sign):
 
 |          Argument               | Meaning        |
