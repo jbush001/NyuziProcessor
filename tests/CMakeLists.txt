@@ -14,6 +14,14 @@
 # limitations under the License.
 #
 
+add_subdirectory(fpga/blinky)
+add_subdirectory(fpga/uart_chargen)
+add_subdirectory(fpga/sdmmc_dump)
+add_subdirectory(fpga/sdmmc_native)
+add_subdirectory(kernel/multiprocess)
+add_subdirectory(kernel/threads)
+add_subdirectory(kernel/vga)
+
 set(py_test_dirs
 	unit
 	remote-gdb
@@ -54,11 +62,6 @@ add_custom_command(TARGET tests
 add_custom_command(TARGET tests
     COMMAND ./runtest.py --target emulator *noverilator.*
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/whole-program)
-
-add_subdirectory(fpga/blinky)
-add_subdirectory(fpga/uart_chargen)
-add_subdirectory(fpga/sdmmc_dump)
-add_subdirectory(fpga/sdmmc_native)
 
 set(fpga_test_dirs
 	core/cache_control/
