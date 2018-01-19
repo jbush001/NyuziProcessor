@@ -117,7 +117,7 @@ macro(add_nyuzi_executable name)
     endif()
 
     file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/run_verilator
-        CONTENT "${CMAKE_SOURCE_DIR}/bin/nyuzi_vsim ${VERILOG_ARGS} +bin=${CMAKE_CURRENT_BINARY_DIR}/${name}.hex")
+        CONTENT "${CMAKE_BINARY_DIR}/bin/nyuzi_vsim ${VERILOG_ARGS} +bin=${CMAKE_CURRENT_BINARY_DIR}/${name}.hex")
 
     # Create VCS run script (uses VERILOG_ARGS from above)
     file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/run_vcs

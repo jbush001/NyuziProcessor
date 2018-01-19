@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2015 Jeff Bush
+# Copyright 2018 Jeff Bush
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,22 +14,14 @@
 # limitations under the License.
 #
 
-TOPDIR=../../
 
-include $(TOPDIR)/build/tool.mk
+# This needs to be in a subdirectory because you can't have two compilers
+# in the same CMakeLists.txt. This builds for the host, the parent directory
+# builds for the processor.
 
-TARGET=$(OBJ_DIR)/gen_cases
+project(gen_float_tests)
+include(cline_tool)
 
-SRCS=gen_cases.c
-
-OBJS := $(SRCS_TO_OBJS)
-DEPS := $(SRCS_TO_DEPS)
-
-all: $(OBJ_DIR) $(BINDIR) $(TARGET)
-
-$(TARGET): $(OBJS) $(DEPS)
-	$(CC) -o $@ $(OBJS)
-
--include $(DEPS)
-
+add_command_line_tool(gen_float_tests
+    gen_float_tests.c)
 

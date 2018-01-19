@@ -21,6 +21,7 @@ add_subdirectory(fpga/sdmmc_native)
 add_subdirectory(kernel/multiprocess)
 add_subdirectory(kernel/threads)
 add_subdirectory(kernel/vga)
+add_subdirectory(float)
 
 set(py_test_dirs
 	unit
