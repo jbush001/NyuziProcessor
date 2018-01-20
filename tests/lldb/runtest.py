@@ -148,7 +148,7 @@ def lldb(_, target):
     hexfile = test_harness.build_program(
         ['test_program.c'], opt_level='-O0', cflags=['-g'])
     with EmulatorProcess(hexfile) as conn:
-        conn.send_command('file "obj/program.elf"')
+        conn.send_command('file "' + test_harness.WORK_DIR + '/program.elf"')
         conn.send_command('gdb-remote 8000\n')
         response = conn.send_command(
             'breakpoint set --file test_program.c --line 27')

@@ -24,8 +24,8 @@ sys.path.insert(0, '..')
 import test_harness
 
 
-VERILATOR_MEM_DUMP = 'obj/vmem.bin'
-EMULATOR_MEM_DUMP = 'obj/mmem.bin'
+VERILATOR_MEM_DUMP = test_harness.WORK_DIR + '/vmem.bin'
+EMULATOR_MEM_DUMP = test_harness.WORK_DIR + '/mmem.bin'
 
 
 def run_cosimulation_test(source_file, target):
@@ -48,7 +48,7 @@ def run_cosimulation_test(source_file, target):
         '-m',
         'cosim',
         '-d',
-        'obj/mmem.bin,0x800000,0x400000'
+        EMULATOR_MEM_DUMP + ',0x800000,0x400000'
     ]
 
     if test_harness.DEBUG:

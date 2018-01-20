@@ -27,6 +27,7 @@ sys.path.insert(0, '../..')
 import test_harness
 
 BASE_ADDRESS = 0x400000
+MEM_DUMP_FILE = test_harness.WORK_DIR +'/vmem.bin'
 
 
 @test_harness.test(['verilator'])
@@ -34,10 +35,10 @@ def dflush(_, target):
     test_harness.build_program(['dflush.S'])
     test_harness.run_program(
         target=target,
-        dump_file='obj/vmem.bin',
+        dump_file=MEM_DUMP_FILE,
         dump_base=BASE_ADDRESS,
         dump_length=0x40000)
-    with open('obj/vmem.bin', 'rb') as memfile:
+    with open(MEM_DUMP_FILE, 'rb') as memfile:
         for index in range(4096):
             val = memfile.read(4)
             if len(val) < 4:
@@ -55,7 +56,7 @@ def dinvalidate(_, target):
     test_harness.build_program(['dinvalidate.S'])
     result = test_harness.run_program(
         target=target,
-        dump_file='obj/vmem.bin',
+        dump_file=MEM_DUMP_FILE,
         dump_base=0x2000,
         dump_length=4,
         flush_l2=True,
@@ -68,7 +69,7 @@ def dinvalidate(_, target):
 
     # 2. Read the memory dump to ensure the proper value is flushed from the
     # L2 cache
-    with open('obj/vmem.bin', 'rb') as memfile:
+    with open(MEM_DUMP_FILE, 'rb') as memfile:
         num_val, = struct.unpack('<L', memfile.read(4))
         if num_val != 0xdeadbeef:
             raise test_harness.TestException(

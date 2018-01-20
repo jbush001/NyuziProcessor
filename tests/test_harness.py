@@ -25,6 +25,7 @@ import binascii
 import hashlib
 import os
 import re
+import shutil
 import subprocess
 import sys
 import threading
@@ -33,9 +34,9 @@ import traceback
 COMPILER_DIR = '/usr/local/llvm-nyuzi/bin/'
 PROJECT_TOP = os.path.normpath(
     os.path.dirname(os.path.abspath(__file__)) + '/../')
-OBJ_DIR = 'obj/'     # XXX move to out-of-tree temp dir
-ELF_FILE = OBJ_DIR + 'program.elf'
-HEX_FILE = OBJ_DIR + 'program.hex'
+WORK_DIR = PROJECT_TOP + '/tests/work/'
+ELF_FILE = WORK_DIR + 'program.elf'
+HEX_FILE = WORK_DIR + 'program.hex'
 ALL_TARGETS = ['verilator', 'emulator']
 DEFAULT_TARGETS = ['verilator', 'emulator']
 DEBUG = False
@@ -91,10 +92,6 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
             TestException if compilation failed, will contain compiler output
     """
     assert isinstance(source_files, list)
-
-    if not os.path.exists(OBJ_DIR):
-        os.makedirs(OBJ_DIR)
-
     compiler_args = [COMPILER_DIR + 'clang',
                      '-o', ELF_FILE,
                      '-w',
@@ -319,7 +316,7 @@ def run_kernel(
             TestException if emulated program crashes or the program cannot
               execute for some other reason.
     """
-    block_file = OBJ_DIR + 'fsimage.bin'
+    block_file = WORK_DIR + 'fsimage.bin'
     subprocess.check_output([BIN_DIR + 'mkfs', block_file, ELF_FILE],
                             stderr=subprocess.STDOUT)
 
@@ -509,6 +506,10 @@ def execute_tests():
             label = param + ' (' + target + ')'
             print(label + (' ' * (OUTPUT_ALIGN - len(label))), end='')
             try:
+                # Clean out working directory and re-create
+                shutil.rmtree(path=WORK_DIR, ignore_errors=True)
+                os.makedirs(WORK_DIR)
+
                 sys.stdout.flush()
                 func(param, target)
                 print(COLOR_GREEN + 'PASS' + COLOR_NONE)

@@ -26,6 +26,7 @@ obj/
 bin/
 generated/
 build/
+work/
 
 CLASSDIR
 hardware/fpga/de2-115/db/

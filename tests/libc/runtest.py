@@ -32,10 +32,10 @@ def filesystem(_, target):
 
     test_harness.build_program(['fs.c'])
     subprocess.check_output(
-        [test_harness.BIN_DIR + 'mkfs', 'obj/fsimage.bin',
+        [test_harness.BIN_DIR + 'mkfs', test_harness.WORK_DIR + '/fsimage.bin',
          'fstest.txt'], stderr=subprocess.STDOUT)
     result = test_harness.run_program(target='emulator',
-                                      block_device='obj/fsimage.bin')
+                                      block_device=test_harness.WORK_DIR + '/fsimage.bin')
     if 'PASS' not in result or 'FAIL' in result:
         raise test_harness.TestException(
             'test program did not indicate pass\n' + result)

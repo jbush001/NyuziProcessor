@@ -23,12 +23,11 @@ each one separately, then look for the string 'PASS' in the output.
 import os
 import subprocess
 import sys
-import shutil
 
 sys.path.insert(0, '..')
 import test_harness
 
-DRIVER_PATH = 'obj/driver.cpp'
+DRIVER_PATH = test_harness.WORK_DIR + '/driver.cpp'
 DRIVER_SRC = '''
 #include <iostream>
 #include <stdlib.h>
@@ -101,8 +100,6 @@ int main(int argc, char **argv, char **env)
 
 
 def run_unit_test(filename, _):
-    shutil.rmtree(path='obj/', ignore_errors=True)
-
     filestem, _ = os.path.splitext(filename)
     modulename = os.path.basename(filestem)
 
@@ -113,7 +110,7 @@ def run_unit_test(filename, _):
         '--assert',
         '-I' + test_harness.PROJECT_TOP + '/hardware/core',
         '-DSIMULATION=1',
-        '-Mdir', 'obj',
+        '-Mdir', test_harness.WORK_DIR,
         '-cc', filename,
         '--exe', DRIVER_PATH
     ]
@@ -121,7 +118,6 @@ def run_unit_test(filename, _):
     if test_harness.DEBUG:
         verilator_args.append('--trace')
         verilator_args.append('--trace-structs')
-
 
     try:
         subprocess.call(verilator_args, stderr=subprocess.STDOUT)
@@ -135,7 +131,7 @@ def run_unit_test(filename, _):
     make_args = [
         'make',
         'CXXFLAGS=-Wno-parentheses-equality',
-        '-C', 'obj/',
+        '-C', test_harness.WORK_DIR,
         '-f', 'V' + modulename + '.mk',
         'V' + modulename
     ]
@@ -147,7 +143,7 @@ def run_unit_test(filename, _):
             'Build failed:\n' + exc.output.decode())
 
     model_args = [
-        'obj/V' + modulename
+        test_harness.WORK_DIR + '/V' + modulename
     ]
 
     try:
