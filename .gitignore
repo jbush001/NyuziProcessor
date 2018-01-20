@@ -26,7 +26,8 @@ obj/
 bin/
 generated/
 build/
-work/
+tests/work/
+__pycache__
 
 CLASSDIR
 hardware/fpga/de2-115/db/
