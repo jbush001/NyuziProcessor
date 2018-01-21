@@ -9,6 +9,9 @@ In addition to the packages listed in the top level README, this also requires
 
 ## Setup
 
+A diagram showing how to wire up the board is on the Wiki
+[here](https://github.com/jbush001/NyuziProcessor/wiki/DE2-115-Setup).
+
 1. This loads programs onto the board over the serial port, so your development
 machine must be connected to the FPGA board with a serial cable.<sup>1</sup>
 
@@ -29,18 +32,18 @@ For example:
         software/bootrom/boot.c
         tools/serial_boot/serial_boot.c
 
-3. Ensure you can access the serial port without being root:
+3. Allow serial port access without being root:
 
         sudo usermod -a -G dialout $USER
 
     You may need to log out and back in for the change to take effect.
 
-4. Make sure the Quartus binary directory is in your PATH environment variable.
+4. Add the Quartus binary directory is in your PATH environment variable.
    The default install path is ~/altera/[version]/quartus/bin/
 
         export PATH=$PATH:<Path to Quartus bin directory>
 
-5. Make sure the FPGA board is in JTAG mode by setting SW19 to 'RUN'
+5. Put the FPGA board is in JTAG mode by setting SW19 to 'RUN'
 
 On some distributions of Linux, the Altera tools have trouble talking to USB if not
 run as root. You can remedy this by creating a file
@@ -48,22 +51,23 @@ run as root. You can remedy this by creating a file
 
     ATTRS{idVendor}=="09fb" , MODE="0660" , GROUP="plugdev"
 
-Reboot or execute the following command:
+...then rebooting or executing the following command:
 
     sudo udevadm control --reload
     sudo killall -9 jtagd
 
-<sup>1</sup> *Since most computers don't have native serial ports any more, this
-will probably require a USB to serial adapter. Almost all of the adapters you
-can buy use one of two chipsets, produced by either FTDI or Prolific. The
+<sup>1</sup> *Since most computers don't have native serial ports any more,
+this will probably require a USB-to-serial adapter. Almost all of the adapters
+one can buy use one of two chipsets, produced by either FTDI or Prolific. The
 Prolific chips are more... common, especially in cheaper adapters. But the
-OS drivers for these chips are unstable, especially when transferring large
-amounts of data like this project does. They often hang mid transfer or cause
-the host machine to reboot. I would recommend finding one with a FTDI based
-chipset. Unfortunately, most serial cables do not advertise which chipset
-they use, but you can sometimes tell by going to their website to download
-the drivers. Also, if you search for 'FTDI USB serial' on a retail site like
-Amazon, there are a number that do explicitly note the chipset type.*
+OS drivers for these chips are notoriously unstable on all platforms,
+especially when transferring large amounts of data like this project does.
+They often hang mid transfer or cause the host machine to reboot. I would
+recommend finding one with a FTDI based chipset. Unfortunately, most serial
+cables do not advertise which chipset they use, but you can sometimes tell by
+going to their website to download the drivers. Also, if you search for 'FTDI
+USB serial' on a retail site like Amazon, there are a number that do explicitly
+note the chipset type.*
 
 ## Synthesizing and Running Programs
 
@@ -77,7 +81,8 @@ The build system is command line based and does not use the Quartus GUI.
 
         make program
 
-    You may get an error when running this command. If so, this can usually be fixed by doing:
+    You may get an error when running this command. If so, this can usually be
+	fixed by running the following command:
 
         sudo killall -9 jtagd
 
@@ -91,14 +96,13 @@ The build system is command line based and does not use the Quartus GUI.
         make fpgarun
 
 Other notes:
-- Most programs with makefiles have a target 'fpgarun' that will load them
+- Most programs have a script 'run_fpga' that will load them
   onto the FPGA board using the serial_loader program (tools/serial_loader).
 - Reload programs by pressing the reset button (push button 0) and using
-  'make fpgarun' again.
-- You do not need to reload the bitstream (step 2) as long as the board is powered
-  (it will be lost if it is turned off, however).
-- The `program` target does not resynthesize the bitstream if source files have changed.
-  This must be done explicitly by typing `make synthesize`.
-- The serial_loader program is also capable of loading a ramdisk file into memory on
-  the board, which some of the test programs use.
-
+  'run_fpga' again.
+- You do not need to reload the bitstream (step 2) as long as the board is
+  powered (it will be lost if it is turned off, however).
+- The `program` target does not resynthesize the bitstream if source files
+  have changed. This must be done explicitly by typing `make synthesize`.
+- The serial_loader program is also capable of loading a ramdisk file into
+  memory on the board, which some of the test programs use.

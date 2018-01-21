@@ -17,7 +17,7 @@ This project uses Emacs [Verilog Mode](http://www.veripool.org/wiki/verilog-mode
 to automatically generate wire definitions and resets. If you have Emacs installed,
 type 'make autos' from the command line to update the definitions in batch mode.
 
-When building for simulation, the preprocessor macro `SIMULATION is defined.
+When building for simulation, the preprocessor macro `SIMULATION` is defined.
 This is used in the code to disable portions of code during synthesis. If you
 are creating a simulation project for another toolchain, make sure this is
 defined.
@@ -87,11 +87,11 @@ produce hundreds of megabytes of trace data.
 
 Template scripts have been added to support building and running with
 [VCS](https://www.synopsys.com/verification/simulation/vcs.html).
-The VCS scripts are located in the build/ directory.
+The VCS scripts are located in the scripts/ directory.
 
 vcsbuild.pl requires no arguments and builds the model. It will create an
 executable named simv and two support directories csrc and simv.daidir all located
-in the build/ directory. vcsbuild.pl uses TOP.sv in the hardware/testbench
+in the scripts/ directory. vcsbuild.pl uses TOP.sv in the hardware/testbench
 directory as the testbench top. TOP.sv in the VCS build is analogous to
 verilator_main.cpp in the verilator build.
 

@@ -8,11 +8,11 @@ rounding errors in hardware. All of the emulator tests should pass.
 
 To execute against emulator:
 
-    make test
+    ./run_emulator
 
 To execute against verilator:
 
-    make vtest
+    ./run_verilator
 
 When there is a failure, it will print a message like this:
 

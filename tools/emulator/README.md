@@ -68,7 +68,7 @@ The steps to run the debugger manually are:
 
 1. Start emulator in GDB mode
 
-        emulator -m gdb <program>.hex
+        bin/nyuzi_emulator -m gdb <program>.hex
 
 2. Start LLDB and attach to emulator. It should be in the directory that you
   built the program in, so it can find sources.
@@ -94,7 +94,7 @@ which would need to be adapted to this environment.
 Another way of debugging is to enable verbose instruction logging. Change the
 commandline to add the -v parameter:
 
-    bin/emulator -v program.hex
+    bin/nyuzi_emulator -v program.hex
 
 This dumps every memory and register transfer to the console.
 
@@ -130,5 +130,5 @@ You can convert a program address can to a file/line combination with the
 llvm-symbolizer program. This is not installed by default, but is in the
 build directory for the toolchain:
 
-    echo <address> | <path to toolchain source directory>/build/bin/llvm-symbolizer -demangle -obj=<program>.elf
+    echo <address> | tools/NyuziToolchain/build/bin/llvm-symbolizer -demangle -obj=<program>.elf
 

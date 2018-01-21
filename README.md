@@ -108,6 +108,6 @@ files, details are in the READMEs in those directories).
 For example, this will render a 3D model in the emulator:
 
     cd software/apps/sceneview
-    make run
+    ./run_emulator
 
 To run on FPGA, see instructions in hardware/fpga/de2-115/README.md
