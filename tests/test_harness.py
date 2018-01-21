@@ -215,7 +215,7 @@ def run_program(
                or 'emulator'.
             block_device: Relative path to a file that contains a filesystem image.
                If passed, contents will appear as a virtual SDMMC device.
-            dump_file: Relative path to a file to write memory contents into after
+            dump_file: Path to a file to write memory contents into after
                execution completes.
             dump_base: if dump_file is specified, base physical memory address to start
                writing mempry from.
@@ -497,6 +497,8 @@ def execute_tests():
     else:
         tests_to_run = registered_tests
 
+    test_run_count = 0
+    test_pass_count = 0
     failing_tests = []
     for func, param, targets in tests_to_run:
         for target in targets:
@@ -510,9 +512,11 @@ def execute_tests():
                 shutil.rmtree(path=WORK_DIR, ignore_errors=True)
                 os.makedirs(WORK_DIR)
 
+                test_run_count += 1
                 sys.stdout.flush()
                 func(param, target)
                 print(COLOR_GREEN + 'PASS' + COLOR_NONE)
+                test_pass_count += 1
             except KeyboardInterrupt:
                 sys.exit(1)
             except TestException as exc:
@@ -529,8 +533,8 @@ def execute_tests():
             print(name)
             print(output)
 
-    print(str(len(failing_tests)) + '/' +
-          str(len(tests_to_run)) + ' tests failed')
+    print('{}/{} tests failed'.format(test_run_count - test_pass_count,
+        test_run_count))
     if failing_tests != []:
         sys.exit(1)
 
@@ -719,6 +723,9 @@ def register_render_test(name, source_files, expected_hash, targets=None):
     # This closure captures parameters source_files and
     # expected_checksum.
     def run_render_test(_, target):
+        RAW_FB_DUMP_FILE = WORK_DIR + '/fb.bin'
+        PNG_DUMP_FILE = WORK_DIR + '/actual-output.png'
+
         render_cflags = [
             '-I' + LIB_INCLUDE_BASE + 'librender',
             LIB_DIR + 'librender/librender.a',
@@ -728,11 +735,11 @@ def register_render_test(name, source_files, expected_hash, targets=None):
         build_program(source_files=source_files,
             cflags=render_cflags)
         run_program(target=target,
-            dump_file='output.bin',
+            dump_file=RAW_FB_DUMP_FILE,
             dump_base=0x200000,
             dump_length=0x12c000,
             flush_l2=True)
-        with open('output.bin', 'rb') as f:
+        with open(RAW_FB_DUMP_FILE, 'rb') as f:
             contents = f.read()
 
         sha = hashlib.sha1()
@@ -740,8 +747,8 @@ def register_render_test(name, source_files, expected_hash, targets=None):
         actual_hash = sha.hexdigest()
         if actual_hash != expected_hash:
             subprocess.check_output(['convert', '-depth', '8', '-size',
-            '640x480', 'rgba:output.bin', 'actual-output.png'])
+            '640x480', 'rgba:' + RAW_FB_DUMP_FILE, PNG_DUMP_FILE])
             raise TestException('render test failed, bad checksum ' + str(actual_hash)
-                + ' output image written to actual-output.png')
+                + ' output image written to ' + PNG_DUMP_FILE)
 
     register_tests(run_render_test, [name], targets)
