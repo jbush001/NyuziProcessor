@@ -22,7 +22,6 @@ all inputs, and a stub test execution loop.
 """
 
 import sys
-import string
 import os.path
 
 source_file = sys.argv[1]

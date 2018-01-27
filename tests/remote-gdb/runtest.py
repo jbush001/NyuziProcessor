@@ -302,8 +302,8 @@ def gdb_read_write_memory(*unused):
             (0x2242, '45f280397a5a3255fa19238693ff13c729'),
             (0x100000, '55483c091aac1e8c6db4bed1'),
             (0x200000, '16e1d56029e912a04121ce41a635155f3442355533703fafcb57f8'
-                '295dd6330f82f9ffc40edb589fac1523665dc2f6e80c1e2de9718d253fcbc'
-                'e1c8a52c9dc21'),
+                       '295dd6330f82f9ffc40edb589fac1523665dc2f6e80c1e2de9718d'
+                       '253fcbce1c8a52c9dc21'),
         ]
 
         # Write memory
@@ -345,11 +345,14 @@ def gdb_read_write_register(*unused):
             (1, '7b53cc78'),
             (30, '0904c47d'),
             (32, 'aef331bc7dbd6f1d042be4d6f1e1649855d864387eb8f0fd49c205c37790'
-                'd1874078516c1a05c74f67678456679ba7e05bb5aed7303c5aeeeba6e619accf702a'),
+                 'd1874078516c1a05c74f67678456679ba7e05bb5aed7303c5aeeeba6e619'
+                 'accf702a'),
             (36, 'cb7e3668a97ef8ea55902658b62a682406f7206f75e5438ff95b4519fed1'
-                'e73e16ce5a29b4385fa2560820f0c8f42227709387dbad3a8208b57c381e268ffe38'),
+                 'e73e16ce5a29b4385fa2560820f0c8f42227709387dbad3a8208b57c381e'
+                 '268ffe38'),
             (63, '9e2d89afb0633c2f64b2eb4fdbba4663401ee673753a66d6d899e4a4101a'
-                'e4920b0b16f0e716e4f7d62d83b5784740c138ac6ab94fa14256ebb468e25f20e02f')
+                 'e4920b0b16f0e716e4f7d62d83b5784740c138ac6ab94fa14256ebb468e2'
+                 '5f20e02f')
         ]
 
         for reg, value in tests:

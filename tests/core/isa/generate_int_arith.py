@@ -96,21 +96,21 @@ FORMS = [
 ]
 
 INSTRUCTIONS = [
-    ('or',      False, lambda a, b: (a | b) & 0xffffffff),
-    ('and',     False, lambda a, b: (a & b) & 0xffffffff),
-    ('xor',     False, lambda a, b: (a ^ b) & 0xffffffff),
-    ('add_i',   False, lambda a, b: (a + b) & 0xffffffff),
-    ('sub_i',   False, lambda a, b: (a - b) & 0xffffffff),
-    ('mull_i',  False, lambda a, b: (a * b) & 0xffffffff),
-    ('mulh_u',  False, lambda a, b: (a * b) >> 32),
-    ('mulh_i',  False, lambda a, b: ((sext64(a) * sext64(b)) >> 32) & 0xffffffff),
-    ('ashr',    False, ashr32),
-    ('shr',     False, lambda a, b: int(math.fabs(a)) >> b),
-    ('shl',     False, lambda a, b: (a << b) & 0xffffffff),
-    ('clz',     True, lambda a, b: clz(b)),
-    ('ctz',     True, lambda a, b: ctz(b)),
-    ('move',    True, lambda a, b: b),
-    ('sext_8',  True, lambda a, b: (b | 0xffffff00)
+    ('or', False, lambda a, b: (a | b) & 0xffffffff),
+    ('and', False, lambda a, b: (a & b) & 0xffffffff),
+    ('xor', False, lambda a, b: (a ^ b) & 0xffffffff),
+    ('add_i', False, lambda a, b: (a + b) & 0xffffffff),
+    ('sub_i', False, lambda a, b: (a - b) & 0xffffffff),
+    ('mull_i', False, lambda a, b: (a * b) & 0xffffffff),
+    ('mulh_u', False, lambda a, b: (a * b) >> 32),
+    ('mulh_i', False, lambda a, b: ((sext64(a) * sext64(b)) >> 32) & 0xffffffff),
+    ('ashr', False, ashr32),
+    ('shr', False, lambda a, b: int(math.fabs(a)) >> b),
+    ('shl', False, lambda a, b: (a << b) & 0xffffffff),
+    ('clz', True, lambda a, b: clz(b)),
+    ('ctz', True, lambda a, b: ctz(b)),
+    ('move', True, lambda a, b: b),
+    ('sext_8', True, lambda a, b: (b | 0xffffff00)
      if (b & 0x80) != 0 else (b & 0xff)),
     ('sext_16', True, lambda a, b: (b | 0xffff0000)
      if (b & 0x8000) != 0 else (b & 0xffff))

@@ -124,8 +124,10 @@ def read_mtl_file(filename):
                         current_name] = texture_file_to_texture_idx[texture_file]
                 else:
                     # load a new texture
-                    material_name_to_texture_idx[current_name] = len(texture_list)
-                    texture_file_to_texture_idx[texture_file] = len(texture_list)
+                    material_name_to_texture_idx[
+                        current_name] = len(texture_list)
+                    texture_file_to_texture_idx[
+                        texture_file] = len(texture_list)
                     texture_list.append(read_texture(os.path.dirname(
                         filename) + '/' + fields[1].replace('\\', '/')))
 
@@ -179,7 +181,8 @@ def read_obj_file(filename):
                 vertex_positions.append(
                     (float(fields[1]), float(fields[2]), float(fields[3])))
             elif fields[0] == 'vt':
-                texture_coordinates.append((float(fields[1]), float(fields[2])))
+                texture_coordinates.append(
+                    (float(fields[1]), float(fields[2])))
             elif fields[0] == 'vn':
                 normals.append(
                     (float(fields[1]), float(fields[2]), float(fields[3])))
@@ -233,8 +236,8 @@ def read_obj_file(filename):
                 # face_list is made up of polygons. Convert to triangles.
                 for index in range(1, len(polygon_indices) - 1):
                     triangle_index_list += [polygon_indices[0],
-                                          polygon_indices[index],
-                                          polygon_indices[index + 1]]
+                                            polygon_indices[index],
+                                            polygon_indices[index + 1]]
             elif fields[0] == 'usemtl':
                 # Switch material
                 new_texture_id = material_name_to_texture_idx[fields[1]]
@@ -243,7 +246,7 @@ def read_obj_file(filename):
                         # State change, emit current primitives and clear the
                         # current combined list
                         mesh_list += [(current_texture_id,
-                                      combined_vertices, triangle_index_list)]
+                                       combined_vertices, triangle_index_list)]
                         combined_vertices = []
                         vertex_to_index = {}
                         triangle_index_list = []
@@ -253,7 +256,7 @@ def read_obj_file(filename):
 
         if triangle_index_list != []:
             mesh_list += [(current_texture_id, combined_vertices,
-                          triangle_index_list)]
+                           triangle_index_list)]
 
 
 def print_stats():

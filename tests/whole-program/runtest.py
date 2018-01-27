@@ -38,7 +38,7 @@ test_list = [fname for fname in test_harness.find_files(
 
 all_targets = [fname for fname in test_list if 'noverilator' not in fname]
 test_harness.register_tests(run_compiler_test, all_targets, [
-                            'emulator', 'verilator', 'host', 'fpga'])
+    'emulator', 'verilator', 'host', 'fpga'])
 
 noverilator_targets = [fname for fname in test_list if 'noverilator' in fname]
 test_harness.register_tests(

@@ -29,7 +29,7 @@ MEMDUMP = 'memory.bin'
 
 
 @test_harness.test
-def sdmmc_read(name, target):
+def sdmmc_read(_, target):
     # Create random file
     with open(SOURCE_BLOCK_DEV, 'wb') as randfile:
         randfile.write(os.urandom(FILE_SIZE))

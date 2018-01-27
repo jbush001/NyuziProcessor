@@ -34,7 +34,7 @@ def filesystem(_, target):
     subprocess.check_output(
         [test_harness.BIN_DIR + 'mkfs', test_harness.WORK_DIR + '/fsimage.bin',
          'fstest.txt'], stderr=subprocess.STDOUT)
-    result = test_harness.run_program(target='emulator',
+    result = test_harness.run_program(target=target,
                                       block_device=test_harness.WORK_DIR + '/fsimage.bin')
     if 'PASS' not in result or 'FAIL' in result:
         raise test_harness.TestException(

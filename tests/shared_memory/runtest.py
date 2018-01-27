@@ -66,7 +66,7 @@ def sharedmem_transact(memory, value):
 
 
 @test_harness.test(['emulator'])
-def shared_memory(_, target):
+def shared_memory(*unused):
     """See coprocessor.c for an explanation of this test"""
 
     test_harness.build_program(['coprocessor.c'])
