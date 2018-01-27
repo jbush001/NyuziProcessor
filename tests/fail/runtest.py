@@ -33,18 +33,19 @@ def timeout(_, target):
 
 
 @test_harness.test(['emulator'])
-def assemble_error(_, target):
+def assemble_error(*unused):
     test_harness.build_program(['assemble_error.s'])
 
 
 @test_harness.test(['emulator'])
-def files_not_equal(_, target):
+def files_not_equal(*unused):
     test_harness.assert_files_equal('compare_file1', 'compare_file2')
 
 
 @test_harness.test(['emulator'])
-def exception(_, target):
+def exception(*unused):
     raise Exception('some exception')
 
-test_harness.register_generic_test(['crash.c', 'check.c', 'checknc', 'compile_error.c'], ['emulator'])
+test_harness.register_generic_test(
+    ['crash.c', 'check.c', 'checknc', 'compile_error.c'], ['emulator'])
 test_harness.execute_tests()

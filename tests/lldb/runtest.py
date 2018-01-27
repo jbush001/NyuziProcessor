@@ -23,6 +23,7 @@ import sys
 sys.path.insert(0, '..')
 import test_harness
 
+
 class EmulatorProcess(object):
 
     """
@@ -142,7 +143,7 @@ def parse_stack_crawl(response):
 
 
 @test_harness.test(['emulator'])
-def lldb(_, target):
+def lldb(*unused):
     """This mainly validates that LLDB is reading symbols correctly."""
 
     hexfile = test_harness.build_program(

@@ -28,7 +28,7 @@ VERILATOR_MEM_DUMP = test_harness.WORK_DIR + '/vmem.bin'
 EMULATOR_MEM_DUMP = test_harness.WORK_DIR + '/mmem.bin'
 
 
-def run_cosimulation_test(source_file, target):
+def run_cosimulation_test(source_file, *unused):
     verilator_args = [
         test_harness.VSIM_PATH,
         '+trace',

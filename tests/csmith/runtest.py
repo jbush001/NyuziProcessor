@@ -60,7 +60,8 @@ def run_csmith_test(_, target):
         # Compile and run on host
         subprocess.check_call(
             ['cc', '-w', source_file, '-o', test_harness.WORK_DIR + '/a.out', csmith_include])
-        result = subprocess.check_output(test_harness.WORK_DIR + '/a.out').decode()
+        result = subprocess.check_output(
+            test_harness.WORK_DIR + '/a.out').decode()
 
         got = CHECKSUM_RE.search(result)
         if not got:

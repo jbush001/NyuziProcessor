@@ -27,7 +27,7 @@ sys.path.insert(0, '../..')
 import test_harness
 
 BASE_ADDRESS = 0x400000
-MEM_DUMP_FILE = test_harness.WORK_DIR +'/vmem.bin'
+MEM_DUMP_FILE = test_harness.WORK_DIR + '/vmem.bin'
 
 
 @test_harness.test(['verilator'])

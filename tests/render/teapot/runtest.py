@@ -21,5 +21,6 @@ sys.path.insert(0, '../..')
 import test_harness
 
 test_harness.register_render_test('render_teapot', ['main.cpp'],
-    'd85c9d0742407583d2ccfc4f31522ce39498c925', targets=['emulator'])
+                                  'd85c9d0742407583d2ccfc4f31522ce39498c925',
+                                  targets=['emulator'])
 test_harness.execute_tests()

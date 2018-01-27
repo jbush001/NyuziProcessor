@@ -68,7 +68,7 @@ SEND_PIPE_NAME = '/tmp/nyuzi_emulator_sendint'
 
 
 @test_harness.test(['emulator'])
-def recv_host_interrupt(_, target):
+def recv_host_interrupt(*unused):
     try:
         os.remove(RECV_PIPE_NAME)
     except OSError:
@@ -109,7 +109,7 @@ def recv_host_interrupt(_, target):
 
 
 @test_harness.test(['emulator'])
-def send_host_interrupt(_, target):
+def send_host_interrupt(*unused):
     try:
         os.remove(SEND_PIPE_NAME)
     except OSError:

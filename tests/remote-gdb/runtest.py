@@ -158,7 +158,7 @@ class EmulatorProcess(object):
 
 
 @test_harness.test(['emulator'])
-def gdb_breakpoint(_, target):
+def gdb_breakpoint(*unused):
     """
     Validate stopping at a breakpoint and continuing after stopping.
     This sets two breakpoints
@@ -196,7 +196,7 @@ def gdb_breakpoint(_, target):
 
 
 @test_harness.test(['emulator'])
-def gdb_remove_breakpoint(_, target):
+def gdb_remove_breakpoint(*unused):
     hexfile = test_harness.build_program(['count.S'], image_type='raw')
     with EmulatorProcess(hexfile), DebugConnection() as conn:
         # Set breakpoint
@@ -219,7 +219,7 @@ def gdb_remove_breakpoint(_, target):
 
 
 @test_harness.test(['emulator'])
-def gdb_breakpoint_errors(_, target):
+def gdb_breakpoint_errors(*unused):
     hexfile = test_harness.build_program(['count.S'], image_type='raw')
     with EmulatorProcess(hexfile), DebugConnection() as conn:
         # Set invalid breakpoint (memory out of range)
@@ -237,7 +237,7 @@ def gdb_breakpoint_errors(_, target):
 
 
 @test_harness.test(['emulator'])
-def gdb_single_step(_, target):
+def gdb_single_step(*unused):
     hexfile = test_harness.build_program(['count.S'], image_type='raw')
     with EmulatorProcess(hexfile), DebugConnection() as conn:
         # Read PC register
@@ -263,7 +263,7 @@ def gdb_single_step(_, target):
 
 
 @test_harness.test(['emulator'])
-def gdb_single_step_breakpoint(_, target):
+def gdb_single_step_breakpoint(*unused):
     """
     Ensure that if you single step through a breakpoint, it doesn't
     trigger and get stuck
@@ -288,7 +288,7 @@ def gdb_single_step_breakpoint(_, target):
 
 
 @test_harness.test(['emulator'])
-def gdb_read_write_memory(_, target):
+def gdb_read_write_memory(*unused):
     hexfile = test_harness.build_program(['count.S'], image_type='raw')
     with EmulatorProcess(hexfile), DebugConnection() as conn:
         # Read program code at address 0. This should match values
@@ -328,7 +328,7 @@ def gdb_read_write_memory(_, target):
 
 
 @test_harness.test(['emulator'])
-def gdb_read_write_register(_, target):
+def gdb_read_write_register(*unused):
     hexfile = test_harness.build_program(['register_values.S'])
     with EmulatorProcess(hexfile), DebugConnection() as conn:
         # Run code to load registers
@@ -366,7 +366,7 @@ def gdb_read_write_register(_, target):
 
 
 @test_harness.test(['emulator'])
-def gdb_register_info(_, target):
+def gdb_register_info(*unused):
     hexfile = test_harness.build_program(['count.S'], image_type='raw')
     with EmulatorProcess(hexfile), DebugConnection() as conn:
         # Scalar registers
@@ -399,7 +399,7 @@ def gdb_register_info(_, target):
 
 
 @test_harness.test(['emulator'])
-def gdb_select_thread(_, target):
+def gdb_select_thread(*unused):
     hexfile = test_harness.build_program(['multithreaded.S'], image_type='raw')
     with EmulatorProcess(hexfile, num_cores=2), DebugConnection() as conn:
         # Read thread ID
@@ -459,7 +459,7 @@ def gdb_select_thread(_, target):
 
 
 @test_harness.test(['emulator'])
-def gdb_thread_info(_, target):
+def gdb_thread_info(*unused):
     # Run with one core, four threads
     hexfile = test_harness.build_program(['count.S'], image_type='raw')
     with EmulatorProcess(hexfile), DebugConnection() as conn:
@@ -471,7 +471,7 @@ def gdb_thread_info(_, target):
 
 
 @test_harness.test(['emulator'])
-def gdb_invalid_command(_, target):
+def gdb_invalid_command(*unused):
     hexfile = test_harness.build_program(['count.S'], image_type='raw')
     with EmulatorProcess(hexfile), DebugConnection() as conn:
         # As far as I know, this is not a valid commanconn...
@@ -480,7 +480,7 @@ def gdb_invalid_command(_, target):
 
 
 @test_harness.test(['emulator'])
-def gdb_big_command(_, target):
+def gdb_big_command(*unused):
     """ Check for buffer overflows by sending a very large command"""
     hexfile = test_harness.build_program(['count.S'], image_type='raw')
     with EmulatorProcess(hexfile), DebugConnection() as conn:
@@ -492,7 +492,7 @@ def gdb_big_command(_, target):
 
 
 @test_harness.test(['emulator'])
-def gdb_queries(_, target):
+def gdb_queries(*unused):
     """Miscellaneous query commands not covered in other tests"""
 
     hexfile = test_harness.build_program(['count.S'], image_type='raw')
@@ -509,7 +509,7 @@ def gdb_queries(_, target):
 
 
 @test_harness.test(['emulator'])
-def gdb_vcont(_, target):
+def gdb_vcont(*unused):
     hexfile = test_harness.build_program(['count.S'], image_type='raw')
     with EmulatorProcess(hexfile), DebugConnection() as conn:
         # Set breakpoint
@@ -525,7 +525,7 @@ def gdb_vcont(_, target):
 
 
 @test_harness.test(['emulator'])
-def gdb_crash(_, target):
+def gdb_crash(*unused):
     hexfile = test_harness.build_program(['crash.S'], image_type='raw')
     with EmulatorProcess(hexfile), DebugConnection() as conn:
         conn.expect('c', 'S05')

@@ -62,9 +62,11 @@ import defines::*;
                 if len(fields) == 2:
                     out.write('    logic ' + name + ';\n')
                 elif fields[1].startswith('['):
-                    out.write('    logic' + ' '.join(fields[1:-1]) + ' ' + name + ';\n')
+                    out.write('    logic' +
+                              ' '.join(fields[1:-1]) + ' ' + name + ';\n')
                 else:
-                    out.write('    ' + ' '.join(fields[1:-1]) + ' ' + name + ';\n')
+                    out.write(
+                        '    ' + ' '.join(fields[1:-1]) + ' ' + name + ';\n')
 
     out.write('    int cycle;\n')
     out.write('\n    ' + modulename + ' ' + modulename + '(.*);\n')

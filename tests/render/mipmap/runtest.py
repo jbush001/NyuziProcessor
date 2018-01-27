@@ -21,5 +21,6 @@ sys.path.insert(0, '../..')
 import test_harness
 
 test_harness.register_render_test('render_mipmap', ['main.cpp'],
-    '9bbf7b8615324751fc45bab930ccfdf030717785', targets=['emulator'])
+                                  '9bbf7b8615324751fc45bab930ccfdf030717785',
+                                  targets=['emulator'])
 test_harness.execute_tests()

@@ -21,5 +21,6 @@ sys.path.insert(0, '../..')
 import test_harness
 
 test_harness.register_render_test('render_depthbuffer', ['main.cpp'],
-    'ce84385b22052b3d3870ecd132b5b06802ac893d', targets=['emulator'])
+                                  'ce84385b22052b3d3870ecd132b5b06802ac893d',
+                                  targets=['emulator'])
 test_harness.execute_tests()

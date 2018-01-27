@@ -54,6 +54,7 @@ else:
 VSIM_PATH = BIN_DIR + 'nyuzi_vsim'
 EMULATOR_PATH = BIN_DIR + 'nyuzi_emulator'
 
+
 class TestException(Exception):
     """This exception is raised for test failures"""
     pass
@@ -67,6 +68,7 @@ parser.add_argument('--debug', action='store_true',
 parser.add_argument('names', nargs=argparse.REMAINDER,
                     help='names of specific tests to run')
 args = parser.parse_args()
+
 
 def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags=None):
     """Compile/assemble one or more files.
@@ -193,7 +195,8 @@ def reset_fpga():
     try:
         subprocess.check_output(args)
     except subprocess.CalledProcessError as exc:
-        raise TestException('Failed to reset dev board:\n' + exc.output.decode())
+        raise TestException(
+            'Failed to reset dev board:\n' + exc.output.decode())
 
 
 def run_program(
@@ -321,7 +324,7 @@ def run_kernel(
                             stderr=subprocess.STDOUT)
 
     output = run_program(target=target, block_device=block_file,
-                       timeout=timeout, executable=PROJECT_TOP + '/software/kernel/kernel.hex')
+                         timeout=timeout, executable=PROJECT_TOP + '/software/kernel/kernel.hex')
 
     if DEBUG:
         print('Program Output:\n' + output)
@@ -534,7 +537,7 @@ def execute_tests():
             print(output)
 
     print('{}/{} tests failed'.format(test_run_count - test_pass_count,
-        test_run_count))
+                                      test_run_count))
     if failing_tests != []:
         sys.exit(1)
 
@@ -697,8 +700,6 @@ def register_generic_assembly_tests(tests, targets=None):
     register_tests(_run_generic_assembly_test, tests, targets)
 
 
-
-
 def register_render_test(name, source_files, expected_hash, targets=None):
     """
     The render test will compile the source files, run the program, then
@@ -733,12 +734,12 @@ def register_render_test(name, source_files, expected_hash, targets=None):
         ]
 
         build_program(source_files=source_files,
-            cflags=render_cflags)
+                      cflags=render_cflags)
         run_program(target=target,
-            dump_file=RAW_FB_DUMP_FILE,
-            dump_base=0x200000,
-            dump_length=0x12c000,
-            flush_l2=True)
+                    dump_file=RAW_FB_DUMP_FILE,
+                    dump_base=0x200000,
+                    dump_length=0x12c000,
+                    flush_l2=True)
         with open(RAW_FB_DUMP_FILE, 'rb') as f:
             contents = f.read()
 
@@ -747,8 +748,8 @@ def register_render_test(name, source_files, expected_hash, targets=None):
         actual_hash = sha.hexdigest()
         if actual_hash != expected_hash:
             subprocess.check_output(['convert', '-depth', '8', '-size',
-            '640x480', 'rgba:' + RAW_FB_DUMP_FILE, PNG_DUMP_FILE])
+                                     '640x480', 'rgba:' + RAW_FB_DUMP_FILE, PNG_DUMP_FILE])
             raise TestException('render test failed, bad checksum ' + str(actual_hash)
-                + ' output image written to ' + PNG_DUMP_FILE)
+                                + ' output image written to ' + PNG_DUMP_FILE)
 
     register_tests(run_render_test, [name], targets)

@@ -206,7 +206,7 @@ class JTAGTestFixture(object):
 
 
 @test_harness.test(['verilator'])
-def jtag_idcode(_, target):
+def jtag_idcode(*unused):
     """
     Validate response to IDCODE request
     """
@@ -223,7 +223,7 @@ def jtag_idcode(_, target):
 
 
 @test_harness.test(['verilator'])
-def jtag_reset(_, target):
+def jtag_reset(*unused):
     """
     Test transition to reset state
     """
@@ -243,7 +243,7 @@ def jtag_reset(_, target):
 
 
 @test_harness.test(['verilator'])
-def jtag_bypass(_, target):
+def jtag_bypass(*unused):
     """
     Validate BYPASS instruction, which is a single bit data register
     We should get what we send, shifted by one bit.
@@ -256,7 +256,7 @@ def jtag_bypass(_, target):
 
 
 @test_harness.test(['verilator'])
-def jtag_instruction_shift(_, target):
+def jtag_instruction_shift(*unused):
     """
     Ensure instruction bits shifted into TDI come out TDO. This is necessary
     to properly chain JTAG devices together.
@@ -272,7 +272,7 @@ def jtag_instruction_shift(_, target):
 
 
 @test_harness.test(['verilator'])
-def jtag_data_transfer(_, target):
+def jtag_data_transfer(*unused):
     """
     Validate bi-directional transfer. The TRANSFER_DATA instruction
     returns the old value of the control register while shifting a new
@@ -289,7 +289,7 @@ def jtag_data_transfer(_, target):
 
 
 @test_harness.test(['verilator'])
-def jtag_inject(_, target):
+def jtag_inject(*unused):
     """
     Test instruction injection, with multiple threads
     """
@@ -349,7 +349,7 @@ def jtag_inject(_, target):
 
 
 @test_harness.test(['verilator'])
-def jtag_inject_rollback(_, target):
+def jtag_inject_rollback(*unused):
     """
     Test reading status register. I put in an instruction that will miss the
     cache, so I know it will roll back.
@@ -361,18 +361,20 @@ def jtag_inject_rollback(_, target):
 
         # Load register values in thread 0
         # First value to transfer
-        fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0x10000)  # High address, not cached
+        # High address, not cached
+        fixture.jtag_transfer(INST_TRANSFER_DATA, 32, 0x10000)
         fixture.jtag_transfer(INST_INJECT_INST, 32, 0xac000012)  # getcr s0, 18
         fixture.jtag_transfer(INST_STATUS, 2, 0)
         fixture.expect_data(STATUS_READY)
-        fixture.jtag_transfer(INST_INJECT_INST, 32, 0xa8000000)  # load_32 s0, (s0)
+        fixture.jtag_transfer(INST_INJECT_INST, 32,
+                              0xa8000000)  # load_32 s0, (s0)
         fixture.jtag_transfer(INST_STATUS, 2, 0)
         fixture.expect_data(STATUS_ROLLED_BACK)
 
 
 # XXX currently disabled because of issue #128
 #@test_harness.test(['verilator'])
-def jtag_read_write_pc(_, target):
+def jtag_read_write_pc(*unused):
     """
     Use the call instruction to read the program counter. The injection
     logic is supposed to simulate each instruction having the PC of the

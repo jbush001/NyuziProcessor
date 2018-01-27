@@ -21,5 +21,6 @@ sys.path.insert(0, '../..')
 import test_harness
 
 test_harness.register_render_test('render_fill', ['main.cpp'],
-    '9075bd5bff66c268c79f6551f48c450f4f6e6bd7', targets=['emulator'])
+                                  '9075bd5bff66c268c79f6551f48c450f4f6e6bd7',
+                                  targets=['emulator'])
 test_harness.execute_tests()
