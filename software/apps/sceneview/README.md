@@ -56,13 +56,10 @@ loop, and will cause the worker threads to stop:
 
      	return 0;
 
-2. Increase the size of the virtual SDMMC device to fit the resource files. In hardware/testbench/sim_sdmmc.sv,
-change MAX_BLOCK_DEVICE_SIZE to 'h2000000 (32 MB)
-
-3. Increase the amount of RAM configured in the FPGA configuration. In hardware/testbench/soc_tb.sv,
+2. Increase the amount of RAM configured in the FPGA configuration. In hardware/testbench/soc_tb.sv,
 change MEM_SIZE to 'h3000000 (48 MB)
 
-4. Type make in the hardware directory to rebuild the verilator model
+3. Type make in the hardware directory to rebuild the verilator model
 
 Once you have made these changes, you can run the test by typing 'make verirun'. This is
 compute intensive and will take hours to complete. You should not run this with

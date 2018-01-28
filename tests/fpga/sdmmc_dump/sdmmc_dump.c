@@ -48,9 +48,9 @@ int main()
             break;
         }
 
-        for (int address = 0; address < BLOCK_SIZE; address += 16)
+        for (int address = 0; address < SDMMC_BLOCK_SIZE; address += 16)
         {
-            printf("%08x ", address + block_num * BLOCK_SIZE);
+            printf("%08x ", address + block_num * SDMMC_BLOCK_SIZE);
             for (int offset = 0; offset < 16; offset++)
                 printf("%02x ", buf[address + offset]);
 

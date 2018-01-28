@@ -435,7 +435,7 @@ int main()
             return 1;
 
         printf("done\n");
-        for (int address = 0; address < BLOCK_SIZE; address += 16)
+        for (int address = 0; address < SDMMC_BLOCK_SIZE; address += 16)
         {
             printf("%08x ", address);
             for (int offset = 0; offset < 16; offset++)

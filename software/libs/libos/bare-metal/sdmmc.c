@@ -24,13 +24,15 @@
 // is not set in hardware/fpga/fpga_top.sv.
 
 #define MAX_RETRIES 100
+#define DATA_TOKEN 0xfe
 
 typedef enum
 {
     SD_CMD_RESET = 0,
     SD_CMD_INIT = 1,
     SD_CMD_SET_BLOCK_LEN = 0x16,
-    SD_CMD_READ_BLOCK = 0x17
+    SD_CMD_READ_SINGLE_BLOCK = 0x17,
+    SD_CMD_WRITE_SINGLE_BLOCK = 0x24
 } SDCommand;
 
 static void set_cs(int level)
@@ -93,7 +95,7 @@ int init_sdmmc_device(void)
     result = send_sd_command(SD_CMD_RESET, 0);
     if (result != 1)
     {
-        printf("init_sdmmc_device: error %d SD_CMD_RESET\n", result);
+        printf("init_sdmmc_device: SD_CMD_RESET unexpected response %02x\n", result);
         return -1;
     }
 
@@ -106,16 +108,16 @@ int init_sdmmc_device(void)
 
         if (result != 1)
         {
-            printf("init_sdmmc_device: error %d SD_CMD_INIT\n", result);
+            printf("init_sdmmc_device: SD_CMD_INIT unexpected response %02x\n", result);
             return -1;
         }
     }
 
     // Configure the block size
-    result = send_sd_command(SD_CMD_SET_BLOCK_LEN, BLOCK_SIZE);
+    result = send_sd_command(SD_CMD_SET_BLOCK_LEN, SDMMC_BLOCK_SIZE);
     if (result != 0)
     {
-        printf("init_sdmmc_device: error %d SD_CMD_SET_BLOCK_LEN\n", result);
+        printf("init_sdmmc_device: SD_CMD_SET_BLOCK_LEN unexpected response %02x\n", result);
         return -1;
     }
 
@@ -128,20 +130,67 @@ int init_sdmmc_device(void)
 int read_sdmmc_device(unsigned int block_address, void *ptr)
 {
     int result;
+    int data_timeout;
 
-    result = send_sd_command(SD_CMD_READ_BLOCK, block_address);
+    result = send_sd_command(SD_CMD_READ_SINGLE_BLOCK, block_address);
     if (result != 0)
     {
-        printf("read_sdmmc_device: error %d SD_CMD_READ_BLOCK\n", result);
+        printf("read_sdmmc_device: SD_CMD_READ_SINGLE_BLOCK unexpected response %02x\n", result);
         return -1;
     }
 
-    for (int i = 0; i < BLOCK_SIZE; i++)
+    // Wait for start of data packet
+    data_timeout = 10000;
+    while (spi_transfer(0xff) != DATA_TOKEN)
+    {
+        if (--data_timeout == 0)
+        {
+            printf("read_sdmmc_device: timed out waiting for data token\n");
+            return -1;
+        }
+    }
+
+    for (int i = 0; i < SDMMC_BLOCK_SIZE; i++)
         ((char*) ptr)[i] = spi_transfer(0xff);
 
     // checksum (ignored)
     spi_transfer(0xff);
     spi_transfer(0xff);
 
-    return BLOCK_SIZE;
+    return SDMMC_BLOCK_SIZE;
+}
+
+int write_sdmmc_device(unsigned int block_address, void *ptr)
+{
+    int result;
+    int data_timeout;
+
+    result = send_sd_command(SD_CMD_WRITE_SINGLE_BLOCK, block_address);
+    if (result != 0)
+    {
+        printf("write_sdmmc_device: SD_CMD_WRITE_SINGLE_BLOCK unexpected response %02x\n", result);
+        return -1;
+    }
+
+    spi_transfer(DATA_TOKEN);
+    for (int i = 0; i < SDMMC_BLOCK_SIZE; i++)
+        spi_transfer(((char*) ptr)[i]);
+
+    // checksum (ignored)
+    spi_transfer(0xff);
+    spi_transfer(0xff);
+
+    result = spi_transfer(0xff);
+    if (result != 0x05)
+    {
+        printf("write_sdmmc_device: write failed, response %02x\n", result);
+        printf("%02x %02x %02x %02x\n",
+            spi_transfer(0xff),
+            spi_transfer(0xff),
+            spi_transfer(0xff),
+            spi_transfer(0xff));
+        return -1;
+    }
+
+    return SDMMC_BLOCK_SIZE;
 }

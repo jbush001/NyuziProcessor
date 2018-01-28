@@ -65,13 +65,10 @@ generates continuous keypresses, but this will cause an infinite loop with this 
         +//     processKeyboardEvents();
 
 
-3. Increase the size of the virtual SDMMC device to fit the resource files. In hardware/testbench/sim_sdmmc.sv,
-change MAX_BLOCK_DEVICE_SIZE to 'h2000000 (32 MB)
-
-4. Increase the amount of RAM configured in the FPGA configuration. In hardware/testbench/soc_tb.sv,
+3. Increase the amount of RAM configured in the FPGA configuration. In hardware/testbench/soc_tb.sv,
 change MEM_SIZE to 'h4000000 (64 MB)
 
-5. Type make in the hardware directory to rebuild the verilator model
+4. Type make in the hardware directory to rebuild the verilator model
 
 Once you have made these changes, run the test by typing 'make verirun'.
 

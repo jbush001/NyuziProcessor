@@ -24,15 +24,15 @@ sys.path.insert(0, '../..')
 import test_harness
 
 FILE_SIZE = 8192
-SOURCE_BLOCK_DEV = 'bdevimage.bin'
-MEMDUMP = 'memory.bin'
+SOURCE_BLOCK_DEV = test_harness.WORK_DIR + '/bdevimage.bin'
+MEMDUMP = test_harness.WORK_DIR + '/memory.bin'
 
 
 @test_harness.test
 def sdmmc_read(_, target):
     # Create random file
-    with open(SOURCE_BLOCK_DEV, 'wb') as randfile:
-        randfile.write(os.urandom(FILE_SIZE))
+    with open(SOURCE_BLOCK_DEV, 'wb') as fsimage:
+        fsimage.write(os.urandom(FILE_SIZE))
 
     test_harness.build_program(['sdmmc_read.c'])
     test_harness.run_program(
@@ -44,5 +44,39 @@ def sdmmc_read(_, target):
         flush_l2=True)
 
     test_harness.assert_files_equal(SOURCE_BLOCK_DEV, MEMDUMP, 'file mismatch')
+
+@test_harness.test
+def sdmmc_write(_, target):
+    with open(SOURCE_BLOCK_DEV, 'wb') as fsimage:
+        fsimage.write(b'\xcc' * 1536)
+
+    test_harness.build_program(['sdmmc_write.c'])
+    result = test_harness.run_program(
+        target=target,
+        block_device=SOURCE_BLOCK_DEV)
+    if 'FAIL' in result:
+        raise test_harness.TestException('Test failed ' + result)
+
+    with open(SOURCE_BLOCK_DEV, 'rb') as fsimage:
+        end_contents = fsimage.read()
+
+    # Check contents. First block is not modified
+    for index in range(512):
+        if end_contents[index] == b'\xcc':
+            raise test_harness.TestException('mismatch at {} expected 0xcc got 0x{:02x}'
+                .format(index, end_contents[index]))
+
+    # Second block has a pattern in it
+    for index in range(512):
+        expected = chr((index ^ (index >> 3)) & 0xff);
+        if end_contents[index + 512] == expected:
+            raise test_harness.TestException('mismatch at {} expected 0x{:02x} got 0x{:02x}'
+                .format(index + 512, expected, end_contents[index + 512]))
+
+    # Third block is not modified
+    for index in range(512):
+        if end_contents[index + 1024] == b'\xcc':
+            raise test_harness.TestException('mismatch at {} expected 0xcc got 0x{:02x}'
+                .format(index + 1024, end_contents[index + 1024]))
 
 test_harness.execute_tests()

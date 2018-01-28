@@ -57,10 +57,6 @@ line arguments (Verilog prefixes arguments with a plus sign):
 | +dumpmems                       | Dump the sizes of all internal FIFOs and SRAMs to standard out and exit. Used by tools/misc/extract_mems.py |
 | +jtag_port=*port*               | Opens a socket waiting for a connection on the given port. Commands received here will be sent over JTAG. See sim_jtag.sv for more details |
 
-1. The maximum size of the virtual block device is hard coded to 8MB. To
-increase it, change the parameter MAX_BLOCK_DEVICE_SIZE in
-testbench/sim_sdmmc.sv
-
 The amount of RAM available in the testbench is hard coded to 16MB. To alter
 it, change MEM_SIZE in testbench/verilator_tb.sv.
 

@@ -65,8 +65,8 @@ int read_block(int block_num, void *ptr)
 {
     if (use_ramdisk)
     {
-        memcpy(ptr, RAMDISK_BASE + block_num * BLOCK_SIZE, BLOCK_SIZE);
-        return BLOCK_SIZE;
+        memcpy(ptr, RAMDISK_BASE + block_num * SDMMC_BLOCK_SIZE, SDMMC_BLOCK_SIZE);
+        return SDMMC_BLOCK_SIZE;
     }
     else
         return read_sdmmc_device(block_num, ptr);
@@ -74,7 +74,7 @@ int read_block(int block_num, void *ptr)
 
 static int init_file_system(void)
 {
-    char super_block[BLOCK_SIZE];
+    char super_block[SDMMC_BLOCK_SIZE];
     int num_directory_blocks;
     int block_num;
     struct fs_header *header;
@@ -102,12 +102,12 @@ static int init_file_system(void)
     }
 
     num_directory_blocks = ((header->num_directory_entries - 1) * sizeof(struct directory_entry)
-                            + sizeof(struct fs_header) + BLOCK_SIZE - 1) / BLOCK_SIZE;
-    fs_directory = (struct fs_header*) malloc(num_directory_blocks * BLOCK_SIZE);
-    memcpy(fs_directory, super_block, BLOCK_SIZE);
+                            + sizeof(struct fs_header) + SDMMC_BLOCK_SIZE - 1) / SDMMC_BLOCK_SIZE;
+    fs_directory = (struct fs_header*) malloc(num_directory_blocks * SDMMC_BLOCK_SIZE);
+    memcpy(fs_directory, super_block, SDMMC_BLOCK_SIZE);
     for (block_num = 1; block_num < num_directory_blocks; block_num++)
     {
-        if (read_block(block_num, ((char*)fs_directory) + BLOCK_SIZE * block_num) <= 0)
+        if (read_block(block_num, ((char*)fs_directory) + SDMMC_BLOCK_SIZE * block_num) <= 0)
         {
             errno = EIO;
             return -1;
@@ -195,7 +195,7 @@ int read(int fd, void *buf, unsigned int nbytes)
     struct file_descriptor *fd_ptr;
     unsigned int slice_length;
     unsigned int total_read;
-    char current_block[BLOCK_SIZE];
+    char current_block[SDMMC_BLOCK_SIZE];
     int offset_in_block;
     int block_number;
 
@@ -219,13 +219,13 @@ int read(int fd, void *buf, unsigned int nbytes)
     if (nbytes > (unsigned int) size_to_copy)
         nbytes = (unsigned int) size_to_copy;
 
-    offset_in_block = fd_ptr->current_offset & (BLOCK_SIZE - 1);
-    block_number = (fd_ptr->start_offset + fd_ptr->current_offset) / BLOCK_SIZE;
+    offset_in_block = fd_ptr->current_offset & (SDMMC_BLOCK_SIZE - 1);
+    block_number = (fd_ptr->start_offset + fd_ptr->current_offset) / SDMMC_BLOCK_SIZE;
 
     total_read = 0;
     while (total_read < nbytes)
     {
-        if (offset_in_block == 0 && (nbytes - total_read) >= BLOCK_SIZE)
+        if (offset_in_block == 0 && (nbytes - total_read) >= SDMMC_BLOCK_SIZE)
         {
             if (read_block(block_number, (char*) buf + total_read) <= 0)
             {
@@ -233,7 +233,7 @@ int read(int fd, void *buf, unsigned int nbytes)
                 return -1;
             }
 
-            total_read += BLOCK_SIZE;
+            total_read += SDMMC_BLOCK_SIZE;
             block_number++;
         }
         else
@@ -244,7 +244,7 @@ int read(int fd, void *buf, unsigned int nbytes)
                 return -1;
             }
 
-            slice_length = BLOCK_SIZE - offset_in_block;
+            slice_length = SDMMC_BLOCK_SIZE - offset_in_block;
             if (slice_length > nbytes - total_read)
                 slice_length = nbytes - total_read;
 

@@ -1,5 +1,5 @@
 //
-// Copyright 2011-2015 Jeff Bush
+// Copyright 2018 Jeff Bush
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@
 #include <stdio.h>
 #include <bare-metal/sdmmc.h>
 
-#define TRANSFER_LENGTH 16
-
 int main()
 {
-    char *buf = (char*) 0x200000;
+    unsigned char buf1[SDMMC_BLOCK_SIZE];
+    unsigned char buf2[SDMMC_BLOCK_SIZE];
+    unsigned int i;
 
     if (init_sdmmc_device() < 0)
     {
@@ -29,13 +29,21 @@ int main()
         return -1;
     }
 
-    // Read blocks in reverse order to verify address is set correctly.
-    for (int i = TRANSFER_LENGTH - 1; i >= 0; i--)
+    // write a block
+    for (i = 0; i < SDMMC_BLOCK_SIZE; i++)
+        buf1[i] = (i ^ (i >> 3)) & 0xff;
+
+    write_sdmmc_device(1, buf1);
+
+    // read it back
+    read_sdmmc_device(1, buf2);
+    for (i = 0; i < SDMMC_BLOCK_SIZE; i++)
     {
-        if (read_sdmmc_device(i, buf + i * SDMMC_BLOCK_SIZE) < 0)
+        if (buf2[i] != ((i ^ (i >> 3)) & 0xff))
         {
-            printf("read_sdmmc_device returned error\n");
-            return 1;
+            printf("FAIL: readback mismatch at offset %d, expected %02x got %02x\n",
+                i, (i ^ (i >> 3)) & 0xff, buf2[i]);
+            break;
         }
     }
 
