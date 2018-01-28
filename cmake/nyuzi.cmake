@@ -129,7 +129,7 @@ macro(add_nyuzi_executable name)
     endif()
 
     file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/run_fpga
-        CONTENT "$<TARGET_FILE:serial_boot> ${SERIAL_BOOT_ARGS} \\$$SERIAL_PORT ${CMAKE_CURRENT_BINARY_DIR}/${name}.hex ${SERIAL_BOOT_FS}")
+        CONTENT "$<TARGET_FILE:serial_boot> ${SERIAL_BOOT_ARGS} \$SERIAL_PORT ${CMAKE_CURRENT_BINARY_DIR}/${name}.hex ${SERIAL_BOOT_FS}")
 
     # Kludge: file GENERATE doesn't allow setting permissions, so do it in the makefile
     add_custom_command(TARGET ${name}

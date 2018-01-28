@@ -26,7 +26,7 @@ add_custom_target(synthesize
     DEPENDS bootrom)
 
 add_custom_target(program
-    COMMAND quartus_pgm -m jtag -o "P;output_files/de2_115.sof")
+    COMMAND quartus_pgm -m jtag -o \"P\;output_files/de2_115.sof\")
 
 
 
