@@ -21,12 +21,16 @@
 #include "sdmmc.h"
 
 #define KEY_BUFFER_SIZE 64
+#define SERIAL_BUFFER_SIZE 64
 
 extern void send_host_interrupt(uint32_t num);
 
-static uint32_t key_buffer[KEY_BUFFER_SIZE];
-static int key_buffer_head;
-static int key_buffer_tail;
+static uint32_t key_buf[KEY_BUFFER_SIZE];
+static int key_buf_head;
+static int key_buf_tail;
+static uint8_t serial_read_buf[SERIAL_BUFFER_SIZE];
+static int serial_read_buf_head;
+static int serial_read_buf_tail;
 static struct processor *proc;
 
 void init_device(struct processor *_proc)
@@ -69,24 +73,40 @@ uint32_t read_device_register(uint32_t address)
     switch (address)
     {
         case REG_SERIAL_STATUS:
-            return 1;
+            return 1 | ((serial_read_buf_head != serial_read_buf_tail) ? 2 : 0);
+
+        case REG_SERIAL_INPUT:
+            if (serial_read_buf_head != serial_read_buf_tail)
+            {
+                value = serial_read_buf[serial_read_buf_tail];
+                serial_read_buf_tail = (serial_read_buf_tail + 1)
+                    % SERIAL_BUFFER_SIZE;
+            }
+            else
+                value = 0;
+
+            if (serial_read_buf_head == serial_read_buf_tail)
+                clear_interrupt(proc, INT_UART_RX);
+
+            return value;
+
 
         case REG_KEYBOARD_STATUS:
-            if (key_buffer_head != key_buffer_tail)
+            if (key_buf_head != key_buf_tail)
                 return 1;
             else
                 return 0;
 
         case REG_KEYBOARD_READ:
-            if (key_buffer_head != key_buffer_tail)
+            if (key_buf_head != key_buf_tail)
             {
-                value = key_buffer[key_buffer_tail];
-                key_buffer_tail = (key_buffer_tail + 1) % KEY_BUFFER_SIZE;
+                value = key_buf[key_buf_tail];
+                key_buf_tail = (key_buf_tail + 1) % KEY_BUFFER_SIZE;
             }
             else
                 value = 0;
 
-            if (key_buffer_head == key_buffer_tail)
+            if (key_buf_head == key_buf_tail)
                 clear_interrupt(proc, INT_PS2_RX);
 
             return value;
@@ -102,12 +122,25 @@ uint32_t read_device_register(uint32_t address)
 
 void enqueue_key(uint32_t scan_code)
 {
-    key_buffer[key_buffer_head] = scan_code;
-    key_buffer_head = (key_buffer_head + 1) % KEY_BUFFER_SIZE;
+    key_buf[key_buf_head] = scan_code;
+    key_buf_head = (key_buf_head + 1) % KEY_BUFFER_SIZE;
 
-    // If the buffer is full, discard the oldest character
-    if (key_buffer_head == key_buffer_tail)
-        key_buffer_tail = (key_buffer_tail + 1) % KEY_BUFFER_SIZE;
+    // If the buf is full, discard the oldest character
+    if (key_buf_head == key_buf_tail)
+        key_buf_tail = (key_buf_tail + 1) % KEY_BUFFER_SIZE;
 
     raise_interrupt(proc, INT_PS2_RX);
+}
+
+void enqueue_serial_char(uint32_t scan_code)
+{
+    serial_read_buf[serial_read_buf_head] = scan_code;
+    serial_read_buf_head = (serial_read_buf_head + 1) % SERIAL_BUFFER_SIZE;
+
+    // If the buf is full, discard the oldest character.
+    // XXX Technically this should set the overrun flag.
+    if (serial_read_buf_head == serial_read_buf_tail)
+        serial_read_buf_tail = (serial_read_buf_tail + 1) % SERIAL_BUFFER_SIZE;
+
+    raise_interrupt(proc, INT_UART_RX);
 }

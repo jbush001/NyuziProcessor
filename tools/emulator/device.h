@@ -22,6 +22,7 @@
 // Memory mapped peripheral register addresses
 #define REG_HOST_INTERRUPT  0xffff0018
 #define REG_SERIAL_STATUS   0xffff0040
+#define REG_SERIAL_INPUT    0xffff0044
 #define REG_SERIAL_OUTPUT   0xffff0048
 #define REG_KEYBOARD_STATUS 0xffff0080
 #define REG_KEYBOARD_READ   0xffff0084
@@ -48,5 +49,6 @@ void init_device(struct processor *proc);
 void write_device_register(uint32_t address, uint32_t value);
 uint32_t read_device_register(uint32_t address);
 void enqueue_key(uint32_t scan_code);
+void enqueue_serial_char(uint32_t scan_code);
 
 #endif

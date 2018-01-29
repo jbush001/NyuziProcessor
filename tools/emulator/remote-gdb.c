@@ -34,7 +34,7 @@
 
 #define TRAP_SIGNAL 5 // SIGTRAP
 
-extern void check_interrupt_pipe(struct processor*);
+extern void poll_inputs(struct processor*);
 static void __attribute__ ((format (printf, 1, 2))) send_formatted_response(const char *format, ...);
 
 static int client_socket = -1;
@@ -147,7 +147,7 @@ static void run_until_interrupt(struct processor *proc, bool enable_fb_window)
         {
             update_frame_buffer(proc);
             poll_fb_window_event();
-            check_interrupt_pipe(proc);
+            poll_inputs(proc);
         }
 
         // Break on error or if data is ready

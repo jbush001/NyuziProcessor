@@ -15,6 +15,7 @@
 # limitations under the License.
 #
 
+import subprocess
 import sys
 
 sys.path.insert(0, '../..')
@@ -22,11 +23,33 @@ import test_harness
 
 
 @test_harness.test(['verilator'])
-def uart(_, target):
-    test_harness.build_program(['uart.c'])
-    result = test_harness.run_program(target)
+def uart_hw_test(*unused):
+    test_harness.build_program(['uart_hw_test.c'])
+    result = test_harness.run_program(target='verilator')
     if 'PASS' not in result:
         raise test_harness.TestException(
             'test did not indicate pass\n' + result)
+
+@test_harness.test(['emulator'])
+def uart_echo_test(*unused):
+    """
+    The emulator direct all UART traffic through the terminal that
+    it is launched from. This validates transfers in both directions.
+    """
+    executable = test_harness.build_program(['uart_echo_test.c'])
+
+    args = [
+        test_harness.EMULATOR_PATH,
+        executable
+    ]
+
+    in_str = 'THE QUICK brOwn FOX jumPED Over THE LAZY DOG\n'
+    process = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    out_str, _ = test_harness.TimedProcessRunner().communicate(process=process,
+        timeout=10, input=in_str.encode('ascii'))
+    out_str = out_str.decode()
+    if not 'the quick brown fox jumped over the lazy dog' in out_str:
+        raise test_harness.TestException('Subprocess returned incorrect result \"'
+            + out_str + '"')
 
 test_harness.execute_tests()

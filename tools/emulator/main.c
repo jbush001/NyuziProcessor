@@ -34,7 +34,7 @@
 #include "sdmmc.h"
 #include "util.h"
 
-extern void check_interrupt_pipe(struct processor*);
+extern void poll_inputs(struct processor*);
 
 static int recv_interrupt_fd = -1;
 static int send_interrupt_fd = -1;
@@ -69,40 +69,60 @@ static uint32_t parse_num_arg(const char *argval)
         return (uint32_t) strtoul(argval, NULL, 10);
 }
 
-// An external process can send interrupts to the emulator by writing to a
-// named pipe. Poll the pipe to determine if any messages are pending. If
-// so, call into the proc to dispatch.
-void check_interrupt_pipe(struct processor *proc)
+// Check for input events that would normally block.
+void poll_inputs(struct processor *proc)
 {
     int result;
     char interrupt_id;
 
-    if (recv_interrupt_fd < 0)
-        return;
-
-    result = can_read_file_descriptor(recv_interrupt_fd);
-    if (result == 0)
-        return;
-
-    if (result < 0)
+    // An external process can send interrupts to the emulator by writing to a
+    // named pipe. Poll the pipe to determine if any messages are pending. If
+    // so, call into the processor to dispatch.
+    if (recv_interrupt_fd > 0)
     {
-        perror("check_interrupt_pipe: select failed");
-        exit(1);
+        result = can_read_file_descriptor(recv_interrupt_fd);
+        if (result != 0)
+        {
+            if (result < 0)
+            {
+                perror("poll_inputs: select failed");
+                exit(1);
+            }
+
+            if (read(recv_interrupt_fd, &interrupt_id, 1) < 1)
+            {
+                perror("poll_inputs: read failed");
+                exit(1);
+            }
+
+            if (interrupt_id > 16)
+            {
+                fprintf(stderr, "Received invalidate interrupt ID %d\n", interrupt_id);
+                return; // Ignore invalid interrupt IDs
+            }
+
+            raise_interrupt(proc, 1 << interrupt_id);
+        }
     }
 
-    if (read(recv_interrupt_fd, &interrupt_id, 1) < 1)
+    // Typing in the terminal that launched emulator will emulate serial
+    // transfers.
+    if (can_read_file_descriptor(STDIN_FILENO))
     {
-        perror("check_interrupt_pipe: read failed");
-        exit(1);
-    }
+        char inbuf[64];
+        int got;
+        int i;
 
-    if (interrupt_id > 16)
-    {
-        fprintf(stderr, "Received invalidate interrupt ID %d\n", interrupt_id);
-        return; // Ignore invalid interrupt IDs
-    }
+        got = read(STDIN_FILENO, inbuf, sizeof(inbuf));
+        if (got < 1)
+        {
+            perror("error reading from stdin");
+            exit(1);
+        }
 
-    raise_interrupt(proc, 1 << interrupt_id);
+        for (i = 0; i < got; i++)
+            enqueue_serial_char(inbuf[i]);
+    }
 }
 
 void send_host_interrupt(uint32_t num)
@@ -353,13 +373,13 @@ int main(int argc, char *argv[])
                 {
                     update_frame_buffer(proc);
                     poll_fb_window_event();
-                    check_interrupt_pipe(proc);
+                    poll_inputs(proc);
                 }
             }
             else
             {
                 while (execute_instructions(proc, 1000000))
-                    check_interrupt_pipe(proc);
+                    poll_inputs(proc);
             }
 
             break;

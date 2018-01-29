@@ -149,14 +149,14 @@ class TimedProcessRunner(threading.Thread):
         self.process = None
         self.timeout = 0
 
-    def communicate(self, process, timeout):
+    def communicate(self, process, timeout, input=''):
         """Call process.communicate(), but throw exception if it has not completed
         before 'timeout' seconds have elapsed"""
 
         self.timeout = timeout
         self.process = process
         self.start()  # Start watchdog
-        result = self.process.communicate()
+        result = self.process.communicate(input=input)
         if self.finished.is_set():
             raise TestException('Test timed out')
         else:
