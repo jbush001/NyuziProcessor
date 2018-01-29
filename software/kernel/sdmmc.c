@@ -21,6 +21,7 @@
 #include "trap.h"
 
 #define MAX_RETRIES 100
+#define DATA_TOKEN 0xfe
 
 enum sd_command
 {
@@ -119,12 +120,21 @@ int read_sdmmc_device(unsigned int block_address, void *ptr)
 {
     int result;
     int old_flags;
+    int data_timeout;
 
     old_flags = acquire_spinlock_int(&sd_lock);
 
     result = send_sd_command(SD_CMD_READ_BLOCK, block_address);
     if (result != 0)
         return -1;
+
+    // Wait for start of data packet
+    data_timeout = 10000;
+    while (spi_transfer(0xff) != DATA_TOKEN)
+    {
+        if (--data_timeout == 0)
+            return -1;
+    }
 
     for (int i = 0; i < BLOCK_SIZE; i++)
         ((char*) ptr)[i] = spi_transfer(0xff);

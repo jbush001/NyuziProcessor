@@ -46,10 +46,12 @@ if os.path.isdir(PROJECT_TOP + '/build'):
     # Out-of-tree build
     BIN_DIR = PROJECT_TOP + '/build/bin/'
     LIB_DIR = PROJECT_TOP + '/build/software/libs/'
+    KERNEL_DIR = PROJECT_TOP + '/build/software/kernel'
 else:
     # In tree build
     BIN_DIR = PROJECT_TOP + '/bin/'
     LIB_DIR = PROJECT_TOP + '/software/libs/'
+    KERNEL_DIR = PROJECT_TOP + '/software/kernel'
 
 VSIM_PATH = BIN_DIR + 'nyuzi_vsim'
 EMULATOR_PATH = BIN_DIR + 'nyuzi_emulator'
@@ -324,7 +326,8 @@ def run_kernel(
                             stderr=subprocess.STDOUT)
 
     output = run_program(target=target, block_device=block_file,
-                         timeout=timeout, executable=PROJECT_TOP + '/software/kernel/kernel.hex')
+                         timeout=timeout, executable=KERNEL_DIR +
+                         '/kernel.hex')
 
     if DEBUG:
         print('Program Output:\n' + output)
