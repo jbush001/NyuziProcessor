@@ -107,12 +107,14 @@ int main(int argc, const char *argv[])
     for (file_index = 0; file_index < num_directory_entries; file_index++)
     {
         char tmp[0x4000];
+        unsigned int slice_length;
+
         fseek(output_fp, header->dir[file_index].start_offset, SEEK_SET);
         FILE *source_fp = fopen(argv[file_index + 2], "rb");
         unsigned int left_to_copy = header->dir[file_index].length;
         while (left_to_copy > 0)
         {
-            unsigned int slice_length = sizeof(tmp);
+            slice_length = sizeof(tmp);
             if (left_to_copy < slice_length)
                 slice_length = left_to_copy;
 
@@ -131,6 +133,19 @@ int main(int argc, const char *argv[])
             }
 
             left_to_copy -= slice_length;
+        }
+
+        // Pad image to a block size
+        slice_length = BLOCK_SIZE - (ftell(output_fp) % BLOCK_SIZE);
+        if (slice_length != BLOCK_SIZE)
+        {
+            memset(tmp, 0, slice_length);
+            if (fwrite(tmp, slice_length, 1, output_fp) != 1)
+            {
+                perror("error writing to output file");
+                fclose(source_fp);
+                return 1;
+            }
         }
 
         fclose(source_fp);
