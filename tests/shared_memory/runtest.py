@@ -65,7 +65,8 @@ def sharedmem_transact(memory, value):
     return read_shared_memory(memory, VALUE_ADDR)
 
 
-@test_harness.test(['emulator'])
+# Disabled because of bug #141
+#@test_harness.test(['emulator'])
 def shared_memory(*unused):
     """See coprocessor.c for an explanation of this test"""
 
