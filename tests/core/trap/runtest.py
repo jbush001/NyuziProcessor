@@ -63,8 +63,8 @@ def run_io_interrupt(_, target):
 # separate host process (useful for co-emulation)
 # XXX A number of error cases do not clean up resources
 
-RECV_PIPE_NAME = '/tmp/nyuzi_emulator_recvint'
-SEND_PIPE_NAME = '/tmp/nyuzi_emulator_sendint'
+RECV_PIPE_NAME = test_harness.WORK_DIR + '/nyuzi_emulator_recvint'
+SEND_PIPE_NAME = test_harness.WORK_DIR + '/nyuzi_emulator_sendint'
 
 
 @test_harness.test(['emulator'])
@@ -104,8 +104,6 @@ def recv_host_interrupt(*unused):
     finally:
         os.close(interrupt_pipe)
         os.unlink(RECV_PIPE_NAME)
-
-# XXX A number of error cases do not clean up resources
 
 
 @test_harness.test(['emulator'])
