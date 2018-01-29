@@ -67,8 +67,7 @@ RECV_PIPE_NAME = test_harness.WORK_DIR + '/nyuzi_emulator_recvint'
 SEND_PIPE_NAME = test_harness.WORK_DIR + '/nyuzi_emulator_sendint'
 
 
-# XXX disabled because it fails on Travis CI
-#@test_harness.test(['emulator'])
+@test_harness.test(['emulator'])
 def recv_host_interrupt(*unused):
     try:
         os.remove(RECV_PIPE_NAME)

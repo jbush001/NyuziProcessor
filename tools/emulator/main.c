@@ -114,12 +114,6 @@ void poll_inputs(struct processor *proc)
         int i;
 
         got = read(STDIN_FILENO, inbuf, sizeof(inbuf));
-        if (got < 1)
-        {
-            perror("error reading from stdin");
-            exit(1);
-        }
-
         for (i = 0; i < got; i++)
             enqueue_serial_char(inbuf[i]);
     }
