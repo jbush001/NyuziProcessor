@@ -27,8 +27,6 @@ add_command_line_tool(nyuzi_emulator
     sdmmc.c
     util.c)
 
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0")
-
 find_package(SDL2 REQUIRED)
 include_directories(${SDL2_INCLUDE_DIRS})
 string(STRIP ${SDL2_LIBRARIES} SDL2_LIBRARIES) # Work around Linux build error w/ trailing space
