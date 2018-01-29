@@ -74,9 +74,9 @@ module on_chip_debugger
     };
 
     typedef enum logic[1:0] {
-        READY = 0,
-        ISSUED = 1,
-        ROLLED_BACK = 2
+        READY = 2'd0,
+        ISSUED = 2'd1,
+        ROLLED_BACK = 2'd2
     } instruction_status_t;
 
     typedef struct packed {
