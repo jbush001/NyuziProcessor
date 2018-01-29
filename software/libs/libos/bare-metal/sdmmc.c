@@ -67,7 +67,7 @@ static int send_sd_command(SDCommand command, unsigned int parameter)
     spi_transfer(parameter & 0xff);
     spi_transfer(0x95);	// Checksum (ignored for all but first command)
 
-    // Wait while card is busy
+    // Read R1 response. 0xff indicates the card is busy.
     do
     {
         result = spi_transfer(0xff);
@@ -81,25 +81,32 @@ int init_sdmmc_device(void)
 {
     int result;
 
-    // Set clock to 200k_hz (50Mhz system clock)
+    // Set clock to 200kHz (50Mhz system clock)
     set_clock_divisor(125);
 
-    // After power on, send a bunch of clocks to initialize the chip
+    // After power on, need to send at least 74 clocks with DI and CS high
+    // per the spec to initialize (10 bytes is 80 clocks).
     set_cs(1);
     for (int i = 0; i < 10; i++)
         spi_transfer(0xff);
 
+    // Reset the card by sending CMD0 with CS low.
     set_cs(0);
-
-    // Reset the card
     result = send_sd_command(SD_CMD_RESET, 0);
+
+    // The card should have returned 01 to indicate it is in SPI mode.
     if (result != 1)
     {
-        printf("init_sdmmc_device: SD_CMD_RESET unexpected response %02x\n", result);
+        if (result == 0xff)
+            printf("init_sdmmc_device: timed out during reset\n");
+        else
+            printf("init_sdmmc_device: SD_CMD_RESET failed: invalid response %02x\n", result);
+
         return -1;
     }
 
-    // Poll until it is ready
+    // Send CMD1 and wait for card to initialize. This can take hundreds
+    // of milliseconds.
     while (1)
     {
         result = send_sd_command(SD_CMD_INIT, 0);
@@ -181,14 +188,9 @@ int write_sdmmc_device(unsigned int block_address, void *ptr)
     spi_transfer(0xff);
 
     result = spi_transfer(0xff);
-    if (result != 0x05)
+    if ((result & 0x1f) != 0x05)
     {
         printf("write_sdmmc_device: write failed, response %02x\n", result);
-        printf("%02x %02x %02x %02x\n",
-            spi_transfer(0xff),
-            spi_transfer(0xff),
-            spi_transfer(0xff),
-            spi_transfer(0xff));
         return -1;
     }
 

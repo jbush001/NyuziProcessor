@@ -20,7 +20,8 @@ import defines::*;
 
 //
 // Serial Peripheral Interface (SPI) bus controller
-// This currenly can only act as a master
+// It is hard coded to act as a master, and to run in "mode 0"
+// (shift data out on falling edge, sample on rising, clock idles low)
 //
 
 module spi_controller
