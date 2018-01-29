@@ -115,6 +115,8 @@ module spi_controller
                 // Set up first bit
                 {spi_mosi, mosi_byte} <= {io_bus.write_data[7:0], 1'd0};
             end
+            else
+                spi_mosi <= 1;  // High when there is no activity
         end
     end
 endmodule

@@ -60,8 +60,9 @@ module de2_115_top(
 
     // SD card
     output                      sd_clk,
-    output                      sd_cmd,
-    inout[3:0]                  sd_dat,
+    input                       sd_do,
+    output                      sd_di,
+    output                      sd_cs,
 
     // PS/2
     input                       ps2_clk,
@@ -192,20 +193,13 @@ module de2_115_top(
         .*);
 `endif
 
-`ifdef BITBANG_SDMMC
-    gpio_controller #(.BASE_ADDRESS('hc0), .NUM_PINS(6)) gpio_controller(
-        .io_bus(peripheral_io_bus[IO_SDCARD]),
-        .gpio_value({sd_clk, sd_cmd, sd_dat}),
-        .*);
-`else
     spi_controller #(.BASE_ADDRESS('hc0)) spi_controller(
         .io_bus(peripheral_io_bus[IO_SDCARD]),
         .spi_clk(sd_clk),
-        .spi_cs_n(sd_dat[3]),
-        .spi_miso(sd_dat[0]),
-        .spi_mosi(sd_cmd),
+        .spi_cs_n(sd_cs),
+        .spi_miso(sd_do),
+        .spi_mosi(sd_di),
         .*);
-`endif
 
     ps2_controller #(.BASE_ADDRESS('h80)) ps2_controller(
         .io_bus(peripheral_io_bus[IO_PS2]),
