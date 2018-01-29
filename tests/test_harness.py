@@ -149,7 +149,7 @@ class TimedProcessRunner(threading.Thread):
         self.process = None
         self.timeout = 0
 
-    def communicate(self, process, timeout, input=''):
+    def communicate(self, process, timeout, input=None):
         """Call process.communicate(), but throw exception if it has not completed
         before 'timeout' seconds have elapsed"""
 
