@@ -14,6 +14,9 @@
 // limitations under the License.
 //
 
+// This is included in both assembly and C files and contains preprocessor
+// constants
+
 // Control register indices
 #define CR_CURRENT_HW_THREAD 0
 #define CR_TRAP_HANDLER 1
@@ -51,3 +54,11 @@
 #define TT_SUPERVISOR_ACCESS 9
 #define TT_NOT_EXECUTABLE 10
 #define TT_BREAKPOINT 11
+
+// Size of frame allocated during context switch. See context_switch.S.
+#define CONTEXT_FRAME_SIZE 0x840
+
+// Size of frame allocated during a trap. See trap_entry.S
+#define TRAP_FRAME_SIZE 192
+
+

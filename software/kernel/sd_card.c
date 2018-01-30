@@ -16,7 +16,7 @@
 
 #include "libc.h"
 #include "registers.h"
-#include "sdmmc.h"
+#include "sd_card.h"
 #include "spinlock.h"
 #include "trap.h"
 
@@ -75,7 +75,7 @@ static int send_sd_command(enum sd_command command, unsigned int parameter)
     return result;
 }
 
-int init_sdmmc_device()
+int init_sd_device()
 {
     int result;
 
@@ -116,7 +116,7 @@ int init_sdmmc_device()
     return 0;
 }
 
-int read_sdmmc_device(unsigned int block_address, void *ptr)
+int read_sd_device(unsigned int block_address, void *ptr)
 {
     int result;
     int old_flags;

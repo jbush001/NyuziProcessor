@@ -16,9 +16,8 @@
 
 #include "asm.h"
 
-#define IFRAME_SIZE 192
-#define IFRAME_SP_OFFSET 120
-#define IFRAME_PC_OFFSET 128
+#define TRAP_FRAME_SP_OFFSET 120
+#define TRAP_FRAME_PC_OFFSET 128
 
 //
 // General trap handler. This saves all scalar registers, but does not save
@@ -43,18 +42,18 @@ trap_entry:             setcr s0, CR_SCRATCHPAD0        // Save s0 in scratchpad
                         load_32 s1, (s1)                // Get base of array
                         add_i s1, s1, s0                // Find element ptr
                         load_32 s1, (s1)                // Get kernel_stack pointer
-                        store_32 sp, IFRAME_SP_OFFSET - IFRAME_SIZE(s1) // Save user stack
+                        store_32 sp, TRAP_FRAME_SP_OFFSET - TRAP_FRAME_SIZE(s1) // Save user stack
                         move sp, s1                     // switch stacks
                         b save_frame
 
                         // Already in kernel mode. Don't need to switch stacks, just
                         // decrement pointer
-is_supervisor:          store_32 sp, IFRAME_SP_OFFSET - IFRAME_SIZE(sp)   // save old stack
+is_supervisor:          store_32 sp, TRAP_FRAME_SP_OFFSET - TRAP_FRAME_SIZE(sp)   // save old stack
 
                         // Save remaining registers
 save_frame:             getcr s0, CR_SCRATCHPAD0        // restore s0
                         getcr s1, CR_SCRATCHPAD1        // restore s1
-                        sub_i sp, sp, IFRAME_SIZE       // Reserve space for iframe
+                        sub_i sp, sp, TRAP_FRAME_SIZE   // Reserve space for trap frame
 
                         store_32 s0, 0(sp)
                         store_32 s1, 4(sp)
@@ -90,13 +89,13 @@ save_frame:             getcr s0, CR_SCRATCHPAD0        // restore s0
                         store_32 ra, 124(sp)
 
                         getcr s0, CR_TRAP_PC
-                        store_32 s0, IFRAME_PC_OFFSET(sp)
+                        store_32 s0, TRAP_FRAME_PC_OFFSET(sp)
                         getcr s0, CR_SAVED_FLAGS
                         store_32 s0, 132(sp)
                         getcr s0, CR_SAVED_SUBCYCLE
                         store_32 s0, 136(sp)
 
-                        move s0, sp  // pointer to iframe is argument to handle_trap
+                        move s0, sp  // pass pointer to trap frame to handle_trap
 
                         call handle_trap
 
@@ -131,14 +130,14 @@ save_frame:             getcr s0, CR_SCRATCHPAD0        // restore s0
                         load_32 fp, 116(sp)
                         load_32 ra, 124(sp)
 
-                        load_32 s0, IFRAME_PC_OFFSET(sp)
+                        load_32 s0, TRAP_FRAME_PC_OFFSET(sp)
                         setcr s0, CR_TRAP_PC    // eret will jump to here
                         load_32 s0, 132(sp)
                         setcr s0, CR_SAVED_FLAGS
                         load_32 s0, 136(sp)
                         setcr s0, CR_SAVED_SUBCYCLE
                         load_32 s0, 0(sp)    // Restore s0
-                        load_32 sp, IFRAME_SP_OFFSET(sp) // Restore old stack pointer
+                        load_32 sp, TRAP_FRAME_SP_OFFSET(sp) // Restore old stack pointer
                         eret
 
 trap_kernel_stack_addr: .long trap_kernel_stack

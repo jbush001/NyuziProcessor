@@ -33,7 +33,7 @@ add_nyuzi_executable(kernel
     thread.c
     loader.c
     fs.c
-    sdmmc.c
+    sd_card.c
     vm_translation_map.c
     vm_page.c
     vm_area_map.c

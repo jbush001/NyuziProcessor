@@ -26,7 +26,7 @@
 
                     .global context_switch
                     .type context_switch,@function
-context_switch:     sub_i sp, sp, 0x840
+context_switch:     sub_i sp, sp, CONTEXT_FRAME_SIZE
 
                     // This must save and restore *all* vector registers,
                     // because they are not used in the kernel and are not
@@ -121,7 +121,7 @@ context_switch:     sub_i sp, sp, 0x840
                     load_32 gp, 0x810(sp)
                     load_32 fp,  0x814(sp)
                     load_32 ra,  0x818(sp)
-                    add_i sp, sp, 0x840
+                    add_i sp, sp, CONTEXT_FRAME_SIZE
 
                     ret
 

@@ -73,7 +73,7 @@ struct vm_address_space *create_address_space(void)
 }
 
 // No locking, because at this point only one thread (grim reaper) should
-// be referecing this address space
+// be referencing this address space
 void destroy_address_space(struct vm_address_space *space)
 {
     struct vm_area *area;

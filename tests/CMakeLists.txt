@@ -57,6 +57,22 @@ foreach (dir ${py_test_dirs})
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${dir})
 endforeach(dir)
 
+# XXX only run in emulator mode for now
+set(kernel_test_dirs
+    kernel/crash
+    kernel/globalinit
+    kernel/hello
+    kernel/panic
+    kernel/user_copy_fault
+    kernel/initdata)
+
+foreach (dir ${kernel_test_dirs})
+    add_custom_command(TARGET tests
+        COMMAND ./runtest.py --target emulator
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${dir})
+endforeach(dir)
+
+# Save a little time by only running these in one environment
 add_custom_command(TARGET tests
     COMMAND ./runtest.py --target verilator
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/whole-program)

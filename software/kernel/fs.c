@@ -17,7 +17,7 @@
 #include "fs.h"
 #include "kernel_heap.h"
 #include "libc.h"
-#include "sdmmc.h"
+#include "sd_card.h"
 #include "slab.h"
 #include "vm_page.h"
 #include "vm_translation_map.h"
@@ -62,7 +62,7 @@ int read_block(int block_num, void *ptr)
         return BLOCK_SIZE;
     }
     else
-        return read_sdmmc_device(block_num, ptr);
+        return read_sd_device(block_num, ptr);
 }
 
 static int init_file_system(void)
@@ -72,7 +72,7 @@ static int init_file_system(void)
     int block_num;
     struct fs_header *header;
 
-    if (init_sdmmc_device() < 0)
+    if (init_sd_device() < 0)
     {
         kprintf("SDMMC init failed, using ramdisk\n");
         ramdisk_area = map_contiguous_memory(get_kernel_address_space(),

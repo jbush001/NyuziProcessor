@@ -68,11 +68,10 @@ void register_interrupt_handler(int interrupt, interrupt_handler_t handler)
     unmask_interrupt(interrupt);
 }
 
-static void handle_interrupt(struct interrupt_frame *frame)
+static void handle_interrupt()
 {
     unsigned int interrupt_bitmap = __builtin_nyuzi_read_control_reg(CR_INTERRUPT_PENDING);
 
-    (void) frame;
     while (interrupt_bitmap)
     {
         int next_int = __builtin_ctz(interrupt_bitmap);
@@ -147,7 +146,7 @@ void handle_trap(struct interrupt_frame *frame)
             break;
 
         case TT_INTERRUPT:
-            handle_interrupt(frame);
+            handle_interrupt();
             break;
 
         default:

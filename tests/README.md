@@ -39,12 +39,7 @@ The Makefile does not run the following tests:
 | fail/                | These test cases validate the test harness itself and are meant to produce failure results. |
 | float/               | Floating point conformance tests. There are still bugs in the hardware implementation that need to be fixed, and there are tweaks required to the test vectors to find canonical values where the spec is lenient. |
 | fpga/                | These only run in the FPGA environment and validate things specific to the dev board (the test target only assembles them) |
-| kernel/crash/        | Intermittently timing out, potentially because of a bug
-| kernel/globalinit/   | For the following, it takes a while to run in verilator mode, so I skip for the sake of speed.
-| kernel/hello/        |
-| kernel/panic/        |
-| kernel/user_copy_fault/ |
-| kernel/initdata/     |
+| kernel/              | Only run in emulator, because they take a long time, and hang under verilator (issue #119) |
 | kernel/multiprocess/ | These do not have automated harnesses and are not easy to
 | kernel/threads/      |   automate for a number of reasons.
 | kernel/vga/          |
@@ -109,7 +104,7 @@ categories:
    timing control, they are useful for testing cases that are difficult to verify
    at the software level, for example, that flushing a cache line clears its
    dirty bit so it won't write it again.
-   
+
 2. **System level directed functional tests** (tests/core)
 
    These are intended to be comprehensive, covering all major instruction forms,
@@ -117,7 +112,7 @@ categories:
    or success message. These don't stress the system or catch race conditions
    (most are single threaded), but validate functional correctness. These run both
    in Verilog simulation and FPGA.
-   
+
 3. **Constrained random cosimulation** (tests/cosimulation)
 
    A test script generates random assembly programs. These are constrained,
@@ -128,7 +123,7 @@ categories:
    accurate, this can't validate timing sensitive use cases like synchronized
    load/stores. These can only run in Verilog simulation. There is more detail
    in the README in the cosimulation directory.
-   
+
 4. **Synthetic stress tests** (tests/stress)
 
    Complementary to the random tests, these validate operations that the former
@@ -136,7 +131,7 @@ categories:
    pseudorandom number generator to control their operation. Checking is done
    after the test as run, usually via a memory dump. These can run in Verilog
    simulation or on FPGA.
-   
+
 5. **Whole program tests** (tests/whole-program, tests/kernel, tests/render)
 
    These are real-world programs that do something useful like compute a
