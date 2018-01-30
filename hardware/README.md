@@ -76,8 +76,20 @@ The simulator writes a file called `trace.vcd` in
 "[value change dump](http://en.wikipedia.org/wiki/Value_change_dump)"
 format in the current working directory. This can be with a waveform
 viewer like [GTKWave](http://gtkwave.sourceforge.net/).
-Waveform files get big quickly. Even running a minute of simulation can
-produce hundreds of megabytes of trace data.
+Waveform files get enormous quickly. Even running a minute of simulation will
+produce gigabytes of trace data. A trick to reduce the size is to use
+verilator pragmas to selectively disable tracing for modules. Working in
+hardware/testbench/soc_tb.sv, start by disabling all tracing:
+
+    +/*verilator tracing_off*/
+     module soc_tb(
+
+Then, selectively re-enable it for modules you are interested in by adding a
+pragma above the module instantiation:
+
+    /*verilator tracing_on*/
+    my_module module_i_want_to_trace(.*);
+    /*verilator tracing_off*/
 
 ### Support for VCS:
 
