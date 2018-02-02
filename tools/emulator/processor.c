@@ -1679,6 +1679,14 @@ static void execute_control_register_inst(struct thread *thread, uint32_t instru
             case CR_INTERRUPT_PENDING:
                 value = get_pending_interrupts(thread) & thread->interrupt_mask;
                 break;
+
+            case CR_INTERRUPT_MASK:
+                value = thread->interrupt_mask;
+                break;
+
+            case CR_INTERRUPT_TRIGGER:
+                value = thread->core->is_level_triggered;
+                break;
         }
 
         set_scalar_reg(thread, dst_src_reg, value);

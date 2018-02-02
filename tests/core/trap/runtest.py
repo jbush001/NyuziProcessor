@@ -145,7 +145,8 @@ test_harness.register_generic_assembly_tests([
     'unaligned_inst_fault.S',
     'unaligned_data_fault.S',
     'multicycle.S',
-    'illegal_instruction.S'
+    'illegal_instruction.S',
+    'int_config.S'
 ], ['emulator', 'verilator', 'fpga'])
 
 test_harness.execute_tests()

@@ -271,6 +271,8 @@ module control_registers
                 CR_PAGE_DIR:          cr_creg_read_val <= page_dir_base[dt_thread_idx];
                 CR_INTERRUPT_PENDING: cr_creg_read_val <= scalar_t'(interrupt_pending[dt_thread_idx]
                                                           & interrupt_mask[dt_thread_idx]);
+                CR_INTERRUPT_MASK:    cr_creg_read_val <= scalar_t'(interrupt_mask[dt_thread_idx]);
+                CR_INTERRUPT_TRIGGER: cr_creg_read_val <= scalar_t'(int_trigger_type);
                 CR_JTAG_DATA:         cr_creg_read_val <= jtag_data;
                 default:              cr_creg_read_val <= 32'hffffffff;
             endcase
