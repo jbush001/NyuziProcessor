@@ -37,7 +37,7 @@ _start:             getcr s0, 0                 // Find my thread ID
 
                     // Set up interrupts
                     li s24, 2
-                    setcr s24, CR_INTERRUPT_MASK
+                    setcr s24, CR_INTERRUPT_ENABLE
 
                     // Reset timer
                     li s24, TIMER_INTERVAL

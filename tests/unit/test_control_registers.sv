@@ -482,7 +482,7 @@ module test_control_registers(input clk, input reset);
                 // int 3: edge triggered, interrupt enabled, not active (result 0)
                 // int 4: edge triggered, interrupt not enabled, active (result 0)
                 // int 5: default config, active (result 0)
-                120: write_creg(CR_INTERRUPT_MASK, 32'b0111);
+                120: write_creg(CR_INTERRUPT_ENABLE, 32'b0111);
                 121: write_creg(CR_INTERRUPT_TRIGGER, 32'b0001);  // 0 is edge, 1 is level
                 122: interrupt_req <= 16'b11011;
                 123: interrupt_req <= 16'b10001;   // Keep level triggered high

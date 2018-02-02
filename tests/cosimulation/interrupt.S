@@ -33,7 +33,7 @@ _start:             lea s0, interrupt_handler
 
                     # Unmask interrupt
                     move s24, 1
-                    setcr s24, CR_INTERRUPT_MASK
+                    setcr s24, CR_INTERRUPT_ENABLE
 
                     # Set up registers
                     move s1, 1000

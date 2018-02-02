@@ -58,7 +58,7 @@ void unmask_interrupt(int interrupt)
 {
     int hwthid = current_hw_thread();
     enabled_interrupts[hwthid] |= 1 << interrupt;
-    __builtin_nyuzi_write_control_reg(CR_INTERRUPT_MASK, enabled_interrupts[hwthid]);
+    __builtin_nyuzi_write_control_reg(CR_INTERRUPT_ENABLE, enabled_interrupts[hwthid]);
 }
 
 void register_interrupt_handler(int interrupt, interrupt_handler_t handler)

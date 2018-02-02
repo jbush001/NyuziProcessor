@@ -1680,7 +1680,7 @@ static void execute_control_register_inst(struct thread *thread, uint32_t instru
                 value = get_pending_interrupts(thread) & thread->interrupt_mask;
                 break;
 
-            case CR_INTERRUPT_MASK:
+            case CR_INTERRUPT_ENABLE:
                 value = thread->interrupt_mask;
                 break;
 
@@ -1747,7 +1747,7 @@ static void execute_control_register_inst(struct thread *thread, uint32_t instru
                 thread->saved_trap_state[0].subcycle = value;
                 break;
 
-            case CR_INTERRUPT_MASK:
+            case CR_INTERRUPT_ENABLE:
                 thread->interrupt_mask = value;
                 break;
 

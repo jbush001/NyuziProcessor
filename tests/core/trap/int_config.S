@@ -32,13 +32,13 @@ _start:     li s0, 0x871e
             assert_reg s1, 0xdec4
 
             li s0, 0x9a0f
-            setcr s0, CR_INTERRUPT_MASK
-            getcr s1, CR_INTERRUPT_MASK
+            setcr s0, CR_INTERRUPT_ENABLE
+            getcr s1, CR_INTERRUPT_ENABLE
             assert_reg s1, 0x9a0f
 
             li s0, 0x5f21
-            setcr s0, CR_INTERRUPT_MASK
-            getcr s1, CR_INTERRUPT_MASK
+            setcr s0, CR_INTERRUPT_ENABLE
+            getcr s1, CR_INTERRUPT_ENABLE
             assert_reg s1, 0x5f21
 
             call pass_test

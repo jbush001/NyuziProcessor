@@ -63,7 +63,7 @@ _start:
 
                 // Unmask interrupt
                 move s24, 2
-                setcr s24, CR_INTERRUPT_MASK
+                setcr s24, CR_INTERRUPT_ENABLE
 
                 // Configure timer
                 li s24, TIMER_INTERVAL

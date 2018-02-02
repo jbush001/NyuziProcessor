@@ -418,7 +418,7 @@ fill_loop:      store_32 s5, (s3)
                 move s10, (FLAG_INTERRUPT_EN | FLAG_SUPERVISOR_EN)
                 setcr s10, CR_FLAGS   # Enable interrupts
                 move s10, 1
-                setcr s10, CR_INTERRUPT_MASK
+                setcr s10, CR_INTERRUPT_ENABLE
 
 ''')
 

@@ -59,7 +59,7 @@ handle_trap\intnum :
                     .globl _start
 _start:             // Unmask interrupt
                     move s24, -1
-                    setcr s24, CR_INTERRUPT_MASK
+                    setcr s24, CR_INTERRUPT_ENABLE
 
                     receive_interrupt 16
                     receive_interrupt 17
