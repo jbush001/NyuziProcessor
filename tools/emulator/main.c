@@ -18,12 +18,14 @@
 #include <fcntl.h>
 #include <getopt.h>
 #include <limits.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/resource.h>
 #include <sys/stat.h>
+#include <termios.h>
 #include <unistd.h>
 #include "processor.h"
 #include "cosimulation.h"
@@ -38,6 +40,7 @@ extern void poll_inputs(struct processor*);
 
 static int recv_interrupt_fd = -1;
 static int send_interrupt_fd = -1;
+static struct termios original_tconfig;
 
 static void usage(void)
 {
@@ -133,6 +136,15 @@ void send_host_interrupt(uint32_t num)
     }
 }
 
+static void handle_int_signal(int num)
+{
+    (void) num;
+
+    // Restore terminal state
+    tcsetattr(STDIN_FILENO, TCSANOW, &original_tconfig);
+    exit(1);
+}
+
 int main(int argc, char *argv[])
 {
     struct processor *proc;
@@ -154,6 +166,7 @@ int main(int argc, char *argv[])
     const char *shared_memory_file = NULL;
     struct stat st;
     bool random_thread_sched = false;
+    struct termios tconfig;
 
     enum
     {
@@ -353,6 +366,22 @@ int main(int argc, char *argv[])
 
     if (random_thread_sched)
         enable_random_thread_sched(proc);
+
+    // Set up terminal for unbuffered operation for proper serial input.
+    if (tcgetattr(STDIN_FILENO, &original_tconfig) < 0)
+        perror("tcgetattr");
+
+    tconfig = original_tconfig;
+    tconfig.c_lflag = ISIG | TOSTOP;  // Disable local echo, canonical input
+    if (tcsetattr(STDIN_FILENO, TCSANOW, &tconfig) < 0)
+        perror("tcsetattr");
+
+    if (signal(SIGINT, handle_int_signal) == SIG_ERR)
+    {
+        perror("error setting up signal handler");
+        tcsetattr(STDIN_FILENO, TCSANOW, &original_tconfig);
+        exit(1);
+    }
 
     switch (mode)
     {
