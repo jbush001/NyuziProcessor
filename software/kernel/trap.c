@@ -165,7 +165,8 @@ void dump_interrupt_frame(const struct interrupt_frame *frame)
     {
         kprintf("%s ", TRAP_NAMES[trap_type]);
         if (trap_type == TT_UNALIGNED_ACCESS || trap_type == TT_PAGE_FAULT
-                || trap_type == TT_TLB_MISS || trap_type == TT_SUPERVISOR_ACCESS)
+                || trap_type == TT_TLB_MISS || trap_type == TT_ILLEGAL_STORE
+                || trap_type == TT_SUPERVISOR_ACCESS)
         {
             kprintf("@%08x %s %s\n", trap_address,
                 (trap_cause & 0x20) ? "dcache" : "icache",
