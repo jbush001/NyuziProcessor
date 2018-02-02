@@ -136,12 +136,17 @@ void send_host_interrupt(uint32_t num)
     }
 }
 
+static void shutdown_cleanup(void)
+{
+    // Restore terminal state
+    tcsetattr(STDIN_FILENO, TCSANOW, &original_tconfig);
+}
+
 static void handle_int_signal(int num)
 {
     (void) num;
 
-    // Restore terminal state
-    tcsetattr(STDIN_FILENO, TCSANOW, &original_tconfig);
+    shutdown_cleanup();
     exit(1);
 }
 
@@ -383,6 +388,13 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    if (atexit(shutdown_cleanup) < 0)
+    {
+        perror("error setting up atexit handler");
+        tcsetattr(STDIN_FILENO, TCSANOW, &original_tconfig);
+        exit(1);
+    }
+
     switch (mode)
     {
         case MODE_NORMAL:
@@ -410,10 +422,7 @@ int main(int argc, char *argv[])
         case MODE_COSIMULATION:
             dbg_set_stop_on_fault(proc, false);
             if (run_cosimulation(proc, verbose) < 0)
-            {
-                tcsetattr(STDIN_FILENO, TCSANOW, &original_tconfig);
                 return 1;	// Failed
-            }
 
             break;
 
@@ -427,9 +436,6 @@ int main(int argc, char *argv[])
         write_memory_to_file(proc, mem_dump_filename, mem_dump_base, mem_dump_length);
 
     free(mem_dump_filename);
-
-    // Restore terminal state
-    tcsetattr(STDIN_FILENO, TCSANOW, &original_tconfig);
 
     dump_instruction_stats(proc);
     if (block_device_open)
