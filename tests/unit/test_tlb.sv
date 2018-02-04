@@ -24,6 +24,7 @@ module test_tlb(input clk, input reset);
     localparam VPAGE3 = 20'h4557b;
     localparam VPAGE4 = 20'hc8d94;
     localparam VPAGE5 = 20'hef065;
+    localparam VPAGE6 = 20'hccccc;
 
     localparam PPAGE1 = 20'hf30f2;
     localparam PPAGE2 = 20'hd87a6;
@@ -121,7 +122,7 @@ module test_tlb(input clk, input reset);
 
                 // Look up existing entries
                 5: lookup_page(VPAGE1, 0);
-                6: lookup_en <= 0;  // wait a cycle for result
+                // wait a cycle for result
                 7:
                 begin
                     assert(lookup_hit);
@@ -294,6 +295,19 @@ module test_tlb(input clk, input reset);
                 37:
                 begin
                     assert(!lookup_hit);
+                end
+
+                ///////////////////////////////////////////////////////////
+                // Insert global page after local. This is a regression
+                // test for for issue #143, which would assert with multiple
+                // way hits for an address.
+                ///////////////////////////////////////////////////////////
+                40: update_page(VPAGE6, PPAGE1, 1, 1, 0, 0, 0); // ASID 1, Present
+                41: update_page(VPAGE6, PPAGE1, 2, 1, 1, 0, 0); // ASID 2, present, global
+                43: lookup_page(VPAGE6, 1);
+
+                50:
+                begin
                     $display("PASS");
                     $finish;
                 end

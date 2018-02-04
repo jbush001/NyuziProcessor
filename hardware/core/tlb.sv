@@ -149,7 +149,8 @@ module tlb
 
             assign way_hit_oh[way_idx] = way_valid
                 && way_vpage_idx == request_vpage_idx_latched
-                && (way_asid == request_asid_latched || way_global);
+                && (way_asid == request_asid_latched || way_global
+                    || (update_en_latched && update_global_latched));
         end
     endgenerate
 
