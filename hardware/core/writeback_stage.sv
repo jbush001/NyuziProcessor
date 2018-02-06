@@ -532,9 +532,11 @@ module writeback_stage(
 `ifdef SIMULATION
     always_ff @(posedge clk)
     begin
-        if (wb_rollback_en && wb_rollback_pc == 0)
+        // this will happen if there is a fault and no fault handler has
+        // been set in the control register.
+        if (wb_trap && wb_rollback_pc == 0)
         begin
-            $display("thread %0d rolled back to 0, cause %0d address %08x", wb_rollback_thread_idx,
+            $display("thread %0d caught trap, no handler set, cause %0d address %08x", wb_rollback_thread_idx,
                 wb_trap_cause, wb_trap_pc);
             $finish;
         end
