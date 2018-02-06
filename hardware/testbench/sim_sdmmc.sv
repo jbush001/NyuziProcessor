@@ -17,6 +17,7 @@
 //
 // Simulates SPI mode SD card. Currently read-only. When the simulator is
 // initialized, it opens the file specified by the argument +block=<filename>
+// http://elm-chan.org/docs/mmc/mmc_e.html
 //
 
 module sim_sdmmc(
@@ -271,7 +272,7 @@ module sim_sdmmc(
             begin
                 if (mosi_byte_nxt == DATA_TOKEN)
                 begin
-                    state_delay <= block_length;
+                    state_delay <= block_length + 1;
                     current_state <= STATE_WRITE_TRANSFER;
                 end
             end
@@ -279,18 +280,22 @@ module sim_sdmmc(
             STATE_WRITE_TRANSFER:
             begin
                 state_delay <= state_delay - 1;
+                if (state_delay > 1)
+                begin
+                    transfer_count <= transfer_count + 1;
+                    assert(transfer_count < block_length);
+                    block_buffer[transfer_count] <= mosi_byte_nxt;
+                end
+                // else ignore checksum from host
+
                 if (state_delay == 0)
                 begin
+                    assert(transfer_count == block_length);
                     miso_byte <= 8'h05; // Data accepted
                     current_state <= STATE_WRITE_DATA_RESPONSE;
                 end
                 else
-                begin
                     miso_byte <= 8'hff;
-                    transfer_count <= transfer_count + 1;
-                    block_buffer[transfer_count] <= mosi_byte_nxt;
-                end
-
             end
 
             STATE_WRITE_DATA_RESPONSE:

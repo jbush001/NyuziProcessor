@@ -33,10 +33,19 @@ int main()
     for (i = 0; i < SDMMC_BLOCK_SIZE; i++)
         buf1[i] = (i ^ (i >> 3)) & 0xff;
 
-    write_sdmmc_device(1, buf1);
+    if (write_sdmmc_device(1, buf1) < 0)
+    {
+        printf("FAIL: write_sdmmc_device returned error\n");
+        return -1;
+    }
 
     // read it back
-    read_sdmmc_device(1, buf2);
+    if (read_sdmmc_device(1, buf2) < 0)
+    {
+        printf("FAIL: read_sdmmc_device returned error\n");
+        return -1;
+    }
+
     for (i = 0; i < SDMMC_BLOCK_SIZE; i++)
     {
         if (buf2[i] != ((i ^ (i >> 3)) & 0xff))
