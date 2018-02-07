@@ -171,7 +171,7 @@ int main(int argc, char *argv[])
     const char *shared_memory_file = NULL;
     struct stat st;
     bool random_thread_sched = false;
-    struct termios tconfig;
+    struct termios new_tconfig;
 
     enum
     {
@@ -373,26 +373,30 @@ int main(int argc, char *argv[])
         enable_random_thread_sched(proc);
 
     // Set up terminal for unbuffered operation for proper serial input.
-    if (tcgetattr(STDIN_FILENO, &original_tconfig) < 0)
-        perror("tcgetattr");
-
-    tconfig = original_tconfig;
-    tconfig.c_lflag = ISIG | TOSTOP;  // Disable local echo, canonical input
-    if (tcsetattr(STDIN_FILENO, TCSANOW, &tconfig) < 0)
-        perror("tcsetattr");
-
-    if (signal(SIGINT, handle_int_signal) == SIG_ERR)
+    // tcgetattr will fail if we are not running in a terminal (for example,
+    // input and output are pipes, which many tests do). In this case,
+    // skip the rest of the terminal initialization.
+    if (tcgetattr(STDIN_FILENO, &original_tconfig) == 0)
     {
-        perror("error setting up signal handler");
-        tcsetattr(STDIN_FILENO, TCSANOW, &original_tconfig);
-        exit(1);
-    }
+        // Set up these handlers to restore the terminal state on exit.
+        if (signal(SIGINT, handle_int_signal) == SIG_ERR)
+        {
+            perror("error setting up signal handler");
+            tcsetattr(STDIN_FILENO, TCSANOW, &original_tconfig);
+            exit(1);
+        }
 
-    if (atexit(shutdown_cleanup) < 0)
-    {
-        perror("error setting up atexit handler");
-        tcsetattr(STDIN_FILENO, TCSANOW, &original_tconfig);
-        exit(1);
+        if (atexit(shutdown_cleanup) < 0)
+        {
+            perror("error setting up atexit handler");
+            tcsetattr(STDIN_FILENO, TCSANOW, &original_tconfig);
+            exit(1);
+        }
+
+        new_tconfig = original_tconfig;
+        new_tconfig.c_lflag = ISIG | TOSTOP;  // Disable local echo, canonical input
+        if (tcsetattr(STDIN_FILENO, TCSANOW, &new_tconfig) < 0)
+            perror("tcsetattr");
     }
 
     switch (mode)
