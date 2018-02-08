@@ -41,7 +41,8 @@ add_nyuzi_executable(kernel
     vm_cache.c
     syscall.c
     user_copy.S
-    vga.c)
+    vga.c
+    util.c)
 
 target_link_libraries(kernel
     compiler-rt)

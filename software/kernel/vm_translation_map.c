@@ -42,9 +42,9 @@ struct boot_page_setup
 extern unsigned int page_dir_addr;
 extern unsigned int boot_pages_used;
 static spinlock_t kernel_space_lock;
-static unsigned int next_asid;
 static struct vm_translation_map kernel_map;
 static struct list_node map_list;
+static unsigned asid_alloc[(MAX_ASIDS + 31) / 32];
 MAKE_SLAB(translation_map_slab, struct vm_translation_map)
 
 unsigned int boot_vm_allocate_pages(struct boot_page_setup *bps, unsigned int num_pages)
@@ -151,7 +151,7 @@ struct vm_translation_map *create_translation_map(void)
            (unsigned int*) PA_TO_VA(kernel_map.page_dir) + 768,
            256 * sizeof(unsigned int));
 
-    map->asid = next_asid++;
+    map->asid = bitmap_alloc(&asid_alloc);
     map->lock = 0;
 
     list_add_tail(&map_list, (struct list_node*) map);
@@ -169,6 +169,8 @@ void destroy_translation_map(struct vm_translation_map *map)
     old_flags = acquire_spinlock_int(&kernel_space_lock);
     list_remove_node(map);
     release_spinlock_int(&kernel_space_lock, old_flags);
+    if (map->asid > 0)
+        bitmap_free(&asid_alloc, map->asid);
 
     // Free user space page tables
     pgdir = (unsigned int*) PA_TO_VA(map->page_dir);

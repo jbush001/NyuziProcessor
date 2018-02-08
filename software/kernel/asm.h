@@ -61,4 +61,6 @@
 // Size of frame allocated during a trap. See trap_entry.S
 #define TRAP_FRAME_SIZE 192
 
+#define MAX_ASIDS 64
+
 
