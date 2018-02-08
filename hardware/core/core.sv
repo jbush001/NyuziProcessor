@@ -51,7 +51,7 @@ module core
     output logic                           ior_request_valid,
     output ioreq_packet_t                  ior_request,
 
-    // From debug_controller
+    // From on_chip_debugger
     input                                  ocd_halt,
     input local_thread_idx_t               ocd_thread,
     input core_id_t                        ocd_core,

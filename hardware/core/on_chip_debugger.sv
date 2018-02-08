@@ -34,7 +34,7 @@ import defines::*;
 //    will not automatically restart it. The debugger should query the
 //    status of the instruction and reissue it.
 //  - If the instruction queue is full when this attempts to inject one, the
-//    instruction will be lost.
+//    instruction will be lost. There's no way to detect this.
 //  - When the halt signal is asserted, the processor will stop fetching new
 //    instructions, but any instructions already in the pipeline or in instruction
 //    queues will complete over subsequent cycles.
@@ -66,6 +66,8 @@ module on_chip_debugger
     input                           injected_complete,
     input                           injected_rollback);
 
+    // JEDEC Standard Manufacturer's Identification Code standard, JEP-106
+    // These constants are specified in config.sv
     localparam JTAG_IDCODE = {
         4'(`JTAG_PART_VERSION),
         16'(`JTAG_PART_NUMBER),
@@ -84,6 +86,17 @@ module on_chip_debugger
         local_thread_idx_t thread;
         logic halt;
     } debug_control_t;
+
+    typedef enum logic[3:0] {
+        INST_IDCODE = 4'd0,
+        INST_EXTEST = 4'd1,
+        INST_INTEST = 4'd2,
+        INST_CONTROL = 4'd3,
+        INST_INJECT_INST = 4'd4,
+        INST_TRANSFER_DATA = 4'd5,
+        INST_STATUS = 4'd6,
+        INST_BYPASS = 4'd15
+    } jtag_instruction_t;
 
     logic data_shift_val;
     logic[31:0] data_shift_reg;
@@ -105,17 +118,6 @@ module on_chip_debugger
     jtag_tap_controller #(.INSTRUCTION_WIDTH(4)) jtag_tap_controller(
         .jtag(jtag),
         .*);
-
-    typedef enum logic[3:0] {
-        INST_IDCODE = 4'd0,
-        INST_EXTEST = 4'd1,
-        INST_INTEST = 4'd2,
-        INST_CONTROL = 4'd3,
-        INST_INJECT_INST = 4'd4,
-        INST_TRANSFER_DATA = 4'd5,
-        INST_STATUS = 4'd6,
-        INST_BYPASS = 4'd15
-    } instruction_t;
 
     assign data_shift_val = data_shift_reg[0];
     assign ocd_inject_en = update_dr && instruction == INST_INJECT_INST;

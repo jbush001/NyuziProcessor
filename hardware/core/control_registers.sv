@@ -66,7 +66,7 @@ module control_registers
     output scalar_t                         cr_trap_handler,
     output scalar_t                         cr_tlb_miss_handler,
 
-    // To/From debug controller
+    // To/From on_chip_debugger
     input scalar_t                          ocd_data_from_host,
     input                                   ocd_data_update,
     output scalar_t                         cr_data_to_host);
@@ -180,7 +180,7 @@ module control_registers
                     CR_SUBCYCLE:          trap_state[dt_thread_idx][0].trap_subcycle <= subcycle_t'(dd_creg_write_val);
                     CR_CURRENT_ASID:      cr_current_asid[dt_thread_idx] <= dd_creg_write_val[ASID_WIDTH - 1:0];
                     CR_PAGE_DIR:          page_dir_base[dt_thread_idx] <= dd_creg_write_val;
-                    CR_INTERRUPT_ENABLE:    interrupt_mask[dt_thread_idx] <= dd_creg_write_val[NUM_INTERRUPTS - 1:0];
+                    CR_INTERRUPT_ENABLE:  interrupt_mask[dt_thread_idx] <= dd_creg_write_val[NUM_INTERRUPTS - 1:0];
                     CR_INTERRUPT_TRIGGER: int_trigger_type <= dd_creg_write_val[NUM_INTERRUPTS - 1:0];
                     CR_JTAG_DATA:         jtag_data <= dd_creg_write_val;
                     default:
@@ -271,7 +271,7 @@ module control_registers
                 CR_PAGE_DIR:          cr_creg_read_val <= page_dir_base[dt_thread_idx];
                 CR_INTERRUPT_PENDING: cr_creg_read_val <= scalar_t'(interrupt_pending[dt_thread_idx]
                                                           & interrupt_mask[dt_thread_idx]);
-                CR_INTERRUPT_ENABLE:    cr_creg_read_val <= scalar_t'(interrupt_mask[dt_thread_idx]);
+                CR_INTERRUPT_ENABLE:  cr_creg_read_val <= scalar_t'(interrupt_mask[dt_thread_idx]);
                 CR_INTERRUPT_TRIGGER: cr_creg_read_val <= scalar_t'(int_trigger_type);
                 CR_JTAG_DATA:         cr_creg_read_val <= jtag_data;
                 default:              cr_creg_read_val <= 32'hffffffff;

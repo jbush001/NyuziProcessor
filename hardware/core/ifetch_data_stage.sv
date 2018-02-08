@@ -90,7 +90,7 @@ module ifetch_data_stage(
     // from core
     input                            core_selected_debug,
 
-    // From debug_controller
+    // From on_chip_debugger
     input                            ocd_halt,
     input scalar_t                   ocd_inject_inst,
     input logic                      ocd_inject_en,

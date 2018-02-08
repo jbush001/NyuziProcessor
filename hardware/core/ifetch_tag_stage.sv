@@ -88,7 +88,7 @@ module ifetch_tag_stage
     // From thread_select_stage
     input local_thread_bitmap_t         ts_fetch_en,
 
-    // From debug_controller
+    // From on_chip_debugger
     input                               ocd_halt,
     input local_thread_idx_t            ocd_thread);
 
