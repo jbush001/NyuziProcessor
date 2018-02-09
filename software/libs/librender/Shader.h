@@ -74,7 +74,6 @@ public:
     // Number of attributes passed to shadeVertices for each vertex.
     int getNumAttribs() const
     {
-        int unused;
         return fAttribsPerVertex;
     }
 
