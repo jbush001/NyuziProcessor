@@ -18,7 +18,6 @@
 
 int bitmap_alloc(unsigned int *array, int num_bits)
 {
-    int new_asid = -1;
     int bitindex;
     int wordindex;
 

@@ -18,6 +18,7 @@
 #include "libc.h"
 #include "slab.h"
 #include "trap.h"
+#include "util.h"
 #include "vm_page.h"
 #include "vm_translation_map.h"
 
@@ -151,7 +152,7 @@ struct vm_translation_map *create_translation_map(void)
            (unsigned int*) PA_TO_VA(kernel_map.page_dir) + 768,
            256 * sizeof(unsigned int));
 
-    map->asid = bitmap_alloc(&asid_alloc);
+    map->asid = bitmap_alloc(asid_alloc, MAX_ASIDS);
     map->lock = 0;
 
     list_add_tail(&map_list, (struct list_node*) map);
@@ -169,8 +170,8 @@ void destroy_translation_map(struct vm_translation_map *map)
     old_flags = acquire_spinlock_int(&kernel_space_lock);
     list_remove_node(map);
     release_spinlock_int(&kernel_space_lock, old_flags);
-    if (map->asid > 0)
-        bitmap_free(&asid_alloc, map->asid);
+    if (map->asid >= 0)
+        bitmap_free(asid_alloc, map->asid);
 
     // Free user space page tables
     pgdir = (unsigned int*) PA_TO_VA(map->page_dir);
