@@ -37,7 +37,7 @@ struct vm_translation_map
     struct list_node list_entry;
     spinlock_t lock;
     unsigned int page_dir;
-    unsigned int asid;
+    int asid;
 };
 
 struct vm_translation_map *vm_translation_map_init(void);

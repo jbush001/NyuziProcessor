@@ -18,7 +18,7 @@ project(dhrystone)
 include(nyuzi)
 
 add_definitions(-DTIME=1)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -fno-inline-functions")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -fno-inline-functions -w")
 
 add_nyuzi_executable(dhrystone
     dhry_1.c

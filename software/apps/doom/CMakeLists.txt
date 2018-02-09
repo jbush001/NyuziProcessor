@@ -84,6 +84,7 @@ add_nyuzi_executable(doom
     info.c
     sounds.c
     i_main.c)
+target_compile_options(doom PRIVATE -Wno-error)
 
 target_link_libraries(doom
     c

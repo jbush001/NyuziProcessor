@@ -38,6 +38,8 @@ add_nyuzi_library(c
     src/memcpy.s
     src/setjmp.s)
 
-set_source_files_properties(dlmalloc.c PROPERTIES COMPILE_FLAGS "-Wno-error")
+# dlmalloc is a third party library that has a bunch of warnings.
+# I'm not going to modify it, so disabling them.
+set_source_files_properties(src/dlmalloc.c PROPERTIES COMPILE_FLAGS "-w")
 
 target_include_directories(c PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

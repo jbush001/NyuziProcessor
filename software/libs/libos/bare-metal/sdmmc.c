@@ -170,7 +170,6 @@ int read_sdmmc_device(unsigned int block_address, void *ptr)
 int write_sdmmc_device(unsigned int block_address, void *ptr)
 {
     int result;
-    int data_timeout;
 
     result = send_sd_command(SD_CMD_WRITE_SINGLE_BLOCK, block_address);
     if (result != 0)

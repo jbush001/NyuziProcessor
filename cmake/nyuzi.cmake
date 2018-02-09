@@ -14,21 +14,6 @@
 # limitations under the License.
 #
 
-macro(strict_warnings)
-    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    	# -Weverything is only supported on clang
-        set(CLANG_WARN_FLAGS "-Weverything -Wno-padded -Wno-float-equal -Wno-covered-switch-default \
-		-Wno-switch-enum -Wno-bad-function-cast -Wno-documentation -Wno-documentation-unknown-command \
-		-Wno-missing-prototypes -Wno-reserved-id-macro -Wno-strict-prototypes -Wno-expansion-to-defined -Wno-c++98-compat -Werror")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CLANG_WARN_FLAGS}")
-        set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} ${CLANG_WARN_FLAGS}")
-    elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-        set(GCC_WARN_FLAGS "-Wall -W -Werror")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_WARN_FLAGS}")
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${GCC_WARN_FLAGS}")
-    endif()
-endmacro()
-
 macro(add_nyuzi_binary)
     set(COMPILER_BIN /usr/local/llvm-nyuzi/bin/)
     set(CMAKE_C_COMPILER ${COMPILER_BIN}/clang)
@@ -38,8 +23,6 @@ macro(add_nyuzi_binary)
     set(CMAKE_ASM_COMPILE ${COMPILER_BIN}/clang)
     enable_language(ASM)
     set(CMAKE_CXX_STANDARD 11)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
 
     # LLD does not support these flags
     string(REPLACE "-Wl,-search_paths_first" "" CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS}")
@@ -65,6 +48,7 @@ macro(add_nyuzi_executable name)
     endif()
 
     add_executable(${name} ${ARGN})
+    target_compile_options(${name} PRIVATE -O3 -Wall -Werror)
 
     # Create the HEX file
     add_custom_command(TARGET ${name}
@@ -139,6 +123,6 @@ endmacro(add_nyuzi_executable name)
 
 macro(add_nyuzi_library name)
     add_nyuzi_binary()
-
     add_library(${name} ${ARGN})
+    target_compile_options(${name} PRIVATE -O3 -Wall -Werror)
 endmacro(add_nyuzi_library name)
