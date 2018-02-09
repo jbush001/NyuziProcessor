@@ -823,12 +823,13 @@ static bool translate_address(struct thread *thread, uint32_t virtual_address,
 
     if (!thread->enable_mmu)
     {
-        if (virtual_address >= thread->core->proc->memory_size && virtual_address < 0xffff0000)
+        if (virtual_address >= thread->core->proc->memory_size
+            && virtual_address < DEVICE_BASE_ADDRESS)
         {
             // This isn't an actual fault supported by the hardware, but a debugging
             // aid only available in the emulator.
-            printf("Memory access out of range %08x, pc %08x (MMU not enabled)\n",
-                   virtual_address, thread->pc - 4);
+            printf("Memory access out of range %08x (MMU not enabled)\n",
+                   virtual_address);
             print_thread_registers(thread);
             thread->core->proc->crashed = true;
             return false;
@@ -879,12 +880,13 @@ static bool translate_address(struct thread *thread, uint32_t virtual_address,
             *out_physical_address = ROUND_TO_PAGE(set_entries[way].phys_addr_and_flags)
                                     | PAGE_OFFSET(virtual_address);
 
-            if (*out_physical_address >= thread->core->proc->memory_size && *out_physical_address < 0xffff0000)
+            if (*out_physical_address >= thread->core->proc->memory_size
+                && *out_physical_address < DEVICE_BASE_ADDRESS)
             {
                 // This isn't an actual fault supported by the hardware, but a debugging
                 // aid only available in the emulator.
-                printf("Translated physical address out of range. va %08x pa %08x pc %08x\n",
-                       virtual_address, *out_physical_address, thread->pc - 4);
+                printf("Translated physical address out of range. va %08x pa %08x\n",
+                       virtual_address, *out_physical_address);
                 print_thread_registers(thread);
                 thread->core->proc->crashed = true;
                 return false;
@@ -1292,7 +1294,7 @@ static void execute_scalar_load_store_inst(struct thread *thread, uint32_t instr
     if (!translate_address(thread, virtual_address, &physical_address, !is_load, true))
         return; // fault raised, bypass other side effects
 
-    is_device_access = (physical_address & 0xffff0000) == 0xffff0000;
+    is_device_access = physical_address >= DEVICE_BASE_ADDRESS;
     if (is_device_access && op != MEM_LONG)
     {
         // This is not an actual CPU fault, but a debugging aid in the emulator.
@@ -1371,7 +1373,7 @@ static void execute_scalar_load_store_inst(struct thread *thread, uint32_t instr
                 break;
 
             case MEM_LONG:
-                if ((physical_address & 0xffff0000) == 0xffff0000)
+                if (physical_address >= DEVICE_BASE_ADDRESS)
                 {
                     // IO address range
                     if (physical_address == REG_THREAD_RESUME)
@@ -1485,6 +1487,14 @@ static void execute_block_load_store_inst(struct thread *thread, uint32_t instru
     if (!translate_address(thread, virtual_address, &physical_address, !is_load, true))
         return; // fault raised, bypass other side effects
 
+    if (physical_address >= DEVICE_BASE_ADDRESS)
+    {
+        printf("Illegal block access to device address\n");
+        print_thread_registers(thread);
+        thread->core->proc->crashed = true;
+        return;
+    }
+
     block_ptr = UINT32_PTR(thread->core->proc->memory, physical_address);
     if (is_load)
     {
@@ -1562,6 +1572,14 @@ static void execute_scatter_gather_inst(struct thread *thread, uint32_t instruct
 
     if (!translate_address(thread, virtual_address, &physical_address, !is_load, true))
         return; // fault raised, bypass other side effects
+
+    if (physical_address >= DEVICE_BASE_ADDRESS)
+    {
+        printf("Illegal scatter access to device address\n");
+        print_thread_registers(thread);
+        thread->core->proc->crashed = true;
+        return;
+    }
 
     if (is_load)
     {

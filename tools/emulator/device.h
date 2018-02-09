@@ -19,6 +19,8 @@
 
 #include <stdint.h>
 
+#define DEVICE_BASE_ADDRESS 0xffff0000
+
 // Memory mapped peripheral register addresses
 #define REG_HOST_INTERRUPT  0xffff0018
 #define REG_SERIAL_STATUS   0xffff0040
