@@ -19,22 +19,21 @@
 int bitmap_alloc(unsigned int *array, int num_bits)
 {
     int bitindex;
-    int wordindex;
+    int wordindex = 0;
 
-    for (wordindex = 0; wordindex < num_bits; wordindex += 32)
+    // Scan whole words at a time looking for a non-zero index
+    while (array[wordindex] == 0xffffffff)
     {
-        if (array[wordindex] != 0xffffffff)
-        {
-            // Search this word for the first zero bit. Inverting the bitmap
-            // allows us to scan for this, since there is no
-            // count-trailing-ones.
-            bitindex = __builtin_ctz(~array[wordindex]);
-            array[wordindex] |= 1 << bitindex;
-            return wordindex * 32 + bitindex;
-        }
+        if (++wordindex == num_bits / 32)
+            return -1;
     }
 
-    return -1;
+    // Search this word for the first zero bit. Inverting the bitmap
+    // allows us to scan for this, since there is no
+    // count-trailing-ones.
+    bitindex = __builtin_clz(~array[wordindex]);
+    array[wordindex] |= 0x80000000 >> bitindex;
+    return wordindex * 32 + bitindex;
 }
 
 void bitmap_free(unsigned int *array, int index)
@@ -42,3 +41,29 @@ void bitmap_free(unsigned int *array, int index)
     array[index / 32] &= ~(0x80000000 >> (index % 32));
 }
 
+#ifdef TEST_BITMAP_ALLOC
+
+#define NUM_TEST_BITS 128
+
+void test_bitmap()
+{
+    unsigned int bitmap[NUM_TEST_BITS / 32];
+    int index;
+
+    memset(bitmap, 0, sizeof(bitmap));
+
+    for (index = 0; index < NUM_TEST_BITS; index++)
+        assert(bitmap_alloc(bitmap, NUM_TEST_BITS) == index);
+
+    assert(bitmap_alloc(bitmap, NUM_TEST_BITS) == -1);
+
+    for (index = 0; index < NUM_TEST_BITS; index += 3)
+        bitmap_free(bitmap, index);
+
+    for (index = 0; index < NUM_TEST_BITS; index += 3)
+        assert(bitmap_alloc(bitmap, NUM_TEST_BITS) == index);
+
+    kprintf("bitmap tests passed\n");
+}
+
+#endif
