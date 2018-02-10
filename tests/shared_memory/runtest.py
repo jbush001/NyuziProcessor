@@ -93,6 +93,6 @@ def shared_memory(*unused):
                                                  hex(value ^ 0xffffffff) +
                                                  ' got ' + hex(computed))
     finally:
-        process.kill()
+        test_harness.kill_gently(process)
 
 test_harness.execute_tests()

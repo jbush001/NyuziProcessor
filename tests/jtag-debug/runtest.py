@@ -98,7 +98,7 @@ class JTAGTestFixture(object):
             except socket.error:
                 pass
         else:
-            self.process.kill()
+            test_harness.kill_gently(self.process)
             raise test_harness.TestException(
                 'failed to connect to verilator model')
 
@@ -108,7 +108,7 @@ class JTAGTestFixture(object):
         return self
 
     def __exit__(self, *unused):
-        self.process.kill()
+        test_harness.kill_gently(self.process)
         if self.sock:
             self.sock.close()
 

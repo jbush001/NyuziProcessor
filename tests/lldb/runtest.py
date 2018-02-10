@@ -72,14 +72,14 @@ class EmulatorProcess(object):
             self.outstr = self.lldb_proc.stdin
             self.instr = self.lldb_proc.stdout
         except:
-            self.emulator_proc.kill()
+            test_harness.kill_gently(self.emulator_proc)
             raise
 
         return self
 
     def __exit__(self, *unused):
-        self.emulator_proc.kill()
-        self.lldb_proc.kill()
+        test_harness.kill_gently(self.emulator_proc)
+        test_harness.kill_gently(self.lldb_proc)
 
     def send_command(self, cmd):
         if test_harness.DEBUG:

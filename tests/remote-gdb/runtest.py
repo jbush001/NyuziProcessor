@@ -152,7 +152,7 @@ class EmulatorProcess(object):
         return self
 
     def __exit__(self, *unused):
-        self.process.kill()
+        test_harness.kill_gently(self.process)
         if self.output:
             self.output.close()
 

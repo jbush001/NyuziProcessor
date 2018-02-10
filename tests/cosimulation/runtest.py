@@ -72,7 +72,7 @@ def run_cosimulation_test(source_file, *unused):
 
     p2.wait()
     time.sleep(1)  # Give verilator a chance to clean up
-    p1.kill() 	# Make sure verilator has exited
+    test_harness.kill_gently(p2) # Make sure verilator has exited
     if p2.returncode:
         raise test_harness.TestException(
             'FAIL: cosimulation mismatch\n' + output)

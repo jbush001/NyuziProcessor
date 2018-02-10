@@ -136,6 +136,19 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
     except subprocess.CalledProcessError as exc:
         raise TestException('Compilation failed:\n' + exc.output.decode())
 
+def kill_gently(process):
+    """
+    Give process a chance to terminate normally, then kill it
+    forcefully if it doesn't respond. This allows the emulator
+    to clean up, including restoring the terminal state.
+    """
+
+    process.terminate()
+    try:
+        process.wait(timeout=2)
+    except TimeoutExpired:
+        # Process may be hung
+        process.kill()
 
 class TimedProcessRunner(threading.Thread):
 
@@ -176,7 +189,7 @@ class TimedProcessRunner(threading.Thread):
         if not self.finished.wait(self.timeout):
             # Timed out
             self.finished.set()
-            self.process.kill()
+            kill_gently(self.process)
 
 
 def run_test_with_timeout(args, timeout):

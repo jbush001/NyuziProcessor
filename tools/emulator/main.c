@@ -142,7 +142,7 @@ static void shutdown_cleanup(void)
     tcsetattr(STDIN_FILENO, TCSANOW, &original_tconfig);
 }
 
-static void handle_int_signal(int num)
+static void handle_quit_signal(int num)
 {
     (void) num;
 
@@ -379,7 +379,14 @@ int main(int argc, char *argv[])
     if (tcgetattr(STDIN_FILENO, &original_tconfig) == 0)
     {
         // Set up these handlers to restore the terminal state on exit.
-        if (signal(SIGINT, handle_int_signal) == SIG_ERR)
+        if (signal(SIGINT, handle_quit_signal) == SIG_ERR)
+        {
+            perror("error setting up signal handler");
+            tcsetattr(STDIN_FILENO, TCSANOW, &original_tconfig);
+            exit(1);
+        }
+
+        if (signal(SIGTERM, handle_quit_signal) == SIG_ERR)
         {
             perror("error setting up signal handler");
             tcsetattr(STDIN_FILENO, TCSANOW, &original_tconfig);
