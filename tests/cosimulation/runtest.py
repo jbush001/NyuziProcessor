@@ -32,7 +32,6 @@ def run_cosimulation_test(source_file, *unused):
     verilator_args = [
         test_harness.VSIM_PATH,
         '+trace',
-        '+simcycles=2000000',
         '+memdumpfile=' + VERILATOR_MEM_DUMP,
         '+memdumpbase=800000',
         '+memdumplen=400000',
