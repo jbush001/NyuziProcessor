@@ -17,14 +17,16 @@
 
 import sys
 
-sys.path.insert(0, '../..')
+sys.path.insert(0, '../')
 import test_harness
 
 
-@test_harness.test
-def kernel_hello(_, target):
-    test_harness.build_program(['hello.c'], image_type='user')
+def run_kernel_test(source_file, target):
+    test_harness.build_program([source_file], image_type='user')
     result = test_harness.run_kernel(target=target, timeout=240)
-    test_harness.check_result('hello.c', result)
+    test_harness.check_result(source_file, result)
 
+test_list = test_harness.find_files(('.c', '.cpp'))
+test_harness.register_tests(run_kernel_test, test_list, [
+    'emulator', 'verilator', 'fpga'])
 test_harness.execute_tests()

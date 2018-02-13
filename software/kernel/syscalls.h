@@ -25,5 +25,4 @@
 #define SYS_set_perf_counter 7
 #define SYS_read_perf_counter 8
 #define SYS_get_cycle_count 9
-#define SYS_panic 10
-#define SYS_write_console 11
+#define SYS_write_console 10

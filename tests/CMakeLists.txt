@@ -18,9 +18,6 @@ add_subdirectory(fpga/blinky)
 add_subdirectory(fpga/uart_chargen)
 add_subdirectory(fpga/sdmmc_dump)
 add_subdirectory(fpga/sdmmc_native)
-add_subdirectory(kernel/multiprocess)
-add_subdirectory(kernel/threads)
-add_subdirectory(kernel/vga)
 add_subdirectory(float)
 
 set(py_test_dirs
@@ -56,20 +53,10 @@ foreach (dir ${py_test_dirs})
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${dir})
 endforeach(dir)
 
-# XXX only run in emulator mode for now
-set(kernel_test_dirs
-    kernel/crash
-    kernel/globalinit
-    kernel/hello
-    kernel/panic
-    kernel/user_copy_fault
-    kernel/initdata)
-
-foreach (dir ${kernel_test_dirs})
-    add_custom_command(TARGET tests
-        COMMAND ./runtest.py --target emulator
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${dir})
-endforeach(dir)
+# XXX only run in emulator mode for now (because of execution time)
+add_custom_command(TARGET tests
+    COMMAND ./runtest.py --target emulator
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/kernel)
 
 # Save a little time by only running these in one environment
 add_custom_command(TARGET tests

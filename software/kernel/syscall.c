@@ -125,10 +125,6 @@ int handle_syscall(int index, int arg0, int arg1, int arg2, int arg3, int arg4,
         case SYS_get_cycle_count:
             return __builtin_nyuzi_read_control_reg(6);
 
-        case SYS_panic:
-            *((volatile unsigned int*) 1) = 0;
-            return 0;
-
         default:
             kprintf("Unknown syscall %d\n", index);
             return -EINVAL;
