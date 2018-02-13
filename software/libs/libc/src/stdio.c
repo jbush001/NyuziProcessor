@@ -15,12 +15,12 @@
 //
 
 #include <ctype.h>
+#include <nyuzi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include "__stdio_internal.h"
-#include "uart.h"
 
 int printf(const char *fmt, ...)
 {
@@ -116,7 +116,10 @@ int puts(const char *s)
 int fputc(int ch, FILE *file)
 {
     if (file == stdout)
-        write_uart(ch);
+    {
+        char _ch = ch;
+        write_console(&_ch, 1);
+    }
     else if (file->write_buf)
     {
         if (file->write_offset < file->write_buf_len)

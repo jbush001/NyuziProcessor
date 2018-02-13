@@ -18,7 +18,6 @@ project(libos-bare)
 include(nyuzi)
 
 include_directories($<TARGET_PROPERTY:c,INCLUDE_DIRECTORIES>)
-include_directories($<TARGET_PROPERTY:kernel,INCLUDE_DIRECTORIES>)
 include_directories(..)
 
 add_nyuzi_library(os-bare

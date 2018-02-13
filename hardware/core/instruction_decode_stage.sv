@@ -231,7 +231,7 @@ module instruction_decode_stage(
     assign fmt_m = ifd_instruction[31:30] == 2'b10;
     assign getlane = (fmt_r || fmt_i) && alu_op == OP_GETLANE;
 
-    assign syscall = fmt_r && ifd_instruction[25:20] == OP_SYSCALL;
+    assign syscall = fmt_i && 6'(ifd_instruction[28:24]) == OP_SYSCALL;
     assign breakpoint = fmt_r && ifd_instruction[25:20] == OP_BREAKPOINT;
     assign nop = ifd_instruction == INSTRUCTION_NOP;
     assign has_trap = (ifd_instruction_valid

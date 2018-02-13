@@ -15,8 +15,8 @@
 //
 
 #include <time.h>
+#include "nyuzi.h"
 #include "unistd.h"
-#include "syscall.h"
 
 int usleep(useconds_t delay)
 {
@@ -27,7 +27,5 @@ int usleep(useconds_t delay)
 
 void exit(int status)
 {
-    __syscall(SYS_thread_exit, status, 0, 0, 0, 0);
-    while (1)   // Will never hit this
-        ;
+    thread_exit();
 }

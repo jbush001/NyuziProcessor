@@ -71,6 +71,7 @@ module test_control_registers(input clk, input reset);
     scalar_t ocd_data_from_host;
     logic ocd_data_update;
     scalar_t cr_data_to_host;
+    syscall_index_t wb_syscall_index;
     int cycle;
 
     control_registers #(

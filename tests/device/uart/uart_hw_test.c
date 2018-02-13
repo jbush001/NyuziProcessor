@@ -20,7 +20,6 @@
 
 #include <stdio.h>
 #include <unistd.h>
-#include <uart.h>
 
 #define CHECK(cond) do { if (!(cond)) { printf("FAIL: %d: %s\n", __LINE__, \
 	#cond); abort(); } } while(0)
@@ -36,6 +35,11 @@ enum uart_regs
     UART_TX = 2,
     UART_DIVISOR = 3
 };
+
+#define UART_FRAME_ERR 	(1 << 3)
+#define UART_OVERRUN 	(1 << 2)
+#define UART_RX_READY 	(1 << 1)
+#define UART_TX_READY 	(1 << 0)
 
 void write_loopback_uart(char ch)
 {

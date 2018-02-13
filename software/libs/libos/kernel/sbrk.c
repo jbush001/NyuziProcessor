@@ -14,25 +14,28 @@
 // limitations under the License.
 //
 
+#include "nyuzi.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "syscall.h"
 
 #define HEAP_SIZE 0x300000
 
 static volatile unsigned int lock;
-unsigned int next_alloc;
-unsigned int heap_base;
+static char *next_alloc;
+static char *heap_base;
 
 void *sbrk(ptrdiff_t size)
 {
-    unsigned int chunk;
+    void *chunk;
 
     while (__sync_lock_test_and_set(&lock, 1))
         ;
 
     if (next_alloc == 0)
-        heap_base = next_alloc = __syscall(SYS_create_area, 0, HEAP_SIZE, 2, (int) "heap", 2);
+    {
+        heap_base = next_alloc = create_area(0, HEAP_SIZE,
+            AREA_PLACE_SEARCH_UP, "heap", AREA_WRITABLE);
+    }
 
     if (next_alloc + size - heap_base > HEAP_SIZE)
     {
@@ -45,6 +48,6 @@ void *sbrk(ptrdiff_t size)
     next_alloc += size;
     __sync_lock_release(&lock);
 
-    return (void*) chunk;
+    return chunk;
 }
 

@@ -38,7 +38,3 @@ do_main:            call main
 __other_thread_start:
                     call main
                     call thread_exit
-
-                    .globl __syscall
-__syscall:          syscall
-                    ret

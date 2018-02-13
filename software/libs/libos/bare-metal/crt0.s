@@ -80,7 +80,7 @@ do_main:            move s0, 0    # Set argc to 0
 
                     # Send ^D to terminate serial console program on FPGA
                     move s0, 4
-                    call write_uart
+                    call _write_uart
 
                     #  Halt all threads.
                     move s0, -1

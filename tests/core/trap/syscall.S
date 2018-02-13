@@ -31,7 +31,7 @@ _start:
                 setcr s0, CR_FLAGS
                 flush_pipeline
 
-fault_loc:      syscall     // This should fault
+fault_loc:      syscall 7    // This should fault
 
                 should_not_get_here
 
@@ -41,6 +41,8 @@ handle_fault:   getcr s0, CR_TRAP_CAUSE
                 assert_reg s0, FLAG_SUPERVISOR_EN
                 getcr s0, CR_SAVED_FLAGS
                 assert_reg s0, 0
+                getcr s0, CR_SYSCALL_INDEX
+                assert_reg s0, 7
 
                 getcr s0, CR_TRAP_PC
                 lea s1, fault_loc

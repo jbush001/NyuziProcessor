@@ -107,6 +107,7 @@ module test_writeback_stage(input clk, input reset);
     logic wb_perf_instruction_retire;
     logic wb_perf_store_rollback;
     logic wb_perf_interrupt;
+    syscall_index_t wb_syscall_index;
     int cycle;
 
     writeback_stage writeback_stage(.*);

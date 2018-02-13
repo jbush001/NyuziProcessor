@@ -332,6 +332,7 @@ module core
     subcycle_t          wb_rollback_subcycle;   // From writeback_stage of writeback_stage.v
     local_thread_idx_t  wb_rollback_thread_idx; // From writeback_stage of writeback_stage.v
     local_thread_bitmap_t wb_suspend_thread_oh; // From writeback_stage of writeback_stage.v
+    syscall_index_t     wb_syscall_index;       // From writeback_stage of writeback_stage.v
     logic               wb_trap;                // From writeback_stage of writeback_stage.v
     scalar_t            wb_trap_access_vaddr;   // From writeback_stage of writeback_stage.v
     trap_cause_t        wb_trap_cause;          // From writeback_stage of writeback_stage.v

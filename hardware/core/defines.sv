@@ -50,6 +50,7 @@ typedef logic[`THREADS_PER_CORE - 1:0] local_thread_bitmap_t; // One bit per thr
 typedef logic[4:0] register_idx_t;
 typedef logic[$clog2(NUM_VECTOR_LANES) - 1:0] subcycle_t;
 typedef logic[NUM_VECTOR_LANES - 1:0] vector_mask_t;
+typedef logic[14:0] syscall_index_t;
 
 parameter CORE_ID_WIDTH = $clog2(`NUM_CORES);
 
@@ -80,8 +81,9 @@ parameter REG_RA = register_idx_t'(31);
 // Immediate/register arithmetic operation encodings
 typedef enum logic[5:0] {
     OP_OR                   = 6'b000000,    // Bitwise logical or
-    OP_AND                  = 6'b000001,
-    OP_XOR                  = 6'b000011,
+    OP_AND                  = 6'b000001,    // bitwise logical and
+    OP_SYSCALL              = 6'b000010,    // raise syscall trap
+    OP_XOR                  = 6'b000011,    // bitwise logical exclusive or
     OP_ADD_I                = 6'b000101,    // Add integer
     OP_SUB_I                = 6'b000110,    // Subtract integer
     OP_MULL_I               = 6'b000111,    // Multiply integer low
@@ -119,8 +121,7 @@ typedef enum logic[5:0] {
     OP_CMPLE_F              = 6'b101111,    // Floating point less than or equal
     OP_CMPEQ_F              = 6'b110000,    // Floating point equal
     OP_CMPNE_F              = 6'b110001,    // Floating point not-equal
-    OP_BREAKPOINT           = 6'b111110,
-    OP_SYSCALL              = 6'b111111
+    OP_BREAKPOINT           = 6'b111110
 } alu_op_t;
 
 // Operation type field encodings for memory instructions
@@ -177,11 +178,12 @@ typedef enum logic [4:0] {
     CR_SCRATCHPAD0          = 5'd11,
     CR_SCRATCHPAD1          = 5'd12,
     CR_SUBCYCLE             = 5'd13,
-    CR_INTERRUPT_ENABLE       = 5'd14,
+    CR_INTERRUPT_ENABLE     = 5'd14,
     CR_INTERRUPT_ACK        = 5'd15,
     CR_INTERRUPT_PENDING    = 5'd16,
     CR_INTERRUPT_TRIGGER    = 5'd17,
-    CR_JTAG_DATA            = 5'd18
+    CR_JTAG_DATA            = 5'd18,
+    CR_SYSCALL_INDEX        = 5'd19
 } control_register_t;
 
 // Trap type encodings

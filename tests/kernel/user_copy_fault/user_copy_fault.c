@@ -22,13 +22,6 @@
 // rather than crashing the kernel.
 //
 
-extern int __syscall(int n, int arg0, int arg1, int arg2, int arg3, int arg4);
-
-int printstr(const char *str, int length)
-{
-    return __syscall(0, (int) str, length, 0, 0, 0);
-}
-
 int main()
 {
     int retval;
@@ -36,7 +29,7 @@ int main()
 
     // The parameter to the first syscall is a null pointer, which will fail and
     // return an error. This should print a negative number.
-    retval = printstr((char*) 0, 5);
+    retval = write_console((char*) 0, 5);
     printf("printstr returned %d\n", retval);
     // CHECK: printstr returned -1
 

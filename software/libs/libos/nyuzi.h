@@ -33,6 +33,10 @@ unsigned int get_cycle_count(void);
 void *create_area(unsigned int address, unsigned int size, int placement,
                   const char *name, int flags);
 int exec(const char *path);
+int __attribute__((noreturn))  thread_exit(void);
+int spawn_thread(const char *name, int (*start)(void*), void *param);
+
+int write_console(const char *str, int length);
 
 #ifdef __cplusplus
 }

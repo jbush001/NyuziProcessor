@@ -30,6 +30,7 @@ enum arithmetic_op
 {
     OP_OR = 0,
     OP_AND = 1,
+    OP_SYSCALL = 2,
     OP_XOR = 3,
     OP_ADD_I = 5,
     OP_SUB_I = 6,
@@ -68,8 +69,7 @@ enum arithmetic_op
     OP_CMPLE_F = 47,
     OP_CMPEQ_F = 48,
     OP_CMPNE_F = 49,
-    OP_BREAKPOINT = 62,
-    OP_SYSCALL = 63
+    OP_BREAKPOINT = 62
 };
 
 enum register_arith_format
@@ -134,7 +134,9 @@ enum control_register
     CR_INTERRUPT_ENABLE = 14,
     CR_INTERRUPT_ACK = 15,
     CR_INTERRUPT_PENDING = 16,
-    CR_INTERRUPT_TRIGGER = 17
+    CR_INTERRUPT_TRIGGER = 17,
+    CR_JTAG_DATA = 18,
+    CR_SYSCALL_INDEX = 19
 };
 
 enum trap_type

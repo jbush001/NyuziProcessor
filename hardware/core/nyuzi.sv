@@ -54,6 +54,12 @@ module nyuzi
 
     /*AUTOLOGIC*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
+    logic               ii_ready [`NUM_CORES];  // From io_interconnect of io_interconnect.v
+    iorsp_packet_t      ii_response;            // From io_interconnect of io_interconnect.v
+    logic               ii_response_valid;      // From io_interconnect of io_interconnect.v
+    logic               l2_ready [`NUM_CORES];  // From l2_cache of l2_cache.v
+    l2rsp_packet_t      l2_response;            // From l2_cache of l2_cache.v
+    logic               l2_response_valid;      // From l2_cache of l2_cache.v
     core_id_t           ocd_core;               // From on_chip_debugger of on_chip_debugger.v
     scalar_t            ocd_data_from_host;     // From on_chip_debugger of on_chip_debugger.v
     logic               ocd_data_update;        // From on_chip_debugger of on_chip_debugger.v
@@ -61,12 +67,6 @@ module nyuzi
     logic               ocd_inject_en;          // From on_chip_debugger of on_chip_debugger.v
     scalar_t            ocd_inject_inst;        // From on_chip_debugger of on_chip_debugger.v
     local_thread_idx_t  ocd_thread;             // From on_chip_debugger of on_chip_debugger.v
-    logic               ii_ready [`NUM_CORES];  // From io_interconnect of io_interconnect.v
-    iorsp_packet_t      ii_response;            // From io_interconnect of io_interconnect.v
-    logic               ii_response_valid;      // From io_interconnect of io_interconnect.v
-    logic               l2_ready [`NUM_CORES];  // From l2_cache of l2_cache.v
-    l2rsp_packet_t      l2_response;            // From l2_cache of l2_cache.v
-    logic               l2_response_valid;      // From l2_cache of l2_cache.v
     // End of automatics
 
     initial

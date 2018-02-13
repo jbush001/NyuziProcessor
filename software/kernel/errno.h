@@ -1,5 +1,5 @@
 //
-// Copyright 2015 Jeff Bush
+// Copyright 2011-2015 Jeff Bush
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,16 +14,16 @@
 // limitations under the License.
 //
 
-#include "performance_counters.h"
-#include "syscall.h"
 
-void set_perf_counter_event(int counter, enum performance_event event)
-{
-    __syscall(SYS_set_perf_counter, counter, event, 0, 0, 0);
-}
+#pragma once
 
-unsigned int read_perf_counter(int counter)
-{
-    return __syscall(SYS_read_perf_counter, counter, 0, 0, 0, 0);
-}
+#define EPERM 1
+#define ENOENT 2
+#define EIO 5
+#define ENOEXEC 8
+#define EBADF 9
+#define ENOMEM 12
+#define EFAULT 14
+#define EINVAL 22
+#define EMFILE 24 // Too many open files
 

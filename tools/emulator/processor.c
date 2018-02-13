@@ -78,6 +78,7 @@ struct thread
         uint32_t scratchpad0;
         uint32_t scratchpad1;
         uint32_t subcycle;
+        uint32_t syscall_index;
         bool enable_interrupt;
         bool enable_mmu;
         bool enable_supervisor;
@@ -153,7 +154,7 @@ static void try_to_dispatch_interrupt(struct thread*);
 static uint32_t get_pending_interrupts(struct thread*);
 static const char *get_trap_name(enum trap_type);
 static void raise_trap(struct thread*, uint32_t address, enum trap_type type, bool is_store,
-                       bool is_data_cache);
+                       bool is_data_cache, uint32_t syscall_index);
 
 // Translate addresses using the translation lookaside buffer. Returns true
 // if there was a valid translation, false otherwise (in the latter case, it
@@ -715,7 +716,7 @@ static void try_to_dispatch_interrupt(struct thread *thread)
         if (thread->subcycle == 0)
             thread->pc += 4;
 
-        raise_trap(thread, 0, TT_INTERRUPT, false, false);
+        raise_trap(thread, 0, TT_INTERRUPT, false, false, 0);
     }
 }
 
@@ -749,13 +750,13 @@ static const char *get_trap_name(enum trap_type type)
 }
 
 static void raise_trap(struct thread *thread, uint32_t trap_address, enum trap_type type,
-                       bool is_store, bool is_data_cache)
+                       bool is_store, bool is_data_cache, uint32_t syscall_index)
 {
     if (thread->core->proc->enable_tracing)
     {
-        printf("%08x [th %u] trap %d store %d cache %d %08x\n",
+        printf("%08x [th %u] trap %d store %d cache %d %08x index %d\n",
                thread->pc - 4, thread->id, type, is_store, is_data_cache,
-               trap_address);
+               trap_address, syscall_index);
     }
 
     if ((thread->core->proc->stop_on_fault || thread->core->trap_handler_pc == 0)
@@ -798,6 +799,7 @@ static void raise_trap(struct thread *thread, uint32_t trap_address, enum trap_t
     thread->saved_trap_state[0].enable_supervisor = thread->enable_supervisor;
     thread->saved_trap_state[0].subcycle = thread->subcycle;
     thread->saved_trap_state[0].access_address = trap_address;
+    thread->saved_trap_state[0].syscall_index = syscall_index;
 
     // Update thread state
     thread->enable_interrupt = false;
@@ -851,7 +853,7 @@ static bool translate_address(struct thread *thread, uint32_t virtual_address,
             if ((set_entries[way].phys_addr_and_flags & TLB_PRESENT) == 0)
             {
                 raise_trap(thread, virtual_address, TT_PAGE_FAULT, is_store,
-                           is_data_access);
+                           is_data_access, 0);
                 return false;
             }
 
@@ -859,21 +861,22 @@ static bool translate_address(struct thread *thread, uint32_t virtual_address,
                     && !thread->enable_supervisor)
             {
                 raise_trap(thread, virtual_address, TT_SUPERVISOR_ACCESS, is_store,
-                           is_data_access);
+                           is_data_access, 0);
                 return false;
             }
 
             if ((set_entries[way].phys_addr_and_flags & TLB_EXECUTABLE) == 0
                     && !is_data_access)
             {
-                raise_trap(thread, virtual_address, TT_NOT_EXECUTABLE, false, false);
+                raise_trap(thread, virtual_address, TT_NOT_EXECUTABLE, false,
+                    false, 0);
                 return false;
             }
 
             if (is_store && (set_entries[way].phys_addr_and_flags & TLB_WRITE_ENABLE) == 0)
             {
                 raise_trap(thread, virtual_address, TT_ILLEGAL_STORE, true,
-                           is_data_access);
+                           is_data_access, 0);
                 return false;
             }
 
@@ -897,7 +900,7 @@ static bool translate_address(struct thread *thread, uint32_t virtual_address,
     }
 
     // No translation found
-    raise_trap(thread, virtual_address, TT_TLB_MISS, is_store, is_data_access);
+    raise_trap(thread, virtual_address, TT_TLB_MISS, is_store, is_data_access, 0);
     return false;
 }
 
@@ -1024,18 +1027,11 @@ static void execute_register_arith_inst(struct thread *thread, uint32_t instruct
     uint32_t maskreg = extract_unsigned_bits(instruction, 10, 5);
     int lane;
 
-    if (op == OP_SYSCALL)
-    {
-        raise_trap(thread, 0, TT_SYSCALL, false, false);
-        return;
-    }
-
     if (op == OP_BREAKPOINT)
     {
-        raise_trap(thread, 0, TT_BREAKPOINT, false, false);
+        raise_trap(thread, 0, TT_BREAKPOINT, false, false, 0);
         return;
     }
-
 
     TALLY_INSTRUCTION(reg_arith_inst);
     if (op == OP_GETLANE)
@@ -1085,7 +1081,7 @@ static void execute_register_arith_inst(struct thread *thread, uint32_t instruct
                 break;
 
             default:
-                raise_trap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false);
+                raise_trap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false, 0);
                 return;
         }
 
@@ -1117,7 +1113,7 @@ static void execute_register_arith_inst(struct thread *thread, uint32_t instruct
                 break;
 
             default:
-                raise_trap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false);
+                raise_trap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false, 0);
                 return;
         }
 
@@ -1179,7 +1175,13 @@ static void execute_immediate_arith_inst(struct thread *thread, uint32_t instruc
             break;
     }
 
-    if (op == OP_GETLANE)
+    if (op == OP_SYSCALL)
+    {
+        raise_trap(thread, 0, TT_SYSCALL, false, false,
+            extract_unsigned_bits(instruction, 10, 14));
+        return;
+    }
+    else if (op == OP_GETLANE)
     {
         TALLY_INSTRUCTION(vector_inst);
         set_scalar_reg(thread, destreg, thread->vector_reg[op1reg][imm_value & 0xf]);
@@ -1209,7 +1211,7 @@ static void execute_immediate_arith_inst(struct thread *thread, uint32_t instruc
                 break;
 
             default:
-                raise_trap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false);
+                raise_trap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false, 0);
                 return;
         }
 
@@ -1239,7 +1241,7 @@ static void execute_immediate_arith_inst(struct thread *thread, uint32_t instruc
                 break;
 
             default:
-                raise_trap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false);
+                raise_trap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false, 0);
                 return;
         }
 
@@ -1287,7 +1289,8 @@ static void execute_scalar_load_store_inst(struct thread *thread, uint32_t instr
     // Check alignment
     if ((virtual_address % access_size) != 0)
     {
-        raise_trap(thread, virtual_address, TT_UNALIGNED_ACCESS, !is_load, true);
+        raise_trap(thread, virtual_address, TT_UNALIGNED_ACCESS, !is_load,
+            true, 0);
         return;
     }
 
@@ -1343,7 +1346,7 @@ static void execute_scalar_load_store_inst(struct thread *thread, uint32_t instr
                 return;
 
             default:
-                raise_trap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false);
+                raise_trap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false, 0);
                 return;
         }
 
@@ -1419,7 +1422,7 @@ static void execute_scalar_load_store_inst(struct thread *thread, uint32_t instr
                 return;
 
             default:
-                raise_trap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false);
+                raise_trap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false, 0);
                 return;
         }
 
@@ -1480,7 +1483,7 @@ static void execute_block_load_store_inst(struct thread *thread, uint32_t instru
     if ((virtual_address & (NUM_VECTOR_LANES * 4 - 1)) != 0)
     {
         raise_trap(thread, virtual_address, TT_UNALIGNED_ACCESS, !is_load,
-                   true);
+                   true, 0);
         return;
     }
 
@@ -1566,7 +1569,8 @@ static void execute_scatter_gather_inst(struct thread *thread, uint32_t instruct
     virtual_address = thread->vector_reg[ptrreg][lane] + offset;
     if ((mask & (1 << lane)) && (virtual_address & 3) != 0)
     {
-        raise_trap(thread, virtual_address, TT_UNALIGNED_ACCESS, !is_load, true);
+        raise_trap(thread, virtual_address, TT_UNALIGNED_ACCESS, !is_load,
+            true, 0);
         return;
     }
 
@@ -1623,7 +1627,7 @@ static void execute_control_register_inst(struct thread *thread, uint32_t instru
     // Only threads in supervisor mode can access control registers.
     if (!thread->enable_supervisor)
     {
-        raise_trap(thread, 0, TT_PRIVILEGED_OP, false, false);
+        raise_trap(thread, 0, TT_PRIVILEGED_OP, false, false, 0);
         return;
     }
 
@@ -1704,6 +1708,10 @@ static void execute_control_register_inst(struct thread *thread, uint32_t instru
 
             case CR_INTERRUPT_TRIGGER:
                 value = thread->core->is_level_triggered;
+                break;
+
+            case CR_SYSCALL_INDEX:
+                value = thread->saved_trap_state[0].syscall_index;
                 break;
         }
 
@@ -1817,7 +1825,7 @@ static void execute_memory_access_inst(struct thread *thread, uint32_t instructi
             break;
 
         default:
-            raise_trap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false);
+            raise_trap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false, 0);
     }
 }
 
@@ -1865,7 +1873,7 @@ static void execute_branch_inst(struct thread *thread, uint32_t instruction)
         case BRANCH_ERET:
             if (!thread->enable_supervisor)
             {
-                raise_trap(thread, 0, TT_PRIVILEGED_OP, false, false);
+                raise_trap(thread, 0, TT_PRIVILEGED_OP, false, false, 0);
                 return;
             }
 
@@ -1885,7 +1893,7 @@ static void execute_branch_inst(struct thread *thread, uint32_t instruction)
             break;
 
         default:
-            raise_trap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false);
+            raise_trap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false, 0);
             break;
     }
 }
@@ -1902,7 +1910,7 @@ static void execute_cache_control_inst(struct thread *thread, uint32_t instructi
         case CC_DINVALIDATE:
             if (!thread->enable_supervisor)
             {
-                raise_trap(thread, 0, TT_PRIVILEGED_OP, false, false);
+                raise_trap(thread, 0, TT_PRIVILEGED_OP, false, false, 0);
                 return;
             }
 
@@ -1930,7 +1938,7 @@ static void execute_cache_control_inst(struct thread *thread, uint32_t instructi
 
             if (!thread->enable_supervisor)
             {
-                raise_trap(thread, 0, TT_PRIVILEGED_OP, false, false);
+                raise_trap(thread, 0, TT_PRIVILEGED_OP, false, false, 0);
                 return;
             }
 
@@ -1980,7 +1988,7 @@ static void execute_cache_control_inst(struct thread *thread, uint32_t instructi
 
             if (!thread->enable_supervisor)
             {
-                raise_trap(thread, 0, TT_PRIVILEGED_OP, false, false);
+                raise_trap(thread, 0, TT_PRIVILEGED_OP, false, false, 0);
                 return;
             }
 
@@ -2002,7 +2010,7 @@ static void execute_cache_control_inst(struct thread *thread, uint32_t instructi
 
             if (!thread->enable_supervisor)
             {
-                raise_trap(thread, 0, TT_PRIVILEGED_OP, false, false);
+                raise_trap(thread, 0, TT_PRIVILEGED_OP, false, false, 0);
                 return;
             }
 
@@ -2028,7 +2036,7 @@ static bool execute_instruction(struct thread *thread)
     // Check PC alignment
     if ((fetch_pc & 3) != 0)
     {
-        raise_trap(thread, thread->pc, TT_UNALIGNED_ACCESS, false, false);
+        raise_trap(thread, thread->pc, TT_UNALIGNED_ACCESS, false, false, 0);
         return true;   // XXX if stop on fault was enabled, should return false
     }
 
@@ -2054,7 +2062,7 @@ restart:
                 // breakpoint lookup. This is an optimization to avoid doing
                 // a lookup on every instruction. In this case, the special
                 // instruction was already in the program, so raise a fault.
-                raise_trap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false);
+                raise_trap(thread, 0, TT_ILLEGAL_INSTRUCTION, false, false, 0);
                 return true;
             }
 

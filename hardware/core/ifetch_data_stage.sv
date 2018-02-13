@@ -186,7 +186,6 @@ module ifetch_data_stage(
         begin
             /*AUTORESET*/
             // Beginning of autoreset for uninitialized flops
-            ocd_halt_latched <= '0;
             ifd_alignment_fault <= '0;
             ifd_executable_fault <= '0;
             ifd_inst_injected <= '0;
@@ -197,6 +196,7 @@ module ifetch_data_stage(
             ifd_perf_itlb_miss <= '0;
             ifd_supervisor_fault <= '0;
             ifd_tlb_miss <= '0;
+            ocd_halt_latched <= '0;
             // End of automatics
         end
         else

@@ -16,9 +16,8 @@
 
 #pragma once
 
-#define SYS_write_serial 0
 #define SYS_spawn_thread 1
-#define SYS_get_thread_id 2
+#define SYS_get_current_thread_id 2
 #define SYS_exec 3
 #define SYS_thread_exit 4
 #define SYS_init_vga 5
@@ -27,3 +26,4 @@
 #define SYS_read_perf_counter 8
 #define SYS_get_cycle_count 9
 #define SYS_panic 10
+#define SYS_write_console 11

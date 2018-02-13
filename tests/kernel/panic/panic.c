@@ -14,12 +14,10 @@
 // limitations under the License.
 //
 
-extern int __syscall(int n, int arg0, int arg1, int arg2, int arg3, int arg4);
-
 int main()
 {
     // This will cause a kernel panic
-    __syscall(10, 0, 0, 0, 0, 0);
+    __asm__("syscall 10");
     return 0;
 }
 

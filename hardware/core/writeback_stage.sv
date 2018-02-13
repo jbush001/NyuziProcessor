@@ -99,6 +99,7 @@ module writeback_stage(
     output scalar_t                       wb_trap_pc,
     output scalar_t                       wb_trap_access_vaddr,
     output subcycle_t                     wb_trap_subcycle,
+    output syscall_index_t                wb_syscall_index,
     output logic                          wb_eret,
 
     // Rollback signals to all stages
@@ -238,6 +239,8 @@ module writeback_stage(
             wb_rollback_subcycle = dd_subcycle;
         end
     end
+
+    assign wb_syscall_index = syscall_index_t'(ix_instruction.immediate_value);
 
     // Return if this instruction was injected by the on chip debugger.
     always_comb

@@ -35,6 +35,8 @@
 #define CR_INTERRUPT_ACK 15
 #define CR_INTERRUPT_PENDING 16
 #define CR_INTERRUPT_TRIGGER 17
+#define CR_JTAG_DATA 18
+#define CR_SYSCALL_INDEX 19
 
 // Flag register bits
 #define FLAG_INTERRUPT_EN (1 << 0)

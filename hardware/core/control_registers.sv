@@ -59,6 +59,7 @@ module control_registers
     input scalar_t                          wb_trap_access_vaddr,
     input local_thread_idx_t                wb_rollback_thread_idx,
     input subcycle_t                        wb_trap_subcycle,
+    input syscall_index_t                   wb_syscall_index,
 
     // To writeback_stage
     output scalar_t                         cr_creg_read_val,
@@ -90,6 +91,7 @@ module control_registers
         scalar_t trap_pc;
         scalar_t trap_access_addr;
         subcycle_t trap_subcycle;
+        syscall_index_t syscall_index;
     } trap_state_t;
 
     trap_state_t trap_state[`THREADS_PER_CORE][TRAP_LEVELS];
@@ -150,6 +152,7 @@ module control_registers
                 trap_state[wb_rollback_thread_idx][0].trap_cause <= wb_trap_cause;
                 trap_state[wb_rollback_thread_idx][0].trap_pc <= wb_trap_pc;
                 trap_state[wb_rollback_thread_idx][0].trap_access_addr <= wb_trap_access_vaddr;
+                trap_state[wb_rollback_thread_idx][0].syscall_index <= wb_syscall_index;
                 trap_state[wb_rollback_thread_idx][0].trap_subcycle <= wb_trap_subcycle;
                 trap_state[wb_rollback_thread_idx][0].flags.interrupt_en <= 0;    // Disable interrupts for this thread
                 trap_state[wb_rollback_thread_idx][0].flags.supervisor_en <= 1;
@@ -274,6 +277,7 @@ module control_registers
                 CR_INTERRUPT_ENABLE:  cr_creg_read_val <= scalar_t'(interrupt_mask[dt_thread_idx]);
                 CR_INTERRUPT_TRIGGER: cr_creg_read_val <= scalar_t'(int_trigger_type);
                 CR_JTAG_DATA:         cr_creg_read_val <= jtag_data;
+                CR_SYSCALL_INDEX:     cr_creg_read_val <= scalar_t'(trap_state[dt_thread_idx][0].syscall_index);
                 default:              cr_creg_read_val <= 32'hffffffff;
             endcase
         end

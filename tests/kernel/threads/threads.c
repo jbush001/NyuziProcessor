@@ -22,29 +22,14 @@
 // - Interrupts and preemptive task switching
 //
 
-extern int __syscall(int n, int arg0, int arg1, int arg2, int arg3, int arg4);
+#include <nyuzi.h>
 
-void printstr(const char *str, int length)
+int thread_start(void *param)
 {
-    __syscall(0, (int) str, length, 0, 0, 0);
-}
-
-int getthid()
-{
-    return __syscall(2, 0, 0, 0, 0, 0);
-}
-
-int spawn_thread(const char *name, void (*func)(void*), void *param)
-{
-    return __syscall(1, (int) name, (int) func, (int) param, 0, 0);
-}
-
-void thread_start()
-{
-    int th = getthid();
+    int th = get_current_thread_id();
     char c = th + 'A';
     for (;;)
-        printstr(&c, 1);
+        write_console(&c, 1);
 }
 
 int main()

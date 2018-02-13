@@ -14,6 +14,7 @@
 // limitations under the License.
 //
 
+#include "errno.h"
 #include "thread.h"
 #include "libc.h"
 #include "registers.h"
@@ -25,7 +26,7 @@
 extern int user_copy(void *dest, const void *src, int count);
 extern int user_strlcpy(char *dest, const char *src, int count);
 
-int handle_syscall(int arg0, int arg1, int arg2, int arg3, int arg4,
+int handle_syscall(int index, int arg0, int arg1, int arg2, int arg3, int arg4,
                    int arg5)
 {
     char tmp[64];
@@ -33,41 +34,41 @@ int handle_syscall(int arg0, int arg1, int arg2, int arg3, int arg4,
     (void) arg4;
     (void) arg5;
 
-    switch (arg0)
+    switch (index)
     {
-        // int write_serial(const char *data, int length);
-        case SYS_write_serial:
-            if ((unsigned int) arg2 >= sizeof(tmp) - 2)
+        // int write_console(const char *data, int length);
+        case SYS_write_console:
+            if ((unsigned int) arg1 >= sizeof(tmp) - 2)
             {
                 kprintf("size out of range\n");
-                return -1;
+                return -EINVAL;
             }
 
-            if (user_copy(tmp, (void*) arg1, arg2) < 0)
+            if (user_copy(tmp, (void*) arg0, arg1) < 0)
             {
                 kprintf("user copy failed\n");
-                return -1;
+                return -EFAULT;
             }
 
-            tmp[arg2] = '\0';
+            tmp[arg1] = '\0';
             kprintf("%s", tmp);
             return 0;
 
         // int spawn_user_thread(const char *name, function, void *arg);
         case SYS_spawn_thread:
-            spawn_user_thread((const char*) arg1, current_thread()->proc, arg2,
-                              (void*) arg3);
+            spawn_user_thread((const char*) arg0, current_thread()->proc, arg1,
+                              (void*) arg2);
             return 0;
 
-        // int get_thread_id();
-        case SYS_get_thread_id:
+        // int get_current_thread_id();
+        case SYS_get_current_thread_id:
             return current_thread()->id;
 
         // int exec(const char *path);
         case SYS_exec:
         {
             // XXX unsafe user copy. Need copy_from_user
-            struct process *proc = exec_program((const char*) arg1);
+            struct process *proc = exec_program((const char*) arg0);
             if (proc)
             {
                 int id = proc->id;
@@ -75,30 +76,30 @@ int handle_syscall(int arg0, int arg1, int arg2, int arg3, int arg4,
                 return id;
             }
             else
-                return -1;
+                return -ENOEXEC;
         }
 
         // void thread_exit(int code)
         case SYS_thread_exit:
-            thread_exit(arg1);  // This will not return
+            thread_exit(arg0);  // This will not return
 
         // void *init_vga(int mode);
         case SYS_init_vga:
-            return (int) init_vga(arg1);
+            return (int) init_vga(arg0);
 
         // void *create_area(unsigned int address, unsigned int size, int placement,
         //                   const char *name, int flags);
         case SYS_create_area:
         {
-            if (user_strlcpy(tmp, (const char*) arg4, sizeof(tmp)) < 0)
+            if (user_strlcpy(tmp, (const char*) arg3, sizeof(tmp)) < 0)
                 return 0;
 
             struct vm_area *area = create_area(current_thread()->proc->space,
-                (unsigned int) arg1, // Address
-                (unsigned int) arg2, // size
-                arg3, // Placement
+                (unsigned int) arg0, // Address
+                (unsigned int) arg1, // size
+                arg2, // Placement
                 tmp,
-                arg5, // flags,
+                arg4, // flags,
                 0, 0);
 
             if (area == 0)
@@ -109,15 +110,15 @@ int handle_syscall(int arg0, int arg1, int arg2, int arg3, int arg4,
 
         // void set_perf_counter_event(int counter, enum performance_event event)
         case SYS_set_perf_counter:
-            if (arg1 >= 0 && arg1 < NUM_PERF_COUNTERS)
-                REGISTERS[REG_PERF0_SEL + arg1] = arg2;
+            if (arg0 >= 0 && arg0 < NUM_PERF_COUNTERS)
+                REGISTERS[REG_PERF0_SEL + arg0] = arg1;
 
             return 0;
 
         // unsigned int read_perf_counter(int counter)
         case SYS_read_perf_counter:
-            if (arg1 >= 0 && arg1 < NUM_PERF_COUNTERS)
-                return REGISTERS[REG_PERF0_VAL + arg1];
+            if (arg0 >= 0 && arg0 < NUM_PERF_COUNTERS)
+                return REGISTERS[REG_PERF0_VAL + arg0];
             else
                 return 0;
 
@@ -129,6 +130,7 @@ int handle_syscall(int arg0, int arg1, int arg2, int arg3, int arg4,
             return 0;
 
         default:
-            panic("Unknown syscall %d\n", arg0);
+            kprintf("Unknown syscall %d\n", index);
+            return -EINVAL;
     }
 }

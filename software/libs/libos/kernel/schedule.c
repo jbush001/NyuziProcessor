@@ -16,7 +16,7 @@
 
 #include <stdio.h>
 #include "schedule.h"
-#include "syscall.h"
+#include "nyuzi.h"
 
 static parallel_func_t current_func;
 static volatile int current_index;
@@ -73,12 +73,5 @@ extern int __other_thread_start();
 void start_all_threads(void)
 {
     for (int i = 0; i < 3; i++)
-        __syscall(SYS_spawn_thread, (int) "thread", (int) __other_thread_start, (int) 0, 0, 0);
-}
-
-void __attribute__((noreturn)) thread_exit(int code)
-{
-    (void) code;
-    __syscall(SYS_thread_exit, code, 0, 0, 0, 0);
-    for (;;);
+        spawn_thread("thread", __other_thread_start, NULL);
 }

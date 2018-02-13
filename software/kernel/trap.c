@@ -30,7 +30,7 @@ struct interrupt_frame
 };
 
 void dump_interrupt_frame(const struct interrupt_frame*);
-extern int handle_syscall(int arg0, int arg1, int arg2, int arg3, int arg4,
+extern int handle_syscall(int index, int arg0, int arg1, int arg2, int arg3, int arg4,
                           int arg5);
 
 static const char *TRAP_NAMES[] =
@@ -112,6 +112,7 @@ static void __attribute__((noreturn)) bad_fault(struct interrupt_frame *frame)
 void handle_trap(struct interrupt_frame *frame)
 {
     unsigned int address;
+    int syscall_index;
     int trap_cause = __builtin_nyuzi_read_control_reg(CR_TRAP_CAUSE);
 
     switch (trap_cause & 0xf)
@@ -134,12 +135,12 @@ void handle_trap(struct interrupt_frame *frame)
 
         case TT_SYSCALL:
             // Enable interrupts
-            address = __builtin_nyuzi_read_control_reg(CR_TRAP_ADDR);
+            syscall_index = __builtin_nyuzi_read_control_reg(CR_SYSCALL_INDEX);
             enable_interrupts();
-
-            frame->gpr[0] = handle_syscall(frame->gpr[0], frame->gpr[1],
-                                           frame->gpr[2], frame->gpr[3],
-                                           frame->gpr[4], frame->gpr[5]);
+            frame->gpr[0] = handle_syscall(syscall_index, frame->gpr[0],
+                                           frame->gpr[1], frame->gpr[2],
+                                           frame->gpr[3], frame->gpr[4],
+                                           frame->gpr[5]);
 
             frame->pc += 4;    // Next instruction
             disable_interrupts();

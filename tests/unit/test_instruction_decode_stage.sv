@@ -189,7 +189,7 @@ module test_instruction_decode_stage(input clk, input reset);
                     // Syscall instruction
                     ifd_instruction_valid <= 1;
                     ifd_pc <= ifd_pc + 4;
-                    ifd_instruction <= 32'hc3f00000;
+                    ifd_instruction <= 32'h02000000;
                 end
 
                 // wait a cycle

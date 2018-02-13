@@ -18,20 +18,16 @@ project(libos-kern)
 include(nyuzi)
 
 include_directories($<TARGET_PROPERTY:c,INCLUDE_DIRECTORIES>)
-include_directories($<TARGET_PROPERTY:kernel,INCLUDE_DIRECTORIES>)
+
 include_directories(..)
 
 add_nyuzi_library(os-kern
     keyboard.c
     schedule.c
-    vga.c
     misc.c
-    performance_counters.c
-    syscall.h
+    syscall.S
     fs.c
-    nyuzi.c
     sbrk.c
-    uart.c
     crt0.s)
 
 target_include_directories (os-kern PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)

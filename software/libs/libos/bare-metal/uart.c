@@ -15,9 +15,10 @@
 //
 
 #include "registers.h"
-#include "uart.h"
 
-void write_uart(char ch)
+#define UART_TX_READY 	(1 << 0)
+
+void _write_uart(char ch)
 {
     while ((REGISTERS[REG_UART_STATUS] & UART_TX_READY) == 0)
         ;	// Wait for space
@@ -25,11 +26,13 @@ void write_uart(char ch)
     REGISTERS[REG_UART_TX] = ch;
 }
 
-unsigned char read_uart(void)
+int write_console(const char *str, int length)
 {
-    while ((REGISTERS[REG_UART_STATUS] & UART_RX_READY) == 0)
-        ;	// Wait for characters to be available
+    int i;
 
-    return REGISTERS[REG_UART_RX];
+    for (i = 0; i < length; i++)
+        _write_uart(str[i]);
+
+    return 0;
 }
 

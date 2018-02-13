@@ -31,7 +31,6 @@ set(py_test_dirs
 	core/cache_control/
 	core/mmu
 	core/trap
-	core/perf_counters
 	stress/atomic
 	shared_memory
 	device/sdmmc/
