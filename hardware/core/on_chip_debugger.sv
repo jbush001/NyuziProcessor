@@ -21,13 +21,19 @@ import defines::*;
 //
 // On chip debugger (OCD) controller.
 //
+// This is experimental and a work in progress.
+//
 // This acts as an interface between an external JTAG host and the cores
 // and exposes debugging functionality like reading and writing memory
 // and registers. It works by allowing the host to inject instructions
-// into a core's instruction pipeline, and facilitating bidirectional data
+// into a core's execution pipeline, and facilitating bidirectional data
 // transfer between the host and target.
 //
-// This is experimental and a work in progress.
+// There are two distinct types of signals labeled 'instruction' in this
+// module: the contents of the JTAG instruction register, which determines
+// the data register that is being transferred, and the machine instruction
+// that is injected into the execution pipeline. Usually when comments
+// refer to instructions, they mean the latter.
 //
 //  Limitations:
 //  - If an instruction has to be rolled back (for example, cache miss), this
@@ -79,7 +85,7 @@ module on_chip_debugger
         READY = 2'd0,
         ISSUED = 2'd1,
         ROLLED_BACK = 2'd2
-    } instruction_status_t;
+    } machine_inst_status_t;
 
     typedef struct packed {
         core_id_t core;
@@ -101,11 +107,11 @@ module on_chip_debugger
     logic data_shift_val;
     logic[31:0] data_shift_reg;
     debug_control_t control;
-    instruction_status_t instruction_status;
+    machine_inst_status_t machine_inst_status;
     /*AUTOLOGIC*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
     logic               capture_dr;             // From jtag_tap_controller of jtag_tap_controller.v
-    logic [3:0]         instruction;            // From jtag_tap_controller of jtag_tap_controller.v
+    logic [3:0]         jtag_instruction;       // From jtag_tap_controller of jtag_tap_controller.v
     logic               shift_dr;               // From jtag_tap_controller of jtag_tap_controller.v
     logic               update_dr;              // From jtag_tap_controller of jtag_tap_controller.v
     logic               update_ir;              // From jtag_tap_controller of jtag_tap_controller.v
@@ -120,29 +126,29 @@ module on_chip_debugger
         .*);
 
     assign data_shift_val = data_shift_reg[0];
-    assign ocd_inject_en = update_dr && instruction == INST_INJECT_INST;
+    assign ocd_inject_en = update_dr && jtag_instruction == INST_INJECT_INST;
 
     always @(posedge clk, posedge reset)
     begin
         if (reset)
         begin
             control <= '0;
-            instruction_status <= READY;
+            machine_inst_status <= READY;
         end
         else
         begin
-            if (update_dr && instruction == INST_CONTROL)
+            if (update_dr && jtag_instruction == INST_CONTROL)
                 control <= debug_control_t'(data_shift_reg);
 
             // Only one of these can be asserted
             assert($onehot0({injected_rollback, injected_complete}));
 
             if (injected_rollback)
-                instruction_status <= ROLLED_BACK;
+                machine_inst_status <= ROLLED_BACK;
             else if (injected_complete)
-                instruction_status <= READY;
-            else if (update_dr && instruction == INST_INJECT_INST)
-                instruction_status <= ISSUED;
+                machine_inst_status <= READY;
+            else if (update_dr && jtag_instruction == INST_INJECT_INST)
+                machine_inst_status <= ISSUED;
         end
     end
 
@@ -150,33 +156,33 @@ module on_chip_debugger
     // will receive the value that was shifted into the TRANSFER_DATA
     // JTAG register.
     assign ocd_data_from_host = data_shift_reg;
-    assign ocd_data_update = update_dr && instruction == INST_TRANSFER_DATA;
+    assign ocd_data_update = update_dr && jtag_instruction == INST_TRANSFER_DATA;
 
     always @(posedge clk)
     begin
         if (capture_dr)
         begin
-            unique case (instruction)
+            unique case (jtag_instruction)
                 INST_IDCODE: data_shift_reg <= JTAG_IDCODE;
                 INST_CONTROL: data_shift_reg <= 32'(control);
                 INST_TRANSFER_DATA: data_shift_reg <= data_to_host;
-                INST_STATUS: data_shift_reg <= 32'(instruction_status);
+                INST_STATUS: data_shift_reg <= 32'(machine_inst_status);
                 default: data_shift_reg <= '0;
             endcase
         end
         else if (shift_dr)
         begin
-            unique case (instruction)
+            unique case (jtag_instruction)
                 INST_BYPASS: data_shift_reg <= 32'(jtag.tdi);
                 INST_CONTROL: data_shift_reg <= 32'({jtag.tdi, data_shift_reg[$bits(debug_control_t) - 1:1]});
-                INST_STATUS: data_shift_reg <= 32'({jtag.tdi, data_shift_reg[$bits(instruction_status_t) - 1:1]});
+                INST_STATUS: data_shift_reg <= 32'({jtag.tdi, data_shift_reg[$bits(machine_inst_status_t) - 1:1]});
                 // Default covers any 32 bit transfer (most instructions)
                 default: data_shift_reg <= 32'({jtag.tdi, data_shift_reg[31:1]});
             endcase
         end
         else if (update_dr)
         begin
-            if (instruction == INST_INJECT_INST)
+            if (jtag_instruction == INST_INJECT_INST)
                 ocd_inject_inst <= data_shift_reg;
         end
     end

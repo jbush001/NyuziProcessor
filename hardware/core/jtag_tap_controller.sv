@@ -46,7 +46,7 @@ module jtag_tap_controller
     output logic                            capture_dr,
     output logic                            shift_dr,
     output logic                            update_dr,
-    output logic[INSTRUCTION_WIDTH - 1:0]   instruction,
+    output logic[INSTRUCTION_WIDTH - 1:0]   jtag_instruction,
     output logic                            update_ir);
 
     typedef enum int {
@@ -189,7 +189,7 @@ module jtag_tap_controller
             state_ff <= JTAG_RESET;
             /*AUTORESET*/
             // Beginning of autoreset for uninitialized flops
-            instruction <= '0;
+            jtag_instruction <= '0;
             jtag.tdo <= '0;
             last_tck <= '0;
             // End of automatics
@@ -199,17 +199,17 @@ module jtag_tap_controller
         else
         begin
             if (state_ff == JTAG_RESET)
-                instruction <= '0;
+                jtag_instruction <= '0;
 
             last_tck <= tck_sync;
             if (tck_rising_edge)
             begin
                 state_ff <= state_nxt;
                 if (state_ff == JTAG_SHIFT_IR)
-                    instruction <= {tdi_sync, instruction[INSTRUCTION_WIDTH - 1:1]};
+                    jtag_instruction <= {tdi_sync, jtag_instruction[INSTRUCTION_WIDTH - 1:1]};
             end
             else if (tck_falling_edge)
-                jtag.tdo <= state_ff == JTAG_SHIFT_IR ? instruction[0] : data_shift_val;
+                jtag.tdo <= state_ff == JTAG_SHIFT_IR ? jtag_instruction[0] : data_shift_val;
         end
     end
 endmodule
