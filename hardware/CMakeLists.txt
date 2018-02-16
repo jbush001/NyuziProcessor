@@ -33,6 +33,22 @@ if(DEFINED ENV{DUMP_WAVEFORM})
     set(VERILATOR_OPTIONS ${VERILATOR_OPTIONS} --trace --trace-structs)
 endif()
 
+# Need fixes:
+# https://www.veripool.org/issues/1246-Verilator-modport-declaration-incorrectly-treats-some-outputs-as-inputs
+# and change 00a502942e956ed (which doesn't have a bug) for a stack smasher.
+set(CMAKE_MIN_VERSION "918")
+
+# Version string looks like this:
+# "Verilator 3.920 2018-02-01 rev verilator_3_920"
+execute_process(COMMAND verilator --version OUTPUT_VARIABLE verilator_version_str)
+string(REGEX MATCH "Verilator 3\\.([0-9]+)" verilator_version ${verilator_version_str})
+if (NOT CMAKE_MATCH_1)
+    message("Couldn't get verilator version")
+elseif(CMAKE_MATCH_1 LESS ${CMAKE_MIN_VERSION})
+    message(FATAL_ERROR "Need at least verilator 3.${CMAKE_MIN_VERSION}")
+endif()
+
+
 # XXX check verilator version
 
 add_custom_target(nyuzi_vsim ALL
