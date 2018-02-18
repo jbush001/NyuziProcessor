@@ -16,6 +16,11 @@
 
 project(de2_115)
 
+# The working directory for these is the source dir, which means these will
+# put output files in the source hierarchy even if this is an out-of-tree
+# build. This is because the Quartus project file specifies relative paths.
+# XXX it might be cleaner to have this generate the .qsf file.
+
 add_custom_target(synthesize
 	COMMAND quartus_map de2_115
 	COMMAND quartus_fit de2_115
@@ -23,10 +28,12 @@ add_custom_target(synthesize
 	COMMAND quartus_sta de2_115
     COMMAND ./print_summary.py
     COMMENT "Synthesizing"
-    DEPENDS bootrom)
+    DEPENDS bootrom
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_custom_target(program
-    COMMAND quartus_pgm -m jtag -o \"P\;output_files/de2_115.sof\")
+    COMMAND quartus_pgm -m jtag -o \"P\;output_files/de2_115.sof\"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 
 
