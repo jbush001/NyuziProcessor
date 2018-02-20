@@ -22,5 +22,4 @@ add_nyuzi_executable(membench
 
 target_link_libraries(membench
     c
-    os-bare
-    compiler-rt)
+    os-bare)

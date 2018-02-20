@@ -21,5 +21,4 @@ add_nyuzi_executable(sdmmc_native
 
 target_link_libraries(sdmmc_native
     c
-    os-bare
-    compiler-rt)
+    os-bare)

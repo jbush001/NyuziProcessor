@@ -30,7 +30,7 @@ function compileAndRun {
 	# Build
 	gcc time.c -o WORK/time
 	WORK/time		# time(0) is stored in the return value
-	$CC -DSEED=$? -O3 -o $ELFFILE $1 ../../libs/libc/crt0.o ../../libs/libc/libc.a ../../libs/libos/libos.a ../../libs/compiler-rt/compiler-rt.a -I../../../software/libs/libc/include
+	$CC -DSEED=$? -O3 -o $ELFFILE $1 ../../libs/libc/crt0.o ../../libs/libc/libc.a ../../libs/libos/libos.a -I../../../software/libs/libc/include
 	$ELF2HEX -o $HEXFILE $ELFFILE
 
 	# Run, collect results

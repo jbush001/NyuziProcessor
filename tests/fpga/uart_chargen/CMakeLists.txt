@@ -21,5 +21,4 @@ add_nyuzi_executable(chargen
 
 target_link_libraries(chargen
     c
-    os-bare
-    compiler-rt)
+    os-bare)

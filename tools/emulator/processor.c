@@ -616,7 +616,7 @@ static void print_thread_registers(const struct thread *thread)
     int reg;
     int lane;
 
-    printf("REGISTERS\n");
+    printf("Thread %d registers\n", thread->id);
     for (reg = 0; reg < NUM_REGISTERS; reg++)
     {
         if (reg < 10)

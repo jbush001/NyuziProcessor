@@ -26,5 +26,4 @@ add_nyuzi_executable(dhrystone
 
 target_link_libraries(dhrystone
     c
-    os-bare
-    compiler-rt)
+    os-bare)

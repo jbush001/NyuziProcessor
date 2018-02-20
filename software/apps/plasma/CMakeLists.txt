@@ -23,5 +23,4 @@ add_nyuzi_executable(plasma
 
 target_link_libraries(plasma
     c
-    os-bare
-    compiler-rt)
+    os-bare)

@@ -25,7 +25,12 @@
 #define MEMORY_SIZE 0x1000000
 
                     .globl _start
-_start:             getcr s0, 0
+_start:
+                    # Load global pointer
+                    movehi gp, hi(_GLOBAL_OFFSET_TABLE_)
+                    or gp, gp, lo(_GLOBAL_OFFSET_TABLE_)
+
+                    getcr s0, 0
                     bnz s0, start_thread_n
 
                     // The temporary stack is only used while calling

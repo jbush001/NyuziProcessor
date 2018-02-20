@@ -88,5 +88,4 @@ target_compile_options(doom PRIVATE -Wno-error)
 
 target_link_libraries(doom
     c
-    os-bare
-    compiler-rt)
+    os-bare)

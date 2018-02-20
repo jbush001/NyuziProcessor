@@ -30,5 +30,4 @@ add_nyuzi_executable(quakeview
 target_link_libraries(quakeview
     render
     c
-    os-bare
-    compiler-rt)
+    os-bare)

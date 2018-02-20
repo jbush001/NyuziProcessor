@@ -22,5 +22,4 @@ add_nyuzi_executable(hash
 
 target_link_libraries(hash
     c
-    os-bare
-    compiler-rt)
+    os-bare)

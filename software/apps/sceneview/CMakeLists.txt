@@ -30,8 +30,7 @@ add_dependencies(sceneview resource_bin)
 target_link_libraries(sceneview
     render
     c
-    os-bare
-    compiler-rt)
+    os-bare)
 
 add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/resource.bin
     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/make_resource_file.py ${OBJ_FILE}

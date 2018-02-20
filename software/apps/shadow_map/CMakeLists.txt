@@ -24,5 +24,4 @@ add_nyuzi_executable(shadow_map
 target_link_libraries(shadow_map
     render
     c
-    os-bare
-    compiler-rt)
+    os-bare)

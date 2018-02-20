@@ -375,6 +375,11 @@ void puts(const char *s)
     putc('\n');
 }
 
+void abort()
+{
+    panic("abort called");
+}
+
 void panic(const char *format, ...)
 {
     va_list args;

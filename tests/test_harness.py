@@ -114,8 +114,7 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
     if any(name.endswith(('.c', '.cpp')) for name in source_files):
         compiler_args += ['-I' + LIB_INCLUDE_BASE + 'libc/include',
                           '-I' + LIB_INCLUDE_BASE + 'libos',
-                          LIB_DIR + 'libc/libc.a',
-                          LIB_DIR + 'compiler-rt/libcompiler-rt.a']
+                          LIB_DIR + 'libc/libc.a']
         if image_type == 'user':
             compiler_args += [LIB_DIR + 'libos/kernel/libos-kern.a']
         else:

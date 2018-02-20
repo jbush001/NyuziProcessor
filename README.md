@@ -4,8 +4,8 @@
 [![Chat at https://gitter.im/jbush001/NyuziProcessor](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jbush001/NyuziProcessor?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Nyuzi is an experimental GPGPU processor hardware design focused on compute
-intensive tasks. It is optimized for use cases like blockchain mining, deep
-learning, and autonomous driving.
+intensive tasks. It is optimized for use cases like deep learning and
+image processing.
 
 This project includes a synthesizable hardware design written in System
 Verilog, an instruction set emulator, an LLVM based C/C++ compiler, software

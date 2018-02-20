@@ -22,6 +22,5 @@ add_nyuzi_executable(hello_world
 
 target_link_libraries(hello_world
     c
-    os-bare
-    compiler-rt)
+    os-bare)
 

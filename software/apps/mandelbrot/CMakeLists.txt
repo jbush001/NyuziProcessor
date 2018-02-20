@@ -22,6 +22,5 @@ add_nyuzi_executable(mandelbrot
 
 target_link_libraries(mandelbrot
     c
-    os-bare
-    compiler-rt)
+    os-bare)
 

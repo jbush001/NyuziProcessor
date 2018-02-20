@@ -24,9 +24,6 @@ add_executable(bootrom
     start.s
     boot.c)
 
-target_link_libraries(bootrom
-    compiler-rt)
-
 add_custom_command(TARGET bootrom
     POST_BUILD
     COMMAND ${CMAKE_SOURCE_DIR}/tools/misc/bin2hex.py $<TARGET_FILE:bootrom> > boot.hex

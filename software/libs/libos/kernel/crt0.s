@@ -16,6 +16,10 @@
 
                     .globl _start
 _start:
+                    # Load global pointer
+                    movehi gp, hi(_GLOBAL_OFFSET_TABLE_)
+                    or gp, gp, lo(_GLOBAL_OFFSET_TABLE_)
+
                     # Call global initializers
                     lea s24, __init_array_start
                     lea s25, __init_array_end
@@ -32,9 +36,3 @@ do_main:            call main
                     call call_atexit_functions
 
                     call exit
-
-
-                    .globl __other_thread_start
-__other_thread_start:
-                    call main
-                    call thread_exit

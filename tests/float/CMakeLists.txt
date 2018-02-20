@@ -24,8 +24,7 @@ add_nyuzi_executable(float_test_runner
 add_dependencies(float_test_runner float_test_cases_s)
 target_link_libraries(float_test_runner
     c
-    os-bare
-    compiler-rt)
+    os-bare)
 
 # Generate the test cases assembly file, which will be compiled in. This is
 # assembly rather than a C array because it builds *much* faster, especially

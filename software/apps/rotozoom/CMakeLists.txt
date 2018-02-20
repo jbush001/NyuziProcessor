@@ -23,5 +23,4 @@ add_nyuzi_executable(rotozoom
 
 target_link_libraries(rotozoom
     c
-    os-bare
-    compiler-rt)
+    os-bare)

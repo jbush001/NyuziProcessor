@@ -23,5 +23,4 @@ add_nyuzi_executable(consoletest
 target_link_libraries(consoletest
     c
     console
-    os-bare
-    compiler-rt)
+    os-bare)
