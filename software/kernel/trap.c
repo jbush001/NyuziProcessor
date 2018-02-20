@@ -29,7 +29,8 @@ struct interrupt_frame
     unsigned int subcycle;
 };
 
-void dump_interrupt_frame(const struct interrupt_frame*);
+void dump_interrupt_frame(int trap_cause, unsigned int trap_address,
+    const struct interrupt_frame*);
 extern int handle_syscall(int index, int arg0, int arg1, int arg2, int arg3, int arg4,
                           int arg5);
 
@@ -91,12 +92,13 @@ void ack_interrupt(int interrupt)
     __builtin_nyuzi_write_control_reg(CR_INTERRUPT_ACK, 1 << interrupt);
 }
 
-static void __attribute__((noreturn)) bad_fault(struct interrupt_frame *frame)
+static void __attribute__((noreturn)) bad_fault(int trap_cause, unsigned int trap_address,
+    struct interrupt_frame *frame)
 {
     if (frame->flags & FLAG_SUPERVISOR_EN)
     {
         kprintf("Invalid kernel page fault thread %d\n", current_thread()->id);
-        dump_interrupt_frame(frame);
+        dump_interrupt_frame(trap_cause, trap_address, frame);
         panic("stopping");
     }
     else
@@ -104,7 +106,7 @@ static void __attribute__((noreturn)) bad_fault(struct interrupt_frame *frame)
         // User space crash. Kill thread. Should kill entire process,
         // but need signals/APCs to do that.
         kprintf("user space thread %d crashed\n", current_thread()->id);
-        dump_interrupt_frame(frame);
+        dump_interrupt_frame(trap_cause, trap_address, frame);
         thread_exit(1);
     }
 }
@@ -127,7 +129,7 @@ void handle_trap(struct interrupt_frame *frame)
                 if (fault_handler[current_hw_thread()] != 0)
                     frame->pc = fault_handler[current_hw_thread()];
                 else
-                    bad_fault(frame);
+                    bad_fault(trap_cause, address, frame);
             }
 
             disable_interrupts();
@@ -151,16 +153,15 @@ void handle_trap(struct interrupt_frame *frame)
             break;
 
         default:
-            bad_fault(frame);
+            bad_fault(trap_cause, 0, frame);
     }
 }
 
-void dump_interrupt_frame(const struct interrupt_frame *frame)
+void dump_interrupt_frame(int trap_cause, unsigned int trap_address,
+    const struct interrupt_frame *frame)
 {
     int reg;
-    int trap_cause = __builtin_nyuzi_read_control_reg(CR_TRAP_CAUSE);
     int trap_type = trap_cause & 0xf;
-    unsigned int trap_address = __builtin_nyuzi_read_control_reg(CR_TRAP_ADDR);
 
     if (trap_type <= TT_NOT_EXECUTABLE)
     {
