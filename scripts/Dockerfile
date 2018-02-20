@@ -30,8 +30,8 @@ ADD tmp/llvm-ar /usr/local/llvm-nyuzi/bin/
 ADD tmp/llvm-ranlib /usr/local/llvm-nyuzi/bin/
 ADD tmp/llvm-objdump /usr/local/llvm-nyuzi/bin/
 ADD tmp/libclang_rt.builtins-nyuzi.a /usr/local/llvm-nyuzi/lib/clang/7.0.0/
-RUN ln -s /usr/local/llvm-nyuzi/bin/clang-5.0 /usr/local/llvm-nyuzi/bin/clang
-RUN ln -s /usr/local/llvm-nyuzi/bin/clang-5.0 /usr/local/llvm-nyuzi/bin/clang++
+RUN ln -s /usr/local/llvm-nyuzi/bin/clang-7.0 /usr/local/llvm-nyuzi/bin/clang
+RUN ln -s /usr/local/llvm-nyuzi/bin/clang-7.0 /usr/local/llvm-nyuzi/bin/clang++
 RUN ln -s /usr/local/llvm-nyuzi/bin/lld /usr/local/llvm-nyuzi/bin/ld.lld
 ADD tmp/share_verilator/ /usr/local/share/verilator/
 ADD tmp/verilator* /usr/local/bin/
