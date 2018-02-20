@@ -25,16 +25,17 @@
 # DOCKER_REPO=username/nyuzi-build ./build_container.sh
 #
 
-TOOLCHAIN_DIR=/usr/local/llvm-nyuzi/bin
+TOOLCHAIN_DIR=/usr/local/llvm-nyuzi/
 
 rm -rf tmp/*
 mkdir -p tmp
-cp $TOOLCHAIN_DIR/clang-5.0 tmp/
-cp $TOOLCHAIN_DIR/elf2hex tmp/
-cp $TOOLCHAIN_DIR/lld tmp/
-cp $TOOLCHAIN_DIR/llvm-ar tmp/
-cp $TOOLCHAIN_DIR/llvm-ranlib tmp/
-cp $TOOLCHAIN_DIR/llvm-objdump tmp/
+cp $TOOLCHAIN_DIR/bin/clang-7.0 tmp/
+cp $TOOLCHAIN_DIR/bin/elf2hex tmp/
+cp $TOOLCHAIN_DIR/bin/lld tmp/
+cp $TOOLCHAIN_DIR/bin/llvm-ar tmp/
+cp $TOOLCHAIN_DIR/bin/llvm-ranlib tmp/
+cp $TOOLCHAIN_DIR/bin/llvm-objdump tmp/
+cp $TOOLCHAIN_DIR/lib/clang/7.0.0/lib/libclang_rt.builtins-nyuzi.a tmp/
 
 cp -R /usr/local/share/verilator tmp/share_verilator
 cp /usr/local/bin/verilator* tmp/
