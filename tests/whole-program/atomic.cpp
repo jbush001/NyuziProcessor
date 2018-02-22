@@ -61,5 +61,15 @@ int main()
     printf("0x%08x\n", __sync_bool_compare_and_swap(&foo, 3, 10));  // CHECK: 0x00000001
     printf("0x%08x\n", foo); // CHECK: 0x0000000a
 
+    // Unlock
+    foo = 1;
+    __sync_lock_release(&foo);
+    printf("foo = %d\n", foo); // CHECK: foo = 0
+
+    // Swap
+    foo = 0x12;
+    printf("old value 0x%08x\n", __atomic_exchange_n(&foo, 0x17, __ATOMIC_RELEASE)); // CHECK: 0x00000012
+    printf("new value 0x%08x\n", foo); // CHECK: new value 0x00000017
+
     return 0;
 }
