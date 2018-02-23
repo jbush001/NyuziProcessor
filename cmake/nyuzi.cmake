@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+# This module defines targets that are compiled for the Nyuzi instruction set.
+
 macro(add_nyuzi_binary)
     set(COMPILER_BIN /usr/local/llvm-nyuzi/bin/)
     set(CMAKE_C_COMPILER ${COMPILER_BIN}/clang)
@@ -48,7 +50,7 @@ macro(add_nyuzi_executable name)
     endif()
 
     add_executable(${name} ${ARGN})
-    target_compile_options(${name} PRIVATE -O3 -Wall -Werror)
+    target_compile_options(${name} PRIVATE -O3 -Wall -Werror -fno-rtti)
 
     # Create the HEX file
     add_custom_command(TARGET ${name}

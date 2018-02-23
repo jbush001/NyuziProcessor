@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+# Command line tool that runs on the host system
+
 macro(add_command_line_tool name)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
     add_executable(${name} ${ARGN})

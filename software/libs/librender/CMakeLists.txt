@@ -22,7 +22,6 @@ include(nyuzi)
 include_directories($<TARGET_PROPERTY:os-bare,INCLUDE_DIRECTORIES>)
 include_directories($<TARGET_PROPERTY:c,INCLUDE_DIRECTORIES>)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wnon-virtual-dtor -Wold-style-cast -Wsign-conversion -fno-rtti -ffast-math -Werror")
 add_nyuzi_library(render
     Rasterizer.cpp
     Surface.cpp
@@ -30,5 +29,5 @@ add_nyuzi_library(render
     RenderContext.cpp
     Texture.cpp
     line.cpp)
-
+target_compile_options(render PRIVATE -Wold-style-cast -Wsign-conversion -ffast-math)
 target_include_directories (render PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

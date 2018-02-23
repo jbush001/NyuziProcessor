@@ -18,12 +18,14 @@ project(dhrystone)
 include(nyuzi)
 
 add_definitions(-DTIME=1)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -fno-inline-functions -w")
 
 add_nyuzi_executable(dhrystone
     dhry_1.c
     dhry_2.c)
 
+# The instructions with Dhrystone indicate function inlining should be
+# disabled.
+target_compile_options(dhrystone PRIVATE -fno-inline-functions -w)
 target_link_libraries(dhrystone
     c
     os-bare)
