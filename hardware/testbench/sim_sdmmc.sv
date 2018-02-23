@@ -15,8 +15,8 @@
 //
 
 //
-// Simulates SPI mode SD card. Currently read-only. When the simulator is
-// initialized, it opens the file specified by the argument +block=<filename>
+// Simulates SPI mode SD card. When the simulator is initialized, it opens the
+// file specified by the argument +block=<filename>
 // http://elm-chan.org/docs/mmc/mmc_e.html
 //
 
