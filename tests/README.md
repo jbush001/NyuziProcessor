@@ -21,7 +21,12 @@ are supported by the test. This can be restricted to a specific target with the
 The --debug flag will enable printing test specific diagonostic output to the
 console.
 
-There is an experimental 'fpga' target in progress, but is not fully functional'
+There is an experimental 'fpga' target in progress, but is not fully functional.
+
+Temporary files like assembled binaries are stored in the 'tests/work' folder.
+These can be useful to dump disassembly and symbols, or to run directly in
+the emulator or verilator to trace output. More tips on debugging are in the
+README in tools/emulator.
 
 Invoking the top level Makefile with the test target will run tests in subprojects.
 This is executed by the continuous integration environment.
