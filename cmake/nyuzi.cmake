@@ -50,7 +50,7 @@ macro(add_nyuzi_executable name)
     endif()
 
     add_executable(${name} ${ARGN})
-    target_compile_options(${name} PRIVATE -O3 -Wall -Werror -fno-rtti)
+    target_compile_options(${name} PRIVATE -O3 -Wall -Wno-unused-command-line-argument -Werror -fno-rtti)
 
     # Create the HEX file
     add_custom_command(TARGET ${name}
@@ -126,5 +126,5 @@ endmacro(add_nyuzi_executable name)
 macro(add_nyuzi_library name)
     add_nyuzi_binary()
     add_library(${name} ${ARGN})
-    target_compile_options(${name} PRIVATE -O3 -Wall -Werror)
+    target_compile_options(${name} PRIVATE -O3 -Wall -Wno-unused-command-line-argument -Werror)
 endmacro(add_nyuzi_library name)

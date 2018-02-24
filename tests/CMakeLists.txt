@@ -89,7 +89,7 @@ add_custom_target(pylint
     COMMAND PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR} find ${CMAKE_CURRENT_SOURCE_DIR} -iname "*.py" -exec echo \{\} \\\\; -exec ${PYLINT_PATH} \{\} \\\\;)
 
 add_custom_target(pyflakes
-    COMMAND PYTHONPATH=$(CURDIR) find ${CMAKE_CURRENT_SOURCE_DIR} -iname "*.py" -exec echo \{\} \\\\; -exec ${PYFLAKES_PATH} \{\} \\\\;)
+    COMMAND PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR} find ${CMAKE_CURRENT_SOURCE_DIR} -iname "*.py" -exec echo \{\} \\\\; -exec ${PYFLAKES_PATH} \{\} \\\\;)
 
 add_custom_target(pyformat
     COMMAND find ${CMAKE_CURRENT_SOURCE_DIR} -iname "*.py" | xargs ${AUTOPEP8_PATH} -i)

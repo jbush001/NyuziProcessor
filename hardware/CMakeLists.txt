@@ -17,6 +17,8 @@
 project(hardware)
 add_subdirectory(fpga/de2-115)
 
+find_program(VERILATOR NAMES verilator)
+
 set(VERILATOR_GEN_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 set(VERILATOR_OPTIONS --unroll-count 512
     --assert
@@ -40,7 +42,7 @@ set(VERILATOR_MIN_VERSION "918")
 
 # Version string looks like this:
 # "Verilator 3.920 2018-02-01 rev verilator_3_920"
-execute_process(COMMAND verilator --version OUTPUT_VARIABLE verilator_version_str)
+execute_process(COMMAND ${VERILATOR} --version OUTPUT_VARIABLE verilator_version_str)
 string(REGEX MATCH "Verilator 3\\.([0-9]+)" verilator_version ${verilator_version_str})
 if (NOT CMAKE_MATCH_1)
     message("Couldn't get verilator version")
@@ -49,7 +51,7 @@ elseif(CMAKE_MATCH_1 LESS ${VERILATOR_MIN_VERSION})
 endif()
 
 add_custom_target(nyuzi_vsim ALL
-    COMMAND verilator ${VERILATOR_OPTIONS}
+    COMMAND ${VERILATOR} ${VERILATOR_OPTIONS}
         --cc ${CMAKE_CURRENT_SOURCE_DIR}/testbench/soc_tb.sv
         --exe ${CMAKE_CURRENT_SOURCE_DIR}/testbench/verilator_main.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/testbench/jtag_socket.cpp
@@ -68,10 +70,12 @@ add_custom_target(vcsbuild
     COMMAND ${CMAKE_SOURCE_DIR}/scripts/vcsbuild.pl
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
+find_program(EMACS NAMES emacs)
+
 # The 'autos' target expands Verilog Mode macros using emacs in batch mode.
 # https://www.veripool.org/wiki/verilog-mode
 add_custom_target(autos
-    COMMAND emacs --eval '\(setq-default indent-tabs-mode nil\)'
+    COMMAND ${EMACS} --eval '\(setq-default indent-tabs-mode nil\)'
       --eval '\(setq-default verilog-typedef-regexp \"_t$$\"\)'
 	    --eval '\(setq-default verilog-auto-reset-widths `unbased\)'
 		  --eval '\(setq-default verilog-auto-inst-param-value t\)'
@@ -83,13 +87,13 @@ add_custom_target(autos
 # FPGA target isn't built as part of other targets, but run a lint pass to
 # ensure they are at least syntactically correct.
 add_custom_target(fpgalint
-    COMMAND verilator ${VERILATOR_OPTIONS} --lint-only fpga/de2-115/de2_115_top.sv
+    COMMAND ${VERILATOR} ${VERILATOR_OPTIONS} --lint-only fpga/de2-115/de2_115_top.sv
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMENT "Checking FPGA sources")
 
 # This extracts all SRAMs from the design and creates separate instances for each
 # unique width/size configuration. This is intended for ASIC memory compiler tools.
 add_custom_target(srams
-    COMMAND ./verilator_model +dumpmems | ../tools/misc/extract_mems.py > core/srams.inc
+    COMMAND ${CMAKE_BINARY_DIR}/bin/nyuzi_vsim +dumpmems | ../tools/misc/extract_mems.py > ${CMAKE_CURRENT_BINARY_DIR}/srams.inc
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    DEPENDS verilator_model)
+    DEPENDS nyuzi_vsim)
