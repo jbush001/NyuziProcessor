@@ -22,8 +22,8 @@
 
 module sim_sdmmc(
     input            sd_sclk,
-    input            sd_di,
     input            sd_cs_n,
+    input            sd_di,
     output logic     sd_do);
 
     localparam INIT_CLOCKS = 72;
@@ -111,7 +111,9 @@ module sim_sdmmc(
         case (current_state)
             STATE_INIT_WAIT_FOR_CLOCKS:
             begin
-                $display("command sent to SD card before initialized");
+                // Bug in this module: shouldn't process commands until
+                // initialization
+                assert(0);
                 $finish;
             end
 
@@ -133,6 +135,14 @@ module sim_sdmmc(
                     case (command[0] & 8'h3f)
                         CMD_GO_IDLE:
                         begin
+                            // Still in native SD mode, checksum needs to be correct
+                            assert(command[1] == 0);
+                            assert(command[2] == 0);
+                            assert(command[3] == 0);
+                            assert(command[4] == 0);
+                            assert(mosi_byte_nxt == 8'h95);
+
+                            // Reset the card
                             card_ready <= 1;
                             current_state <= STATE_RESULT;
                             command_result <= 1;
@@ -148,7 +158,7 @@ module sim_sdmmc(
                         begin
                             assert(card_ready);
                             current_state <= STATE_READ_CMD_RESPONSE;
-                            state_delay <= $random() & 'hf;    // Simulate random delay
+                            state_delay <= $random() & 'h7;    // Simulate random delay
                             command_result <= 1;
                             miso_byte <= 'hff;    // wait
                             transfer_count <= 0;
@@ -183,7 +193,7 @@ module sim_sdmmc(
                         begin
                             assert(card_ready);
                             current_state <= STATE_WRITE_CMD_RESPONSE;
-                            state_delay <= $random() & 'hf;    // Simulate random delay
+                            state_delay <= $random() & 'h7;    // Simulate random delay
                             command_result <= 1;
                             transfer_address <= {command[1], command[2], command[3], command[4]}
                                 * block_length;
@@ -214,7 +224,7 @@ module sim_sdmmc(
                 begin
                     current_state <= STATE_READ_DATA_TOKEN;
                     miso_byte <= 0; // Ready
-                    state_delay <= $random() & 'hf;    // Simulate random delay
+                    state_delay <= $random() & 'h7;    // Simulate random delay
                 end
                 else
                     state_delay <= state_delay - 1;
@@ -240,7 +250,7 @@ module sim_sdmmc(
                 state_delay <= state_delay - 1;
                 if (state_delay <= 2)
                 begin
-                    // Transmit 16 bit checksum (ignored)
+                    // 16 bit checksum (ignored)
                     miso_byte <= 'hff;
                 end
                 else
@@ -259,7 +269,7 @@ module sim_sdmmc(
                 begin
                     current_state <= STATE_WRITE_DATA_TOKEN;
                     miso_byte <= 0; // Ready
-                    state_delay <= $random() & 'hf;    // Simulate random delay
+                    state_delay <= $random() & 'h7;    // Simulate random delay
                 end
                 else
                 begin
@@ -317,10 +327,21 @@ module sim_sdmmc(
         endcase
     endtask
 
-    always @(posedge sd_sclk) // fix for multiple drivers on shift_count: initial statement not compatible with always_ff according to SystemVerilog standard
+    // This is 'always' instead of 'always_ff' because there is an initial
+    // statement to initialize variables, which is not compatible with
+    // always_ff according to SystemVerilog standard (was causing errors
+    // on some simulators otherwise).
+    always @(posedge sd_sclk)
     begin
-        if (sd_cs_n && current_state == STATE_INIT_WAIT_FOR_CLOCKS)
+        if (current_state == STATE_INIT_WAIT_FOR_CLOCKS)
         begin
+            if (!sd_di || !sd_cs_n)
+            begin
+                $display("Error in SD initialization sequence: DI %d CS %d",
+                    sd_di, sd_cs_n);
+                $finish;
+            end
+
             init_clock_count <= init_clock_count + 1;
             if (init_clock_count >= INIT_CLOCKS)
                 current_state <= STATE_IDLE;
