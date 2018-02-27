@@ -17,7 +17,7 @@
 //
 // Simulates SPI mode SD card. When the simulator is initialized, it opens the
 // file specified by the argument +block=<filename>
-// http://elm-chan.org/docs/mmc/mmc_e.html
+// https://www.sdcard.org/downloads/pls/pdf/index.php?p=Part1_Physical_Layer_Simplified_Specification_Ver6.00.jpg
 //
 
 module sim_sdmmc(

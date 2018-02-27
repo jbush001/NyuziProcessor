@@ -23,8 +23,7 @@
 // Read the first few sectors of the SD card and dump them out the
 // serial port. This uses the SPI mode driver in libos.
 // ***This is not yet functional***.  I'm still debugging issues with
-// it. The define BITBANG_SDMMC must be disabled in hardware/fpga/de2-115/de2_115_top.sv
-// for this to be operational.
+// it.
 //
 
 int main()

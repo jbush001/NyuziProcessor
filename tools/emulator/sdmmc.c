@@ -28,7 +28,7 @@
 #include "util.h"
 
 // SD/MMC interface, SPI mode.
-// http://elm-chan.org/docs/mmc/mmc_e.html
+// https://www.sdcard.org/downloads/pls/pdf/index.php?p=Part1_Physical_Layer_Simplified_Specification_Ver6.00.jpg
 
 #define INIT_CLOCKS 80
 #define SD_COMMAND_LENGTH 6

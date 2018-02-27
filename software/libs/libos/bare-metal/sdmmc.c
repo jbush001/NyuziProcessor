@@ -20,6 +20,7 @@
 
 // SPI mode SDMMC driver. This currently only works in the emulator/verilog
 // simulator. I'm still debugging this on FPGA.
+// https://www.sdcard.org/downloads/pls/pdf/index.php?p=Part1_Physical_Layer_Simplified_Specification_Ver6.00.jpg
 
 #define MAX_RETRIES 100
 #define DATA_TOKEN 0xfe
