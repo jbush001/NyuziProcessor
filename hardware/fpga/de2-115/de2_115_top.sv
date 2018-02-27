@@ -237,13 +237,8 @@ module de2_115_top(
 
             casez (nyuzi_io_bus.address)
                 'h4?: io_bus_source <= IO_UART;
-`ifdef BITBANG_SDMMC
                 'hc?: io_bus_source <= IO_SDCARD;
-`else
-                'hc?: io_bus_source <= IO_SDCARD;
-`endif
                 'h8?: io_bus_source <= IO_PS2;
-
                 default: io_bus_source <= IO_UART;
             endcase
         end
