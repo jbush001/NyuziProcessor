@@ -45,11 +45,11 @@ module sim_sdmmc(
     } sd_state_t;
 
     // SD commands
-    localparam CMD_GO_IDLE = 8'h00;
-    localparam CMD_SEND_OP_COND = 8'h01;
-    localparam CMD_SET_BLOCKLEN = 8'h16;
-    localparam CMD_READ_SINGLE_BLOCK = 8'h17;
-    localparam CMD_WRITE_SINGLE_BLOCK = 8'h24;
+    localparam CMD_GO_IDLE_STATE = 0;
+    localparam CMD_SEND_OP_COND = 1;
+    localparam CMD_SET_BLOCKLEN = 16;
+    localparam CMD_READ_SINGLE_BLOCK = 17;
+    localparam CMD_WRITE_SINGLE_BLOCK = 24;
 
     logic[1000:0] filename;
     int shift_count;
@@ -133,7 +133,7 @@ module sim_sdmmc(
                 if (command_length == 5)
                 begin
                     case (command[0] & 8'h3f)
-                        CMD_GO_IDLE:
+                        CMD_GO_IDLE_STATE:
                         begin
                             // Still in native SD mode, checksum needs to be correct
                             assert(command[1] == 0);
@@ -335,16 +335,15 @@ module sim_sdmmc(
     begin
         if (current_state == STATE_INIT_WAIT_FOR_CLOCKS)
         begin
-            if (!sd_di || !sd_cs_n)
+            // 6.4.1 "The host shall...start to supply at least 74 SD clocks
+            // to the SD card with keeping CMD [DI] line to high. In case of SPI
+            // mode, CS shall be held to high during 74 clock cycles."
+            if (sd_cs_n && sd_di)
             begin
-                $display("Error in SD initialization sequence: DI %d CS %d",
-                    sd_di, sd_cs_n);
-                $finish;
+                init_clock_count <= init_clock_count + 1;
+                if (init_clock_count >= INIT_CLOCKS)
+                    current_state <= STATE_IDLE;
             end
-
-            init_clock_count <= init_clock_count + 1;
-            if (init_clock_count >= INIT_CLOCKS)
-                current_state <= STATE_IDLE;
         end
         else if (!sd_cs_n)
         begin

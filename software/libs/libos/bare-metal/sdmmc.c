@@ -27,11 +27,11 @@
 
 typedef enum
 {
-    SD_CMD_RESET = 0,
-    SD_CMD_INIT = 1,
-    SD_CMD_SET_BLOCK_LEN = 0x16,
-    SD_CMD_READ_SINGLE_BLOCK = 0x17,
-    SD_CMD_WRITE_SINGLE_BLOCK = 0x24
+    CMD_GO_IDLE_STATE = 0,
+    CMD_SEND_OP_COND = 1,
+    CMD_SET_BLOCK_LEN = 16,
+    CMD_READ_SINGLE_BLOCK = 17,
+    CMD_WRITE_SINGLE_BLOCK = 24
 } SDCommand;
 
 static void set_cs(int level)
@@ -91,7 +91,7 @@ int init_sdmmc_device(void)
 
     // Reset the card by sending CMD0 with CS low.
     set_cs(0);
-    result = send_sd_command(SD_CMD_RESET, 0);
+    result = send_sd_command(CMD_GO_IDLE_STATE, 0);
 
     // The card should have returned 01 to indicate it is in SPI mode.
     if (result != 1)
@@ -99,7 +99,7 @@ int init_sdmmc_device(void)
         if (result == 0xff)
             printf("init_sdmmc_device: timed out during reset\n");
         else
-            printf("init_sdmmc_device: SD_CMD_RESET failed: invalid response %02x\n", result);
+            printf("init_sdmmc_device: CMD_GO_IDLE_STATE failed: invalid response %02x\n", result);
 
         return -1;
     }
@@ -108,22 +108,22 @@ int init_sdmmc_device(void)
     // of milliseconds.
     while (1)
     {
-        result = send_sd_command(SD_CMD_INIT, 0);
+        result = send_sd_command(CMD_SEND_OP_COND , 0);
         if (result == 0)
             break;
 
         if (result != 1)
         {
-            printf("init_sdmmc_device: SD_CMD_INIT unexpected response %02x\n", result);
+            printf("init_sdmmc_device: CMD_SEND_OP_COND  unexpected response %02x\n", result);
             return -1;
         }
     }
 
     // Configure the block size
-    result = send_sd_command(SD_CMD_SET_BLOCK_LEN, SDMMC_BLOCK_SIZE);
+    result = send_sd_command(CMD_SET_BLOCK_LEN, SDMMC_BLOCK_SIZE);
     if (result != 0)
     {
-        printf("init_sdmmc_device: SD_CMD_SET_BLOCK_LEN unexpected response %02x\n", result);
+        printf("init_sdmmc_device: CMD_SET_BLOCK_LEN unexpected response %02x\n", result);
         return -1;
     }
 
@@ -138,10 +138,10 @@ int read_sdmmc_device(unsigned int block_address, void *ptr)
     int result;
     int data_timeout;
 
-    result = send_sd_command(SD_CMD_READ_SINGLE_BLOCK, block_address);
+    result = send_sd_command(CMD_READ_SINGLE_BLOCK, block_address);
     if (result != 0)
     {
-        printf("read_sdmmc_device: SD_CMD_READ_SINGLE_BLOCK unexpected response %02x\n", result);
+        printf("read_sdmmc_device: CMD_READ_SINGLE_BLOCK unexpected response %02x\n", result);
         return -1;
     }
 
@@ -170,10 +170,10 @@ int write_sdmmc_device(unsigned int block_address, void *ptr)
 {
     int result;
 
-    result = send_sd_command(SD_CMD_WRITE_SINGLE_BLOCK, block_address);
+    result = send_sd_command(CMD_WRITE_SINGLE_BLOCK, block_address);
     if (result != 0)
     {
-        printf("write_sdmmc_device: SD_CMD_WRITE_SINGLE_BLOCK unexpected response %02x\n", result);
+        printf("write_sdmmc_device: CMD_WRITE_SINGLE_BLOCK unexpected response %02x\n", result);
         return -1;
     }
 

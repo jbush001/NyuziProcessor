@@ -25,10 +25,10 @@
 
 enum sd_command
 {
-    SD_CMD_RESET = 0,
-    SD_CMD_INIT = 1,
-    SD_CMD_SET_BLOCK_LEN = 0x16,
-    SD_CMD_READ_BLOCK = 0x17
+    CMD_GO_IDLE_STATE = 0,
+    CMD_SEND_OP_COND = 1,
+    CMD_SET_BLOCKLEN = 16,
+    CMD_READ_SINGLE_BLOCK = 17
 };
 
 static spinlock_t sd_lock;
@@ -90,14 +90,14 @@ int init_sd_device()
     set_cs(0);
 
     // Reset the card
-    result = send_sd_command(SD_CMD_RESET, 0);
+    result = send_sd_command(CMD_GO_IDLE_STATE, 0);
     if (result != 1)
         return -1;
 
     // Poll until it is ready
     while (1)
     {
-        result = send_sd_command(SD_CMD_INIT, 0);
+        result = send_sd_command(CMD_SEND_OP_COND, 0);
         if (result == 0)
             break;
 
@@ -106,7 +106,7 @@ int init_sd_device()
     }
 
     // Configure the block size
-    result = send_sd_command(SD_CMD_SET_BLOCK_LEN, BLOCK_SIZE);
+    result = send_sd_command(CMD_SET_BLOCKLEN, BLOCK_SIZE);
     if (result != 0)
         return -1;
 
@@ -124,7 +124,7 @@ int read_sd_device(unsigned int block_address, void *ptr)
 
     old_flags = acquire_spinlock_int(&sd_lock);
 
-    result = send_sd_command(SD_CMD_READ_BLOCK, block_address);
+    result = send_sd_command(CMD_READ_SINGLE_BLOCK, block_address);
     if (result != 0)
         return -1;
 

@@ -37,11 +37,11 @@
 // Commands
 enum sd_command
 {
-    CMD_GO_IDLE = 0x00,
-    CMD_SEND_OP_COND = 0x01,
-    CMD_SET_BLOCKLEN = 0x16,
-    CMD_READ_SINGLE_BLOCK = 0x17,
-    CMD_WRITE_SINGLE_BLOCK = 0x24
+    CMD_GO_IDLE_STATE = 0,
+    CMD_SEND_OP_COND = 1,
+    CMD_SET_BLOCKLEN = 16,
+    CMD_READ_SINGLE_BLOCK = 17,
+    CMD_WRITE_SINGLE_BLOCK = 24
 };
 
 enum sd_state
@@ -113,7 +113,7 @@ static void process_command(const uint8_t *command)
 {
     switch (command[0] & 0x3f)
     {
-        case CMD_GO_IDLE:
+        case CMD_GO_IDLE_STATE:
             // If a virtual block device wasn't specified, don't initialize
             if (block_fd > 0)
             {
