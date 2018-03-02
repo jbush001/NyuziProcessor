@@ -67,13 +67,11 @@ static uint32_t state_delay;
 static uint32_t transfer_block_address;
 static uint32_t transfer_count;
 static uint32_t block_length;
-static uint8_t response_value;
 static uint32_t init_clock_count;
-static uint32_t reset_delay;
 static uint8_t current_command[SD_COMMAND_LENGTH];
 static uint32_t current_command_length;
-static bool is_ready = false;
 static char *block_buffer;
+static bool in_idle_state = false;
 
 int open_block_device(const char *filename)
 {
@@ -106,7 +104,8 @@ void close_block_device(void)
 
 static uint32_t read_little_endian(const uint8_t *values)
 {
-    return (uint32_t)((values[0] << 24) | (values[1] << 16) | (values[2] << 8) | values[3]);
+    return (uint32_t)((values[0] << 24) | (values[1] << 16) | (values[2] << 8)
+        | values[3]);
 }
 
 static void process_command(const uint8_t *command)
@@ -117,27 +116,19 @@ static void process_command(const uint8_t *command)
             // If a virtual block device wasn't specified, don't initialize
             if (block_fd > 0)
             {
-                is_ready = true;
+                in_idle_state = true;
                 current_state = STATE_SEND_RESULT;
-                response_value = 1;
             }
 
             break;
 
         case CMD_SEND_OP_COND:
-            if (reset_delay)
-            {
-                response_value = 1;
-                reset_delay--;
-            }
-            else
-                response_value = 0;
-
             current_state = STATE_SEND_RESULT;
+            in_idle_state = false;
             break;
 
         case CMD_SET_BLOCKLEN:
-            if (!is_ready)
+            if (in_idle_state)
             {
                 printf("CMD_SET_BLOCKLEN: card not ready\n");
                 exit(1);
@@ -146,11 +137,10 @@ static void process_command(const uint8_t *command)
             block_length = read_little_endian(command + 1);
             block_buffer = realloc(block_buffer, block_length);
             current_state = STATE_SEND_RESULT;
-            response_value = 0;
             break;
 
         case CMD_READ_SINGLE_BLOCK:
-            if (!is_ready)
+            if (in_idle_state)
             {
                 printf("CMD_READ_SINGLE_BLOCK: card not ready\n");
                 exit(1);
@@ -165,18 +155,17 @@ static void process_command(const uint8_t *command)
 
             if (read(block_fd, block_buffer, block_length) != block_length)
             {
-                printf("read failed for block\n");
+                printf("CMD_READ_SINGLE_BLOCK: read failed for block\n");
                 exit(1);
             }
 
             transfer_count = 0;
             current_state = STATE_READ_CMD_RESPONSE;
             state_delay = next_random() & 0xf; // Wait a random amount of time
-            response_value = 0; // command response
             break;
 
         case CMD_WRITE_SINGLE_BLOCK:
-            if (!is_ready)
+            if (in_idle_state)
             {
                 printf("CMD_READ_SINGLE_BLOCK: card not ready\n");
                 exit(1);
@@ -186,174 +175,143 @@ static void process_command(const uint8_t *command)
             transfer_count = 0;
             current_state = STATE_WRITE_CMD_RESPONSE;
             state_delay = next_random() & 0xf; // Wait a random amount of time
-            response_value = 0; // Command response
             break;
+
+        default:
+            printf("sdmmc error: unknown command %02x\n", command[0]);
+            exit(1);
     }
 }
 
-void write_sd_card_register(uint32_t address, uint32_t value)
+int transfer_sdmmc_byte(int value)
 {
-    switch (address)
+    int result = 0xff;
+    switch (current_state)
     {
-        case REG_SD_WRITE_DATA:
-            switch (current_state)
+        case STATE_INIT_WAIT:
+            init_clock_count += 8;
+            if (!chip_select && init_clock_count < INIT_CLOCKS)
             {
-                case STATE_INIT_WAIT:
-                    init_clock_count += 8;
-                    if (!chip_select && init_clock_count < INIT_CLOCKS)
-                    {
-                        printf("sdmmc error: command posted before card initialized 1\n");
-                        exit(1);
-                    }
+                printf("sdmmc error: command posted before card initialized 1\n");
+                exit(1);
+            }
 
-                // Falls through
+        // Falls through
 
-                case STATE_IDLE:
-                    if (!chip_select && (value & 0xc0) == 0x40)
-                    {
-                        current_state = STATE_RECEIVE_COMMAND;
-                        current_command[0] = value & 0xff;
-                        current_command_length = 1;
-                    }
-
-                    response_value = 0xff;  // Ready
-                    break;
-
-                case STATE_RECEIVE_COMMAND:
-                    if (!chip_select)
-                    {
-                        current_command[current_command_length++] = value & 0xff;
-                        if (current_command_length == SD_COMMAND_LENGTH)
-                        {
-                            process_command(current_command);
-                            current_command_length = 0;
-                        }
-                    }
-
-                    break;
-
-                case STATE_SEND_RESULT:
-                    current_state = STATE_IDLE;
-                    break;
-
-                case STATE_READ_CMD_RESPONSE:
-                    if (state_delay == 0)
-                    {
-                        current_state = STATE_READ_DATA_TOKEN;
-                        response_value = 0;	// Signal ready
-                        state_delay = next_random() & 0xf;
-                    }
-                    else
-                    {
-                        state_delay--;
-                        response_value = 0xff;	// Signal busy
-                    }
-
-                    break;
-
-                case STATE_READ_DATA_TOKEN:
-                    if (state_delay == 0)
-                    {
-                        current_state = STATE_READ_TRANSFER;
-                        response_value = DATA_TOKEN; // Send data token to start block
-                        state_delay = block_length + 2;
-                    }
-                    else
-                    {
-                        state_delay--;
-                        response_value = 0xff;	// Busy
-                    }
-
-                    break;
-
-                case STATE_READ_TRANSFER:
-                    // Ignore transmitted byte, put read byte in buffer
-                    if (--state_delay < 2)
-                        response_value = 0xff;	// Checksum
-                    else
-                        response_value = block_buffer[transfer_count++];
-
-                    if (state_delay == 0)
-                        current_state = STATE_IDLE;
-
-                    break;
-
-                case STATE_WRITE_CMD_RESPONSE:
-                    if (state_delay == 0)
-                    {
-                        current_state = STATE_WRITE_DATA_TOKEN;
-                        response_value = 0;	// Signal ready
-                        state_delay = block_length + 2;
-                    }
-                    else
-                    {
-                        state_delay--;
-                        response_value = 0xff;	// Signal busy
-                    }
-
-                    break;
-
-                case STATE_WRITE_DATA_TOKEN:
-                    // Wait until we see the data token
-                    if (value == DATA_TOKEN)
-                        current_state = STATE_WRITE_TRANSFER;
-
-                    break;
-
-                case STATE_WRITE_TRANSFER:
-                    if (--state_delay >= 2 && transfer_block_address < block_dev_size)
-                        block_buffer[transfer_count++] = value & 0xff;
-
-                    if (state_delay == 0)
-                    {
-                        assert(transfer_count == block_length);
-                        current_state = STATE_WRITE_DATA_RESPONSE;
-                    }
-
-                    break;
-
-                case STATE_WRITE_DATA_RESPONSE:
-                    current_state = STATE_IDLE;
-                    response_value = 0x05;  // Data accepted
-
-                    if (lseek(block_fd, transfer_block_address, SEEK_SET) < 0)
-                    {
-                        perror("CMD_READ_SINGLE_BLOCK: seek failed");
-                        exit(1);
-                    }
-
-                    if (write(block_fd, block_buffer, block_length) != block_length)
-                    {
-                        printf("write failed for block\n");
-                        exit(1);
-                    }
-
-                    break;
+        case STATE_IDLE:
+            if (!chip_select && (value & 0xc0) == 0x40)
+            {
+                current_state = STATE_RECEIVE_COMMAND;
+                current_command[0] = value & 0xff;
+                current_command_length = 1;
             }
 
             break;
 
-        case REG_SD_CONTROL:
-            chip_select = value & 1;
+        case STATE_RECEIVE_COMMAND:
+            if (!chip_select)
+            {
+                current_command[current_command_length++] = value & 0xff;
+                if (current_command_length == SD_COMMAND_LENGTH)
+                {
+                    process_command(current_command);
+                    current_command_length = 0;
+                }
+            }
+
             break;
 
-        default:
-            assert("Should not be here" && 0);
+        case STATE_SEND_RESULT:
+            current_state = STATE_IDLE;
+            result = (int) in_idle_state;
+            break;
+
+        case STATE_READ_CMD_RESPONSE:
+            if (state_delay == 0)
+            {
+                current_state = STATE_READ_DATA_TOKEN;
+                result = 0; // Signal ready
+                state_delay = next_random() & 0xf;
+            }
+            else
+                state_delay--;
+
+            break;
+
+        case STATE_READ_DATA_TOKEN:
+            if (state_delay == 0)
+            {
+                current_state = STATE_READ_TRANSFER;
+                result = DATA_TOKEN; // Send data token to start block
+                state_delay = block_length + 2;
+            }
+            else
+                state_delay--;
+
+            break;
+
+        case STATE_READ_TRANSFER:
+            // This also adds a 2 byte checksum (which is ignored)
+            if (transfer_count < block_length)
+                result = block_buffer[transfer_count];
+            else if (transfer_count == block_length + 1)
+                current_state = STATE_IDLE;
+
+            transfer_count++;
+            break;
+
+        case STATE_WRITE_CMD_RESPONSE:
+            if (state_delay == 0)
+            {
+                current_state = STATE_WRITE_DATA_TOKEN;
+                result = 0; // Signal ready
+                state_delay = block_length + 2;
+            }
+            else
+                state_delay--;
+
+            break;
+
+        case STATE_WRITE_DATA_TOKEN:
+            // Wait until we see the data token
+            if (value == DATA_TOKEN)
+                current_state = STATE_WRITE_TRANSFER;
+
+            break;
+
+        case STATE_WRITE_TRANSFER:
+            // This also adds a 2 byte checksum (which is ignored)
+            if (transfer_count < block_length)
+                block_buffer[transfer_count] = value & 0xff;
+            else if (transfer_count == block_length + 1)
+                current_state = STATE_WRITE_DATA_RESPONSE;
+
+            transfer_count++;
+            break;
+
+        case STATE_WRITE_DATA_RESPONSE:
+            current_state = STATE_IDLE;
+            result = 0x05;  // Data accepted
+
+            if (lseek(block_fd, transfer_block_address, SEEK_SET) < 0)
+            {
+                perror("CMD_READ_SINGLE_BLOCK: seek failed");
+                exit(1);
+            }
+
+            if (write(block_fd, block_buffer, block_length) != block_length)
+            {
+                printf("CMD_READ_SINGLE_BLOCK: write failed for block\n");
+                exit(1);
+            }
+
+            break;
     }
+
+    return result;
 }
 
-uint32_t read_sd_card_register(uint32_t address)
+void sdmmc_set_cs(int value)
 {
-    switch (address)
-    {
-        case REG_SD_READ_DATA:
-            return response_value;
-
-        case REG_SD_STATUS:
-            return 0x01;
-
-        default:
-            assert("Should not be here" && 0);
-    }
+    chip_select = value & 1;
 }
-

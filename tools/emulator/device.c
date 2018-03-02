@@ -32,6 +32,7 @@ static uint8_t serial_read_buf[SERIAL_BUFFER_SIZE];
 static int serial_read_buf_head;
 static int serial_read_buf_tail;
 static struct processor *proc;
+static int last_sdmmc_response;
 
 void init_device(struct processor *_proc)
 {
@@ -48,8 +49,11 @@ void write_device_register(uint32_t address, uint32_t value)
             break;
 
         case REG_SD_WRITE_DATA:
+            last_sdmmc_response = transfer_sdmmc_byte(value);
+            break;
+
         case REG_SD_CONTROL:
-            write_sd_card_register(address, value);
+            sdmmc_set_cs(value & 1);
             break;
 
         case REG_VGA_ENABLE:
@@ -112,8 +116,10 @@ uint32_t read_device_register(uint32_t address)
             return value;
 
         case REG_SD_READ_DATA:
+            return last_sdmmc_response;
+
         case REG_SD_STATUS:
-            return read_sd_card_register(address);
+            return 1;
 
         default:
             return 0xffffffff;

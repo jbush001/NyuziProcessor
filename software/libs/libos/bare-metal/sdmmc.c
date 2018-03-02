@@ -29,7 +29,7 @@ typedef enum
 {
     CMD_GO_IDLE_STATE = 0,
     CMD_SEND_OP_COND = 1,
-    CMD_SET_BLOCK_LEN = 16,
+    CMD_SET_BLOCKLEN = 16,
     CMD_READ_SINGLE_BLOCK = 17,
     CMD_WRITE_SINGLE_BLOCK = 24
 } SDCommand;
@@ -108,7 +108,7 @@ int init_sdmmc_device(void)
     // of milliseconds.
     while (1)
     {
-        result = send_sd_command(CMD_SEND_OP_COND , 0);
+        result = send_sd_command(CMD_SEND_OP_COND, 0);
         if (result == 0)
             break;
 
@@ -120,10 +120,10 @@ int init_sdmmc_device(void)
     }
 
     // Configure the block size
-    result = send_sd_command(CMD_SET_BLOCK_LEN, SDMMC_BLOCK_SIZE);
+    result = send_sd_command(CMD_SET_BLOCKLEN, SDMMC_BLOCK_SIZE);
     if (result != 0)
     {
-        printf("init_sdmmc_device: CMD_SET_BLOCK_LEN unexpected response %02x\n", result);
+        printf("init_sdmmc_device: CMD_SET_BLOCKLEN unexpected response %02x\n", result);
         return -1;
     }
 
