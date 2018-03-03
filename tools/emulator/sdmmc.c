@@ -59,17 +59,16 @@ enum sd_state
     STATE_WRITE_DATA_RESPONSE
 };
 
-static uint32_t block_dev_size;
 static int block_fd = -1;
 static enum sd_state current_state;
 static uint32_t chip_select;
 static uint32_t state_delay;
-static uint32_t transfer_block_address;
+static uint32_t transfer_address;
 static uint32_t transfer_count;
 static uint32_t block_length;
 static uint32_t init_clock_count;
-static uint8_t current_command[SD_COMMAND_LENGTH];
-static uint32_t current_command_length;
+static uint8_t command[SD_COMMAND_LENGTH];
+static uint32_t command_length;
 static char *block_buffer;
 static bool in_idle_state = false;
 
@@ -85,7 +84,6 @@ int open_sdmmc_device(const char *filename)
         return -1;
     }
 
-    block_dev_size = (uint32_t) fs.st_size;
     block_fd = open(filename, O_RDWR);
     if (block_fd < 0)
     {
@@ -146,8 +144,8 @@ static void process_command(const uint8_t *command)
                 exit(1);
             }
 
-            transfer_block_address = read_little_endian(command + 1) * block_length;
-            if (lseek(block_fd, transfer_block_address, SEEK_SET) < 0)
+            transfer_address = read_little_endian(command + 1) * block_length;
+            if (lseek(block_fd, transfer_address, SEEK_SET) < 0)
             {
                 perror("CMD_READ_SINGLE_BLOCK: seek failed");
                 exit(1);
@@ -171,7 +169,7 @@ static void process_command(const uint8_t *command)
                 exit(1);
             }
 
-            transfer_block_address = read_little_endian(command + 1) * block_length;
+            transfer_address = read_little_endian(command + 1) * block_length;
             transfer_count = 0;
             current_state = STATE_WRITE_CMD_RESPONSE;
             state_delay = next_random() & 0xf; // Wait a random amount of time
@@ -202,8 +200,8 @@ int transfer_sdmmc_byte(int value)
             if (!chip_select && (value & 0xc0) == 0x40)
             {
                 current_state = STATE_RECEIVE_COMMAND;
-                current_command[0] = value & 0xff;
-                current_command_length = 1;
+                command[0] = value & 0xff;
+                command_length = 1;
             }
 
             break;
@@ -211,11 +209,11 @@ int transfer_sdmmc_byte(int value)
         case STATE_RECEIVE_COMMAND:
             if (!chip_select)
             {
-                current_command[current_command_length++] = value & 0xff;
-                if (current_command_length == SD_COMMAND_LENGTH)
+                command[command_length++] = value & 0xff;
+                if (command_length == SD_COMMAND_LENGTH)
                 {
-                    process_command(current_command);
-                    current_command_length = 0;
+                    process_command(command);
+                    command_length = 0;
                 }
             }
 
@@ -243,7 +241,6 @@ int transfer_sdmmc_byte(int value)
             {
                 current_state = STATE_READ_TRANSFER;
                 result = DATA_TOKEN; // Send data token to start block
-                state_delay = block_length + 2;
             }
             else
                 state_delay--;
@@ -265,7 +262,7 @@ int transfer_sdmmc_byte(int value)
             {
                 current_state = STATE_WRITE_DATA_TOKEN;
                 result = 0; // Signal ready
-                state_delay = block_length + 2;
+                state_delay = next_random() & 0xf;
             }
             else
                 state_delay--;
@@ -293,7 +290,7 @@ int transfer_sdmmc_byte(int value)
             current_state = STATE_IDLE;
             result = 0x05;  // Data accepted
 
-            if (lseek(block_fd, transfer_block_address, SEEK_SET) < 0)
+            if (lseek(block_fd, transfer_address, SEEK_SET) < 0)
             {
                 perror("CMD_READ_SINGLE_BLOCK: seek failed");
                 exit(1);

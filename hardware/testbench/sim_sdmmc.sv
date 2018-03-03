@@ -31,12 +31,12 @@ module sim_sdmmc(
     localparam MAX_BLOCK_LEN = 'd512;
 
     typedef enum int {
-        STATE_INIT_WAIT_FOR_CLOCKS,
+        STATE_INIT_WAIT,
         STATE_IDLE,
         STATE_RECEIVE_COMMAND,
         STATE_READ_CMD_RESPONSE,
         STATE_READ_DATA_TOKEN,
-        STATE_RESULT,
+        STATE_SEND_RESULT,
         STATE_READ_TRANSFER,
         STATE_WRITE_CMD_RESPONSE,
         STATE_WRITE_DATA_TOKEN,
@@ -56,18 +56,17 @@ module sim_sdmmc(
     logic[7:0] mosi_byte_nxt;    // Master Out/Slave In
     logic[7:0] mosi_byte_ff;
     logic[7:0] miso_byte;        // Master In/Slave Out
+    integer block_fd;
     sd_state_t current_state;
     int state_delay;
     int transfer_address;
     int transfer_count;
     int block_length;
     int init_clock_count;
-    logic card_ready;
     logic[7:0] command[6];
+    logic in_idle_state;
     int command_length;
-    logic[7:0] command_result;
     logic[7:0] block_buffer[MAX_BLOCK_LEN];
-    integer block_fd;
 
     initial
     begin
@@ -84,12 +83,12 @@ module sim_sdmmc(
         else
             block_fd = -1;
 
-        current_state = STATE_INIT_WAIT_FOR_CLOCKS;
+        current_state = STATE_INIT_WAIT;
         mosi_byte_ff = 0;
         shift_count = 0;
         init_clock_count = 0;
-        card_ready = 0;
         miso_byte = 'hff;
+        in_idle_state = 0;
     end
 
     final
@@ -104,12 +103,100 @@ module sim_sdmmc(
     always_ff @(negedge sd_sclk)
         sd_do <= miso_byte[7 - shift_count];
 
+    task process_command;
+        case (command[0] & 8'h3f)
+            CMD_GO_IDLE_STATE:
+            begin
+                // Still in native SD mode, checksum needs to be correct
+                assert(command[1] == 0);
+                assert(command[2] == 0);
+                assert(command[3] == 0);
+                assert(command[4] == 0);
+                assert(mosi_byte_nxt == 8'h95);
+
+                in_idle_state <= 1;
+                current_state <= STATE_SEND_RESULT;
+            end
+
+            CMD_SEND_OP_COND:
+            begin
+                current_state <= STATE_SEND_RESULT;
+                in_idle_state <= 0;
+            end
+
+            CMD_SET_BLOCKLEN:
+            begin
+                if (in_idle_state)
+                begin
+                    $display("CMD_SET_BLOCKLEN: card not ready\n");
+                    $finish;
+                end
+
+                block_length <= {command[1], command[2], command[3], command[4]};
+                current_state <= STATE_SEND_RESULT;
+                if (block_length > MAX_BLOCK_LEN)
+                begin
+                    $display("CMD_SET_BLOCKLEN: block size is too large. Modify MAX_BLOCK_LEN in sim_sdmmc.sv");
+                    $finish;
+                end
+            end
+
+            CMD_READ_SINGLE_BLOCK:
+            begin
+                if (in_idle_state)
+                begin
+                    $display("CMD_READ_SINGLE_BLOCK: card not ready\n");
+                    $finish;
+                end
+
+                current_state <= STATE_READ_CMD_RESPONSE;
+                state_delay <= $random() & 'h7;    // Simulate random delay
+                miso_byte <= 'hff;    // wait
+                transfer_count <= 0;
+
+`ifdef VERILATOR
+                $c("fseek(VL_CVT_I_FP(", block_fd, "), ",
+                    {command[1], command[2], command[3], command[4]} * block_length,
+                    ", SEEK_SET);");
+                $c("fread(", block_buffer, ", 1, ", block_length, ", VL_CVT_I_FP(", block_fd, "));");
+`else
+                // May require tweaking for other simulators...
+                $fseek(block_fd, {command[1], command[2], command[3], command[4]}
+                    * block_length, 0);
+                $fread(block_fd, block_buffer, 0, block_length);
+`endif
+            end
+
+            CMD_WRITE_SINGLE_BLOCK:
+            begin
+                if (in_idle_state)
+                begin
+                    $display("CMD_READ_SINGLE_BLOCK: card not ready\n");
+                    $finish;
+                end
+
+                transfer_address <= {command[1], command[2], command[3], command[4]}
+                    * block_length;
+                transfer_count <= 0;
+                current_state <= STATE_WRITE_CMD_RESPONSE;
+                state_delay <= $random() & 'h7;    // Simulate random delay
+            end
+
+            default:
+            begin
+                $display("invalid command %02x", command[0]);
+                current_state <= STATE_IDLE;
+            end
+        endcase
+    endtask
+
     task process_receive_byte;
         mosi_byte_ff <= 0;    // Helpful for debugging
+        miso_byte <= 'hff;
         shift_count <= 0;
 
         case (current_state)
-            STATE_INIT_WAIT_FOR_CLOCKS:
+            STATE_INIT_WAIT:
             begin
                 // Bug in this module: shouldn't process commands until
                 // initialization
@@ -131,90 +218,14 @@ module sim_sdmmc(
             begin
                 command[command_length] <= mosi_byte_nxt;
                 if (command_length == 5)
-                begin
-                    case (command[0] & 8'h3f)
-                        CMD_GO_IDLE_STATE:
-                        begin
-                            // Still in native SD mode, checksum needs to be correct
-                            assert(command[1] == 0);
-                            assert(command[2] == 0);
-                            assert(command[3] == 0);
-                            assert(command[4] == 0);
-                            assert(mosi_byte_nxt == 8'h95);
-
-                            // Reset the card
-                            card_ready <= 1;
-                            current_state <= STATE_RESULT;
-                            command_result <= 1;
-                        end
-
-                        CMD_SEND_OP_COND:
-                        begin
-                            current_state <= STATE_RESULT;
-                            command_result <= 0;
-                        end
-
-                        CMD_READ_SINGLE_BLOCK:
-                        begin
-                            assert(card_ready);
-                            current_state <= STATE_READ_CMD_RESPONSE;
-                            state_delay <= $random() & 'h7;    // Simulate random delay
-                            command_result <= 1;
-                            miso_byte <= 'hff;    // wait
-                            transfer_count <= 0;
-
-`ifdef VERILATOR
-                            $c("fseek(VL_CVT_I_FP(", block_fd, "), ",
-                                {command[1], command[2], command[3], command[4]} * block_length,
-                                ", SEEK_SET);");
-                            $c("fread(", block_buffer, ", 1, ", block_length, ", VL_CVT_I_FP(", block_fd, "));");
-`else
-                            // May require tweaking for other simulators...
-                            $fseek(block_fd, {command[1], command[2], command[3], command[4]}
-                                * block_length, 0);
-                            $fread(block_fd, block_buffer, 0, block_length);
-`endif
-                        end
-
-                        CMD_SET_BLOCKLEN:
-                        begin
-                            assert(card_ready);
-                            state_delay <= 5;
-                            current_state <= STATE_RESULT;
-                            block_length <= {command[1], command[2], command[3], command[4]};
-                            if (block_length > MAX_BLOCK_LEN)
-                            begin
-                                $display("CMD_SET_BLOCKLEN: block size is too large. Modify MAX_BLOCK_LEN in sim_sdmmc.sv");
-                                $finish;
-                            end
-                        end
-
-                        CMD_WRITE_SINGLE_BLOCK:
-                        begin
-                            assert(card_ready);
-                            current_state <= STATE_WRITE_CMD_RESPONSE;
-                            state_delay <= $random() & 'h7;    // Simulate random delay
-                            command_result <= 1;
-                            transfer_address <= {command[1], command[2], command[3], command[4]}
-                                * block_length;
-                            transfer_count <= 0;
-                            miso_byte <= 'hff;    // wait
-                        end
-
-                        default:
-                        begin
-                            $display("invalid command %02x", command[0]);
-                            current_state <= STATE_IDLE;
-                        end
-                    endcase
-                end
+                    process_command;
                 else
                     command_length <= command_length + 1;
             end
 
-            STATE_RESULT:
+            STATE_SEND_RESULT:
             begin
-                miso_byte <= command_result;
+                miso_byte <= 8'(in_idle_state);
                 current_state <= STATE_IDLE;
             end
 
@@ -239,28 +250,17 @@ module sim_sdmmc(
                     state_delay <= block_length + 2;    // block length + 2 checksum bytes
                 end
                 else
-                begin
-                    miso_byte <= 8'hff;
                     state_delay <= state_delay - 1;
-                end
             end
 
             STATE_READ_TRANSFER:
             begin
-                state_delay <= state_delay - 1;
-                if (state_delay <= 2)
-                begin
-                    // 16 bit checksum (ignored)
-                    miso_byte <= 'hff;
-                end
-                else
-                begin
-                    transfer_count <= transfer_count + 1;
+                if (transfer_count < block_length)
                     miso_byte <= block_buffer[transfer_count];
-                end
-
-                if (state_delay == 0)
+                else if (transfer_count == block_length + 1)
                     current_state <= STATE_IDLE;
+
+                transfer_count <= transfer_count + 1;
             end
 
             STATE_WRITE_CMD_RESPONSE:
@@ -272,46 +272,31 @@ module sim_sdmmc(
                     state_delay <= $random() & 'h7;    // Simulate random delay
                 end
                 else
-                begin
                     state_delay <= state_delay - 1;
-                    miso_byte <= 8'hff;
-                end
             end
 
             STATE_WRITE_DATA_TOKEN:
             begin
                 if (mosi_byte_nxt == DATA_TOKEN)
-                begin
-                    state_delay <= block_length + 1;
                     current_state <= STATE_WRITE_TRANSFER;
-                end
             end
 
             STATE_WRITE_TRANSFER:
             begin
-                state_delay <= state_delay - 1;
-                if (state_delay > 1)
-                begin
-                    transfer_count <= transfer_count + 1;
-                    assert(transfer_count < block_length);
+                if (transfer_count < block_length)
                     block_buffer[transfer_count] <= mosi_byte_nxt;
-                end
-                // else ignore checksum from host
-
-                if (state_delay == 0)
+                else if (transfer_count == block_length + 1)
                 begin
-                    assert(transfer_count == block_length);
-                    miso_byte <= 8'h05; // Data accepted
                     current_state <= STATE_WRITE_DATA_RESPONSE;
+                    miso_byte <= 8'h05; // Data accepted
                 end
-                else
-                    miso_byte <= 8'hff;
+
+                transfer_count <= transfer_count + 1;
             end
 
             STATE_WRITE_DATA_RESPONSE:
             begin
                 current_state <= STATE_IDLE;
-                miso_byte <= 8'hff;
 
 `ifdef VERILATOR
                 // .Verilator doesn't support $fseek
@@ -333,7 +318,7 @@ module sim_sdmmc(
     // on some simulators otherwise).
     always @(posedge sd_sclk)
     begin
-        if (current_state == STATE_INIT_WAIT_FOR_CLOCKS)
+        if (current_state == STATE_INIT_WAIT)
         begin
             // 6.4.1 "The host shall...start to supply at least 74 SD clocks
             // to the SD card with keeping CMD [DI] line to high. In case of SPI
