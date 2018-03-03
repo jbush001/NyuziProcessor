@@ -91,6 +91,8 @@ pragma above the module instantiation:
     my_module module_i_want_to_trace(.*);
     /*verilator tracing_off*/
 
+The timescale is set to 1 ns by default, which simulates a 1 GHz clock speed.
+
 ### Support for VCS:
 
 Template scripts have been added to support building and running with
