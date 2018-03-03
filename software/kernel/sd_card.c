@@ -22,13 +22,18 @@
 
 #define MAX_RETRIES 100
 #define DATA_TOKEN 0xfe
+#define CHECK_PATTERN 0x5a
 
 enum sd_command
 {
     CMD_GO_IDLE_STATE = 0,
     CMD_SEND_OP_COND = 1,
+    CMD_SEND_IF_COND = 8,
     CMD_SET_BLOCKLEN = 16,
-    CMD_READ_SINGLE_BLOCK = 17
+    CMD_READ_SINGLE_BLOCK = 17,
+    CMD_WRITE_SINGLE_BLOCK = 24,
+    CMD_APP_OP_COND = 41,
+    CMD_APP_CMD = 55
 };
 
 static spinlock_t sd_lock;
@@ -78,6 +83,8 @@ static int send_sd_command(enum sd_command command, unsigned int parameter)
 int init_sd_device()
 {
     int result;
+    int retry;
+    int i;
 
     // Set clock to 200k_hz (50Mhz system clock)
     set_clock_divisor(125);
@@ -89,26 +96,47 @@ int init_sd_device()
 
     set_cs(0);
 
-    // Reset the card
+    // Switch to SPI mode
     result = send_sd_command(CMD_GO_IDLE_STATE, 0);
     if (result != 1)
         return -1;
 
+    result = send_sd_command(CMD_SEND_IF_COND, 0x100 | CHECK_PATTERN);
+    if (result != 1)
+        return -1;
+
+    // Read remainder of R7 response (7.3.2.6)
+    spi_transfer(0xff);
+    spi_transfer(0xff);
+    result = spi_transfer(0xff);
+    if ((result & 0xf) != 1)
+        return -1;
+
+    if (spi_transfer(0xff) != CHECK_PATTERN)
+        return -1;
+
     // Poll until it is ready
-    while (1)
+    for (retry = 0; ; retry++)
     {
-        result = send_sd_command(CMD_SEND_OP_COND, 0);
+        result = send_sd_command(CMD_APP_CMD, 0);
+        if (result != 1)
+            return -1;
+
+        result = send_sd_command(CMD_APP_OP_COND, 0);
+
+        // Read remainder of R3 response
+        for (i = 0; i < 5; i++)
+            spi_transfer(0xff);
+
         if (result == 0)
             break;
 
         if (result != 1)
             return -1;
-    }
 
-    // Configure the block size
-    result = send_sd_command(CMD_SET_BLOCKLEN, BLOCK_SIZE);
-    if (result != 0)
-        return -1;
+        if (retry == MAX_RETRIES)
+            return -1;
+    }
 
     // Increase clock rate to 5 Mhz
     set_clock_divisor(5);

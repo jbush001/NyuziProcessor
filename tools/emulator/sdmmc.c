@@ -39,9 +39,12 @@ enum sd_command
 {
     CMD_GO_IDLE_STATE = 0,
     CMD_SEND_OP_COND = 1,
+    CMD_SEND_IF_COND = 8,
     CMD_SET_BLOCKLEN = 16,
     CMD_READ_SINGLE_BLOCK = 17,
-    CMD_WRITE_SINGLE_BLOCK = 24
+    CMD_WRITE_SINGLE_BLOCK = 24,
+    CMD_APP_OP_COND = 41,
+    CMD_APP_CMD = 55
 };
 
 enum sd_state
@@ -51,7 +54,9 @@ enum sd_state
     STATE_RECEIVE_COMMAND,
     STATE_READ_CMD_RESPONSE,
     STATE_READ_DATA_TOKEN,
-    STATE_SEND_RESULT,
+    STATE_SEND_R1,
+    STATE_SEND_R3,
+    STATE_SEND_R7,
     STATE_READ_TRANSFER,
     STATE_WRITE_CMD_RESPONSE,
     STATE_WRITE_DATA_TOKEN,
@@ -71,6 +76,9 @@ static uint8_t command[SD_COMMAND_LENGTH];
 static uint32_t command_length;
 static char *block_buffer;
 static bool in_idle_state = false;
+static uint8_t check_pattern;
+static uint8_t voltage;
+static bool is_app_cmd = false;
 
 int open_sdmmc_device(const char *filename)
 {
@@ -91,6 +99,9 @@ int open_sdmmc_device(const char *filename)
         return -1;
     }
 
+    block_length = 512;
+    block_buffer = malloc(block_length);
+
     return 0;
 }
 
@@ -108,76 +119,107 @@ static uint32_t read_little_endian(const uint8_t *values)
 
 static void process_command(const uint8_t *command)
 {
-    switch (command[0] & 0x3f)
+    if (is_app_cmd)
     {
-        case CMD_GO_IDLE_STATE:
-            // If a virtual block device wasn't specified, don't initialize
-            if (block_fd > 0)
-            {
-                in_idle_state = true;
-                current_state = STATE_SEND_RESULT;
-            }
+        is_app_cmd = false;
+        switch (command[0] & 0x3f)
+        {
+            case CMD_APP_OP_COND:
+                current_state = STATE_SEND_R3;
+                transfer_count = 0;
+                in_idle_state = 0;
+                break;
 
-            break;
-
-        case CMD_SEND_OP_COND:
-            current_state = STATE_SEND_RESULT;
-            in_idle_state = false;
-            break;
-
-        case CMD_SET_BLOCKLEN:
-            if (in_idle_state)
-            {
-                printf("CMD_SET_BLOCKLEN: card not ready\n");
+            default:
+                printf("sdmmc error: unknown command %02x\n", command[0]);
                 exit(1);
-            }
+        }
+    }
+    else
+    {
+        switch (command[0] & 0x3f)
+        {
+            case CMD_GO_IDLE_STATE:
+                // If a virtual block device wasn't specified, don't initialize
+                if (block_fd > 0)
+                {
+                    in_idle_state = true;
+                    current_state = STATE_SEND_R1;
+                }
 
-            block_length = read_little_endian(command + 1);
-            block_buffer = realloc(block_buffer, block_length);
-            current_state = STATE_SEND_RESULT;
-            break;
+                break;
 
-        case CMD_READ_SINGLE_BLOCK:
-            if (in_idle_state)
-            {
-                printf("CMD_READ_SINGLE_BLOCK: card not ready\n");
+            case CMD_SEND_OP_COND:
+                current_state = STATE_SEND_R1;
+                in_idle_state = false;
+                break;
+
+            case CMD_SEND_IF_COND:
+                current_state = STATE_SEND_R7;
+                transfer_count = 0;
+                voltage = command[3] & 0xf;
+                check_pattern = command[4];
+                break;
+
+            case CMD_SET_BLOCKLEN:
+                if (in_idle_state)
+                {
+                    printf("CMD_SET_BLOCKLEN: card not ready\n");
+                    exit(1);
+                }
+
+                block_length = read_little_endian(command + 1);
+                block_buffer = realloc(block_buffer, block_length);
+                current_state = STATE_SEND_R1;
+                break;
+
+            case CMD_READ_SINGLE_BLOCK:
+                if (in_idle_state)
+                {
+                    printf("CMD_READ_SINGLE_BLOCK: card not ready\n");
+                    exit(1);
+                }
+
+                transfer_address = read_little_endian(command + 1) * block_length;
+                if (lseek(block_fd, transfer_address, SEEK_SET) < 0)
+                {
+                    perror("CMD_READ_SINGLE_BLOCK: seek failed");
+                    exit(1);
+                }
+
+                if (read(block_fd, block_buffer, block_length) != block_length)
+                {
+                    printf("CMD_READ_SINGLE_BLOCK: read failed for block\n");
+                    exit(1);
+                }
+
+                transfer_count = 0;
+                current_state = STATE_READ_CMD_RESPONSE;
+                state_delay = next_random() & 0xf; // Wait a random amount of time
+                break;
+
+            case CMD_WRITE_SINGLE_BLOCK:
+                if (in_idle_state)
+                {
+                    printf("CMD_READ_SINGLE_BLOCK: card not ready\n");
+                    exit(1);
+                }
+
+                transfer_address = read_little_endian(command + 1) * block_length;
+                transfer_count = 0;
+                current_state = STATE_WRITE_CMD_RESPONSE;
+                state_delay = next_random() & 0xf; // Wait a random amount of time
+                break;
+
+            case CMD_APP_CMD:
+                is_app_cmd = true;
+                current_state = STATE_SEND_R1;
+                break;
+
+            default:
+                printf("sdmmc error: unknown command %02x\n", command[0]);
                 exit(1);
-            }
-
-            transfer_address = read_little_endian(command + 1) * block_length;
-            if (lseek(block_fd, transfer_address, SEEK_SET) < 0)
-            {
-                perror("CMD_READ_SINGLE_BLOCK: seek failed");
-                exit(1);
-            }
-
-            if (read(block_fd, block_buffer, block_length) != block_length)
-            {
-                printf("CMD_READ_SINGLE_BLOCK: read failed for block\n");
-                exit(1);
-            }
-
-            transfer_count = 0;
-            current_state = STATE_READ_CMD_RESPONSE;
-            state_delay = next_random() & 0xf; // Wait a random amount of time
-            break;
-
-        case CMD_WRITE_SINGLE_BLOCK:
-            if (in_idle_state)
-            {
-                printf("CMD_READ_SINGLE_BLOCK: card not ready\n");
-                exit(1);
-            }
-
-            transfer_address = read_little_endian(command + 1) * block_length;
-            transfer_count = 0;
-            current_state = STATE_WRITE_CMD_RESPONSE;
-            state_delay = next_random() & 0xf; // Wait a random amount of time
-            break;
-
-        default:
-            printf("sdmmc error: unknown command %02x\n", command[0]);
-            exit(1);
+        }
     }
 }
 
@@ -200,7 +242,7 @@ int transfer_sdmmc_byte(int value)
             if (!chip_select && (value & 0xc0) == 0x40)
             {
                 current_state = STATE_RECEIVE_COMMAND;
-                command[0] = value & 0xff;
+                command[0] = value;
                 command_length = 1;
             }
 
@@ -209,7 +251,7 @@ int transfer_sdmmc_byte(int value)
         case STATE_RECEIVE_COMMAND:
             if (!chip_select)
             {
-                command[command_length++] = value & 0xff;
+                command[command_length++] = value;
                 if (command_length == SD_COMMAND_LENGTH)
                 {
                     process_command(command);
@@ -219,9 +261,42 @@ int transfer_sdmmc_byte(int value)
 
             break;
 
-        case STATE_SEND_RESULT:
+        case STATE_SEND_R1:
             current_state = STATE_IDLE;
             result = (int) in_idle_state;
+            break;
+
+        // 7.3.2.4
+        case STATE_SEND_R3:
+            result = 0;
+            if (transfer_count == 0)
+                result = (int) in_idle_state;
+            else if (transfer_count == 4)
+                current_state = STATE_IDLE;
+
+            transfer_count++;
+            break;
+
+        // 7.3.2.6
+        case STATE_SEND_R7:
+            switch (transfer_count++)
+            {
+                case 0:
+                    result = 1; // R1 response
+                    break;
+                case 1:
+                case 2:
+                    result = 0;
+                    break;
+                case 3:
+                    result = voltage;
+                    break;
+                case 4:
+                    result = check_pattern;
+                    current_state = STATE_IDLE;
+                    break;
+            }
+
             break;
 
         case STATE_READ_CMD_RESPONSE:

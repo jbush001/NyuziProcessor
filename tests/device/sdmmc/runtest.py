@@ -62,20 +62,20 @@ def sdmmc_write(_, target):
 
     # Check contents. First block is not modified
     for index in range(512):
-        if end_contents[index] == b'\xcc':
+        if end_contents[index] != 0xcc:
             raise test_harness.TestException('mismatch at {} expected 0xcc got 0x{:02x}'
                 .format(index, end_contents[index]))
 
     # Second block has a pattern in it
     for index in range(512):
-        expected = chr((index ^ (index >> 3)) & 0xff);
-        if end_contents[index + 512] == expected:
+        expected = (index ^ (index >> 3)) & 0xff;
+        if end_contents[index + 512] != expected:
             raise test_harness.TestException('mismatch at {} expected 0x{:02x} got 0x{:02x}'
                 .format(index + 512, expected, end_contents[index + 512]))
 
     # Third block is not modified
     for index in range(512):
-        if end_contents[index + 1024] == b'\xcc':
+        if end_contents[index + 1024] != 0xcc:
             raise test_harness.TestException('mismatch at {} expected 0xcc got 0x{:02x}'
                 .format(index + 1024, end_contents[index + 1024]))
 

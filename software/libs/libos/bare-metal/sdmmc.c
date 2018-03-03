@@ -18,20 +18,23 @@
 #include "registers.h"
 #include "sdmmc.h"
 
-// SPI mode SDMMC driver. This currently only works in the emulator/verilog
-// simulator. I'm still debugging this on FPGA.
+// SPI mode SDMMC driver.
 // https://www.sdcard.org/downloads/pls/pdf/index.php?p=Part1_Physical_Layer_Simplified_Specification_Ver6.00.jpg
 
 #define MAX_RETRIES 100
 #define DATA_TOKEN 0xfe
+#define CHECK_PATTERN 0x5a
 
 typedef enum
 {
     CMD_GO_IDLE_STATE = 0,
     CMD_SEND_OP_COND = 1,
+    CMD_SEND_IF_COND = 8,
     CMD_SET_BLOCKLEN = 16,
     CMD_READ_SINGLE_BLOCK = 17,
-    CMD_WRITE_SINGLE_BLOCK = 24
+    CMD_WRITE_SINGLE_BLOCK = 24,
+    CMD_APP_OP_COND = 41,
+    CMD_APP_CMD = 55
 } SDCommand;
 
 static void set_cs(int level)
@@ -66,7 +69,7 @@ static int send_sd_command(SDCommand command, unsigned int parameter)
     spi_transfer(parameter & 0xff);
     spi_transfer(0x95);	// Checksum (ignored for all but first command)
 
-    // Read R1 response. 0xff indicates the card is busy.
+    // Read first byte of response. 0xff indicates the card is busy.
     do
     {
         result = spi_transfer(0xff);
@@ -79,6 +82,8 @@ static int send_sd_command(SDCommand command, unsigned int parameter)
 int init_sdmmc_device(void)
 {
     int result;
+    int i;
+    int retry;
 
     // Set clock to 200kHz (50Mhz system clock)
     set_clock_divisor(125);
@@ -89,7 +94,7 @@ int init_sdmmc_device(void)
     for (int i = 0; i < 10; i++)
         spi_transfer(0xff);
 
-    // Reset the card by sending CMD0 with CS low.
+    // Reset the card and enter SPI mode by sending CMD0 with CS low.
     set_cs(0);
     result = send_sd_command(CMD_GO_IDLE_STATE, 0);
 
@@ -104,27 +109,60 @@ int init_sdmmc_device(void)
         return -1;
     }
 
-    // Send CMD1 and wait for card to initialize. This can take hundreds
-    // of milliseconds.
-    while (1)
+    // 4.2.2 It is mandatory to issue CMD8 prior to first ACMD41 for
+    // initialization of High Capacity SD Memory Card.
+    result = send_sd_command(CMD_SEND_IF_COND, 0x100 | CHECK_PATTERN); // 3.6v
+    if (result != 1)
     {
-        result = send_sd_command(CMD_SEND_OP_COND, 0);
+        printf("CMD_SEND_IF_COND: invalid response %02x\n", result);
+        return -1;
+    }
+
+    // Read remainder of R7 response (7.3.2.6)
+    spi_transfer(0xff);
+    spi_transfer(0xff);
+    result = spi_transfer(0xff);
+    if ((result & 0xf) != 1)
+    {
+        printf("error: unsupported voltage range %02x\n", result);
+        return -1;
+    }
+
+    if (spi_transfer(0xff) != CHECK_PATTERN)
+    {
+        printf("error: R7 check pattern mismatch\n");
+        return -1;
+    }
+
+    for (retry = 0; ; retry++)
+    {
+        result = send_sd_command(CMD_APP_CMD, 0);
+        if (result != 1)
+        {
+            printf("CMD_APP_CMD: invalid response %02x\n", result);
+            return -1;
+        }
+
+        result = send_sd_command(CMD_APP_OP_COND, 0);
+
+        // Read remainder of R3 response
+        for (i = 0; i < 5; i++)
+            spi_transfer(0xff);
+
         if (result == 0)
             break;
 
         if (result != 1)
         {
-            printf("init_sdmmc_device: CMD_SEND_OP_COND  unexpected response %02x\n", result);
+            printf("CMD_APP_OP_COND: invalid response %02x\n", result);
             return -1;
         }
-    }
 
-    // Configure the block size
-    result = send_sd_command(CMD_SET_BLOCKLEN, SDMMC_BLOCK_SIZE);
-    if (result != 0)
-    {
-        printf("init_sdmmc_device: CMD_SET_BLOCKLEN unexpected response %02x\n", result);
-        return -1;
+        if (retry == MAX_RETRIES)
+        {
+            printf("CMD_APP_OP_COND: timed out\n");
+            return -1;
+        }
     }
 
     // Increase clock rate to 5 Mhz
