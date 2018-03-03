@@ -58,7 +58,7 @@ int main()
             {
                 unsigned char c = buf[address + offset];
                 if (c >= 32 && c <= 128)
-                    printf("%c ", c);
+                    printf("%c", c);
                 else
                     printf(".");
             }
