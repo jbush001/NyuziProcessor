@@ -17,12 +17,9 @@
 #ifndef SDMMC_H
 #define SDMMC_H
 
-int open_block_device(const char *filename);
-void close_block_device(void);
+int open_sdmmc_device(const char *filename);
+void close_sdmmc_device(void);
 int transfer_sdmmc_byte(int value);
-void sdmmc_set_cs(int value);
-
-void write_sd_card_register(uint32_t address, uint32_t value);
-uint32_t read_sd_card_register(uint32_t address);
+void set_sdmmc_cs(int value);
 
 #endif

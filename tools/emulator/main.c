@@ -250,7 +250,7 @@ int main(int argc, char *argv[])
                 break;
 
             case 'b':
-                if (open_block_device(optarg) < 0)
+                if (open_sdmmc_device(optarg) < 0)
                     return 1;
 
                 block_device_open = true;
@@ -450,7 +450,7 @@ int main(int argc, char *argv[])
 
     dump_instruction_stats(proc);
     if (block_device_open)
-        close_block_device();
+        close_sdmmc_device();
 
     if (is_stopped_on_fault(proc))
         return 1;

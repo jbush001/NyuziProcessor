@@ -73,7 +73,7 @@ static uint32_t current_command_length;
 static char *block_buffer;
 static bool in_idle_state = false;
 
-int open_block_device(const char *filename)
+int open_sdmmc_device(const char *filename)
 {
     struct stat fs;
     if (block_fd != -1)
@@ -81,7 +81,7 @@ int open_block_device(const char *filename)
 
     if (stat(filename, &fs) < 0)
     {
-        perror("open_block_device: failed to stat block device file");
+        perror("open_sdmmc_device: failed to stat block device file");
         return -1;
     }
 
@@ -89,14 +89,14 @@ int open_block_device(const char *filename)
     block_fd = open(filename, O_RDWR);
     if (block_fd < 0)
     {
-        perror("open_block_device: failed to open block device file");
+        perror("open_sdmmc_device: failed to open block device file");
         return -1;
     }
 
     return 0;
 }
 
-void close_block_device(void)
+void close_sdmmc_device(void)
 {
     assert(block_fd > 0);
     close(block_fd);
@@ -311,7 +311,7 @@ int transfer_sdmmc_byte(int value)
     return result;
 }
 
-void sdmmc_set_cs(int value)
+void set_sdmmc_cs(int value)
 {
     chip_select = value & 1;
 }

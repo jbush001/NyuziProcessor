@@ -53,7 +53,7 @@ void write_device_register(uint32_t address, uint32_t value)
             break;
 
         case REG_SD_CONTROL:
-            sdmmc_set_cs(value & 1);
+            set_sdmmc_cs(value & 1);
             break;
 
         case REG_VGA_ENABLE:
