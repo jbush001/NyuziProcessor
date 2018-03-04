@@ -111,7 +111,7 @@ macro(add_nyuzi_executable name)
 
     # Create FPGA run script
     if(FS_IMAGE_FILES)
-        set(${SERIAL_BOOT_FS} "${CMAKE_CURRENT_BINARY_DIR}/fsimage.bin")
+        set(SERIAL_BOOT_FS "${CMAKE_CURRENT_BINARY_DIR}/fsimage.bin")
     endif()
 
     file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/run_fpga
