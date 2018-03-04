@@ -76,12 +76,12 @@ find_program(EMACS NAMES emacs)
 # https://www.veripool.org/wiki/verilog-mode
 add_custom_target(autos
     COMMAND ${EMACS} --eval '\(setq-default indent-tabs-mode nil\)'
-      --eval '\(setq-default verilog-typedef-regexp \"_t$$\"\)'
+        --eval '\(setq-default verilog-typedef-regexp \"_t$$\"\)'
 	    --eval '\(setq-default verilog-auto-reset-widths `unbased\)'
-		  --eval '\(setq-default verilog-auto-inst-param-value t\)'
-		  --eval '\(setq-default verilog-library-directories `\(\"${CMAKE_CURRENT_SOURCE_DIR}/core\" \"${CMAKE_CURRENT_SOURCE_DIR}/testbench\" \"${CMAKE_CURRENT_SOURCE_DIR}/fpga/common\" \".\"\)\)'
-		  --batch core/*.sv testbench/*.sv fpga/common/*.sv fpga/de2-115/*.sv
-		  -f verilog-batch-auto -f save-buffer
+	    --eval '\(setq-default verilog-auto-inst-param-value t\)'
+	    --eval '\(setq-default verilog-library-directories `\(\"${CMAKE_CURRENT_SOURCE_DIR}/core\" \"${CMAKE_CURRENT_SOURCE_DIR}/testbench\" \"${CMAKE_CURRENT_SOURCE_DIR}/fpga/common\" \".\"\)\)'
+	    --batch core/*.sv testbench/*.sv fpga/common/*.sv fpga/de2-115/*.sv
+		-f verilog-batch-auto -f save-buffer
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 # FPGA target isn't built as part of other targets, but run a lint pass to

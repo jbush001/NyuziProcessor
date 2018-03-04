@@ -31,6 +31,9 @@ import defines::*;
 // The interface to system memory is the AMBA AXI interface.
 // http://www.arm.com/products/system-ip/amba-specifications.php
 //
+// I've tried to keep all bus logic consolidated in this module to make it
+// easier to swap this out for other bus implementations.
+//
 // XXX This does not overlap address and data phases, but it should to improve
 // bus utilization.
 //

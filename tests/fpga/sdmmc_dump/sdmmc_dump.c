@@ -22,8 +22,6 @@
 //
 // Read the first few sectors of the SD card and dump them out the
 // serial port. This uses the SPI mode driver in libos.
-// ***This is not yet functional***.  I'm still debugging issues with
-// it.
 //
 
 int main()
