@@ -74,7 +74,7 @@ download the drivers. Also, if you search for 'FTDI USB serial' on a retail
 site like Amazon, there are a number that do explicitly note the chipset type.
 This one has worked well for me: http://a.co/hOTKx9R*
 
-## Synthesizing and Running Programs
+## Synthesizing and Running
 
 The build system is command line based and does not use the Quartus GUI.
 
@@ -105,9 +105,24 @@ Other notes:
   onto the FPGA board using the serial_loader program (tools/serial_loader).
 - Reload programs by pressing the reset button (push button 0) and using
   'run_fpga' again.
-- You do not need to reload the bitstream (step 2) as long as the board is
-  powered (it will be lost if it is turned off, however).
+- This loads programs in 'JTAG' mode. You do not need to reload the bitstream
+  (step 2) as long as the board is powered. It will be lost if it is turned off,
+  however. Instructions below describe how to load the configuration bitstream
+  into non-volatile memory.
 - The `program` target does not resynthesize the bitstream if source files
   have changed. This must be done explicitly by typing `make synthesize`.
 - The serial_loader program is also capable of loading a ramdisk file into
   memory on the board, which some of the test programs use.
+
+### Flashing Configuration Onto Board
+
+The configuration above loads the configuration bitstream into the FPGA, but
+doesn't persist across power cycles. The board supports loading a non-volatile
+image using 'Active Serial' programming mode. To do that, use the following steps:
+
+1. Switch SW19 to 'prog'
+2. Send program
+
+        make asprogram
+
+3. Switch SW19 to 'run' and power cycle the board.
