@@ -67,6 +67,8 @@ parser.add_argument('--target', dest='target',
                     nargs=1)
 parser.add_argument('--debug', action='store_true',
                     help='enable verbose output to debug test failures')
+parser.add_argument('--list', action='store_true',
+                    help='list availble tests')
 parser.add_argument('names', nargs=argparse.REMAINDER,
                     help='names of specific tests to run')
 args = parser.parse_args()
@@ -494,6 +496,12 @@ def execute_tests():
     """
 
     global DEBUG
+
+    if args.list:
+        for _, param, targets in registered_tests:
+            print(param + ': ' + ', '.join(targets))
+
+        return
 
     DEBUG = args.debug
     if args.target:

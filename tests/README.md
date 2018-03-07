@@ -18,6 +18,10 @@ are supported by the test. This can be restricted to a specific target with the
 
     ./runtest.py --target emulator aes.c
 
+You can list all available tests and targets with the list parameter:
+
+    ./runtest.py --list
+
 The --debug flag will enable printing test specific diagonostic output to the
 console.
 
