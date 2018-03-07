@@ -36,3 +36,12 @@ do_main:            call main
                     call call_atexit_functions
 
                     call exit
+
+                    # Called from schedule.c
+                    .globl __other_thread_start
+__other_thread_start:
+                    # Load global pointer
+                    movehi gp, hi(_GLOBAL_OFFSET_TABLE_)
+                    or gp, gp, lo(_GLOBAL_OFFSET_TABLE_)
+                    call worker_thread
+                    call thread_exit
