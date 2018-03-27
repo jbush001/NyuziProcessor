@@ -19,7 +19,6 @@ Utility functions for functional tests. This is imported into test runner script
 in subdirectories under this one.
 """
 
-from __future__ import print_function
 import argparse
 import binascii
 import hashlib
