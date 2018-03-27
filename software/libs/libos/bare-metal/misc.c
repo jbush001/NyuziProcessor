@@ -14,11 +14,20 @@
 // limitations under the License.
 //
 
+#include "nyuzi.h"
 #include <time.h>
 #include "registers.h"
 #include "unistd.h"
 
 #define CLOCKS_PER_US 50
+#define MAX_THREADS 64
+
+int __errno_array[MAX_THREADS];
+
+int *__errno_ptr(void)
+{
+    return &__errno_array[get_current_thread_id()];
+}
 
 int usleep(useconds_t delay)
 {

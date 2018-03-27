@@ -21,8 +21,6 @@
 
 static int randseed = -1;
 
-int __errno_array[__MAX_THREADS];
-
 void abort(void)
 {
     puts("abort");

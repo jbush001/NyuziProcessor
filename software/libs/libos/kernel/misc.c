@@ -18,6 +18,15 @@
 #include "nyuzi.h"
 #include "unistd.h"
 
+#define MAX_THREADS 64
+
+int __errno_array[MAX_THREADS];
+
+int *__errno_ptr(void)
+{
+    return &__errno_array[get_current_thread_id()];
+}
+
 int usleep(useconds_t delay)
 {
     (void) delay;
@@ -29,3 +38,5 @@ void exit(int status)
 {
     thread_exit();
 }
+
+

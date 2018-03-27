@@ -27,9 +27,6 @@
 #define EINVAL 22
 #define EMFILE 24 // Too many open files
 
-#define __MAX_THREADS 64
+extern int *__errno_ptr(void);
 
-extern int get_current_thread_id();
-extern int __errno_array[__MAX_THREADS];
-
-#define errno __errno_array[get_current_thread_id()]
+#define errno (*__errno_ptr())
