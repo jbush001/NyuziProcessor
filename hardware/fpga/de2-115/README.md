@@ -98,7 +98,7 @@ The build system is command line based and does not use the Quartus GUI.
 4. Load program into memory and execute it:
 
         cd ../../../tests/fpga/blinky
-        make fpgarun
+        run_fpga
 
 Other notes:
 - Most programs have a script 'run_fpga' that will load them

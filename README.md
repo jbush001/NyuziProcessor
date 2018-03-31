@@ -75,7 +75,7 @@ The following script will download and install the
 Although some Linux package managers have Verilator, they have old versions.
 It will ask for your root password a few times to install stuff.
 
-    build/setup_tools.sh
+    scripts/setup_tools.sh
 
 Build everything else:
 
