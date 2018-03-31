@@ -14,18 +14,13 @@
 # limitations under the License.
 #
 
-project(software)
+project(colorbars)
+include(nyuzi)
 
-add_subdirectory(plasma)
-add_subdirectory(consoletest)
-add_subdirectory(hello_world)
-add_subdirectory(sceneview)
-add_subdirectory(mandelbrot)
-add_subdirectory(rotozoom)
-add_subdirectory(shadow_map)
-add_subdirectory(colorbars)
+set_display_res(640 480)
+add_nyuzi_executable(colorbars
+    main.cpp)
 
-# These don't build by default because they require data files that
-# are not checked in.
-add_subdirectory(doom EXCLUDE_FROM_ALL)
-add_subdirectory(quakeview EXCLUDE_FROM_ALL)
+target_link_libraries(colorbars
+    c
+    os-bare)
