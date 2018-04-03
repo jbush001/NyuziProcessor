@@ -65,3 +65,20 @@ It has a hardcoded size that may trip asserts with more complex scenes.
     ASSERT FAILED: ./RegionAllocator.h:60: alignedAlloc + size < fArenaBase + fTotalSize
 
 The RenderContext constructor takes the size of this arena as a parameter.
+
+# Inspiration/References
+
+The architecture is at a high level similar to the one described in section 4
+of the original Larrabee paper: "Larrabee: a many-core x86 architecture for
+visual computing."
+
+https://dl.acm.org/citation.cfm?id=1360617
+
+It also borrows ideas from the 'SimdRast' project by Rasmus Barringer:
+
+https://code.google.com/archive/p/simdrast/
+
+The rasterization algorithm is based on the approach described in Michael
+Abrash's Dr. Dobbs article about Larrabee:
+
+http://www.drdobbs.com/parallel/rasterization-on-larrabee/217200602
