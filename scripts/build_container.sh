@@ -29,7 +29,7 @@ TOOLCHAIN_DIR=/usr/local/llvm-nyuzi/
 
 rm -rf tmp/*
 mkdir -p tmp
-cp $TOOLCHAIN_DIR/bin/clang-7.0 tmp/
+cp $TOOLCHAIN_DIR/bin/clang-7 tmp/
 cp $TOOLCHAIN_DIR/bin/elf2hex tmp/
 cp $TOOLCHAIN_DIR/bin/lld tmp/
 cp $TOOLCHAIN_DIR/bin/llvm-ar tmp/

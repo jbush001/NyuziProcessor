@@ -1056,8 +1056,9 @@ static int lookup_test_item(const struct btree *btree, int key)
 }
 
 static int destroy_test_item(void *item, void *ctx) {
+    // test items are constant strings, so nothing to do...
+    (void) item;
 	(void) ctx;
-	free(item);
 	return 1;
 }
 
