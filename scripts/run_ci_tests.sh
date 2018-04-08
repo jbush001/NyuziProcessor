@@ -23,7 +23,9 @@
 (cd tests/cosimulation
 ./generate_random.py -m 3)
 
+# Print versions of pre-installed tools
 verilator --version
+/usr/local/llvm-nyuzi/bin/clang -v
 
 # Build out of tree
 mkdir build
