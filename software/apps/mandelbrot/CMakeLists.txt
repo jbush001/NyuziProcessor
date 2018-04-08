@@ -17,6 +17,8 @@
 project(mandelbrot)
 include(nyuzi)
 
+set_display_res(640 480)
+
 add_nyuzi_executable(mandelbrot
     mandelbrot.c)
 
