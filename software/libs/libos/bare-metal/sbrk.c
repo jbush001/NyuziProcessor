@@ -22,6 +22,8 @@ volatile unsigned int next_alloc = 0x500000;
 void *sbrk(ptrdiff_t size)
 {
     void *base_ptr = (void*) __sync_fetch_and_add(&next_alloc, size);
-    memset(base_ptr, 0, size);
+    if (size > 0)
+        memset(base_ptr, 0, size);
+
     return base_ptr;
 }
