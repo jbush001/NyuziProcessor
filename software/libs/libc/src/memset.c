@@ -16,8 +16,6 @@
 
 #include <stdint.h>
 
-typedef int _veci16_t __attribute__((__vector_size__(16 * sizeof(int))));
-
 void* memset(void *_dest, int value, unsigned int length)
 {
     char *dest = (char*) _dest;
@@ -28,11 +26,11 @@ void* memset(void *_dest, int value, unsigned int length)
     if ((((unsigned int) dest) & 63) == 0)
     {
         // Write 64 bytes at a time.
-        _veci16_t reallyWideValue = (veci16_t)(value | (value << 8) | (value << 16)
+        veci16_t reallyWideValue = (veci16_t)(value | (value << 8) | (value << 16)
                                     | (value << 24));
         while (length > 64)
         {
-            *((_veci16_t*) dest) = reallyWideValue;
+            *((veci16_t*) dest) = reallyWideValue;
             length -= 64;
             dest += 64;
         }
