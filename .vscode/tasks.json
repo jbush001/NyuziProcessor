@@ -11,9 +11,10 @@
             },
             "type" : "shell",
             "command" : "make",
-            "options" : {
-                "cwd" : "${workspaceRoot}/build"
-            },
+            // Uncomment for out-of-tree build
+            //"options" : {
+            //    "cwd" : "${workspaceRoot}/build"
+            //},
             "problemMatcher": [
                 // Clang
                 {
