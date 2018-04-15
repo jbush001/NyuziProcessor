@@ -1,0 +1,46 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "make",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "type" : "shell",
+            "command" : "make",
+            "options" : {
+                "cwd" : "${workspaceRoot}/build"
+            },
+            "problemMatcher": [
+                // Clang
+                {
+                    "owner": "cpp",
+                    "fileLocation": "absolute",
+                    "pattern": {
+                        "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+                        "file": 1,
+                        "line": 2,
+                        "column": 3,
+                        "severity": 4,
+                        "message": 5
+                    }
+                },
+
+                // Verilator
+                {
+                    "fileLocation": "absolute",
+                    "pattern": {
+                        "regexp": "^%(Error|Warning):\\s+(.*):(\\d+):\\s+(.*)$",
+                        "severity": 1,
+                        "file": 2,
+                        "line": 3,
+                        "message": 4
+                    }
+                }
+            ]
+        }
+    ]
+}
