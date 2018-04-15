@@ -1,0 +1,6 @@
+{
+    "files.exclude" : {
+        "tools/NyuziToolchain" : true,
+        "tools/verilator" : true
+    },
+}
