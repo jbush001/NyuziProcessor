@@ -11,7 +11,7 @@ virtual memory implementation, but no user level synchronization or filesystem
 APIs. The downside of that is that I can't use it to stress the hardware with
 real workloads.
 
-The reason I built something from scatch rather than using an existing
+The reason I built something from scratch rather than using an existing
 OS was that I couldn't find something that met my needs. Linux and
 FreeBSD are very large: they would take forever to boot in simulation,
 making them not well suited for automated testing and CI. There are simpler

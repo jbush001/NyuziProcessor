@@ -7,9 +7,9 @@ created by the generate_random utility. Each file is a separate test.
 Randomized cosimulation is a common processor verification technique. Here
 are a few papers that describe its application in some commercial processors:
 
-* [Functional Verification of a Multiple-issue, Out-of-Order, Superscalar Alpha Processor— The DEC Alpha 21264 Microprocessor](http://www.cs.clemson.edu/~mark/464/21264.verification.pdf)
-* [Functional Verification of the HP PA 8000 Processor](http://www.cs.clemson.edu/~mark/464/hp8000.verification.pdf)
-* [PicoJava II Verification Guide](http://www1.pldworld.com/@xilinx/html/pds/HDL/picoJava-II/docs/pj2-verif-guide.pdf)
+- [Functional Verification of a Multiple-issue, Out-of-Order, Superscalar Alpha Processor— The DEC Alpha 21264 Microprocessor](http://www.cs.clemson.edu/~mark/464/21264.verification.pdf)
+- [Functional Verification of the HP PA 8000 Processor](http://www.cs.clemson.edu/~mark/464/hp8000.verification.pdf)
+- [PicoJava II Verification Guide](http://www1.pldworld.com/@xilinx/html/pds/HDL/picoJava-II/docs/pj2-verif-guide.pdf)
 
 # Executing Tests
 
@@ -130,7 +130,6 @@ the random test program does not flush them and The C model does not emulate
 the caches.
 
 # How it works
-## Checking
 
 The test program runs the verilog simulator with the +trace flag, which
 causes it to print text descriptions of register writebacks and memory stores
@@ -159,11 +158,10 @@ simulator and flags an error if there is a mismatch.
     1. Hardware executes store_sync, which fails. It does not log a cosimuation event
        because it *only* logs memory side effects, and those only occur on success
     2. Interrupt comes in. Emulator jumps to interrupt handler without executing the
-	   store_sync and register does not get set to 0 to reflect failure.
+       store_sync and register does not get set to 0 to reflect failure.
 - If control register 13 (subcycle) is read after an interrupt, it may not match the
   value in hardware, since hardware does not log scatter stores to lanes that don't
   have the mask bit set.
 - This does not validate virtual memory translation. This has a software managed
 TLB, and the TLB replacement behavior is timing specific, which makes it hard to match
 behavior exactly.
-

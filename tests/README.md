@@ -54,7 +54,6 @@ The Makefile does not run the following tests:
 | kernel/vga/          |
 | render/              | These only run under the emulator (they support verilator, but they take a long time to run)
 
-
 # Adding Tests
 
 Each test consists of a function, which takes two arguments: the name parameter (which
@@ -148,4 +147,3 @@ categories:
    output to expected values. These include everything from simple, single
    threaded programs to a full fledged kernel. Most can run both in Verilog
    simulation and on FPGA.
-

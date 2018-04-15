@@ -13,9 +13,9 @@ the data files over the serial port into the ramdisk.
 
 The primary changes I made for the port were:
 
-* in i_video.c, added code to copy the screen to the framebuffer, expanding
+- in i_video.c, added code to copy the screen to the framebuffer, expanding
   from an 8 bit paletted format to the 32 bit per pixel framebuffer format.
-* in i_video.c, read from a virtual keyboard device for input.
-* Fixed a number of places that assumed unaligned accesses were supported.
-* Code from i_net and i_sound removed, as there is no hardware support
+- in i_video.c, read from a virtual keyboard device for input.
+- Fixed a number of places that assumed unaligned accesses were supported.
+- Code from i_net and i_sound removed, as there is no hardware support
   for them.

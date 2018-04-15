@@ -20,4 +20,3 @@ first.
   for setting up the FPGA are in hardware/fpga/de2-115/README.
 - **run_debug**: Execute the program in the emulator and attach to it with the
   debugger (lldb).
-

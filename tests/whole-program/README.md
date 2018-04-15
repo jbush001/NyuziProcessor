@@ -20,15 +20,15 @@ To run only on emulator:
 
     ./runtest.py --target emulator *program names*
 
-* The test script skips filenames that begin with underscore, which is
+- The test script skips filenames that begin with underscore, which is
   useful for known failing cases.
-* This skips tests with "noverilator" in the filename (used for tests that
+- This skips tests with "noverilator" in the filename (used for tests that
   take too long to run in verilator).
-* This runtest script supports '--target host' to run on host machine.
+- This runtest script supports '--target host' to run on host machine.
   Some tests fail in this configuration because they use intrinsics
   that exist only for Nyuzi.
-* The Csmith random generation tool generated The csmith* tests:
+- The Csmith random generation tool generated The csmith* tests:
   http://embed.cs.utah.edu/csmith/
-* This uses the compiler installed at /usr/local/llvm-nyuzi/. To test a
+- This uses the compiler installed at /usr/local/llvm-nyuzi/. To test a
   development compiler, adjust COMPILER_DIR variable in test_harness.py
   in the parent directory.

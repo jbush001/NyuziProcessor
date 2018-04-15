@@ -3,10 +3,12 @@ checked in, but you can find the shareware .PAK file by searching the web. Name
 the file 'pak0.pak' and put into this directory.
 
 Not implemented:
+
 - Animated textures
 - Clipping/collision detection for camera
 
 Controls:
+
 - Up/Down arrows: move camera forward and backward
 - Right/left arrows: rotate left and right
 - U/D keys: move camera up and down
@@ -16,7 +18,7 @@ Controls:
 
 You can load other episodes/missions by changing this line in main.cpp:
 
-	pak.readBspFile("maps/e1m1.bsp");
+    pak.readBspFile("maps/e1m1.bsp");
 
 ## Running in Emulator
 
@@ -51,10 +53,10 @@ loop and stops the worker threads:
 
              context->finish();
              printf("rendered frame in %d uS\n", clock() - time);
-        +		exit(1);
-         	}
+        +        exit(1);
+             }
 
-     	return 0;
+         return 0;
 
 2. Comment out keyboard polling in main. In the verilator configuration, there is a dummy module that
 generates continuous keypresses, but this will cause an infinite loop with this program:

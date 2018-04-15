@@ -35,6 +35,7 @@ memory:
     RenderContext *context = new RenderContext(0x1000000);
 
 There are a few debug defines in the top of sceneview.cpp:
+
 - **TEST_TEXTURE** If defined, this uses a checkerboard texture in place
 of the normal textures. Each mip level is a different color.
 - **SHOW_DEPTH** If defined, this shades the pixels with lighter values
@@ -48,13 +49,13 @@ following changes:
 1. At the bottom of the main loop in sceneview.cpp, add a call to exit(). This stop the main
 loop, and will cause the worker threads to stop:
 
-         		context->finish();
-         		printf("rendered frame in %d instructions\n", __builtin_nyuzi_read_control_reg(6)
-         			- startInstructions);
-        +		exit(1);
-         	}
+                 context->finish();
+                 printf("rendered frame in %d instructions\n", __builtin_nyuzi_read_control_reg(6)
+                     - startInstructions);
+        +        exit(1);
+             }
 
-     	return 0;
+         return 0;
 
 2. Increase the amount of RAM configured in the FPGA configuration. In hardware/testbench/soc_tb.sv,
 change MEM_SIZE to 'h3000000 (48 MB)
@@ -64,4 +65,3 @@ change MEM_SIZE to 'h3000000 (48 MB)
 Once you have made these changes, you can run the test by typing 'make verirun'. This is
 compute intensive and will take hours to complete. You should not run this with
 VCD logging enabled, as the files will be enormous (described in hardware README).
-

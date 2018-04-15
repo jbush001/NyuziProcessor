@@ -16,7 +16,7 @@ This also simulates hardware peripherals supported by the FPGA and Verilog
 simulator environments (which are all software compatible), such as video
 output and a mass storage device.
 
-### Command line options:
+### Command line options
 
 |Option|Arguments                  |Meaning                                           |
 |------|---------------------------|--------------------------------------------------|
@@ -53,10 +53,10 @@ Other notes:
   causes it to dump instruction statistics.
 - See [SOC-Test-Environment](https://github.com/jbush001/NyuziProcessor/wiki/SOC-Test-Environment)
   for list of supported device registers. The emulator doesn't support the following devices:
-  * LED/HEX display output registers
-  * Serial reads
-  * VGA frame buffer address/toggle
-  * SPI GPIO mode
+  - LED/HEX display output registers
+  - Serial reads
+  - VGA frame buffer address/toggle
+  - SPI GPIO mode
 
 ### Debugging with LLDB
 
@@ -76,6 +76,7 @@ The steps to run the debugger manually are:
         /usr/local/llvm-nyuzi/bin/lldb --arch nyuzi <program>.elf -o "gdb-remote 8000"
 
 Other notes:
+
 - The emulator does not support the debugger in cosimulation mode.
 - Debugging works better if you compile the program with optimizations disabled.
   For example, at -O3, lldb cannot read variables if they are not live at the
@@ -131,4 +132,3 @@ llvm-symbolizer program. This is not installed by default, but is in the
 build directory for the toolchain:
 
     echo <address> | tools/NyuziToolchain/build/bin/llvm-symbolizer -demangle -obj=<program>.elf
-

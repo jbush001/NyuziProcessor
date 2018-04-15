@@ -25,7 +25,7 @@ For example:
     For a different serial device, you will need to find
     the device path. It may also be something like:
 
-	    /dev/ttyS0
+        /dev/ttyS0
         /dev/ttyUSB0
 
     This defaults to 921600 baud. If your serial device does not
@@ -87,7 +87,7 @@ The build system is command line based and does not use the Quartus GUI.
         make program
 
     You may get an error when running this command. If so, this can usually be
-	fixed by running the following command:
+    fixed by running the following command:
 
         sudo killall -9 jtagd
 
@@ -100,7 +100,8 @@ The build system is command line based and does not use the Quartus GUI.
         cd ../../../tests/fpga/blinky
         run_fpga
 
-Other notes:
+## Other notes
+
 - Most programs have a script 'run_fpga' that will load them
   onto the FPGA board using the serial_loader program (tools/serial_loader).
 - Reload programs by pressing the reset button (push button 0) and using

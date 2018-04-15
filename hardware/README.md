@@ -1,5 +1,6 @@
 This directory contains the hardware implementation of the processor. There are
 three directories:
+
 - core/
   The GPGPU. The top level module is 'nyuzi'. Configurable options (cache size,
   associativity, number of cores) are in core/config.sv
@@ -24,7 +25,7 @@ defined.
 
 This design uses parameterized memories (FIFOs and SRAM blocks) in the modules
 core/sram_1r1w.sv, core/sram_2r1w.sv, and core/sync_fifo.sv. By default, these
-instantite simulator versions, which are not synthesizable (at least not
+instantiate simulator versions, which are not synthesizable (at least not
 efficiently).
 
 - For Altera parts, the build files define the preprocessor macro
@@ -67,10 +68,10 @@ To write a waveform trace, set the environment variable DUMP_WAVEFORM
 and rebuild:
 
     make clean
-	 cd ..
+   cd ..
     DUMP_WAVEFORM=1 cmake .
-	 cd hardware
-	 make
+   cd hardware
+   make
 
 The simulator writes a file called `trace.vcd` in
 "[value change dump](http://en.wikipedia.org/wiki/Value_change_dump)"
@@ -93,7 +94,7 @@ pragma above the module instantiation:
 
 The timescale is set to 1 ns by default, which simulates a 1 GHz clock speed.
 
-### Support for VCS:
+### Support for VCS
 
 Template scripts have been added to support building and running with
 [VCS](https://www.synopsys.com/verification/simulation/vcs.html).
