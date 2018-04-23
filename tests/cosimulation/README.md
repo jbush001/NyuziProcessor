@@ -151,8 +151,9 @@ simulator and flags an error if there is a mismatch.
   threads. Thus, the random test generator reserves a separate write region for
   each thread.
 - The random instruction generator does not generate floating point
-  instructions. There are still a fair number of subtle rounding bugs in the
-  floating point pipeline (https://github.com/jbush001/NyuziProcessor/issues/87).
+  instructions. The floating point pipeline is not fully IEEE 754 compliant
+  yet, so there are a number of cases where results are off slightly.
+  (https://github.com/jbush001/NyuziProcessor/issues/87).
 - store_sync doesn't really work correctly with interrupts (even in the absence
   of thread contention), because the following can happen:
     1. Hardware executes store_sync, which fails. It does not log a cosimuation event
