@@ -47,7 +47,11 @@ module scoreboard(
 
     localparam SCOREBOARD_ENTRIES = NUM_REGISTERS * 2;
 
-    // Number of stages in longest pipeline
+    // This represents the longest path between the thread select and
+    // writeback stages:
+    // operand_fetch -> dcache_tag -> dcache_data -> writeback
+    // It does not include the floating point pipeline, as that does not
+    // generate traps.
     localparam ROLLBACK_STAGES = 4;
 
     typedef logic[SCOREBOARD_ENTRIES - 1:0] scoreboard_bitmap_t;
@@ -79,7 +83,8 @@ module scoreboard(
                 if (has_writeback[i])
                     rollback_bitmap[writeback_reg[i]] = 1;
 
-            // If this is a memory instruction, include it.
+            // The memory pipeline is one stage longer than the integer
+            // pipeline, so include that stage if it generated the rollback.
             if (has_writeback[ROLLBACK_STAGES - 1]
                 && wb_rollback_pipeline == PIPE_MEM)
                 rollback_bitmap[writeback_reg[ROLLBACK_STAGES - 1]] = 1;
