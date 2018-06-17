@@ -406,6 +406,8 @@ typedef enum logic[1:0] {
     AXI_BURST_WRAP = 2'b10
 } axi_burst_type_t;
 
+parameter AXI_ADDR_WIDTH = 32;
+
 endpackage : defines
 
 // Non-cached I/O bus (peripheral register access) external interface
@@ -425,7 +427,7 @@ endinterface
 // AMBA AXI-4 bus interface
 interface axi4_interface;
     // Write address channel (Table A2-2)
-    logic [31:0] m_awaddr;
+    logic [AXI_ADDR_WIDTH - 1:0] m_awaddr;
     logic [7:0] m_awlen;
     logic [2:0] m_awsize;
     defines::axi_burst_type_t m_awburst;
@@ -445,7 +447,7 @@ interface axi4_interface;
     logic m_bready;
 
     // Read address channel (Table A2-5)
-    logic [31:0] m_araddr;
+    logic [AXI_ADDR_WIDTH - 1:0] m_araddr;
     logic [7:0] m_arlen;
     logic [2:0] m_arsize;
     defines::axi_burst_type_t m_arburst;

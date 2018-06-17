@@ -173,6 +173,12 @@ module sdram_controller
 
     assign dram_dq = output_enable ? write_data : {DATA_WIDTH{1'hZ}};
 
+    initial
+    begin
+        // Currently a requirement because narrowing or expanding isn't implemented.
+        assert(`AXI_DATA_WIDTH == DATA_WIDTH);
+    end
+
     // Next state logic. When there is a delay between states, timer_ff tracks
     // how many cycles are remaining. state_ff will point to the *next* state
     // during this interval, but the  control signals associated with the state
@@ -486,7 +492,7 @@ module sdram_controller
 `endif
 
                 // axi_bus.m_awaddr is in terms of bytes.  Convert to # of transfers.
-                write_address <= INTERNAL_ADDR_WIDTH'(axi_bus.m_awaddr[31:$clog2(DATA_WIDTH / 8)]);
+                write_address <= INTERNAL_ADDR_WIDTH'(axi_bus.m_awaddr[AXI_ADDR_WIDTH - 1:$clog2(DATA_WIDTH / 8)]);
                 write_length <= axi_bus.m_awlen;
                 write_pending <= 1'b1;
             end
@@ -517,7 +523,7 @@ module sdram_controller
 `endif
 
                 // axi_bus.m_araddr is in terms of bytes.  Convert to # of transfers.
-                read_address <= INTERNAL_ADDR_WIDTH'(axi_bus.m_araddr[31:$clog2(DATA_WIDTH / 8)]);
+                read_address <= INTERNAL_ADDR_WIDTH'(axi_bus.m_araddr[AXI_ADDR_WIDTH - 1:$clog2(DATA_WIDTH / 8)]);
                 read_length <= axi_bus.m_arlen;
                 read_pending <= 1'b1;
             end
