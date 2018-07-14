@@ -40,23 +40,23 @@ module sim_sdram
     localparam NUM_BANKS = 4;
     localparam MEM_SIZE = (1 << ROW_ADDR_WIDTH) * (1 << COL_ADDR_WIDTH) * NUM_BANKS;
 
-    logic[9:0] mode_register_ff = 0;
-    logic[NUM_BANKS - 1:0] bank_active = 0;
+    logic[9:0] mode_register_ff;
+    logic[NUM_BANKS - 1:0] bank_active;
     logic[NUM_BANKS - 1:0] bank_cas_delay[0:3];
     logic[ROW_ADDR_WIDTH - 1:0] bank_active_row[0:NUM_BANKS - 1];
     logic[DATA_WIDTH - 1:0] sdram_data[0:MEM_SIZE - 1] /*verilator public*/;
-    logic[15:0] refresh_delay = 0;
+    logic[15:0] refresh_delay;
 
     // Current burst info
-    logic burst_w = '0; // If true, is a write burst.  Otherwise, read burst
-    logic burst_active = '0;
-    logic[3:0] burst_count_ff = '0;    // How many transfers have occurred
-    logic[1:0] burst_bank = '0;
-    logic burst_auto_precharge = '0;
-    logic[10:0] burst_column_address = '0;
-    logic[3:0] burst_read_delay_count = '0;
-    logic cke_ff = '0;
-    logic initialized = '0;
+    logic burst_w; // If true, is a write burst.  Otherwise, read burst
+    logic burst_active;
+    logic[3:0] burst_count_ff;    // How many transfers have occurred
+    logic[1:0] burst_bank;
+    logic burst_auto_precharge;
+    logic[10:0] burst_column_address;
+    logic[3:0] burst_read_delay_count;
+    logic cke_ff;
+    logic initialized;
     logic[3:0] burst_length;
     logic burst_interleaved;
     logic[COL_ADDR_WIDTH - 1:0] burst_address_offset;
@@ -75,6 +75,19 @@ module sim_sdram
     begin
         for (int i = 0; i < NUM_BANKS; i++)
             bank_active_row[i] = 0;
+
+        mode_register_ff = 0;
+        bank_active = 0;
+        refresh_delay = 0;
+        burst_w = '0;
+        burst_active = 0;
+        burst_count_ff = 0;
+        burst_bank = '0;
+        burst_auto_precharge = '0;
+        burst_column_address = '0;
+        burst_read_delay_count = '0;
+        cke_ff = 0;
+        initialized = 0;
     end
 
     assign cas_delay = mode_register_ff[6:4];
