@@ -77,7 +77,7 @@ private:
         bool isConstant;
         float constantValue;
         LinearInterpolator linearInterpolator;
-    } fParameters[kMaxParams];
+    } fParameters[kMaxParams] = {};
     int fNumParams = 0;
     float fZ0;
     float fZ1;

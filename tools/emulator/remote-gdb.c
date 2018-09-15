@@ -311,7 +311,7 @@ void remote_gdb_main_loop(struct processor *proc, bool enable_fb_window)
                         // XXX May need dynamic allocation. At very least, buffer is too small.
                         if (length > sizeof(response) / 2)
                         {
-                            printf("memory read of %d requested\n", length);
+                            printf("memory read of %u requested\n", length);
                             assert(0);
                         }
 
@@ -422,7 +422,7 @@ void remote_gdb_main_loop(struct processor *proc, bool enable_fb_window)
                         for (i = 2; i <= num_threads && offset < (int) sizeof(response); i++)
                         {
                             offset += snprintf(response + offset, sizeof(response)
-                                               - (size_t) offset, ",%d", i);
+                                               - (size_t) offset, ",%u", i);
                         }
 
                         send_response_packet(response);
@@ -436,7 +436,7 @@ void remote_gdb_main_loop(struct processor *proc, bool enable_fb_window)
                         uint32_t reg_id = (uint32_t) strtoul(request + 13, NULL, 16);
                         if (reg_id < 32 || reg_id == 64)
                         {
-                            sprintf(response, "name:s%d;bitsize:32;encoding:uint;format:hex;set:General Purpose Scalar Registers;gcc:%d;dwarf:%d;",
+                            sprintf(response, "name:s%u;bitsize:32;encoding:uint;format:hex;set:General Purpose Scalar Registers;gcc:%d;dwarf:%d;",
                                     reg_id, reg_id, reg_id);
 
                             if (reg_id == 64)
@@ -545,4 +545,3 @@ void remote_gdb_main_loop(struct processor *proc, bool enable_fb_window)
         close(client_socket);
     }
 }
-

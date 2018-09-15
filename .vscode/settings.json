@@ -3,4 +3,8 @@
         "tools/NyuziToolchain" : true,
         "tools/verilator" : true
     },
+    "files.associations": {
+        "__functional_03": "cpp",
+        "functional": "cpp"
+    },
 }

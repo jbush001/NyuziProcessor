@@ -50,7 +50,7 @@ int main()
     {
         if (buf2[i] != ((i ^ (i >> 3)) & 0xff))
         {
-            printf("FAIL: readback mismatch at offset %d, expected %02x got %02x\n",
+            printf("FAIL: readback mismatch at offset %u, expected %02x got %02x\n",
                 i, (i ^ (i >> 3)) & 0xff, buf2[i]);
             break;
         }

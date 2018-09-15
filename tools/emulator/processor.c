@@ -327,7 +327,7 @@ void write_memory_to_file(const struct processor *proc, const char *filename,
         return;
     }
 
-    if (fwrite((int8_t*) proc->memory + base_address, MIN(proc->memory_size, length), 1, file) <= 0)
+    if (fwrite((int8_t*) proc->memory + base_address, MIN(proc->memory_size, length), 1, file) != 1)
     {
         fclose(file);
         perror("write_memory_to_file: fwrite failed");
@@ -616,7 +616,7 @@ static void print_thread_registers(const struct thread *thread)
     int reg;
     int lane;
 
-    printf("Thread %d registers\n", thread->id);
+    printf("Thread %u registers\n", thread->id);
     for (reg = 0; reg < NUM_REGISTERS; reg++)
     {
         if (reg < 10)
@@ -655,7 +655,7 @@ static void print_thread_registers(const struct thread *thread)
 static void set_scalar_reg(struct thread *thread, uint32_t reg, uint32_t value)
 {
     if (thread->core->proc->enable_tracing)
-        printf("%08x [th %u] s%d <= %08x\n", thread->pc - 4, thread->id, reg, value);
+        printf("%08x [th %u] s%u <= %08x\n", thread->pc - 4, thread->id, reg, value);
 
     if (thread->core->proc->enable_cosim)
     {
@@ -673,7 +673,7 @@ static void set_vector_reg(struct thread *thread, uint32_t reg, uint32_t mask,
 
     if (thread->core->proc->enable_tracing)
     {
-        printf("%08x [th %u] v%d{%04x} <= ", thread->pc - 4, thread->id, reg,
+        printf("%08x [th %u] v%u{%04x} <= ", thread->pc - 4, thread->id, reg,
                mask & 0xffff);
         for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
             printf("%08x ", values[lane]);
@@ -754,7 +754,7 @@ static void raise_trap(struct thread *thread, uint32_t trap_address, enum trap_t
 {
     if (thread->core->proc->enable_tracing)
     {
-        printf("%08x [th %u] trap %d store %d cache %d %08x index %d\n",
+        printf("%08x [th %u] trap %d store %d cache %d %08x index %u\n",
                thread->pc - 4, thread->id, type, is_store, is_data_cache,
                trap_address, syscall_index);
     }
@@ -1431,7 +1431,7 @@ static void execute_scalar_load_store_inst(struct thread *thread, uint32_t instr
             invalidate_sync_address(thread->core, physical_address);
             if (thread->core->proc->enable_tracing)
             {
-                printf("%08x [th %u] memory store size %d %08x %02x\n", thread->pc - 4,
+                printf("%08x [th %u] memory store size %u %08x %02x\n", thread->pc - 4,
                        thread->id, access_size, virtual_address, value_to_store);
             }
 

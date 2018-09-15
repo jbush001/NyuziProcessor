@@ -146,7 +146,7 @@ def kill_gently(process):
     process.terminate()
     try:
         process.wait(timeout=2)
-    except TimeoutExpired:
+    except subprocess.TimeoutExpired:
         # Process may be hung
         process.kill()
 
@@ -447,6 +447,7 @@ def test(param=None):
         # this will just pass the function as the parameter.
         # Run all targtes
         register_tests(param, [param.__name__], ALL_TARGETS)
+        return param
     else:
         # decorator is called with a list of targets. Return
         # a fuction that will be called on the actual function.

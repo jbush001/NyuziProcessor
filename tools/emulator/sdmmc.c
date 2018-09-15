@@ -169,7 +169,8 @@ static void process_command(const uint8_t *command)
                 }
 
                 block_length = read_little_endian(command + 1);
-                block_buffer = realloc(block_buffer, block_length);
+                free(block_buffer);
+                block_buffer = malloc(block_length);
                 current_state = STATE_SEND_R1;
                 break;
 

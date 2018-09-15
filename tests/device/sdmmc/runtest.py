@@ -68,7 +68,7 @@ def sdmmc_write(_, target):
 
     # Second block has a pattern in it
     for index in range(512):
-        expected = (index ^ (index >> 3)) & 0xff;
+        expected = (index ^ (index >> 3)) & 0xff
         if end_contents[index + 512] != expected:
             raise test_harness.TestException('mismatch at {} expected 0x{:02x} got 0x{:02x}'
                 .format(index + 512, expected, end_contents[index + 512]))

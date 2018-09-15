@@ -48,7 +48,7 @@ def uart_echo_test(*unused):
     out_str, _ = test_harness.TimedProcessRunner().communicate(process=process,
         timeout=10, input=in_str.encode('ascii'))
     out_str = out_str.decode()
-    if not 'the quick brown fox jumped over the lazy dog' in out_str:
+    if 'the quick brown fox jumped over the lazy dog' not in out_str:
         raise test_harness.TestException('Subprocess returned incorrect result \"'
             + out_str + '"')
 
