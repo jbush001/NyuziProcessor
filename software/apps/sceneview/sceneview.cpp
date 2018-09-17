@@ -150,18 +150,19 @@ int main()
 
     // Set up resource data
     char *resourceData = readResourceFile();
-    const FileHeader *resourceHeader = (FileHeader*) resourceData;
+    const FileHeader *fileHeader = reinterpret_cast<const FileHeader*>(resourceData);
 #ifndef TEST_TEXTURE
-    const TextureEntry *texHeader = (TextureEntry*)(resourceData + sizeof(FileHeader));
+    const TextureEntry *texHeader = reinterpret_cast<const TextureEntry*>(resourceData
+            + sizeof(FileHeader));
 #endif
-    const MeshEntry *meshHeader = (MeshEntry*)(resourceData + sizeof(FileHeader) + resourceHeader->numTextures
-                                  * sizeof(TextureEntry));
-    Texture **textures = new Texture*[resourceHeader->numTextures];
+    const MeshEntry *meshHeader = reinterpret_cast<const MeshEntry*>(resourceData
+            + sizeof(FileHeader) + fileHeader->numTextures * sizeof(TextureEntry));
+    Texture **textures = new Texture*[fileHeader->numTextures];
 
-    printf("%d textures %d meshes\n", resourceHeader->numTextures, resourceHeader->numMeshes);
+    printf("%u textures %u meshes\n", fileHeader->numTextures, fileHeader->numMeshes);
 
     // Create texture objects
-    for (unsigned int textureIndex = 0; textureIndex < resourceHeader->numTextures; textureIndex++)
+    for (unsigned int textureIndex = 0; textureIndex < fileHeader->numTextures; textureIndex++)
     {
 #if TEST_TEXTURE
         textures[textureIndex] = createCheckerboardTexture();
@@ -182,9 +183,9 @@ int main()
     }
 
     // Create Render Buffers
-    RenderBuffer *vertexBuffers = new RenderBuffer[resourceHeader->numMeshes];
-    RenderBuffer *indexBuffers = new RenderBuffer[resourceHeader->numMeshes];
-    for (unsigned int meshIndex = 0; meshIndex < resourceHeader->numMeshes; meshIndex++)
+    RenderBuffer *vertexBuffers = new RenderBuffer[fileHeader->numMeshes];
+    RenderBuffer *indexBuffers = new RenderBuffer[fileHeader->numMeshes];
+    for (unsigned int meshIndex = 0; meshIndex < fileHeader->numMeshes; meshIndex++)
     {
         const MeshEntry &entry = meshHeader[meshIndex];
         vertexBuffers[meshIndex].setData(resourceData + entry.offset,
@@ -231,12 +232,12 @@ int main()
         uniforms.fNormalMatrix = modelViewMatrix.upper3x3();
 
         context->clearColorBuffer();
-        for (unsigned int meshIndex = 0; meshIndex < resourceHeader->numMeshes; meshIndex++)
+        for (unsigned int meshIndex = 0; meshIndex < fileHeader->numMeshes; meshIndex++)
         {
             const MeshEntry &entry = meshHeader[meshIndex];
             if (entry.textureId != 0xffffffff)
             {
-                assert(entry.textureId < resourceHeader->numTextures);
+                assert(entry.textureId < fileHeader->numTextures);
                 context->bindTexture(0, textures[entry.textureId]);
                 uniforms.fHasTexture = true;
             }
@@ -257,5 +258,3 @@ int main()
 
     return 0;
 }
-
-

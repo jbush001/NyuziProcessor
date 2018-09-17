@@ -436,7 +436,7 @@ void remote_gdb_main_loop(struct processor *proc, bool enable_fb_window)
                         uint32_t reg_id = (uint32_t) strtoul(request + 13, NULL, 16);
                         if (reg_id < 32 || reg_id == 64)
                         {
-                            sprintf(response, "name:s%u;bitsize:32;encoding:uint;format:hex;set:General Purpose Scalar Registers;gcc:%d;dwarf:%d;",
+                            sprintf(response, "name:s%u;bitsize:32;encoding:uint;format:hex;set:General Purpose Scalar Registers;gcc:%u;dwarf:%u;",
                                     reg_id, reg_id, reg_id);
 
                             if (reg_id == 64)
