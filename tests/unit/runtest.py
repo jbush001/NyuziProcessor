@@ -105,7 +105,7 @@ def run_unit_test(filename, _):
 
     verilator_args = [
         'sh',
-        '/usr/local/bin/verilator',
+        'verilator',
         '--unroll-count', '512',
         '--assert',
         '-I' + test_harness.PROJECT_TOP + '/hardware/core',
