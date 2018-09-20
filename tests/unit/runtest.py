@@ -103,24 +103,20 @@ def run_unit_test(filename, _):
     filestem, _ = os.path.splitext(filename)
     modulename = os.path.basename(filestem)
 
+    # The verilator command is actually a perl script. Executing it
+    # like this with shell=True is necessary for it to work correctly
+    # in all environments.
     verilator_args = [
-        'sh',
-        '/usr/local/bin/verilator',
-        '--unroll-count', '512',
-        '--assert',
-        '-I' + test_harness.PROJECT_TOP + '/hardware/core',
-        '-DSIMULATION=1',
-        '-Mdir', test_harness.WORK_DIR,
-        '-cc', filename,
-        '--exe', DRIVER_PATH
+        'verilator --unroll-count 512 --assert -I' + test_harness.PROJECT_TOP +
+        '/hardware/core -DSIMULATION=1 -Mdir ' + test_harness.WORK_DIR +
+        ' -cc ' + filename + ' --exe ' + DRIVER_PATH
     ]
 
     if test_harness.DEBUG:
-        verilator_args.append('--trace')
-        verilator_args.append('--trace-structs')
+        verilator_args[0] += ' --trace --trace-structs'
 
     try:
-        subprocess.call(verilator_args, stderr=subprocess.STDOUT)
+        subprocess.call(verilator_args, stderr=subprocess.STDOUT, shell=True)
     except subprocess.CalledProcessError as exc:
         raise test_harness.TestException(
             'Verilation failed:\n' + exc.output.decode())
