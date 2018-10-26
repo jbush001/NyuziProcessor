@@ -119,7 +119,8 @@ module sram_2r1w
         end
     endgenerate
 `elsif VENDOR_XILINX
-    // For [Synth 8-439] module 'xpm_memory_sdpram' not found:
+    // If you get an error [Synth 8-439] module 'xpm_memory_sdpram' not found,
+    // you must set the property XPM_LIBRARIES on the project.
     // https://www.xilinx.com/support/answers/67815.html
 
     localparam XPM_MEM_SIZE = (1 << ADDR_WIDTH) * DATA_WIDTH; // Memory size in bits
@@ -249,9 +250,7 @@ module sram_2r1w
     logic[DATA_WIDTH - 1:0] data[SIZE];
 
     // Note: use always here instead of always_ff so Modelsim will allow
-    // initializing the array to zeroes in the initial block. That in
-    // turn is necessary to avoid X-propagation issues with running with
-    // four-state simulators.
+    // initializing the array in the initial block (see below).
     always @(posedge clk)
     begin
         if (write_en)
