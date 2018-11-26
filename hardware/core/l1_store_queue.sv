@@ -24,7 +24,7 @@ import defines::*;
 // here as well.
 // A memory barrier request waits until all pending store requests finish.
 // It acts like a store in terms of rollback logic, but doesn't enqueue
-// anything if the store buffer is empty.
+// anything.
 //
 
 module l1_store_queue(
