@@ -28,7 +28,6 @@ import "DPI-C" function int send_jtag_response(input bit[31:0] instruction, inpu
 
 module sim_jtag
     (input                     clk,
-    input                      reset,
     jtag_interface.host        jtag);
 
     typedef enum int {
@@ -77,13 +76,20 @@ module sim_jtag
             control_port_open = open_jtag_socket(jtag_port);
         else
             control_port_open = 0;
+
+        state_ff = JTAG_RESET;
+        data_shift = '0;
+        instruction_shift = '0;
+        need_dr_shift = '0;
+        need_ir_shift = '0;
+        need_reset = '0;
+        shift_count = '0;
+        divider_count = 0;
     end
 
-    always @(posedge clk, posedge reset)
+    always @(posedge clk)
     begin
-        if (reset)
-            divider_count <= 0;
-        else if (divider_count == 0)
+        if (divider_count == 0)
         begin
             jtag.tck <= !jtag.tck;
             divider_count <= CLOCK_DIVISOR;
@@ -103,123 +109,107 @@ module sim_jtag
         jtag.tms <= tms_nxt;
     end
 
-    always @(posedge jtag.tck, posedge reset)
+    always @(posedge jtag.tck)
     begin
-        if (reset)
+        if (control_port_open != 0 && !need_ir_shift && !need_dr_shift && !need_reset)
         begin
-            state_ff <= JTAG_RESET;
-            /*AUTORESET*/
-            // Beginning of autoreset for uninitialized flops
-            data_shift <= '0;
-            instruction_shift <= '0;
-            need_dr_shift <= '0;
-            need_ir_shift <= '0;
-            need_reset <= '0;
-            shift_count <= '0;
-            // End of automatics
-        end
-        else
-        begin
-            if (control_port_open != 0 && !need_ir_shift && !need_dr_shift && !need_reset)
+            // Check if we have a new messsage request in the socket
+            // from the test harness
+            if (poll_jtag_request(instruction_length, instruction,
+                data_length, data) != 0)
             begin
-                // Check if we have a new messsage request in the socket
-                // from the test harness
-                if (poll_jtag_request(instruction_length, instruction,
-                    data_length, data) != 0)
+                // Ensure test harness doesn't send bad lengths (these are unsigned)
+                assert(instruction_length <= 32);
+                assert(data_length <= MAX_DATA_LEN);
+
+                // Specifying a zero length will cause the corresponding register
+                // not to be shifted.
+                if (instruction_length != 0)
+                    need_ir_shift <= 1;
+
+                if (data_length != 0)
+                    need_dr_shift <= 1;
+
+                if (instruction_length == 0 && data_length == 0)
+                    need_reset <= 1;
+            end
+        end
+
+        // Should not have need_reset set if there is a rest to send an IR
+        // or DR register.
+        assert(!need_reset || !(need_ir_shift || need_dr_shift));
+
+        state_ff <= state_nxt;
+        case (state_ff)
+            JTAG_SELECT_DR_SCAN:
+            begin
+                // Should not enter this state unless we have something to do.
+                assert(need_ir_shift || need_dr_shift || need_reset);
+            end
+
+            JTAG_CAPTURE_DR:
+            begin
+                shift_count <= data_length;
+                data_shift <= data;
+            end
+
+            JTAG_SHIFT_DR:
+            begin
+                data_shift <= (data_shift >> 1) | (MAX_DATA_LEN'(jtag.tdi)
+                    << (data_length - 1));
+                shift_count <= shift_count - 1;
+                assert(need_dr_shift);
+                assert(shift_count > 0);
+            end
+
+            JTAG_UPDATE_DR:
+            begin
+                assert(shift_count == 0);
+                send_jtag_response(instruction_shift, data_shift);
+                need_dr_shift <= 0;
+            end
+
+            JTAG_SELECT_IR_SCAN:
+            begin
+                // Shouldn't get to this state unless we are about
+                // to shift in a new IR or going to reset state.
+                assert(need_ir_shift || need_reset);
+                assert(!(need_ir_shift && need_reset));
+
+                if (need_reset)
                 begin
-                    // Ensure test harness doesn't send bad lengths (these are unsigned)
-                    assert(instruction_length <= 32);
-                    assert(data_length <= MAX_DATA_LEN);
-
-                    // Specifying a zero length will cause the corresponding register
-                    // not to be shifted.
-                    if (instruction_length != 0)
-                        need_ir_shift <= 1;
-
-                    if (data_length != 0)
-                        need_dr_shift <= 1;
-
-                    if (instruction_length == 0 && data_length == 0)
-                        need_reset <= 1;
+                    need_reset <= 0;
+                    send_jtag_response(0, 0);
                 end
             end
 
-            // Should not have need_reset set if there is a rest to send an IR
-            // or DR register.
-            assert(!need_reset || !(need_ir_shift || need_dr_shift));
+            JTAG_CAPTURE_IR:
+            begin
+                shift_count <= instruction_length;
+                instruction_shift <= instruction;
+            end
 
-            state_ff <= state_nxt;
-            case (state_ff)
-                JTAG_SELECT_DR_SCAN:
+            JTAG_SHIFT_IR:
+            begin
+                instruction_shift <= (instruction_shift >> 1)
+                    | (MAX_INSTRUCTION_LEN'(jtag.tdi)
+                    << (instruction_length - 1));
+                shift_count <= shift_count - 1;
+                assert(need_ir_shift);
+                assert(shift_count > 0);
+            end
+
+            JTAG_UPDATE_IR:
+            begin
+                assert(shift_count == 0);
+                need_ir_shift <= 0;
+                if (!need_dr_shift)
                 begin
-                    // Should not enter this state unless we have something to do.
-                    assert(need_ir_shift || need_dr_shift || need_reset);
+                    // There was an instruction, but no data
+                    send_jtag_response(instruction_shift, 0);
                 end
-
-                JTAG_CAPTURE_DR:
-                begin
-                    shift_count <= data_length;
-                    data_shift <= data;
-                end
-
-                JTAG_SHIFT_DR:
-                begin
-                    data_shift <= (data_shift >> 1) | (MAX_DATA_LEN'(jtag.tdi)
-                        << (data_length - 1));
-                    shift_count <= shift_count - 1;
-                    assert(need_dr_shift);
-                    assert(shift_count > 0);
-                end
-
-                JTAG_UPDATE_DR:
-                begin
-                    assert(shift_count == 0);
-                    send_jtag_response(instruction_shift, data_shift);
-                    need_dr_shift <= 0;
-                end
-
-                JTAG_SELECT_IR_SCAN:
-                begin
-                    // Shouldn't get to this state unless we are about
-                    // to shift in a new IR or going to reset state.
-                    assert(need_ir_shift || need_reset);
-                    assert(!(need_ir_shift && need_reset));
-
-                    if (need_reset)
-                    begin
-                        need_reset <= 0;
-                        send_jtag_response(0, 0);
-                    end
-                end
-
-                JTAG_CAPTURE_IR:
-                begin
-                    shift_count <= instruction_length;
-                    instruction_shift <= instruction;
-                end
-
-                JTAG_SHIFT_IR:
-                begin
-                    instruction_shift <= (instruction_shift >> 1)
-                        | (MAX_INSTRUCTION_LEN'(jtag.tdi)
-                        << (instruction_length - 1));
-                    shift_count <= shift_count - 1;
-                    assert(need_ir_shift);
-                    assert(shift_count > 0);
-                end
-
-                JTAG_UPDATE_IR:
-                begin
-                    assert(shift_count == 0);
-                    need_ir_shift <= 0;
-                    if (!need_dr_shift)
-                    begin
-                        // There was an instruction, but no data
-                        send_jtag_response(instruction_shift, 0);
-                    end
-                end
-            endcase
-        end
+            end
+        endcase
     end
 
     // The FSM is structured so it will always make progress if this returns 0.

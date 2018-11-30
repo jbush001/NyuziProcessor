@@ -43,10 +43,10 @@ set(VERILATOR_MIN_VERSION "918")
 # Version string looks like this:
 # "Verilator 3.920 2018-02-01 rev verilator_3_920"
 execute_process(COMMAND ${VERILATOR} --version OUTPUT_VARIABLE verilator_version_str)
-string(REGEX MATCH "Verilator 3\\.([0-9]+)" verilator_version ${verilator_version_str})
-if (NOT CMAKE_MATCH_1)
+string(REGEX MATCH "Verilator ([0-9])\\.([0-9]+)" verilator_version ${verilator_version_str})
+if (NOT CMAKE_MATCH_0)
     message("Couldn't get verilator version")
-elseif(CMAKE_MATCH_1 LESS ${VERILATOR_MIN_VERSION})
+elseif(CMAKE_MATCH_2 LESS ${VERILATOR_MIN_VERSION} AND CMAKE_MATCH_1 LESS 4)
     message(FATAL_ERROR "Need at least verilator 3.${VERILATOR_MIN_VERSION}")
 endif()
 
