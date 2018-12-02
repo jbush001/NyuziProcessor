@@ -7,8 +7,7 @@ standalone executable with no operating system support and the MMU disabled.
 The 'kernel' runs as a user mode program loaded by os/kernel and makes system
 calls where necessary.
 
-Both the crt0 and libos libraries must be linked against to use a specific
-variant. The kernel version must be linked at an address greater than 0x1000.
+The kernel version must be linked at an address greater than 0x1000.
 The bare metal version must be linked at address 0.
 
 The kernel version is a work in progress. A number of system calls are not yet
