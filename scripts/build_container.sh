@@ -29,17 +29,16 @@ TOOLCHAIN_DIR=/usr/local/llvm-nyuzi/
 
 rm -rf tmp/*
 mkdir -p tmp
-cp $TOOLCHAIN_DIR/bin/clang-7 tmp/
+cp $TOOLCHAIN_DIR/bin/clang-8 tmp/
 cp $TOOLCHAIN_DIR/bin/elf2hex tmp/
 cp $TOOLCHAIN_DIR/bin/lld tmp/
 cp $TOOLCHAIN_DIR/bin/llvm-ar tmp/
 cp $TOOLCHAIN_DIR/bin/llvm-ranlib tmp/
 cp $TOOLCHAIN_DIR/bin/llvm-objdump tmp/
-cp $TOOLCHAIN_DIR/lib/clang/7.0.0/lib/libclang_rt.builtins-nyuzi.a tmp/
+cp $TOOLCHAIN_DIR/lib/clang/8.0.0/lib/libclang_rt.builtins-nyuzi.a tmp/
 
 cp -R /usr/local/share/verilator tmp/share_verilator
 cp /usr/local/bin/verilator* tmp/
 
 docker build -t $DOCKER_REPO:latest .
 docker push $DOCKER_REPO
-
