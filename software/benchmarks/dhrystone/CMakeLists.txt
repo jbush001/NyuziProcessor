@@ -20,6 +20,7 @@ include(nyuzi)
 add_definitions(-DTIME=1)
 
 add_nyuzi_executable(dhrystone
+    SOURCES
     dhry_1.c
     dhry_2.c)
 

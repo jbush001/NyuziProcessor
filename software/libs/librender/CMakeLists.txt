@@ -30,4 +30,4 @@ add_nyuzi_library(render
     Texture.cpp
     line.cpp)
 target_compile_options(render PRIVATE -Wold-style-cast -Wsign-conversion -ffast-math)
-target_include_directories (render PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(render PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

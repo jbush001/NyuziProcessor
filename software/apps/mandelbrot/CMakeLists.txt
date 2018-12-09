@@ -17,12 +17,10 @@
 project(mandelbrot)
 include(nyuzi)
 
-set_display_res(640 480)
-
 add_nyuzi_executable(mandelbrot
-    mandelbrot.c)
+    DISPLAY_WIDTH 640 DISPLAY_HEIGHT 480
+    SOURCES mandelbrot.c)
 
 target_link_libraries(mandelbrot
     c
     os-bare)
-

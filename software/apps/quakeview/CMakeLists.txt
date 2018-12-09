@@ -17,11 +17,11 @@
 project(quakeview)
 include(nyuzi)
 
-set_display_res(640 480)
-set(MEMORY_SIZE 0x4000000)
-set(FS_IMAGE_FILES pak0.pak)
-
 add_nyuzi_executable(quakeview
+    DISPLAY_WIDTH 640 DISPLAY_HEIGHT 480
+    MEMORY_SIZE 0x4000000
+    FS_IMAGE_FILES pak0.pak
+    SOURCES
     main.cpp
     LevelRenderer.cpp
     MeshBuilder.cpp

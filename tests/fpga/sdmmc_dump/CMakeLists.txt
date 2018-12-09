@@ -17,7 +17,7 @@
 include(nyuzi)
 
 add_nyuzi_executable(sdmmc_dump
-    sdmmc_dump.c)
+    SOURCES sdmmc_dump.c)
 
 target_link_libraries(sdmmc_dump
     c

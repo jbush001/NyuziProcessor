@@ -17,9 +17,9 @@
 project(shadow_map)
 include(nyuzi)
 
-set_display_res(640 480)
 add_nyuzi_executable(shadow_map
-    main.cpp)
+    DISPLAY_WIDTH 640 DISPLAY_HEIGHT 480
+    SOURCES main.cpp)
 
 target_link_libraries(shadow_map
     render

@@ -18,9 +18,8 @@ project(hello_world)
 include(nyuzi)
 
 add_nyuzi_executable(hello_world
-    hello_world.c)
+    SOURCES hello_world.c)
 
 target_link_libraries(hello_world
     c
     os-bare)
-

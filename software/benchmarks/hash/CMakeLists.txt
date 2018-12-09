@@ -18,7 +18,7 @@ project(hash)
 include(nyuzi)
 
 add_nyuzi_executable(hash
-    hash.cpp)
+    SOURCES hash.cpp)
 
 target_link_libraries(hash
     c

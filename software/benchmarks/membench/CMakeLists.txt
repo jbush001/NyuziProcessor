@@ -18,7 +18,7 @@ project(membench)
 include(nyuzi)
 
 add_nyuzi_executable(membench
-    membench.c)
+    SOURCES membench.c)
 
 target_link_libraries(membench
     c

@@ -17,7 +17,7 @@
 include(nyuzi)
 
 add_nyuzi_executable(chargen
-    chargen.c)
+    SOURCES chargen.c)
 
 target_link_libraries(chargen
     c

@@ -18,7 +18,8 @@ project(consoletest)
 include(nyuzi)
 
 add_nyuzi_executable(consoletest
-    consoletest.c)
+    DISPLAY_WIDTH 640 DISPLAY_HEIGHT 480
+    SOURCES consoletest.c)
 
 target_link_libraries(consoletest
     c

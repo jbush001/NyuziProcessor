@@ -17,4 +17,4 @@
 include(nyuzi)
 
 add_nyuzi_executable(blinky
-    blinky.S)
+    SOURCES blinky.S)

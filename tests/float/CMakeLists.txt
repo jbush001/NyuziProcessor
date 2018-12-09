@@ -19,6 +19,7 @@ add_subdirectory(gen_float_tests)
 include(nyuzi)
 
 add_nyuzi_executable(float_test_runner
+    SOURCES
     run_tests.c
     ${CMAKE_CURRENT_BINARY_DIR}/test_cases.s)
 add_dependencies(float_test_runner float_test_cases_s)

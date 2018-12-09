@@ -30,25 +30,23 @@ macro(add_nyuzi_binary)
     string(REPLACE "-Wl,-search_paths_first" "" CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS}")
 endmacro(add_nyuzi_binary)
 
-macro(set_display_res width height)
-    set(DISPLAY_WIDTH ${width})
-    set(DISPLAY_HEIGHT ${height})
-endmacro()
-
 macro(add_nyuzi_executable name)
+    cmake_parse_arguments(ARG
+        "" "DISPLAY_WIDTH;DISPLAY_HEIGHT;IMAGE_BASE_ADDRESS;MEMORY_SIZE" "FS_IMAGE_FILES;SOURCES" ${ARGN})
+
     add_nyuzi_binary()
 
-    if(DISPLAY_WIDTH)
-        add_definitions(-DFB_WIDTH=${DISPLAY_WIDTH})
-        add_definitions(-DFB_HEIGHT=${DISPLAY_HEIGHT})
+    if(ARG_DISPLAY_WIDTH)
+        add_definitions(-DFB_WIDTH=${ARG_DISPLAY_WIDTH})
+        add_definitions(-DFB_HEIGHT=${ARG_DISPLAY_HEIGHT})
     endif()
 
-    if (IMAGE_BASE_ADDRESS)
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--image-base=${IMAGE_BASE_ADDRESS}")
-        set(ELF2HEX_ARGS -b ${IMAGE_BASE_ADDRESS})
+    if (ARG_IMAGE_BASE_ADDRESS)
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--image-base=${ARG_IMAGE_BASE_ADDRESS}")
+        set(ELF2HEX_ARGS -b ${ARG_IMAGE_BASE_ADDRESS})
     endif()
 
-    add_executable(${name} ${ARGN})
+    add_executable(${name} ${ARG_SOURCES})
     target_compile_options(${name} PRIVATE -O3 -Wall -Wno-unused-command-line-argument -Werror -fno-rtti)
 
     # Create the HEX file
@@ -62,13 +60,14 @@ macro(add_nyuzi_executable name)
         COMMAND ${NYUZI_COMPILER_BIN}/llvm-objdump -d $<TARGET_FILE:${name}> -source > ${CMAKE_CURRENT_BINARY_DIR}/${name}.lst)
 
     # If this has an associated FS image, create that now
-    if(FS_IMAGE_FILES)
-        add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/fsimage.bin
-            COMMAND mkfs ${CMAKE_CURRENT_BINARY_DIR}/fsimage.bin ${FS_IMAGE_FILES}
-            DEPENDS mkfs ${FS_IMAGE_FILES}
+    if(ARG_FS_IMAGE_FILES)
+        set(FS_IMAGE_PATH ${CMAKE_CURRENT_BINARY_DIR}/fsimage.bin)
+        add_custom_command(OUTPUT ${FS_IMAGE_PATH}
+            COMMAND mkfs ${FS_IMAGE_PATH} ${ARG_FS_IMAGE_FILES}
+            DEPENDS mkfs
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
             COMMENT "Creating filesystem image")
-        add_custom_target(${name}_fsimage DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/fsimage.bin)
+        add_custom_target(${name}_fsimage DEPENDS ${FS_IMAGE_PATH})
         add_dependencies(${name} ${name}_fsimage)
     endif()
 
@@ -76,16 +75,16 @@ macro(add_nyuzi_executable name)
     # Create emulator run script (xxx should create at cmake eval time instead of
     # as a custom target).
     #
-    if(DISPLAY_WIDTH)
-        set(EMULATOR_ARGS "${EMULATOR_RUN_CMD} -f ${DISPLAY_WIDTH}x${DISPLAY_HEIGHT}")
+    if(ARG_DISPLAY_WIDTH)
+        set(EMULATOR_ARGS "${EMULATOR_RUN_CMD} -f ${ARG_DISPLAY_WIDTH}x${ARG_DISPLAY_HEIGHT}")
     endif()
 
-    if(FS_IMAGE_FILES)
-        set(EMULATOR_ARGS "${EMULATOR_ARGS} -b ${CMAKE_CURRENT_BINARY_DIR}/fsimage.bin")
+    if(ARG_FS_IMAGE_FILES)
+        set(EMULATOR_ARGS "${EMULATOR_ARGS} -b ${FS_IMAGE_PATH}")
     endif()
 
-    if(MEMORY_SIZE)
-        set(EMULATOR_ARGS "${EMULATOR_ARGS} -c ${MEMORY_SIZE}")
+    if(ARG_MEMORY_SIZE)
+        set(EMULATOR_ARGS "${EMULATOR_ARGS} -c ${ARG_MEMORY_SIZE}")
     endif()
 
     # Create emulator run script
@@ -97,8 +96,8 @@ macro(add_nyuzi_executable name)
         CONTENT "$<TARGET_FILE:nyuzi_emulator> -m gdb ${EMULATOR_ARGS} ${name}.hex \&\n${NYUZI_COMPILER_BIN}/lldb --arch nyuzi $<TARGET_FILE:${name}> -o \"gdb-remote 8000\"")
 
     # Create verilator run script
-    if(FS_IMAGE_FILES)
-        set(VERILOG_ARGS "${VERILOG_ARGS} +block=${CMAKE_CURRENT_BINARY_DIR}/fsimage.bin")
+    if(ARG_FS_IMAGE_FILES)
+        set(VERILOG_ARGS "${VERILOG_ARGS} +block=${FS_IMAGE_PATH}")
     endif()
 
     file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/run_verilator
@@ -109,8 +108,8 @@ macro(add_nyuzi_executable name)
         CONTENT "${CMAKE_SOURCE_DIR}/scripts/vcsrun.pl ${VERILOG_ARGS} +bin=${CMAKE_CURRENT_BINARY_DIR}/${name}.hex")
 
     # Create FPGA run script
-    if(FS_IMAGE_FILES)
-        set(SERIAL_BOOT_FS "${CMAKE_CURRENT_BINARY_DIR}/fsimage.bin")
+    if(ARG_FS_IMAGE_FILES)
+        set(SERIAL_BOOT_FS "${FS_IMAGE_PATH}")
     endif()
 
     file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/run_fpga

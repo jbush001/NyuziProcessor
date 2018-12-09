@@ -20,12 +20,11 @@ include(nyuzi)
 set(OBJ_FILE ${CMAKE_CURRENT_SOURCE_DIR}/dabrovik_sponza/sponza.obj)
 set(RESOURCE_FILE ${CMAKE_CURRENT_BINARY_DIR}/resource.bin)
 
-set_display_res(640 480)
-set(MEMORY_SIZE 0x8000000)
-set(FS_IMAGE_FILES ${RESOURCE_FILE})
-
 add_nyuzi_executable(sceneview
-    sceneview.cpp)
+    MEMORY_SIZE 0x8000000
+    FS_IMAGE_FILES ${RESOURCE_FILE}
+    DISPLAY_WIDTH 640 DISPLAY_HEIGHT 480
+    SOURCES sceneview.cpp)
 add_dependencies(sceneview resource_bin)
 
 target_link_libraries(sceneview

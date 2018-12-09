@@ -17,11 +17,11 @@
 project(doom)
 include(nyuzi)
 
-set_display_res(640 400)
-set(MEMORY_SIZE 0x4000000)
-set(FS_IMAGE_FILES DOOM1.WAD)
-
 add_nyuzi_executable(doom
+    DISPLAY_WIDTH 640 DISPLAY_HEIGHT 400
+    MEMORY_SIZE 0x4000000
+    FS_IMAGE_FILES DOOM1.WAD
+    SOURCES
     doomdef.c
     doomstat.c
     dstrings.c
