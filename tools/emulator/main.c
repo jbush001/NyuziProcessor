@@ -275,7 +275,7 @@ int main(int argc, char *argv[])
                 if (num_cores < 1)
                 {
                     // XXX Should there be a maximum?
-                    fprintf(stderr, "Total cores must be greater than 1\n");
+                    fprintf(stderr, "Total cores must 1 or greater\n");
                     return 1;
                 }
 

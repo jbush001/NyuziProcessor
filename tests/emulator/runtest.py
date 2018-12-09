@@ -21,8 +21,9 @@ import sys
 sys.path.insert(0, '..')
 import test_harness
 
-def test_emulator_error(filename, expected_error):
-    args = [test_harness.EMULATOR_PATH, filename]
+
+def test_emulator_error(args, expected_error):
+    args = [test_harness.EMULATOR_PATH] + args
     try:
         result = subprocess.check_output(args, stderr=subprocess.STDOUT)
         raise test_harness.TestException('emulator did not detect error')
@@ -30,25 +31,38 @@ def test_emulator_error(filename, expected_error):
         result = exc.output.decode().strip()
         if not result.startswith(expected_error):
             raise test_harness.TestException('error string did not match, wanted \"{}\", got \"{}\"'
-                .format(expected_error, result))
+                                             .format(expected_error, result))
+
 
 @test_harness.test(['emulator'])
-def out_of_range_hexfile1(filename, _):
+def out_of_range_hexfile1(testname, _):
     '''Constant is larger than 32 bits. strtoul is successful, but the loader flags an error.'''
-    test_emulator_error('out_of_range1', 'Invalid constant in hex file at line 2')
+    test_emulator_error(['out_of_range1'],
+                        'Invalid constant in hex file at line 2')
+
 
 @test_harness.test(['emulator'])
-def out_of_range_hexfile2(filename, _):
+def out_of_range_hexfile2(testname, _):
     '''Constant is larger than 64 bits. strtoul  returns ERANGE'''
-    test_emulator_error('out_of_range2', 'Invalid constant in hex file at line 5')
+    test_emulator_error(['out_of_range2'],
+                        'Invalid constant in hex file at line 5')
+
 
 @test_harness.test(['emulator'])
-def bad_character(filename, _):
+def bad_character(testname, _):
     '''Checks when entire line is not consumed by strtoul'''
-    error = test_emulator_error('bad_character', 'Invalid constant in hex file at line 4')
+    error = test_emulator_error(
+        ['bad_character'], 'Invalid constant in hex file at line 4')
+
 
 @test_harness.test(['emulator'])
-def missing_file(filename, _):
-    test_emulator_error('this_file_does_not_exist.hex', 'load_hex_file: error opening hex file: No such file or directory')
+def missing_file(testname, _):
+    test_emulator_error(['this_file_does_not_exist.hex'],
+                        'load_hex_file: error opening hex file: No such file or directory')
+
+
+@test_harness.test(['emulator'])
+def no_file_specified(testname, _):
+    test_emulator_error([], 'No image filename specified')
 
 test_harness.execute_tests()

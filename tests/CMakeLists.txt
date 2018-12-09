@@ -21,21 +21,22 @@ add_subdirectory(fpga/sdmmc_native)
 add_subdirectory(float)
 
 set(py_test_dirs
-	unit
-	remote-gdb
-	jtag-debug
-	core/isa/
-	core/cache_control/
-	core/mmu
-	core/trap
-	stress/atomic
-	shared_memory
-	device/sdmmc/
-	device/ps2/
-	device/uart
-	libc
-	compiler-rt
-	cosimulation
+    unit
+    remote-gdb
+    jtag-debug
+    core/isa/
+    core/cache_control/
+    core/mmu
+    core/trap
+    stress/atomic
+    shared_memory
+    device/sdmmc/
+    device/ps2/
+    device/uart
+    emulator
+    libc
+    compiler-rt
+    cosimulation
     render/clip
     render/fill
     render/teapot
@@ -67,12 +68,12 @@ add_custom_command(TARGET tests
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/whole-program)
 
 set(fpga_test_dirs
-	core/cache_control/
-	core/isa/
-	core/mmu
-	core/trap
-	fpga/memory_test
-	whole-program)
+    core/cache_control/
+    core/isa/
+    core/mmu
+    core/trap
+    fpga/memory_test
+    whole-program)
 
 add_custom_target(fpgatest)
 foreach (dir ${fpga_test_dirs})
