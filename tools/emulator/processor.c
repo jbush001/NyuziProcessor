@@ -291,6 +291,7 @@ int load_hex_file(struct processor *proc, const char *filename)
     FILE *file;
     char line[16];
     uint32_t *memptr = proc->memory;
+    int line_num = 0;
 
     file = fopen(filename, "r");
     if (file == NULL)
@@ -301,7 +302,17 @@ int load_hex_file(struct processor *proc, const char *filename)
 
     while (fgets(line, sizeof(line), file))
     {
-        *memptr++ = endian_swap32((uint32_t) strtoul(line, NULL, 16));
+        line_num++;
+        errno = 0;
+        char *end_of_const;
+        unsigned long int value = strtoul(line, &end_of_const, 16);
+        if (errno != 0 || value > UINT32_MAX
+            || end_of_const != line + strlen(line) - 1) {
+            fprintf(stderr, "Invalid constant in hex file at line %d\n", line_num);
+            return -1;
+        }
+
+        *memptr++ = endian_swap32((uint32_t) value);
         if ((uint32_t)((memptr - proc->memory) * 4) >= proc->memory_size)
         {
             fclose(file);
