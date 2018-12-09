@@ -31,7 +31,9 @@ set(VERILATOR_OPTIONS --unroll-count 512
     -y ${CMAKE_CURRENT_SOURCE_DIR}/fpga/common
     -Mdir ${VERILATOR_GEN_DIR})
 
-if(DEFINED ENV{DUMP_WAVEFORM})
+set(DUMP_WAVEFORM 0 CACHE BOOL "Enable dumping VCD waveforms from Verilog simulator.")
+
+if (${DUMP_WAVEFORM})
     set(VERILATOR_OPTIONS ${VERILATOR_OPTIONS} --trace --trace-structs)
 endif()
 
@@ -67,7 +69,7 @@ set_directory_properties(PROPERTY ADDITIONAL_MAKE_CLEAN_FILES
 
 # Target for VCS simulator
 add_custom_target(vcsbuild
-    COMMAND ${CMAKE_SOURCE_DIR}/scripts/vcsbuild.pl
+    COMMAND ${CMAKE_COMMAND} -E env "DUMP_WAVEFORM=${DUMP_WAVEFORM}" ${CMAKE_SOURCE_DIR}/scripts/vcsbuild.pl
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 find_program(EMACS NAMES emacs)

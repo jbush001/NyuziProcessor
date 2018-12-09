@@ -64,13 +64,10 @@ it, change MEM_SIZE in testbench/verilator_tb.sv.
 The simulator exits when all threads halt by writing to the appropriate control
 register.
 
-To write a waveform trace, set the environment variable DUMP_WAVEFORM
-and rebuild:
+To write a waveform trace, set the cmake variable DUMP_WAVEFORM and rebuild.
+From the build directory:
 
-    make clean
-   cd ..
-    DUMP_WAVEFORM=1 cmake .
-   cd hardware
+   cmake -DDUMP_WAVEFORM=1 .
    make
 
 The simulator writes a file called `trace.vcd` in
@@ -120,8 +117,8 @@ executing:
 
 Waveform dumping can be enabled by executing:
 
-    % make clean
-    % DUMP_WAVEFORM=1 make vcsbuild
+    % cmake -DDUMP_WAVEFORM=1 .
+    % make clean; make vcsbuild
 
 If waveform dumping is enabled in VCS, the simulator writes a file called
 `trace.fsdb` which can be opened with Verdi.
