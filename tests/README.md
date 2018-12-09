@@ -144,6 +144,6 @@ categories:
 
    These are real-world programs that do something useful like compute a
    cryptographic hash. The test harness verifies them by comparing their
-   output to expected values. These include everything from simple, single
-   threaded programs to a full fledged kernel. Most can run both in Verilog
-   simulation and on FPGA.
+   output (printed to the console) to expected values. These include
+   everything from simple, single threaded programs to a full fledged kernel.
+   Most can run both in Verilog simulation and on FPGA.

@@ -18,8 +18,8 @@ by no means exhaustive:
 6. Software - Optimize or add capabilities to librender, implement a raytracer,
    port games or demo effects (which do double duty as a tests and benchmarks)
 
-There is a more detailed list of potential feature ideas at:
-https://trello.com/b/ywPdjo0A/nyuziprocessortasks
+The [issues](https://github.com/jbush001/NyuziProcessor/issues) section has list of
+known tasks and bugs.
 
 # Submitting Changes
 
@@ -112,7 +112,7 @@ synthesized design after synthesis:
     Fmax 54.3 MHz
     73,034 Logic elmements
 
-Ensure the frequence hasn't decreased too much (the design will not work on FPGA
+Ensure the frequency hasn't decreased too much (the design will not work on FPGA
 if it is below 50 MHz), and that the number of logic elements hasn't increased
 disproportionately.
 
