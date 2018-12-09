@@ -14,6 +14,10 @@
 # limitations under the License.
 #
 
+# This is is written in-tree rather than in the build directory so the test
+# harness to find it.
+configure_file(tests.conf.in ${CMAKE_CURRENT_SOURCE_DIR}/tests.conf)
+
 add_subdirectory(fpga/blinky)
 add_subdirectory(fpga/uart_chargen)
 add_subdirectory(fpga/sdmmc_dump)

@@ -26,12 +26,11 @@ obj/
 bin/
 generated/
 build/
-tests/work/
 __pycache__
+tests/tests.conf
 
 CLASSDIR
 hardware/fpga/de2-115/db/
 hardware/fpga/de2-115/incremental_db/
 hardware/fpga/de2-115/output_files/
 tests/cosimulation/random*
-

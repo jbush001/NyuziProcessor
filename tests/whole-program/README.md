@@ -29,6 +29,3 @@ To run only on emulator:
   that exist only for Nyuzi.
 - The Csmith random generation tool generated The csmith* tests:
   http://embed.cs.utah.edu/csmith/
-- This uses the compiler installed at /usr/local/llvm-nyuzi/. To test a
-  development compiler, adjust COMPILER_DIR variable in test_harness.py
-  in the parent directory.

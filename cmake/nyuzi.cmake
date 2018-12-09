@@ -17,12 +17,11 @@
 # This module defines targets that are compiled for the Nyuzi instruction set.
 
 macro(add_nyuzi_binary)
-    set(COMPILER_BIN /usr/local/llvm-nyuzi/bin/)
-    set(CMAKE_C_COMPILER ${COMPILER_BIN}/clang)
-    set(CMAKE_CXX_COMPILER ${COMPILER_BIN}/clang++)
-    set(CMAKE_RANLIB ${COMPILER_BIN}/llvm-ranlib)
-    set(CMAKE_AR ${COMPILER_BIN}/llvm-ar)
-    set(CMAKE_ASM_COMPILE ${COMPILER_BIN}/clang)
+    set(CMAKE_C_COMPILER ${NYUZI_COMPILER_BIN}/clang)
+    set(CMAKE_CXX_COMPILER ${NYUZI_COMPILER_BIN}/clang++)
+    set(CMAKE_RANLIB ${NYUZI_COMPILER_BIN}/llvm-ranlib)
+    set(CMAKE_AR ${NYUZI_COMPILER_BIN}/llvm-ar)
+    set(CMAKE_ASM_COMPILE ${NYUZI_COMPILER_BIN}/clang)
     enable_language(ASM)
     set(CMAKE_CXX_STANDARD 11)
 
@@ -55,12 +54,12 @@ macro(add_nyuzi_executable name)
     # Create the HEX file
     add_custom_command(TARGET ${name}
         POST_BUILD
-        COMMAND ${COMPILER_BIN}/elf2hex ${ELF2HEX_ARGS} -o ${CMAKE_CURRENT_BINARY_DIR}/${name}.hex $<TARGET_FILE:${name}>)
+        COMMAND ${NYUZI_COMPILER_BIN}/elf2hex ${ELF2HEX_ARGS} -o ${CMAKE_CURRENT_BINARY_DIR}/${name}.hex $<TARGET_FILE:${name}>)
 
     # Write a disassembly listing file
     add_custom_command(TARGET ${name}
         POST_BUILD
-        COMMAND ${COMPILER_BIN}/llvm-objdump -d $<TARGET_FILE:${name}> -source > ${CMAKE_CURRENT_BINARY_DIR}/${name}.lst)
+        COMMAND ${NYUZI_COMPILER_BIN}/llvm-objdump -d $<TARGET_FILE:${name}> -source > ${CMAKE_CURRENT_BINARY_DIR}/${name}.lst)
 
     # If this has an associated FS image, create that now
     if(FS_IMAGE_FILES)
@@ -95,7 +94,7 @@ macro(add_nyuzi_executable name)
 
     # Create debugger run script
     file(GENERATE OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/run_debug
-        CONTENT "$<TARGET_FILE:nyuzi_emulator> -m gdb ${EMULATOR_ARGS} ${name}.hex \&\n${COMPILER_BIN}/lldb --arch nyuzi $<TARGET_FILE:${name}> -o \"gdb-remote 8000\"")
+        CONTENT "$<TARGET_FILE:nyuzi_emulator> -m gdb ${EMULATOR_ARGS} ${name}.hex \&\n${NYUZI_COMPILER_BIN}/lldb --arch nyuzi $<TARGET_FILE:${name}> -o \"gdb-remote 8000\"")
 
     # Create verilator run script
     if(FS_IMAGE_FILES)

@@ -21,6 +21,7 @@ in subdirectories under this one.
 
 import argparse
 import binascii
+import configparser
 import hashlib
 import os
 import re
@@ -30,31 +31,28 @@ import sys
 import threading
 import traceback
 
-COMPILER_DIR = '/usr/local/llvm-nyuzi/bin/'
 PROJECT_TOP = os.path.normpath(
     os.path.dirname(os.path.abspath(__file__)) + '/../')
-WORK_DIR = PROJECT_TOP + '/tests/work/'
+
+# Read configuration file
+config = configparser.ConfigParser()
+config.read(PROJECT_TOP + '/tests/tests.conf')
+default_config = config['DEFAULT']
+BIN_DIR = default_config['TOOL_BIN_DIR'] + '/'
+LIB_DIR = default_config['LIB_DIR'] + '/'
+KERNEL_DIR = default_config['KERNEL_DIR'] + '/'
+WORK_DIR = default_config['WORK_DIR'] + '/'
+LIB_INCLUDE_BASE = default_config['LIB_INCLUDE_BASE'] + '/'
+COMPILER_BIN = default_config['COMPILER_BIN'] + '/'
+
 ELF_FILE = WORK_DIR + 'program.elf'
 HEX_FILE = WORK_DIR + 'program.hex'
 ALL_TARGETS = ['verilator', 'emulator']
 DEFAULT_TARGETS = ['verilator', 'emulator']
-DEBUG = False
-LIB_INCLUDE_BASE = PROJECT_TOP + '/software/libs/'
-
-if os.path.isdir(PROJECT_TOP + '/build'):
-    # Out-of-tree build
-    BIN_DIR = PROJECT_TOP + '/build/bin/'
-    LIB_DIR = PROJECT_TOP + '/build/software/libs/'
-    KERNEL_DIR = PROJECT_TOP + '/build/software/kernel'
-else:
-    # In tree build
-    BIN_DIR = PROJECT_TOP + '/bin/'
-    LIB_DIR = PROJECT_TOP + '/software/libs/'
-    KERNEL_DIR = PROJECT_TOP + '/software/kernel'
-
 VSIM_PATH = BIN_DIR + 'nyuzi_vsim'
 EMULATOR_PATH = BIN_DIR + 'nyuzi_emulator'
 
+DEBUG = False # This will be modified during command flag parsing
 
 class TestException(Exception):
     """This exception is raised for test failures"""
@@ -97,7 +95,7 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
             TestException if compilation failed, will contain compiler output
     """
     assert isinstance(source_files, list)
-    compiler_args = [COMPILER_DIR + 'clang',
+    compiler_args = [COMPILER_BIN + '/clang',
                      '-o', ELF_FILE,
                      '-w',
                      opt_level]
@@ -128,7 +126,7 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
             return HEX_FILE
 
         if image_type == 'bare-metal':
-            subprocess.check_output([COMPILER_DIR + 'elf2hex', '-o', HEX_FILE, ELF_FILE],
+            subprocess.check_output([COMPILER_BIN + '/elf2hex', '-o', HEX_FILE, ELF_FILE],
                                     stderr=subprocess.STDOUT)
             return HEX_FILE
 
@@ -747,8 +745,8 @@ def register_render_test(name, source_files, expected_hash, targets=None):
     # This closure captures parameters source_files and
     # expected_checksum.
     def run_render_test(_, target):
-        RAW_FB_DUMP_FILE = WORK_DIR + '/fb.bin'
-        PNG_DUMP_FILE = WORK_DIR + '/actual-output.png'
+        RAW_FB_DUMP_FILE = WORK_DIR + 'fb.bin'
+        PNG_DUMP_FILE = WORK_DIR + 'actual-output.png'
 
         render_cflags = [
             '-I' + LIB_INCLUDE_BASE + 'librender',

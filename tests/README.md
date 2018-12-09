@@ -89,7 +89,7 @@ There are a number of built-in functions to check output:
     def check_result(source_file, program_output):
 
 This will open 'source_file' and scan through it looking for the patterns CHECK and CHECKN.
-These will verify that the outputput string following it either occurs in program_output or
+These will verify that the output string following it either occurs in program_output or
 does not, respectively. Check patterns can be embedded in comments. This is usually used
 on the output of the program. For example:
 

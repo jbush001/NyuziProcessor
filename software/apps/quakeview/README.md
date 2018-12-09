@@ -88,5 +88,5 @@ the BSP tree again, traversing surfaces from front to back. Walking in order
 takes advantage of early-z rejection, skipping shading pixels that aren't
 visible. As it walks the tree, it skips nodes that that the PVS did not mark.
 
-Lightmaps are similarily assembled into a texture map and applied in the pixel
+Lightmaps are similarly assembled into a texture map and applied in the pixel
 shader.
