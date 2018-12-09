@@ -25,6 +25,9 @@ add_nyuzi_executable(sceneview
     FS_IMAGE_FILES ${RESOURCE_FILE}
     DISPLAY_WIDTH 640 DISPLAY_HEIGHT 480
     SOURCES sceneview.cpp)
+
+# XXX hack. The sceneview_fsimage target is created by add_nyuzi_executable.
+# Need to make an explicit dependency so it builds resource_bin first.
 add_dependencies(sceneview_fsimage resource_bin)
 
 target_link_libraries(sceneview
