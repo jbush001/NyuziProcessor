@@ -19,6 +19,7 @@
 # This script is executed when by TravisCI to build everything and run
 # automated tests.
 #
+set -e  # Exit automatically if any of these commands fail
 
 (cd tests/cosimulation
 ./generate_random.py -m 3)
@@ -33,7 +34,3 @@ cd build
 cmake ..
 make -j 8
 make tests
-
-
-
-

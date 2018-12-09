@@ -64,7 +64,7 @@ macro(add_nyuzi_executable name)
         set(FS_IMAGE_PATH ${CMAKE_CURRENT_BINARY_DIR}/fsimage.bin)
         add_custom_command(OUTPUT ${FS_IMAGE_PATH}
             COMMAND mkfs ${FS_IMAGE_PATH} ${ARG_FS_IMAGE_FILES}
-            DEPENDS mkfs
+            DEPENDS mkfs ${ARG_FS_IMAGE_FILES}
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
             COMMENT "Creating filesystem image")
         add_custom_target(${name}_fsimage DEPENDS ${FS_IMAGE_PATH})

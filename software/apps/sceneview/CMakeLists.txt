@@ -25,7 +25,7 @@ add_nyuzi_executable(sceneview
     FS_IMAGE_FILES ${RESOURCE_FILE}
     DISPLAY_WIDTH 640 DISPLAY_HEIGHT 480
     SOURCES sceneview.cpp)
-add_dependencies(sceneview resource_bin)
+add_dependencies(sceneview_fsimage resource_bin)
 
 target_link_libraries(sceneview
     render

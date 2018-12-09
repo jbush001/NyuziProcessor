@@ -60,7 +60,7 @@ class EmulatorProcess(object):
                                               stderr=subprocess.STDOUT)
 
         lldb_args = [
-            test_harness.COMPILER_DIR + 'lldb-mi'
+            test_harness.COMPILER_BIN + 'lldb-mi'
         ]
 
         # XXX race condition: the emulator needs to be ready before
