@@ -18,7 +18,7 @@ cmake_minimum_required(VERSION 3.4)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
-set(NYUZI_COMPILER_ROOT /usr/local/llvm-nyuzi/ CACHE STRING "Path to nyuzi compiler install directory.")
+set(NYUZI_COMPILER_ROOT /usr/local/llvm-nyuzi/ CACHE PATH "Path to nyuzi compiler install directory.")
 set(NYUZI_COMPILER_BIN ${NYUZI_COMPILER_ROOT}/bin)
 
 add_subdirectory(tools)

@@ -14,13 +14,14 @@
 # limitations under the License.
 #
 
+include(ProcessorCount)
+
 project(hardware)
 add_subdirectory(fpga/de2-115)
 
 set(ENABLE_VERILATOR_THREADS 0 CACHE BOOL "Enable multithreaded verilator model (improves performance on multiprocessor host machines)")
 
 if (${ENABLE_VERILATOR_THREADS})
-    include(ProcessorCount)
     ProcessorCount(NUM_THREADS)
     message("Configure verilator with ${NUM_THREADS} threads")
 else()

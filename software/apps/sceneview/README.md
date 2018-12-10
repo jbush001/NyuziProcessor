@@ -15,8 +15,11 @@ The Sponza model is from this repository:
 
 http://graphics.cs.williams.edu/data/meshes.xml
 
-To view other models, extract the data files to a new directory.  Change
-MODEL_FILE in the Makefile to point at the OBJ file for the new model.
+To view other models, extract the data files to a new directory. To point to
+the new object file, run cmake from the root directory with the following flag:
+
+    cmake -DSCENEVIEW_OBJ_FILE=/new/path/to/obj
+
 Delete `resource.bin` and type `make run` again. You may need to change the
 modelViewMatrix in viewobj.cpp to put the camera in the right place.
 The first parameter is the position of the camera.  The second is a point in

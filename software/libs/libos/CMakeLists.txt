@@ -18,6 +18,3 @@ project(libos)
 
 add_subdirectory(kernel)
 add_subdirectory(bare-metal)
-
-
-

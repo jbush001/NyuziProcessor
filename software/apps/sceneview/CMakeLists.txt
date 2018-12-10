@@ -17,7 +17,8 @@
 project(sceneview)
 include(nyuzi)
 
-set(OBJ_FILE ${CMAKE_CURRENT_SOURCE_DIR}/dabrovik_sponza/sponza.obj)
+set(SCENEVIEW_OBJ_FILE ${CMAKE_CURRENT_SOURCE_DIR}/dabrovik_sponza/sponza.obj CACHE FILEPATH "Path to OBJ geometry file")
+
 set(RESOURCE_FILE ${CMAKE_CURRENT_BINARY_DIR}/resource.bin)
 
 add_nyuzi_executable(sceneview
@@ -36,8 +37,8 @@ target_link_libraries(sceneview
     os-bare)
 
 add_custom_command(OUTPUT ${RESOURCE_FILE}
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/make_resource_file.py ${OBJ_FILE}
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/make_resource_file.py ${SCENEVIEW_OBJ_FILE}
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    DEPENDS ${OBJ_FILE}
+    DEPENDS ${SCENEVIEW_OBJ_FILE}
     COMMENT "converting scene geometry files...")
 add_custom_target(resource_bin DEPENDS ${RESOURCE_FILE})
