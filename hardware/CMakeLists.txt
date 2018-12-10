@@ -17,6 +17,17 @@
 project(hardware)
 add_subdirectory(fpga/de2-115)
 
+set(ENABLE_VERILATOR_THREADS 0 CACHE BOOL "Enable multithreaded verilator model (improves performance on multiprocessor host machines)")
+
+if (${ENABLE_VERILATOR_THREADS})
+    include(ProcessorCount)
+    ProcessorCount(NUM_THREADS)
+    message("Configure verilator with ${NUM_THREADS} threads")
+else()
+    set(NUM_THREADS 0)
+    message("Configure verilator with 1 thread")
+endif()
+
 find_program(VERILATOR NAMES verilator)
 
 set(VERILATOR_GEN_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
@@ -29,7 +40,8 @@ set(VERILATOR_OPTIONS --unroll-count 512
     -I${CMAKE_CURRENT_SOURCE_DIR}/core
     -y ${CMAKE_CURRENT_SOURCE_DIR}/testbench
     -y ${CMAKE_CURRENT_SOURCE_DIR}/fpga/common
-    -Mdir ${VERILATOR_GEN_DIR})
+    -Mdir ${VERILATOR_GEN_DIR}
+    --threads ${NUM_THREADS})
 
 set(DUMP_WAVEFORM 0 CACHE BOOL "Enable dumping VCD waveforms from Verilog simulator.")
 
@@ -37,10 +49,7 @@ if (${DUMP_WAVEFORM})
     set(VERILATOR_OPTIONS ${VERILATOR_OPTIONS} --trace --trace-structs)
 endif()
 
-# This version is required because it has fixes for
-# https://www.veripool.org/issues/1246-Verilator-modport-declaration-incorrectly-treats-some-outputs-as-inputs
-# and a stack smasher (which doesn't have a bug) fixed in change 00a502942e956ed
-set(VERILATOR_MIN_VERSION "918")
+set(VERILATOR_MIN_VERSION "6")
 
 # Version string looks like this:
 # "Verilator 3.920 2018-02-01 rev verilator_3_920"
@@ -48,8 +57,8 @@ execute_process(COMMAND ${VERILATOR} --version OUTPUT_VARIABLE verilator_version
 string(REGEX MATCH "Verilator ([0-9])\\.([0-9]+)" verilator_version ${verilator_version_str})
 if (NOT CMAKE_MATCH_0)
     message("Couldn't get verilator version")
-elseif(CMAKE_MATCH_2 LESS ${VERILATOR_MIN_VERSION} AND CMAKE_MATCH_1 LESS 4)
-    message(FATAL_ERROR "Need at least verilator 3.${VERILATOR_MIN_VERSION}")
+elseif(CMAKE_MATCH_2 LESS ${VERILATOR_MIN_VERSION} OR CMAKE_MATCH_1 LESS 4)
+    message(FATAL_ERROR "Need at least verilator 4.${VERILATOR_MIN_VERSION}")
 endif()
 
 add_custom_target(nyuzi_vsim ALL

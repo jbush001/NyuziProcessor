@@ -91,6 +91,12 @@ pragma above the module instantiation:
 
 The timescale is set to 1 ns by default, which simulates a 1 GHz clock speed.
 
+This has support for Verilator's ability to utilize multiple processors, which is
+disabled by default. To enable, configure using the following and perform a clean
+rebuild.
+
+    cmake -DENABLE_VERILATOR_THREADS=1 .
+
 ### Support for VCS
 
 Template scripts have been added to support building and running with
