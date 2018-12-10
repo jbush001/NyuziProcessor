@@ -52,8 +52,6 @@ DEFAULT_TARGETS = ['verilator', 'emulator']
 VSIM_PATH = BIN_DIR + 'nyuzi_vsim'
 EMULATOR_PATH = BIN_DIR + 'nyuzi_emulator'
 
-DEBUG = False # This will be modified during command flag parsing
-
 class TestException(Exception):
     """This exception is raised for test failures"""
     pass
@@ -69,6 +67,7 @@ parser.add_argument('--list', action='store_true',
 parser.add_argument('names', nargs=argparse.REMAINDER,
                     help='names of specific tests to run')
 args = parser.parse_args()
+DEBUG = args.debug
 
 
 def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags=None):
@@ -501,7 +500,6 @@ def execute_tests():
 
         return
 
-    DEBUG = args.debug
     if args.target:
         targets_to_run = args.target
     else:
@@ -545,16 +543,16 @@ def execute_tests():
                 sys.exit(1)
             except TestException as exc:
                 print(COLOR_RED + 'FAIL' + COLOR_NONE)
-                failing_tests += [(param, exc.args[0])]
+                failing_tests += [(param, target, exc.args[0])]
             except Exception as exc:  # pylint: disable=W0703
                 print(COLOR_RED + 'FAIL' + COLOR_NONE)
-                failing_tests += [(param, 'Test threw exception:\n' +
+                failing_tests += [(param, target, 'Test threw exception:\n' +
                                    traceback.format_exc())]
 
     if failing_tests:
         print('Failing tests:')
-        for name, output in failing_tests:
-            print(name)
+        for name, target, output in failing_tests:
+            print('{} ({})'.format(name, target))
             print(output)
 
     print('{}/{} tests failed'.format(test_run_count - test_pass_count,
@@ -613,8 +611,9 @@ def check_result(source_file, program_output):
                 if chkoffs != -1:
                     found_check_lines = True
                     nexpected = line[chkoffs + len(CHECKN_PREFIX):].strip()
-                    print('ensuring absence of pattern "' + nexpected +
-                          '", line ' + str(line_num))
+                    if DEBUG:
+                        print('ensuring absence of pattern "' + nexpected +
+                            '", line ' + str(line_num))
 
                     regexp = re.compile(nexpected)
                     got = regexp.search(program_output, output_offset)

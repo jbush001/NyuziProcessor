@@ -47,5 +47,7 @@ def exception(*unused):
     raise Exception('some exception')
 
 test_harness.register_generic_test(
-    ['crash.c', 'check.c', 'checknc', 'compile_error.c'], ['emulator'])
+    ['crash.c'], ['emulator', 'verilator'])
+test_harness.register_generic_test(
+    ['check.c', 'checkn.c', 'compile_error.c'], ['emulator'])
 test_harness.execute_tests()
