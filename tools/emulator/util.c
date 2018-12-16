@@ -126,7 +126,7 @@ int read_hex_file(const char *filename, uint32_t *memory, uint32_t memory_size)
     file = fopen(filename, "r");
     if (file == NULL)
     {
-        perror("load_hex_file: error opening hex file");
+        perror("read_hex_file: error opening hex file");
         return -1;
     }
 
@@ -140,7 +140,8 @@ int read_hex_file(const char *filename, uint32_t *memory, uint32_t memory_size)
         else
             ch = fgetc(file);
 
-        switch (state) {
+        switch (state)
+        {
             case SCAN_SPACE:
                 if (ch == EOF)
                     done = true;
@@ -158,7 +159,7 @@ int read_hex_file(const char *filename, uint32_t *memory, uint32_t memory_size)
                 }
                 else if (!isspace(ch))
                 {
-                    fprintf(stderr, "load_hex_file: Invalid character %c in line %d\n", ch, line_num);
+                    fprintf(stderr, "read_hex_file: Invalid character %c in line %d\n", ch, line_num);
                     fclose(file);
                     return -1;
                 } else if (ch == '\n')
@@ -173,7 +174,7 @@ int read_hex_file(const char *filename, uint32_t *memory, uint32_t memory_size)
                     state = SCAN_SINGLE_LINE_COMMENT;
                 else
                 {
-                    fprintf(stderr, "load_hex_file: Invalid character %c in line %d\n", ch, line_num);
+                    fprintf(stderr, "read_hex_file: Invalid character %c in line %d\n", ch, line_num);
                     fclose(file);
                     return -1;
                 }
@@ -194,7 +195,7 @@ int read_hex_file(const char *filename, uint32_t *memory, uint32_t memory_size)
                     state = SCAN_ASTERISK;
                 else if (ch == EOF)
                 {
-                    fprintf(stderr, "load_hex_file: Missing */ at end of file\n");
+                    fprintf(stderr, "read_hex_file: Missing */ at end of file\n");
                     fclose(file);
                     return -1;
                 }
@@ -206,7 +207,7 @@ int read_hex_file(const char *filename, uint32_t *memory, uint32_t memory_size)
                     state = SCAN_SPACE;
                 else if (ch == EOF)
                 {
-                    fprintf(stderr, "load_hex_file: Missing */ at end of file\n");
+                    fprintf(stderr, "read_hex_file: Missing */ at end of file\n");
                     fclose(file);
                     return -1;
                 }
@@ -218,7 +219,7 @@ int read_hex_file(const char *filename, uint32_t *memory, uint32_t memory_size)
                 {
                     if ((number_value & 0xf0000000) != 0)
                     {
-                        fprintf(stderr, "load_hex_file: number out of range in line %d\n", line_num);
+                        fprintf(stderr, "read_hex_file: number out of range in line %d\n", line_num);
                         fclose(file);
                         return -1;
                     }
@@ -229,7 +230,7 @@ int read_hex_file(const char *filename, uint32_t *memory, uint32_t memory_size)
                 {
                     if (address >= memory_size)
                     {
-                        fprintf(stderr, "load_hex_file: hex file too big to fit in memory\n");
+                        fprintf(stderr, "read_hex_file: hex file too big to fit in memory\n");
                         fclose(file);
                         return -1;
                     }
@@ -248,14 +249,14 @@ int read_hex_file(const char *filename, uint32_t *memory, uint32_t memory_size)
                 {
                     if (number_value >= memory_size)
                     {
-                        fprintf(stderr, "load_hex_file: address out of range in line %d\n", line_num);
+                        fprintf(stderr, "read_hex_file: address out of range in line %d\n", line_num);
                         fclose(file);
                         return -1;
                     }
 
                     if (number_value % 4 != 0)
                     {
-                        fprintf(stderr, "load_hex_file: address not aligned in line %d\n", line_num);
+                        fprintf(stderr, "read_hex_file: address not aligned in line %d\n", line_num);
                         fclose(file);
                         return -1;
                     }
