@@ -15,11 +15,49 @@
 # limitations under the License.
 #
 
+"""
+Many other tests in this tree validate parts of the emulator. This module is
+for everything that isn't directly tested elsewhere.
+"""
+
 import subprocess
 import sys
 
 sys.path.insert(0, '..')
 import test_harness
+
+@test_harness.test(['emulator'])
+def load_file(testname, _):
+    BINARY_OUTPUT = test_harness.WORK_DIR + 'mem.bin'
+    args = [test_harness.EMULATOR_PATH, '-d', BINARY_OUTPUT + ',0,0x3c', 'valid_file.data']
+    subprocess.check_output(args, stderr=subprocess.STDOUT)
+    EXPECTED = [
+        0x18fcff4f,
+        0x00100400,
+        0x20fcff0f,
+        0x20000088,
+        0x000000f6,
+        0xb56f49f,
+        0xa4ea27d1,
+        0x22e919ac,
+        0x287451a5,
+        0xcff70833,
+        0xfe6a2d11,
+        None,
+        None,
+        0x5148c78a,
+        0x12345678
+    ]
+
+    with open(BINARY_OUTPUT, 'rb') as file:
+        for check in EXPECTED:
+            word = file.read(4)
+            if not word:
+                raise test_harness.TestException('unexpected end of binary output')
+
+            value = (word[0] << 24) | (word[1] << 16) | (word[2] << 8) | word[3]
+            if check != None and check != value:
+                raise test_harness.TestException('incorrect value, expected {:x} got {:x}'.format(check, value))
 
 
 def test_emulator_error(args, expected_error):
@@ -35,24 +73,25 @@ def test_emulator_error(args, expected_error):
 
 
 @test_harness.test(['emulator'])
-def out_of_range_hexfile1(testname, _):
-    '''Constant is larger than 32 bits. strtoul is successful, but the loader flags an error.'''
-    test_emulator_error(['out_of_range1'],
-                        'Invalid constant in hex file at line 2')
+def data_out_of_range(testname, _):
+    test_emulator_error(['data_out_of_range.data'],
+                        'load_hex_file: number out of range in line 2')
 
 
 @test_harness.test(['emulator'])
-def out_of_range_hexfile2(testname, _):
-    '''Constant is larger than 64 bits. strtoul  returns ERANGE'''
-    test_emulator_error(['out_of_range2'],
-                        'Invalid constant in hex file at line 5')
+def address_out_of_range(testname, _):
+    test_emulator_error(['address_out_of_range.data'],
+                        'load_hex_file: address out of range in line 2')
 
+@test_harness.test(['emulator'])
+def address_unaligned(testname, _):
+    test_emulator_error(['address_unaligned.data'],
+                        'load_hex_file: address not aligned in line 2')
 
 @test_harness.test(['emulator'])
 def bad_character(testname, _):
-    '''Checks when entire line is not consumed by strtoul'''
     error = test_emulator_error(
-        ['bad_character'], 'Invalid constant in hex file at line 4')
+        ['bad_character.data'], 'load_hex_file: Invalid character ! in line 4')
 
 
 @test_harness.test(['emulator'])

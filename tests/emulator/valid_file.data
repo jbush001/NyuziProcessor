@@ -1,0 +1,21 @@
+
+/*
+ * This file demonstrates:
+ * Multi-line comment
+ * single line comment
+ * Using tab, space, and newline as separators
+ * Multiple consecutive space separators
+ * Using @ notation to set address
+ */
+18fcff4f // single line comment
+00100400 20fcff0f     20000088	000000f6
+b56f49f
+a4ea27d1
+
+ 22e919ac
+  287451a5
+cff70833
+fe6a2d11
+@34
+5148c78a
+12345678

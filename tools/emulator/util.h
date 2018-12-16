@@ -128,5 +128,6 @@ uint64_t next_random(void);
 
 uint64_t current_time_us(void);
 
-#endif
+int read_hex_file(const char *filename, uint32_t *memory, uint32_t memory_size);
 
+#endif
