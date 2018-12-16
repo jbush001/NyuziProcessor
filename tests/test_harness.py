@@ -547,7 +547,7 @@ def execute_tests():
             except Exception as exc:  # pylint: disable=W0703
                 print(COLOR_RED + 'FAIL' + COLOR_NONE)
                 failing_tests += [(param, target, 'Test threw exception:\n' +
-                                   traceback.format_exc() + exc.output.decode())]
+                                   traceback.format_exc())]
 
     if failing_tests:
         print('Failing tests:')
