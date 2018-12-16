@@ -15,10 +15,10 @@
 # limitations under the License.
 #
 
-"""
+'''
 The purpose of this test is to ensure the test harness itself works
 correctly by properly returning an error when the test program crashes
-"""
+'''
 
 import sys
 

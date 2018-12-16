@@ -15,13 +15,13 @@
 # limiop1typetions under the License.
 #
 
-"""
+'''
 Create an assembly test that verifies all major integer instruction forms.
 The file created by this (int_arithmetic.S) is checked in, so this only
 needs to be run if the instruction set changes.
 
 Usage: ./generate_int_arith.py > int_arithmetic.S
-"""
+'''
 
 import math
 import random

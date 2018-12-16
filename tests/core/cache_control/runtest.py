@@ -15,10 +15,10 @@
 # limitations under the License.
 #
 
-"""
+'''
 This test writes a pattern to memory and manually flushes it from code. It then
 checks the contents of system memory to ensure the data was flushed correctly.
-"""
+'''
 
 import struct
 import sys

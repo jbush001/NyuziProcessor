@@ -15,7 +15,9 @@
 # limitations under the License.
 #
 
-"""Test PS/2 keyboard peripheral"""
+'''
+Test PS/2 keyboard peripheral.
+'''
 
 import sys
 

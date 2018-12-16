@@ -15,6 +15,11 @@
 # limitations under the License.
 #
 
+'''
+Tests for the compiler-rt (compiler runtime) library, which is built as part of the
+LLVM toolchain and contains compiler specific built-in functions.
+'''
+
 import sys
 
 sys.path.insert(0, '..')

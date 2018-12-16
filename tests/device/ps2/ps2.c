@@ -14,6 +14,11 @@
 // limitations under the License.
 //
 
+//
+// The verilog simulation environment has a dummy hardware device that
+// spits out a known sequence of characters, which this checks.
+//
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

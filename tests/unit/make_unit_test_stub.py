@@ -15,11 +15,11 @@
 # limitations under the License.
 #
 
-"""
+'''
 Quick and dirty script for making a stub unit test from a verilog module.
 Creates declarations for inputs and outputs, a reset block that zeroes
 all inputs, and a stub test execution loop.
-"""
+'''
 
 import sys
 import os.path

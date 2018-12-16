@@ -15,10 +15,10 @@
 # limitations under the License.
 #
 
-"""
+'''
 Many other tests in this tree validate parts of the emulator. This module is
 for everything that isn't directly tested elsewhere.
-"""
+'''
 
 import subprocess
 import sys
@@ -27,7 +27,7 @@ sys.path.insert(0, '..')
 import test_harness
 
 @test_harness.test(['emulator'])
-def load_file(testname, _):
+def load_file(*ignored):
     BINARY_OUTPUT = test_harness.WORK_DIR + 'mem.bin'
     args = [test_harness.EMULATOR_PATH, '-d', BINARY_OUTPUT + ',0,0x3c', 'valid_file.data']
     subprocess.check_output(args, stderr=subprocess.STDOUT)
@@ -73,35 +73,35 @@ def test_emulator_error(args, expected_error):
 
 
 @test_harness.test(['emulator'])
-def data_out_of_range(testname, _):
+def data_out_of_range(*ignored):
     test_emulator_error(['data_out_of_range.data'],
                         'load_hex_file: number out of range in line 2')
 
 
 @test_harness.test(['emulator'])
-def address_out_of_range(testname, _):
+def address_out_of_range(*ignored):
     test_emulator_error(['address_out_of_range.data'],
                         'load_hex_file: address out of range in line 2')
 
 @test_harness.test(['emulator'])
-def address_unaligned(testname, _):
+def address_unaligned(*ignored):
     test_emulator_error(['address_unaligned.data'],
                         'load_hex_file: address not aligned in line 2')
 
 @test_harness.test(['emulator'])
-def bad_character(testname, _):
-    error = test_emulator_error(
+def bad_character(*ignored):
+    test_emulator_error(
         ['bad_character.data'], 'load_hex_file: Invalid character ! in line 4')
 
 
 @test_harness.test(['emulator'])
-def missing_file(testname, _):
+def missing_file(*ignored):
     test_emulator_error(['this_file_does_not_exist.hex'],
                         'load_hex_file: error opening hex file: No such file or directory')
 
 
 @test_harness.test(['emulator'])
-def no_file_specified(testname, _):
+def no_file_specified(*ignored):
     test_emulator_error([], 'No image filename specified')
 
 test_harness.execute_tests()

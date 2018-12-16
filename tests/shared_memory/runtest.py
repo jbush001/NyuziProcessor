@@ -15,11 +15,11 @@
 # limitations under the License.
 #
 
-"""
+'''
 This test validates a feature where the emulator can map its
 system memory as a shared memory file that can be mapped into
 other emulators or test programs representing a host processor.
-"""
+'''
 
 import mmap
 import random
@@ -47,10 +47,10 @@ OWNER_COPROCESSOR = 1
 
 
 def sharedmem_transact(memory, value):
-    """
+    '''
     Send a request through shared memory to the emulated process and read
     the response from it.
-    """
+    '''
 
     write_shared_memory(memory, VALUE_ADDR, value)
     write_shared_memory(memory, OWNER_ADDR, OWNER_COPROCESSOR)
@@ -67,7 +67,7 @@ def sharedmem_transact(memory, value):
 
 @test_harness.test(['emulator'])
 def shared_memory(*unused):
-    """See coprocessor.c for an explanation of this test"""
+    '''See coprocessor.c for an explanation of this test'''
 
     test_harness.build_program(['coprocessor.c'])
 

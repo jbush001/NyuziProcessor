@@ -10,7 +10,7 @@ To execute against emulator:
 
     ./run_emulator
 
-To execute against verilator:
+To execute against Verilator:
 
     ./run_verilator
 

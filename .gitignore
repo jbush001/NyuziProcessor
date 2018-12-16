@@ -22,8 +22,6 @@ run_emulator
 run_verilator
 run_vcs
 run_fpga
-obj/
-bin/
 generated/
 build/
 __pycache__

@@ -15,10 +15,10 @@
 # limitations under the License.
 #
 
-"""
+'''
 Test load_sync/store_sync instructions by having four threads update
 variables round-robin.
-"""
+'''
 
 import struct
 import sys

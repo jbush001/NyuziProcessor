@@ -15,11 +15,11 @@
 # limitations under the License.
 #
 
-"""
+'''
 Test virtual address translation by running a program that writes patterns
 to memory, then reading back the values to see if they match what is expected.
 More details are in random_access.S
-"""
+'''
 
 import struct
 import sys

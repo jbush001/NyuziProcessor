@@ -15,10 +15,10 @@
 # limitations under the License.
 #
 
-"""
+'''
 Read a Wavefront .OBJ file and convert it into a flat file that can be read
 by the viewer program
-"""
+'''
 
 import math
 import os

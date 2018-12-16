@@ -32,10 +32,10 @@ def uart_hw_test(*unused):
 
 @test_harness.test(['emulator'])
 def uart_echo_test(*unused):
-    """
+    '''
     The emulator direct all UART traffic through the terminal that
     it is launched from. This validates transfers in both directions.
-    """
+    '''
     executable = test_harness.build_program(['uart_echo_test.c'])
 
     args = [
