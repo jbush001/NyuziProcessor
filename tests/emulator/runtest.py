@@ -75,29 +75,29 @@ def test_emulator_error(args, expected_error):
 @test_harness.test(['emulator'])
 def data_out_of_range(*ignored):
     test_emulator_error(['data_out_of_range.data'],
-                        'load_hex_file: number out of range in line 2')
+                        'read_hex_file: number out of range in line 2')
 
 
 @test_harness.test(['emulator'])
 def address_out_of_range(*ignored):
     test_emulator_error(['address_out_of_range.data'],
-                        'load_hex_file: address out of range in line 2')
+                        'read_hex_file: address out of range in line 2')
 
 @test_harness.test(['emulator'])
 def address_unaligned(*ignored):
     test_emulator_error(['address_unaligned.data'],
-                        'load_hex_file: address not aligned in line 2')
+                        'read_hex_file: address not aligned in line 2')
 
 @test_harness.test(['emulator'])
 def bad_character(*ignored):
     test_emulator_error(
-        ['bad_character.data'], 'load_hex_file: Invalid character ! in line 4')
+        ['bad_character.data'], 'read_hex_file: Invalid character ! in line 4')
 
 
 @test_harness.test(['emulator'])
 def missing_file(*ignored):
     test_emulator_error(['this_file_does_not_exist.hex'],
-                        'load_hex_file: error opening hex file: No such file or directory')
+                        'read_hex_file: error opening hex file: No such file or directory')
 
 
 @test_harness.test(['emulator'])
