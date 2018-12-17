@@ -68,9 +68,8 @@ module de2_115_top(
     input                       ps2_clk,
     input                       ps2_data);
 
-    parameter  bootrom = "../../../software/bootrom/boot.hex";
-
-    localparam BOOT_ROM_BASE = 32'hfffee000;
+    parameter  BOOT_ROM_PATH = "../../../software/bootrom/boot.hex";
+    localparam BOOT_ROM_BASE_ADDR = 32'hfffee000;
     localparam NUM_PERIPHERALS = 5;
 
     /*AUTOLOGIC*/
@@ -107,7 +106,7 @@ module de2_115_top(
 
     assign clk = clk50;
 
-    nyuzi #(.RESET_PC(BOOT_ROM_BASE)) nyuzi(
+    nyuzi #(.RESET_PC(BOOT_ROM_BASE_ADDR)) nyuzi(
         .interrupt_req({11'd0,
             frame_interrupt,
             ps2_rx_interrupt,
@@ -119,7 +118,7 @@ module de2_115_top(
         .jtag(jtag),
         .*);
 
-    axi_interconnect #(.M1_BASE_ADDRESS(BOOT_ROM_BASE)) axi_interconnect(
+    axi_interconnect #(.M1_BASE_ADDRESS(BOOT_ROM_BASE_ADDR)) axi_interconnect(
         .axi_bus_s(axi_bus_s),
         .axi_bus_m(axi_bus_m),
         .*);
@@ -136,7 +135,7 @@ module de2_115_top(
     // Boot ROM.  Execution starts here. The boot ROM path is relative
     // to the directory that the synthesis tool is invoked from (this
     // directory).
-    axi_rom #(.FILENAME(bootrom)) boot_rom(
+    axi_rom #(.FILENAME(BOOT_ROM_PATH)) boot_rom(
         .axi_bus(axi_bus_s[1]),
         .*);
 

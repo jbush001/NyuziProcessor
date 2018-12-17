@@ -26,5 +26,5 @@ add_executable(bootrom
 
 add_custom_command(TARGET bootrom
     POST_BUILD
-    COMMAND ${CMAKE_SOURCE_DIR}/tools/misc/bin2hex.py $<TARGET_FILE:bootrom> > boot.hex
+    COMMAND ${CMAKE_SOURCE_DIR}/tools/misc/bin2hex.py $<TARGET_FILE:bootrom> > ${CMAKE_CURRENT_BINARY_DIR}/boot.hex
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
