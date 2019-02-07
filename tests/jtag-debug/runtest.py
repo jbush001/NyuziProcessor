@@ -178,9 +178,17 @@ class JTAGTestFixture(object):
         return self.output
 
     def expect_data(self, expected_data):
-        '''
-        Throw an exception if the bits shifted out of TDO during the last data
-        transfer do not match the passed value
+        '''Check if bits shifted out of TDO are correct.
+
+        Args:
+            expected_data: binary
+                The received data will be compared to this.
+
+        Returns:
+            Nothing
+
+        Raises:
+            TestException if the shifted bits do not match expected_data.
         '''
         if self.last_response != expected_data:
             raise test_harness.TestException('unexpected JTAG data response. Wanted {} got {}:\n{}'
@@ -188,8 +196,8 @@ class JTAGTestFixture(object):
                                                      self.get_program_output()))
 
     def _read_output(self):
-        '''
-        Read text that is printed by the verilator process to standard out.
+        '''Read text that is printed by the verilator process to standard out.
+
         This needs to happen on a separate thread to avoid blocking the
         main thread. This seems to be the only way to do it portably in
         python.
@@ -207,9 +215,7 @@ class JTAGTestFixture(object):
 
 @test_harness.test(['verilator'])
 def jtag_idcode(*unused):
-    '''
-    Validate response to IDCODE request
-    '''
+    '''Validate response to IDCODE request.'''
     hexfile = test_harness.build_program(['test_program.S'])
     with JTAGTestFixture(hexfile) as fixture:
         # Ensure the default instruction after reset is IDCODE
@@ -224,9 +230,7 @@ def jtag_idcode(*unused):
 
 @test_harness.test(['verilator'])
 def jtag_reset(*unused):
-    '''
-    Test transition to reset state
-    '''
+    '''Test transition to reset state.'''
     hexfile = test_harness.build_program(['test_program.S'])
     with JTAGTestFixture(hexfile) as fixture:
         # Load a different instruction
@@ -244,9 +248,10 @@ def jtag_reset(*unused):
 
 @test_harness.test(['verilator'])
 def jtag_bypass(*unused):
-    '''
-    Validate BYPASS instruction, which is a single bit data register
-    We should get what we send, shifted by one bit.
+    '''Validate BYPASS instruction.
+
+    BYPASS is a single bit data register We should get what we send, delayed
+    by one bit.
     '''
     hexfile = test_harness.build_program(['test_program.S'])
     with JTAGTestFixture(hexfile) as fixture:
@@ -257,9 +262,9 @@ def jtag_bypass(*unused):
 
 @test_harness.test(['verilator'])
 def jtag_instruction_shift(*unused):
-    '''
-    Ensure instruction bits shifted into TDI come out TDO. This is necessary
-    to properly chain JTAG devices together.
+    '''Ensure instruction bits shifted into TDI come out TDO.
+
+    This is necessary to properly chain JTAG devices together.
     '''
     hexfile = test_harness.build_program(['test_program.S'])
     with JTAGTestFixture(hexfile) as fixture:
@@ -273,11 +278,11 @@ def jtag_instruction_shift(*unused):
 
 @test_harness.test(['verilator'])
 def jtag_data_transfer(*unused):
-    '''
-    Validate bi-directional transfer. The TRANSFER_DATA instruction
-    returns the old value of the control register while shifting a new
-    one in, so we should see the previous value come out each time
-    we write a new one.
+    '''Validate bi-directional transfer.
+
+    The TRANSFER_DATA instruction returns the old value of the control
+    register while shifting a new one in, so we should see the previous
+    value come out each time we write a new one.
     '''
     hexfile = test_harness.build_program(['test_program.S'])
     with JTAGTestFixture(hexfile) as fixture:
@@ -290,9 +295,7 @@ def jtag_data_transfer(*unused):
 
 @test_harness.test(['verilator'])
 def jtag_inject(*unused):
-    '''
-    Test instruction injection, with multiple threads
-    '''
+    '''Test instruction injection, with multiple threads.'''
     hexfile = test_harness.build_program(['test_program.S'])
     with JTAGTestFixture(hexfile) as fixture:
         # Halt
@@ -350,9 +353,10 @@ def jtag_inject(*unused):
 
 @test_harness.test(['verilator'])
 def jtag_inject_rollback(*unused):
-    '''
-    Test reading status register. I put in an instruction that will miss the
-    cache, so I know it will roll back.
+    '''Test reading status register.
+
+    I put in an instruction that will miss the cache, so I know it will roll
+    back.
     '''
     hexfile = test_harness.build_program(['test_program.S'])
     with JTAGTestFixture(hexfile) as fixture:
@@ -375,12 +379,12 @@ def jtag_inject_rollback(*unused):
 # XXX currently disabled because of issue #128
 #@test_harness.test(['verilator'])
 def jtag_read_write_pc(*unused):
-    '''
-    Use the call instruction to read the program counter. The injection
-    logic is supposed to simulate each instruction having the PC of the
-    interrupted thread. Then ensure performing a branch will properly
-    update the PC of the selected thread. This then resumes the thread
-    to ensure it operates properly.
+    '''Use the call instruction to read the program counter.
+
+    The injection logic is supposed to simulate each instruction having the
+    PC of the interrupted thread. Then ensure performing a branch will
+    properly update the PC of the selected thread. This then resumes the
+    thread to ensure it operates properly.
     '''
     hexfile = test_harness.build_program(['test_program.S'])
     with JTAGTestFixture(hexfile) as fixture:

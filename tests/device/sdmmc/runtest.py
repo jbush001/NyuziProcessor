@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-'''Test reading blocks from SDMMC device'''
+'''Test reading blocks from SDMMC device.'''
 
 import os
 import sys

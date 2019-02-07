@@ -30,7 +30,6 @@ import test_harness
 
 
 class EmulatorProcess(object):
-
     '''
     This spawns the emulator process and LLDB in MI (machine interface) mode.
     It allows communication with LLDB with it via stdin and stdout. It has the
@@ -127,9 +126,14 @@ AT_RE = re.compile(' at (?P<filename>[a-z_A-Z][a-z\\._A-Z]+):(?P<line>[0-9]+)')
 
 def parse_stack_crawl(response):
     '''
-    Given text response from the debugger containing a stack crawl, this will
-    return a list of tuples where each entry represents the function name,
-    filename, and line number of the call site.
+    Convert blob of stack crawl text to a list of tuples.
+
+    Args:
+        response: string
+            Text from debugger containing the stack crawl.
+
+    Returns:
+        list(tuple (function name, filename, line number))
     '''
 
     stack_info = []

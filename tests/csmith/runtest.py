@@ -16,13 +16,13 @@
 #
 
 '''
-This uses the Csmith random program generate to validate the compiler. It first
-compiles and executes the program using the host system. The program outputs
-a checksum of its data structures. It then compiles and executes it under
-the emulator. It compares the output to that produced by the host and flags
-an error if they don't match.
-'''
+Use the Csmith random program generate to validate the compiler.
 
+This first compiles and executes the program using the host system. The
+program outputs a checksum of its data structures. It then compiles and
+executes it under the emulator. It compares the output to that produced
+by the host and flags an error if they don't match.
+'''
 
 import re
 import subprocess

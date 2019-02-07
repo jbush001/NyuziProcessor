@@ -24,8 +24,9 @@ import test_harness
 
 @test_harness.test(['emulator', 'fpga'])
 def filesystem(_, target):
-    '''
-    Filesystem tests. This creates a filesystem image with the test file fstest.txt
+    '''Filesystem tests.
+
+    This creates a filesystem image with the test file fstest.txt
     in it, the compiles the program fs.c to perform operations on it. The program
     will print 'PASS' if it is successful.
     '''
