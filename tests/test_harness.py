@@ -52,6 +52,7 @@ ALL_TARGETS = ['verilator', 'emulator']
 DEFAULT_TARGETS = ['verilator', 'emulator']
 VSIM_PATH = BIN_DIR + 'nyuzi_vsim'
 EMULATOR_PATH = BIN_DIR + 'nyuzi_emulator'
+SERIAL_BOOT_PATH = BIN_DIR + 'serial_boot'
 
 class TestException(Exception):
     '''This exception is raised for test failures'''
@@ -200,11 +201,6 @@ class TimedProcessRunner(threading.Thread):
         else:
             self.finished.set()  # Stop watchdog
 
-        if self.process.poll():
-            # Non-zero return code. Probably target program crash.
-            raise TestException(
-                'Process returned error: ' + result[0].decode())
-
         return result
 
     # Watchdog thread kills process if it runs too long
@@ -218,7 +214,8 @@ class TimedProcessRunner(threading.Thread):
 def run_test_with_timeout(args, timeout):
     '''Run program specified by args with timeout.
 
-    If it does not complete in time, throw a TestException.
+    If it does not complete in time, throw a TestException. If it
+    returns a non-zero result, it will also throw a TestException.
 
     Args:
         args: list
@@ -237,6 +234,11 @@ def run_test_with_timeout(args, timeout):
     process = subprocess.Popen(args, stdout=subprocess.PIPE,
                                stderr=subprocess.STDOUT)
     output, _ = TimedProcessRunner().communicate(process, timeout)
+    if process.poll():
+        # Non-zero return code. Probably target program crash.
+        raise TestException(
+            'Process returned error: ' + output.decode())
+
     return output.decode()
 
 
@@ -338,7 +340,7 @@ def run_program(
                 'Need to set SERIAL_PORT to device path in environment')
 
         args = [
-            BIN_DIR + 'serial_boot',
+            SERIAL_BOOT_PATH,
             os.environ['SERIAL_PORT'],
             executable
         ]

@@ -201,7 +201,7 @@ int fill_memory(int serial_fd, unsigned int address, const unsigned char *buffer
     return 1;
 }
 
-// An error has occurred. Resyncronize so we can retry the command.
+// An error has occurred. Resynchronize so we can retry the command.
 int fix_connection(int serial_fd)
 {
     unsigned char ch = 0;
@@ -301,7 +301,7 @@ int ping_target(int serial_fd)
 
     if (!target_ready)
     {
-        printf("target is not responding\n");
+        fprintf(stderr, "target is not responding\n");
         return 0;
     }
 

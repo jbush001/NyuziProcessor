@@ -48,7 +48,8 @@ set(py_test_dirs
     render/blend
     render/depthbuffer
     render/mipmap
-    render/texture)
+    render/texture
+    serial_boot)
 
 # This is called 'tests' because 'test' is reserved by cmake.
 add_custom_target(tests)
