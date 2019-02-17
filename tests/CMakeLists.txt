@@ -26,14 +26,12 @@ add_subdirectory(float)
 
 set(py_test_dirs
     unit
-    remote-gdb
     jtag-debug
     core/isa/
     core/cache_control/
     core/mmu
     core/trap
     stress/atomic
-    shared_memory
     device/sdmmc/
     device/ps2/
     device/uart
