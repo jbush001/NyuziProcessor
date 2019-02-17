@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "../../asm_macros.inc"
+#include "../asm_macros.inc"
 
 //
 // Validate mechanism for delivering interrupts from the emulator to an
@@ -29,4 +29,3 @@ _start:         move s0, 5
                 cmpge_i s2, s0, 10
                 bz s2, 1b
                 halt_all_threads
-

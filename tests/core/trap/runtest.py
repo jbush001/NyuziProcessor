@@ -15,11 +15,7 @@
 # limitations under the License.
 #
 
-import os
-import stat
-import subprocess
 import sys
-import time
 
 sys.path.insert(0, '../..')
 import test_harness
@@ -59,81 +55,7 @@ def run_io_interrupt(_, target):
         raise test_harness.TestException(
             'Base string does not match:\n' + stripped)
 
-# Test the mechanism for delivering interrupts to the emulator from a
-# separate host process (useful for co-emulation)
-# XXX A number of error cases do not clean up resources
 
-RECV_PIPE_NAME = test_harness.WORK_DIR + '/nyuzi_emulator_recvint'
-SEND_PIPE_NAME = test_harness.WORK_DIR + '/nyuzi_emulator_sendint'
-
-
-@test_harness.test(['emulator'])
-def recv_host_interrupt(*unused):
-    try:
-        os.remove(RECV_PIPE_NAME)
-    except OSError:
-        pass    # Ignore if pipe doesn't exist
-
-    test_harness.build_program(['recv_host_interrupt.S'])
-
-    os.mknod(RECV_PIPE_NAME, stat.S_IFIFO | 0o666)
-
-    args = [test_harness.EMULATOR_PATH,
-            '-i', RECV_PIPE_NAME, test_harness.HEX_FILE]
-    emulator_process = subprocess.Popen(args, stdout=subprocess.PIPE,
-                                        stderr=subprocess.STDOUT)
-
-    try:
-        interrupt_pipe = os.open(RECV_PIPE_NAME, os.O_WRONLY)
-
-        # Send periodic interrupts to process'
-        try:
-            for intnum in range(5):
-                os.write(interrupt_pipe, str.encode(chr(intnum)))
-                time.sleep(0.2)
-        except OSError:
-            # Broken pipe will occur if the emulator exits early.
-            # We'll flag an error after communicate if we don't see a PASS.
-            pass
-
-        # Wait for completion
-        result, _ = test_harness.TimedProcessRunner().communicate(emulator_process, 60)
-        strresult = str(result)
-        if 'PASS' not in strresult or 'FAIL' in strresult:
-            raise test_harness.TestException('Test failed ' + strresult)
-    finally:
-        os.close(interrupt_pipe)
-        os.unlink(RECV_PIPE_NAME)
-
-
-@test_harness.test(['emulator'])
-def send_host_interrupt(*unused):
-    try:
-        os.remove(SEND_PIPE_NAME)
-    except OSError:
-        pass    # Ignore if pipe doesn't exist
-
-    test_harness.build_program(['send_host_interrupt.S'])
-
-    os.mknod(SEND_PIPE_NAME, stat.S_IFIFO | 0o666)
-
-    args = [test_harness.EMULATOR_PATH,
-            '-o', SEND_PIPE_NAME, test_harness.HEX_FILE]
-    emulator_process = subprocess.Popen(args, stdout=subprocess.PIPE,
-                                        stderr=subprocess.STDOUT)
-
-    try:
-        interrupt_pipe = os.open(SEND_PIPE_NAME, os.O_RDONLY | os.O_NONBLOCK)
-        test_harness.TimedProcessRunner().communicate(emulator_process, 60)
-
-        # Interrupts should be in pipe now
-        interrupts = os.read(interrupt_pipe, 5)
-        if interrupts != b'\x05\x06\x07\x08\x09':
-            raise test_harness.TestException(
-                'Did not receive proper host interrupts')
-    finally:
-        os.close(interrupt_pipe)
-        os.unlink(SEND_PIPE_NAME)
 
 test_harness.register_generic_assembly_tests([
     'setcr_non_super.S',

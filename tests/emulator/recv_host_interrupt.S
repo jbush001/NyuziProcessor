@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "../../asm_macros.inc"
+#include "../asm_macros.inc"
 
 //
 // Validate mechanism for delivering interrupts from an external program
@@ -68,8 +68,3 @@ _start:             // Unmask interrupt
                     receive_interrupt 20
 
                     call pass_test
-
-
-
-
-
