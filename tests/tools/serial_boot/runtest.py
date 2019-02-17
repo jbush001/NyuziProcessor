@@ -25,12 +25,15 @@ running, as there wasn't an applicable target type.
 
 import os
 import pty
+import select
 import stat
 import subprocess
 import sys
 
 sys.path.insert(0, '../..')
 import test_harness
+
+RECEIVE_TIMEOUT_S = 30
 
 # From software/bootrom/protocol.h
 LOAD_MEMORY_REQ = 0xc0
@@ -71,12 +74,38 @@ class SerialLoader(object):
 
 
     def get_result(self):
+        """Wait for the process to exit and return its output.
+
+        This does not check the exit value of the program.
+
+        Args:
+            None
+
+        Returns:
+            (string, string) Standard out and standard error
+
+        Raises:
+            TestException if the program does not exit in
+            RECEIVE_TIMEOUT_S seconds.
+        """
         out, err = test_harness.TimedProcessRunner().communicate(
-            self.serial_boot_process, 30)
+            self.serial_boot_process, RECEIVE_TIMEOUT_S)
         return out.decode('ascii'), err.decode('ascii')
 
 
     def expect_bytes(self, expect_sequence):
+        """Receive a sequence of bytes from the serial loader and check them.
+
+        Args:
+            expect_sequence: list (int)
+                The sequence of byte values that are expected to be received.
+
+        Returns:
+            Nothing
+
+        Raises:
+            TestException if the program doesn't send this sequence of bytes
+        """
         if test_harness.DEBUG:
             print('expect bytes: ' + str(expect_sequence))
 
@@ -104,7 +133,7 @@ class SerialLoader(object):
         """
         out, err = self.get_result()
         if not self.serial_boot_process.poll():
-            raise TestException('Loader did not return error result as expected')
+            raise test_harness.TestException('Loader did not return error result as expected')
 
         if err.find(error_message) == -1:
             raise test_harness.TestException('Did not get expected error message. Got: ' + err)
@@ -124,7 +153,7 @@ class SerialLoader(object):
         self.send([4]) # ^D Exits interactive mode
         out, err = self.get_result()
         if self.serial_boot_process.poll():
-            raise TestException('Process return error')
+            raise test_harness.TestException('Process return error')
 
 
     def recv(self):
@@ -138,10 +167,14 @@ class SerialLoader(object):
             integer byte value
 
         Raises:
-            Nothing
+            TestException if nothing can be read for over RECEIVE_TIMEOUT_S
+            seconds.
         """
-        return ord(os.read(self.pipe, 1))
-
+        r, w, e = select.select([self.pipe], [], [], RECEIVE_TIMEOUT_S)
+        if self.pipe in r:
+            return ord(os.read(self.pipe, 1))
+        else:
+            raise test_harness.TestException('serial read timed out')
 
     def send(self, values):
         """Send a set of bytes to the serial loader program.
@@ -344,7 +377,7 @@ def invalid_character(*ignored):
 
 @test_harness.test(['emulator'])
 def load_ramdisk(*ignored):
-    with SerialLoader('testhex.txt', 'ramdisk.bin') as loader:
+    with SerialLoader('testhex.txt', 'ramdisk-bin') as loader:
         loader.expect_bytes([PING_REQ])
         loader.send([PING_ACK])
 
