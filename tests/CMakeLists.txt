@@ -35,7 +35,8 @@ set(py_test_dirs
     device/sdmmc/
     device/ps2/
     device/uart
-    emulator
+    tools/emulator
+    tools/serial_boot
     libc
     compiler-rt
     cosimulation
@@ -46,8 +47,7 @@ set(py_test_dirs
     render/blend
     render/depthbuffer
     render/mipmap
-    render/texture
-    serial_boot)
+    render/texture)
 
 # This is called 'tests' because 'test' is reserved by cmake.
 add_custom_target(tests)

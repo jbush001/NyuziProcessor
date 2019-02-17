@@ -34,10 +34,11 @@ import traceback
 
 PROJECT_TOP = os.path.normpath(
     os.path.dirname(os.path.abspath(__file__)) + '/../')
+TEST_DIR = PROJECT_TOP + '/tests/'
 
 # Read configuration file
 config = configparser.ConfigParser()
-config.read(PROJECT_TOP + '/tests/tests.conf')
+config.read(TEST_DIR + 'tests.conf')
 default_config = config['DEFAULT']
 BIN_DIR = default_config['TOOL_BIN_DIR'] + '/'
 LIB_DIR = default_config['LIB_DIR'] + '/'
@@ -108,7 +109,7 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
         compiler_args += cflags
 
     if image_type == 'raw':
-        compiler_args += ['-Wl,--script,../one-segment.ld,--oformat,binary']
+        compiler_args += ['-Wl,--script,' + TEST_DIR + 'one-segment.ld,--oformat,binary']
     elif image_type == 'user':
         compiler_args += ['-Wl,--image-base=0x1000']
 
@@ -243,7 +244,7 @@ def run_test_with_timeout(args, timeout):
 
 
 def reset_fpga():
-    args = ['quartus_stp', '-t', PROJECT_TOP + '/tests/reset_altera.tcl']
+    args = ['quartus_stp', '-t', TEST_DIR + 'reset_altera.tcl']
 
     try:
         subprocess.check_output(args)

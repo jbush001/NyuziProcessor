@@ -31,7 +31,7 @@ import sys
 import tempfile
 import time
 
-sys.path.insert(0, '..')
+sys.path.insert(0, '../..')
 import test_harness
 
 @test_harness.test(['emulator'])
