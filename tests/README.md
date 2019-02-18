@@ -22,10 +22,11 @@ You can list all available tests and targets with the list parameter:
 
     ./runtest.py --list
 
-The --debug flag will enable printing test specific diagonostic output to the
+The --debug flag will enable printing test specific diagnostic output to the
 console.
 
-There is an experimental 'fpga' target in progress, but is not fully functional.
+There is an experimental 'fpga' target in progress, but is not fully functional
+(See issue #122).
 
 Temporary files like assembled binaries are stored in the 'tests/work' folder.
 These can be useful to dump disassembly and symbols, or to run directly in
@@ -135,7 +136,7 @@ categories:
 4. **Synthetic stress tests** (tests/stress)
 
    Complementary to the random tests, these validate operations that the former
-   cannot easily like atomic accessses or MMU operation. They often use an internal
+   cannot easily like atomic accesses or MMU operation. They often use an internal
    pseudorandom number generator to control their operation. Checking is done
    after the test as run, usually via a memory dump. These can run in Verilog
    simulation or on FPGA.
