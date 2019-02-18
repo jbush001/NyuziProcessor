@@ -21,6 +21,9 @@ This uses a pseudo terminal to simulate the serial port, with
 this acting as the FPGA board. These tests are marked somewhat
 incorrectly as emulator tests, even though there's no emulator
 running, as there wasn't an applicable target type.
+
+XXX does not test error recovery
+XXX does not test console mode
 '''
 
 import os
@@ -224,6 +227,19 @@ def read_valid_hex(*unused):
 
 
 def compute_checksum(byte_array):
+    """Compute FNV-1 checksum.
+
+    Args:
+        byte_array: list (int)
+            Each element represents a a byte
+
+    Returns:
+        integer Computed checksum
+
+    Raises:
+        Nothing
+    """
+
     checksum = 2166136261
     for b in byte_array:
         checksum = ((checksum ^ b) * 16777619) & 0xffffffff
@@ -242,7 +258,6 @@ def load_memory_chunking(*unused):
     with SerialLoader('sequence-hex.txt') as loader:
         loader.expect_bytes([PING_REQ])
         loader.send([PING_ACK])
-
 
         def check_sequence_block(address, base_index, count):
             if test_harness.DEBUG:
@@ -267,6 +282,7 @@ def load_memory_chunking(*unused):
         loader.expect_bytes([EXECUTE_REQ])
         loader.send([EXECUTE_ACK])
         loader.expect_normal_exit()
+
 
 @test_harness.test(['emulator'])
 def load_address_chunks(*unused):
@@ -293,6 +309,46 @@ def load_address_chunks(*unused):
 
 
 @test_harness.test(['emulator'])
+def load_ack_timeout(*unused):
+    """After sending a load request, the target does not respond.
+
+    Ensure the loader times out and returns an error"""
+    with SerialLoader('testhex.txt') as loader:
+        loader.expect_bytes([PING_REQ])
+        loader.send([PING_ACK])
+        loader.expect_bytes([LOAD_MEMORY_REQ, 0, 0, 0, 0, 16, 0, 0, 0])
+        # Send nothing, it will time out
+        loader.expect_error('00000000 Did not get ack for load memory')
+
+
+@test_harness.test(['emulator'])
+def load_bad_ack(*unused):
+    """After sending a load request, the target responds with an invalid command.
+
+    Ensure the loader returns an error"""
+
+    with SerialLoader('testhex.txt') as loader:
+        loader.expect_bytes([PING_REQ])
+        loader.send([PING_ACK])
+        loader.expect_bytes([LOAD_MEMORY_REQ, 0, 0, 0, 0, 16, 0, 0, 0])
+        loader.send([0x00])
+        loader.expect_error('00000000 Did not get ack for load memory, got 00 instead')
+
+
+@test_harness.test(['emulator'])
+def load_checksum_timeout(*unused):
+    """Timeout while waiting for checksum after load."""
+
+    with SerialLoader('testhex.txt') as loader:
+        loader.expect_bytes([PING_REQ])
+        loader.send([PING_ACK])
+        loader.expect_bytes([LOAD_MEMORY_REQ, 0, 0, 0, 0, 16, 0, 0, 0])
+        loader.send([LOAD_MEMORY_ACK, 0x99, 0x98, 0xf5])
+        # Don't send last byte of checksum, will time out
+        loader.expect_error('00000000 timed out reading checksum')
+
+
+@test_harness.test(['emulator'])
 def checksum_mismatch(*unused):
     with SerialLoader('testhex.txt') as loader:
         loader.expect_bytes([PING_REQ])
@@ -304,27 +360,8 @@ def checksum_mismatch(*unused):
 
 
 @test_harness.test(['emulator'])
-def fill_ack_timeout(*unused):
-    with SerialLoader('testhex.txt') as loader:
-        loader.expect_bytes([PING_REQ])
-        loader.send([PING_ACK])
-        loader.expect_bytes([LOAD_MEMORY_REQ, 0, 0, 0, 0, 16, 0, 0, 0])
-        # Send nothing, it will time out
-        loader.expect_error('00000000 Did not get ack for load memory')
-
-
-@test_harness.test(['emulator'])
-def fill_bad_ack(*unused):
-    with SerialLoader('testhex.txt') as loader:
-        loader.expect_bytes([PING_REQ])
-        loader.send([PING_ACK])
-        loader.expect_bytes([LOAD_MEMORY_REQ, 0, 0, 0, 0, 16, 0, 0, 0])
-        loader.send([0x00])
-        loader.expect_error('00000000 Did not get ack for load memory, got 00 instead')
-
-
-@test_harness.test(['emulator'])
 def clear_mem(*unused):
+    """Successfully clear memory."""
     with SerialLoader('zerohex.txt') as loader:
         loader.expect_bytes([PING_REQ])
         loader.send([PING_ACK])
@@ -356,7 +393,17 @@ def clear_mem_ack_timeout(*unused):
 
 
 @test_harness.test(['emulator'])
+def ping_retries(*unused):
+    """If the target doesn't respond to pings, the loader should retry."""
+    with SerialLoader('testhex.txt') as loader:
+        loader.expect_bytes([PING_REQ, PING_REQ, PING_REQ, PING_REQ])
+        loader.send([PING_ACK])
+        loader.expect_bytes([LOAD_MEMORY_REQ])
+
+
+@test_harness.test(['emulator'])
 def ping_timeout(*unused):
+    """...but if it retries long enough with no response, return an error"""
     with SerialLoader('testhex.txt') as loader:
         loader.expect_bytes([PING_REQ, PING_REQ, PING_REQ, PING_REQ])
         # Send nothing, it should time out
@@ -365,8 +412,16 @@ def ping_timeout(*unused):
 
 @test_harness.test(['emulator'])
 def invalid_character(*ignored):
+    """Invalid character in hex file"""
     with SerialLoader('invalid-character-hex.txt') as loader:
         loader.expect_error('read_hex_file: Invalid character ! in line 4')
+
+
+@test_harness.test(['emulator'])
+def number_out_of_range(*ignored):
+    """A number is too big"""
+    with SerialLoader('number-out-of-range-hex.txt') as loader:
+        loader.expect_error('read_hex_file: number out of range in line 3')
 
 
 @test_harness.test(['emulator'])
@@ -390,5 +445,60 @@ def load_ramdisk(*ignored):
         loader.expect_bytes([EXECUTE_REQ])
         loader.send([EXECUTE_ACK])
         loader.expect_normal_exit()
+
+
+@test_harness.test(['emulator'])
+def missing_ramdisk_file(*ignored):
+    with SerialLoader('testhex.txt', 'this_does_not_exist.bin') as loader:
+        loader.expect_error('Error opening input file')
+
+
+@test_harness.test(['emulator'])
+def missing_hex_file(*ignored):
+    with SerialLoader('this_does_not_exist.txt') as loader:
+        loader.expect_error('read_hex_file: error opening hex file')
+
+
+@test_harness.test(['emulator'])
+def invalid_serial_port(*ignored):
+    args = [test_harness.SERIAL_BOOT_PATH, 'this_device_does_not_exist', 'testhex.txt']
+    try:
+        process = subprocess.check_output(args, stderr=subprocess.STDOUT)
+        raise test_harness.TestException('loader did not return error')
+    except subprocess.CalledProcessError as exc:
+        error_message = exc.output.decode()
+        if error_message.find('couldn\'t open serial port') == -1:
+            raise test_harness.TestException('returned unknown error: ' + error_message)
+
+
+@test_harness.test(['emulator'])
+def not_a_serial_port(*ignored):
+    # Note serial port (2nd arg) is normal file
+    args = [test_harness.SERIAL_BOOT_PATH, 'testhex.txt', 'testhex.txt']
+    try:
+        process = subprocess.check_output(args, stderr=subprocess.STDOUT)
+        raise test_harness.TestException('loader did not return error')
+    except subprocess.CalledProcessError as exc:
+        error_message = exc.output.decode()
+        if error_message.find('Unable to initialize serial port') == -1:
+            raise test_harness.TestException('returned unknown error: ' + error_message)
+
+@test_harness.test(['emulator'])
+def execute_failure(*ignored):
+    with SerialLoader('testhex.txt') as loader:
+        loader.expect_bytes([PING_REQ])
+        loader.send([PING_ACK])
+
+        # Load program
+        loader.expect_bytes([LOAD_MEMORY_REQ, 0, 0, 0, 0, 16, 0, 0, 0])
+        values = [0xad, 0xde, 0x97, 0x20, 0x25, 0xb0, 0xf5, 0xa8, 0x25, 0xd5, 0x8d, 0x97, 0x2b, 0x01, 0xc1, 0x25]
+        loader.expect_bytes(values)
+        loader.send([LOAD_MEMORY_ACK] + int_to_le_bytes(compute_checksum(values)))
+
+        # Execute command
+        loader.expect_bytes([EXECUTE_REQ])
+        loader.send([0])    # Bad response
+        loader.expect_error('Target returned invalid response starting execution')
+
 
 test_harness.execute_tests()

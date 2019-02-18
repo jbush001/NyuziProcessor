@@ -157,7 +157,7 @@ bool write_serial_long(int serial_fd, unsigned int value)
     return true;
 }
 
-bool fill_memory(int serial_fd, unsigned int address, const unsigned char *buffer, unsigned int length)
+bool load_memory(int serial_fd, unsigned int address, const unsigned char *buffer, unsigned int length)
 {
     unsigned int target_checksum;
     unsigned int local_checksum;
@@ -175,7 +175,7 @@ bool fill_memory(int serial_fd, unsigned int address, const unsigned char *buffe
 
     if (write(serial_fd, buffer, length) != length)
     {
-        fprintf(stderr, "\n_error writing to serial port\n");
+        fprintf(stderr, "\nError writing to serial port\n");
         return false;
     }
 
@@ -210,61 +210,6 @@ bool fill_memory(int serial_fd, unsigned int address, const unsigned char *buffe
     }
 
     return true;
-}
-
-// An error has occurred. Resynchronize so we can retry the command.
-bool fix_connection(int serial_fd)
-{
-    unsigned char ch = 0;
-    int chars_read = 0;
-    bool ping_seen = false;
-    int retry = 0;
-
-    // Clear out any waiting BAD_COMMAND bytes
-    // May grab an extra byte
-    while (read_serial_byte(serial_fd, &ch, 250) && ch == BAD_COMMAND)
-        chars_read++;
-
-    printf("%d BAD_COMMAND bytes seen, last was %02x\n", chars_read, ch);
-
-    // Send pings until the processor responds
-    // This can help if the processor is expecting data from us
-    while (1)
-    {
-        if (read_serial_byte(serial_fd, &ch, 25))
-        {
-            if (ping_seen)
-                continue; // Once you've seen one ping, ignore the rest
-            else if (ch == PING_ACK)
-            {
-                printf("Ping return seen.\n");
-                ping_seen = true;
-            }
-            else
-                printf("byte read: %02x\n", ch);
-        }
-        else
-        {
-            // If there's no more data, and we've seen one ping,
-            // we're done here.
-            if (ping_seen)
-                return true;
-        }
-
-        if (!ping_seen)
-        {
-            retry++;
-            if (!write_serial_byte(serial_fd, PING_REQ))
-                return false;
-        }
-
-        if (retry > 40)
-        {
-            printf("Cannot fix connection, no ping from board recieved.\n");
-            printf("Try resetting the board (KEY0) and rerunning.\n");
-            return false;
-        }
-    }
 }
 
 bool clear_memory(int serial_fd, unsigned int address, unsigned int length)
@@ -321,6 +266,61 @@ bool ping_target(int serial_fd)
     return true;
 }
 
+// An error has occurred. Resynchronize so we can retry the command.
+bool fix_connection(int serial_fd)
+{
+    unsigned char ch = 0;
+    int chars_read = 0;
+    bool ping_seen = false;
+    int retry = 0;
+
+    // Clear out any waiting BAD_COMMAND bytes
+    // May grab an extra byte
+    while (read_serial_byte(serial_fd, &ch, 250) && ch == BAD_COMMAND)
+        chars_read++;
+
+    printf("%d BAD_COMMAND bytes seen, last was %02x\n", chars_read, ch);
+
+    // Send pings until the processor responds
+    // This can help if the processor is expecting data from us
+    while (1)
+    {
+        if (read_serial_byte(serial_fd, &ch, 25))
+        {
+            if (ping_seen)
+                continue; // Once you've seen one ping, ignore the rest
+            else if (ch == PING_ACK)
+            {
+                printf("Ping return seen.\n");
+                ping_seen = true;
+            }
+            else
+                printf("byte read: %02x\n", ch);
+        }
+        else
+        {
+            // If there's no more data, and we've seen one ping,
+            // we're done here.
+            if (ping_seen)
+                return true;
+        }
+
+        if (!ping_seen)
+        {
+            retry++;
+            if (!write_serial_byte(serial_fd, PING_REQ))
+                return false;
+        }
+
+        if (retry > 40)
+        {
+            printf("Cannot fix connection, no ping from board received.\n");
+            printf("Try resetting the board (KEY0) and rerunning.\n");
+            return false;
+        }
+    }
+}
+
 bool send_execute_command(int serial_fd)
 {
     unsigned char ch;
@@ -328,7 +328,7 @@ bool send_execute_command(int serial_fd)
     write_serial_byte(serial_fd, EXECUTE_REQ);
     if (!read_serial_byte(serial_fd, &ch, 15000) || ch != EXECUTE_ACK)
     {
-        fprintf(stderr, "Target returned error starting execution\n");
+        fprintf(stderr, "Target returned invalid response starting execution\n");
         return false;
     }
 
@@ -673,7 +673,7 @@ bool send_segment(int serial_fd, unsigned int address, unsigned char *data, unsi
         }
         else
         {
-            if (!fill_memory(serial_fd, address + offset, data + offset, this_slice))
+            if (!load_memory(serial_fd, address + offset, data + offset, this_slice))
             {
                 copied_correctly = 0;
                 if (!fix_connection(serial_fd))
