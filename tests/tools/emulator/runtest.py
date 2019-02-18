@@ -136,7 +136,7 @@ def recv_host_interrupt(*unused):
     try:
         interrupt_pipe = os.open(RECV_PIPE_NAME, os.O_WRONLY)
 
-        # Send periodic interrupts to process'
+        # Send periodic interrupts to process
         try:
             for intnum in range(5):
                 os.write(interrupt_pipe, str.encode(chr(intnum)))
