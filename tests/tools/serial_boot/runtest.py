@@ -15,16 +15,13 @@
 # limitations under the License.
 #
 
-'''Verify the FPGA serial loader.
+"""Verify the FPGA serial loader.
 
 This uses a pseudo terminal to simulate the serial port, with
 this acting as the FPGA board. These tests are marked somewhat
 incorrectly as emulator tests, even though there's no emulator
 running, as there wasn't an applicable target type.
-
-XXX does not test error recovery
-XXX does not test console mode
-'''
+"""
 
 import os
 import pty
@@ -49,6 +46,10 @@ CLEAR_MEMORY_REQ = 0xc6
 CLEAR_MEMORY_ACK = 0xc7
 BAD_COMMAND = 0xc8
 
+# Matches contents of testhex.txt
+TESTHEX_CONTENTS = [0xad, 0xde, 0x97, 0x20, 0x25, 0xb0, 0xf5, 0xa8, 0x25, 0xd5, 0x8d, 0x97, 0x2b, 0x01, 0xc1, 0x25]
+
+
 class SerialLoader(object):
     def __init__(self, hexfile, ramdisk = None):
         self.serial_boot_process = None
@@ -66,7 +67,7 @@ class SerialLoader(object):
             args.append(self.ramdisk)
 
         self.serial_boot_process = subprocess.Popen(args, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE)
+            stdin=subprocess.PIPE, stderr=subprocess.PIPE)
 
         return self
 
@@ -93,10 +94,13 @@ class SerialLoader(object):
         """
         out, err = test_harness.TimedProcessRunner().communicate(
             self.serial_boot_process, RECEIVE_TIMEOUT_S)
-        return out.decode('ascii'), err.decode('ascii')
+        if test_harness.DEBUG:
+            print('got result {}'.format(out))
+
+        return out.decode(), err.decode()
 
 
-    def expect_bytes(self, expect_sequence):
+    def expect_serial_bytes(self, expect_sequence):
         """Receive a sequence of bytes from the serial loader and check them.
 
         Args:
@@ -107,18 +111,18 @@ class SerialLoader(object):
             Nothing
 
         Raises:
-            TestException if the program doesn't send_bytes this sequence of bytes
+            TestException if the program doesn't send_serial this sequence of bytes
         """
         if test_harness.DEBUG:
             print('expect bytes: ' + str(expect_sequence))
 
         for index, expect_byte in enumerate(expect_sequence):
-            got = self.recv()
+            got = self.recv_serial()
             if got != expect_byte:
                 raise test_harness.TestException('serial mismatch @{}: expected {} got {}'.format(
                     index, expect_byte, got))
 
-    def expect_int(self, expected):
+    def expect_serial_int(self, expected):
         """Check a 32-bit value received from the serial port.
 
         The value is four bytes in little endian order.
@@ -133,12 +137,12 @@ class SerialLoader(object):
             TestException if the number doesn't match.
         """
         if test_harness.DEBUG:
-            print('expect int: ' + str(value))
+            print('expect int: ' + str(expected))
 
-        intval = self.recv()
-        intval |= self.recv() << 8
-        intval |= self.recv() << 16
-        intval |= self.recv() << 24
+        intval = self.recv_serial()
+        intval |= self.recv_serial() << 8
+        intval |= self.recv_serial() << 16
+        intval |= self.recv_serial() << 24
         if intval != expected:
             raise test_harness.TestException('Int value mismatch: wanted {} got {}'.format(
                 expected, intval))
@@ -158,6 +162,9 @@ class SerialLoader(object):
             TestException if the loader returns a zero exit value (no error) or
             it does not print the error message somewhere on stderr.
         """
+        if test_harness.DEBUG:
+            print('expect error: {}'.format(message))
+
         out, err = self.get_result()
         if not self.serial_boot_process.poll():
             raise test_harness.TestException('Loader did not return error result as expected')
@@ -177,13 +184,65 @@ class SerialLoader(object):
         Raises:
             TestException if the program returns a non-zero exit value.
         """
-        self.send_bytes([4]) # ^D Exits interactive mode
+        self.send_serial([4]) # ^D Exits interactive mode
         out, err = self.get_result()
         if self.serial_boot_process.poll():
             raise test_harness.TestException('Process return error')
 
+    def expect_stdout(self, message):
+        """Check for a message printed to the console from a program.
 
-    def recv(self):
+        Args:
+            message: string
+                The message that should appear in stdout.
+
+        Returns:
+            Nothing
+
+        Raises:
+            TestException if the message is not received (either output does
+            not match or there is a timeout)
+        """
+        if test_harness.DEBUG:
+            print('expect stdout: {}'.format(message))
+
+        stdout_no = self.serial_boot_process.stdout.fileno()
+        all_stdout = '' # Everything printed by program
+        while True:
+            r, _w, _e = select.select([stdout_no], [], [], RECEIVE_TIMEOUT_S)
+            if stdout_no not in r:
+                # Timed out
+                raise test_harness.TestException('did not get message from standard out:')
+
+            got = os.read(stdout_no, 0xffff).decode()
+            all_stdout += got
+            if test_harness.DEBUG:
+                print(got)
+
+            if all_stdout.find(message) != -1:
+                break
+
+            # Else we loop and read some more. Perhaps it hasn't been printed yet.
+
+    def send_stdin(self, message):
+        """Write text to stdin of the process
+
+        Args:
+            message: string
+                The message to send
+
+        Returns:
+            Nothing
+
+        Raises:
+            Nothing
+        """
+        if test_harness.DEBUG:
+            print('send_stdin ' + message)
+
+        os.write(self.serial_boot_process.stdin.fileno(), bytes(message, 'utf-8'))
+
+    def recv_serial(self):
         """Receive a single byte from the serial loader program.
 
         The byte is meant to be sent to the dev board.
@@ -197,14 +256,14 @@ class SerialLoader(object):
             TestException if nothing can be read for over RECEIVE_TIMEOUT_S
             seconds.
         """
-        r, w, e = select.select([self.pipe], [], [], RECEIVE_TIMEOUT_S)
+        r, _w, _e = select.select([self.pipe], [], [], RECEIVE_TIMEOUT_S)
         if self.pipe in r:
             return ord(os.read(self.pipe, 1))
         else:
             raise test_harness.TestException('serial read timed out')
 
-    def send_bytes(self, values):
-        """send_bytes a set of bytes to the serial loader program.
+    def send_serial(self, values):
+        """send_serial a set of bytes to the serial loader program.
 
         Args:
             values: array (integer)
@@ -216,9 +275,8 @@ class SerialLoader(object):
         Raises:
             Nothing
         """
-
         if test_harness.DEBUG:
-            print('send_bytes: ' + str(values))
+            print('send_serial: ' + str(values))
 
         os.write(self.pipe, bytes(values))
 
@@ -237,6 +295,9 @@ class SerialLoader(object):
         Raises:
             Nothing
         """
+        if test_harness.DEBUG:
+            print('send_int {}'.format(value))
+
         bytevals = [value & 0xff, (value >> 8) & 0xff,
             (value >> 16) & 0xff, (value >> 24) & 0xff]
         os.write(self.pipe, bytes(bytevals))
@@ -266,11 +327,11 @@ def check_load_memory_command(loader, address, values):
     if test_harness.DEBUG:
         print('check_load_memory_command 0x{:x} 0x{:x}'.format(address, len(values)))
 
-    loader.expect_bytes([LOAD_MEMORY_REQ])
-    loader.expect_int(address)
-    loader.expect_int(len(values))
-    loader.expect_bytes(values)
-    loader.send_bytes([LOAD_MEMORY_ACK])
+    loader.expect_serial_bytes([LOAD_MEMORY_REQ])
+    loader.expect_serial_int(address)
+    loader.expect_serial_int(len(values))
+    loader.expect_serial_bytes(values)
+    loader.send_serial([LOAD_MEMORY_ACK])
     loader.send_int(compute_checksum(values))
 
 
@@ -285,14 +346,13 @@ def read_valid_hex(*unused):
 
     The passed file exercises of valid syntactic constructs."""
     with SerialLoader('testhex.txt') as loader:
-        loader.expect_bytes([PING_REQ])
-        loader.send_bytes([PING_ACK])
+        loader.expect_serial_bytes([PING_REQ])
+        loader.send_serial([PING_ACK])
 
-        values = [0xad, 0xde, 0x97, 0x20, 0x25, 0xb0, 0xf5, 0xa8, 0x25, 0xd5, 0x8d, 0x97, 0x2b, 0x01, 0xc1, 0x25]
-        check_load_memory_command(loader, 0, values)
+        check_load_memory_command(loader, 0, TESTHEX_CONTENTS)
 
-        loader.expect_bytes([EXECUTE_REQ])
-        loader.send_bytes([EXECUTE_ACK])
+        loader.expect_serial_bytes([EXECUTE_REQ])
+        loader.send_serial([EXECUTE_ACK])
         loader.expect_normal_exit()
 
 @test_harness.test(['emulator'])
@@ -304,8 +364,8 @@ def load_memory_chunking(*unused):
     an arbitrary number.
     """
     with SerialLoader('sequence-hex.txt') as loader:
-        loader.expect_bytes([PING_REQ])
-        loader.send_bytes([PING_ACK])
+        loader.expect_serial_bytes([PING_REQ])
+        loader.send_serial([PING_ACK])
 
         def make_sequence(base_index, count):
             bytevals = []
@@ -320,8 +380,8 @@ def load_memory_chunking(*unused):
         # Partial block with one word
         check_load_memory_command(loader, 2048, make_sequence(0x12345678 + 512, 4))
 
-        loader.expect_bytes([EXECUTE_REQ])
-        loader.send_bytes([EXECUTE_ACK])
+        loader.expect_serial_bytes([EXECUTE_REQ])
+        loader.send_serial([EXECUTE_ACK])
         loader.expect_normal_exit()
 
 
@@ -329,8 +389,8 @@ def load_memory_chunking(*unused):
 def load_address_chunks(*unused):
     """Test using @ in hex file to specify address."""
     with SerialLoader('address-hex.txt') as loader:
-        loader.expect_bytes([PING_REQ])
-        loader.send_bytes([PING_ACK])
+        loader.expect_serial_bytes([PING_REQ])
+        loader.send_serial([PING_ACK])
 
         # First chunk at 100000
         values = [0xb7, 0x6d, 0xff, 0xf1, 0x39, 0xe4, 0x84, 0x58, 0x11, 0xba, 0xda, 0x14, 0x39, 0xfb, 0x40, 0xf4]
@@ -340,41 +400,41 @@ def load_address_chunks(*unused):
         values = [0x9a, 0x01, 0x3b, 0x2a, 0xfb, 0xda, 0xe5, 0xba]
         check_load_memory_command(loader, 0x201234, values)
 
-        loader.expect_bytes([EXECUTE_REQ])
-        loader.send_bytes([EXECUTE_ACK])
+        loader.expect_serial_bytes([EXECUTE_REQ])
+        loader.send_serial([EXECUTE_ACK])
         loader.expect_normal_exit()
 
 
 @test_harness.test(['emulator'])
 def load_ack_timeout(*unused):
-    """After send_bytesing a load request, the target does not respond.
+    """After send_serialing a load request, the target does not respond.
 
     Ensure the loader times out and returns an error"""
     with SerialLoader('testhex.txt') as loader:
-        loader.expect_bytes([PING_REQ])
-        loader.send_bytes([PING_ACK])
+        loader.expect_serial_bytes([PING_REQ])
+        loader.send_serial([PING_ACK])
 
-        loader.expect_bytes([LOAD_MEMORY_REQ])
-        loader.expect_int(0) # Address
-        loader.expect_int(16) # Length
-        # send_bytes nothing, it will time out
+        loader.expect_serial_bytes([LOAD_MEMORY_REQ])
+        loader.expect_serial_int(0) # Address
+        loader.expect_serial_int(16) # Length
+        # send_serial nothing, it will time out
         loader.expect_error('00000000 Did not get ack for load memory')
 
 
 @test_harness.test(['emulator'])
 def load_bad_ack(*unused):
-    """After send_bytesing a load request, the target responds with an invalid command.
+    """After send_serialing a load request, the target responds with an invalid command.
 
     Ensure the loader returns an error"""
 
     with SerialLoader('testhex.txt') as loader:
-        loader.expect_bytes([PING_REQ])
-        loader.send_bytes([PING_ACK])
+        loader.expect_serial_bytes([PING_REQ])
+        loader.send_serial([PING_ACK])
 
-        loader.expect_bytes([LOAD_MEMORY_REQ])
+        loader.expect_serial_bytes([LOAD_MEMORY_REQ])
         loader.send_int(0) # Address
         loader.send_int(16) # Length
-        loader.send_bytes([0x00])
+        loader.send_serial([0x00])
         loader.expect_error('00000000 Did not get ack for load memory, got 00 instead')
 
 
@@ -383,27 +443,26 @@ def load_checksum_timeout(*unused):
     """Timeout while waiting for checksum after load."""
 
     with SerialLoader('testhex.txt') as loader:
-        loader.expect_bytes([PING_REQ])
-        loader.send_bytes([PING_ACK])
+        loader.expect_serial_bytes([PING_REQ])
+        loader.send_serial([PING_ACK])
 
-        loader.expect_bytes([LOAD_MEMORY_REQ])
-        loader.send_bytes([LOAD_MEMORY_ACK, 0x99, 0x98, 0xf5])
-        # Don't send_bytes last byte of checksum, will time out
+        loader.expect_serial_bytes([LOAD_MEMORY_REQ])
+        loader.send_serial([LOAD_MEMORY_ACK, 0x99, 0x98, 0xf5])
+        # Don't send_serial last byte of checksum, will time out
         loader.expect_error('00000000 timed out reading checksum')
 
 
 @test_harness.test(['emulator'])
 def checksum_mismatch(*unused):
     with SerialLoader('testhex.txt') as loader:
-        loader.expect_bytes([PING_REQ])
-        loader.send_bytes([PING_ACK])
+        loader.expect_serial_bytes([PING_REQ])
+        loader.send_serial([PING_ACK])
 
-        loader.expect_bytes([LOAD_MEMORY_REQ])
-        loader.expect_int(0) # Address
-        loader.expect_int(16) # Length
-        values = [0xad, 0xde, 0x97, 0x20, 0x25, 0xb0, 0xf5, 0xa8, 0x25, 0xd5, 0x8d, 0x97, 0x2b, 0x01, 0xc1, 0x25]
-        loader.expect_bytes(values)
-        loader.send_bytes([LOAD_MEMORY_ACK])
+        loader.expect_serial_bytes([LOAD_MEMORY_REQ])
+        loader.expect_serial_int(0) # Address
+        loader.expect_serial_int(16) # Length
+        loader.expect_serial_bytes(TESTHEX_CONTENTS)
+        loader.send_serial([LOAD_MEMORY_ACK])
         loader.send_int(compute_checksum(values) + 1)  # Invalid checksum
         loader.expect_error('00000000 checksum mismatch want')
 
@@ -412,42 +471,42 @@ def checksum_mismatch(*unused):
 def clear_mem(*unused):
     """Successfully clear memory."""
     with SerialLoader('zerohex.txt') as loader:
-        loader.expect_bytes([PING_REQ])
-        loader.send_bytes([PING_ACK])
+        loader.expect_serial_bytes([PING_REQ])
+        loader.send_serial([PING_ACK])
 
-        loader.expect_bytes([CLEAR_MEMORY_REQ])
-        loader.expect_int(0) # Address
-        loader.expect_int(32) # Length
-        loader.send_bytes([CLEAR_MEMORY_ACK])
+        loader.expect_serial_bytes([CLEAR_MEMORY_REQ])
+        loader.expect_serial_int(0) # Address
+        loader.expect_serial_int(32) # Length
+        loader.send_serial([CLEAR_MEMORY_ACK])
 
-        loader.expect_bytes([EXECUTE_REQ])
-        loader.send_bytes([EXECUTE_ACK])
+        loader.expect_serial_bytes([EXECUTE_REQ])
+        loader.send_serial([EXECUTE_ACK])
         loader.expect_normal_exit()
 
 
 @test_harness.test(['emulator'])
 def clear_mem_bad_ack(*unused):
     with SerialLoader('zerohex.txt') as loader:
-        loader.expect_bytes([PING_REQ])
-        loader.send_bytes([PING_ACK])
+        loader.expect_serial_bytes([PING_REQ])
+        loader.send_serial([PING_ACK])
 
-        loader.expect_bytes([CLEAR_MEMORY_REQ])
+        loader.expect_serial_bytes([CLEAR_MEMORY_REQ])
         loader.send_int(0) # Address
         loader.send_int(32) # Length
-        loader.send_bytes([0x00])
+        loader.send_serial([0x00])
         loader.expect_error('00000000 Did not get ack for clear memory')
 
 
 @test_harness.test(['emulator'])
 def clear_mem_ack_timeout(*unused):
     with SerialLoader('zerohex.txt') as loader:
-        loader.expect_bytes([PING_REQ])
-        loader.send_bytes([PING_ACK])
+        loader.expect_serial_bytes([PING_REQ])
+        loader.send_serial([PING_ACK])
 
-        loader.expect_bytes([CLEAR_MEMORY_REQ])
+        loader.expect_serial_bytes([CLEAR_MEMORY_REQ])
         loader.send_int(0) # Address
         loader.send_int(32) # Length
-        # send_bytes nothing, it will time out
+        # send_serial nothing, it will time out
         loader.expect_error('00000000 Did not get ack for clear memory')
 
 
@@ -455,18 +514,18 @@ def clear_mem_ack_timeout(*unused):
 def ping_retries(*unused):
     """If the target doesn't respond to pings, the loader should retry."""
     with SerialLoader('testhex.txt') as loader:
-        loader.expect_bytes([PING_REQ, PING_REQ, PING_REQ, PING_REQ])
-        loader.send_bytes([PING_ACK])
+        loader.expect_serial_bytes([PING_REQ, PING_REQ, PING_REQ, PING_REQ])
+        loader.send_serial([PING_ACK])
 
-        loader.expect_bytes([LOAD_MEMORY_REQ])
+        loader.expect_serial_bytes([LOAD_MEMORY_REQ])
 
 
 @test_harness.test(['emulator'])
 def ping_timeout(*unused):
     """...but if it retries long enough with no response, return an error"""
     with SerialLoader('testhex.txt') as loader:
-        loader.expect_bytes([PING_REQ, PING_REQ, PING_REQ, PING_REQ])
-        # send_bytes nothing, it should time out
+        loader.expect_serial_bytes([PING_REQ, PING_REQ, PING_REQ, PING_REQ])
+        # send_serial nothing, it should time out
         loader.expect_error('target is not responding')
 
 
@@ -487,19 +546,18 @@ def number_out_of_range(*ignored):
 @test_harness.test(['emulator'])
 def load_ramdisk(*ignored):
     with SerialLoader('testhex.txt', 'ramdisk-bin') as loader:
-        loader.expect_bytes([PING_REQ])
-        loader.send_bytes([PING_ACK])
+        loader.expect_serial_bytes([PING_REQ])
+        loader.send_serial([PING_ACK])
 
         # Load program
-        values = [0xad, 0xde, 0x97, 0x20, 0x25, 0xb0, 0xf5, 0xa8, 0x25, 0xd5, 0x8d, 0x97, 0x2b, 0x01, 0xc1, 0x25]
-        check_load_memory_command(loader, 0, values)
+        check_load_memory_command(loader, 0, TESTHEX_CONTENTS)
 
         # Load the ramdisk
         values = [0x12, 0x34, 0x56, 0x78, 0xab, 0xcd, 0xef, 0x55]
         check_load_memory_command(loader, 0x4000000, values)
 
-        loader.expect_bytes([EXECUTE_REQ])
-        loader.send_bytes([EXECUTE_ACK])
+        loader.expect_serial_bytes([EXECUTE_REQ])
+        loader.send_serial([EXECUTE_ACK])
         loader.expect_normal_exit()
 
 
@@ -542,17 +600,64 @@ def not_a_serial_port(*ignored):
 @test_harness.test(['emulator'])
 def execute_failure(*ignored):
     with SerialLoader('testhex.txt') as loader:
-        loader.expect_bytes([PING_REQ])
-        loader.send_bytes([PING_ACK])
+        loader.expect_serial_bytes([PING_REQ])
+        loader.send_serial([PING_ACK])
 
         # Load program
-        values = [0xad, 0xde, 0x97, 0x20, 0x25, 0xb0, 0xf5, 0xa8, 0x25, 0xd5, 0x8d, 0x97, 0x2b, 0x01, 0xc1, 0x25]
-        check_load_memory_command(loader, 0, values)
+        check_load_memory_command(loader, 0, TESTHEX_CONTENTS)
 
         # Execute command
-        loader.expect_bytes([EXECUTE_REQ])
-        loader.send_bytes([0])    # Bad response
+        loader.expect_serial_bytes([EXECUTE_REQ])
+        loader.send_serial([0])    # Bad response
         loader.expect_error('Target returned invalid response starting execution')
+
+
+@test_harness.test(['emulator'])
+def console_mode(*ignored):
+    with SerialLoader('testhex.txt') as loader:
+        loader.expect_serial_bytes([PING_REQ])
+        loader.send_serial([PING_ACK])
+
+        # Load program
+        check_load_memory_command(loader, 0, TESTHEX_CONTENTS)
+
+        # Execute command
+        loader.expect_serial_bytes([EXECUTE_REQ])
+        loader.send_serial([EXECUTE_ACK])
+
+        # From console to serial port
+        stdin_msg = 'adjf;adsf akjadsfadsf'
+        loader.send_stdin(stdin_msg)
+        expected_serial = [ord(x) for x in stdin_msg]
+        loader.expect_serial_bytes(expected_serial)
+
+        # Serial port to console
+        stdout_msg = 'glhkdfgklhjdfgf fdjgdfg'
+        loader.send_serial([ord(x) for x in stdout_msg])
+        loader.expect_stdout(stdout_msg)
+
+@test_harness.test(['emulator'])
+def error_recovery(*ignored):
+    with SerialLoader('testhex.txt') as loader:
+        loader.expect_serial_bytes([PING_REQ])
+        loader.send_serial([PING_ACK])
+
+        loader.expect_serial_bytes([LOAD_MEMORY_REQ])
+        loader.expect_serial_int(0) # Address
+        loader.expect_serial_int(16) # Length
+        loader.expect_serial_bytes(TESTHEX_CONTENTS)
+        loader.send_serial([0]) # Bad ack
+
+        loader.expect_serial_bytes([PING_REQ])
+        loader.send_serial([PING_ACK])
+
+        # Now recovered, trying again
+
+        check_load_memory_command(loader, 0, TESTHEX_CONTENTS)
+
+        loader.expect_serial_bytes([EXECUTE_REQ])
+        loader.send_serial([EXECUTE_ACK])
+        loader.expect_normal_exit()
 
 
 test_harness.execute_tests()
