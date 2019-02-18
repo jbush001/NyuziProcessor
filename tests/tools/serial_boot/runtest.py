@@ -463,7 +463,7 @@ def checksum_mismatch(*unused):
         loader.expect_serial_int(16) # Length
         loader.expect_serial_bytes(TESTHEX_CONTENTS)
         loader.send_serial([LOAD_MEMORY_ACK])
-        loader.send_int(compute_checksum(values) + 1)  # Invalid checksum
+        loader.send_int(compute_checksum(TESTHEX_CONTENTS) + 1)  # Invalid checksum
         loader.expect_error('00000000 checksum mismatch want')
 
 
