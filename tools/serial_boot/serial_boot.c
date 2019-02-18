@@ -565,13 +565,6 @@ struct segment *read_hex_file(const char *filename)
                     number_value = (number_value << 4) | hex_digit_val(ch);
                 else
                 {
-                    if (number_value % 4 != 0)
-                    {
-                        fprintf(stderr, "read_hex_file: address not aligned in line %d\n", line_num);
-                        fclose(file);
-                        return NULL;
-                    }
-
                     push_back_char = ch;
                     state = SCAN_SPACE;
 
@@ -582,7 +575,7 @@ struct segment *read_hex_file(const char *filename)
                         current_segment = current_segment->next;
                     }
 
-                    current_segment->address = number_value;
+                    current_segment->address = number_value * 4;
                 }
 
                 break;

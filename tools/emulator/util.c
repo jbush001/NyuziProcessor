@@ -254,14 +254,7 @@ int read_hex_file(const char *filename, uint32_t *memory, uint32_t memory_size)
                         return -1;
                     }
 
-                    if (number_value % 4 != 0)
-                    {
-                        fprintf(stderr, "read_hex_file: address not aligned in line %d\n", line_num);
-                        fclose(file);
-                        return -1;
-                    }
-
-                    address = number_value / 4;
+                    address = number_value;
                     push_back_char = ch;
                     state = SCAN_SPACE;
                 }

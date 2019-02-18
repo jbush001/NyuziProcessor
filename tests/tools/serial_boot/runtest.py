@@ -364,12 +364,6 @@ def ping_timeout(*unused):
 
 
 @test_harness.test(['emulator'])
-def address_unaligned(*unused):
-    with SerialLoader('address-unaligned-hex.txt') as loader:
-        loader.expect_error('read_hex_file: address not aligned in line 2')
-
-
-@test_harness.test(['emulator'])
 def invalid_character(*ignored):
     with SerialLoader('invalid-character-hex.txt') as loader:
         loader.expect_error('read_hex_file: Invalid character ! in line 4')

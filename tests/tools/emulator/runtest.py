@@ -92,11 +92,6 @@ def address_out_of_range(*ignored):
                         'read_hex_file: address out of range in line 2')
 
 @test_harness.test(['emulator'])
-def address_unaligned(*ignored):
-    test_emulator_error(['address_unaligned.data'],
-                        'read_hex_file: address not aligned in line 2')
-
-@test_harness.test(['emulator'])
 def invalid_character(*ignored):
     test_emulator_error(
         ['bad_character.data'], 'read_hex_file: Invalid character ! in line 4')
