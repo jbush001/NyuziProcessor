@@ -47,10 +47,13 @@ following:
 
     xcode-select --install
 
-Install MacPorts from https://www.macports.org/install.php, then use it to install
-the remaining packages from the terminal:
+Install Homebrew from https://brew.sh/, then use it to install the remaining packages
+from the terminal (do *not* use sudo):
 
-    sudo port install cmake bison swig swig-python imagemagick libsdl2 curl emacs
+    brew install cmake bison swig imagemagick sdl2 emacs ninja
+
+*This will also work with MacPorts if that is installed on your system, but
+you will need to tweak the package names*
 
 You may optionally install [GTKWave](http://gtkwave.sourceforge.net/) for analyzing
 waveform files.
@@ -76,7 +79,7 @@ The following script will download and install the
 Although some Linux package managers have Verilator, they have old versions.
 It will ask for your root password a few times to install stuff.
 
-    scripts/setup_tools.sh
+    ./scripts/setup_tools.sh
 
 Build everything else:
 
@@ -103,12 +106,13 @@ Occasionally a change will require a new version of the compiler. To rebuild:
 ## Next Steps
 
 Sample applications are available in [software/apps](software/apps). You can
-run these in the emulator by typing 'make run' (some need 3rd party data
-files, details are in the READMEs in those directories).
+run these in the emulator by switching to the build directory and using
+the run_emulator script (some need 3rd party data files, details are in
+the READMEs in those directories).
 
 For example, this will render a 3D model in the emulator:
 
-    cd software/apps/sceneview
+    cd build/software/apps/sceneview
     ./run_emulator
 
 To run on FPGA, see instructions in hardware/fpga/de2-115/README.md
