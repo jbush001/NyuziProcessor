@@ -52,18 +52,10 @@ from the terminal (do *not* use sudo):
 
     brew install cmake bison swig imagemagick sdl2 emacs ninja
 
-*This will also work with MacPorts if that is installed on your system, but
-you will need to tweak the package names*
+*Alternatively, you could use [MacPorts](https://www.macports.org/) if that is installed on your system, but you will need to change some of the package names*
 
 You may optionally install [GTKWave](http://gtkwave.sourceforge.net/) for analyzing
 waveform files.
-
-Many LLVM tools will fail to build if their dependent packages are too old. If
-you haven't updated MacPorts in a while, you may need to update to get newer
-packages:
-
-    sudo port selfupdate
-    sudo port upgrade outdated
 
 ### Windows
 
