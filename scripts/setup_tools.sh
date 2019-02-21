@@ -58,10 +58,10 @@ if [ ! -d tools/NyuziToolchain/Makefile ]; then
 	# created, cmake will reconfigure on its own if necessary when make is
 	# invoked.
 	cd tools/NyuziToolchain/build
-	cmake -DCMAKE_BUILD_TYPE=Release .. || fail "Error configuring toolchain"
+	cmake -G Ninja -DCMAKE_BUILD_TYPE=Release .. || fail "Error configuring toolchain"
 else
 	cd tools/NyuziToolchain/build
 fi
 
-make || fail "Error building toolchain"
-sudo make install || fail "Error installing toolchain"
+ninja || fail "Error building toolchain"
+sudo ninja install || fail "Error installing toolchain"
