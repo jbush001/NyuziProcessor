@@ -97,6 +97,10 @@ module test_l2_cache_wait_state(input clk, input reset);
                     assert(!axi_bus.m_wvalid);
                     assert(axi_bus.m_arvalid);
 
+                    // Ensure these are stable
+                    assert(axi_bus.m_araddr == ADDR0 * CACHE_LINE_BYTES);
+                    assert(axi_bus.m_arlen == 15);
+
                     if (wait_count == 0)
                     begin
                         axi_bus.s_arready <= 1;
@@ -202,6 +206,7 @@ module test_l2_cache_wait_state(input clk, input reset);
                     if (axi_bus.m_awvalid)
                     begin
                         assert(axi_bus.m_awaddr == ADDR0 * CACHE_LINE_BYTES);
+                        assert(axi_bus.m_awlen == 15);
                         state <= state + 1;
                         wait_count <= DELAY;
                     end
@@ -214,6 +219,10 @@ module test_l2_cache_wait_state(input clk, input reset);
                     assert(!axi_bus.m_wvalid);
                     assert(!axi_bus.m_arvalid);
                     assert(axi_bus.m_awvalid);
+
+                    // Ensure these are stable
+                    assert(axi_bus.m_awaddr == ADDR0 * CACHE_LINE_BYTES);
+                    assert(axi_bus.m_awlen == 15);
 
                     if (wait_count == 0)
                     begin
@@ -251,6 +260,8 @@ module test_l2_cache_wait_state(input clk, input reset);
                         axi_bus.s_wready <= 0;
                         wait_count <= wait_count - 1;
                     end
+
+                    assert(axi_bus.m_wlast == (axi_burst_offset == 15));
 
                     if (axi_bus.m_wvalid && axi_bus.s_wready)
                     begin

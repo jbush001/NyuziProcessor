@@ -142,6 +142,11 @@ module soc_tb(
         .jtag(target_jtag),
         .*);
 
+    axi_protocol_checker axi_protocol_checker(
+        .clk(clk),
+        .reset(reset),
+        .axi_bus(axi_bus_m[0]));
+
     //
     // AXI buses/memory subsystem
     //

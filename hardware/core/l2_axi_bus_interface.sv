@@ -363,8 +363,7 @@ module l2_axi_bus_interface(
             axi_bus.m_awvalid <= state_nxt == STATE_WRITE_ISSUE_ADDRESS;
             axi_bus.m_wvalid <= state_nxt == STATE_WRITE_TRANSFER;
             axi_bus.m_wlast <= state_nxt == STATE_WRITE_TRANSFER
-                && axi_bus.s_wready
-                && burst_offset_ff == BURST_OFFSET_WIDTH'(BURST_BEATS) - 2;
+                && burst_offset_nxt == BURST_OFFSET_WIDTH'(BURST_BEATS - 1);
             l2bi_perf_l2_writeback <= enqueue_writeback_request
                 && !writeback_fifo_almost_full;
         end
