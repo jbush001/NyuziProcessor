@@ -95,6 +95,8 @@ static inline bool can_read_file_descriptor(int fd)
 
     do
     {
+        // The read_fds will be signaled when read will not block,
+        // including error conditions.
         FD_ZERO(&read_fds);
         FD_SET(fd, &read_fds);
         timeout.tv_sec = 0;

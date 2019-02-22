@@ -36,7 +36,7 @@
 #include "sdmmc.h"
 #include "util.h"
 
-extern void poll_inputs(struct processor*);
+void poll_inputs(struct processor*);
 
 static int recv_interrupt_fd = -1;
 static int send_interrupt_fd = -1;
@@ -75,37 +75,26 @@ static uint32_t parse_num_arg(const char *argval)
 // Check for input events that would normally block.
 void poll_inputs(struct processor *proc)
 {
-    int result;
     char interrupt_id;
 
     // An external process can send interrupts to the emulator by writing to a
     // named pipe. Poll the pipe to determine if any messages are pending. If
     // so, call into the processor to dispatch.
-    if (recv_interrupt_fd > 0)
+    if (recv_interrupt_fd > 0 && can_read_file_descriptor(recv_interrupt_fd))
     {
-        result = can_read_file_descriptor(recv_interrupt_fd);
-        if (result != 0)
+        if (read(recv_interrupt_fd, &interrupt_id, 1) < 1)
         {
-            if (result < 0)
-            {
-                perror("poll_inputs: select failed");
-                exit(1);
-            }
-
-            if (read(recv_interrupt_fd, &interrupt_id, 1) < 1)
-            {
-                perror("poll_inputs: read failed");
-                exit(1);
-            }
-
-            if (interrupt_id > 16)
-            {
-                fprintf(stderr, "Received invalidate interrupt ID %d\n", interrupt_id);
-                return; // Ignore invalid interrupt IDs
-            }
-
-            raise_interrupt(proc, 1 << interrupt_id);
+            perror("poll_inputs: read failed");
+            exit(1);
         }
+
+        if (interrupt_id > 16)
+        {
+            fprintf(stderr, "Received invalidate interrupt ID %d\n", interrupt_id);
+            return; // Ignore invalid interrupt IDs
+        }
+
+        raise_interrupt(proc, 1 << interrupt_id);
     }
 
     // Typing in the terminal that launched emulator will emulate serial
