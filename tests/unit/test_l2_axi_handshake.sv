@@ -20,6 +20,7 @@ import defines::*;
 
 //
 // Ensure L2 respects ready/valid signals.
+// Spec references are from AMBA AXI and ACE Protocol Specification, rev E, A3.4.1
 //
 
 module test_l2_cache_wait_state(input clk, input reset);
@@ -65,6 +66,8 @@ module test_l2_cache_wait_state(input clk, input reset);
                 ///////////////////////////////////////////////////
                 // Start read transaction
                 ///////////////////////////////////////////////////
+
+                // Send a request packet to the L2 cache
                 0:
                 begin
                     l2i_request_valid <= 1;
@@ -73,7 +76,7 @@ module test_l2_cache_wait_state(input clk, input reset);
                     state <= state + 1;
                 end
 
-                // Wait for read address
+                // Wait for read address to be asserted on the AXI bus.
                 1:
                 begin
                     assert(!l2_response_valid);
@@ -90,14 +93,21 @@ module test_l2_cache_wait_state(input clk, input reset);
                 end
 
                 // Wait to assert arready.
+                // A3.2.2 "A source is not permitted to wait until READY is asserted before
+                // asserting VALID."
                 2:
                 begin
                     assert(!l2_response_valid);
                     assert(!axi_bus.m_awvalid);
                     assert(!axi_bus.m_wvalid);
+
+                    // A3.2.1 "Once VALID is asserted it must remain asserted until the
+                    // handshake occurs"
                     assert(axi_bus.m_arvalid);
 
                     // Ensure these are stable
+                    // A3.2.1 "...the source must keep its information stable until the transfer
+                    // occurs..."
                     assert(axi_bus.m_araddr == ADDR0 * CACHE_LINE_BYTES);
                     assert(axi_bus.m_arlen == 15);
 
@@ -118,7 +128,8 @@ module test_l2_cache_wait_state(input clk, input reset);
                     state <= state + 1;
                 end
 
-                // Read transfer. Assert rvalid periodically.
+                // Read transfer. Assert rvalid periodically. Ensure nothing
+                // is transferred when it is not asserted.
                 4:
                 begin
                     assert(!l2_response_valid);
@@ -148,7 +159,8 @@ module test_l2_cache_wait_state(input clk, input reset);
                     end
                 end
 
-                // Check response, ensure data was transferred properly
+                // Check response packet from cache to pipeline to ensure data
+                // was transferred properly.
                 5:
                 begin
                     if (l2_response_valid)
@@ -195,7 +207,7 @@ module test_l2_cache_wait_state(input clk, input reset);
                     state <= state + 1;
                 end
 
-                // wait for write address
+                // Wait for write address on AXI bus
                 9:
                 begin
                     l2i_request_valid <= 0;
@@ -212,15 +224,21 @@ module test_l2_cache_wait_state(input clk, input reset);
                     end
                 end
 
-                // wait to assert awready
+                // Wait for cache to assert awready
+                // As above, the master must not wait for awready to be asserted.
                 10:
                 begin
                     assert(!l2_response_valid);
                     assert(!axi_bus.m_wvalid);
                     assert(!axi_bus.m_arvalid);
+
+                    // A3.2.1 "Once VALID is asserted it must remain asserted until the
+                    // handshake occurs"
                     assert(axi_bus.m_awvalid);
 
                     // Ensure these are stable
+                    // A3.2.1 "...the source must keep its information stable until the transfer
+                    // occurs..."
                     assert(axi_bus.m_awaddr == ADDR0 * CACHE_LINE_BYTES);
                     assert(axi_bus.m_awlen == 15);
 
@@ -261,6 +279,8 @@ module test_l2_cache_wait_state(input clk, input reset);
                         wait_count <= wait_count - 1;
                     end
 
+                    // A3.2.2 "The master must assert the WLAST signal while
+                    // it is driving the final write transfer in the burst."
                     assert(axi_bus.m_wlast == (axi_burst_offset == 15));
 
                     if (axi_bus.m_wvalid && axi_bus.s_wready)
@@ -283,7 +303,8 @@ module test_l2_cache_wait_state(input clk, input reset);
                     if (l2_response_valid)
                     begin
                         assert(l2_response.packet_type == L2RSP_FLUSH_ACK);
-                        // XXX the address isn't set.
+                        // The address isn't set in the response packet, so don't
+                        // need to check it.
                         state <= state + 1;
                     end
                 end
