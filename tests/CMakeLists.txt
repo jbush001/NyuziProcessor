@@ -14,8 +14,10 @@
 # limitations under the License.
 #
 
-# This is is written in-tree rather than in the build directory so the test
-# harness to find it.
+# Write the test configuration file. This is ready by test_harness.py
+# to find paths of its dependencies. It is is written in the source
+# directory rather than in the build directory so the test harness
+# can find it even if this is an out-of-tree build.
 configure_file(tests.conf.in ${CMAKE_CURRENT_SOURCE_DIR}/tests.conf)
 
 add_subdirectory(fpga/blinky)
@@ -50,6 +52,9 @@ set(py_test_dirs
     render/texture)
 
 # This is called 'tests' because 'test' is reserved by cmake.
+# I'm not using ctest/add_test here, as I ran into some issues that
+# I can't remember now. But it may be worth exploring (or at
+# least documenting) later.
 add_custom_target(tests)
 foreach (dir ${py_test_dirs})
     add_custom_command(TARGET tests

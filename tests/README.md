@@ -74,8 +74,9 @@ Tests can also be added manually with several convenience functions:
 
     test_harness.register_tests(my_test_func, ['my_test'], ['emulator'])
 
-At the bottom of each runtests.py, call into test_harness to invoke all tests that
-are enabled:
+runtests.py should not run any tests directly when the script is invoked, but
+only register them. At the bottom of each runtests.py, call into test_harness
+to invoke all tests that are enabled:
 
     test_harness.execute_tests()
 
@@ -96,8 +97,9 @@ on the output of the program. For example:
 
     printf("s1a 0x%08x\n", s1.a); // CHECK: s1a 0x12345678
 
-If you'd like to add additional debugging output to a test, check the global DEBUG
-flag, which will be set to true if the user adds --debug to the command line.
+If you'd like to add additional output to a test to debug failures or the
+test configuration, check the  test_harness.DEBUG flag, which will be set to true
+if the user adds --debug to the command line.
 
 # Test Approach
 

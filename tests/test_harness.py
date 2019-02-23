@@ -36,7 +36,9 @@ PROJECT_TOP = os.path.normpath(
     os.path.dirname(os.path.abspath(__file__)) + '/../')
 TEST_DIR = PROJECT_TOP + '/tests/'
 
-# Read configuration file
+# Read configuration file. This is written by the build system.
+# It contains paths to dependencies of the tests, and allows
+# them to operate no matter where the build directory is.
 config = configparser.ConfigParser()
 config.read(TEST_DIR + 'tests.conf')
 default_config = config['DEFAULT']
