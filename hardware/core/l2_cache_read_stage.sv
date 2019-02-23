@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-`include "defines.sv"
+`include "defines.svh"
 
 import defines::*;
 
@@ -135,9 +135,10 @@ module l2_cache_read_stage(
         .one_hot(hit_way_oh),
         .index(hit_way_idx));
 
-    // If this is a fill, read the old (potentially dirty line) so it can be written back.
-    // If it is a cache hit, read the line data.
-    assign read_address = {(l2t_l2_fill ? l2t_fill_way : hit_way_idx), l2t_request.address.set_idx};
+    // If this is a fill, read the old (potentially dirty line) so it
+    // can be written back. If it is a cache hit, read the line data.
+    assign read_address = {(l2t_l2_fill ? l2t_fill_way : hit_way_idx),
+        l2t_request.address.set_idx};
 
     //
     // Cache memory

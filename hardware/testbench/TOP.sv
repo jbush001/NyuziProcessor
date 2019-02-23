@@ -6,7 +6,7 @@
 // Simulate with +initreg+0 to initialize to 0
 // Simulate with +initreg+0 to initialize to 1
 
-`include "defines.sv"
+`include "defines.svh"
 
 import defines::*;
 

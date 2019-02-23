@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-`include "defines.sv"
+`include "defines.svh"
 
 import defines::*;
 
@@ -334,10 +334,6 @@ module soc_tb(
             end
         end
     end
-
-    //
-    // Simulator option/execution handling
-    //
 
     trace_logger trace_logger(
         .wb_writeback_en(`CORE0.wb_writeback_en),

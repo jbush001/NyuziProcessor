@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-`include "defines.sv"
+`include "defines.svh"
 
 import defines::*;
 
@@ -30,7 +30,8 @@ import defines::*;
 // virtually indexed and physically tagged: the tag memories contain physical
 // addresses, translated by the TLB.
 //
-// Snoop addresses from the l1_l2_interface are physical addresses, but the
+// This also performs snoops from the l1_l2_interface when there are writes
+// from this or other cores. Snoop addresses are physical addresses, but the
 // tag memory is virtually indexed. To avoid aliasing, the size of a way must
 // be the same size or smaller than a virtual page
 // (cache line size * num sets <= page_size).

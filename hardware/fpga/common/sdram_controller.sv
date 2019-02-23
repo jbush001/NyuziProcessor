@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-`include "defines.sv"
+`include "defines.svh"
 
 import defines::*;
 
@@ -147,10 +147,10 @@ module sdram_controller
         .almost_empty(),
         .almost_full(),
         .empty(lfifo_empty),
-        .value_i(dram_dq),
+        .enqueue_value(dram_dq),
         .enqueue_en(lfifo_enqueue),
         .dequeue_en(axi_bus.m_rready && axi_bus.s_rvalid),
-        .value_o(axi_bus.s_rdata));
+        .dequeue_value(axi_bus.s_rdata));
 
     sync_fifo #(.WIDTH(DATA_WIDTH), .SIZE(SDRAM_BURST_LENGTH)) store_fifo(
         .clk(clk),
@@ -159,9 +159,9 @@ module sdram_controller
         .full(sfifo_full),
         .almost_empty(),
         .almost_full(),
-        .value_o(write_data),
+        .dequeue_value(write_data),
         .dequeue_en(output_enable),
-        .value_i(axi_bus.m_wdata),
+        .enqueue_value(axi_bus.m_wdata),
         .enqueue_en(axi_bus.s_wready && axi_bus.m_wvalid),
         .empty());
 

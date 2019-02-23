@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-`include "defines.sv"
+`include "defines.svh"
 
 import defines::*;
 
@@ -94,8 +94,8 @@ module vga_controller
         .almost_full(),
         .empty(pixel_fifo_empty),
         .almost_empty(pixel_fifo_almost_empty),
-        .value_o({vga_r, vga_g, vga_b}),
-        .value_i(axi_bus.s_rdata[31:8]),
+        .dequeue_value({vga_r, vga_g, vga_b}),
+        .enqueue_value(axi_bus.s_rdata[31:8]),
         .enqueue_en(axi_bus.s_rvalid),
         .full(),
         .dequeue_en(pixel_en && in_visible_region && !pixel_fifo_empty));

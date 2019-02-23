@@ -14,13 +14,14 @@
 // limitations under the License.
 //
 
-`include "defines.sv"
+`include "defines.svh"
 
 import defines::*;
 
 //
-// The scoreboard tracks register dependencies betwen instructions.
-// For example, if we issued the following instructions in sequence:
+// The scoreboard tracks register dependencies betwen instructions
+// issued by the same thread. For example, if a thread issued the
+// following instructions in sequence:
 //
 //   add_i s0, s1, s2
 //   add_i s3, s0, s4
@@ -68,7 +69,8 @@ module scoreboard(
     scoreboard_bitmap_t clear_bitmap;
     scoreboard_bitmap_t set_bitmap;
 
-    // Rollback registers. Why not just clear the entire scoreboard?
+    // Handle rollback for a thread (for example, if it takes a branch)
+    // Why not just clear the entire scoreboard?
     // - Instructions in the floating point pipeline *after* the stage that
     //   issues the rollback should still retire (thus their destinations
     //   are still pending).

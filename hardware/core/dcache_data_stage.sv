@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-`include "defines.sv"
+`include "defines.svh"
 
 import defines::*;
 
@@ -622,4 +622,3 @@ module dcache_data_stage(
         end
     end
 endmodule
-

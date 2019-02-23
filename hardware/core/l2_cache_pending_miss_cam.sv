@@ -14,13 +14,13 @@
 // limitations under the License.
 //
 
-`include "defines.sv"
+`include "defines.svh"
 
 import defines::*;
 
 //
 // Tracks pending cache misses (fills) in the L2 cache pipeline.
-// This module avoids duplicate loads/stores in the system memory request
+// This module detects duplicate loads/stores in the system memory request
 // queue. These not only waste memory bandwidth, but can cause data to be
 // overwritten.
 //
@@ -30,8 +30,9 @@ import defines::*;
 // another transaction for that line is pending.
 //
 // The pending miss for the line may be anywhere in the L2 pipeline,
-// not just the SMI queue. Because of this, QUEUE_SIZE must be >= the number of
-// entries in the system memory request queue + the number of pipeline stages.
+// not just the l2 bus interface. Because of this, QUEUE_SIZE must be greater
+// than or equal to the number of entries in the bus interface request queue
+// + the number of pipeline stages.
 //
 
 module l2_cache_pending_miss_cam
@@ -87,4 +88,3 @@ module l2_cache_pending_miss_cam
             empty_entries[next_empty] <= 1'b0;
     end
 endmodule
-

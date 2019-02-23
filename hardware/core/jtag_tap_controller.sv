@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-`include "defines.sv"
+`include "defines.svh"
 
 import defines::*;
 
@@ -189,8 +189,8 @@ module jtag_tap_controller
             state_ff <= JTAG_RESET;
             /*AUTORESET*/
             // Beginning of autoreset for uninitialized flops
-            jtag_instruction <= '0;
             jtag.tdo <= '0;
+            jtag_instruction <= '0;
             last_tck <= '0;
             // End of automatics
         end

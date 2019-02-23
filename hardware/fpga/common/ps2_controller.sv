@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-`include "defines.sv"
+`include "defines.svh"
 
 import defines::*;
 
@@ -72,11 +72,11 @@ module ps2_controller
         .full(),
         .almost_full(fifo_almost_full),
         .enqueue_en(enqueue_en),
-        .value_i(receive_byte),
+        .enqueue_value(receive_byte),
         .empty(read_fifo_empty),
         .almost_empty(),
         .dequeue_en((io_bus.read_en && io_bus.address == DATA_REG && !read_fifo_empty) || fifo_almost_full),
-        .value_o(dequeue_data),
+        .dequeue_value(dequeue_data),
         .*);
 
     always @(posedge clk, posedge reset)

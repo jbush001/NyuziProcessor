@@ -52,7 +52,7 @@ line arguments (Verilog prefixes arguments with a plus sign):
 | +memdumplen=*length*            | Number of bytes of memory to dump (hexadecimal) |
 | +autoflushl2                    | Copy dirty data in the L2 cache to system memory at the end of simulation before writing to file (used with +memdump...) |
 | +profile=*filename*             | Periodically write the program counters to a file. Use with tools/misc/profile.py |
-| +block=*filename*               | Read file into virtual block device, which it exposes as a virtual SD/MMC device.<sup>1</sup>
+| +block=*filename*               | Read file into virtual block device, which it exposes as a virtual SD/MMC device.
 | +randomize=*\[1\|0\]*              | Randomize initial register and memory values. Used to verify reset handling. Defaults to on.
 | +randseed=*seed*                | If randomization is enabled, set the seed for the random number generator.
 | +dumpmems                       | Dump the sizes of all internal FIFOs and SRAMs to standard out and exit. Used by tools/misc/extract_mems.py |
@@ -70,12 +70,12 @@ From the build directory:
    cmake -DDUMP_WAVEFORM=1 .
    make
 
-The simulator writes a file called `trace.vcd` in
+With this enabled, the simulator writes a file called `trace.vcd` in
 "[value change dump](http://en.wikipedia.org/wiki/Value_change_dump)"
 format in the current working directory. This can be with a waveform
 viewer like [GTKWave](http://gtkwave.sourceforge.net/).
-Waveform files get enormous quickly. Even running a minute of simulation will
-produce gigabytes of trace data. A trick to reduce the size is to use
+Waveform files become enormous quickly. Even running a minute of simulation
+will produce gigabytes of trace data. A trick to reduce the size is to use
 verilator pragmas to selectively disable tracing for modules. Working in
 hardware/testbench/soc_tb.sv, start by disabling all tracing:
 
@@ -100,8 +100,9 @@ rebuild.
 ### Support for VCS
 
 Template scripts have been added to support building and running with
-[VCS](https://www.synopsys.com/verification/simulation/vcs.html).
-The VCS scripts are located in the scripts/ directory.
+
+Synposys [VCS](https://www.synopsys.com/verification/simulation/vcs.html)
+simulator. The VCS scripts are located in the scripts/ directory.
 
 vcsbuild.pl requires no arguments and builds the model. It will create an
 executable named simv and two support directories csrc and simv.daidir all located

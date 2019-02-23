@@ -120,9 +120,9 @@ module uart
         .almost_full(rx_fifo_full),
         .full(),
         .empty(rx_fifo_empty),
-        .value_o({rx_fifo_frame_error, rx_fifo_char}),
+        .dequeue_value({rx_fifo_frame_error, rx_fifo_char}),
         .enqueue_en(rx_char_valid),
         .flush_en(1'b0),
-        .value_i({rx_frame_error, rx_char}),
+        .enqueue_value({rx_frame_error, rx_char}),
         .dequeue_en(rx_fifo_read || rx_fifo_overrun_dq));
 endmodule

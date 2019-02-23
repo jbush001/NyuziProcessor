@@ -14,28 +14,29 @@
 // limitations under the License.
 //
 
-`include "defines.sv"
+`include "defines.svh"
 
 import defines::*;
 
 //
-// L2 AXI Bus Interface
+// L2 Bus Interface
 // Receives L2 cache misses and writeback requests from the L2 pipeline and
-// controls AXI system memory interface to fulfill them. When fills complete,
+// drives system memory interface to fulfill them. When fills complete,
 // this reissues them to the L2 pipeline via the arbiter.
 //
-// If this is already handling the request for a line, it set a flag that
-// causes it to reissue the request to the L2 pipeline, but doesn't read
-// or write system memory.
+// If a load miss is already pending for a line, this set a flag on the FIFO
+// entry that will skip the load. It will, however, still reissue it to the
+// L2 pipeline.
 //
 // The interface to system memory is the AMBA AXI interface.
 // http://www.arm.com/products/system-ip/amba-specifications.php
 //
 // I've tried to keep all bus logic consolidated in this module to make it
-// easier to swap this out for other bus implementations.
+// easier to swap this out for other bus implementations (eg Wishbone).
 //
-// XXX This does not overlap address and data phases, but it should to improve
-// bus utilization.
+// Todo: This should issue the address for the next bus transaction before it
+// has finished the previous data transfer to improve utilization, especially
+// in systems with larger memory latency.
 //
 
 module l2_axi_bus_interface(
@@ -148,11 +149,11 @@ module l2_axi_bus_interface(
         .flush_en(1'b0),
         .almost_full(writeback_fifo_almost_full),
         .enqueue_en(enqueue_writeback_request),
-        .value_i(writeback_fifo_in),
+        .enqueue_value(writeback_fifo_in),
         .almost_empty(),
         .empty(writeback_fifo_empty),
         .dequeue_en(writeback_complete),
-        .value_o(writeback_fifo_out),
+        .dequeue_value(writeback_fifo_out),
         .full(/* ignore */));
 
     assign writeback_address = writeback_fifo_out.address;
@@ -168,11 +169,11 @@ module l2_axi_bus_interface(
         .flush_en(1'b0),
         .almost_full(fill_queue_almost_full),
         .enqueue_en(enqueue_fill_request),
-        .value_i({duplicate_request, l2r_request}),
+        .enqueue_value({duplicate_request, l2r_request}),
         .empty(fill_queue_empty),
         .almost_empty(),
         .dequeue_en(fill_dequeue_en),
-        .value_o({l2bi_collided_miss, lmq_out_request}),
+        .dequeue_value({l2bi_collided_miss, lmq_out_request}),
         .full(/* ignore */));
 
     // Stop accepting new L2 packets until space is available in the queues
@@ -306,8 +307,8 @@ module l2_axi_bus_interface(
     generate
         for (writeback_lane = 0; writeback_lane < BURST_BEATS; writeback_lane++)
         begin : writeback_lane_gen
-            assign writeback_lanes[writeback_lane] = writeback_data[writeback_lane * `AXI_DATA_WIDTH+:
-                `AXI_DATA_WIDTH];
+            assign writeback_lanes[writeback_lane] = writeback_data[
+                writeback_lane * `AXI_DATA_WIDTH+:`AXI_DATA_WIDTH];
         end
     endgenerate
 

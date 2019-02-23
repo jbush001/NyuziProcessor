@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-`ifndef __DEFINES_SV
-`define __DEFINES_SV
+`ifndef __DEFINES_SVH
+`define __DEFINES_SVH
 
 `include "config.sv"
 

@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-`include "defines.sv"
+`include "defines.svh"
 
 import defines::*;
 
@@ -25,15 +25,15 @@ import defines::*;
 //   queued.
 // - almost_empty asserts when there are ALMOST_EMPTY_THRESHOLD or fewer
 //   entries queued.
-// - almost_full asserts when full is asserted, as does almost_empty
+// - almost_full is still asserted when full is asserted, as is almost_empty
 //   when empty is asserted.
 // - flush takes precedence over enqueue/dequeue if it is asserted
 //   simultaneously. It is synchronous, unlike reset.
 // - It is not legal to assert enqueue when the FIFO is full or dequeue when it
-//   is empty  (The former is true even if there is a dequeue and enqueue in the
+//   is empty (The former is true even if there is a dequeue and enqueue in the
 //   same cycle, which wouldn't change the count). Doing this will trigger an
 //   error in the simulator and have incorrect behavior in synthesis.
-// - value_o will contain the next value to be dequeued even if dequeue_en is
+// - dequeue_value will contain the next value to be dequeued even if dequeue_en is
 //   not asserted.
 //
 
@@ -49,11 +49,11 @@ module sync_fifo
     output logic                 full,
     output logic                 almost_full,
     input                        enqueue_en,
-    input [WIDTH - 1:0]          value_i,
+    input [WIDTH - 1:0]          enqueue_value,
     output logic                 empty,
     output logic                 almost_empty,
     input                        dequeue_en,
-    output logic[WIDTH - 1:0]    value_o);
+    output logic[WIDTH - 1:0]    dequeue_value);
 
 `ifdef VENDOR_ALTERA
     SCFIFO #(
@@ -67,10 +67,10 @@ module sync_fifo
         .almost_empty(almost_empty),
         .almost_full(almost_full),
         .clock(clk),
-        .data(value_i),
+        .data(enqueue_value),
         .empty(empty),
         .full(full),
-        .q(value_o),
+        .q(dequeue_value),
         .rdreq(dequeue_en),
         .sclr(flush_en),
         .wrreq(enqueue_en));
@@ -93,7 +93,7 @@ module sync_fifo
     assign almost_empty = count <= (ADDR_WIDTH + 1)'(ALMOST_EMPTY_THRESHOLD);
     assign full = count == SIZE;
     assign empty = count == 0;
-    assign value_o = data[head];
+    assign dequeue_value = data[head];
 
     always_ff @(posedge clk, posedge reset)
     begin
@@ -117,7 +117,7 @@ module sync_fifo
                 begin
                     assert(!full);
                     tail <= tail + 1;
-                    data[tail] <= value_i;
+                    data[tail] <= enqueue_value;
                 end
 
                 if (dequeue_en)

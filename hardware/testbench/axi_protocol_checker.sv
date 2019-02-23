@@ -14,10 +14,11 @@
 // limitations under the License.
 //
 
-`include "defines.sv"
+`include "defines.svh"
 
 import defines::*;
 
+// Ensure AXI protocol transactions conform to the specification.
 // This primarily validates the master. It assumes only one transaction
 // is outstanding.
 module axi_protocol_checker(

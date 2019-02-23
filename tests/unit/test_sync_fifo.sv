@@ -31,11 +31,11 @@ module test_sync_fifo(input clk, input reset);
     logic full;
     logic almost_full;
     logic enqueue_en;
-    logic [WIDTH - 1:0] value_i;
+    logic [WIDTH - 1:0] enqueue_value;
     logic empty;
     logic almost_empty;
     logic dequeue_en;
-    logic[WIDTH - 1:0] value_o;
+    logic[WIDTH - 1:0] dequeue_value;
     enum {
         FILL1,
         EMPTY1,
@@ -51,7 +51,7 @@ module test_sync_fifo(input clk, input reset);
     int dequeue_index;
     logic[WIDTH - 1:0] values[TOTAL_VALUES];
     int expected_fifo_count;
-    logic[WIDTH - 1:0] expected_value_o;
+    logic[WIDTH - 1:0] expected_dequeue_value;
 
     sync_fifo #(
         .WIDTH(32),
@@ -65,7 +65,7 @@ module test_sync_fifo(input clk, input reset);
         if (reset)
         begin
             expected_fifo_count <= 0;
-            expected_value_o <= 0;
+            expected_dequeue_value <= 0;
             enqueue_index <= 0;
             dequeue_index <= 0;
             for (int i = 0; i < TOTAL_VALUES; i++)
@@ -82,7 +82,7 @@ module test_sync_fifo(input clk, input reset);
             assert(almost_empty == expected_fifo_count <= ALMOST_EMPTY_THRESHOLD);
             assert(full == 1'(expected_fifo_count == FIFO_SIZE));
             assert(empty == 1'(expected_fifo_count == 0));
-            assert(expected_fifo_count == 0 || value_o == expected_value_o);
+            assert(expected_fifo_count == 0 || dequeue_value == expected_dequeue_value);
 
             if (flush_en)
                 expected_fifo_count <= 0;
@@ -94,12 +94,12 @@ module test_sync_fifo(input clk, input reset);
             if (dequeue_en)
             begin
                 dequeue_index <= dequeue_index + 1;
-                expected_value_o <= values[dequeue_index];
+                expected_dequeue_value <= values[dequeue_index];
             end
 
             if (enqueue_en)
             begin
-                value_i <= values[enqueue_index];
+                enqueue_value <= values[enqueue_index];
                 enqueue_index <= enqueue_index + 1;
             end
 

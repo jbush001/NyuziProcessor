@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-`include "defines.sv"
+`include "defines.svh"
 
 import defines::*;
 
@@ -162,4 +162,3 @@ module io_request_queue
     always_ff @(posedge clk)
         ior_read_value <= pending_request[dd_io_thread_idx].value;
 endmodule
-

@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-`include "defines.sv"
+`include "defines.svh"
 
 import defines::*;
 
@@ -125,11 +125,11 @@ module thread_select_stage(
                 .full(),
                 .almost_full(ififo_almost_full),
                 .enqueue_en(enqueue_this_thread),
-                .value_i(id_instruction),
+                .enqueue_value(id_instruction),
                 .empty(ififo_empty),
                 .almost_empty(),
                 .dequeue_en(issue_last_subcycle[thread_idx]),
-                .value_o(thread_instr[thread_idx]),
+                .dequeue_value(thread_instr[thread_idx]),
                 .*);
 
             assign writeback_this_thread = wb_writeback_en

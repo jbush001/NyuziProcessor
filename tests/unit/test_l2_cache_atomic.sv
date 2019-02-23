@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-`include "defines.sv"
+`include "defines.svh"
 
 import defines::*;
 
@@ -222,5 +222,3 @@ module test_l2_cache_atomic(input clk, input reset);
         end
     end
 endmodule
-
-

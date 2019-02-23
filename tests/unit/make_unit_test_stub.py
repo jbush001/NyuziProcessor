@@ -31,7 +31,7 @@ output_file = 'test_' + modulename + '.sv'
 with open(output_file, 'w') as out:
     out.write('''
 
-`include "defines.sv"
+`include "defines.svh"
 
 import defines::*;
 
