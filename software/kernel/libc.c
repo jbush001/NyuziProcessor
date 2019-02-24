@@ -14,6 +14,7 @@
 // limitations under the License.
 //
 
+#include "asm.h"
 #include "libc.h"
 
 #define va_start(AP, LASTARG) __builtin_va_start(AP, LASTARG);
@@ -392,7 +393,7 @@ void panic(const char *format, ...)
 
     putchar('\n');
 
-    *((volatile unsigned int*) 0xffff0104) = 0xffffffff;
+    __builtin_nyuzi_write_control_reg(CR_SUSPEND_THREAD, -1);
 
     while (1);
 }

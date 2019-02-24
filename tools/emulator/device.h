@@ -32,8 +32,6 @@
 #define REG_SD_READ_DATA    0xffff00c4
 #define REG_SD_STATUS       0xffff00c8
 #define REG_SD_CONTROL      0xffff00cc
-#define REG_THREAD_RESUME   0xffff0100
-#define REG_THREAD_HALT     0xffff0104
 #define REG_VGA_ENABLE      0xffff0180
 #define REG_VGA_BASE        0xffff0188
 #define REG_TIMER_INT       0xffff0240

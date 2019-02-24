@@ -49,7 +49,7 @@ void __attribute__((noreturn)) kernel_main(unsigned int _memory_size)
     boot_init_thread();
 
     // Start other threads
-    REGISTERS[REG_THREAD_RESUME] = 0xffffffff;
+    __builtin_nyuzi_write_control_reg(CR_RESUME_THREAD, 0xffffffff);
 
     spawn_kernel_thread("Grim Reaper", grim_reaper, 0);
 
@@ -61,7 +61,7 @@ void __attribute__((noreturn)) kernel_main(unsigned int _memory_size)
         if (list_is_empty(&init_proc->thread_list))
         {
             kprintf("init process has exited, shutting down\n");
-            REGISTERS[REG_THREAD_HALT] = 0xffffffff;
+            __builtin_nyuzi_write_control_reg(CR_SUSPEND_THREAD, 0xffffffff);
         }
 
         reschedule();
@@ -77,4 +77,3 @@ void __attribute__((noreturn)) thread_n_main(void)
     for (;;)
         reschedule();
 }
-

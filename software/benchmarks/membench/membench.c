@@ -27,6 +27,7 @@
 
 #define NUM_THREADS 4
 #define LOOP_UNROLL 16
+#define CR_SUSPEND_THREAD 20
 
 const int TRANSFER_SIZE = 0x200000;
 void * const region_1_base = (void*) 0x200000;
@@ -48,7 +49,7 @@ void end_parallel(void)
     if (get_current_thread_id() == 0)
     {
         // Stop all but me
-        *((unsigned int*) 0xffff0104) = ~1;
+        __builtin_nyuzi_write_control_reg(CR_SUSPEND_THREAD, ~1);
     }
 }
 
@@ -210,5 +211,3 @@ int main(void)
 
     return 0;
 }
-
-

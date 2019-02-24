@@ -38,6 +38,10 @@ module control_registers
     output logic                            cr_supervisor_en[`THREADS_PER_CORE],
     output logic[ASID_WIDTH - 1:0]          cr_current_asid[`THREADS_PER_CORE],
 
+    // To nyuzi
+    output logic[TOTAL_THREADS - 1:0]       cr_suspend_thread,
+    output logic[TOTAL_THREADS - 1:0]       cr_resume_thread,
+
     // To instruction_decode_stage
     output logic[`THREADS_PER_CORE - 1:0]   cr_interrupt_pending,
     output local_thread_bitmap_t            cr_interrupt_en,
@@ -128,6 +132,8 @@ module control_registers
             cr_trap_handler <= '0;
             cycle_count <= '0;
             int_trigger_type <= '0;
+            cr_suspend_thread <= '0;
+            cr_resume_thread <= '0;
         end
         else
         begin
@@ -170,6 +176,9 @@ module control_registers
             //
             // Write logic
             //
+            cr_suspend_thread <= '0;
+            cr_resume_thread <= '0;
+
             if (dd_creg_write_en)
             begin
                 unique case (dd_creg_index)
@@ -186,6 +195,8 @@ module control_registers
                     CR_INTERRUPT_ENABLE:  interrupt_mask[dt_thread_idx] <= dd_creg_write_val[NUM_INTERRUPTS - 1:0];
                     CR_INTERRUPT_TRIGGER: int_trigger_type <= dd_creg_write_val[NUM_INTERRUPTS - 1:0];
                     CR_JTAG_DATA:         jtag_data <= dd_creg_write_val;
+                    CR_SUSPEND_THREAD:    cr_suspend_thread <= dd_creg_write_val[TOTAL_THREADS - 1:0];
+                    CR_RESUME_THREAD:     cr_resume_thread <= dd_creg_write_val[TOTAL_THREADS - 1:0];
                     default:
                         ;
                 endcase

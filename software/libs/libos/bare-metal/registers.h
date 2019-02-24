@@ -38,8 +38,6 @@ enum register_index
     REG_SD_SPI_STATUS       = 0x00c8 / 4,
     REG_SD_SPI_CONTROL      = 0x00cc / 4,
     REG_SD_SPI_CLOCK_DIVIDE = 0x00d0 / 4,
-    REG_THREAD_RESUME       = 0x0100 / 4,
-    REG_THREAD_HALT         = 0x0104 / 4,
     REG_VGA_ENABLE          = 0x0180 / 4,
     REG_VGA_MICROCODE       = 0x0184 / 4,
     REG_VGA_BASE            = 0x0188 / 4,
@@ -53,4 +51,3 @@ enum register_index
     REG_PERF2_VAL           = 0x0218 / 4,
     REG_PERF3_VAL           = 0x021c / 4
 };
-

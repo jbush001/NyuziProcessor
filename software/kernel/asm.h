@@ -37,6 +37,8 @@
 #define CR_INTERRUPT_TRIGGER 17
 #define CR_JTAG_DATA 18
 #define CR_SYSCALL_INDEX 19
+#define CR_SUSPEND_THREAD 20
+#define CR_RESUME_THREAD 21
 
 // Flag register bits
 #define FLAG_INTERRUPT_EN (1 << 0)
@@ -64,5 +66,3 @@
 #define TRAP_FRAME_SIZE 192
 
 #define MAX_ASIDS 64
-
-

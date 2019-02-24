@@ -136,7 +136,9 @@ enum control_register
     CR_INTERRUPT_PENDING = 16,
     CR_INTERRUPT_TRIGGER = 17,
     CR_JTAG_DATA = 18,
-    CR_SYSCALL_INDEX = 19
+    CR_SYSCALL_INDEX = 19,
+    CR_SUSPEND_THREAD = 20,
+    CR_RESUME_THREAD = 21
 };
 
 enum trap_type

@@ -41,6 +41,8 @@
 .set CR_INTERRUPT_TRIGGER, 17
 .set CR_JTAG_DATA, 18
 .set CR_SYSCALL_INDEX, 19
+.set CR_SUSPEND_THREAD, 20
+.set CR_RESUME_THREAD, 21
 
 // Trap types
 .set TT_RESET, 0
@@ -67,29 +69,24 @@
 // Device registers
 .set REG_HOST_INTERRUPT, 0xffff0018
 .set REG_SERIAL_WRITE, 0xffff0048
-.set REG_THREAD_RESUME, 0xffff0100
-.set REG_THREAD_HALT, 0xffff0104
 .set REG_TIMER_COUNT, 0xffff0240
 
 .macro start_all_threads
-                li s0, REG_THREAD_RESUME
-                li s1, 0xffffffff
-                store_32 s1, (s0)
+                li s0, 0xffffffff
+                setcr s0, CR_RESUME_THREAD
 .endm
 
 .macro halt_current_thread
                 getcr s0, CR_CURRENT_THREAD
                 move s1, 1
                 shl s1, s1, s0
-                li s0, REG_THREAD_HALT
-                store_32 s1, (s0)
+                setcr s1, CR_SUSPEND_THREAD
 1:              b 1b
 .endm
 
 .macro halt_all_threads
-                li s0, REG_THREAD_HALT
-                li s1, 0xffffffff
-                store_32 s1, (s0)
+                li s0, 0xffffffff
+                setcr s0, CR_SUSPEND_THREAD
 1:              b 1b
 .endm
 
@@ -146,5 +143,3 @@ passstr:        .ascii "PASS"
                 .byte 4, 0
 
                 .align 4, 0xff
-
-

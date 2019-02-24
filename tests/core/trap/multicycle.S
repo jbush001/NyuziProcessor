@@ -31,9 +31,8 @@ _start:             getcr s0, 0                 // Find my thread ID
                     bnz s0, spinner_thread    // If it is 1, jump to spinner thread
 
                     // Start spinner thread, which is described below
-                    li s0, REG_THREAD_RESUME
                     li s1, 3    // Two threads enabled
-                    store_32 s1, (s0)
+                    setcr s1, CR_RESUME_THREAD
 
                     // Set up interrupts
                     li s24, 2

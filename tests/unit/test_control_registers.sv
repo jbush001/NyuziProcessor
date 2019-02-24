@@ -72,6 +72,8 @@ module test_control_registers(input clk, input reset);
     logic ocd_data_update;
     scalar_t cr_data_to_host;
     syscall_index_t wb_syscall_index;
+    logic[TOTAL_THREADS - 1:0] cr_suspend_thread;
+    logic[TOTAL_THREADS - 1:0] cr_resume_thread;
     int cycle;
 
     control_registers #(
@@ -609,6 +611,58 @@ module test_control_registers(input clk, input reset);
                 171: assert(cr_creg_read_val == JTAG_DATA_VAL1);
 
                 172:
+                begin
+                    write_creg(CR_SUSPEND_THREAD, 32'h5);
+                    assert(cr_suspend_thread == 4'h0);
+                    assert(cr_resume_thread == 4'h0);
+                end
+
+                // wait cycle
+                173:
+                begin
+                    assert(cr_suspend_thread == 4'h0);
+                    assert(cr_resume_thread == 4'h0);
+                end
+
+                174:
+                begin
+                    assert(cr_suspend_thread == 4'h5);
+                    assert(cr_resume_thread == 4'h0);
+                end
+
+                175:
+                begin
+                    assert(cr_suspend_thread == 4'h0);
+                    assert(cr_resume_thread == 4'h0);
+                end
+
+                176:
+                begin
+                    write_creg(CR_RESUME_THREAD, 32'ha);
+                    assert(cr_suspend_thread == 4'h0);
+                    assert(cr_resume_thread == 4'h0);
+                end
+
+                // wait cycle
+                177:
+                begin
+                    assert(cr_suspend_thread == 4'h0);
+                    assert(cr_resume_thread == 4'h0);
+                end
+
+                178:
+                begin
+                    assert(cr_suspend_thread == 4'h0);
+                    assert(cr_resume_thread == 4'ha);
+                end
+
+                179:
+                begin
+                    assert(cr_suspend_thread == 4'h0);
+                    assert(cr_resume_thread == 4'h0);
+                end
+
+                180:
                 begin
                     $display("PASS");
                     $finish;

@@ -17,9 +17,8 @@
 #include "../asm_macros.inc"
 
                 .globl _start
-_start:         li s0, REG_THREAD_RESUME
-                li s1, 3
-                store_32 s1, (s0)
+_start:         li s1, 3
+                setcr s1, CR_RESUME_THREAD
                 getcr s0, CR_CURRENT_THREAD
                 shl s0, s0, 2
                 lea s1, jump_table

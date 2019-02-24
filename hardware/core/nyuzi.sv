@@ -51,6 +51,10 @@ module nyuzi
     scalar_t data_to_host;
     logic[`NUM_CORES - 1:0] core_injected_complete;
     logic[`NUM_CORES - 1:0] core_injected_rollback;
+    logic[`NUM_CORES - 1:0][TOTAL_THREADS - 1:0] core_suspend_thread;
+    logic[`NUM_CORES - 1:0][TOTAL_THREADS - 1:0] core_resume_thread;
+    logic[TOTAL_THREADS - 1:0] thread_suspend_mask;
+    logic[TOTAL_THREADS - 1:0] thread_resume_mask;
 
     /*AUTOLOGIC*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -75,27 +79,23 @@ module nyuzi
     end
 
     // Thread enable
+    always @*
+    begin
+        thread_suspend_mask = '0;
+        thread_resume_mask = '0;
+        for (int i = 0; i < `NUM_CORES; i++)
+        begin
+            thread_suspend_mask |= core_suspend_thread[i];
+            thread_resume_mask |= core_resume_thread[i];
+        end
+    end
+
     always_ff @(posedge clk, posedge reset)
     begin
         if (reset)
             thread_en <= 1;
         else
-        begin
-            if (io_bus.write_en)
-            begin
-                unique case (io_bus.address)
-                    // Thread enable flag handling. This is limited to 32 threads.
-                    'h100: // resume thread
-                        thread_en <= thread_en | io_bus.write_data[TOTAL_THREADS - 1:0];
-
-                    'h104: // halt thread
-                        thread_en <= thread_en & ~io_bus.write_data[TOTAL_THREADS - 1:0];
-
-                    default:
-                        ;
-                endcase
-            end
-        end
+            thread_en <= (thread_en | thread_resume_mask) & ~thread_suspend_mask;
     end
 
     assign processor_halt = thread_en == 0;
@@ -175,6 +175,8 @@ module nyuzi
                 .core_perf_events(perf_events[L2_PERF_EVENTS + CORE_PERF_EVENTS * core_idx+:CORE_PERF_EVENTS]),
                 .injected_complete(core_injected_complete[core_idx]),
                 .injected_rollback(core_injected_rollback[core_idx]),
+                .cr_suspend_thread(core_suspend_thread[core_idx]),
+                .cr_resume_thread(core_resume_thread[core_idx]),
                 .*);
         end
     endgenerate

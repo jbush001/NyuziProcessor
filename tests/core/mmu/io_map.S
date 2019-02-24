@@ -56,6 +56,8 @@ _start:         load_tlb_entries itlb_entries, dtlb_entries
 
                 // halt
                 move s0, -1
+                setcr s0, CR_SUSPEND_THREAD
+
                 store_32 s0, 0x104(s1)
 1:              b 1b
 

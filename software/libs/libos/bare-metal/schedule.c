@@ -18,6 +18,8 @@
 #include "registers.h"
 #include "schedule.h"
 
+#define CR_RESUME_THREAD 21
+
 static parallel_func_t current_func;
 static volatile int current_index;
 static volatile int max_index;
@@ -70,5 +72,5 @@ void worker_thread(void)
 
 void start_all_threads(void)
 {
-    REGISTERS[REG_THREAD_RESUME] = 0xffffffff;
+    __builtin_nyuzi_write_control_reg(CR_RESUME_THREAD, 0xffffffff);
 }

@@ -40,9 +40,9 @@ def load_file(*ignored):
     args = [test_harness.EMULATOR_PATH, '-d', BINARY_OUTPUT + ',0,0x3c', 'valid_file.data']
     subprocess.check_output(args, stderr=subprocess.STDOUT)
     EXPECTED = [
-        0x18fcff4f,
-        0x00100400,
-        0x20fcff0f,
+        0x00fcff0f,
+        0x1400008c,
+        0x000000fc,
         0x20000088,
         0x000000f6,
         0xb56f49f,

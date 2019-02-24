@@ -63,6 +63,10 @@ module core
     input                                  ocd_data_update,
     output scalar_t                        cr_data_to_host,
 
+    // To nyuzi
+    output logic[TOTAL_THREADS - 1:0]      cr_suspend_thread,
+    output logic[TOTAL_THREADS - 1:0]      cr_resume_thread,
+
     // To performance_counters
     output logic [CORE_PERF_EVENTS - 1:0]  core_perf_events);
 

@@ -67,8 +67,7 @@ dtlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT | TLB_SUPERVISOR
                 b 1b                    // Loop for next char
 3:
                 // Exit simulation
-                li s0, 0xffff0104
                 li s1, 0xffffffff
+                setcr s1, CR_SUSPEND_THREAD
 	            store_32 s1, (s0)
 1:	            b 1b
-

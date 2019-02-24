@@ -170,6 +170,10 @@ static void execute_scalar_load_store_inst(struct thread*, uint32_t instruction)
 static void execute_block_load_store_inst(struct thread*, uint32_t instruction);
 static void execute_scatter_gather_inst(struct thread*, uint32_t instruction);
 static void execute_control_register_inst(struct thread*, uint32_t instruction);
+static void read_control_register(struct thread*, uint32_t cr_index,
+                                  uint32_t dst_src_reg);
+static void write_control_register(struct thread*, uint32_t cr_index,
+                                   uint32_t dst_src_reg);
 static void execute_memory_access_inst(struct thread*, uint32_t instruction);
 static void execute_branch_inst(struct thread*, uint32_t instruction);
 static void execute_cache_control_inst(struct thread*, uint32_t instruction);
@@ -1355,12 +1359,7 @@ static void execute_scalar_load_store_inst(struct thread *thread, uint32_t instr
                 if (physical_address >= DEVICE_BASE_ADDRESS)
                 {
                     // IO address range
-                    if (physical_address == REG_THREAD_RESUME)
-                        thread->core->proc->thread_enable_mask |= value_to_store
-                                & ((1ull << thread->core->proc->total_threads) - 1);
-                    else if (physical_address == REG_THREAD_HALT)
-                        thread->core->proc->thread_enable_mask &= ~value_to_store;
-                    else if (physical_address == REG_TIMER_INT)
+                    if (physical_address == REG_TIMER_INT)
                         thread->core->proc->current_timer_count = value_to_store;
                     else
                         write_device_register(physical_address, value_to_store);
@@ -1608,159 +1607,174 @@ static void execute_control_register_inst(struct thread *thread, uint32_t instru
     }
 
     if (extract_unsigned_bits(instruction, 29, 1))
-    {
-        // Load
-        uint32_t value = 0xffffffff;
-
-        switch (cr_index)
-        {
-            case CR_THREAD_ID:
-                value = thread->id;
-                break;
-
-            case CR_TRAP_HANDLER:
-                value = thread->core->trap_handler_pc;
-                break;
-
-            case CR_TRAP_PC:
-                value = thread->saved_trap_state[0].pc;
-                break;
-
-            case CR_TRAP_REASON:
-                value = thread->saved_trap_state[0].trap_cause;
-                break;
-
-            case CR_FLAGS:
-                value = (thread->enable_interrupt ? 1 : 0)
-                        | (thread->enable_mmu ? 2 : 0)
-                        | (thread->enable_supervisor ? 4 : 0);
-                break;
-
-            case CR_SAVED_FLAGS:
-                value = (thread->saved_trap_state[0].enable_interrupt ? 1 : 0)
-                        | (thread->saved_trap_state[0].enable_mmu ? 2 : 0)
-                        | (thread->saved_trap_state[0].enable_supervisor ? 4 : 0);
-                break;
-
-            case CR_CURRENT_ASID:
-                value = thread->asid;
-                break;
-
-            case CR_PAGE_DIR:
-                value = thread->page_dir;
-                break;
-
-            case CR_TRAP_ACCESS_ADDR:
-                value = thread->saved_trap_state[0].access_address;
-                break;
-
-            case CR_CYCLE_COUNT:
-                value = (uint32_t) thread->core->proc->total_instructions;
-                break;
-
-            case CR_TLB_MISS_HANDLER:
-                value = thread->core->tlb_miss_handler_pc;
-                break;
-
-            case CR_SCRATCHPAD0:
-                value = thread->saved_trap_state[0].scratchpad0;
-                break;
-
-            case CR_SCRATCHPAD1:
-                value = thread->saved_trap_state[0].scratchpad1;
-                break;
-
-            case CR_SUBCYCLE:
-                value = thread->saved_trap_state[0].subcycle;
-                break;
-
-            case CR_INTERRUPT_PENDING:
-                value = get_pending_interrupts(thread) & thread->interrupt_mask;
-                break;
-
-            case CR_INTERRUPT_ENABLE:
-                value = thread->interrupt_mask;
-                break;
-
-            case CR_INTERRUPT_TRIGGER:
-                value = thread->core->is_level_triggered;
-                break;
-
-            case CR_SYSCALL_INDEX:
-                value = thread->saved_trap_state[0].syscall_index;
-                break;
-        }
-
-        set_scalar_reg(thread, dst_src_reg, value);
-    }
+        read_control_register(thread, cr_index, dst_src_reg);
     else
+        write_control_register(thread, cr_index, dst_src_reg);
+}
+
+static void read_control_register(struct thread *thread, uint32_t cr_index,
+                                  uint32_t dst_src_reg)
+{
+    uint32_t value = 0xffffffff;
+
+    switch (cr_index)
     {
-        // Store
-        uint32_t value = thread->scalar_reg[dst_src_reg];
-        switch (cr_index)
-        {
-            case CR_TRAP_HANDLER:
-                thread->core->trap_handler_pc = value;
-                break;
+        case CR_THREAD_ID:
+            value = thread->id;
+            break;
 
-            case CR_TRAP_PC:
-                thread->saved_trap_state[0].pc = value;
-                break;
+        case CR_TRAP_HANDLER:
+            value = thread->core->trap_handler_pc;
+            break;
 
-            case CR_FLAGS:
-                thread->enable_interrupt = (value & 1) != 0;
-                thread->enable_mmu = (value & 2) != 0;
-                thread->enable_supervisor = (value & 4) != 0;
+        case CR_TRAP_PC:
+            value = thread->saved_trap_state[0].pc;
+            break;
 
-                // An interrupt may have occurred while interrupts were
-                // disabled.
-                if (thread->enable_interrupt)
-                    try_to_dispatch_interrupt(thread);
+        case CR_TRAP_REASON:
+            value = thread->saved_trap_state[0].trap_cause;
+            break;
 
-                break;
+        case CR_FLAGS:
+            value = (thread->enable_interrupt ? 1 : 0)
+                    | (thread->enable_mmu ? 2 : 0)
+                    | (thread->enable_supervisor ? 4 : 0);
+            break;
 
-            case CR_SAVED_FLAGS:
-                thread->saved_trap_state[0].enable_interrupt = (value & 1) != 0;
-                thread->saved_trap_state[0].enable_mmu = (value & 2) != 0;
-                thread->saved_trap_state[0].enable_supervisor = (value & 4) != 0;
-                break;
+        case CR_SAVED_FLAGS:
+            value = (thread->saved_trap_state[0].enable_interrupt ? 1 : 0)
+                    | (thread->saved_trap_state[0].enable_mmu ? 2 : 0)
+                    | (thread->saved_trap_state[0].enable_supervisor ? 4 : 0);
+            break;
 
-            case CR_CURRENT_ASID:
-                thread->asid = value;
-                break;
+        case CR_CURRENT_ASID:
+            value = thread->asid;
+            break;
 
-            case CR_PAGE_DIR:
-                thread->page_dir = value;
-                break;
+        case CR_PAGE_DIR:
+            value = thread->page_dir;
+            break;
 
-            case CR_TLB_MISS_HANDLER:
-                thread->core->tlb_miss_handler_pc = value;
-                break;
+        case CR_TRAP_ACCESS_ADDR:
+            value = thread->saved_trap_state[0].access_address;
+            break;
 
-            case CR_SCRATCHPAD0:
-                thread->saved_trap_state[0].scratchpad0 = value;
-                break;
+        case CR_CYCLE_COUNT:
+            value = (uint32_t) thread->core->proc->total_instructions;
+            break;
 
-            case CR_SCRATCHPAD1:
-                thread->saved_trap_state[0].scratchpad1 = value;
-                break;
+        case CR_TLB_MISS_HANDLER:
+            value = thread->core->tlb_miss_handler_pc;
+            break;
 
-            case CR_SUBCYCLE:
-                thread->saved_trap_state[0].subcycle = value;
-                break;
+        case CR_SCRATCHPAD0:
+            value = thread->saved_trap_state[0].scratchpad0;
+            break;
 
-            case CR_INTERRUPT_ENABLE:
-                thread->interrupt_mask = value;
-                break;
+        case CR_SCRATCHPAD1:
+            value = thread->saved_trap_state[0].scratchpad1;
+            break;
 
-            case CR_INTERRUPT_ACK:
-                thread->latched_interrupts &= ~value;
-                break;
+        case CR_SUBCYCLE:
+            value = thread->saved_trap_state[0].subcycle;
+            break;
 
-            case CR_INTERRUPT_TRIGGER:
-                thread->core->is_level_triggered = value;
-                break;
-        }
+        case CR_INTERRUPT_PENDING:
+            value = get_pending_interrupts(thread) & thread->interrupt_mask;
+            break;
+
+        case CR_INTERRUPT_ENABLE:
+            value = thread->interrupt_mask;
+            break;
+
+        case CR_INTERRUPT_TRIGGER:
+            value = thread->core->is_level_triggered;
+            break;
+
+        case CR_SYSCALL_INDEX:
+            value = thread->saved_trap_state[0].syscall_index;
+            break;
+    }
+
+    set_scalar_reg(thread, dst_src_reg, value);
+}
+
+static void write_control_register(struct thread *thread, uint32_t cr_index,
+                                   uint32_t dst_src_reg)
+{
+    uint32_t value = thread->scalar_reg[dst_src_reg];
+    switch (cr_index)
+    {
+        case CR_TRAP_HANDLER:
+            thread->core->trap_handler_pc = value;
+            break;
+
+        case CR_TRAP_PC:
+            thread->saved_trap_state[0].pc = value;
+            break;
+
+        case CR_FLAGS:
+            thread->enable_interrupt = (value & 1) != 0;
+            thread->enable_mmu = (value & 2) != 0;
+            thread->enable_supervisor = (value & 4) != 0;
+
+            // An interrupt may have occurred while interrupts were
+            // disabled.
+            if (thread->enable_interrupt)
+                try_to_dispatch_interrupt(thread);
+
+            break;
+
+        case CR_SAVED_FLAGS:
+            thread->saved_trap_state[0].enable_interrupt = (value & 1) != 0;
+            thread->saved_trap_state[0].enable_mmu = (value & 2) != 0;
+            thread->saved_trap_state[0].enable_supervisor = (value & 4) != 0;
+            break;
+
+        case CR_CURRENT_ASID:
+            thread->asid = value;
+            break;
+
+        case CR_PAGE_DIR:
+            thread->page_dir = value;
+            break;
+
+        case CR_TLB_MISS_HANDLER:
+            thread->core->tlb_miss_handler_pc = value;
+            break;
+
+        case CR_SCRATCHPAD0:
+            thread->saved_trap_state[0].scratchpad0 = value;
+            break;
+
+        case CR_SCRATCHPAD1:
+            thread->saved_trap_state[0].scratchpad1 = value;
+            break;
+
+        case CR_SUBCYCLE:
+            thread->saved_trap_state[0].subcycle = value;
+            break;
+
+        case CR_INTERRUPT_ENABLE:
+            thread->interrupt_mask = value;
+            break;
+
+        case CR_INTERRUPT_ACK:
+            thread->latched_interrupts &= ~value;
+            break;
+
+        case CR_INTERRUPT_TRIGGER:
+            thread->core->is_level_triggered = value;
+            break;
+
+        case CR_SUSPEND_THREAD:
+            thread->core->proc->thread_enable_mask &= ~value;
+            break;
+
+        case CR_RESUME_THREAD:
+            thread->core->proc->thread_enable_mask |= value
+                & ((1ull << thread->core->proc->total_threads) - 1);
+            break;
     }
 }
 

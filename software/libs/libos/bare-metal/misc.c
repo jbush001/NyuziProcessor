@@ -21,6 +21,8 @@
 
 #define CLOCKS_PER_US 50
 #define MAX_THREADS 64
+#define CR_CYCLE_COUNT 6
+#define CR_SUSPEND_THREAD 20
 
 int __errno_array[MAX_THREADS];
 
@@ -31,8 +33,8 @@ int *__errno_ptr(void)
 
 int usleep(useconds_t delay)
 {
-    int expire = __builtin_nyuzi_read_control_reg(6) + delay * CLOCKS_PER_US;
-    while (__builtin_nyuzi_read_control_reg(6) < expire)
+    int expire = __builtin_nyuzi_read_control_reg(CR_CYCLE_COUNT) + delay * CLOCKS_PER_US;
+    while (__builtin_nyuzi_read_control_reg(CR_CYCLE_COUNT) < expire)
         ;
 
     return 0;
@@ -42,7 +44,7 @@ void exit(int status)
 {
     (void) status;
 
-    REGISTERS[REG_THREAD_HALT] = 0xffffffff;
+    __builtin_nyuzi_write_control_reg(CR_SUSPEND_THREAD, 0xffffffff);
     while (1)
         ;
 }

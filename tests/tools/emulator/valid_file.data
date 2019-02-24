@@ -7,8 +7,8 @@
  * Multiple consecutive space separators
  * Using @ notation to set address
  */
-18fcff4f // single line comment
-00100400 20fcff0f     20000088	000000f6
+00fcff0f // single line comment
+1400008c 000000fc     20000088	000000f6
 b56f49f
 a4ea27d1
 

@@ -33,6 +33,8 @@
 #            |   code/data   |
 # 00000000   +---------------+
 
+.set CR_SUSPEND_THREAD, 20
+
                     .text
                     .globl _start
                     .align 4
@@ -84,8 +86,7 @@ do_main:            move s0, 0    # Set argc to 0
 
                     #  Halt all threads.
                     move s0, -1
-                    li s1, 0xffff0104   # thread halt register
-                    store_32 s0, (s1)
+                    setcr s0, CR_SUSPEND_THREAD
 1:                  b 1b
 
 exit_flag:          .long 0
