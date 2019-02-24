@@ -17,7 +17,7 @@
 `ifndef __DEFINES_SVH
 `define __DEFINES_SVH
 
-`include "config.sv"
+`include "config.svh"
 
 package defines;
 
