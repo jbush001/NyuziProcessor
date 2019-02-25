@@ -36,9 +36,7 @@ module axi_protocol_checker(
     // Write checks
     burst_state_t write_burst_state;
     logic[AXI_ADDR_WIDTH - 1:0] awaddr;
-    defines::axi_burst_type_t awburst;
     logic [7:0] awlen;
-    logic [2:0] awsize;
     int write_count;
 
     always @(posedge clk, posedge reset)
@@ -53,9 +51,7 @@ module axi_protocol_checker(
                     if (axi_bus.m_awvalid)
                     begin
                         awaddr <= axi_bus.m_awaddr;
-                        awburst <= axi_bus.m_awburst;
                         awlen <= axi_bus.m_awlen;
-                        awsize <= axi_bus.m_awsize;
                         assert(!axi_bus.m_wvalid);
 
                         // Ensure this transaction doesn't cross a 4k boundary
@@ -74,9 +70,7 @@ module axi_protocol_checker(
                 begin
                     // Ensure signals are stable until accepted.
                     assert(axi_bus.m_awaddr === awaddr);
-                    assert(axi_bus.m_awburst === awburst);
                     assert(axi_bus.m_awlen === awlen);
-                    assert(axi_bus.m_awsize == awsize);
                     assert(axi_bus.m_awvalid);
                     assert(!axi_bus.m_wvalid);
                     if (axi_bus.s_awready)
@@ -110,9 +104,7 @@ module axi_protocol_checker(
     // Read checks
     burst_state_t read_burst_state;
     logic[AXI_ADDR_WIDTH - 1:0] araddr;
-    defines::axi_burst_type_t arburst;
     logic [7:0] arlen;
-    logic [2:0] arsize;
     int read_count;
 
     always @(posedge clk, posedge reset)
@@ -127,9 +119,7 @@ module axi_protocol_checker(
                     if (axi_bus.m_arvalid)
                     begin
                         araddr <= axi_bus.m_araddr;
-                        arburst <= axi_bus.m_arburst;
                         arlen <= axi_bus.m_arlen;
-                        arsize <= axi_bus.m_arsize;
 
                         // Ensure this transaction doesn't cross a 4k boundary
                         assert ((int'(axi_bus.m_araddr) / 4096) ==
@@ -147,9 +137,7 @@ module axi_protocol_checker(
                 begin
                     // Ensure signals are stable.
                     assert(axi_bus.m_araddr === araddr);
-                    assert(axi_bus.m_arburst === arburst);
                     assert(axi_bus.m_arlen === arlen);
-                    assert(axi_bus.m_arsize == arsize);
                     assert(axi_bus.m_arvalid);
                     if (axi_bus.s_arready)
                         read_burst_state <= ADDRESS_ACCEPTED;

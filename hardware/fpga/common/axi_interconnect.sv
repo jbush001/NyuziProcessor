@@ -72,17 +72,11 @@ module axi_interconnect
     assign axi_bus_s[0].m_wdata = axi_bus_m[0].m_wdata;
     assign axi_bus_s[0].m_wlast = axi_bus_m[0].m_wlast;
     assign axi_bus_s[0].m_bready = axi_bus_m[0].m_bready;
-    assign axi_bus_s[0].m_wstrb = axi_bus_m[0].m_wstrb;
-    assign axi_bus_s[0].m_awburst = axi_bus_m[0].m_awburst;
-    assign axi_bus_s[0].m_awsize = axi_bus_m[0].m_awsize;
     assign axi_bus_s[1].m_awaddr = write_burst_address - M1_BASE_ADDRESS;
     assign axi_bus_s[1].m_awlen = write_burst_length;
     assign axi_bus_s[1].m_wdata = axi_bus_m[0].m_wdata;
     assign axi_bus_s[1].m_wlast = axi_bus_m[0].m_wlast;
     assign axi_bus_s[1].m_bready = axi_bus_m[0].m_bready;
-    assign axi_bus_s[1].m_wstrb = axi_bus_m[0].m_wstrb;
-    assign axi_bus_s[1].m_awburst = axi_bus_m[0].m_awburst;
-    assign axi_bus_s[1].m_awsize = axi_bus_m[0].m_awsize;
 
     assign axi_bus_s[0].m_awvalid = write_slave_select == 0 && write_state == STATE_ISSUE_ADDRESS;
     assign axi_bus_s[1].m_awvalid = write_slave_select == 1 && write_state == STATE_ISSUE_ADDRESS;
@@ -239,14 +233,6 @@ module axi_interconnect
     assign axi_bus_s[1].m_arvalid = read_state == STATE_ISSUE_ADDRESS && read_selected_slave == 1;
     assign axi_bus_s[0].m_araddr = read_burst_address;
     assign axi_bus_s[1].m_araddr = read_burst_address - M1_BASE_ADDRESS;
-    assign axi_bus_s[0].m_arburst = read_selected_slave ? axi_bus_m[1].m_arburst : axi_bus_m[0].m_arburst;
-    assign axi_bus_s[1].m_arburst = AXI_BURST_INCR;
-    assign axi_bus_s[0].m_arsize = read_selected_slave ? axi_bus_m[1].m_arsize : axi_bus_m[0].m_arsize;
-    assign axi_bus_s[1].m_arsize = '0;
-    assign axi_bus_s[0].m_awcache = '0;
-    assign axi_bus_s[1].m_awcache = '0;
-    assign axi_bus_s[0].m_arcache = '0;
-    assign axi_bus_s[1].m_arcache = '0;
     assign axi_bus_m[0].s_rdata = read_selected_slave ? axi_bus_s[1].s_rdata : axi_bus_s[0].s_rdata;
     assign axi_bus_m[1].s_rdata = axi_bus_m[0].s_rdata;
     assign axi_bus_m[1].s_awready = '0;

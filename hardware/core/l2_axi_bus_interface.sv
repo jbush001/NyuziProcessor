@@ -184,18 +184,10 @@ module l2_axi_bus_interface(
     assign axi_bus.m_awlen = 8'(BURST_BEATS - 1);
     assign axi_bus.m_arlen = 8'(BURST_BEATS - 1);
     assign axi_bus.m_bready = 1'b1;
-
-    // ibid, Table A3-2
-    assign axi_bus.m_arsize = `AXI_DATA_WIDTH == 1 ? 3'd0 : 3'($clog2(`AXI_DATA_WIDTH / 8));
-    assign axi_bus.m_awsize = axi_bus.m_arsize;
-
-    assign axi_bus.m_awburst = AXI_BURST_INCR;
-    assign axi_bus.m_arburst = AXI_BURST_INCR;
-    assign axi_bus.m_wstrb = {(`AXI_DATA_WIDTH / 8){1'b1}};
-
-    // ibid, Table A4-3/A4-4
-    assign axi_bus.m_awcache = 4'b1110;    // Allocate, Modifiable, Not-Bufferable
-    assign axi_bus.m_arcache = 4'b1110;
+    assign axi_bus.m_awprot = 3'b000;
+    assign axi_bus.m_arprot = 3'b000;
+    assign axi_bus.m_aclk = clk;
+    assign axi_bus.m_aresetn = !reset;
 
     // Flatten array
     genvar fill_buffer_idx;
