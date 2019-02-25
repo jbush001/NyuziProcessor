@@ -38,13 +38,6 @@ module nyuzi
     l2req_packet_t l2i_request[`NUM_CORES];
     logic[`NUM_CORES - 1:0] l2i_request_valid;
     ioreq_packet_t ior_request[`NUM_CORES];
-    logic[TOTAL_PERF_EVENTS - 1:0] perf_events;
-    io_bus_interface perf_io_bus();
-    io_bus_interface interconnect_io_bus();
-    enum logic {
-        IO_PERF_COUNTERS,
-        IO_ARBITER
-    } io_read_source;
     logic[`NUM_CORES - 1:0] ior_request_valid;
     logic[TOTAL_THREADS - 1:0] thread_en;
     scalar_t cr_data_to_host[`NUM_CORES];
@@ -101,45 +94,10 @@ module nyuzi
     assign processor_halt = thread_en == 0;
 
     l2_cache l2_cache(
-        .l2_perf_events(perf_events[L2_PERF_EVENTS - 1:0]),
+        .l2_perf_events(),
         .*);
 
-    always_ff @(posedge clk)
-    begin
-        if (interconnect_io_bus.address ==? 'h20? || interconnect_io_bus.address ==? 'h21?)
-            io_read_source <= IO_PERF_COUNTERS;
-        else
-            io_read_source <= IO_ARBITER;
-    end
-
-    assign io_bus.write_en = interconnect_io_bus.write_en;
-    assign io_bus.read_en = interconnect_io_bus.read_en;
-    assign io_bus.address = interconnect_io_bus.address;
-    assign io_bus.write_data = interconnect_io_bus.write_data;
-
-    assign perf_io_bus.write_en = interconnect_io_bus.write_en;
-    assign perf_io_bus.read_en = interconnect_io_bus.read_en;
-    assign perf_io_bus.address = interconnect_io_bus.address;
-    assign perf_io_bus.write_data = interconnect_io_bus.write_data;
-
-    always_comb
-    begin
-        if (io_read_source == IO_PERF_COUNTERS)
-            interconnect_io_bus.read_data = perf_io_bus.read_data;
-        else
-            interconnect_io_bus.read_data = io_bus.read_data; // External read
-    end
-
-    io_interconnect io_interconnect(
-        .io_bus(interconnect_io_bus),
-        .*);
-
-    performance_counters #(
-        .NUM_EVENTS(TOTAL_PERF_EVENTS),
-        .BASE_ADDRESS('h200)
-    ) performance_counters(
-        .io_bus(perf_io_bus),
-        .*);
+    io_interconnect io_interconnect(.*);
 
     on_chip_debugger on_chip_debugger(
         .jtag(jtag),
@@ -172,7 +130,6 @@ module nyuzi
                 .ii_ready(ii_ready[core_idx]),
                 .ii_response(ii_response),
                 .cr_data_to_host(cr_data_to_host[core_idx]),
-                .core_perf_events(perf_events[L2_PERF_EVENTS + CORE_PERF_EVENTS * core_idx+:CORE_PERF_EVENTS]),
                 .injected_complete(core_injected_complete[core_idx]),
                 .injected_rollback(core_injected_rollback[core_idx]),
                 .cr_suspend_thread(core_suspend_thread[core_idx]),

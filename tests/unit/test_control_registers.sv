@@ -45,6 +45,9 @@ module test_control_registers(input clk, input reset);
     localparam JTAG_DATA_VAL0 = 32'hfc982951;
     localparam JTAG_DATA_VAL1 = 32'h7fc44607;
 
+    localparam EVENT_IDX_WIDTH = $clog2(CORE_PERF_EVENTS);
+    localparam NUM_PERF_COUNTERS = 2;
+
     logic [NUM_INTERRUPTS - 1:0] interrupt_req;
     scalar_t cr_eret_address[`THREADS_PER_CORE];
     logic cr_mmu_en[`THREADS_PER_CORE];
@@ -74,11 +77,16 @@ module test_control_registers(input clk, input reset);
     syscall_index_t wb_syscall_index;
     logic[TOTAL_THREADS - 1:0] cr_suspend_thread;
     logic[TOTAL_THREADS - 1:0] cr_resume_thread;
+    logic[EVENT_IDX_WIDTH - 1:0] cr_perf_event_select0;
+    logic[EVENT_IDX_WIDTH - 1:0] cr_perf_event_select1;
+    logic[63:0] perf_event_count0;
+    logic[63:0] perf_event_count1;
     int cycle;
 
     control_registers #(
         .CORE_ID(4'd0),
-        .NUM_INTERRUPTS(NUM_INTERRUPTS)
+        .NUM_INTERRUPTS(NUM_INTERRUPTS),
+        .NUM_PERF_EVENTS(CORE_PERF_EVENTS)
     ) control_registers(.*);
 
     task write_creg(input control_register_t index, input int value);
@@ -610,6 +618,9 @@ module test_control_registers(input clk, input reset);
 
                 171: assert(cr_creg_read_val == JTAG_DATA_VAL1);
 
+                ////////////////////////////////////////////////////////////
+                // Suspend/resume
+                ////////////////////////////////////////////////////////////
                 172:
                 begin
                     write_creg(CR_SUSPEND_THREAD, 32'h5);
@@ -662,7 +673,60 @@ module test_control_registers(input clk, input reset);
                     assert(cr_resume_thread == 4'h0);
                 end
 
-                180:
+                ////////////////////////////////////////////////////////////
+                // Performance registers
+                ////////////////////////////////////////////////////////////
+                180: write_creg(CR_PERF_EVENT_SELECT0, 7);
+                181: write_creg(CR_PERF_EVENT_SELECT1, 13);
+
+                // wait a cycle
+
+                183:
+                begin
+                    assert(cr_perf_event_select0 == 7);
+                    assert(cr_perf_event_select1 == 13);
+
+                    perf_event_count0 <= 64'he0e0f196_27c12181;
+                    perf_event_count1 <= 64'h9e4325b2_82300d10;
+                end
+
+                // wait a cycle
+
+                185: read_creg(CR_PERF_EVENT_COUNT0_L);
+
+                // wait a cycle
+
+                187:
+                begin
+                    assert(cr_creg_read_val == 32'h27c12181);
+                    read_creg(CR_PERF_EVENT_COUNT0_H);
+                end
+
+                // wait a cycle
+
+                189:
+                begin
+                    assert(cr_creg_read_val == 32'he0e0f196);
+                    read_creg(CR_PERF_EVENT_COUNT1_L);
+                end
+
+                // wait a cycle
+
+                191:
+                begin
+                    assert(cr_creg_read_val == 32'h82300d10);
+                    read_creg(CR_PERF_EVENT_COUNT1_H);
+                end
+
+                // wait a cycle
+
+                193:
+                begin
+                    $display("cr_creg_read_val= %x", cr_creg_read_val);
+                    assert(cr_creg_read_val == 32'h9e4325b2);
+                end
+
+                194:
                 begin
                     $display("PASS");
                     $finish;

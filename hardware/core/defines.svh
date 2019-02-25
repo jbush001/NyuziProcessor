@@ -69,7 +69,6 @@ typedef logic[3:0] core_id_t;
 // signals in the assignment to l2_perf_events in l2_cache.sv.
 parameter CORE_PERF_EVENTS = 14;
 parameter L2_PERF_EVENTS = 3;
-parameter TOTAL_PERF_EVENTS = L2_PERF_EVENTS + CORE_PERF_EVENTS * `NUM_CORES;
 
 //
 // Instruction encodings
@@ -185,7 +184,13 @@ typedef enum logic [4:0] {
     CR_JTAG_DATA            = 5'd18,
     CR_SYSCALL_INDEX        = 5'd19,
     CR_SUSPEND_THREAD       = 5'd20,
-    CR_RESUME_THREAD        = 5'd21
+    CR_RESUME_THREAD        = 5'd21,
+    CR_PERF_EVENT_SELECT0   = 5'd22,
+    CR_PERF_EVENT_SELECT1   = 5'd23,
+    CR_PERF_EVENT_COUNT0_L  = 5'd24,
+    CR_PERF_EVENT_COUNT0_H  = 5'd25,
+    CR_PERF_EVENT_COUNT1_L  = 5'd26,
+    CR_PERF_EVENT_COUNT1_H  = 5'd27
 } control_register_t;
 
 // Trap type encodings

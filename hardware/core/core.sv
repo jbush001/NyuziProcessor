@@ -65,12 +65,14 @@ module core
 
     // To nyuzi
     output logic[TOTAL_THREADS - 1:0]      cr_suspend_thread,
-    output logic[TOTAL_THREADS - 1:0]      cr_resume_thread,
+    output logic[TOTAL_THREADS - 1:0]      cr_resume_thread);
 
-    // To performance_counters
-    output logic [CORE_PERF_EVENTS - 1:0]  core_perf_events);
+    localparam EVENT_IDX_WIDTH = $clog2(CORE_PERF_EVENTS);
+    localparam NUM_PERF_COUNTERS = 2;
 
     logic core_selected_debug;
+    logic[CORE_PERF_EVENTS - 1:0] perf_events;
+    logic[NUM_PERF_COUNTERS - 1:0][EVENT_IDX_WIDTH - 1:0] perf_event_select;
 
     /*AUTOLOGIC*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -314,6 +316,7 @@ module core
     vector_t            of_store_value;         // From operand_fetch_stage of operand_fetch_stage.v
     subcycle_t          of_subcycle;            // From operand_fetch_stage of operand_fetch_stage.v
     local_thread_idx_t  of_thread_idx;          // From operand_fetch_stage of operand_fetch_stage.v
+    logic [1:0] [63:0]  perf_event_count;       // From performance_counters of performance_counters.v
     logic               sq_rollback_en;         // From l1_l2_interface of l1_l2_interface.v
     cache_line_data_t   sq_store_bypass_data;   // From l1_l2_interface of l1_l2_interface.v
     logic [CACHE_LINE_BYTES-1:0] sq_store_bypass_mask;// From l1_l2_interface of l1_l2_interface.v
@@ -371,8 +374,15 @@ module core
 
     control_registers #(
         .CORE_ID(CORE_ID),
-        .NUM_INTERRUPTS(NUM_INTERRUPTS)
-    ) control_registers(.*);
+        .NUM_INTERRUPTS(NUM_INTERRUPTS),
+        .NUM_PERF_EVENTS(CORE_PERF_EVENTS)
+    ) control_registers(
+        .cr_perf_event_select0(perf_event_select[0]),
+        .cr_perf_event_select1(perf_event_select[1]),
+        .perf_event_count0(perf_event_count[0]),
+        .perf_event_count1(perf_event_count[1]),
+        .*);
+
     l1_l2_interface #(.CORE_ID(CORE_ID)) l1_l2_interface(.*);
     io_request_queue #(.CORE_ID(CORE_ID)) io_request_queue(.*);
 
@@ -386,7 +396,7 @@ module core
 
     // The number of signals in this assignment must match CORE_PERF_EVENTS
     // in defines.sv.
-    assign core_perf_events = {
+    assign perf_events = {
         ix_perf_cond_branch_not_taken,
         ix_perf_cond_branch_taken,
         ix_perf_uncond_branch,
@@ -402,4 +412,10 @@ module core
         wb_perf_store_rollback,
         wb_perf_interrupt
     };
+
+    performance_counters #(
+        .NUM_EVENTS(CORE_PERF_EVENTS),
+        .NUM_COUNTERS(2)
+    ) performance_counters(
+        .*);
 endmodule

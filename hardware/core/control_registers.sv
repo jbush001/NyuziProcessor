@@ -26,7 +26,9 @@ import defines::*;
 
 module control_registers
     #(parameter CORE_ID = 0,
-    parameter NUM_INTERRUPTS = 16)
+    parameter NUM_INTERRUPTS = 16,
+    parameter NUM_PERF_EVENTS = 8,
+    parameter EVENT_IDX_WIDTH = $clog2(NUM_PERF_EVENTS))
     (input                                  clk,
     input                                   reset,
 
@@ -71,7 +73,13 @@ module control_registers
     output scalar_t                         cr_trap_handler,
     output scalar_t                         cr_tlb_miss_handler,
 
-    // To/From on_chip_debugger
+    // To/from performance_counters
+    output logic[EVENT_IDX_WIDTH - 1:0]     cr_perf_event_select0,
+    output logic[EVENT_IDX_WIDTH - 1:0]     cr_perf_event_select1,
+    input[63:0]                             perf_event_count0,
+    input[63:0]                             perf_event_count1,
+
+    // To/from on_chip_debugger
     input scalar_t                          ocd_data_from_host,
     input                                   ocd_data_update,
     output scalar_t                         cr_data_to_host);
@@ -134,6 +142,8 @@ module control_registers
             int_trigger_type <= '0;
             cr_suspend_thread <= '0;
             cr_resume_thread <= '0;
+            cr_perf_event_select0 <= '0;
+            cr_perf_event_select1 <= '0;
         end
         else
         begin
@@ -197,6 +207,8 @@ module control_registers
                     CR_JTAG_DATA:         jtag_data <= dd_creg_write_val;
                     CR_SUSPEND_THREAD:    cr_suspend_thread <= dd_creg_write_val[TOTAL_THREADS - 1:0];
                     CR_RESUME_THREAD:     cr_resume_thread <= dd_creg_write_val[TOTAL_THREADS - 1:0];
+                    CR_PERF_EVENT_SELECT0: cr_perf_event_select0 <= dd_creg_write_val[EVENT_IDX_WIDTH - 1:0];
+                    CR_PERF_EVENT_SELECT1: cr_perf_event_select1 <= dd_creg_write_val[EVENT_IDX_WIDTH - 1:0];
                     default:
                         ;
                 endcase
@@ -289,6 +301,10 @@ module control_registers
                 CR_INTERRUPT_TRIGGER: cr_creg_read_val <= scalar_t'(int_trigger_type);
                 CR_JTAG_DATA:         cr_creg_read_val <= jtag_data;
                 CR_SYSCALL_INDEX:     cr_creg_read_val <= scalar_t'(trap_state[dt_thread_idx][0].syscall_index);
+                CR_PERF_EVENT_COUNT0_L: cr_creg_read_val <= perf_event_count0[31:0];
+                CR_PERF_EVENT_COUNT0_H: cr_creg_read_val <= perf_event_count0[63:32];
+                CR_PERF_EVENT_COUNT1_L: cr_creg_read_val <= perf_event_count1[31:0];
+                CR_PERF_EVENT_COUNT1_H: cr_creg_read_val <= perf_event_count1[63:32];
                 default:              cr_creg_read_val <= 32'hffffffff;
             endcase
         end
