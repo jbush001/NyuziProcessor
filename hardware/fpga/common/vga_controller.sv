@@ -193,9 +193,6 @@ module vga_controller
     assign axi_bus.m_araddr = vram_addr;
     assign axi_bus.m_awaddr = '0;
     assign axi_bus.m_awlen = '0;
-    assign axi_bus.m_arsize = 3'd2;    // Assumes 32 bit transfers
-    assign axi_bus.m_arburst = AXI_BURST_INCR;
-    assign axi_bus.m_arcache = 4'b1110; // Allocate, Modifiable, Not-Bufferable
 
     // Write channels not used.
     assign axi_bus.m_wdata = '0;
@@ -203,10 +200,6 @@ module vga_controller
     assign axi_bus.m_wlast = 0;
     assign axi_bus.m_wvalid = 0;
     assign axi_bus.m_bready = 0;
-    assign axi_bus.m_awsize = '0;
-    assign axi_bus.m_awburst = AXI_BURST_INCR;
-    assign axi_bus.m_wstrb = '0;
-    assign axi_bus.m_awcache = '0;
 
     always_ff @(posedge clk, posedge reset)
     begin
