@@ -32,7 +32,6 @@ module nyuzi
     axi4_interface.master           axi_bus,
     io_bus_interface.master         io_bus,
     jtag_interface.target           jtag,
-    output logic                    processor_halt,
     input [NUM_INTERRUPTS - 1:0]    interrupt_req);
 
     l2req_packet_t l2i_request[`NUM_CORES];
@@ -90,8 +89,6 @@ module nyuzi
         else
             thread_en <= (thread_en | thread_resume_mask) & ~thread_suspend_mask;
     end
-
-    assign processor_halt = thread_en == 0;
 
     l2_cache l2_cache(
         .l2_perf_events(),

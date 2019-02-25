@@ -81,6 +81,7 @@ module soc_tb(
 
     localparam SDRAM_DATA_WIDTH = 32; // declare before use
     wire [SDRAM_DATA_WIDTH-1:0] dram_dq; // inout fix: change from logic to wire to comply with commercial simulator and SystemVerilog standard
+    logic processor_halt;
 
     /*AUTOLOGIC*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -95,7 +96,6 @@ module soc_tb(
     logic               frame_interrupt;        // From vga_controller of vga_controller.v
     logic               perf_dram_page_hit;     // From sdram_controller of sdram_controller.v
     logic               perf_dram_page_miss;    // From sdram_controller of sdram_controller.v
-    logic               processor_halt;         // From nyuzi of nyuzi.v
     logic               ps2_clk;                // From sim_ps2 of sim_ps2.v
     logic               ps2_data;               // From sim_ps2 of sim_ps2.v
     logic               sd_do;                  // From sim_sdmmc of sim_sdmmc.v
@@ -141,6 +141,8 @@ module soc_tb(
             cosim_interrupt}),
         .jtag(target_jtag),
         .*);
+
+    assign processor_halt = nyuzi.thread_en == '0;
 
     axi_protocol_checker axi_protocol_checker(
         .clk(clk),

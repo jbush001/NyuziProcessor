@@ -78,7 +78,6 @@ module de2_115_top(
     logic               frame_interrupt;        // From vga_controller of vga_controller.v
     logic               perf_dram_page_hit;     // From sdram_controller of sdram_controller.v
     logic               perf_dram_page_miss;    // From sdram_controller of sdram_controller.v
-    logic               processor_halt;         // From nyuzi of nyuzi.v
     logic               timer_interrupt;        // From timer of timer.v
     // End of automatics
 
