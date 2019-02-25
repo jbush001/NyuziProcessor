@@ -50,9 +50,6 @@ module trace_logger(
 
     // From integer pipeline
     input                            ix_instruction_valid,
-    input                            ix_instruction_has_dest,
-    input register_idx_t             ix_instruction_dest_reg,
-    input                            ix_instruction_dest_vector,
     input scalar_t                   ix_instruction_pc,
     input                            ix_instruction_has_trap,
     input trap_cause_t               ix_instruction_trap_cause,
@@ -60,10 +57,6 @@ module trace_logger(
 
     // From memory pipeline
     input                            dd_instruction_valid,
-    input                            dd_instruction_has_dest,
-    input register_idx_t             dd_instruction_dest_reg,
-    input                            dd_instruction_dest_vector,
-    input                            dd_rollback_en,
     input scalar_t                   dd_instruction_pc,
     input                            dd_store_en,
     input [CACHE_LINE_BYTES - 1:0]   dd_store_mask,
