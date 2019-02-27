@@ -90,7 +90,6 @@ module test_dcache_data_stage(input clk, input reset);
     pipeline_sel_t wb_rollback_pipeline;
     logic dd_perf_dcache_hit;
     logic dd_perf_dcache_miss;
-    logic dd_perf_store;
     logic dd_perf_dtlb_miss;
     int cycle;
 
@@ -202,7 +201,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -215,7 +213,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -243,7 +240,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -256,7 +252,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -285,7 +280,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -298,7 +292,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -326,7 +319,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -339,7 +331,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -369,7 +360,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -381,7 +371,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -426,7 +415,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -441,7 +429,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en); // This is only for cache misses
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(dd_perf_dtlb_miss);
                 end
 
@@ -476,7 +463,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -491,7 +477,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en); // This is only for cache misses
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(dd_perf_dtlb_miss);
                 end
 
@@ -523,7 +508,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -538,7 +522,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en); // This is only for cache misses
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(dd_perf_dtlb_miss);
                 end
 
@@ -569,7 +552,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -584,7 +566,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en); // This is only for cache misses
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(dd_perf_dtlb_miss);
                 end
 
@@ -600,7 +581,6 @@ module test_dcache_data_stage(input clk, input reset);
                     dt_instruction.memory_access_type <= MEM_SCGATH_M;
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -621,7 +601,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_cache_miss);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -635,7 +614,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en); // This is only for cache misses
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -668,7 +646,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -682,7 +659,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -707,7 +683,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -721,7 +696,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -743,7 +717,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -757,7 +730,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -778,7 +750,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -792,7 +763,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -814,7 +784,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -828,7 +797,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -852,7 +820,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -865,7 +832,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -889,7 +855,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -902,7 +867,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -925,7 +889,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -939,7 +902,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -960,7 +922,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -974,7 +935,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -994,7 +954,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1025,7 +984,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1039,7 +997,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1062,7 +1019,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1075,7 +1031,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1098,7 +1053,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1111,7 +1065,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1129,7 +1082,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1143,7 +1095,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1162,7 +1113,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1176,7 +1126,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1196,7 +1145,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1225,7 +1173,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1270,7 +1217,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1284,7 +1230,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1316,7 +1261,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1330,7 +1274,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1361,7 +1304,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1375,7 +1317,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1406,7 +1347,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1420,7 +1360,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1451,7 +1390,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1465,7 +1403,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1496,7 +1433,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1510,7 +1446,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1531,7 +1466,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1545,7 +1479,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1564,7 +1497,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1578,7 +1510,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1599,7 +1530,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1612,7 +1542,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1647,7 +1576,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1660,7 +1588,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1692,7 +1619,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1705,7 +1631,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1738,7 +1663,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1751,7 +1675,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1784,7 +1707,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1797,7 +1719,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1833,7 +1754,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1846,7 +1766,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en); // This is only for cache misses
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1871,7 +1790,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1884,7 +1802,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1917,7 +1834,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1930,7 +1846,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1963,7 +1878,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -1976,7 +1890,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -2003,7 +1916,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -2016,7 +1928,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_rollback_en);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -2050,7 +1961,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -2064,7 +1974,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_instruction_valid);
                     assert(!dd_perf_dcache_hit);
                     assert(dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -2096,7 +2005,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -2111,7 +2019,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_load_sync_pending == 4'b0001);
                     assert(!dd_perf_dcache_hit);
                     assert(dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -2138,7 +2045,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(!dd_trap);
                     assert(!dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
@@ -2153,7 +2059,6 @@ module test_dcache_data_stage(input clk, input reset);
                     assert(dd_load_sync_pending == 4'b0000);
                     assert(dd_perf_dcache_hit);
                     assert(!dd_perf_dcache_miss);
-                    assert(!dd_perf_store);
                     assert(!dd_perf_dtlb_miss);
                 end
 
