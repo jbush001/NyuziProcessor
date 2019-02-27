@@ -378,6 +378,9 @@ module l1_l2_interface
             assert(!sq_dequeue_ready || $onehot0({sq_dequeue_flush, sq_dequeue_iinvalidate,
                 sq_dequeue_dinvalidate}));
 
+            // Can only send one request per cycle
+            assert($onehot0({dcache_dequeue_ack, icache_dequeue_ack, storebuf_dequeue_ack}));
+
             // These are latched to delay then one cycle from the tag updates
             // Update cache line for data cache
             l2i_ddata_update_en <= dcache_update_en || (|snoop_hit_way_oh && response_stage2_valid
@@ -412,6 +415,8 @@ module l1_l2_interface
             l2i_request.id = dcache_dequeue_idx;
             l2i_request.address = dcache_dequeue_addr;
             l2i_request.cache_type = CT_DCACHE;
+            if (l2_ready)
+                dcache_dequeue_ack = 1;
         end
         else if (icache_dequeue_ready)
         begin
@@ -421,6 +426,8 @@ module l1_l2_interface
             l2i_request.id = icache_dequeue_idx;
             l2i_request.address = icache_dequeue_addr;
             l2i_request.cache_type = CT_ICACHE;
+            if (l2_ready)
+                icache_dequeue_ack = 1;
         end
         else if (sq_dequeue_ready)
         begin
@@ -442,14 +449,11 @@ module l1_l2_interface
             l2i_request.data = sq_dequeue_data;
             l2i_request.store_mask = sq_dequeue_mask;
             l2i_request.cache_type = CT_DCACHE;
-            l2i_perf_store = 1;
+            if (l2_ready)
+            begin
+                storebuf_dequeue_ack = 1;
+                l2i_perf_store = l2i_request.packet_type == L2REQ_STORE;
+            end
         end
-
-        assign dcache_dequeue_ack = l2_ready && dcache_dequeue_ready;
-        assign icache_dequeue_ack = l2_ready && icache_dequeue_ready;
-        assign storebuf_dequeue_ack= l2_ready && sq_dequeue_ready;
-
-        l2i_perf_store = storebuf_dequeue_ack
-            && l2i_request.packet_type == L2REQ_STORE;
     end
 endmodule
