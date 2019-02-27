@@ -33,6 +33,7 @@ set(py_test_dirs
     core/cache_control/
     core/mmu
     core/trap
+    core/perf_counter
     stress/atomic
     device/sdmmc/
     device/ps2/

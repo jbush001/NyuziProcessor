@@ -120,7 +120,6 @@ module dcache_data_stage(
     // To performance_counters
     output logic                              dd_perf_dcache_hit,
     output logic                              dd_perf_dcache_miss,
-    output logic                              dd_perf_store,
     output logic                              dd_perf_dtlb_miss);
 
     logic memory_access_req;
@@ -580,7 +579,6 @@ module dcache_data_stage(
             dd_perf_dcache_hit <= '0;
             dd_perf_dcache_miss <= '0;
             dd_perf_dtlb_miss <= '0;
-            dd_perf_store <= '0;
             dd_rollback_en <= '0;
             dd_suspend_thread <= '0;
             dd_trap <= '0;
@@ -617,7 +615,6 @@ module dcache_data_stage(
                  && cache_hit;
             dd_perf_dcache_miss <= cached_load_req && !any_fault && !tlb_miss
                 && !cache_hit;
-            dd_perf_store <= dd_store_en;
             dd_perf_dtlb_miss <= tlb_miss;
         end
     end

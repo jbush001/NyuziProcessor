@@ -112,7 +112,6 @@ module core
     logic               dd_perf_dcache_hit;     // From dcache_data_stage of dcache_data_stage.v
     logic               dd_perf_dcache_miss;    // From dcache_data_stage of dcache_data_stage.v
     logic               dd_perf_dtlb_miss;      // From dcache_data_stage of dcache_data_stage.v
-    logic               dd_perf_store;          // From dcache_data_stage of dcache_data_stage.v
     l1d_addr_t          dd_request_vaddr;       // From dcache_data_stage of dcache_data_stage.v
     logic               dd_rollback_en;         // From dcache_data_stage of dcache_data_stage.v
     scalar_t            dd_rollback_pc;         // From dcache_data_stage of dcache_data_stage.v
@@ -306,6 +305,7 @@ module core
     l1i_set_idx_t       l2i_itag_update_set;    // From l1_l2_interface of l1_l2_interface.v
     l1i_tag_t           l2i_itag_update_tag;    // From l1_l2_interface of l1_l2_interface.v
     logic               l2i_itag_update_valid;  // From l1_l2_interface of l1_l2_interface.v
+    logic               l2i_perf_store;         // From l1_l2_interface of l1_l2_interface.v
     logic               l2i_snoop_en;           // From l1_l2_interface of l1_l2_interface.v
     l1d_set_idx_t       l2i_snoop_set;          // From l1_l2_interface of l1_l2_interface.v
     decoded_instruction_t of_instruction;       // From operand_fetch_stage of operand_fetch_stage.v
@@ -408,7 +408,7 @@ module core
         ifd_perf_icache_miss,
         ts_perf_instruction_issue,
         wb_perf_instruction_retire,
-        dd_perf_store,
+        l2i_perf_store,
         wb_perf_store_rollback,
         wb_perf_interrupt
     };

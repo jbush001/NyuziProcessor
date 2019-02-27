@@ -128,7 +128,10 @@ module l1_l2_interface
     output logic[CACHE_LINE_BYTES - 1:0]          sq_store_bypass_mask,
     output logic                                  sq_store_sync_success,
     output cache_line_data_t                      sq_store_bypass_data,
-    output logic                                  sq_rollback_en);
+    output logic                                  sq_rollback_en,
+
+    // To core
+    output logic                                  l2i_perf_store);
 
     logic[`L1D_WAYS - 1:0] snoop_hit_way_oh;    // Only snoops dcache
     l1d_way_idx_t snoop_hit_way_idx;
@@ -396,6 +399,7 @@ module l1_l2_interface
         storebuf_dequeue_ack = 0;
         icache_dequeue_ack = 0;
         dcache_dequeue_ack = 0;
+        l2i_perf_store = 0;
 
         l2i_request.core = CORE_ID;
 
@@ -438,17 +442,14 @@ module l1_l2_interface
             l2i_request.data = sq_dequeue_data;
             l2i_request.store_mask = sq_dequeue_mask;
             l2i_request.cache_type = CT_DCACHE;
+            l2i_perf_store = 1;
         end
 
-        if (l2_ready)
-        begin
-            // Request acknowledged, mark it as sent
-            if (dcache_dequeue_ready)
-                dcache_dequeue_ack = 1;
-            else if (icache_dequeue_ready)
-                icache_dequeue_ack = 1;
-            else if (sq_dequeue_ready)
-                storebuf_dequeue_ack = 1;
-        end
+        assign dcache_dequeue_ack = l2_ready && dcache_dequeue_ready;
+        assign icache_dequeue_ack = l2_ready && icache_dequeue_ready;
+        assign storebuf_dequeue_ack= l2_ready && sq_dequeue_ready;
+
+        l2i_perf_store = storebuf_dequeue_ack
+            && l2i_request.packet_type == L2REQ_STORE;
     end
 endmodule
