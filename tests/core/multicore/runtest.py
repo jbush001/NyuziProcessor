@@ -28,9 +28,9 @@ import test_harness
 
 @test_harness.test(['verilator'])
 def multicore(_, target):
-    test_harness.build_program(['multicore.c'])
+    test_harness.build_program(['multicore.S'])
     result = test_harness.run_program(target)
-    if '012345678910111213141516171819202122232425262728293031' not in result.replace('\n', ''):
+    if 'ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`' not in result:
         raise test_harness.TestException('Output mismatch:\n' + result)
 
 test_harness.execute_tests()

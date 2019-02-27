@@ -43,6 +43,12 @@
 .set CR_SYSCALL_INDEX, 19
 .set CR_SUSPEND_THREAD, 20
 .set CR_RESUME_THREAD, 21
+.set CR_PERF_EVENT_SELECT0, 22
+.set CR_PERF_EVENT_SELECT1, 23
+.set CR_PERF_EVENT_COUNT0_L, 24
+.set CR_PERF_EVENT_COUNT0_H, 25
+.set CR_PERF_EVENT_COUNT1_L, 26
+.set CR_PERF_EVENT_COUNT1_H, 27
 
 // Trap types
 .set TT_RESET, 0
@@ -96,7 +102,7 @@
 .macro print_string
                 li s1, 0xffff0040       // Load address of serial registers
 1:              load_u8 s2, (s0)        // Read a character
-                bz s2, 3f               // If delimeter, exit
+                bz s2, 3f               // If delimiter, exit
 2:              load_32 s3, (s1)        // Read STATUS
                 and s3, s3, 1           // Check write available bit
                 bz s3, 2b               // If this is clear, busy wait
@@ -104,6 +110,15 @@
                 add_i s0, s0, 1         // Increment pointer
                 b 1b                    // Loop for next char
 3:
+.endm
+
+// Print a character in s0. Clobbers s1, s2
+.macro print_char
+                li s1, 0xffff0040       // Load address of serial registers
+1:              load_32 s2, (s1)        // Read STATUS
+                and s2, s2, 1           // Check write available bit
+                bz s2, 1b               // If this is clear, busy wait
+                store_32 s0, 8(s1)       // Write space available, send char
 .endm
 
 // If register is not equal to testval, print failure message.
@@ -125,8 +140,9 @@
                 call fail_test
 .endm
 
-// Print failure message and halt. The \x04 (^D) will cause the serial console
-// to exit, triggering the end of the test on the FPGA target.
+// Print failure message and halt. It will print \x04 (^D) at the end, which
+// will cause the serial_loader console mode to exit on FPGA, triggering the
+// end of the test.
                 .align 4, 0xff
 fail_test:      lea s0, failstr
                 print_string
