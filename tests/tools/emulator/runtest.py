@@ -37,7 +37,7 @@ import test_harness
 @test_harness.test(['emulator'])
 def load_file(*ignored):
     BINARY_OUTPUT = test_harness.WORK_DIR + 'mem.bin'
-    args = [test_harness.EMULATOR_PATH, '-d', BINARY_OUTPUT + ',0,0x3c', 'valid_file.data']
+    args = [test_harness.EMULATOR_PATH, '-d', BINARY_OUTPUT + ',0,0x3c', 'valid-file-hex.txt']
     subprocess.check_output(args, stderr=subprocess.STDOUT)
     EXPECTED = [
         0x00fcff0f,
@@ -82,19 +82,19 @@ def test_emulator_error(args, expected_error):
 
 @test_harness.test(['emulator'])
 def data_out_of_range(*ignored):
-    test_emulator_error(['data_out_of_range.data'],
+    test_emulator_error(['data-out-of-range-hex.txt'],
                         'read_hex_file: number out of range in line 2')
 
 
 @test_harness.test(['emulator'])
 def address_out_of_range(*ignored):
-    test_emulator_error(['address_out_of_range.data'],
+    test_emulator_error(['addr-out-of-range-hex.txt'],
                         'read_hex_file: address out of range in line 2')
 
 @test_harness.test(['emulator'])
 def invalid_character(*ignored):
     test_emulator_error(
-        ['bad_character.data'], 'read_hex_file: Invalid character ! in line 4')
+        ['bad-character-hex.txt'], 'read_hex_file: Invalid character ! in line 4')
 
 
 @test_harness.test(['emulator'])
