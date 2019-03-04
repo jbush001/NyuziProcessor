@@ -41,8 +41,8 @@ module ifetch_data_stage(
     input                            ift_tlb_present,
     input                            ift_tlb_executable,
     input                            ift_tlb_supervisor,
-    input l1i_tag_t                  ift_tag[`L1D_WAYS],
-    input                            ift_valid[`L1D_WAYS],
+    input l1i_tag_t                  ift_tag[`L1I_WAYS],
+    input                            ift_valid[`L1I_WAYS],
 
     // To ifetch_tag_stage
     output logic                     ifd_update_lru_en,
@@ -123,7 +123,7 @@ module ifetch_data_stage(
 
     assign cache_hit = |way_hit_oh && ift_tlb_hit;
 
-    oh_to_idx #(.NUM_SIGNALS(`L1D_WAYS)) oh_to_idx_hit_way(
+    oh_to_idx #(.NUM_SIGNALS(`L1I_WAYS)) oh_to_idx_hit_way(
         .one_hot(way_hit_oh),
         .index(way_hit_idx));
 

@@ -88,6 +88,12 @@ module cache_lru
     assign new_mru = was_fill ? fill_way : update_way;
     assign update_lru_en = was_fill || update_en;
 
+    initial
+    begin
+        // Must be 1, 2, 4, or 8
+        assert(NUM_WAYS <= 8 && (NUM_WAYS & (NUM_WAYS - 1)) == 0);
+    end
+
     // This uses a pseudo-LRU algorithm
     // Assuming four sets, the current state of each set is represented by
     // three bits. Imagine a tree:

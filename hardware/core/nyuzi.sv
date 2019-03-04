@@ -67,7 +67,10 @@ module nyuzi
 
     initial
     begin
+        // Check config (see config.svh for rules)
         assert(`NUM_CORES >= 1 && `NUM_CORES <= (1 << CORE_ID_WIDTH));
+        assert(`L1D_WAYS >= `THREADS_PER_CORE);
+        assert(`L1I_WAYS >= `THREADS_PER_CORE);
     end
 
     // Thread enable

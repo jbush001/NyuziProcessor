@@ -161,11 +161,9 @@ module dcache_tag_stage
 
     initial
     begin
-        if (`L1D_SETS > 64)
-        begin
-            $display("Cannot use more than 64 dcache sets");
-            $finish;
-        end
+        // Cannot use more than 64 dcache sets
+        assert(`L1D_SETS <= 64);
+        assert((`L1D_SETS & (`L1D_SETS - 1)) == 0);
     end
 
     //

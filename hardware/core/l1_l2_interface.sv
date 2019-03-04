@@ -163,7 +163,7 @@ module l1_l2_interface
     l1d_set_idx_t dcache_set_stage1;
     l1i_set_idx_t icache_set_stage1;
     l1d_set_idx_t dcache_set_stage2;
-    l1d_set_idx_t icache_set_stage2;
+    l1i_set_idx_t icache_set_stage2;
     l1d_tag_t dcache_tag_stage2;
     l1i_tag_t icache_tag_stage2;
     logic storebuf_l2_sync_success;
@@ -298,7 +298,7 @@ module l1_l2_interface
         .index(dupdate_way_idx),
         .one_hot(dupdate_way_oh));
 
-    idx_to_oh #(.NUM_SIGNALS(`L1D_WAYS)) idx_to_oh_ifill_way(
+    idx_to_oh #(.NUM_SIGNALS(`L1I_WAYS)) idx_to_oh_ifill_way(
         .index(ift_fill_lru),
         .one_hot(ifill_way_oh));
 

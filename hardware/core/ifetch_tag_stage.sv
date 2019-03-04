@@ -113,6 +113,11 @@ module ifetch_tag_stage
     page_index_t request_vpage_idx;
     logic[ASID_WIDTH - 1:0] request_asid;
 
+    initial
+    begin
+        assert((`L1I_SETS & (`L1I_SETS - 1)) == 0);
+    end
+
     //
     // Pick which thread to fetch next.
     // Only consider threads that are not blocked, but do not skip threads that
@@ -271,7 +276,7 @@ module ifetch_tag_stage
     end
 
     cache_lru #(
-        .NUM_WAYS(`L1D_WAYS),
+        .NUM_WAYS(`L1I_WAYS),
         .NUM_SETS(`L1I_SETS)
     ) cache_lru(
         .fill_en(l2i_icache_lru_fill_en),

@@ -21,16 +21,19 @@
 // Configurable parameters
 // - Number of cache ways must be 1, 2, 4, or 8 (TLB_WAYS does not have
 //   this constraint). This is a limitation in the cache_lru module.
+// - L1D_WAYS/L1I_WAYS must be greater than or equal to THREADS_PER_CORE,
+//   otherwise the system may livelock on a cache miss.
+// - The number of cache sets must be a power of two.
 // - If you change the number of L2 ways, you must also modify the
-//   flush_l2_cache function in testbench/verilator_tb.sv. Comments above
+//   flush_l2_cache function in testbench/soc_tb.sv. Comments above
 //   that function describe how and why.
 // - NUM_CORES must be 1-16. To synthesize more cores, increase the
 //   width of core_id_t in defines.sv (as above, comments there describe why).
-// - The size of a cache is sets * ways * cache line size (64 bytes)
 // - L1D_SETS sets must be 64 or fewer (page size / cache line size). This
 //   avoids aliasing in the virtually indexed/physically tagged L1 cache by
 //   preventing the same physical address from appearing in different cache
 //   sets (see dcache_tag_stage).
+// - The size of a cache is sets * ways * cache line size (64 bytes)
 //
 
 `define NUM_CORES 1

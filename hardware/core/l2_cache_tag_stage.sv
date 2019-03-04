@@ -57,6 +57,11 @@ module l2_cache_tag_stage(
     output cache_line_data_t              l2t_data_from_memory,
     output logic                          l2t_restarted_flush);
 
+    initial
+    begin
+        assert((`L2_SETS & (`L2_SETS - 1)) == 0);
+    end
+
     cache_lru #(
         .NUM_SETS(`L2_SETS),
         .NUM_WAYS(`L2_WAYS)
