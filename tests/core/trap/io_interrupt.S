@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "../../asm_macros.inc"
+#include "asm_macros.h"
 
 //
 // This does a lot of I/O writes while the timer interrupt is going off.
@@ -27,7 +27,7 @@
 // doesn't check if the UART is ready to send (it always is in the simulator)
 //
 
-.set TIMER_INTERVAL, 100
+#define TIMER_INTERVAL 100
 
 //
 // Interrupt handler clobbers s24-s25

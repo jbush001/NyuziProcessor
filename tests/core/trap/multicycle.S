@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "../../asm_macros.inc"
+#include "asm_macros.h"
 
 //
 // Ensure that gather instructions resume from the correct lane after
@@ -24,7 +24,7 @@
 // cause an alignment exception if it used as a pointer.
 //
 
-.set TIMER_INTERVAL, 100
+#define TIMER_INTERVAL 100
 
                     .globl _start
 _start:             getcr s0, 0                 // Find my thread ID

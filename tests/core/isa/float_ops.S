@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-#include "arithmetic_macros.inc"
+#include "arithmetic_macros.h"
 
 # This tests all floating point instruction forms, but doesn't validate
 # the results extensively (see float.S)

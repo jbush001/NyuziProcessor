@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "../../asm_macros.inc"
+#include "asm_macros.h"
 
 //
 // Verify atomic operations work correctly. Threads cycle through incrementing
@@ -22,7 +22,7 @@
 // to find the next slot to increment, then uses an atomic operation to increment
 // that slot.
 //
-                    .set NUM_SLOTS, 512
+                    #define NUM_SLOTS 512
 
 // Clobbers s25
 .macro sync_fetch_and_increment oldval, ptr

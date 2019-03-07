@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "../../asm_macros.inc"
+#include "asm_macros.h"
 
 //
 // Ensure instructions will invalid operation fields raise traps

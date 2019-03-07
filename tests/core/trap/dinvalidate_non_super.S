@@ -14,15 +14,15 @@
 // limitations under the License.
 //
 
-#include "../../asm_macros.inc"
+#include "asm_macros.h"
 
 //
 // Ensure that attempting to execute the 'dinvalidate' instruction faults
 // and doesn't perform its side effects if the thread is in user mode.
 //
 
-.set DATA_LOCATION, 0x4000
-.set WRITE_VALUE, 0x12345678
+#define DATA_LOCATION 0x4000
+#define WRITE_VALUE 0x12345678
 
                 .globl _start
 _start:

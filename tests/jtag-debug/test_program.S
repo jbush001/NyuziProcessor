@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "../asm_macros.inc"
+#include "asm_macros.h"
 
                 .globl _start
 _start:         li s1, 3

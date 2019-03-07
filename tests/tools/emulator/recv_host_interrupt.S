@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "../../asm_macros.inc"
+#include "asm_macros.h"
 
 //
 // Validate mechanism for delivering interrupts from an external program

@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "mmu_test_common.inc"
+#include "mmu_test_common.h"
 
 //
 // Ensure inserting TLB entries multiple times for the same virtual address

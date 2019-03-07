@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "mmu_test_common.inc"
+#include "mmu_test_common.h"
 
 //
 // Ensure a fault occurs when writing to a I/O page that does not have the

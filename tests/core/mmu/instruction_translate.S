@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "mmu_test_common.inc"
+#include "mmu_test_common.h"
 
 //
 // Ensure instruction/data translation is working correctly by mapping

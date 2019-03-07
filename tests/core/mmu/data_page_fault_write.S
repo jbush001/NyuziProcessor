@@ -14,15 +14,15 @@
 // limitations under the License.
 //
 
-#include "mmu_test_common.inc"
+#include "mmu_test_common.h"
 
 //
 // Ensure writing to a page that has a TLB entry but is not marked
 // present raises a page fault and does not update the page.
 //
 
-.set ORIGINAL_VALUE, 0xb74e5a8d
-.set TEST_ADDR, 0x2350
+#define ORIGINAL_VALUE 0xb74e5a8d
+#define TEST_ADDR 0x2350
 
                 .globl _start
 _start:

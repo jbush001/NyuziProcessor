@@ -105,7 +105,8 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
     compiler_args = [COMPILER_BIN + '/clang',
                      '-o', ELF_FILE,
                      '-w',
-                     opt_level]
+                     opt_level,
+                     '-I', TEST_DIR]    # To include asm_macros.h
 
     if cflags:
         compiler_args += cflags

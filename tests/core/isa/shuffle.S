@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-#include "arithmetic_macros.inc"
+#include "arithmetic_macros.h"
 
 #
 # Validate vector shuffle and getlane instructions

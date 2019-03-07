@@ -377,7 +377,7 @@ int main()
         set_value(GPIO_SD_CLK, 1);
     }
 
-    // Reset card, 4.2.1
+    // R#define card 4.2.1
     sd_send_command(SD_GO_IDLE, 0);
     sd_send_byte(0xff);
 

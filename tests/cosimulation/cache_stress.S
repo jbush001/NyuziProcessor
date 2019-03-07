@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-.include "../asm_macros.inc"
+#include "asm_macros.h"
 
 #
 # L2 cache stress test. Generate stores to a series of randomly generated
@@ -52,7 +52,3 @@ main_loop:      mull_i s1, s1, s2    # Generate next random number (seed * A + C
                 bnz s5, main_loop
 
                 halt_current_thread
-
-
-
-

@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-#include "../../asm_macros.inc"
+#include "asm_macros.h"
 
 #
 # Test integer and floating point comparisions
@@ -168,4 +168,3 @@ ivec1: .long SIGNED_MIN, SIGNED_MAX, SIGNED_MIN, SIGNED_MAX, SIGNED_MIN, 0, SIGN
 ivec2: .long SIGNED_MIN, SIGNED_MAX, SIGNED_MAX, SIGNED_MIN, 0, SIGNED_MIN, 0, SIGNED_MAX, SIGNED_MIN, SIGNED_MAX, SIGNED_MAX, SIGNED_MIN, 0, SIGNED_MIN, 0, SIGNED_MAX
 fval3: .float 1.0
 fval4: .float -1.0
-

@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-#include "../../asm_macros.inc"
+#include "asm_macros.h"
 
 #
 # This validates the memory subsystem by writing a pseudorandom memory pattern

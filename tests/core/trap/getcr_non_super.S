@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "../../asm_macros.inc"
+#include "asm_macros.h"
 
 //
 // Ensure executing getcr instruction faults in user mode.
@@ -50,5 +50,3 @@ handle_fault:   // Check that s0 was not updated. If it were, that could
                 bnz s10, 1f
                 call fail_test
 1:              call pass_test
-
-

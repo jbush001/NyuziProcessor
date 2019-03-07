@@ -142,7 +142,7 @@ module test_l2_cache_pending_miss_cam(input clk, input reset);
                 begin
                     assert(!duplicate_request);
 
-                    // Set request_valid, but don't make it a valid load request
+                    //#define request_valid but don't make it a valid load request
                     // ensure it doesn't mess up existing entry.
                     enqueue_request(ADDR3, 0, 0);
                 end

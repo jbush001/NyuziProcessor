@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "../../asm_macros.inc"
+#include "asm_macros.h"
 
 // This test writes something to the cache, then uses dinvalidate to remove it
 // before it is flushed back to main memory.  It then reads back the location

@@ -14,15 +14,15 @@
 // limitations under the License.
 //
 
-#include "mmu_test_common.inc"
+#include "mmu_test_common.h"
 
 //
 // Ensure writing to a page that does not have its writable bit set
 // faults and does not update memory.
 //
 
-.set ORIGINAL_VALUE, 0xb74e5a8d
-.set TEST_ADDR, 0x2350
+#define ORIGINAL_VALUE 0xb74e5a8d
+#define TEST_ADDR 0x2350
 
 
                 .globl _start

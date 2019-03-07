@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-.include "../../asm_macros.inc"
+#include "asm_macros.h"
 
 #
 # This is a very basic smoke test for performance counters.

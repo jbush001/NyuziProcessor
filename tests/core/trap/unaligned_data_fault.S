@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "../../asm_macros.inc"
+#include "asm_macros.h"
 
 //
 // Test that unaligned data accesses faults
@@ -63,7 +63,7 @@ handle_fault\testnum\()_\subtest :
     _test_unaligned_fault \testnum, 1, \op, \ptr, \value, \fault_addr, \is_store, FLAG_SUPERVISOR_EN, \subcycle
 .endm
 
-.set ORIGINAL_VALUE, 0x12345678
+#define ORIGINAL_VALUE 0x12345678
 
                 .globl _start
 _start:         move s10, 17            // Scalar pointer

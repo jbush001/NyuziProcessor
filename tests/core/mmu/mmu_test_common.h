@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "../../asm_macros.inc"
+#include "asm_macros.h"
 
 // Clobbers s0, s1, s2
 // itlb_entries and dtlb_entries point to two labels, each which points
@@ -89,4 +89,3 @@ handle_fault:       getcr s0, CR_TRAP_CAUSE
                     call fail_test
 1:
 .endm
-

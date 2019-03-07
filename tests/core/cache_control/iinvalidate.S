@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "../../asm_macros.inc"
+#include "asm_macros.h"
 
 // This test patches a nop instruction in the middle of a loop to convert it
 // to a jump out of the loop

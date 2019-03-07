@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-.include "../../asm_macros.inc"
+#include "asm_macros.h"
 
 #
 # Test load_sync/store_sync instructions.
@@ -53,4 +53,3 @@ _start:         lea s0, test_sync
 
                 .align 4
 test_sync:      .long VALUE1
-

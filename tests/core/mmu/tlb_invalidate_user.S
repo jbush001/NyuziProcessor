@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "mmu_test_common.inc"
+#include "mmu_test_common.h"
 
 //
 // Ensure executing tlbinval while in user mode faults and does not change the
@@ -70,5 +70,3 @@ dtlb_entries:   .long 0x00001000, 0x00001000 | TLB_PRESENT
                 .long 0x00002000, 0x00002000 | TLB_PRESENT | TLB_WRITABLE
                 .long 0xffff0000, 0xffff0000 | TLB_PRESENT | TLB_WRITABLE    // I/O area
                 .long 0xffffffff, 0xffffffff
-
-

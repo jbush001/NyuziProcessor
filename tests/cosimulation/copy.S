@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-.include "../asm_macros.inc"
+#include "asm_macros.h"
 
 #
 # Tests all alignments of reading and writing, across multiple cache lines by

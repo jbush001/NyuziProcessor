@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-#include "../../asm_macros.inc"
+#include "asm_macros.h"
 
 #
 # This test spawns four threads. Each one has a separate data address space,

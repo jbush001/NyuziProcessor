@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "../../asm_macros.inc"
+#include "asm_macros.h"
 
 //
 // Ensure that writing to a control register while in user mode raises a fault
@@ -55,5 +55,3 @@ handle_fault:   getcr s0, CR_SCRATCHPAD0
                 bnz s0, 1f
                 call fail_test
 1:              call pass_test
-
-

@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "../../asm_macros.inc"
+#include "asm_macros.h"
 
 // Scalar/scalar operation
 .macro test_sss operation, result, operand1, operand2
@@ -193,4 +193,3 @@
                 call fail_test
 1:
 .endmacro
-

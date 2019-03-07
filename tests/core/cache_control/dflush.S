@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "../../asm_macros.inc"
+#include "asm_macros.h"
 
 //
 // Verify dflush works correctly. Fill memory with known values. The test
@@ -39,4 +39,3 @@ fill_loop:          add_i s3, s1, s0            // Get value to store
                     bnz s4, fill_loop         // No, so loop
 
                     halt_current_thread
-
