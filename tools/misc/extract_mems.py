@@ -15,11 +15,12 @@
 # limitations under the License.
 #
 
-#
-# Create non-parameterized instances of all FIFOs and SRAMS in the design, which may
-# be required by some synthesis tools. This is invoked by the Makefile in the hardware/
-# directory and isn't called directly.
-#
+"""Create non-parameterized instances of all FIFOs and SRAMS in the design.
+
+This is required to use ASIC memory compiler tools. It is invoked by the
+Makefile in the hardware directory. It outputs a new Verilog file that
+is included in the source files for memories.
+"""
 
 from __future__ import print_function
 import re

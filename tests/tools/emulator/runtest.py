@@ -15,10 +15,11 @@
 # limitations under the License.
 #
 
-'''
+"""Test emulator.
+
 Many other tests in this tree validate parts of the emulator. This module is
 for everything that isn't directly tested elsewhere.
-'''
+"""
 
 import mmap
 import os
@@ -202,10 +203,11 @@ OWNER_HOST = 0
 OWNER_COPROCESSOR = 1
 
 def sharedmem_transact(memory, value):
-    '''
-    Send a request through shared memory to the emulated process and read
+    """Round trip message through shared memory.
+
+    Send request through shared memory to the emulated process and read
     the response from it.
-    '''
+    """
 
     write_shared_memory(memory, VALUE_ADDR, value)
     write_shared_memory(memory, OWNER_ADDR, OWNER_COPROCESSOR)
@@ -222,7 +224,7 @@ def sharedmem_transact(memory, value):
 
 @test_harness.test(['emulator'])
 def shared_memory(*unused):
-    '''See coprocessor.c for an explanation of this test'''
+    """See coprocessor.c for an explanation of this test."""
 
     test_harness.build_program(['coprocessor.c'])
 
@@ -255,12 +257,11 @@ def shared_memory(*unused):
 ############################################################################
 
 class DebugConnection(object):
+    """Encapsulates remote GDB socket connection to emulator.
 
-    '''
-    Encapsulates remote GDB socket connection to emulator. It supports
-    __enter__ and __exit__ methods so it can be used in the 'with' construct
-    to automatically close the socket when the test is done.
-    '''
+    It supports __enter__ and __exit__ methods so it can be used in the 'with'
+    construct to automatically close the socket when the test is done.
+    """
 
     def __init__(self):
         self.sock = None
@@ -283,10 +284,10 @@ class DebugConnection(object):
         self.sock.close()
 
     def _send_packet(self, body):
-        '''
-        Send request 'body' to emulator. This will encapsulate the request
-        in a packet and add the checksum.
-        '''
+        """Send request 'body' to emulator.
+
+        This will encapsulate the request in a packet and add the checksum.
+        """
 
         if test_harness.DEBUG:
             print('SEND: ' + body)
@@ -297,10 +298,10 @@ class DebugConnection(object):
         self.sock.send(str.encode('\x00\x00'))
 
     def _receive_packet(self):
-        '''
-        Wait for a full packet to be received from the peer and return
-        just the body.
-        '''
+        """Wait for a full packet to be received from peer and return body.
+
+        This parses the header, but doesn't return it.
+        """
 
         while True:
             leader = self.sock.recv(1)
@@ -331,10 +332,10 @@ class DebugConnection(object):
         return body
 
     def expect(self, command, value):
-        '''
-        Sends 'command' to remote GDB value, then waits for the response.
+        """Send 'command' to remote GDB value, then wait for the response.
+
         If the response doesn't match 'value', this will throw TestException.
-        '''
+        """
 
         self._send_packet(command)
         response = self._receive_packet()
@@ -344,12 +345,12 @@ class DebugConnection(object):
 
 
 class EmulatorProcess(object):
+    """Emulator process wrapper.
 
-    '''
-    Manages spawning the emulator and automatically stopping it at the
+    Manage spawning the emulator and automatically stopping it at the
     end of the test. It supports __enter__ and __exit__ methods so it
     can be used in the 'with' construct.
-    '''
+    """
 
     def __init__(self, hexfile, num_cores=1):
         self.hexfile = hexfile
@@ -384,10 +385,10 @@ class EmulatorProcess(object):
 
 @test_harness.test(['emulator'])
 def gdb_breakpoint(*unused):
-    '''
-    Validate stopping at a breakpoint and continuing after stopping.
+    """Validate stopping at a breakpoint and continuing after stopping.
+
     This sets two breakpoints
-    '''
+    """
 
     hexfile = test_harness.build_program(['count.S'], image_type='raw')
     with EmulatorProcess(hexfile), DebugConnection() as conn:
@@ -489,10 +490,10 @@ def gdb_single_step(*unused):
 
 @test_harness.test(['emulator'])
 def gdb_single_step_breakpoint(*unused):
-    '''
+    """
     Ensure that if you single step through a breakpoint, it doesn't
     trigger and get stuck
-    '''
+    """
     hexfile = test_harness.build_program(['count.S'], image_type='raw')
     with EmulatorProcess(hexfile), DebugConnection() as conn:
         # Set breakpoint at second instruction (address 0x8)
@@ -709,7 +710,7 @@ def gdb_invalid_command(*unused):
 
 @test_harness.test(['emulator'])
 def gdb_big_command(*unused):
-    ''' Check for buffer overflows by sending a very large command'''
+    """Check for buffer overflows by sending a very large command."""
     hexfile = test_harness.build_program(['count.S'], image_type='raw')
     with EmulatorProcess(hexfile), DebugConnection() as conn:
         # Big, invalid command. this should return an error (empty response)
@@ -721,7 +722,7 @@ def gdb_big_command(*unused):
 
 @test_harness.test(['emulator'])
 def gdb_queries(*unused):
-    '''Miscellaneous query commands not covered in other tests'''
+    """Miscellaneous query commands not covered in other tests."""
 
     hexfile = test_harness.build_program(['count.S'], image_type='raw')
     with EmulatorProcess(hexfile), DebugConnection() as conn:

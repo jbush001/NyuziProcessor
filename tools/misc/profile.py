@@ -15,16 +15,16 @@
 # limitations under the License.
 #
 
+"""Process sampling profiler output from hardware model.
 
-#
-# USAGE: profile <objdump file> <pc dump file>
-# Prints a breakdown of time spent per function.
-# - 'objdump file' parameter points to a file that was produced using:
-#   /usr/local/llvm-nyuzi/bin/llvm-objdump -t <path to ELF file>
-# - 'pc dump file' points to a file that was produced by the verilog model
-#   using +profile=<filename>.  It is a list of hexadecimal program counter
-#   samples, one per line.
-#
+USAGE: profile <objdump file> <pc dump file>
+Prints a breakdown of time spent per function.
+- 'objdump file' parameter points to a file that was produced using:
+  /usr/local/llvm-nyuzi/bin/llvm-objdump -t <path to ELF file>
+- 'pc dump file' points to a file that was produced by the verilog model
+  using +profile=<filename>.  It is a list of hexadecimal program counter
+  samples, one per line.
+"""
 
 import sys
 import re

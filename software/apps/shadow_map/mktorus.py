@@ -15,10 +15,7 @@
 # limitations under the License.
 #
 
-
-#
-# Generate a C header file with vertices and indices for a 3D torus.
-#
+"""Generate a C header file with vertices and indices for a 3D torus."""
 
 import math
 

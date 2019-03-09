@@ -15,10 +15,10 @@
 # limitations under the License.
 #
 
-'''
-Read a Wavefront .OBJ file and convert it into a flat file that can be read
-by the viewer program
-'''
+"""Read a Wavefront .OBJ file and convert it into a flat file.
+
+The output is read by the viewer program.
+"""
 
 import math
 import os
@@ -91,6 +91,11 @@ def read_image_file(filename, resize_to_width=None, resize_to_height=None):
 
 
 def read_texture(filename):
+    """Read an image file at multiple resolutions to create mip maps
+
+    This is read at the original resolution, then progressively at scaled
+    down by halves for MIP map levels.
+    """
     print('read texture ' + filename)
     width, height, data = read_image_file(filename)
 
@@ -104,6 +109,15 @@ def read_texture(filename):
 
 
 def read_mtl_file(filename):
+    """Read a material file
+
+    As a side effect, this will also read in the texture files specified
+    in the file. These will be cached, so if the same file appears in
+    multiple materials, the same loaded images will be used.
+    """
+    global material_name_to_texture_idx
+    global texture_file_to_texture_idx
+
     print('read material file ' + filename)
 
     current_name = ''

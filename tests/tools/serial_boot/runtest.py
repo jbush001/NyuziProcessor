@@ -17,10 +17,10 @@
 
 """Verify the FPGA serial loader.
 
-This uses a pseudo terminal to simulate the serial port, with
-this acting as the FPGA board. These tests are marked somewhat
-incorrectly as emulator tests, even though there's no emulator
-running, as there wasn't an applicable target type.
+This uses a pseudo terminal (pty) to simulate the serial port, with
+this process simulating the FPGA board. These tests are marked somewhat
+incorrectly as using the emulator targt, even though there's no emulator
+running. I did this as there wasn't an applicable target type.
 """
 
 import os

@@ -15,10 +15,10 @@
 # limitations under the License.
 #
 
-'''
-Tests for LLDB symbolic debugger, which is build as part of the LLVM toolchain.
-https://lldb.llvm.org/
-'''
+"""Test LLDB symbolic debugger.
+
+LLDB is built as part of the LLVM toolchain: https://lldb.llvm.org/
+"""
 
 import os
 import re
@@ -30,12 +30,12 @@ import test_harness
 
 
 class EmulatorProcess(object):
-    '''
-    This spawns the emulator process and LLDB in MI (machine interface) mode.
-    It allows communication with LLDB with it via stdin and stdout. It has the
+    """Spawns the emulator process and LLDB in MI (machine interface) mode.
+
+    This allows communication with LLDB with it via stdin and stdout. It has the
     __enter__ and __exit__ methods allowing it to be used in the 'with'
     construct so it will automatically be torn down when the test is done.
-    '''
+    """
 
     def __init__(self, hexfile):
         self.hexfile = hexfile
@@ -125,8 +125,7 @@ AT_RE = re.compile(' at (?P<filename>[a-z_A-Z][a-z\\._A-Z]+):(?P<line>[0-9]+)')
 
 
 def parse_stack_crawl(response):
-    '''
-    Convert blob of stack crawl text to a list of tuples.
+    """Convert blob of stack crawl text to a list of tuples.
 
     Args:
         response: string
@@ -134,7 +133,7 @@ def parse_stack_crawl(response):
 
     Returns:
         list(tuple (function name, filename, line number))
-    '''
+    """
 
     stack_info = []
     for line in response.split('\\n'):
@@ -153,7 +152,7 @@ def parse_stack_crawl(response):
 
 @test_harness.test(['emulator'])
 def lldb(*unused):
-    '''This mainly validates that LLDB is reading symbols correctly.'''
+    """This mainly validates that LLDB is reading symbols correctly."""
 
     hexfile = test_harness.build_program(
         ['test_program.c'], opt_level='-O0', cflags=['-g'])

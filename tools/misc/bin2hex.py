@@ -15,6 +15,13 @@
 # limitations under the License.
 #
 
+"""Convert a binary file into a file compatible with Verilog $readmemh.
+
+Each line in this file will be a 4 byte hexadecimal value. This is used
+primarily to create a bootloader file that can be read by the synthesis
+tools.
+"""
+
 import sys
 import binascii
 

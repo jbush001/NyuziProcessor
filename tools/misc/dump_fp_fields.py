@@ -15,10 +15,10 @@
 # limitations under the License.
 #
 
+"""Print internal fields of a floating point number.
 
-#
-# Print internal fields of a floating point number.
-#
+This is a handy utility when debugging the floating point pipeline.
+"""
 
 import sys
 import struct

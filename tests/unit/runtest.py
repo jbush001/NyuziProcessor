@@ -15,10 +15,11 @@
 # limitations under the License.
 #
 
-'''
-This module runs unit tests against individual verilog modules. It will compile
-each one separately, then look for the string 'PASS' in the output.
-'''
+"""Run unit tests against individual verilog modules.
+
+This compiles each one separately, then looks for the string 'PASS'
+in the output.
+"""
 
 import os
 import subprocess
@@ -28,7 +29,7 @@ sys.path.insert(0, '..')
 import test_harness
 
 DRIVER_PATH = test_harness.WORK_DIR + '/driver.cpp'
-DRIVER_SRC = '''
+DRIVER_SRC = """
 #include <iostream>
 #include <stdlib.h>
 #include "V$MODULE$.h"
@@ -96,7 +97,7 @@ int main(int argc, char **argv, char **env)
 
     return 0;
 }
-'''
+"""
 
 
 def run_unit_test(filename, _):

@@ -14,11 +14,10 @@
 # limitations under the License.
 #
 
-'''
-Utility functions for functional tests.
+"""Utility functions for functional tests.
 
 This is imported into test runner scripts in subdirectories under this one.
-'''
+"""
 
 import argparse
 import binascii
@@ -58,7 +57,7 @@ EMULATOR_PATH = BIN_DIR + 'nyuzi_emulator'
 SERIAL_BOOT_PATH = BIN_DIR + 'serial_boot'
 
 class TestException(Exception):
-    '''This exception is raised for test failures'''
+    """This exception is raised for test failures"""
     pass
 
 parser = argparse.ArgumentParser()
@@ -76,7 +75,7 @@ DEBUG = test_args.debug
 
 
 def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags=None):
-    '''Compile and or assemble one or more files.
+    """Compile and or assemble one or more files.
 
     If there are any .c files in the list, this will link in crt0, libc,
     and libos libraries. It converts the binary to a hex file that can be
@@ -100,7 +99,7 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
 
     Raises:
         TestException if compilation failed, will contain compiler output
-    '''
+    """
     assert isinstance(source_files, list)
     compiler_args = [COMPILER_BIN + '/clang',
                      '-o', ELF_FILE,
@@ -143,7 +142,7 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
         raise TestException('Compilation failed:\n' + exc.output.decode())
 
 def kill_gently(process):
-    '''Kill a process, giving a chance to terminate cleanly.
+    """Kill a process, giving a chance to terminate cleanly.
 
     Give process a chance to terminate normally, then kill it
     forcefully if it doesn't respond after a few seconds.
@@ -158,7 +157,7 @@ def kill_gently(process):
 
     Raises:
         nothing
-    '''
+    """
 
     process.terminate()
     try:
@@ -168,7 +167,7 @@ def kill_gently(process):
         process.kill()
 
 class TimedProcessRunner(threading.Thread):
-    '''Run a process, but throw an exception if it takes too long.'''
+    """Run a process, but throw an exception if it takes too long."""
 
     def __init__(self):
         threading.Thread.__init__(self)
@@ -178,7 +177,7 @@ class TimedProcessRunner(threading.Thread):
         self.timeout = 0
 
     def communicate(self, process, timeout, input=None):
-        '''Call process.communicate() with timeout.
+        """Call process.communicate() with timeout.
 
         Args:
             process: Popen
@@ -194,7 +193,7 @@ class TimedProcessRunner(threading.Thread):
 
         Raises:
             TestException if the process times out.
-        '''
+        """
 
         self.timeout = timeout
         self.process = process
@@ -216,7 +215,7 @@ class TimedProcessRunner(threading.Thread):
 
 
 def run_test_with_timeout(args, timeout):
-    '''Run program specified by args with timeout.
+    """Run program specified by args with timeout.
 
     If it does not complete in time, throw a TestException. If it
     returns a non-zero result, it will also throw a TestException.
@@ -233,7 +232,7 @@ def run_test_with_timeout(args, timeout):
 
     Raises:
         TestException if the test fails or times out.
-    '''
+    """
 
     process = subprocess.Popen(args, stdout=subprocess.PIPE,
                                stderr=subprocess.STDOUT)
@@ -266,7 +265,7 @@ def run_program(
         flush_l2=False,
         trace=False,
         executable=None):
-    '''Run test program.
+    """Run test program.
 
     This uses the hex file produced by build_program.
 
@@ -293,7 +292,7 @@ def run_program(
     Raises:
         TestException if emulated program crashes or the program cannot
         execute for some other reason.
-    '''
+    """
     if not executable:
         executable = HEX_FILE
 
@@ -364,7 +363,7 @@ def run_program(
 def run_kernel(
         target='emulator',
         timeout=60):
-    '''Run test program as a user space program under the kernel.
+    """Run test program as a user space program under the kernel.
 
     This uses the elf file produced by build_program. The kernel reads
     the file 'program.elf' from the filesystem. This will build a filesystem
@@ -380,7 +379,7 @@ def run_kernel(
     Raises:
         TestException if emulated program crashes or the program cannot
         execute for some other reason.
-    '''
+    """
     block_file = WORK_DIR + 'fsimage.bin'
     subprocess.check_output([BIN_DIR + 'mkfs', block_file, ELF_FILE],
                             stderr=subprocess.STDOUT)
@@ -396,7 +395,7 @@ def run_kernel(
 
 
 def assert_files_equal(file1, file2, error_msg='file mismatch'):
-    '''Read two files and throw a TestException if they are not the same
+    """Read two files and throw a TestException if they are not the same
 
     Args:
         file1: string
@@ -412,7 +411,7 @@ def assert_files_equal(file1, file2, error_msg='file mismatch'):
     Raises:
         TestException if the files don't match. Exception test contains
         details about where the mismatch occurred.
-    '''
+    """
 
     bufsize = 0x1000
     block_offset = 0
@@ -463,7 +462,7 @@ registered_tests = []
 
 
 def register_tests(func, names, targets=None):
-    '''Add a list of tests to be run when execute_tests is called.
+    """Add a list of tests to be run when execute_tests is called.
 
     This function can be called multiple times, it will append passed
     tests to the existing list.
@@ -480,7 +479,7 @@ def register_tests(func, names, targets=None):
 
     Raises:
         Nothing
-     '''
+     """
 
     global registered_tests
     if not targets:
@@ -490,12 +489,12 @@ def register_tests(func, names, targets=None):
 
 
 def test(param=None):
-    '''decorator @test automatically registers test to be run.
+    """decorator @test automatically registers test to be run.
 
     Args:
         param: list(string)
             optional list of targets that are valid for this test
-    '''
+    """
     if callable(param):
         # If the test decorator is used without a target list,
         # this will just pass the function as the parameter.
@@ -512,7 +511,7 @@ def test(param=None):
 
 
 def find_files(extensions):
-    '''Find all files in the current directory that have the passed extensions.
+    """Find all files in the current directory that have the passed extensions.
 
     Args:
         extensions: list
@@ -524,7 +523,7 @@ def find_files(extensions):
 
     Raises:
         Nothing
-    '''
+    """
 
     return [fname for fname in os.listdir('.') if fname.endswith(extensions)]
 
@@ -535,7 +534,7 @@ OUTPUT_ALIGN = 50
 
 
 def execute_tests():
-    '''All tests are called from here.
+    """All tests are called from here.
 
     Run all tests that have been registered with the register_tests functions
     and report results. If this fails, it will call sys.exit with a non-zero status.
@@ -548,7 +547,7 @@ def execute_tests():
 
     Raises:
         Nothing
-    '''
+    """
 
     global DEBUG
 
@@ -623,7 +622,7 @@ CHECKN_PREFIX = 'CHECKN: '
 
 
 def check_result(source_file, program_output):
-    '''Check output of a program based on embedded comments in source code.
+    """Check output of a program based on embedded comments in source code.
 
     For each pattern in a source file that begins with 'CHECK: ', search
     to see if the regular expression that follows it occurs in program_output.
@@ -640,7 +639,7 @@ def check_result(source_file, program_output):
 
     Raises:
         TestException if a string is not found.
-    '''
+    """
 
     output_offset = 0
     line_num = 1
@@ -692,7 +691,7 @@ def check_result(source_file, program_output):
 
 
 def dump_hex(output_file, input_file):
-    '''Read binary input file and encode as hexadecimal file.
+    """Read binary input file and encode as hexadecimal file.
 
     Each line of the output file is 4 bytes.
 
@@ -707,7 +706,7 @@ def dump_hex(output_file, input_file):
 
     Raises:
         IOError if there is a problem reading or writing files.
-    '''
+    """
 
     with open(input_file, 'rb') as ifile, open(output_file, 'wb') as ofile:
         while True:
@@ -720,7 +719,7 @@ def dump_hex(output_file, input_file):
 
 
 def endian_swap(value):
-    '''"Given a 32-bit integer value, swap it to the opposite endianness.
+    """"Given a 32-bit integer value, swap it to the opposite endianness.
 
     Args:
         value: number
@@ -728,14 +727,14 @@ def endian_swap(value):
 
     Returns:
         number Endian swapped result
-    '''
+    """
 
     return (((value >> 24) & 0xff) | ((value >> 8) & 0xff00)
             | ((value << 8) & 0xff0000) | (value << 24))
 
 
 def _run_generic_test(name, target):
-    '''Compile a file, run the program, and call check_result on it.
+    """Compile a file, run the program, and call check_result on it.
 
     check_result will match expected strings in the source
     file with the programs output.
@@ -752,7 +751,7 @@ def _run_generic_test(name, target):
 
     Raises:
         TestException if the test fails.
-    '''
+    """
 
     build_program([name])
     result = run_program(target)
@@ -760,7 +759,7 @@ def _run_generic_test(name, target):
 
 
 def register_generic_test(name, targets=None):
-    '''Register a test without a custom test handler function.
+    """Register a test without a custom test handler function.
 
     This will compile the passed filename, then use check_result to validate
     it against comment strings embedded in the file. It runs it both in
@@ -775,7 +774,7 @@ def register_generic_test(name, targets=None):
 
     Raises:
         Nothing
-    '''
+    """
     if not targets:
         targets = ALL_TARGETS[:]
 
@@ -790,7 +789,7 @@ def _run_generic_assembly_test(name, target):
 
 
 def register_generic_assembly_tests(tests, targets=None):
-    '''Register a test written in assembler without a custom test handler.
+    """Register a test written in assembler without a custom test handler.
 
     This will assemble the passed program, then look for PASS or FAIL
     strings. It runs it both in verilator and emulator configurations.
@@ -805,7 +804,7 @@ def register_generic_assembly_tests(tests, targets=None):
 
     Raises:
         Nothing
-    '''
+    """
 
     if not targets:
         targets = ALL_TARGETS[:]
@@ -814,7 +813,7 @@ def register_generic_assembly_tests(tests, targets=None):
 
 
 def register_render_test(name, source_files, expected_hash, targets=None):
-    '''Register a test that renders graphics.
+    """Register a test that renders graphics.
 
     This will compile the source files, run the program, then compute a
     hash of memory starting at 2M, which is expected to be a framebuffer
@@ -836,7 +835,7 @@ def register_render_test(name, source_files, expected_hash, targets=None):
 
     Raises:
         Nothing
-    '''
+    """
 
     # This closure captures parameters source_files and
     # expected_checksum.

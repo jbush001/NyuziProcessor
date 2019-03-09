@@ -24,12 +24,12 @@ import test_harness
 
 @test_harness.test(['emulator', 'fpga'])
 def filesystem(_, target):
-    '''Filesystem tests.
+    """Test the filesystem implementation in libos.
 
     This creates a filesystem image with the test file fstest.txt
     in it, the compiles the program fs.c to perform operations on it. The program
     will print 'PASS' if it is successful.
-    '''
+    """
 
     test_harness.build_program(['fs.c'])
     subprocess.check_output(
