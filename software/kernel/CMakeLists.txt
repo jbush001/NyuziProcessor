@@ -44,4 +44,4 @@ add_nyuzi_executable(kernel
     vga.c
     util.c)
 
-target_include_directories (kernel PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(kernel PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

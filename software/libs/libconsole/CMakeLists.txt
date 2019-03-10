@@ -17,12 +17,13 @@
 project(console)
 include(nyuzi)
 
-# libos-bare and libos-kern share headers, so this doesn't create a dependency
-# on one.
-include_directories($<TARGET_PROPERTY:os-bare,INCLUDE_DIRECTORIES>)
-include_directories($<TARGET_PROPERTY:c,INCLUDE_DIRECTORIES>)
 
 add_nyuzi_library(console
     console.cpp)
 
-target_include_directories (console PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(console PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+# libos-bare and libos-kern share headers, so this doesn't create a dependency
+# on one.
+target_include_directories(console PRIVATE $<TARGET_PROPERTY:os-bare,INCLUDE_DIRECTORIES>)
+target_include_directories(console PRIVATE $<TARGET_PROPERTY:c,INCLUDE_DIRECTORIES>)

@@ -17,8 +17,6 @@
 project(dhrystone)
 include(nyuzi)
 
-add_definitions(-DTIME=1)
-
 add_nyuzi_executable(dhrystone
     SOURCES
     dhry_1.c
@@ -27,6 +25,7 @@ add_nyuzi_executable(dhrystone
 # The instructions with Dhrystone indicate function inlining should be
 # disabled.
 target_compile_options(dhrystone PRIVATE -fno-inline-functions -w)
+target_compile_definitions(dhrystone PRIVATE TIME=1)
 target_link_libraries(dhrystone
     c
     os-bare)

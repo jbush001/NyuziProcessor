@@ -17,11 +17,6 @@
 project(librender)
 include(nyuzi)
 
-# libos-bare and libos-kern share headers, so this doesn't create a dependency
-# on one.
-include_directories($<TARGET_PROPERTY:os-bare,INCLUDE_DIRECTORIES>)
-include_directories($<TARGET_PROPERTY:c,INCLUDE_DIRECTORIES>)
-
 add_nyuzi_library(render
     Rasterizer.cpp
     Surface.cpp
@@ -31,3 +26,8 @@ add_nyuzi_library(render
     line.cpp)
 target_compile_options(render PRIVATE -Wold-style-cast -Wsign-conversion -ffast-math)
 target_include_directories(render PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+# libos-bare and libos-kern share headers, so this doesn't create a dependency
+# on one.
+target_include_directories(render PRIVATE $<TARGET_PROPERTY:os-bare,INCLUDE_DIRECTORIES>)
+target_include_directories(render PRIVATE $<TARGET_PROPERTY:c,INCLUDE_DIRECTORIES>)

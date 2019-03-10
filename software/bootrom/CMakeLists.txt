@@ -24,6 +24,8 @@ add_executable(bootrom
     start.s
     boot.c)
 
+# XXX hack: the result is written into the source directory instead of build, as the
+# FPGA tools don't know how to find the latter.
 add_custom_command(TARGET bootrom
     POST_BUILD
     COMMAND ${CMAKE_SOURCE_DIR}/tools/misc/bin2hex.py $<TARGET_FILE:bootrom> > boot.hex

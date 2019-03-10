@@ -17,10 +17,6 @@
 project(libc)
 include(nyuzi)
 
-# libos-bare and libos-kern share headers, so this doesn't create a dependency
-# on one.
-include_directories($<TARGET_PROPERTY:os-bare,INCLUDE_DIRECTORIES>)
-
 add_nyuzi_library(c
     src/dlmalloc.c
     src/memcmp.c
@@ -29,17 +25,19 @@ add_nyuzi_library(c
     src/stdlib.c
     src/time.c
     src/math.c
-    src/memcpy.s
+    src/memcpy.S
     src/qsort.c
     src/stdio.c
     src/string.c
     src/vfprintf.c
     src/cxx_runtime.cpp
-    src/memcpy.s
-    src/setjmp.s)
+    src/setjmp.S)
 
 # dlmalloc is a third party library that has a bunch of warnings.
 # I'm not going to modify it, so disabling them.
 set_source_files_properties(src/dlmalloc.c PROPERTIES COMPILE_FLAGS "-w")
 
 target_include_directories(c PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+# libos-bare and libos-kern share headers, so this doesn't create a dependency
+# on one.
+target_include_directories(c PRIVATE $<TARGET_PROPERTY:os-bare,INCLUDE_DIRECTORIES>)

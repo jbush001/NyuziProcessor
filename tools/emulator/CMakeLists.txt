@@ -28,7 +28,6 @@ add_command_line_tool(nyuzi_emulator
     util.c)
 
 find_package(SDL2 REQUIRED)
-include_directories(${SDL2_INCLUDE_DIRS})
+target_include_directories(nyuzi_emulator PRIVATE ${SDL2_INCLUDE_DIRS})
 string(STRIP ${SDL2_LIBRARIES} SDL2_LIBRARIES) # Work around Linux build error w/ trailing space
 target_link_libraries(nyuzi_emulator ${SDL2_LIBRARIES})
-

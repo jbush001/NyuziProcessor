@@ -26,7 +26,7 @@
 
                     .globl _start
 _start:
-                    # Load global pointer
+                    // Load global pointer
                     movehi gp, hi(_GLOBAL_OFFSET_TABLE_)
                     or gp, gp, lo(_GLOBAL_OFFSET_TABLE_)
 
@@ -37,7 +37,7 @@ _start:
                     // boot_setup_page_tables. As soon as that returns,
                     // this memory will not be touched again and can be
                     // used for other things.
-                    li sp, 0x400000                 # Temporary stack
+                    li sp, 0x400000             // Temporary stack addr
                     li s0, MEMORY_SIZE
                     call boot_setup_page_tables
 

@@ -17,9 +17,6 @@
 project(libos-bare)
 include(nyuzi)
 
-include_directories($<TARGET_PROPERTY:c,INCLUDE_DIRECTORIES>)
-include_directories(..)
-
 add_nyuzi_library(os-bare
     keyboard.c
     sbrk.c
@@ -31,6 +28,7 @@ add_nyuzi_library(os-bare
     nyuzi.c
     sdmmc.c
     vga.c
-    crt0.s)
+    crt0.S)
 
-target_include_directories (os-bare PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
+target_include_directories(os-bare PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
+target_include_directories(os-bare PRIVATE $<TARGET_PROPERTY:c,INCLUDE_DIRECTORIES>)

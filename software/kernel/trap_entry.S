@@ -34,8 +34,9 @@ trap_entry:             setcr s0, CR_SCRATCHPAD0        // Save s0 in scratchpad
                         and s0, s0, FLAG_SUPERVISOR_EN  // Was in supervisor mode?
                         bnz s0, is_supervisor
 
-                        // Need to switch to kernel stack. First, find the
-                        // current thread for this hardware thread.
+                        // Fault occured while thread was in user mode. Need
+                        // to switch to kernel stack. First, find the current
+                        // OS thread that is running.
                         getcr s0, CR_CURRENT_HW_THREAD  // Current hardware thread
                         shl s0, s0, 2                   // Multiply by 4 (bytes/entry)
                         lea s1, trap_kernel_stack_addr
@@ -46,8 +47,8 @@ trap_entry:             setcr s0, CR_SCRATCHPAD0        // Save s0 in scratchpad
                         move sp, s1                     // switch stacks
                         b save_frame
 
-                        // Already in kernel mode. Don't need to switch stacks, just
-                        // decrement pointer
+                        // Already in kernel mode. Do not need to switch stacks, just
+                        // decrement stack pointer to make room for trap frame.
 is_supervisor:          store_32 sp, TRAP_FRAME_SP_OFFSET - TRAP_FRAME_SIZE(sp)   // save old stack
 
                         // Save remaining registers
@@ -97,7 +98,7 @@ save_frame:             getcr s0, CR_SCRATCHPAD0        // restore s0
 
                         move s0, sp  // pass pointer to trap frame to handle_trap
 
-                        # Load global pointer
+                        // Load global pointer
                         movehi gp, hi(_GLOBAL_OFFSET_TABLE_)
                         or gp, gp, lo(_GLOBAL_OFFSET_TABLE_)
 
@@ -136,19 +137,22 @@ save_frame:             getcr s0, CR_SCRATCHPAD0        // restore s0
 
                         load_32 s0, TRAP_FRAME_PC_OFFSET(sp)
                         setcr s0, CR_TRAP_PC    // eret will jump to here
-                        load_32 s0, 132(sp)
+                        load_32 s0, 132(sp)     // get save flags from trap frame
                         setcr s0, CR_SAVED_FLAGS
-                        load_32 s0, 136(sp)
+                        load_32 s0, 136(sp)     // get subcycle from trap frame
                         setcr s0, CR_SAVED_SUBCYCLE
                         load_32 s0, 0(sp)    // Restore s0
                         load_32 sp, TRAP_FRAME_SP_OFFSET(sp) // Restore old stack pointer
                         eret
 
+// This stores an array of addresses of kernel stacks, one for each hardware
+// thread.
 trap_kernel_stack_addr: .long trap_kernel_stack
 
 
 //
 // Jump to a user mode task.
+// This is used to initially jump to user code when spawning a new thread.
 //
 //  void jump_to_user_mode(int argc, void *argv, unsigned int inital_pc,
 //      unsigned int user_stack_ptr);
@@ -164,7 +168,10 @@ jump_to_user_mode:      setcr s2, CR_TRAP_PC        // Address to jump to.
                         eret
 
 //
-// TLB miss handler. This is invoked with the MMU disabled.
+// TLB miss handler.
+// This is called when either an instruction or data TLB miss occurs.
+// It is responsible for populating the corresponding TLB entry.
+// This is invoked with the MMU disabled.
 //
 // Virtual address format:
 // +--------------------+--------------------+------------------------+
