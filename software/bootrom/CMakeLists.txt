@@ -21,7 +21,7 @@ add_nyuzi_binary(bootrom)
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--script ${CMAKE_CURRENT_SOURCE_DIR}/boot.ld -Wl,--oformat,binary")
 
 add_executable(bootrom
-    start.s
+    start.S
     boot.c)
 
 # XXX hack: the result is written into the source directory instead of build, as the

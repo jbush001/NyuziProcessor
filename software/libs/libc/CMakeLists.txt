@@ -21,7 +21,7 @@ add_nyuzi_library(c
     src/dlmalloc.c
     src/memcmp.c
     src/memset.c
-    src/setjmp.s
+    src/setjmp.S
     src/stdlib.c
     src/time.c
     src/math.c
