@@ -15,14 +15,13 @@
 //
 
 #include <iostream>
-#include <stdlib.h>
+#include <cstdlib>
 #include "Vsoc_tb.h"
 #include "verilated.h"
 #include "verilated_vpi.h"
 #if VM_TRACE
 #include <verilated_vcd_c.h>
 #endif
-using namespace std;
 
 //
 // This is compiled into the verilog simulator executable along with the
@@ -83,7 +82,6 @@ int main(int argc, char **argv, char **env)
     // This is a bit of a hack, set the 'last' state of reset to zero and reset to one.
     // This will cause a positive edge event on the next eval() that will trigger
     // all reset blocks. Reset will be deasserted in the main loop below.
-    //
     testbench->__Vclklast__TOP__reset = 0;
     testbench->reset = 1;
     testbench->clk = 0;
@@ -99,8 +97,9 @@ int main(int argc, char **argv, char **env)
 
     while (!Verilated::gotFinish())
     {
-        // Allow it to run for a few clock cycles with reset asserted. This allows
-        // flops that are not reset to settle on valid values so assertions don't trip.
+        // Run for a few clock cycles with reset asserted. This allows flops
+        // that are not reset to settle on valid values so assertions don't
+        // trip.
         if (currentTime == 4)
             testbench->reset = 0;
 
@@ -113,11 +112,12 @@ int main(int argc, char **argv, char **env)
         currentTime++;
     }
 
+    testbench->final();
+
 #if VM_TRACE
     tfp->close();
 #endif
 
-    testbench->final();
     delete testbench;
 
     return 0;
