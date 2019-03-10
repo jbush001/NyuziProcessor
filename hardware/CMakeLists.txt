@@ -21,7 +21,7 @@ add_subdirectory(fpga/de2-115)
 
 set(ENABLE_VERILATOR_THREADS 0 CACHE BOOL "Enable multithreaded verilator model (improves performance on multiprocessor host machines)")
 
-if (${ENABLE_VERILATOR_THREADS})
+if(${ENABLE_VERILATOR_THREADS})
     ProcessorCount(NUM_THREADS)
     message("Configure verilator with ${NUM_THREADS} threads")
 else()
@@ -46,7 +46,7 @@ set(VERILATOR_OPTIONS --unroll-count 512
 
 set(DUMP_WAVEFORM 0 CACHE BOOL "Enable dumping VCD waveforms from Verilog simulator.")
 
-if (${DUMP_WAVEFORM})
+if(${DUMP_WAVEFORM})
     set(VERILATOR_OPTIONS ${VERILATOR_OPTIONS} --trace --trace-structs)
 endif()
 
@@ -56,7 +56,7 @@ set(VERILATOR_MIN_VERSION "6")
 # "Verilator 3.920 2018-02-01 rev verilator_3_920"
 execute_process(COMMAND ${VERILATOR} --version OUTPUT_VARIABLE verilator_version_str)
 string(REGEX MATCH "Verilator ([0-9])\\.([0-9]+)" verilator_version ${verilator_version_str})
-if (NOT CMAKE_MATCH_0)
+if(NOT CMAKE_MATCH_0)
     message("Couldn't get verilator version")
 elseif(CMAKE_MATCH_2 LESS ${VERILATOR_MIN_VERSION} OR CMAKE_MATCH_1 LESS 4)
     message(FATAL_ERROR "Need at least verilator 4.${VERILATOR_MIN_VERSION}")
@@ -89,11 +89,11 @@ find_program(EMACS NAMES emacs)
 add_custom_target(autos
     COMMAND ${EMACS} --eval '\(setq-default indent-tabs-mode nil\)'
         --eval '\(setq-default verilog-typedef-regexp \"_t$$\"\)'
-	    --eval '\(setq-default verilog-auto-reset-widths `unbased\)'
-	    --eval '\(setq-default verilog-auto-inst-param-value t\)'
-	    --eval '\(setq-default verilog-library-directories `\(\"${CMAKE_CURRENT_SOURCE_DIR}/core\" \"${CMAKE_CURRENT_SOURCE_DIR}/testbench\" \"${CMAKE_CURRENT_SOURCE_DIR}/fpga/common\" \".\"\)\)'
-	    --batch core/*.sv testbench/*.sv fpga/common/*.sv fpga/de2-115/*.sv
-		-f verilog-batch-auto -f save-buffer
+        --eval '\(setq-default verilog-auto-reset-widths `unbased\)'
+        --eval '\(setq-default verilog-auto-inst-param-value t\)'
+        --eval '\(setq-default verilog-library-directories `\(\"${CMAKE_CURRENT_SOURCE_DIR}/core\" \"${CMAKE_CURRENT_SOURCE_DIR}/testbench\" \"${CMAKE_CURRENT_SOURCE_DIR}/fpga/common\" \".\"\)\)'
+        --batch core/*.sv testbench/*.sv fpga/common/*.sv fpga/de2-115/*.sv
+        -f verilog-batch-auto -f save-buffer
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 # FPGA target isn't built as part of other targets, but run a lint pass to

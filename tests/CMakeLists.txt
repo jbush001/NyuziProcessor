@@ -57,11 +57,11 @@ set(py_test_dirs
 # I can't remember now. But it may be worth exploring (or at
 # least documenting) later.
 add_custom_target(tests)
-foreach (dir ${py_test_dirs})
+foreach(dir ${py_test_dirs})
     add_custom_command(TARGET tests
         COMMAND ./runtest.py
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${dir})
-endforeach(dir)
+endforeach()
 
 # XXX only run in emulator mode for now (because of execution time)
 add_custom_command(TARGET tests
@@ -85,11 +85,11 @@ set(fpga_test_dirs
     whole-program)
 
 add_custom_target(fpgatest)
-foreach (dir ${fpga_test_dirs})
+foreach(dir ${fpga_test_dirs})
     add_custom_command(TARGET fpgatest
         COMMAND ./runtest.py --target fpga
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${dir})
-endforeach(dir)
+endforeach()
 
 find_program(PYLINT_PATH pylint)
 find_program(PYFLAKES_PATH pyflakes)

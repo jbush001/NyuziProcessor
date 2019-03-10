@@ -28,7 +28,7 @@ macro(add_nyuzi_binary)
     # LLD does not support these flags
     string(REPLACE "-Wl,-search_paths_first" "" CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS}")
     string(REPLACE "-Wl,-search_paths_first" "" CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS}")
-endmacro(add_nyuzi_binary)
+endmacro()
 
 macro(add_nyuzi_executable name)
     cmake_parse_arguments(ARG
@@ -41,7 +41,7 @@ macro(add_nyuzi_executable name)
         add_definitions(-DFB_HEIGHT=${ARG_DISPLAY_HEIGHT})
     endif()
 
-    if (ARG_IMAGE_BASE_ADDRESS)
+    if(ARG_IMAGE_BASE_ADDRESS)
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--image-base=${ARG_IMAGE_BASE_ADDRESS}")
         set(ELF2HEX_ARGS -b ${ARG_IMAGE_BASE_ADDRESS})
     endif()
@@ -119,10 +119,10 @@ macro(add_nyuzi_executable name)
     add_custom_command(TARGET ${name}
         POST_BUILD
         COMMAND chmod +x run_*)
-endmacro(add_nyuzi_executable name)
+endmacro()
 
 macro(add_nyuzi_library name)
     add_nyuzi_binary()
     add_library(${name} ${ARGN})
     target_compile_options(${name} PRIVATE -O3 -Wall -Wno-unused-command-line-argument -Werror)
-endmacro(add_nyuzi_library name)
+endmacro()
