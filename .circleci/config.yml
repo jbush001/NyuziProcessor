@@ -1,0 +1,12 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: jeffbush001/nyuzi-build
+
+    steps:
+      - checkout
+
+      - run:
+          name: Compile and Test
+          command: scripts/run_ci_tests.sh
