@@ -105,7 +105,7 @@ the READMEs in those directories).
 
 For example, this will render a 3D model in the emulator:
 
-    cd build/software/apps/sceneview
+    cd software/apps/sceneview
     ./run_emulator
 
 To run on FPGA, see instructions in hardware/fpga/de2-115/README.md
