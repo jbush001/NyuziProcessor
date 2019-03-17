@@ -46,6 +46,7 @@ module fp_execute_stage2(
     input subcycle_t                            fx1_subcycle,
     input [NUM_VECTOR_LANES - 1:0]              fx1_result_inf,
     input [NUM_VECTOR_LANES - 1:0]              fx1_result_nan,
+    input [NUM_VECTOR_LANES - 1:0]              fx1_equal,
     input [NUM_VECTOR_LANES - 1:0][5:0]         fx1_ftoi_lshift,
 
     // Floating point addition/subtraction
@@ -71,6 +72,7 @@ module fp_execute_stage2(
     output subcycle_t                           fx2_subcycle,
     output logic[NUM_VECTOR_LANES - 1:0]        fx2_result_inf,
     output logic[NUM_VECTOR_LANES - 1:0]        fx2_result_nan,
+    output logic[NUM_VECTOR_LANES - 1:0]        fx2_equal,
     output logic[NUM_VECTOR_LANES - 1:0][5:0]   fx2_ftoi_lshift,
 
     // Floating point addition/subtraction
@@ -130,6 +132,7 @@ module fp_execute_stage2(
                 fx2_mul_sign[lane_idx] <= fx1_mul_sign[lane_idx];
                 fx2_result_inf[lane_idx] <= fx1_result_inf[lane_idx];
                 fx2_result_nan[lane_idx] <= fx1_result_nan[lane_idx];
+                fx2_equal[lane_idx] <= fx1_equal[lane_idx];
                 fx2_ftoi_lshift[lane_idx] <= fx1_ftoi_lshift[lane_idx];
 
                 // XXX Simple version. Should have a wallace tree here to collect partial products.

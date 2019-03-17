@@ -60,6 +60,7 @@ module fp_execute_stage1(
     output subcycle_t                               fx1_subcycle,
     output logic[NUM_VECTOR_LANES - 1:0]            fx1_result_inf,
     output logic[NUM_VECTOR_LANES - 1:0]            fx1_result_nan,
+    output logic[NUM_VECTOR_LANES - 1:0]            fx1_equal,
     output logic[NUM_VECTOR_LANES - 1:0][5:0]       fx1_ftoi_lshift,
 
     // Floating point addition/subtraction
@@ -81,12 +82,19 @@ module fp_execute_stage1(
     logic imul;
     logic ftoi;
     logic itof;
+    logic compare;
 
     assign fmul = of_instruction.alu_op == OP_MUL_F;
     assign imul = of_instruction.alu_op == OP_MULL_I || of_instruction.alu_op == OP_MULH_U
         || of_instruction.alu_op == OP_MULH_I;
     assign ftoi = of_instruction.alu_op == OP_FTOI;
     assign itof = of_instruction.alu_op == OP_ITOF;
+    assign compare = of_instruction.alu_op == OP_CMPGT_F
+        || of_instruction.alu_op == OP_CMPLT_F
+        || of_instruction.alu_op == OP_CMPGE_F
+        || of_instruction.alu_op == OP_CMPLE_F
+        || of_instruction.alu_op == OP_CMPEQ_F
+        || of_instruction.alu_op == OP_CMPNE_F;
 
     genvar lane_idx;
     generate
@@ -108,6 +116,7 @@ module fp_execute_stage1(
             logic fop2_nan;
             logic logical_subtract;
             logic result_nan;
+            logic equal;
             logic mul_exponent_underflow;
             logic mul_exponent_carry;
             logic[5:0] ftoi_rshift;
@@ -165,9 +174,15 @@ module fp_execute_stage1(
                         || (fop2_inf && of_operand1[lane_idx] == 0);
                 else if (ftoi)
                     result_nan = fop2_nan || fop2_inf || fop2.exponent >= 8'd159;
+                else if (compare)
+                    result_nan = fop1_nan || fop2_nan;
                 else
                     result_nan = fop1_nan || fop2_nan || (fop1_inf && fop2_inf && logical_subtract);
             end
+
+            // This will be overridden if result_nan is true.
+            assign equal = (fop1_inf && fop2_inf && fop1.sign == fop2.sign)
+                || (!fop1_inf && !fop2_inf && fop1 == fop2);
 
             // The result exponent for multiplication is the sum of the exponents. Convert these
             // from biased to unbiased representation by inverting the MSB, then add.
@@ -187,6 +202,7 @@ module fp_execute_stage1(
                 fx1_result_nan[lane_idx] <= result_nan;
                 fx1_result_inf[lane_idx] <= !itof && !result_nan && (fop1_inf || fop2_inf
                     || (fmul && mul_exponent_carry && !mul_exponent_underflow));
+                fx1_equal[lane_idx] <= equal;
                 fx1_mul_underflow[lane_idx] <= mul_exponent_underflow;
 
                 // Floating point addition pipeline.

@@ -37,11 +37,113 @@
             bz s5, 1b
 .endmacro
 
+.macro test_compare op, result_list
+            lea s0, compare_vals        # base ptr
+            lea s1, compare_vals_end
+            lea s2, \result_list
+            move s3, s0                 # op1
+1:          move s4, s0                 # op2
+2:          load_32 s5, (s3)            # Read first op
+            load_32 s6, (s4)            # Read second op
+            load_u8 s7, (s2)            # Read expected
+            \op s8, s5, s6
+            and s8, s8, 1               # Chop bits
+            cmpeq_i s9, s8, s7          # Check result
+            bnz s9, 3f                  # If this matches, continue
+            call fail_test
+3:          add_i s2, s2, 1             # increment expected pointer
+            add_i s4, s4, 4             # increment op2
+            cmpeq_i s9, s4, s1          # op2 pointer at end?
+            bz s9, 2b                   # No, so check next
+            add_i s3, s3, 4             # increment op1
+            cmpeq_i s9, s4, s1          # op1 pointer at end?
+            bz s9, 1b                   # No, reset op2 ptr and loop
+.endmacro
+
             .globl _start
 _start:     test_op_loop add_ops, add_ops_end, add_f
             test_op_loop sub_ops, sub_ops_end, sub_f
             test_op_loop mul_ops, mul_ops_end, mul_f
+
+            # Comparison tests
+            test_compare cmpgt_f, cmpgt_expect
+            test_compare cmpge_f, cmpge_expect
+            test_compare cmplt_f, cmplt_expect
+            test_compare cmple_f, cmple_expect
+            test_compare cmpeq_f, cmpeq_expect
+            test_compare cmpne_f, cmpne_expect
             call pass_test
+
+compare_vals:
+    .long 0x7f800000    # inf
+    .float 2
+    .float 1
+    .float 0
+    .float -1
+    .float -2
+    .long 0xff800000    # - inf
+    .long 0x7fffffff    # NaN
+compare_vals_end:
+
+cmpgt_expect:
+    .byte 0, 1, 1, 1, 1, 1, 1, 0   # op1 = inf
+    .byte 0, 0, 1, 1, 1, 1, 1, 0   # op1 = 2
+    .byte 0, 0, 0, 1, 1, 1, 1, 0   # op1 = 1
+    .byte 0, 0, 0, 0, 1, 1, 1, 0   # op1 = 0
+    .byte 0, 0, 0, 0, 0, 1, 1, 0   # op1 = -1
+    .byte 0, 0, 0, 0, 0, 0, 1, 0   # op1 = -2
+    .byte 0, 0, 0, 0, 0, 0, 0, 0   # op1 = -inf
+    .byte 0, 0, 0, 0, 0, 0, 0, 0   # op1 = NaN
+
+cmpge_expect:
+    .byte 1, 1, 1, 1, 1, 1, 1, 0   # op1 = inf
+    .byte 0, 1, 1, 1, 1, 1, 1, 0   # op1 = 2
+    .byte 0, 0, 1, 1, 1, 1, 1, 0   # op1 = 1
+    .byte 0, 0, 0, 1, 1, 1, 1, 0   # op1 = 0
+    .byte 0, 0, 0, 0, 1, 1, 1, 0   # op1 = -1
+    .byte 0, 0, 0, 0, 0, 1, 1, 0   # op1 = -2
+    .byte 0, 0, 0, 0, 0, 0, 1, 0   # op1 = -inf
+    .byte 0, 0, 0, 0, 0, 0, 0, 0   # op1 = NaN
+
+cmplt_expect:
+    .byte 0, 0, 0, 0, 0, 0, 0, 0   # op1 = inf
+    .byte 1, 0, 0, 0, 0, 0, 0, 0   # op1 = 2
+    .byte 1, 1, 0, 0, 0, 0, 0, 0   # op1 = 1
+    .byte 1, 1, 1, 0, 0, 0, 0, 0   # op1 = 0
+    .byte 1, 1, 1, 1, 0, 0, 0, 0   # op1 = -1
+    .byte 1, 1, 1, 1, 1, 0, 0, 0   # op1 = -2
+    .byte 1, 1, 1, 1, 1, 1, 0, 0   # op1 = -inf
+    .byte 0, 0, 0, 0, 0, 0, 0, 0   # op1 = NaN
+
+cmple_expect:
+    .byte 1, 0, 0, 0, 0, 0, 0, 0   # op1 = inf
+    .byte 1, 1, 0, 0, 0, 0, 0, 0   # op1 = 2
+    .byte 1, 1, 1, 0, 0, 0, 0, 0   # op1 = 1
+    .byte 1, 1, 1, 1, 0, 0, 0, 0   # op1 = 0
+    .byte 1, 1, 1, 1, 1, 0, 0, 0   # op1 = -1
+    .byte 1, 1, 1, 1, 1, 1, 0, 0   # op1 = -2
+    .byte 1, 1, 1, 1, 1, 1, 1, 0   # op1 = -inf
+    .byte 0, 0, 0, 0, 0, 0, 0, 0   # op1 = NaN
+
+cmpeq_expect:
+    .byte 1, 0, 0, 0, 0, 0, 0, 0   # op1 = inf
+    .byte 0, 1, 0, 0, 0, 0, 0, 0   # op1 = 2
+    .byte 0, 0, 1, 0, 0, 0, 0, 0   # op1 = 1
+    .byte 0, 0, 0, 1, 0, 0, 0, 0   # op1 = 0
+    .byte 0, 0, 0, 0, 1, 0, 0, 0   # op1 = -1
+    .byte 0, 0, 0, 0, 0, 1, 0, 0   # op1 = -2
+    .byte 0, 0, 0, 0, 0, 0, 1, 0   # op1 = -inf
+    .byte 0, 0, 0, 0, 0, 0, 0, 0   # op1 = NaN
+
+cmpne_expect:
+    .byte 0, 1, 1, 1, 1, 1, 1, 1   # op1 = inf
+    .byte 1, 0, 1, 1, 1, 1, 1, 1   # op1 = 2
+    .byte 1, 1, 0, 1, 1, 1, 1, 1   # op1 = 1
+    .byte 1, 1, 1, 0, 1, 1, 1, 1   # op1 = 0
+    .byte 1, 1, 1, 1, 0, 1, 1, 1   # op1 = -1
+    .byte 1, 1, 1, 1, 1, 0, 1, 1   # op1 = -2
+    .byte 1, 1, 1, 1, 1, 1, 0, 1   # op1 = -inf
+    .byte 1, 1, 1, 1, 1, 1, 1, 1   # op1 = NaN
 
 add_ops:
     .float 17.79, 19.32, 37.11      # Exponents equal. Will carry into next significand bit

@@ -42,6 +42,7 @@ module fp_execute_stage3(
     input subcycle_t                            fx2_subcycle,
     input [NUM_VECTOR_LANES - 1:0]              fx2_result_inf,
     input [NUM_VECTOR_LANES - 1:0]              fx2_result_nan,
+    input [NUM_VECTOR_LANES - 1:0]              fx2_equal,
     input [NUM_VECTOR_LANES - 1:0][5:0]         fx2_ftoi_lshift,
 
     // Floating point addition/subtraction
@@ -68,6 +69,7 @@ module fp_execute_stage3(
     output subcycle_t                           fx3_subcycle,
     output logic[NUM_VECTOR_LANES - 1:0]        fx3_result_inf,
     output logic[NUM_VECTOR_LANES - 1:0]        fx3_result_nan,
+    output logic[NUM_VECTOR_LANES - 1:0]        fx3_equal,
     output logic[NUM_VECTOR_LANES - 1:0][5:0]   fx3_ftoi_lshift,
 
     // Floating point addition/subtraction
@@ -122,6 +124,8 @@ module fp_execute_stage3(
             begin
                 fx3_result_inf[lane_idx] <= fx2_result_inf[lane_idx];
                 fx3_result_nan[lane_idx] <= fx2_result_nan[lane_idx];
+                fx3_equal[lane_idx] <= fx2_equal[lane_idx];
+                fx3_equal[lane_idx] <= fx2_equal[lane_idx];
                 fx3_ftoi_lshift[lane_idx] <= fx2_ftoi_lshift[lane_idx];
 
                 // Addition

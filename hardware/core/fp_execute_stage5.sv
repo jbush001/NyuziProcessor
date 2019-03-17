@@ -38,6 +38,7 @@ module fp_execute_stage5(
     input subcycle_t                        fx4_subcycle,
     input [NUM_VECTOR_LANES - 1:0]          fx4_result_inf,
     input [NUM_VECTOR_LANES - 1:0]          fx4_result_nan,
+    input [NUM_VECTOR_LANES - 1:0]          fx4_equal,
 
     // Floating point addition/subtraction
     input [NUM_VECTOR_LANES - 1:0][7:0]     fx4_add_exponent,
@@ -137,12 +138,12 @@ module fp_execute_stage5(
             always_comb
             begin
                 unique case (fx4_instruction.alu_op)
-                    OP_CMPGT_F: compare_result = !fx4_add_result_sign[lane_idx] && !sum_zero && !fx4_result_nan[lane_idx];
-                    OP_CMPGE_F: compare_result = (!fx4_add_result_sign[lane_idx] || sum_zero) && !fx4_result_nan[lane_idx];
-                    OP_CMPLT_F: compare_result = fx4_add_result_sign[lane_idx] && !sum_zero && !fx4_result_nan[lane_idx];
-                    OP_CMPLE_F: compare_result = (fx4_add_result_sign[lane_idx] || sum_zero) && !fx4_result_nan[lane_idx];
-                    OP_CMPEQ_F: compare_result = sum_zero && !fx4_result_nan[lane_idx];
-                    OP_CMPNE_F: compare_result = !sum_zero && !fx4_result_nan[lane_idx];
+                    OP_CMPGT_F: compare_result = !fx4_add_result_sign[lane_idx] && !fx4_equal[lane_idx] && !fx4_result_nan[lane_idx];
+                    OP_CMPGE_F: compare_result = (!fx4_add_result_sign[lane_idx] || fx4_equal[lane_idx]) && !fx4_result_nan[lane_idx];
+                    OP_CMPLT_F: compare_result = fx4_add_result_sign[lane_idx] && !fx4_equal[lane_idx] && !fx4_result_nan[lane_idx];
+                    OP_CMPLE_F: compare_result = (fx4_add_result_sign[lane_idx] || fx4_equal[lane_idx]) && !fx4_result_nan[lane_idx];
+                    OP_CMPEQ_F: compare_result = fx4_equal[lane_idx] && !fx4_result_nan[lane_idx];
+                    OP_CMPNE_F: compare_result = !fx4_equal[lane_idx] || fx4_result_nan[lane_idx];
                     default: compare_result = 0;
                 endcase
             end
