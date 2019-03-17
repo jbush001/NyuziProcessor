@@ -17,9 +17,10 @@
 #include "arithmetic_macros.h"
 
 #
-# Basic floating point sanity tests. This does not test all instruction
-# forms (see float_ops.S), nor does it exhaustively validate floating
-# point conformance, but checks a bunch of common cases.
+# Functional floating point tests. This does not test all instruction
+# forms (see float_ops.S, compare.S), nor does it exhaustively validate
+# floating point conformance (especially around rounding), but checks a
+# bunch of common cases.
 #
 
 .macro test_op_loop start, end, op
@@ -65,7 +66,6 @@ _start:     test_op_loop add_ops, add_ops_end, add_f
             test_op_loop sub_ops, sub_ops_end, sub_f
             test_op_loop mul_ops, mul_ops_end, mul_f
 
-            # Comparison tests
             test_compare cmpgt_f, cmpgt_expect
             test_compare cmpge_f, cmpge_expect
             test_compare cmplt_f, cmplt_expect
@@ -79,6 +79,7 @@ compare_vals:
     .float 2
     .float 1
     .float 0
+    .float -0
     .float -1
     .float -2
     .long 0xff800000    # - inf
@@ -86,64 +87,72 @@ compare_vals:
 compare_vals_end:
 
 cmpgt_expect:
-    .byte 0, 1, 1, 1, 1, 1, 1, 0   # op1 = inf
-    .byte 0, 0, 1, 1, 1, 1, 1, 0   # op1 = 2
-    .byte 0, 0, 0, 1, 1, 1, 1, 0   # op1 = 1
-    .byte 0, 0, 0, 0, 1, 1, 1, 0   # op1 = 0
-    .byte 0, 0, 0, 0, 0, 1, 1, 0   # op1 = -1
-    .byte 0, 0, 0, 0, 0, 0, 1, 0   # op1 = -2
-    .byte 0, 0, 0, 0, 0, 0, 0, 0   # op1 = -inf
-    .byte 0, 0, 0, 0, 0, 0, 0, 0   # op1 = NaN
+    .byte 0, 1, 1, 1, 1, 1, 1, 1, 0   # op1 = inf
+    .byte 0, 0, 1, 1, 1, 1, 1, 1, 0   # op1 = 2
+    .byte 0, 0, 0, 1, 1, 1, 1, 1, 0   # op1 = 1
+    .byte 0, 0, 0, 0, 0, 1, 1, 1, 0   # op1 = 0
+    .byte 0, 0, 0, 0, 0, 1, 1, 1, 0   # op1 = -0
+    .byte 0, 0, 0, 0, 0, 0, 1, 1, 0   # op1 = -1
+    .byte 0, 0, 0, 0, 0, 0, 0, 1, 0   # op1 = -2
+    .byte 0, 0, 0, 0, 0, 0, 0, 0, 0   # op1 = -inf
+    .byte 0, 0, 0, 0, 0, 0, 0, 0, 0   # op1 = NaN
 
 cmpge_expect:
-    .byte 1, 1, 1, 1, 1, 1, 1, 0   # op1 = inf
-    .byte 0, 1, 1, 1, 1, 1, 1, 0   # op1 = 2
-    .byte 0, 0, 1, 1, 1, 1, 1, 0   # op1 = 1
-    .byte 0, 0, 0, 1, 1, 1, 1, 0   # op1 = 0
-    .byte 0, 0, 0, 0, 1, 1, 1, 0   # op1 = -1
-    .byte 0, 0, 0, 0, 0, 1, 1, 0   # op1 = -2
-    .byte 0, 0, 0, 0, 0, 0, 1, 0   # op1 = -inf
-    .byte 0, 0, 0, 0, 0, 0, 0, 0   # op1 = NaN
+    .byte 1, 1, 1, 1, 1, 1, 1, 1, 0   # op1 = inf
+    .byte 0, 1, 1, 1, 1, 1, 1, 1, 0   # op1 = 2
+    .byte 0, 0, 1, 1, 1, 1, 1, 1, 0   # op1 = 1
+    .byte 0, 0, 0, 1, 1, 1, 1, 1, 0   # op1 = 0
+    .byte 0, 0, 0, 0, 0, 1, 1, 1, 0   # op1 = -0
+    .byte 0, 0, 0, 0, 0, 1, 1, 1, 0   # op1 = -1
+    .byte 0, 0, 0, 0, 0, 0, 1, 1, 0   # op1 = -2
+    .byte 0, 0, 0, 0, 0, 0, 0, 1, 0   # op1 = -inf
+    .byte 0, 0, 0, 0, 0, 0, 0, 0, 0   # op1 = NaN
 
 cmplt_expect:
-    .byte 0, 0, 0, 0, 0, 0, 0, 0   # op1 = inf
-    .byte 1, 0, 0, 0, 0, 0, 0, 0   # op1 = 2
-    .byte 1, 1, 0, 0, 0, 0, 0, 0   # op1 = 1
-    .byte 1, 1, 1, 0, 0, 0, 0, 0   # op1 = 0
-    .byte 1, 1, 1, 1, 0, 0, 0, 0   # op1 = -1
-    .byte 1, 1, 1, 1, 1, 0, 0, 0   # op1 = -2
-    .byte 1, 1, 1, 1, 1, 1, 0, 0   # op1 = -inf
-    .byte 0, 0, 0, 0, 0, 0, 0, 0   # op1 = NaN
+    .byte 0, 0, 0, 0, 0, 0, 0, 0, 0   # op1 = inf
+    .byte 1, 0, 0, 0, 0, 0, 0, 0, 0   # op1 = 2
+    .byte 1, 1, 0, 0, 0, 0, 0, 0, 0   # op1 = 1
+    .byte 1, 1, 1, 0, 0, 0, 0, 0, 0   # op1 = 0
+    .byte 0, 0, 0, 0, 0, 1, 1, 1, 0   # op1 = -0
+    .byte 1, 1, 1, 1, 1, 0, 0, 0, 0   # op1 = -1
+    .byte 1, 1, 1, 1, 1, 1, 0, 0, 0   # op1 = -2
+    .byte 1, 1, 1, 1, 1, 1, 1, 0, 0   # op1 = -inf
+    .byte 0, 0, 0, 0, 0, 0, 0, 0, 0   # op1 = NaN
 
 cmple_expect:
-    .byte 1, 0, 0, 0, 0, 0, 0, 0   # op1 = inf
-    .byte 1, 1, 0, 0, 0, 0, 0, 0   # op1 = 2
-    .byte 1, 1, 1, 0, 0, 0, 0, 0   # op1 = 1
-    .byte 1, 1, 1, 1, 0, 0, 0, 0   # op1 = 0
-    .byte 1, 1, 1, 1, 1, 0, 0, 0   # op1 = -1
-    .byte 1, 1, 1, 1, 1, 1, 0, 0   # op1 = -2
-    .byte 1, 1, 1, 1, 1, 1, 1, 0   # op1 = -inf
-    .byte 0, 0, 0, 0, 0, 0, 0, 0   # op1 = NaN
+    .byte 1, 0, 0, 0, 0, 0, 0, 0, 0   # op1 = inf
+    .byte 1, 1, 0, 0, 0, 0, 0, 0, 0   # op1 = 2
+    .byte 1, 1, 1, 0, 0, 0, 0, 0, 0   # op1 = 1
+    .byte 1, 1, 1, 1, 1, 0, 0, 0, 0   # op1 = 0
+    .byte 0, 0, 0, 0, 0, 1, 1, 1, 0   # op1 = -0
+    .byte 1, 1, 1, 1, 1, 1, 0, 0, 0   # op1 = -1
+    .byte 1, 1, 1, 1, 1, 1, 1, 0, 0   # op1 = -2
+    .byte 1, 1, 1, 1, 1, 1, 1, 1, 0   # op1 = -inf
+    .byte 0, 0, 0, 0, 0, 0, 0, 0, 0   # op1 = NaN
 
 cmpeq_expect:
-    .byte 1, 0, 0, 0, 0, 0, 0, 0   # op1 = inf
-    .byte 0, 1, 0, 0, 0, 0, 0, 0   # op1 = 2
-    .byte 0, 0, 1, 0, 0, 0, 0, 0   # op1 = 1
-    .byte 0, 0, 0, 1, 0, 0, 0, 0   # op1 = 0
-    .byte 0, 0, 0, 0, 1, 0, 0, 0   # op1 = -1
-    .byte 0, 0, 0, 0, 0, 1, 0, 0   # op1 = -2
-    .byte 0, 0, 0, 0, 0, 0, 1, 0   # op1 = -inf
-    .byte 0, 0, 0, 0, 0, 0, 0, 0   # op1 = NaN
+    .byte 1, 0, 0, 0, 0, 0, 0, 0, 0   # op1 = inf
+    .byte 0, 1, 0, 0, 0, 0, 0, 0, 0   # op1 = 2
+    .byte 0, 0, 1, 0, 0, 0, 0, 0, 0   # op1 = 1
+    .byte 0, 0, 0, 1, 1, 0, 0, 0, 0   # op1 = 0
+    .byte 0, 0, 0, 0, 0, 1, 1, 1, 0   # op1 = -0
+    .byte 0, 0, 0, 0, 0, 1, 0, 0, 0   # op1 = -1
+    .byte 0, 0, 0, 0, 0, 0, 1, 0, 0   # op1 = -2
+    .byte 0, 0, 0, 0, 0, 0, 0, 1, 0   # op1 = -inf
+    .byte 0, 0, 0, 0, 0, 0, 0, 0, 0   # op1 = NaN
 
 cmpne_expect:
-    .byte 0, 1, 1, 1, 1, 1, 1, 1   # op1 = inf
-    .byte 1, 0, 1, 1, 1, 1, 1, 1   # op1 = 2
-    .byte 1, 1, 0, 1, 1, 1, 1, 1   # op1 = 1
-    .byte 1, 1, 1, 0, 1, 1, 1, 1   # op1 = 0
-    .byte 1, 1, 1, 1, 0, 1, 1, 1   # op1 = -1
-    .byte 1, 1, 1, 1, 1, 0, 1, 1   # op1 = -2
-    .byte 1, 1, 1, 1, 1, 1, 0, 1   # op1 = -inf
-    .byte 1, 1, 1, 1, 1, 1, 1, 1   # op1 = NaN
+    .byte 0, 1, 1, 1, 1, 1, 1, 1, 1   # op1 = inf
+    .byte 1, 0, 1, 1, 1, 1, 1, 1, 1   # op1 = 2
+    .byte 1, 1, 0, 1, 1, 1, 1, 1, 1   # op1 = 1
+    .byte 1, 1, 1, 0, 0, 1, 1, 1, 1   # op1 = 0
+    .byte 0, 0, 0, 0, 0, 1, 1, 1, 0   # op1 = -0
+    .byte 1, 1, 1, 1, 1, 0, 1, 1, 1   # op1 = -1
+    .byte 1, 1, 1, 1, 1, 1, 0, 1, 1   # op1 = -2
+    .byte 1, 1, 1, 1, 1, 1, 1, 0, 1   # op1 = -inf
+    .byte 1, 1, 1, 1, 1, 1, 1, 1, 1   # op1 = NaN
+
+    .align 4
 
 add_ops:
     .float 17.79, 19.32, 37.11      # Exponents equal. Will carry into next significand bit
@@ -153,9 +162,9 @@ add_ops:
     .float -5.0, 1.0, -4.0          # First element is negative and has larger exponent
     .float 5.0, -1.0, 4.0           # Second element is negative and has smaller exponent
     .float 1.0, -5.0, -4.0          # Second element is negative and has larger exponent
-    .float 5.0, 0.0, 5.0            # Zero identity (zero is a special case in IEEE754)
-    .float 0.0, 5.0, 5.0
-    .float 0.0, 0.0, 0.0
+    .float 5.0, 0.0, 5.0            # Zero identity
+    .float 0.0, 5.0, 5.0            # " "
+    .float 0.0, 0.0, 0.0            # " "
     .float 7.0, -7.0, 0.0           # Sum is zero, positive first operand
     .float -7.0, 7.0, 0.0           # Sum is zero, negative first operand
     .float 1000000.0, 0.0000001, 1000000.0      # Second op is lost because of precision
@@ -164,7 +173,7 @@ add_ops:
     .float -0.0, 2.323, 2.323       # negative zero
     .float 2.323, -0.0 , 2.323      # negative zero
     .float 5.67666007898e-42, 0.0, 5.67666007898e-42   # subnormal minus zero
-    .float inf, inf, inf
+    .float inf, inf, inf            # Infinity and NaN cases...
     .float inf, 1.0, inf
     .float -inf, 1.0, -inf
     .float 0, -inf, -inf
@@ -192,7 +201,7 @@ sub_ops:
     .float 1000000.0, 0.0000001, 1000000.0      # Second op is lost because of precision
     .float 0.0000001, 0.00000001, 0.00000009    # Very small number
     .float 10000000.0, 1000000.0, 9000000.0     # Large number
-    .float inf, -inf, inf
+    .float inf, -inf, inf           # Infinity and NaN cases...
     .float inf, -1.0, inf
     .float -inf, -1.0, -inf
     .float 0, inf, -inf
@@ -215,11 +224,11 @@ mul_ops:
     .float -2.0, 4.0, -8.0          # negative x positive
     .float 2.0, -4.0, -8.0          # positive x negative
     .float -2.0, -4.0, 8.0          # negative x negative
-    .float 100000.0, 7.0, 700000.0
+    .float 100000.0, 7.0, 700000.0  # Large numbers...
     .float 7.0, 100000.0, 700000.0
     .float 5.0, 0.00001, 0.00005
-    .float 0.00001, 5.0, 0.00005
-    .float inf, 0, nan
+    .float 0.00001, 5.0, 0.00005    # Small numbers
+    .float inf, 0, nan              # Infinity and NaN cases...
     .float 0, inf, nan
     .float inf, inf, inf
     .float inf, -inf, -inf

@@ -17,7 +17,9 @@
 #include "asm_macros.h"
 
 #
-# Test integer and floating point comparisions
+# Test integer and floating point comparisions. This mainly validates the
+# various instruction forms, but does not fully validate floating point
+# operations, which are covered in more detail in float.S.
 #
 
 #define SIGNED_MIN -0x2000  // Unsigned is 0xffffe000
