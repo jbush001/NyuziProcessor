@@ -75,10 +75,6 @@ void Texture::setMipSurface(int mipLevel, const Surface *surface)
     }
 }
 
-unsigned int asInt(float val) {
-    return *(reinterpret_cast<unsigned int*>(&val));
-}
-
 void Texture::readPixels(vecf16_t u, vecf16_t v, vmask_t mask,
                          vecf16_t *outColor) const
 {
@@ -105,11 +101,6 @@ void Texture::readPixels(vecf16_t u, vecf16_t v, vmask_t mask,
     vecf16_t vRaster = (1.0 - wrapfv(fracfv(v))) * (mipHeight - 1);
     veci16_t tx = __builtin_convertvector(uRaster, veci16_t);
     veci16_t ty = __builtin_convertvector(vRaster, veci16_t);
-
-    if (tx[0] < 0 || tx[0] > 1024) {
-        printf("tx[0] %08x u[0] %x uRaster[0] %x isnan %d\n", tx[0],
-            asInt(u[0]), asInt(uRaster[0]), u[0] == u[0]);
-    }
 
     if (fEnableBilinearFiltering)
     {
