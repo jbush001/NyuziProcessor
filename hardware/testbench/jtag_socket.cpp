@@ -170,7 +170,7 @@ extern int poll_jtag_request(svBitVecVal *instructionLength, svBitVecVal *instru
 
 // When the JTAG harness has finished shifting all data bits,
 // this sends the value that was shifted out of the device.
-extern int send_jtag_response(const svBitVecVal *instruction, const svBitVecVal *data)
+extern void send_jtag_response(const svBitVecVal *instruction, const svBitVecVal *data)
 {
     char response[12];
 
@@ -179,6 +179,4 @@ extern int send_jtag_response(const svBitVecVal *instruction, const svBitVecVal 
 
     if (write(controlSocket, response, 12) < 0)
         perror("send_jtag_response: error sending response (send)");
-
-    return 0;
 }

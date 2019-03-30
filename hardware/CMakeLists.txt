@@ -34,9 +34,12 @@ find_program(VERILATOR NAMES verilator)
 set(VERILATOR_GEN_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 set(VERILATOR_OPTIONS --unroll-count 512
     --assert
-    -Wall -Wno-unused -Wno-pinconnectempty
+    -Wall
+    -Wno-unused
+    -Wno-pinconnectempty
     -Wno-undriven
     -Wno-declfilename
+    -Wno-importstar
     -DSIMULATION=1
     -I${CMAKE_CURRENT_SOURCE_DIR}/core
     -y ${CMAKE_CURRENT_SOURCE_DIR}/testbench
