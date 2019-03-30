@@ -37,7 +37,6 @@ set(VERILATOR_OPTIONS --unroll-count 512
     -Wall
     -Wno-unused
     -Wno-pinconnectempty
-    -Wno-undriven
     -Wno-declfilename
     -Wno-importstar
     -DSIMULATION=1

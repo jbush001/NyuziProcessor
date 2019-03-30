@@ -43,7 +43,6 @@ module trace_logger(
     input vector_mask_t              wb_writeback_mask,
     input local_thread_idx_t         wb_rollback_thread_idx,
     input scalar_t                   wb_trap_pc,
-    input scalar_t                   wb_rollback_pc,
 
     // From floating point pipeline
     input scalar_t                   fx5_instruction_pc,

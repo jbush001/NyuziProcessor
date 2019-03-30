@@ -83,6 +83,10 @@ module soc_tb(
     wire [SDRAM_DATA_WIDTH-1:0] dram_dq; // inout fix: change from logic to wire to comply with commercial simulator and SystemVerilog standard
     logic processor_halt;
 
+    /* verilator lint_off UNDRIVEN */
+    logic frame_interrupt;
+    /* verilator lint_on UNDRIVEN */
+
     /*AUTOLOGIC*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
     logic [12:0]        dram_addr;              // From sdram_controller of sdram_controller.v
@@ -93,7 +97,6 @@ module soc_tb(
     logic               dram_cs_n;              // From sdram_controller of sdram_controller.v
     logic               dram_ras_n;             // From sdram_controller of sdram_controller.v
     logic               dram_we_n;              // From sdram_controller of sdram_controller.v
-    logic               frame_interrupt;        // From vga_controller of vga_controller.v
     logic               perf_dram_page_hit;     // From sdram_controller of sdram_controller.v
     logic               perf_dram_page_miss;    // From sdram_controller of sdram_controller.v
     logic               ps2_clk;                // From sim_ps2 of sim_ps2.v
@@ -345,7 +348,6 @@ module soc_tb(
         .wb_writeback_mask(`CORE0.wb_writeback_mask),
         .wb_writeback_thread_idx(`CORE0.wb_writeback_thread_idx),
         .wb_rollback_thread_idx(`CORE0.wb_rollback_thread_idx),
-        .wb_rollback_pc(`CORE0.wb_rollback_pc),
         .fx5_instruction_pc(`CORE0.fx5_instruction.pc),
         .ix_instruction_valid(`CORE0.ix_instruction_valid),
         .ix_instruction_pc(`CORE0.ix_instruction.pc),
