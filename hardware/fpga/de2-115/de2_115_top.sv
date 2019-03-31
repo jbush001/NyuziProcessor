@@ -102,7 +102,9 @@ module de2_115_top(
     logic virt_tck;
     logic virt_tdi;
     logic virt_data_reg;
+    /* verilator lint_off UNDRIVEN */
     logic virt_reset;
+    /* verilator lint_on UNDRIVEN */
 
     assign clk = clk50;
 
