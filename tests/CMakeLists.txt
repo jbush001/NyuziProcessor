@@ -56,6 +56,7 @@ set(py_test_dirs
 # I'm not using ctest/add_test here, as I ran into some issues that
 # I can't remember now. But it may be worth exploring (or at
 # least documenting) later.
+# Also: the test target will not rebuild any other modules as dependencies.
 add_custom_target(tests)
 foreach(dir ${py_test_dirs})
     add_custom_command(TARGET tests

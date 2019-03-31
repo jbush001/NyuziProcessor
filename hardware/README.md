@@ -53,10 +53,10 @@ line arguments (Verilog prefixes arguments with a plus sign):
 | +autoflushl2                    | Copy dirty data in the L2 cache to system memory at the end of simulation before writing to file (used with +memdump...) |
 | +profile=*filename*             | Periodically write the program counters to a file. Use with tools/misc/profile.py |
 | +block=*filename*               | Read file into virtual block device, which it exposes as a virtual SD/MMC device.
-| +randomize=*\[1\|0\]*              | Randomize initial register and memory values. Used to verify reset handling. Defaults to on.
-| +randseed=*seed*                | If randomization is enabled, set the seed for the random number generator.
 | +dumpmems                       | Dump the sizes of all internal FIFOs and SRAMs to standard out and exit. Used by tools/misc/extract_mems.py |
 | +jtag_port=*port*               | Opens a socket waiting for a connection on the given port. Commands received here will be sent over JTAG. See sim_jtag.sv for more details |
+| +verilator+rand+reset+I         | Determine how memory/registers are initialized 0=all zeroes, 1 = all ones, 2 = random values |
+| +verilator+seed+N               | Set seed for random number generator; used to force deterministic behavior during debugging |
 
 The amount of RAM available in the testbench is hard coded to 16MB. To alter
 it, change MEM_SIZE in testbench/verilator_tb.sv.
@@ -111,7 +111,7 @@ directory as the testbench top. TOP.sv in the VCS build is analogous to
 verilator_main.cpp in the verilator build.
 
 vcsrun.pl will run simulation. It accepts plus arguments in the same way as the
-verilor_model. Any plus argument that is Verilog specific should work. It also
+verilor_model. Any plus argument that is Verilog specific should work. It
 supports +randomize=*\[1\|0\]* and +randseed=*seed*
 
 vcs.config in the build/ directory is used to configure the paths for VCS and Verdi

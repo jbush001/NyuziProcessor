@@ -52,7 +52,7 @@ if(${DUMP_WAVEFORM})
     set(VERILATOR_OPTIONS ${VERILATOR_OPTIONS} --trace --trace-structs)
 endif()
 
-set(VERILATOR_MIN_VERSION "6")
+set(VERILATOR_MIN_VERSION "12")
 
 # Version string looks like this:
 # "Verilator 3.920 2018-02-01 rev verilator_3_920"

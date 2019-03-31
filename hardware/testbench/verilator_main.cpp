@@ -45,30 +45,6 @@ int main(int argc, char **argv, char **env)
     Verilated::commandArgs(argc, argv);
     Verilated::debug(0);
 
-    // Default to randomizing contents of memory before the start of
-    // simulation. This flag can disable it.
-    const char *arg = Verilated::commandArgsPlusMatch("randomize=");
-    if (arg[0] == '\0' || atoi(arg + 11) != 0)
-    {
-        // Initialize random seed.
-        long randomSeed;
-        arg = Verilated::commandArgsPlusMatch("randseed=");
-        if (arg[0] != '\0')
-            randomSeed = atol(arg + 10);
-        else
-        {
-            time_t t1;
-            time(&t1);
-            randomSeed = (long) t1;
-        }
-
-        srand48(randomSeed);
-        VL_PRINTF("Random seed is %li\n", randomSeed);
-        Verilated::randReset(2);
-    }
-    else
-        Verilated::randReset(0);
-
     Vsoc_tb* testbench = new Vsoc_tb;
 
     // As with real hardware, reset is a bit tricky.

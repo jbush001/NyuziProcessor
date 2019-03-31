@@ -16,6 +16,7 @@
 #
 
 import os
+import random
 import subprocess
 import sys
 import time
@@ -29,13 +30,19 @@ EMULATOR_MEM_DUMP = test_harness.WORK_DIR + '/mmem.bin'
 
 
 def run_cosimulation_test(source_file, *unused):
+    random_seed = random.randint(0, 0xffffffff)
+    if test_harness.DEBUG:
+        print('random seed is ' + random_seed)
+
     verilator_args = [
         test_harness.VSIM_PATH,
         '+trace',
         '+memdumpfile=' + VERILATOR_MEM_DUMP,
         '+memdumpbase=800000',
         '+memdumplen=400000',
-        '+autoflushl2'
+        '+autoflushl2',
+        '+verilator+rand+reset+2',
+        '+verilator+seed+' + str(random_seed)
     ]
 
     # XXX this should probably be a command line option in test_harness.py

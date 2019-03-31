@@ -22,6 +22,7 @@ in the output.
 """
 
 import os
+import random
 import subprocess
 import sys
 
@@ -55,10 +56,6 @@ int main(int argc, char **argv, char **env)
 {
     Verilated::commandArgs(argc, argv);
     Verilated::debug(0);
-
-    time_t t1;
-    time(&t1);
-    srand48((long) t1);
 
     V$MODULE$ *testbench = new V$MODULE$;
 
@@ -138,6 +135,10 @@ def run_unit_test(filename, _):
     except subprocess.CalledProcessError as exc:
         raise test_harness.TestException(
             'Build failed:\n' + exc.output.decode())
+
+    random_seed = random.randint(0, 0xffffffff)
+    if test_harness.DEBUG:
+        print('random seed is ' + random_seed)
 
     model_args = [
         test_harness.WORK_DIR + '/V' + modulename

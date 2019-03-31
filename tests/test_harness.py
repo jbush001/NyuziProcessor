@@ -24,6 +24,7 @@ import binascii
 import configparser
 import hashlib
 import os
+import random
 import re
 import shutil
 import subprocess
@@ -309,7 +310,16 @@ def run_program(
         args += [executable]
         output = run_test_with_timeout(args, timeout)
     elif target == 'verilator':
-        args = [VSIM_PATH]
+        random_seed = random.randint(0, 0xffffffff)
+        if DEBUG:
+            print('random seed is ' + random_seed)
+
+        args = [
+            VSIM_PATH,
+            '+bin=' + executable,
+            '+verilator+rand+reset+2',
+            '+verilator+seed+' + str(random_seed)
+        ]
         if block_device:
             args += ['+block=' + block_device]
 
@@ -324,7 +334,6 @@ def run_program(
         if trace:
             args += ['+trace']
 
-        args += ['+bin=' + executable]
         output = run_test_with_timeout(args, timeout)
         if '***HALTED***' not in output:
             raise TestException(output + '\nProgram did not halt normally')
