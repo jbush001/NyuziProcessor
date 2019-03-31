@@ -22,8 +22,8 @@ It creates declarations for inputs and outputs, a reset block that zeroes
 all inputs, and a stub test execution loop.
 """
 
+import os
 import sys
-import os.path
 
 source_file = sys.argv[1]
 modulename = os.path.splitext(os.path.basename(source_file))[0]

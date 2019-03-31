@@ -25,8 +25,8 @@ sys.path.insert(0, '..')
 import test_harness
 
 
-VERILATOR_MEM_DUMP = test_harness.WORK_DIR + '/vmem.bin'
-EMULATOR_MEM_DUMP = test_harness.WORK_DIR + '/mmem.bin'
+VERILATOR_MEM_DUMP = os.path.join(test_harness.WORK_DIR, 'vmem.bin')
+EMULATOR_MEM_DUMP = os.path.join(test_harness.WORK_DIR, 'mmem.bin')
 
 
 def run_cosimulation_test(source_file, *unused):

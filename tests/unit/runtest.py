@@ -29,7 +29,7 @@ import sys
 sys.path.insert(0, '..')
 import test_harness
 
-DRIVER_PATH = test_harness.WORK_DIR + '/driver.cpp'
+DRIVER_PATH = os.path.join(test_harness.WORK_DIR, 'driver.cpp')
 DRIVER_SRC = """
 #include <iostream>
 #include <stdlib.h>
@@ -105,8 +105,9 @@ def run_unit_test(filename, _):
     # like this with shell=True is necessary for it to work correctly
     # in all environments.
     verilator_args = [
-        'verilator --unroll-count 512 --assert -I' + test_harness.PROJECT_TOP +
-        '/hardware/core -DSIMULATION=1 -Mdir ' + test_harness.WORK_DIR +
+        'verilator --unroll-count 512 --assert -I' +
+        test_harness.HARDWARE_INCLUDE_DIR +
+        ' -DSIMULATION=1 -Mdir ' + test_harness.WORK_DIR +
         ' -cc ' + filename + ' --exe ' + DRIVER_PATH
     ]
 
@@ -141,7 +142,7 @@ def run_unit_test(filename, _):
         print('random seed is ' + random_seed)
 
     model_args = [
-        test_harness.WORK_DIR + '/V' + modulename
+        os.path.join(test_harness.WORK_DIR, 'V' + modulename)
     ]
 
     try:

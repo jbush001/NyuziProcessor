@@ -15,6 +15,7 @@
 # limitations under the License.
 #
 
+import os
 import subprocess
 import sys
 
@@ -24,9 +25,9 @@ import test_harness
 
 def run_compiler_test(source_file, target):
     if target == 'host':
-        subprocess.check_call(['cc', source_file, '-o', test_harness.WORK_DIR + '/a.out'],
+        subprocess.check_call(['cc', source_file, '-o', os.path.join(test_harness.WORK_DIR, 'a.out')],
                               stderr=subprocess.STDOUT)
-        result = subprocess.check_output(test_harness.WORK_DIR + '/a.out')
+        result = subprocess.check_output(os.path.join(test_harness.WORK_DIR, 'a.out'))
         test_harness.check_result(source_file, result.decode())
     else:
         test_harness.build_program([source_file])

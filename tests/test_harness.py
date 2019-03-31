@@ -32,30 +32,29 @@ import sys
 import threading
 import traceback
 
-PROJECT_TOP = os.path.normpath(
-    os.path.dirname(os.path.abspath(__file__)) + '/../')
-TEST_DIR = PROJECT_TOP + '/tests/'
+TEST_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Read configuration file. This is written by the build system.
 # It contains paths to dependencies of the tests, and allows
 # them to operate no matter where the build directory is.
 config = configparser.ConfigParser()
-config.read(TEST_DIR + 'tests.conf')
+config.read(os.path.join(TEST_DIR, 'tests.conf'))
 default_config = config['DEFAULT']
-BIN_DIR = default_config['TOOL_BIN_DIR'] + '/'
-LIB_DIR = default_config['LIB_DIR'] + '/'
-KERNEL_DIR = default_config['KERNEL_DIR'] + '/'
-WORK_DIR = default_config['WORK_DIR'] + '/'
-LIB_INCLUDE_BASE = default_config['LIB_INCLUDE_BASE'] + '/'
-COMPILER_BIN = default_config['COMPILER_BIN'] + '/'
+BIN_DIR = default_config['TOOL_BIN_DIR']
+LIB_DIR = default_config['LIB_DIR']
+KERNEL_DIR = default_config['KERNEL_DIR']
+WORK_DIR = default_config['WORK_DIR']
+LIB_INCLUDE_DIR = default_config['LIB_INCLUDE_DIR']
+COMPILER_BIN_DIR = default_config['COMPILER_BIN_DIR']
+HARDWARE_INCLUDE_DIR = default_config['HARDWARE_INCLUDE_DIR']
 
-ELF_FILE = WORK_DIR + 'program.elf'
-HEX_FILE = WORK_DIR + 'program.hex'
+ELF_FILE = os.path.join(WORK_DIR, 'program.elf')
+HEX_FILE = os.path.join(WORK_DIR, 'program.hex')
 ALL_TARGETS = ['verilator', 'emulator']
 DEFAULT_TARGETS = ['verilator', 'emulator']
-VSIM_PATH = BIN_DIR + 'nyuzi_vsim'
-EMULATOR_PATH = BIN_DIR + 'nyuzi_emulator'
-SERIAL_BOOT_PATH = BIN_DIR + 'serial_boot'
+VSIM_PATH = os.path.join(BIN_DIR, 'nyuzi_vsim')
+EMULATOR_PATH = os.path.join(BIN_DIR, 'nyuzi_emulator')
+SERIAL_BOOT_PATH = os.path.join(BIN_DIR, 'serial_boot')
 
 class TestException(Exception):
     """This exception is raised for test failures"""
@@ -102,7 +101,7 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
         TestException if compilation failed, will contain compiler output
     """
     assert isinstance(source_files, list)
-    compiler_args = [COMPILER_BIN + '/clang',
+    compiler_args = [os.path.join(COMPILER_BIN_DIR, 'clang'),
                      '-o', ELF_FILE,
                      '-w',
                      opt_level,
@@ -112,20 +111,20 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
         compiler_args += cflags
 
     if image_type == 'raw':
-        compiler_args += ['-Wl,--script,' + TEST_DIR + 'one-segment.ld,--oformat,binary']
+        compiler_args += ['-Wl,--script,' + os.path.join(TEST_DIR, 'one-segment.ld') + ',--oformat,binary']
     elif image_type == 'user':
         compiler_args += ['-Wl,--image-base=0x1000']
 
     compiler_args += source_files
 
     if any(name.endswith(('.c', '.cpp')) for name in source_files):
-        compiler_args += ['-I' + LIB_INCLUDE_BASE + 'libc/include',
-                          '-I' + LIB_INCLUDE_BASE + 'libos',
-                          LIB_DIR + 'libc/libc.a']
+        compiler_args += ['-I' + os.path.join(LIB_INCLUDE_DIR, 'libc/include'),
+                          '-I' + os.path.join(LIB_INCLUDE_DIR, 'libos'),
+                          os.path.join(LIB_DIR, 'libc/libc.a')]
         if image_type == 'user':
-            compiler_args += [LIB_DIR + 'libos/kernel/libos-kern.a']
+            compiler_args += [os.path.join(LIB_DIR, 'libos/kernel/libos-kern.a')]
         else:
-            compiler_args += [LIB_DIR + 'libos/bare-metal/libos-bare.a']
+            compiler_args += [os.path.join(LIB_DIR, 'libos/bare-metal/libos-bare.a')]
 
     try:
         subprocess.check_output(compiler_args, stderr=subprocess.STDOUT)
@@ -134,7 +133,7 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
             return HEX_FILE
 
         if image_type == 'bare-metal':
-            subprocess.check_output([COMPILER_BIN + '/elf2hex', '-o', HEX_FILE, ELF_FILE],
+            subprocess.check_output([os.path.join(COMPILER_BIN_DIR, 'elf2hex'), '-o', HEX_FILE, ELF_FILE],
                                     stderr=subprocess.STDOUT)
             return HEX_FILE
 
@@ -247,7 +246,7 @@ def run_test_with_timeout(args, timeout):
 
 
 def reset_fpga():
-    args = ['quartus_stp', '-t', TEST_DIR + 'reset_altera.tcl']
+    args = ['quartus_stp', '-t', os.path.join(TEST_DIR, 'reset_altera.tcl')]
 
     try:
         subprocess.check_output(args)
@@ -389,8 +388,8 @@ def run_kernel(
         TestException if emulated program crashes or the program cannot
         execute for some other reason.
     """
-    block_file = WORK_DIR + 'fsimage.bin'
-    subprocess.check_output([BIN_DIR + 'mkfs', block_file, ELF_FILE],
+    block_file = os.path.join(WORK_DIR, 'fsimage.bin')
+    subprocess.check_output([os.path.join(BIN_DIR, 'mkfs'), block_file, ELF_FILE],
                             stderr=subprocess.STDOUT)
 
     output = run_program(target=target, block_device=block_file,
@@ -849,12 +848,12 @@ def register_render_test(name, source_files, expected_hash, targets=None):
     # This closure captures parameters source_files and
     # expected_checksum.
     def run_render_test(_, target):
-        RAW_FB_DUMP_FILE = WORK_DIR + 'fb.bin'
-        PNG_DUMP_FILE = WORK_DIR + 'actual-output.png'
+        RAW_FB_DUMP_FILE = os.path.join(WORK_DIR, 'fb.bin')
+        PNG_DUMP_FILE = os.path.join(WORK_DIR, 'actual-output.png')
 
         render_cflags = [
-            '-I' + LIB_INCLUDE_BASE + 'librender',
-            LIB_DIR + 'librender/librender.a',
+            '-I' + os.path.join(LIB_INCLUDE_DIR, 'librender'),
+            os.path.join(LIB_DIR, 'librender/librender.a'),
             '-ffast-math'
         ]
 

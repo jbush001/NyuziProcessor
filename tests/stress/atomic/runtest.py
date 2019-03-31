@@ -20,6 +20,7 @@
 This uses four threads to update variables round-robin.
 """
 
+import os
 import struct
 import sys
 
@@ -32,12 +33,12 @@ def atomic(_, target):
     test_harness.build_program(['atomic.S'])
     test_harness.run_program(
         target=target,
-        dump_file=test_harness.WORK_DIR + '/vmem.bin',
+        dump_file=os.path.join(test_harness.WORK_DIR, 'vmem.bin'),
         dump_base=0x100000,
         dump_length=0x800,
         flush_l2=True)
 
-    with open(test_harness.WORK_DIR + '/vmem.bin', 'rb') as memfile:
+    with open(os.path.join(test_harness.WORK_DIR, 'vmem.bin'), 'rb') as memfile:
         for _ in range(512):
             val = memfile.read(4)
             if len(val) < 4:

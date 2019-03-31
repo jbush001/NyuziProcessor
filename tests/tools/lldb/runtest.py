@@ -64,7 +64,7 @@ class EmulatorProcess(object):
                                               stderr=subprocess.STDOUT)
 
         lldb_args = [
-            test_harness.COMPILER_BIN + 'lldb-mi'
+            os.path.join(test_harness.COMPILER_BIN_DIR, 'lldb-mi')
         ]
 
         # XXX race condition: the emulator needs to be ready before
@@ -157,7 +157,7 @@ def lldb(*unused):
     hexfile = test_harness.build_program(
         ['test_program.c'], opt_level='-O0', cflags=['-g'])
     with EmulatorProcess(hexfile) as conn:
-        conn.send_command('file "' + test_harness.WORK_DIR + '/program.elf"')
+        conn.send_command('file "' + os.path.join(test_harness.WORK_DIR, 'program.elf"'))
         conn.send_command('gdb-remote 8000\n')
         response = conn.send_command(
             'breakpoint set --file test_program.c --line 27')

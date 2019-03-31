@@ -23,6 +23,7 @@ executes it under the emulator. It compares the output to that produced
 by the host and flags an error if they don't match.
 """
 
+import os
 import re
 import subprocess
 import sys
@@ -47,7 +48,7 @@ def run_csmith_test(_, target):
     csmith_include = '-I/usr/local/include/csmith-' + version_str
 
     for x in range(100):
-        source_file = 'test%04d.c' % x
+        source_file = os.path.join(test_harness.WORK_DIR, 'test%04d.c' % x)
         print('running ' + source_file)
 
         # Disable packed structs because we don't support unaligned accesses.
@@ -58,9 +59,9 @@ def run_csmith_test(_, target):
 
         # Compile and run on host
         subprocess.check_call(
-            ['cc', '-w', source_file, '-o', test_harness.WORK_DIR + '/a.out', csmith_include])
+            ['cc', '-w', source_file, '-o', os.path.join(test_harness.WORK_DIR, 'a.out'), csmith_include])
         result = subprocess.check_output(
-            test_harness.WORK_DIR + '/a.out').decode()
+            os.path.join(test_harness.WORK_DIR, 'a.out')).decode()
 
         got = CHECKSUM_RE.search(result)
         if not got:

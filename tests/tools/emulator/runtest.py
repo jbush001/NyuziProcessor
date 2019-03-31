@@ -37,7 +37,7 @@ import test_harness
 
 @test_harness.test(['emulator'])
 def load_file(*ignored):
-    BINARY_OUTPUT = test_harness.WORK_DIR + 'mem.bin'
+    BINARY_OUTPUT = os.path.join(test_harness.WORK_DIR, 'mem.bin')
     args = [test_harness.EMULATOR_PATH, '-d', BINARY_OUTPUT + ',0,0x3c', 'valid-file-hex.txt']
     subprocess.check_output(args, stderr=subprocess.STDOUT)
     EXPECTED = [
@@ -114,8 +114,8 @@ def no_file_specified(*ignored):
 # XXX A number of error cases do not clean up resources
 ############################################################################
 
-RECV_PIPE_NAME = test_harness.WORK_DIR + '/nyuzi_emulator_recvint'
-SEND_PIPE_NAME = test_harness.WORK_DIR + '/nyuzi_emulator_sendint'
+RECV_PIPE_NAME = os.path.join(test_harness.WORK_DIR, 'nyuzi_emulator_recvint')
+SEND_PIPE_NAME = os.path.join(test_harness.WORK_DIR, 'nyuzi_emulator_sendint')
 
 
 @test_harness.test(['emulator'])

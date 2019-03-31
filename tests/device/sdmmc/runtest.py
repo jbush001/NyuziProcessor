@@ -24,8 +24,8 @@ sys.path.insert(0, '../..')
 import test_harness
 
 FILE_SIZE = 8192
-SOURCE_BLOCK_DEV = test_harness.WORK_DIR + '/bdevimage.bin'
-MEMDUMP = test_harness.WORK_DIR + '/memory.bin'
+SOURCE_BLOCK_DEV = os.path.join(test_harness.WORK_DIR, 'bdevimage.bin')
+MEMDUMP = os.path.join(test_harness.WORK_DIR, 'memory.bin')
 
 
 @test_harness.test
