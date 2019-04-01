@@ -26,7 +26,6 @@ running. I did this as there wasn't an applicable target type.
 import os
 import pty
 import select
-import stat
 import subprocess
 import sys
 
@@ -163,7 +162,7 @@ class SerialLoader(object):
             it does not print the error message somewhere on stderr.
         """
         if test_harness.DEBUG:
-            print('expect error: {}'.format(message))
+            print('expect error: {}'.format(error_message))
 
         out, err = self.get_result()
         if not self.serial_boot_process.poll():

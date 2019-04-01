@@ -311,7 +311,7 @@ def run_program(
     elif target == 'verilator':
         random_seed = random.randint(0, 0xffffffff)
         if DEBUG:
-            print('random seed is ' + random_seed)
+            print('random seed is {}'.format(random_seed))
 
         args = [
             VSIM_PATH,

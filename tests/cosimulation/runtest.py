@@ -32,7 +32,7 @@ EMULATOR_MEM_DUMP = os.path.join(test_harness.WORK_DIR, 'mmem.bin')
 def run_cosimulation_test(source_file, *unused):
     random_seed = random.randint(0, 0xffffffff)
     if test_harness.DEBUG:
-        print('random seed is ' + random_seed)
+        print('random seed is {}'.format(random_seed))
 
     verilator_args = [
         test_harness.VSIM_PATH,
