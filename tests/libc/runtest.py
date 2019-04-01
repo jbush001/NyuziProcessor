@@ -22,6 +22,7 @@ import sys
 sys.path.insert(0, '..')
 import test_harness
 
+FS_IMAGE_PATH = os.path.join(test_harness.WORK_DIR, 'fsimage.bin')
 
 @test_harness.test(['emulator', 'fpga'])
 def filesystem(_, target):
@@ -34,10 +35,9 @@ def filesystem(_, target):
 
     test_harness.build_program(['fs.c'])
     subprocess.check_output(
-        [os.path.join(test_harness.BIN_DIR, 'mkfs'), os.path.join(test_harness.WORK_DIR, 'fsimage.bin'),
+        [os.path.join(test_harness.BIN_DIR, 'mkfs'), FS_IMAGE_PATH,
          'fstest.txt'], stderr=subprocess.STDOUT)
-    result = test_harness.run_program(target=target,
-                                      block_device=os.path.join(test_harness.WORK_DIR, 'fsimage.bin'))
+    result = test_harness.run_program(target=target, block_device=FS_IMAGE_PATH)
     if 'PASS' not in result or 'FAIL' in result:
         raise test_harness.TestException(
             'test program did not indicate pass\n' + result)

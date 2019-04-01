@@ -33,21 +33,21 @@ NUM_THREADS = 4
 PAGE_SIZE = 0x1000
 MEMORY_SIZE = 0x20000   # Size of mapped region per thread
 DUMP_BASE = 0x10000     # Physical address, is 4k in virtual address space
-
+MEM_DUMP_FILE = os.path.join(test_harness.WORK_DIR, 'vmem.bin')
 
 @test_harness.test(['verilator'])
 def random_access_mmu_stress(_, target):
     test_harness.build_program(['random_access.S'])
     test_harness.run_program(
         target=target,
-        dump_file=os.path.join(test_harness.WORK_DIR, 'vmem.bin'),
+        dump_file=MEM_DUMP_FILE,
         dump_base=DUMP_BASE,
         dump_length=MEMORY_SIZE * NUM_THREADS,
         timeout=240,
         flush_l2=True)
 
     # Check that threads have written proper values
-    with open(os.path.join(test_harness.WORK_DIR, 'vmem.bin'), 'rb') as memfile:
+    with open(MEM_DUMP_FILE, 'rb') as memfile:
         for page_num in range(int(MEMORY_SIZE / PAGE_SIZE)):
             for thread_id in range(NUM_THREADS):
                 for page_offset in range(0, PAGE_SIZE, 4):

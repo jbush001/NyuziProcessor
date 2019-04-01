@@ -33,6 +33,7 @@ import test_harness
 
 VERSION_RE = re.compile(r'csmith (?P<version>[0-9\.]+)')
 CHECKSUM_RE = re.compile(r'checksum = (?P<checksum>[0-9A-Fa-f]+)')
+HOST_EXE = os.path.join(test_harness.WORK_DIR, 'a.out')
 
 
 @test_harness.test(['emulator'])
@@ -59,9 +60,8 @@ def run_csmith_test(_, target):
 
         # Compile and run on host
         subprocess.check_call(
-            ['cc', '-w', source_file, '-o', os.path.join(test_harness.WORK_DIR, 'a.out'), csmith_include])
-        result = subprocess.check_output(
-            os.path.join(test_harness.WORK_DIR, 'a.out')).decode()
+            ['cc', '-w', source_file, '-o', HOST_EXE, csmith_include])
+        result = subprocess.check_output(HOST_EXE).decode()
 
         got = CHECKSUM_RE.search(result)
         if not got:

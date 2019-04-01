@@ -22,12 +22,13 @@ import sys
 sys.path.insert(0, '..')
 import test_harness
 
+HOST_EXE_FILE = os.path.join(test_harness.WORK_DIR, 'a.out')
 
 def run_compiler_test(source_file, target):
     if target == 'host':
-        subprocess.check_call(['cc', source_file, '-o', os.path.join(test_harness.WORK_DIR, 'a.out')],
+        subprocess.check_call(['cc', source_file, '-o', HOST_EXE_FILE],
                               stderr=subprocess.STDOUT)
-        result = subprocess.check_output(os.path.join(test_harness.WORK_DIR, 'a.out'))
+        result = subprocess.check_output(HOST_EXE_FILE)
         test_harness.check_result(source_file, result.decode())
     else:
         test_harness.build_program([source_file])

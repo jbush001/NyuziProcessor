@@ -50,11 +50,11 @@ HARDWARE_INCLUDE_DIR = default_config['HARDWARE_INCLUDE_DIR']
 
 ELF_FILE = os.path.join(WORK_DIR, 'program.elf')
 HEX_FILE = os.path.join(WORK_DIR, 'program.hex')
-ALL_TARGETS = ['verilator', 'emulator']
-DEFAULT_TARGETS = ['verilator', 'emulator']
 VSIM_PATH = os.path.join(BIN_DIR, 'nyuzi_vsim')
 EMULATOR_PATH = os.path.join(BIN_DIR, 'nyuzi_emulator')
 SERIAL_BOOT_PATH = os.path.join(BIN_DIR, 'serial_boot')
+ALL_TARGETS = ['verilator', 'emulator']
+DEFAULT_TARGETS = ['verilator', 'emulator']
 
 class TestException(Exception):
     """This exception is raised for test failures"""

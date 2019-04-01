@@ -27,18 +27,19 @@ import sys
 sys.path.insert(0, '../..')
 import test_harness
 
+MEM_DUMP_FILE = os.path.join(test_harness.WORK_DIR, 'vmem.bin')
 
 @test_harness.test(['verilator'])
 def atomic(_, target):
     test_harness.build_program(['atomic.S'])
     test_harness.run_program(
         target=target,
-        dump_file=os.path.join(test_harness.WORK_DIR, 'vmem.bin'),
+        dump_file=MEM_DUMP_FILE,
         dump_base=0x100000,
         dump_length=0x800,
         flush_l2=True)
 
-    with open(os.path.join(test_harness.WORK_DIR, 'vmem.bin'), 'rb') as memfile:
+    with open(MEM_DUMP_FILE, 'rb') as memfile:
         for _ in range(512):
             val = memfile.read(4)
             if len(val) < 4:
