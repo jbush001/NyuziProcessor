@@ -93,7 +93,7 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
             Additional command line flags to pass to C compiler.
 
     Returns:
-        string Name of hex file created
+        string Name of output file
 
     Raises:
         TestException if compilation failed, will contain compiler output
@@ -266,7 +266,8 @@ def run_program(
         dump_length=None,
         timeout=60,
         flush_l2=False,
-        trace=False):
+        trace=False,
+        profile_file=None):
     """Run test program.
 
     This uses the hex file produced by build_program.
@@ -309,6 +310,9 @@ def run_program(
                      hex(dump_base) + ',' + hex(dump_length)]
 
         args += [executable]
+        if DEBUG:
+            print('running emulator with args ' + str(args))
+
         output = run_test_with_timeout(args, timeout)
     elif target == 'verilator':
         random_seed = random.randint(0, 0xffffffff)
@@ -334,6 +338,12 @@ def run_program(
 
         if trace:
             args += ['+trace']
+
+        if profile_file:
+            args += ['+profile=' + profile_file]
+
+        if DEBUG:
+            print('running verilator with args ' + str(args))
 
         output = run_test_with_timeout(args, timeout)
         if '***HALTED***' not in output:
@@ -404,6 +414,36 @@ def run_kernel(
         print('Program Output:\n' + output)
 
     return output
+
+
+def assert_greater(a, b):
+    if a <= b:
+        raise TestException('assert_greater failed: {}, {}'.format(a, b))
+
+
+def assert_greater_equal(a, b):
+    if a < b:
+        raise TestException('assert_greater_equal failed: {}, {}'.format(a, b))
+
+
+def assert_less(a, b):
+    if a >= b:
+        raise TestException('assert_less failed: {}, {}'.format(a, b))
+
+
+def assert_less_equal(a, b):
+    if a > b:
+        raise TestException('assert_less_equal failed: {}, {}'.format(a, b))
+
+
+def assert_equal(a, b):
+    if a != b:
+        raise TestException('assert_equal failed: {}, {}'.format(a, b))
+
+
+def assert_not_equal(a, b):
+    if a == b:
+        raise TestException('assert_not_equal failed: {}, {}'.format(a, b))
 
 
 def assert_files_equal(file1, file2, error_msg='file mismatch'):

@@ -47,8 +47,40 @@ def files_not_equal(*unused):
 def exception(*unused):
     raise Exception('some exception')
 
+
+@test_harness.test(['emulator'])
+def greater1(*unused):
+    test_harness.assert_greater(5, 6)
+
+
+@test_harness.test(['emulator'])
+def greater2(*unused):
+    test_harness.assert_greater(5, 5)
+
+
+@test_harness.test(['emulator'])
+def less1(*unused):
+    test_harness.assert_less(6, 5)
+
+
+@test_harness.test(['emulator'])
+def less2(*unused):
+    test_harness.assert_less(5, 5)
+
+
+@test_harness.test(['emulator'])
+def equal(*unused):
+    test_harness.assert_equal(4, 5)
+
+
+@test_harness.test(['emulator'])
+def not_equal(*unused):
+    test_harness.assert_not_equal(5, 5)
+
+
 test_harness.register_generic_test(
     ['crash.c'], ['emulator', 'verilator'])
 test_harness.register_generic_test(
     ['check.c', 'checkn.c', 'compile_error.c'], ['emulator'])
+
 test_harness.execute_tests()

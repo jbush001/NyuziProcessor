@@ -40,6 +40,7 @@ set(py_test_dirs
     device/uart
     tools/emulator
     tools/serial_boot
+    tools/profile
     libc
     compiler-rt
     cosimulation

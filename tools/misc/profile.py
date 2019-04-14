@@ -37,7 +37,7 @@ def find_function(functions, pc):
     low = 0
     high = len(functions)
     while low < high:
-        mid = (low + high) / 2
+        mid = int((low + high) / 2)
         if pc < functions[mid][0]:
             high = mid
         else:
@@ -51,6 +51,7 @@ def find_function(functions, pc):
 
 def main():
     counts = {}
+    functions = []
 
     # Read symbols
     with open(sys.argv[1], 'r') as f:
