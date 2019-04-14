@@ -31,10 +31,14 @@ def dump(value):
     print('significand ' + hex(sig) + ' ' + bin(sig)[2:].zfill(23))
     print(struct.unpack('f', struct.pack('I', value))[0])
 
-strval = sys.argv[1]
-if strval[:2] == '0x':
-    dump(int(strval[2:], 16))
-elif strval.find('.') != -1:
-    dump(struct.unpack('I', struct.pack('f', float(strval)))[0])
-else:
-    dump(int(strval))
+def main():
+    strval = sys.argv[1]
+    if strval[:2] == '0x':
+        dump(int(strval[2:], 16))
+    elif strval.find('.') != -1:
+        dump(struct.unpack('I', struct.pack('f', float(strval)))[0])
+    else:
+        dump(int(strval))
+
+if __name__ == '__main__':
+    main()

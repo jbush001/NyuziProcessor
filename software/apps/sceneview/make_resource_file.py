@@ -355,11 +355,14 @@ def write_resource_file(filename):
 
         print('wrote ' + filename)
 
-# Main
-if len(sys.argv) < 2:
-    print('enter the name of a .OBJ file')
-    sys.exit(1)
+def main():
+    if len(sys.argv) < 2:
+        print('enter the name of a .OBJ file')
+        sys.exit(1)
 
-read_obj_file(sys.argv[1])
-print_stats()
-write_resource_file('resource.bin')
+    read_obj_file(sys.argv[1])
+    print_stats()
+    write_resource_file('resource.bin')
+
+if __name__ == '__main__':
+    main()

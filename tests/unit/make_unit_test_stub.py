@@ -25,86 +25,90 @@ all inputs, and a stub test execution loop.
 import os
 import sys
 
-source_file = sys.argv[1]
-modulename = os.path.splitext(os.path.basename(source_file))[0]
-output_file = 'test_' + modulename + '.sv'
+def main():
+    source_file = sys.argv[1]
+    modulename = os.path.splitext(os.path.basename(source_file))[0]
+    output_file = 'test_' + modulename + '.sv'
 
-with open(output_file, 'w') as out:
-    out.write('''
+    with open(output_file, 'w') as out:
+        out.write('''
 
-`include "defines.svh"
+    `include "defines.svh"
 
-import defines::*;
+    import defines::*;
 
-''')
+    ''')
 
-    out.write('module test_' + modulename + '(input clk, input reset);\n')
+        out.write('module test_' + modulename + '(input clk, input reset);\n')
 
-    input_names = []
-    with open(sys.argv[1]) as f:
-        for line in f:
-            if 'input' in line or 'output' in line:
-                fields = line.split()
-                name = fields[-1]
-                if name.endswith(','):
-                    name = name.rstrip(',')
-                elif name.endswith(');'):
-                    name = name.rstrip(');')
+        input_names = []
+        with open(sys.argv[1]) as f:
+            for line in f:
+                if 'input' in line or 'output' in line:
+                    fields = line.split()
+                    name = fields[-1]
+                    if name.endswith(','):
+                        name = name.rstrip(',')
+                    elif name.endswith(');'):
+                        name = name.rstrip(');')
 
-                if name == 'clk':
-                    continue
-                elif name == 'reset':
-                    continue
+                    if name == 'clk':
+                        continue
+                    elif name == 'reset':
+                        continue
 
-                if fields[0] == 'input':
-                    input_names += [name]
+                    if fields[0] == 'input':
+                        input_names += [name]
 
-                if len(fields) == 2:
-                    out.write('    logic ' + name + ';\n')
-                elif fields[1].startswith('['):
-                    out.write('    logic' +
-                              ' '.join(fields[1:-1]) + ' ' + name + ';\n')
-                else:
-                    out.write(
-                        '    ' + ' '.join(fields[1:-1]) + ' ' + name + ';\n')
+                    if len(fields) == 2:
+                        out.write('    logic ' + name + ';\n')
+                    elif fields[1].startswith('['):
+                        out.write('    logic' +
+                                ' '.join(fields[1:-1]) + ' ' + name + ';\n')
+                    else:
+                        out.write(
+                            '    ' + ' '.join(fields[1:-1]) + ' ' + name + ';\n')
 
-    out.write('    int cycle;\n')
-    out.write('\n    ' + modulename + ' ' + modulename + '(.*);\n')
-    out.write('''
-    always_ff @(posedge clk, posedge reset)
-    begin
-        if (reset)
+        out.write('    int cycle;\n')
+        out.write('\n    ' + modulename + ' ' + modulename + '(.*);\n')
+        out.write('''
+        always_ff @(posedge clk, posedge reset)
         begin
-            cycle <= 0;
-''')
+            if (reset)
+            begin
+                cycle <= 0;
+    ''')
 
-    for net in input_names:
-        if '[' in net:
-            lbracket = net.find('[')
-            rbracket = net.find(']')
-            size = net[lbracket + 1:rbracket]
-            signalname = net[:lbracket]
-            out.write('            for (int i = 0; i < ' + size + '; i++)\n')
-            out.write('                ' + signalname + '[i] <= \'0;\n')
-            out.write('\n')
-        else:
-            out.write('            ' + net + ' <= \'0;\n')
+        for net in input_names:
+            if '[' in net:
+                lbracket = net.find('[')
+                rbracket = net.find(']')
+                size = net[lbracket + 1:rbracket]
+                signalname = net[:lbracket]
+                out.write('            for (int i = 0; i < ' + size + '; i++)\n')
+                out.write('                ' + signalname + '[i] <= \'0;\n')
+                out.write('\n')
+            else:
+                out.write('            ' + net + ' <= \'0;\n')
 
-    out.write('''        end
-        else
-        begin
-            cycle <= cycle + 1;
-            unique case (cycle)
+        out.write('''        end
+            else
+            begin
+                cycle <= cycle + 1;
+                unique case (cycle)
 
-                // test cases...
+                    // test cases...
 
-                0:
-                begin
-                    $display("PASS");
-                    $finish;
-                end
-            endcase
+                    0:
+                    begin
+                        $display("PASS");
+                        $finish;
+                    end
+                endcase
+            end
         end
-    end
-endmodule
-''')
+    endmodule
+    ''')
+
+if __name__ == '__main__':
+    main()
