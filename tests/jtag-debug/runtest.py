@@ -118,6 +118,20 @@ class JTAGTestFixture(object):
         If instruction is set to INST_SAME, this will not shift an instruction
         If data_length is zero, it will not shift any data. If both are set to
         not transfer, it will initiate a reset of the target.
+
+        Args:
+            instruction: int
+                JTAG instruction type (value of IR) to send
+            data_length: int
+                Number of bits of data to transfer
+            data: int
+                Numeric data value to shift to target
+
+        Returns:
+            Nothing
+
+        Raises:
+            TestException if there is an error communicating with the device.
         """
 
         if test_harness.DEBUG:
@@ -170,6 +184,15 @@ class JTAGTestFixture(object):
         This won't read anything if the program was killed (which is the
         common case if the program didn't die with an assertion), but
         we usually call in the case that it has exited with an error.
+
+        Args:
+            None
+
+        Returns:
+            str Contents of stdout.
+
+        Raises:
+            Nothing
         """
         # Give the reader thread time to finish reading responses.
         if self.reader_thread:
@@ -198,9 +221,18 @@ class JTAGTestFixture(object):
     def _read_output(self):
         """Read text that is printed by the verilator process to standard out.
 
-        This needs to happen on a separate thread to avoid blocking the
-        main thread. This seems to be the only way to do it portably in
-        python.
+        This needs to happen on a separate thread to avoid blocking the main thread.
+        This seems to be the only way to do it portably in python. The text that is
+        returned is appended to an internal buffer.
+
+        Args:
+            None
+
+        Returns:
+            None
+
+        Raises:
+            Nothing
         """
         while True:
             got = self.process.stdout.read(0x100)

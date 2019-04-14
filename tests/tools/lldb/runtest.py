@@ -128,11 +128,11 @@ def parse_stack_crawl(response):
     """Convert blob of stack crawl text to a list of tuples.
 
     Args:
-        response: string
+        response: str
             Text from debugger containing the stack crawl.
 
     Returns:
-        list(tuple (function name, filename, line number))
+        list of (function name: str, filename: str, line number: int))
     """
 
     stack_info = []

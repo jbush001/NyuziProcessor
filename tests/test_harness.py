@@ -40,7 +40,7 @@ TEST_DIR = os.path.dirname(os.path.abspath(__file__))
 config = configparser.ConfigParser()
 config.read(os.path.join(TEST_DIR, 'tests.conf'))
 default_config = config['DEFAULT']
-BIN_DIR = default_config['TOOL_BIN_DIR']
+TOOL_BIN_DIR = default_config['TOOL_BIN_DIR']
 LIB_DIR = default_config['LIB_DIR']
 KERNEL_DIR = default_config['KERNEL_DIR']
 WORK_DIR = default_config['WORK_DIR']
@@ -48,9 +48,9 @@ LIB_INCLUDE_DIR = default_config['LIB_INCLUDE_DIR']
 COMPILER_BIN_DIR = default_config['COMPILER_BIN_DIR']
 HARDWARE_INCLUDE_DIR = default_config['HARDWARE_INCLUDE_DIR']
 
-VSIM_PATH = os.path.join(BIN_DIR, 'nyuzi_vsim')
-EMULATOR_PATH = os.path.join(BIN_DIR, 'nyuzi_emulator')
-SERIAL_BOOT_PATH = os.path.join(BIN_DIR, 'serial_boot')
+VSIM_PATH = os.path.join(TOOL_BIN_DIR, 'nyuzi_vsim')
+EMULATOR_PATH = os.path.join(TOOL_BIN_DIR, 'nyuzi_emulator')
+SERIAL_BOOT_PATH = os.path.join(TOOL_BIN_DIR, 'serial_boot')
 ALL_TARGETS = ['verilator', 'emulator']
 DEFAULT_TARGETS = ['verilator', 'emulator']
 
@@ -80,25 +80,27 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
     loaded into memory.
 
     Args:
-        source_files: list (string)
-            Files to compile, which can be C/C++ or assembly files.
-        image_type: string
+        source_files: list of str
+            Paths to files to compile, which can be C/C++ or assembly files.
+        image_type: str
             Can be:
             - 'bare-metal', Runs standalone, but with elf linkage
             - 'raw', Has no header and is linked at address 0
             - 'user', ELF binary linked at 0x1000, linked against kernel libs
-        opt_level: string
+        opt_level: str
             Optimization level (-O0, -O1, -O2, or -O3)
-        cflags: list (string)
+        cflags: list of str
             Additional command line flags to pass to C compiler.
 
     Returns:
-        string Name of output file
+        str Name of output file
 
     Raises:
         TestException if compilation failed, will contain compiler output
     """
     assert isinstance(source_files, list)
+    assert image_type in ['bare-metal', 'raw', 'user']
+
     elf_file = os.path.join(WORK_DIR, 'program.elf')
     compiler_args = [os.path.join(COMPILER_BIN_DIR, 'clang'),
                      '-o', elf_file,
@@ -168,7 +170,7 @@ def kill_gently(process):
         process.kill()
 
 class TimedProcessRunner(threading.Thread):
-    """Run a process, but throw an exception if it takes too long."""
+    """Run a program, but throw an exception if it takes too long."""
 
     def __init__(self):
         threading.Thread.__init__(self)
@@ -183,14 +185,14 @@ class TimedProcessRunner(threading.Thread):
         Args:
             process: Popen
                 The subprcess to run, which should be created with Popen.
-            timeout: number
+            timeout: float
                 How long to wait, in seconds.
-            input: string
+            input: str
                 If specified, this will be sent to the processes standard
                 input.
 
         Returns:
-            string The collected standard out that was printed by this process.
+            str The collected standard out that was printed by this process.
 
         Raises:
             TestException if the process times out.
@@ -207,8 +209,8 @@ class TimedProcessRunner(threading.Thread):
 
         return result
 
-    # Watchdog thread kills process if it runs too long
     def run(self):
+        """Watchdog thread that kills process if it runs too long."""
         if not self.finished.wait(self.timeout):
             # Timed out
             self.finished.set()
@@ -222,14 +224,15 @@ def run_test_with_timeout(args, timeout):
     returns a non-zero result, it will also throw a TestException.
 
     Args:
-        args: list
-            A list of string arguments, the first being the path to the
+        args: list of str
+            Arguments to called program the first being the path to the
             executable
-        timeout: number
-            Timeout in seconds.
+        timeout: float
+            Number of seconds to wait for the program to exit normally
+            before throwing exception.
 
     Returns:
-        string All data printed to stdout by the process.
+        str All data printed to stdout by the process.
 
     Raises:
         TestException if the test fails or times out.
@@ -273,27 +276,27 @@ def run_program(
     This uses the hex file produced by build_program.
 
     Args:
-        executable: string
+        executable: str
             Path in host filesystem to file that should be executed.
             This is usually the return value from build_program.
-        target: string
+        target: str
             Which target will run the program. Can be 'verilator'
             or 'emulator'.
-        block_device: string
+        block_device: str
             Relative path to a file that contains a filesystem image.
             If passed, contents will appear as a virtual SDMMC device.
-        dump_file: string
+        dump_file: str
             Path to a file to write memory contents into after
             execution completes.
-        dump_base: number
+        dump_base: int
             if dump_file is specified, base physical memory address to start
             writing mempry from.
-        dump_length: number
+        dump_length: int
             number of bytes of memory to write to dump_file
 
     Returns:
-        string Output from program, anything written to virtual serial device,
-        as a string.
+        str Output from program, anything written to virtual serial device,
+        as a str.
 
     Raises:
         TestException if emulated program crashes or the program cannot
@@ -392,18 +395,18 @@ def run_kernel(
     with that image automatically.
 
     Args:
-        target: string
+        target: str
             Which target to execute on. Can be 'verilator' or 'emulator'.
 
     Returns:
-        string Output from program, anything written to virtual serial device
+        str Output from program, anything written to virtual serial device
 
     Raises:
         TestException if emulated program crashes or the program cannot
         execute for some other reason.
     """
     block_file = os.path.join(WORK_DIR, 'fsimage.bin')
-    subprocess.check_output([os.path.join(BIN_DIR, 'mkfs'), block_file, exe_file],
+    subprocess.check_output([os.path.join(TOOL_BIN_DIR, 'mkfs'), block_file, exe_file],
                             stderr=subprocess.STDOUT)
 
     output = run_program(KERNEL_DIR + '/kernel.hex',
@@ -450,11 +453,11 @@ def assert_files_equal(file1, file2, error_msg='file mismatch'):
     """Read two files and throw a TestException if they are not the same
 
     Args:
-        file1: string
+        file1: str
             relative path to first file
-        file2: string
+        file2: str
             relative path to second file
-        error_msg: string
+        error_msg: str
             If there is a file mismatch, prepend this to error output
 
     Returns:
@@ -523,7 +526,7 @@ def register_tests(func, names, targets=None):
         func: function
             A function that will be called for each of the elements
             in the names list.
-        names: list(string)
+        names: list of str
             List of tests to run.
 
     Returns:
@@ -544,7 +547,7 @@ def test(param=None):
     """decorator @test automatically registers test to be run.
 
     Args:
-        param: list(string)
+        param: list of str
             optional list of targets that are valid for this test
     """
     if callable(param):
@@ -558,6 +561,7 @@ def test(param=None):
     # a fuction that will be called on the actual function.
     def register_func(func):
         register_tests(func, [func.__name__], param)
+        return func
 
     return register_func
 
@@ -566,12 +570,12 @@ def find_files(extensions):
     """Find all files in the current directory that have the passed extensions.
 
     Args:
-        extensions: list
+        extensions: list of str
             File extensions, each starting with a dot. For example
             ['.c', '.cpp']
 
     Returns:
-        list (string) Filenames.
+        list of str Filenames.
 
     Raises:
         Nothing
@@ -589,7 +593,8 @@ def execute_tests():
     """All tests are called from here.
 
     Run all tests that have been registered with the register_tests functions
-    and report results. If this fails, it will call sys.exit with a non-zero status.
+    and print results. If this fails, it will call sys.exit with a non-zero
+    status.
 
     Args:
         None
@@ -598,7 +603,7 @@ def execute_tests():
         Nothing
 
     Raises:
-        Nothing
+        NOthing
     """
 
     global DEBUG
@@ -683,7 +688,7 @@ def check_result(source_file, program_output):
     occur in the output.
 
     Args:
-        source_file: string
+        source_file: str
             relative path to a source file that contains patterns
 
     Returns:
@@ -748,9 +753,9 @@ def dump_hex(output_file, input_file):
     Each line of the output file is 4 bytes.
 
     Args:
-        output_file: string
+        output_file: str
             Path of hex file to to write
-        input_file: string
+        input_file: str
             Path of binary file to read
 
     Returns:
@@ -774,11 +779,11 @@ def endian_swap(value):
     """"Given a 32-bit integer value, swap it to the opposite endianness.
 
     Args:
-        value: number
-            Value to swap
+        value: int
+            Value to endian swap
 
     Returns:
-        number Endian swapped result
+        int Endian swapped result
     """
 
     return (((value >> 24) & 0xff) | ((value >> 8) & 0xff00)
@@ -792,10 +797,10 @@ def _run_generic_test(name, target):
     file with the programs output.
 
     Args:
-        name: string
+        name: str
             Filename of the file to run, expected to be in the same
             directory is the runtest script
-        target: string
+        target: str
             Name of the target (e.g. emulator, verilator)
 
     Returns:
@@ -818,7 +823,7 @@ def register_generic_test(name, targets=None):
     verilator and emulator configurations.
 
     Args:
-        names: list
+        names: list of str
             Source file names. Each is compiled as a separate test.
 
     Returns:
@@ -847,9 +852,8 @@ def register_generic_assembly_tests(tests, targets=None):
     strings. It runs it both in verilator and emulator configurations.
 
     Args:
-        tests: list (string)
-            list of source file names. Each is assembled as a
-            separate test.
+        tests: list of str
+            Source file names. Each is assembled as a separate test.
 
     Returns:
         Nothing
@@ -873,20 +877,21 @@ def register_render_test(name, source_files, expected_hash, targets=None):
     value to ensure the output is pixel accurate.
 
     Args:
-        name: string
+        name: str
             Display name of the test in test result output
-        source_files: list (string)
+        source_files: list of str
             List of source files to compile (unlike other calls, these
             are all compiled into one executable, this call only registers
             one test, not multiple).
-        expected_hash: string
-            this is an ASCII hex string of that the computed hash.
+        expected_hash: str
+            this is an ASCII hex string that the computed hash should match.
 
     Returns:
         Nothing
 
     Raises:
-        Nothing
+        TestException if the computed hash doesn't match or there is some other
+        test failure.
     """
 
     # This closure captures parameters source_files and

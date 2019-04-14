@@ -34,6 +34,17 @@ symbolre = re.compile(
 
 
 def find_function(functions, pc):
+    """Given a PC, figure out which function it is in.
+
+    Args:
+        functions: list of (addr: int, name: str)
+
+    Returns:
+        str Name of function.
+
+    Raises:
+        Nothing
+    """
     low = 0
     high = len(functions)
     while low < high:

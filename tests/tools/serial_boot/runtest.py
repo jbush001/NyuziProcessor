@@ -58,6 +58,7 @@ class SerialLoader(object):
 
 
     def __enter__(self):
+        """Called as a side effect of starting a 'with SerialLoader as...'"""
         # Create a virtual serial device
         self.pipe, slave = pty.openpty()
         sname = os.ttyname(slave)
@@ -72,6 +73,7 @@ class SerialLoader(object):
 
 
     def __exit__(self, *unused):
+        """Called as a side effect of exiting a 'with SerialLoader as...'"""
         self.serial_boot_process.kill()
         os.close(self.pipe)
 
@@ -85,11 +87,11 @@ class SerialLoader(object):
             None
 
         Returns:
-            (string, string) Standard out and standard error
+            (str, str) Standard out and standard error
 
         Raises:
-            TestException if the program does not exit in
-            RECEIVE_TIMEOUT_S seconds.
+            TestException if the program does not exit in RECEIVE_TIMEOUT_S
+            seconds.
         """
         out, err = test_harness.TimedProcessRunner().communicate(
             self.serial_boot_process, RECEIVE_TIMEOUT_S)
@@ -103,7 +105,7 @@ class SerialLoader(object):
         """Receive a sequence of bytes from the serial loader and check them.
 
         Args:
-            expect_sequence: list (int)
+            expect_sequence: list of int
                 The sequence of byte values that are expected to be received.
 
         Returns:
@@ -126,7 +128,7 @@ class SerialLoader(object):
 
         The value is four bytes in little endian order.
         Args:
-            expected: integer
+            expected: int
                 The value that should be received
 
         Returns:
@@ -150,7 +152,7 @@ class SerialLoader(object):
         """Check for an error message printed to stderr by the serial loader.
 
         Args:
-            error_message: string
+            error_message: str
                 The message that should be printed. This should appear somewhere in the output,
                 but other values before or after this will be ignored.
 
@@ -192,7 +194,7 @@ class SerialLoader(object):
         """Check for a message printed to the console from a program.
 
         Args:
-            message: string
+            message: str
                 The message that should appear in stdout.
 
         Returns:
@@ -227,7 +229,7 @@ class SerialLoader(object):
         """Write text to stdin of the process
 
         Args:
-            message: string
+            message: str
                 The message to send
 
         Returns:
@@ -249,7 +251,7 @@ class SerialLoader(object):
             None
 
         Returns:
-            integer byte value
+            int byte value
 
         Raises:
             TestException if nothing can be read for over RECEIVE_TIMEOUT_S
@@ -265,7 +267,7 @@ class SerialLoader(object):
         """send_serial a set of bytes to the serial loader program.
 
         Args:
-            values: array (integer)
+            values: list of int
                 Sequence of values to be sent. Each will be encoded as
                 one byte.
         Returns:
@@ -305,7 +307,7 @@ def compute_checksum(byte_array):
     """Compute FNV-1 checksum.
 
     Args:
-        byte_array: list (int)
+        byte_array: list of int
             Each element represents a a byte
 
     Returns:
@@ -323,6 +325,23 @@ def compute_checksum(byte_array):
 
 
 def check_load_memory_command(loader, address, values):
+    """Ensure the host sends a proper command to load memory
+
+    Args:
+        loader: SerialLoader
+            Wraps the connection to the serial_loader process under test.
+        address: int
+            Address at which loaded block should start
+        values: list of int
+            Each element is a byte value that should be received.
+
+    Returns:
+        Nothing
+
+    Throws:
+        TestException if there is a mismatch
+    """
+
     if test_harness.DEBUG:
         print('check_load_memory_command 0x{:x} 0x{:x}'.format(address, len(values)))
 

@@ -101,21 +101,26 @@ def run_unit_test(filename, _):
     filestem, _ = os.path.splitext(filename)
     modulename = os.path.basename(filestem)
 
-    # The verilator command is actually a perl script. Executing it
-    # like this with shell=True is necessary for it to work correctly
-    # in all environments.
     verilator_args = [
-        'verilator --unroll-count 512 --assert -I' +
-        test_harness.HARDWARE_INCLUDE_DIR +
-        ' -DSIMULATION=1 -Mdir ' + test_harness.WORK_DIR +
-        ' -cc ' + filename + ' --exe ' + DRIVER_PATH
+        'verilator',
+        '--unroll-count', '512',
+        '--assert',
+        '-I' + test_harness.HARDWARE_INCLUDE_DIR,
+        '-DSIMULATION=1',
+        '-Mdir', test_harness.WORK_DIR,
+        '-cc', filename,
+        '--exe', DRIVER_PATH
     ]
 
     if test_harness.DEBUG:
-        verilator_args[0] += ' --trace --trace-structs'
+        verilator_args += ['--trace', '--trace-structs']
 
     try:
-        subprocess.call(verilator_args, stderr=subprocess.STDOUT, shell=True)
+        # The 'verilator' command is actually a perl script. Executing it
+        # with shell=True is necessary for it to work correctly in all
+        # environments.
+        subprocess.call(' '.join(verilator_args), stderr=subprocess.STDOUT,
+                        shell=True)
     except subprocess.CalledProcessError as exc:
         raise test_harness.TestException(
             'Verilation failed:\n' + exc.output.decode())
@@ -136,10 +141,6 @@ def run_unit_test(filename, _):
     except subprocess.CalledProcessError as exc:
         raise test_harness.TestException(
             'Build failed:\n' + exc.output.decode())
-
-    random_seed = random.randint(0, 0xffffffff)
-    if test_harness.DEBUG:
-        print('random seed is ' + random_seed)
 
     model_args = [
         os.path.join(test_harness.WORK_DIR, 'V' + modulename)

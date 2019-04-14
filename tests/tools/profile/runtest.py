@@ -45,7 +45,7 @@ def profile(*unused):
         f.write(symbols.decode())
 
     profile_args = [
-        os.path.join(test_harness.BIN_DIR, 'profile.py'),
+        os.path.join(test_harness.TOOL_BIN_DIR, 'profile.py'),
         symbol_file,
         profile_file
     ]

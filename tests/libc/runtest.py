@@ -35,7 +35,7 @@ def filesystem(_, target):
 
     hex_file = test_harness.build_program(['fs.c'])
     subprocess.check_output(
-        [os.path.join(test_harness.BIN_DIR, 'mkfs'), FS_IMAGE_PATH,
+        [os.path.join(test_harness.TOOL_BIN_DIR, 'mkfs'), FS_IMAGE_PATH,
          'fstest.txt'], stderr=subprocess.STDOUT)
     result = test_harness.run_program(hex_file, target, block_device=FS_IMAGE_PATH)
     if 'PASS' not in result or 'FAIL' in result:

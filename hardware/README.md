@@ -55,7 +55,7 @@ line arguments (Verilog prefixes arguments with a plus sign):
 | +block=*filename*               | Read file into virtual block device, which it exposes as a virtual SD/MMC device.
 | +dumpmems                       | Dump the sizes of all internal FIFOs and SRAMs to standard out and exit. Used by tools/misc/extract_mems.py |
 | +jtag_port=*port*               | Opens a socket waiting for a connection on the given port. Commands received here will be sent over JTAG. See sim_jtag.sv for more details |
-| +verilator+rand+reset+I         | Determine how memory/registers are initialized 0=all zeroes, 1 = all ones, 2 = random values |
+| +verilator+rand+reset+I         | Determine how memory/registers are initialized 0=all zeroes, 1 = all ones, 2 = random values (default 0) |
 | +verilator+seed+N               | Set seed for random number generator; used to force deterministic behavior during debugging |
 
 The amount of RAM available in the testbench is hard coded to 16MB. To alter

@@ -43,6 +43,30 @@ size_re2 = re.compile(
 
 
 def read_image_file(filename, resize_to_width=None, resize_to_height=None):
+    """Read and decode an image in the local filesystem.
+
+    This uses ImageMagick, and is limited to the types that it supports.
+    (Usually PNG and JPEG for our cases). The resulting image will be in
+    RGBA 32-bit format.
+
+    Args:
+        filename: str
+            Path to image file.
+        resize_to_width: int
+            If specified, this will be the new width of the resulting image.
+            If the source image is not this size, the image will be scaled.
+        resize_to_height: int
+            This must be specified if resize_to_width is, and gives the
+            vertical dimension of the loaded image.
+
+    Returns:
+        (width: int, height: int, raster data:bytes )
+
+    Raises:
+        Exception if there is a problem reading or decoding the file.
+    """
+
+
     width = None
     height = None
     handle, temppath = tempfile.mkstemp(suffix='.bin')
@@ -94,7 +118,15 @@ def read_texture(filename):
     """Read an image file at multiple resolutions to create mip maps
 
     This is read at the original resolution, then progressively at scaled
-    down by halves for MIP map levels.
+    down by halves for MIP map levels. These will be stored as RGBA 32-bit
+    raster data.
+
+    Args:
+        filename: string
+            Path to file to open.
+
+    Returns:
+        (width: int, height: int, image data: bytes)
     """
     print('read texture ' + filename)
     width, height, data = read_image_file(filename)
@@ -113,7 +145,16 @@ def read_mtl_file(filename):
 
     As a side effect, this will also read in the texture files specified
     in the file. These will be cached, so if the same file appears in
-    multiple materials, the same loaded images will be used.
+    multiple materials, the same loaded images will be used. This will
+    update global variables indexing the textures and materials as a side
+    effect.
+
+    Args:
+        filename: str
+            Path fo file to open
+
+    Returns:
+        Nothing.
     """
     global material_name_to_texture_idx
     global texture_file_to_texture_idx
@@ -147,6 +188,23 @@ def read_mtl_file(filename):
 
 
 def compute_normal(vertex1, vertex2, vertex3):
+    """Compute a vector perpendicular to the face of a triangle in 3d space.
+
+    Args:
+        vertex1: (float, float, float)
+            Position of first triangle point.
+        vertex1: (float, float, float)
+            Position of second triangle point.
+        vertex1: (float, float, float)
+            Position of third triangle point.
+    Returns:
+        (float, float, float) A vector (from origin) describing the orientation
+        of the normal.
+
+    Raises:
+        Nothing
+    """
+
     # Vector 1
     ax = vertex2[0] - vertex1[0]
     ay = vertex2[1] - vertex1[1]
@@ -171,10 +229,26 @@ def compute_normal(vertex1, vertex2, vertex3):
 
 
 def zero_to_one_based_index(x):
+    """
+    """
     return x + 1 if x < 0 else x - 1
 
 
 def read_obj_file(filename):
+    """Read a Wavefront .OBJ file containing geometry data.
+
+    This may read other files containing materials and textures as a
+    side effect. It updates a global variable with the contents of the
+    meshes.
+
+    Args:
+        filename: str
+            Path to file
+
+    Returns:
+        Nothing
+    """
+
     global mesh_list
 
     vertex_positions = []
@@ -274,6 +348,20 @@ def read_obj_file(filename):
 
 
 def print_stats():
+    """Print geometric information about the file that was just read.
+
+    This assumes read_obj_file has already been called. It uses information
+    stored in global variables.
+
+    Args:
+        None
+
+    Returns:
+        Nothing
+
+    Raises:
+        Nothing
+    """
     total_triangles = 0
     total_vertices = 0
     minx = float('Inf')
@@ -308,6 +396,20 @@ def align(addr, alignment):
 
 
 def write_resource_file(filename):
+    """Write all geometry and texture information into a unified binary file.
+
+    This custom format is read by the sceneviewer application.
+
+    Args:
+        filename: str
+            Path to file in host filesystem to write.
+
+    Returns:
+        Nothing
+
+    Raises:
+        IOException if there is a problem writing to the file.
+    """
     current_data_offset = 12 + len(texture_list) * \
         12 + len(mesh_list) * 16  # Skip header
     current_header_offset = 12
