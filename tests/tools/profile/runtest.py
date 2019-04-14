@@ -53,7 +53,16 @@ def profile(*unused):
     profile_lines = profile_output.decode().split('\n')
     profile_tuples = [line.split(' ') for line in profile_lines if line]
     profile_map = {func: int(count) for count, _, func in profile_tuples}
-    test_harness.assert_greater(profile_map['loop10000'], profile_map['loop5000'] * 1.9)
-    test_harness.assert_greater(profile_map['loop20000'], profile_map['loop10000'] * 1.9)
+
+    # These tests don't end up being exactly 2x the number of samples. Because
+    # the system samples randomly, it can vary. I could have ran the test longer
+    # to get more samples, but this is really just a smoke test and I didn't want
+    # to bloat the test time unnecessarily.
+    loop5k = profile_map['loop5000']
+    loop10k = profile_map['loop10000']
+    loop20k = profile_map['loop20000']
+    test_harness.assert_greater(loop5k, 0)
+    test_harness.assert_greater(loop10k, loop5k * 1.75)
+    test_harness.assert_greater(loop20k, loop10k * 1.75)
 
 test_harness.execute_tests()
