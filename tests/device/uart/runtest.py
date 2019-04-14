@@ -24,8 +24,8 @@ import test_harness
 
 @test_harness.test(['verilator'])
 def uart_hw_test(*unused):
-    test_harness.build_program(['uart_hw_test.c'])
-    result = test_harness.run_program(target='verilator')
+    hex_file = test_harness.build_program(['uart_hw_test.c'])
+    result = test_harness.run_program(hex_file, 'verilator')
     if 'PASS' not in result:
         raise test_harness.TestException(
             'test did not indicate pass\n' + result)

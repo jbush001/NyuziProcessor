@@ -31,9 +31,10 @@ MEM_DUMP_FILE = os.path.join(test_harness.WORK_DIR, 'vmem.bin')
 
 @test_harness.test(['verilator'])
 def atomic(_, target):
-    test_harness.build_program(['atomic.S'])
+    hex_file = test_harness.build_program(['atomic.S'])
     test_harness.run_program(
-        target=target,
+        hex_file,
+        target,
         dump_file=MEM_DUMP_FILE,
         dump_base=0x100000,
         dump_length=0x800,

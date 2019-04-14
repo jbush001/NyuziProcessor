@@ -29,8 +29,8 @@ import test_harness
 
 @test_harness.test(['emulator', 'verilator'])
 def timeout(_, target):
-    test_harness.build_program(['timeout.c'])
-    test_harness.run_program(target=target, timeout=3)
+    hex_file = test_harness.build_program(['timeout.c'])
+    test_harness.run_program(hex_file, target, timeout=3)
 
 
 @test_harness.test(['emulator'])

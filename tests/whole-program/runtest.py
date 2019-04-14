@@ -31,8 +31,8 @@ def run_compiler_test(source_file, target):
         result = subprocess.check_output(HOST_EXE_FILE)
         test_harness.check_result(source_file, result.decode())
     else:
-        test_harness.build_program([source_file])
-        result = test_harness.run_program(target)
+        hex_file = test_harness.build_program([source_file])
+        result = test_harness.run_program(hex_file, target)
         test_harness.check_result(source_file, result)
 
 test_list = [fname for fname in test_harness.find_files(

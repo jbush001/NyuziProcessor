@@ -71,8 +71,8 @@ def run_csmith_test(_, target):
         print('host checksum %08x' % host_checksum)
 
         # Compile and run under emulator
-        test_harness.build_program([source_file], cflags=[csmith_include])
-        result = test_harness.run_program(target)
+        hex_file = test_harness.build_program([source_file], cflags=[csmith_include])
+        result = test_harness.run_program(hex_file, target)
         got = CHECKSUM_RE.search(result)
         if not got:
             raise test_harness.TestException('no checksum in host output')

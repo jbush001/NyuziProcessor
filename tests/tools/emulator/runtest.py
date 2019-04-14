@@ -125,12 +125,12 @@ def recv_host_interrupt(*unused):
     except OSError:
         pass    # Ignore if pipe doesn't exist
 
-    test_harness.build_program(['recv_host_interrupt.S'])
+    hex_file = test_harness.build_program(['recv_host_interrupt.S'])
 
     os.mknod(RECV_PIPE_NAME, stat.S_IFIFO | 0o666)
 
     args = [test_harness.EMULATOR_PATH,
-            '-i', RECV_PIPE_NAME, test_harness.HEX_FILE]
+            '-i', RECV_PIPE_NAME, hex_file]
     emulator_process = subprocess.Popen(args, stdout=subprocess.PIPE,
                                         stderr=subprocess.STDOUT)
 
@@ -164,12 +164,12 @@ def send_host_interrupt(*unused):
     except OSError:
         pass    # Ignore if pipe doesn't exist
 
-    test_harness.build_program(['send_host_interrupt.S'])
+    hex_file = test_harness.build_program(['send_host_interrupt.S'])
 
     os.mknod(SEND_PIPE_NAME, stat.S_IFIFO | 0o666)
 
     args = [test_harness.EMULATOR_PATH,
-            '-o', SEND_PIPE_NAME, test_harness.HEX_FILE]
+            '-o', SEND_PIPE_NAME, hex_file]
     emulator_process = subprocess.Popen(args, stdout=subprocess.PIPE,
                                         stderr=subprocess.STDOUT)
 
@@ -226,12 +226,12 @@ def sharedmem_transact(memory, value):
 def shared_memory(*unused):
     """See coprocessor.c for an explanation of this test."""
 
-    test_harness.build_program(['coprocessor.c'])
+    hex_file = test_harness.build_program(['coprocessor.c'])
 
     # Start the emulator
     memory_file = tempfile.NamedTemporaryFile()
     args = [test_harness.EMULATOR_PATH, '-s',
-            memory_file.name, test_harness.HEX_FILE]
+            memory_file.name, hex_file]
     process = subprocess.Popen(args, stdout=subprocess.PIPE,
                                stderr=subprocess.STDOUT)
 

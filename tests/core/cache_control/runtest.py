@@ -34,9 +34,10 @@ MEM_DUMP_FILE = os.path.join(test_harness.WORK_DIR, 'vmem.bin')
 
 @test_harness.test(['verilator'])
 def dflush(_, target):
-    test_harness.build_program(['dflush.S'])
+    hex_file = test_harness.build_program(['dflush.S'])
     test_harness.run_program(
-        target=target,
+        hex_file,
+        target,
         dump_file=MEM_DUMP_FILE,
         dump_base=BASE_ADDRESS,
         dump_length=0x40000)
@@ -55,9 +56,10 @@ def dflush(_, target):
 
 @test_harness.test(['verilator'])
 def dinvalidate(_, target):
-    test_harness.build_program(['dinvalidate.S'])
+    hex_file = test_harness.build_program(['dinvalidate.S'])
     result = test_harness.run_program(
-        target=target,
+        hex_file,
+        target,
         dump_file=MEM_DUMP_FILE,
         dump_base=0x2000,
         dump_length=4,
@@ -80,16 +82,16 @@ def dinvalidate(_, target):
 
 @test_harness.test(['verilator', 'fpga'])
 def dflush_wait(_, target):
-    test_harness.build_program(['dflush_wait.S'])
-    output = test_harness.run_program(target)
+    hex_file = test_harness.build_program(['dflush_wait.S'])
+    output = test_harness.run_program(hex_file, target)
     if 'PASS' not in output:
         raise test_harness.TestException('Test did not signal pass: ' + output)
 
 
 @test_harness.test(['verilator', 'fpga'])
 def iinvalidate(_, target):
-    test_harness.build_program(['iinvalidate.S'])
-    output = test_harness.run_program(target)
+    hex_file = test_harness.build_program(['iinvalidate.S'])
+    output = test_harness.run_program(hex_file, target)
     if 'PASS' not in output:
         raise test_harness.TestException('Test did not signal pass: ' + output)
 

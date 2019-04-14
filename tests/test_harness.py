@@ -48,8 +48,6 @@ LIB_INCLUDE_DIR = default_config['LIB_INCLUDE_DIR']
 COMPILER_BIN_DIR = default_config['COMPILER_BIN_DIR']
 HARDWARE_INCLUDE_DIR = default_config['HARDWARE_INCLUDE_DIR']
 
-ELF_FILE = os.path.join(WORK_DIR, 'program.elf')
-HEX_FILE = os.path.join(WORK_DIR, 'program.hex')
 VSIM_PATH = os.path.join(BIN_DIR, 'nyuzi_vsim')
 EMULATOR_PATH = os.path.join(BIN_DIR, 'nyuzi_emulator')
 SERIAL_BOOT_PATH = os.path.join(BIN_DIR, 'serial_boot')
@@ -101,8 +99,9 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
         TestException if compilation failed, will contain compiler output
     """
     assert isinstance(source_files, list)
+    elf_file = os.path.join(WORK_DIR, 'program.elf')
     compiler_args = [os.path.join(COMPILER_BIN_DIR, 'clang'),
-                     '-o', ELF_FILE,
+                     '-o', elf_file,
                      '-w',
                      opt_level,
                      '-I', TEST_DIR]    # To include asm_macros.h
@@ -128,16 +127,18 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
 
     try:
         subprocess.check_output(compiler_args, stderr=subprocess.STDOUT)
+        hex_file = os.path.join(WORK_DIR, 'program.hex')
         if image_type == 'raw':
-            dump_hex(input_file=ELF_FILE, output_file=HEX_FILE)
-            return HEX_FILE
+            dump_hex(input_file=elf_file, output_file=hex_file)
+            return hex_file
 
         if image_type == 'bare-metal':
-            subprocess.check_output([os.path.join(COMPILER_BIN_DIR, 'elf2hex'), '-o', HEX_FILE, ELF_FILE],
+            subprocess.check_output([os.path.join(COMPILER_BIN_DIR, 'elf2hex'),
+                                    '-o', hex_file, elf_file],
                                     stderr=subprocess.STDOUT)
-            return HEX_FILE
+            return hex_file
 
-        return ELF_FILE
+        return elf_file
     except subprocess.CalledProcessError as exc:
         raise TestException('Compilation failed:\n' + exc.output.decode())
 
@@ -256,20 +257,24 @@ def reset_fpga():
 
 
 def run_program(
+        executable,
         target='emulator',
+        *,
         block_device=None,
         dump_file=None,
         dump_base=None,
         dump_length=None,
         timeout=60,
         flush_l2=False,
-        trace=False,
-        executable=None):
+        trace=False):
     """Run test program.
 
     This uses the hex file produced by build_program.
 
     Args:
+        executable: string
+            Path in host filesystem to file that should be executed.
+            This is usually the return value from build_program.
         target: string
             Which target will run the program. Can be 'verilator'
             or 'emulator'.
@@ -293,9 +298,6 @@ def run_program(
         TestException if emulated program crashes or the program cannot
         execute for some other reason.
     """
-    if not executable:
-        executable = HEX_FILE
-
     if target == 'emulator':
         args = [EMULATOR_PATH]
         args += ['-a']  # Enable thread scheduling randomization by default
@@ -369,7 +371,9 @@ def run_program(
 
 
 def run_kernel(
+        exe_file,
         target='emulator',
+        *,
         timeout=60):
     """Run test program as a user space program under the kernel.
 
@@ -389,12 +393,12 @@ def run_kernel(
         execute for some other reason.
     """
     block_file = os.path.join(WORK_DIR, 'fsimage.bin')
-    subprocess.check_output([os.path.join(BIN_DIR, 'mkfs'), block_file, ELF_FILE],
+    subprocess.check_output([os.path.join(BIN_DIR, 'mkfs'), block_file, exe_file],
                             stderr=subprocess.STDOUT)
 
-    output = run_program(target=target, block_device=block_file,
-                         timeout=timeout, executable=KERNEL_DIR +
-                         '/kernel.hex')
+    output = run_program(KERNEL_DIR + '/kernel.hex',
+                         target, block_device=block_file,
+                         timeout=timeout, )
 
     if DEBUG:
         print('Program Output:\n' + output)
@@ -761,8 +765,8 @@ def _run_generic_test(name, target):
         TestException if the test fails.
     """
 
-    build_program([name])
-    result = run_program(target)
+    hex_file = build_program([name])
+    result = run_program(hex_file, target)
     check_result(name, result)
 
 
@@ -790,8 +794,8 @@ def register_generic_test(name, targets=None):
 
 
 def _run_generic_assembly_test(name, target):
-    build_program([name])
-    result = run_program(target)
+    hex_file = build_program([name])
+    result = run_program(hex_file, target)
     if 'PASS' not in result or 'FAIL' in result:
         raise TestException('Test failed ' + result)
 
@@ -857,9 +861,10 @@ def register_render_test(name, source_files, expected_hash, targets=None):
             '-ffast-math'
         ]
 
-        build_program(source_files=source_files,
+        hex_file = build_program(source_files=source_files,
                       cflags=render_cflags)
-        run_program(target=target,
+        run_program(hex_file,
+                    target,
                     dump_file=RAW_FB_DUMP_FILE,
                     dump_base=0x200000,
                     dump_length=0x12c000,

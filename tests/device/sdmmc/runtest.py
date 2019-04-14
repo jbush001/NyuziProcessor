@@ -34,9 +34,10 @@ def sdmmc_read(_, target):
     with open(SOURCE_BLOCK_DEV, 'wb') as fsimage:
         fsimage.write(os.urandom(FILE_SIZE))
 
-    test_harness.build_program(['sdmmc_read.c'])
+    hex_file = test_harness.build_program(['sdmmc_read.c'])
     test_harness.run_program(
-        target=target,
+        hex_file,
+        target,
         block_device=SOURCE_BLOCK_DEV,
         dump_file=MEMDUMP,
         dump_base=0x200000,
@@ -50,9 +51,10 @@ def sdmmc_write(_, target):
     with open(SOURCE_BLOCK_DEV, 'wb') as fsimage:
         fsimage.write(b'\xcc' * 1536)
 
-    test_harness.build_program(['sdmmc_write.c'])
+    hex_file = test_harness.build_program(['sdmmc_write.c'])
     result = test_harness.run_program(
-        target=target,
+        hex_file,
+        target,
         block_device=SOURCE_BLOCK_DEV)
     if 'FAIL' in result:
         raise test_harness.TestException('Test failed ' + result)

@@ -37,9 +37,10 @@ MEM_DUMP_FILE = os.path.join(test_harness.WORK_DIR, 'vmem.bin')
 
 @test_harness.test(['verilator'])
 def random_access_mmu_stress(_, target):
-    test_harness.build_program(['random_access.S'])
+    hex_file = test_harness.build_program(['random_access.S'])
     test_harness.run_program(
-        target=target,
+        hex_file,
+        target,
         dump_file=MEM_DUMP_FILE,
         dump_base=DUMP_BASE,
         dump_length=MEMORY_SIZE * NUM_THREADS,

@@ -33,19 +33,19 @@ def filesystem(_, target):
     will print 'PASS' if it is successful.
     """
 
-    test_harness.build_program(['fs.c'])
+    hex_file = test_harness.build_program(['fs.c'])
     subprocess.check_output(
         [os.path.join(test_harness.BIN_DIR, 'mkfs'), FS_IMAGE_PATH,
          'fstest.txt'], stderr=subprocess.STDOUT)
-    result = test_harness.run_program(target=target, block_device=FS_IMAGE_PATH)
+    result = test_harness.run_program(hex_file, target, block_device=FS_IMAGE_PATH)
     if 'PASS' not in result or 'FAIL' in result:
         raise test_harness.TestException(
             'test program did not indicate pass\n' + result)
 
 
 def run_test(source_file, target):
-    test_harness.build_program([source_file])
-    result = test_harness.run_program(target)
+    hex_file = test_harness.build_program([source_file])
+    result = test_harness.run_program(hex_file, target)
     test_harness.check_result(source_file, result)
 
 # hack: register all source files in this directory except for fs test,
