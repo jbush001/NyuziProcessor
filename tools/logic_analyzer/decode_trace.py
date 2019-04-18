@@ -20,7 +20,6 @@ Given a set of hex encoded packed data records with the format given in the fiel
 (msb first), decode and print in CSV format.
 '''
 
-from __future__ import print_function
 import sys
 
 fields = [

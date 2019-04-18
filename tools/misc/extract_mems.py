@@ -22,7 +22,6 @@ Makefile in the hardware directory. It outputs a new Verilog file that
 is included in the source files for memories.
 """
 
-from __future__ import print_function
 import re
 import sys
 

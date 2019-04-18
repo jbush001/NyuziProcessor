@@ -566,6 +566,19 @@ def test(param=None):
     return register_func
 
 
+def disable(func):
+    """Decorator that disables a test.
+
+    Useful to temporarily disable failing tests.
+
+    Args:
+        func: function
+            Callback of function to disable
+    """
+    assert registered_tests[-1][0] == func
+    del registered_tests[-1] # This should always called right after @test
+
+
 def find_files(extensions):
     """Find all files in the current directory that have the passed extensions.
 

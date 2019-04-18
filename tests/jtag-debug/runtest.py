@@ -27,7 +27,7 @@ import struct
 import subprocess
 import sys
 import time
-from threading import Thread
+import threading
 
 sys.path.insert(0, '..')
 import test_harness
@@ -102,7 +102,7 @@ class JTAGTestFixture(object):
             raise test_harness.TestException(
                 'failed to connect to verilator model')
 
-        self.reader_thread = Thread(target=self._read_output)
+        self.reader_thread = threading.Thread(target=self._read_output)
         self.reader_thread.daemon = True
         self.reader_thread.start()
         return self
@@ -123,7 +123,7 @@ class JTAGTestFixture(object):
             instruction: int
                 JTAG instruction type (value of IR) to send
             data_length: int
-                Number of bits of data to transfer
+                Number of bits of data to transfer (must be <= 32)
             data: int
                 Numeric data value to shift to target
 
@@ -179,7 +179,7 @@ class JTAGTestFixture(object):
                 value, instr_response))
 
     def get_program_output(self):
-        """Return everything verilator printed to stdout before exiting.
+        """Return everything the hardware model printed to stdout before exiting.
 
         This won't read anything if the program was killed (which is the
         common case if the program didn't die with an assertion), but
@@ -409,7 +409,8 @@ def jtag_inject_rollback(*unused):
 
 
 # XXX currently disabled because of issue #128
-#@test_harness.test(['verilator'])
+@test_harness.disable
+@test_harness.test(['verilator'])
 def jtag_read_write_pc(*unused):
     """Use the call instruction to read the program counter.
 
