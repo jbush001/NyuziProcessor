@@ -42,7 +42,7 @@ def run_cosimulation_test(source_file, *unused):
         '+memdumplen=400000',
         '+autoflushl2',
         '+verilator+rand+reset+2',
-        '+verilator+seed+' + str(random_seed)
+        '+verilator+seed+{}'.format(random_seed)
     ]
 
     # XXX this should probably be a command line option in test_harness.py

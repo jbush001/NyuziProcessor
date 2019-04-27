@@ -74,8 +74,7 @@ def read_image_file(filename, resize_to_width=None, resize_to_height=None):
 
     args = ['convert', '-debug', 'all']
     if resize_to_width:
-        args += ['-resize', str(resize_to_width) + 'x' +
-                 str(resize_to_height) + '^']
+        args += ['-resize', '{}x{}^'.format(resize_to_width, resize_to_height)]
 
     args += [filename, 'rgba:' + temppath]
     p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -106,8 +105,7 @@ def read_image_file(filename, resize_to_width=None, resize_to_height=None):
         texture_data = f.read(expected_size)
 
     if resize_to_width and len(texture_data) != expected_size:
-        print('length mismatch' + str(len(texture_data)) +
-              ' != ' + str(expected_size))
+        print('length mismatch {} != {}'.format(len(texture_data), expected_size))
 
     os.unlink(temppath)
 
@@ -183,8 +181,8 @@ def read_mtl_file(filename):
                         current_name] = len(texture_list)
                     texture_file_to_texture_idx[
                         texture_file] = len(texture_list)
-                    texture_list.append(read_texture(os.path.dirname(
-                        filename) + '/' + fields[1].replace('\\', '/')))
+                    texture_name = os.path.join(os.path.dirname(filename), fields[1])
+                    texture_list.append(read_texture(texture_name))
 
 
 def compute_normal(vertex1, vertex2, vertex3):
@@ -340,7 +338,8 @@ def read_obj_file(filename):
                         triangle_index_list = []
                     current_texture_id = new_texture_id
             elif fields[0] == 'mtllib':
-                read_mtl_file(os.path.dirname(filename) + '/' + fields[1])
+                path = os.path.join(os.path.dirname(filename), fields[1])
+                read_mtl_file(path)
 
         if triangle_index_list != []:
             mesh_list += [(current_texture_id, combined_vertices,
@@ -386,9 +385,9 @@ def print_stats():
     print('triangles ' + str(total_triangles))
     print('vertices ' + str(total_vertices))
     print('scene bounds ')
-    print('  x ' + str(minx) + ' ' + str(maxx))
-    print('  y ' + str(miny) + ' ' + str(maxy))
-    print('  z ' + str(minz) + ' ' + str(maxz))
+    print('  x {} {}'.format(minx, maxx))
+    print('  y {} {}'.format(miny, maxy))
+    print('  z {} {}'.format(minz, maxz))
 
 
 def align(addr, alignment):

@@ -113,7 +113,7 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
         compiler_args += cflags
 
     if image_type == 'raw':
-        compiler_args += ['-Wl,--script,' + os.path.join(TEST_DIR, 'one-segment.ld') + ',--oformat,binary']
+        compiler_args += ['-Wl,--script,{},--oformat,binary'.format(os.path.join(TEST_DIR, 'one-segment.ld'))]
     elif image_type == 'user':
         compiler_args += ['-Wl,--image-base=0x1000']
 
@@ -188,7 +188,6 @@ def run_test_with_timeout(args, timeout):
     Raises:
         TestException if the test fails or times out.
     """
-
     process = subprocess.Popen(args, stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT)
     try:
@@ -265,8 +264,7 @@ def run_program(
             args += ['-b', block_device]
 
         if dump_file:
-            args += ['-d', dump_file + ',' +
-                     hex(dump_base) + ',' + hex(dump_length)]
+            args += ['-d', '{},0x{:x},0x{:x}'.format(dump_file, dump_base, dump_length)]
 
         args += [executable]
         if DEBUG:
@@ -289,8 +287,8 @@ def run_program(
 
         if dump_file:
             args += ['+memdumpfile=' + dump_file,
-                     '+memdumpbase=' + hex(dump_base)[2:],
-                     '+memdumplen=' + hex(dump_length)[2:]]
+                     '+memdumpbase={:x}'.format(dump_base),
+                     '+memdumplen={:x}'.format(dump_length)]
 
         if flush_l2:
             args += ['+autoflushl2=1']
@@ -365,7 +363,7 @@ def run_kernel(
     subprocess.check_output([os.path.join(TOOL_BIN_DIR, 'mkfs'), block_file, exe_file],
                             stderr=subprocess.STDOUT)
 
-    output = run_program(KERNEL_DIR + '/kernel.hex',
+    output = run_program(os.path.join(KERNEL_DIR, 'kernel.hex'),
                          target, block_device=block_file,
                          timeout=timeout, )
 
@@ -610,7 +608,7 @@ def execute_tests():
             if target not in targets_to_run:
                 continue
 
-            label = param + ' (' + target + ')'
+            label = '{}({})'.format(param, target)
             print(label + (' ' * (OUTPUT_ALIGN - len(label))), end='')
             try:
                 # Clean out working directory and re-create
@@ -679,17 +677,16 @@ def check_result(source_file, program_output):
                 found_check_lines = True
                 expected = line[chkoffs + len(CHECK_PREFIX):].strip()
                 if DEBUG:
-                    print('searching for pattern "' + expected + '", line '
-                          + str(line_num))
+                    print('searching for pattern "{}", line {}'.format(expected,
+                          line_num))
 
                 regexp = re.compile(expected)
                 got = regexp.search(program_output, output_offset)
                 if got:
                     output_offset = got.end()
                 else:
-                    error = 'FAIL: line ' + \
-                        str(line_num) + ' expected string ' + \
-                        expected + ' was not found\n'
+                    error = 'FAIL: line {} expected string {} was not found\n'.format(
+                        line_num, expected)
                     error += 'searching here:' + program_output[output_offset:]
                     raise TestException(error)
             else:
@@ -704,9 +701,8 @@ def check_result(source_file, program_output):
                     regexp = re.compile(nexpected)
                     got = regexp.search(program_output, output_offset)
                     if got:
-                        error = 'FAIL: line ' + \
-                            str(line_num) + ' string ' + \
-                            nexpected + ' should not be here:\n'
+                        error = 'FAIL: line {} string {} should not be here:\n'.format(
+                            line_num, nexpected)
                         error += program_output
                         raise TestException(error)
 
@@ -894,7 +890,7 @@ def register_render_test(name, source_files, expected_hash, targets=None):
         if actual_hash != expected_hash:
             subprocess.check_output(['convert', '-depth', '8', '-size',
                                      '640x480', 'rgba:' + RAW_FB_DUMP_FILE, PNG_DUMP_FILE])
-            raise TestException('render test failed, bad checksum ' + str(actual_hash)
-                                + ' output image written to ' + PNG_DUMP_FILE)
+            raise TestException('render test failed, bad checksum {} output image written to {}'.format(
+                actual_hash, PNG_DUMP_FILE))
 
     register_tests(run_render_test, [name], targets)

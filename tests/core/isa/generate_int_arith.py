@@ -191,4 +191,4 @@ print('voperand1:     .long ' + hexlist(vector_operand1))
 print('voperand2:     .long ' + hexlist(vector_operand2))
 print('voperand3:     .long ' + hexlist(vector_operand3))
 for i, value in enumerate(vector_results):
-    print('result' + str(i) + ': .long ' + hexlist(value))
+    print('result{}: .long {}'.format(i, hexlist(value)))

@@ -93,8 +93,7 @@ def main():
         if count == 0:
             break
 
-        print(str(count) + ' ' +
-            str(float(count * 10000 / total_cycles) / 100) + '% ' + name)
+        print('{:7d} {:.3f}% {}'.format(count, count / total_cycles * 100, name))
 
 if __name__ == '__main__':
     main()

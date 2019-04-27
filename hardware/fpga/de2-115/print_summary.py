@@ -29,7 +29,7 @@ with open('output_files/de2_115.sta.rpt') as f:
         if found_section:
             got = speed_re.search(line)
             if got:
-                print('Fmax ' + got.group('speed') + 'MHz')
+                print('Fmax {} MHz'.format(got.group('speed')))
                 break
         elif line.find('; Slow 1200mV 85C Model Fmax Summary') != -1:
             found_section = True
@@ -40,5 +40,5 @@ with open('output_files/de2_115.fit.rpt') as f:
         if line.find('Total logic elements') != -1:
             got = count_re.search(line)
             if got:
-                print(got.group('num') + ' Logic elements')
+                print('{} Logic elements'.format(got.group('num')))
                 break

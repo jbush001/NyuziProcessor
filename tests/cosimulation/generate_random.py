@@ -115,7 +115,7 @@ def generate_binary_arith(outfile):
     rega = generate_arith_reg()
     regb = generate_arith_reg()
     maskreg = generate_arith_reg()
-    opstr = '\t\t{}{} {}{}, '.format(mnemonic, suffix, typed, dest)
+    opstr = '        {}{} {}{}, '.format(mnemonic, suffix, typed, dest)
     if suffix != '':
         opstr += 's{}, '.format(maskreg)  # Add mask register
 
@@ -155,7 +155,7 @@ def generate_unary_arith(outfile):
     dest = generate_arith_reg()
     rega = generate_arith_reg()
     if mnemonic == 'movehi':
-        outfile.write('\t\tmovehi s{}, {}\n'.format(
+        outfile.write('        movehi s{}, {}\n'.format(
             dest, random.randint(0, 0x7ffff)))
     else:
         fmt = random.randint(0, 3)
@@ -163,23 +163,23 @@ def generate_unary_arith(outfile):
             # Move with immediate value
             if fmt == 0:
                 maskreg = generate_arith_reg()
-                outfile.write('\t\t{}_mask  v{}, s{}, {}\n'.format
+                outfile.write('        {}_mask  v{}, s{}, {}\n'.format
                               (mnemonic, dest, maskreg, random.randint(-0xff, 0xff)))
             elif fmt == 1:
-                outfile.write('\t\t{} v{}, {}\n'.format(mnemonic, dest,
+                outfile.write('        {} v{}, {}\n'.format(mnemonic, dest,
                                                         random.randint(-0xff, 0xff)))
             else:
-                outfile.write('\t\t{} s{}, {}\n'.format(mnemonic, dest,
+                outfile.write('        {} s{}, {}\n'.format(mnemonic, dest,
                                                         random.randint(-0x1fff, 0x1fff)))
         else:
             if fmt == 0:
                 maskreg = generate_arith_reg()
-                outfile.write('\t\t{}_mask  v{}, s{}, v{}\n'.format
+                outfile.write('        {}_mask  v{}, s{}, v{}\n'.format
                               (mnemonic, dest, maskreg, rega))
             elif fmt == 1:
-                outfile.write('\t\t{} v{}, v{}\n'.format(mnemonic, dest, rega))
+                outfile.write('        {} v{}, v{}\n'.format(mnemonic, dest, rega))
             else:
-                outfile.write('\t\t{} s{}, s{}\n'.format(mnemonic, dest, rega))
+                outfile.write('        {} s{}, s{}\n'.format(mnemonic, dest, rega))
 
 COMPARE_FORMS = [
     ('v', 'v'),
@@ -222,7 +222,7 @@ def generate_compare(outfile):
     rega = generate_arith_reg()
     regb = generate_arith_reg()
     opsuffix = random.choice(COMPARE_OPS)
-    opstr = '\t\tcmp{} s{}, {}{}, '.format(opsuffix, dest, typea, rega)
+    opstr = '        cmp{} s{}, {}{}, '.format(opsuffix, dest, typea, rega)
     if random.randint(0, 1) == 0 and not opsuffix.endswith('_f'):
         opstr += str(random.randint(-0x1ff, 0x1ff))  # Immediate value
     else:
@@ -296,13 +296,13 @@ def generate_memory_access(outfile):
         # a store can invalidate a synchronized load that is issued subsequently.
         # A membar guarantees order.
         if opstr == 'load' and suffix == '_sync':
-            opstr = 'membar\n\t\t' + opstr
+            opstr = 'membar\n        ' + opstr
 
         offset = random.randint(0, 16) * align
         opstr += '{} s{}, {}(s{})'.format(suffix, generate_arith_reg(),
                                           offset, ptr_reg)
 
-    outfile.write('\t\t' + opstr + '\n')
+    outfile.write('        ' + opstr + '\n')
 
 
 def generate_device_io(outfile):
@@ -319,10 +319,10 @@ def generate_device_io(outfile):
     """
 
     if random.randint(0, 1):
-        outfile.write('\t\tload_32 s{}, {}(s9)\n'.format(
+        outfile.write('        load_32 s{}, {}(s9)\n'.format(
             generate_arith_reg(), random.randint(0, 1) * 4))
     else:
-        outfile.write('\t\tstore_32 s{}, (s9)\n'.format(generate_arith_reg()))
+        outfile.write('        store_32 s{}, (s9)\n'.format(generate_arith_reg()))
 
 BRANCH_TYPES = [
     ('bz', True),
@@ -348,10 +348,10 @@ def generate_branch(outfile):
 
     branch_type, is_cond = random.choice(BRANCH_TYPES)
     if is_cond:
-        outfile.write('\t\t{} s{}, {}f\n'.format(
+        outfile.write('        {} s{}, {}f\n'.format(
             branch_type, generate_arith_reg(), random.randint(1, 6)))
     else:
-        outfile.write('\t\t{} {}f\n'.format(branch_type, random.randint(1, 6)))
+        outfile.write('        {} {}f\n'.format(branch_type, random.randint(1, 6)))
 
 
 def generate_computed_pointer(outfile):
@@ -369,10 +369,10 @@ def generate_computed_pointer(outfile):
     """
 
     if random.randint(0, 1) == 0:
-        outfile.write('\t\tadd_i s1, s2, {}\n'.format(
+        outfile.write('        add_i s1, s2, {}\n'.format(
             random.randint(0, 16) * 64))
     else:
-        outfile.write('\t\tadd_i v1, v2, {}\n'.format(
+        outfile.write('        add_i v1, v2, {}\n'.format(
             random.randint(0, 16) * 64))
 
 CACHE_CONTROL_INSTRS = [
@@ -393,7 +393,7 @@ def generate_cache_control(outfile):
         Nothing
     """
 
-    outfile.write('\t\t{}\n'.format(random.choice(CACHE_CONTROL_INSTRS)))
+    outfile.write('        {}\n'.format(random.choice(CACHE_CONTROL_INSTRS)))
 
 GENERATE_FUNCS = [
     (0.1, generate_computed_pointer),

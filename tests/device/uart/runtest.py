@@ -53,7 +53,6 @@ def uart_echo_test(*unused):
 
     out_str = out_str.decode()
     if 'the quick brown fox jumped over the lazy dog' not in out_str:
-        raise test_harness.TestException('Subprocess returned incorrect result \"'
-            + out_str + '"')
+        raise test_harness.TestException('Subprocess returned incorrect result "{}"'.format(out_str))
 
 test_harness.execute_tests()

@@ -50,11 +50,11 @@ def main():
             if first:
                 first = False
             else:
-                print('else', end='')
+                print('else ', end='')
 
-            print('if (WIDTH == ' + str(width) + ' && SIZE == ' + str(depth) + ')')
-            instancename = prefix + str(width) + 'x' + str(depth)
-            print('\t' + instancename + ' ' + instancename + '(.*);')
+            print('if (WIDTH == {} && SIZE == {})'.format(width, depth))
+            instancename = '{}{}x{}'.format(prefix, width, depth)
+            print('    {0} {0}(.*);'.format(instancename))
 
         print('\n`endif')
 

@@ -132,8 +132,8 @@ def run_unit_test(filename, _):
         'make',
         'CXXFLAGS=-Wno-parentheses-equality',
         '-C', test_harness.WORK_DIR,
-        '-f', 'V' + modulename + '.mk',
-        'V' + modulename
+        '-f', 'V{}.mk'.format(modulename),
+        'V{}'.format(modulename)
     ]
 
     try:

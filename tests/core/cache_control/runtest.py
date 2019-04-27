@@ -50,8 +50,8 @@ def dflush(_, target):
             num_val, = struct.unpack('<L', val)
             expected = 0x1f0e6231 + (index // 16)
             if num_val != expected:
-                raise test_harness.TestException('FAIL: mismatch at ' + hex(
-                    BASE_ADDRESS + (index * 4)) + ' want ' + str(expected) + ' got ' + str(num_val))
+                raise test_harness.TestException('FAIL: mismatch at 0x{:x} want {} got {}'.format(
+                    BASE_ADDRESS + (index * 4), expected, num_val))
 
 
 @test_harness.test(['verilator'])
@@ -77,7 +77,7 @@ def dinvalidate(_, target):
         num_val, = struct.unpack('<L', memfile.read(4))
         if num_val != 0xdeadbeef:
             raise test_harness.TestException(
-                'memory contents were incorrect: ' + hex(num_val))
+                'memory contents were incorrect: 0x{:x}'.format(num_val))
 
 
 @test_harness.test(['verilator', 'fpga'])

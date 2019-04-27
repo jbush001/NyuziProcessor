@@ -37,10 +37,13 @@ import test_harness
 
 @test_harness.test(['emulator'])
 def load_file(*ignored):
-    BINARY_OUTPUT = os.path.join(test_harness.WORK_DIR, 'mem.bin')
-    args = [test_harness.EMULATOR_PATH, '-d', BINARY_OUTPUT + ',0,0x3c', 'valid-file-hex.txt']
+    binary_output = os.path.join(test_harness.WORK_DIR, 'mem.bin')
+    args = [
+        test_harness.EMULATOR_PATH,
+        '-d{},0,0x3c'.format(binary_output),
+        'valid-file-hex.txt']
     subprocess.check_output(args, stderr=subprocess.STDOUT)
-    EXPECTED = [
+    expected = [
         0x00fcff0f,
         0x1400008c,
         0x000000fc,
@@ -58,8 +61,8 @@ def load_file(*ignored):
         0x12345678
     ]
 
-    with open(BINARY_OUTPUT, 'rb') as file:
-        for check in EXPECTED:
+    with open(binary_output, 'rb') as file:
+        for check in expected:
             word = file.read(4)
             if not word:
                 raise test_harness.TestException('unexpected end of binary output')
@@ -293,7 +296,7 @@ class DebugConnection(object):
         if test_harness.DEBUG:
             print('SEND: ' + body)
 
-        self.sock.send(str.encode('$' + body + '#'))
+        self.sock.send(str.encode('${}#'.format(body)))
 
         # Checksum
         self.sock.send(str.encode('\x00\x00'))
@@ -342,7 +345,7 @@ class DebugConnection(object):
         response = self._receive_packet()
         if response != str.encode(value):
             raise test_harness.TestException(
-                'unexpected response. Wanted ' + value + ' got ' + str(response))
+                'unexpected response. Wanted {} got {}'.format(value, response))
 
 
 class EmulatorProcess(object):
@@ -535,13 +538,11 @@ def gdb_read_write_memory(*unused):
 
         # Write memory
         for addr, data in tests:
-            conn.expect('M' + hex(addr)[2:] + ',' +
-                        hex(int(len(data) / 2))[2:] + ':' + data, 'OK')
+            conn.expect('M{:x},{:x}:{}'.format(addr, int(len(data) / 2), data), 'OK')
 
         # Read and verify
         for addr, data in tests:
-            conn.expect('m' + hex(addr)[2:] + ',' +
-                        hex(int(len(data) / 2))[2:], data)
+            conn.expect('m{:x},{:x}'.format(addr, int(len(data) / 2)), data)
 
         # Try to write a bad address (out of range)
         # Doesn't return an error, test just ensures it
@@ -583,10 +584,10 @@ def gdb_read_write_register(*unused):
         ]
 
         for reg, value in tests:
-            conn.expect('G' + hex(reg)[2:] + ',' + value, 'OK')
+            conn.expect('G{:x},{}'.format(reg, value), 'OK')
 
         for reg, value in tests:
-            conn.expect('g' + hex(reg)[2:], value)
+            conn.expect('g{:x}'.format(reg), value)
 
         # Read invalid register index
         conn.expect('g41', '')
@@ -605,7 +606,7 @@ def gdb_register_info(*unused):
             conn.expect('qRegisterInfo' + hex(idx + 1)[2:], 'name:s' + regid +
                         ';bitsize:32;encoding:uint;format:hex;'
                         'set:General Purpose Scalar Registers;gcc:' + regid +
-                        ';dwarf:' + regid + ';')
+                        ';dwarf:{};'.format(regid))
 
         # These registers (sp, fp, ra) are special and have additional
         # information.
@@ -615,7 +616,7 @@ def gdb_register_info(*unused):
             conn.expect('qRegisterInfo' + hex(idx + 1)[2:], 'name:s' + regid +
                         ';bitsize:32;encoding:uint;format:hex;'
                         'set:General Purpose Scalar Registers;gcc:' + regid +
-                        ';dwarf:' + regid + ';generic:' + name + ';')
+                        ';dwarf:{};generic:{};'.format(regid, name))
 
         # Vector registers
         for idx in range(32, 63):
@@ -623,7 +624,7 @@ def gdb_register_info(*unused):
             conn.expect('qRegisterInfo' + hex(idx + 1)[2:], 'name:v' + str(idx - 31) +
                         ';bitsize:512;encoding:uint;format:vector-uint32;'
                         'set:General Purpose Vector Registers;gcc:' + regid +
-                        ';dwarf:' + regid + ';')
+                        ';dwarf:{};'.format(regid))
 
         conn.expect('qRegisterInfo65', '')
 

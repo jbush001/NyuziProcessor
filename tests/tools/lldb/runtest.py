@@ -39,6 +39,8 @@ class EmulatorProcess(object):
 
     def __init__(self, hexfile):
         self.hexfile = hexfile
+
+        # XXX hack: Making assumption about ELF file location and name.
         self.elf_file = os.path.splitext(hexfile)[0] + '.elf'
         self.output = None
         self.emulator_proc = None
