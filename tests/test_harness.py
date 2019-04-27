@@ -145,6 +145,29 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
     except subprocess.CalledProcessError as exc:
         raise TestException('Compilation failed:\n' + exc.output.decode())
 
+class TerminalStateRestorer(object):
+    """This restores the configuration of POSIX terminals.
+
+    The emulator process disables local echo.  If it crashes or
+    times out, it can leave the terminal in a bad state. This will
+    save and restore the state automatically."""
+    def __init__(self):
+        self.attrs = None
+
+    def __enter__(self):
+        try:
+            self.attrs = termios.tcgetattr(sys.stdin.fileno())
+        except:
+            # This may throw an exception if the process doesn't
+            # have a controlling TTY (continuous integration). In
+            # this case, self.attrs will remain None.
+            print('exception')
+            pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.attrs:
+            termios.tcsetattr(sys.stdin.fileno(), termios.TCSANOW, self.attrs)
+
 
 def run_test_with_timeout(args, timeout):
     """Run program specified by args with timeout.
@@ -167,16 +190,14 @@ def run_test_with_timeout(args, timeout):
         TestException if the test fails or times out.
     """
 
-    term_attrs = termios.tcgetattr(sys.stdin.fileno())
-    process = subprocess.Popen(args, stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT)
-    try:
-        output, _ = process.communicate(timeout=timeout)
-        termios.tcsetattr(sys.stdin.fileno(), termios.TCSANOW, term_attrs)
-    except subprocess.TimeoutExpired:
-        process.kill()
-        termios.tcsetattr(sys.stdin.fileno(), termios.TCSANOW, term_attrs)
-        raise TestException('Test timed out')
+    with TerminalStateRestorer():
+        process = subprocess.Popen(args, stdout=subprocess.PIPE,
+                                   stderr=subprocess.STDOUT)
+        try:
+            output, _ = process.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            raise TestException('Test timed out')
 
     if process.poll():
         # Non-zero return code. Probably target program crash.
