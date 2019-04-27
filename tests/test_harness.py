@@ -29,6 +29,7 @@ import re
 import shutil
 import subprocess
 import sys
+import termios
 import threading
 import traceback
 
@@ -144,78 +145,6 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
     except subprocess.CalledProcessError as exc:
         raise TestException('Compilation failed:\n' + exc.output.decode())
 
-def kill_gently(process):
-    """Kill a process, giving a chance to terminate cleanly.
-
-    Give process a chance to terminate normally, then kill it
-    forcefully if it doesn't respond after a few seconds.
-    This allows the emulator to clean up, including restoring
-    the terminal state.
-
-    Args:
-        process: Popen
-
-    Returns:
-        nothing
-
-    Raises:
-        nothing
-    """
-
-    process.terminate()
-    try:
-        process.wait(timeout=2)
-    except subprocess.TimeoutExpired:
-        # Process may be hung
-        process.kill()
-
-class TimedProcessRunner(threading.Thread):
-    """Run a program, but throw an exception if it takes too long."""
-
-    def __init__(self):
-        threading.Thread.__init__(self)
-        self.finished = threading.Event()
-        self.daemon = True  # Kill watchdog if we exit
-        self.process = None
-        self.timeout = 0
-
-    def communicate(self, process, timeout, input=None):
-        """Call process.communicate() with timeout.
-
-        Args:
-            process: Popen
-                The subprcess to run, which should be created with Popen.
-            timeout: float
-                How long to wait, in seconds.
-            input: str
-                If specified, this will be sent to the processes standard
-                input.
-
-        Returns:
-            str The collected standard out that was printed by this process.
-
-        Raises:
-            TestException if the process times out.
-        """
-
-        self.timeout = timeout
-        self.process = process
-        self.start()  # Start watchdog
-        result = self.process.communicate(input=input)
-        if self.finished.is_set():
-            raise TestException('Test timed out')
-        else:
-            self.finished.set()  # Stop watchdog
-
-        return result
-
-    def run(self):
-        """Watchdog thread that kills process if it runs too long."""
-        if not self.finished.wait(self.timeout):
-            # Timed out
-            self.finished.set()
-            kill_gently(self.process)
-
 
 def run_test_with_timeout(args, timeout):
     """Run program specified by args with timeout.
@@ -238,9 +167,17 @@ def run_test_with_timeout(args, timeout):
         TestException if the test fails or times out.
     """
 
+    term_attrs = termios.tcgetattr(sys.stdin.fileno())
     process = subprocess.Popen(args, stdout=subprocess.PIPE,
-                               stderr=subprocess.STDOUT)
-    output, _ = TimedProcessRunner().communicate(process, timeout)
+                            stderr=subprocess.STDOUT)
+    try:
+        output, _ = process.communicate(timeout=timeout)
+        termios.tcsetattr(sys.stdin.fileno(), termios.TCSANOW, term_attrs)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        termios.tcsetattr(sys.stdin.fileno(), termios.TCSANOW, term_attrs)
+        raise TestException('Test timed out')
+
     if process.poll():
         # Non-zero return code. Probably target program crash.
         raise TestException(
