@@ -51,7 +51,7 @@ def profile(*unused):
     ]
     profile_output = subprocess.check_output(' '.join(profile_args), shell=True)
     profile_lines = profile_output.decode().split('\n')
-    profile_tuples = [line.split(' ') for line in profile_lines if line]
+    profile_tuples = [line.split() for line in profile_lines if line]
     profile_map = {func: int(count) for count, _, func in profile_tuples}
 
     # These tests don't end up being exactly 2x the number of samples. Because
