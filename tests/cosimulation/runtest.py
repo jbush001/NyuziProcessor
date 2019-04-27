@@ -61,28 +61,28 @@ def run_cosimulation_test(source_file, *unused):
         emulator_args += ['-v']
 
     hexfile = test_harness.build_program([source_file])
-    with test_harness.TerminalStateRestorer():
-        try:
-            p1 = subprocess.Popen(
-                verilator_args + ['+bin=' + hexfile], stdout=subprocess.PIPE)
-            p2 = subprocess.Popen(
-                emulator_args + [hexfile], stdin=p1.stdout, stdout=subprocess.PIPE)
-            output = ''
-            while True:
-                got = p2.stdout.read(0x1000)
-                if not got:
-                    break
+    try:
+        p1 = subprocess.Popen(
+            verilator_args + ['+bin=' + hexfile], stdout=subprocess.PIPE)
+        p2 = subprocess.Popen(
+            emulator_args + [hexfile], stdin=p1.stdout, stdout=subprocess.PIPE)
+        output = ''
+        while True:
+            got = p2.stdout.read(0x1000)
+            if not got:
+                break
 
-                if test_harness.DEBUG:
-                    print(got.decode())
-                else:
-                    output += got.decode()
+            if test_harness.DEBUG:
+                print(got.decode())
+            else:
+                output += got.decode()
 
-            p2.wait()
-            time.sleep(1)  # Give verilator a chance to clean up
-        finally:
-            p1.kill()
-            p2.kill()
+        p2.wait()
+        time.sleep(1)  # Give verilator a chance to clean up
+    finally:
+        p1.kill()
+        p2.kill()
+
     if p2.returncode:
         raise test_harness.TestException(
             'FAIL: cosimulation mismatch\n' + output)

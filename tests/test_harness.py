@@ -146,7 +146,7 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
         raise TestException('Compilation failed:\n' + exc.output.decode())
 
 class TerminalStateRestorer(object):
-    """This restores the configuration of POSIX terminals.
+    """This saves and restores the configuration of POSIX terminals.
 
     The emulator process disables local echo.  If it crashes or
     times out, it can leave the terminal in a bad state. This will
@@ -161,7 +161,6 @@ class TerminalStateRestorer(object):
             # This may throw an exception if the process doesn't
             # have a controlling TTY (continuous integration). In
             # this case, self.attrs will remain None.
-            print('exception')
             pass
 
     def __exit__(self, *unused):
@@ -190,14 +189,13 @@ def run_test_with_timeout(args, timeout):
         TestException if the test fails or times out.
     """
 
-    with TerminalStateRestorer():
-        process = subprocess.Popen(args, stdout=subprocess.PIPE,
-                                   stderr=subprocess.STDOUT)
-        try:
-            output, _ = process.communicate(timeout=timeout)
-        except subprocess.TimeoutExpired:
-            process.kill()
-            raise TestException('Test timed out')
+    process = subprocess.Popen(args, stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT)
+    try:
+        output, _ = process.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        raise TestException('Test timed out')
 
     if process.poll():
         # Non-zero return code. Probably target program crash.
@@ -621,7 +619,9 @@ def execute_tests():
 
                 test_run_count += 1
                 sys.stdout.flush()
-                func(param, target)
+                with TerminalStateRestorer():
+                    func(param, target)
+
                 print(COLOR_GREEN + 'PASS' + COLOR_NONE)
                 test_pass_count += 1
             except KeyboardInterrupt:
