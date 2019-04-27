@@ -164,7 +164,7 @@ class TerminalStateRestorer(object):
             print('exception')
             pass
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, *unused):
         if self.attrs:
             termios.tcsetattr(sys.stdin.fileno(), termios.TCSANOW, self.attrs)
 

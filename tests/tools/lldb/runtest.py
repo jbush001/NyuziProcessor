@@ -45,8 +45,10 @@ class EmulatorProcess(object):
         self.lldb_proc = None
         self.outstr = None
         self.instr = None
+        self.terminal_restorer = test_harness.TerminalStateRestorer()
 
     def __enter__(self):
+        self.terminal_restorer.__enter__()
         emulator_args = [
             test_harness.EMULATOR_PATH,
             '-m',
@@ -76,14 +78,15 @@ class EmulatorProcess(object):
             self.outstr = self.lldb_proc.stdin
             self.instr = self.lldb_proc.stdout
         except:
-            test_harness.kill_gently(self.emulator_proc)
+            self.emulator_proc.kill()
             raise
 
         return self
 
     def __exit__(self, *unused):
-        test_harness.kill_gently(self.emulator_proc)
-        test_harness.kill_gently(self.lldb_proc)
+        self.emulator_proc.kill()
+        self.lldb_proc.kill()
+        self.terminal_restorer.__exit__(*unused)
 
     def send_command(self, cmd):
         if test_harness.DEBUG:
@@ -156,7 +159,7 @@ def lldb(*unused):
 
     hexfile = test_harness.build_program(
         ['test_program.c'], opt_level='-O0', cflags=['-g'])
-    with EmulatorProcess(hexfile) as conn:
+    with test_harness.TerminalStateRestorer(), EmulatorProcess(hexfile) as conn:
         conn.send_command('file "' + os.path.join(test_harness.WORK_DIR, 'program.elf"'))
         conn.send_command('gdb-remote 8000\n')
         response = conn.send_command(

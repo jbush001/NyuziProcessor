@@ -93,8 +93,7 @@ class SerialLoader(object):
             TestException if the program does not exit in RECEIVE_TIMEOUT_S
             seconds.
         """
-        out, err = test_harness.TimedProcessRunner().communicate(
-            self.serial_boot_process, RECEIVE_TIMEOUT_S)
+        out, err = self.serial_boot_process.communicate(timeout=RECEIVE_TIMEOUT_S)
         if test_harness.DEBUG:
             print('got result {}'.format(out))
 

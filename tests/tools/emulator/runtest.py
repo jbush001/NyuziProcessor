@@ -131,30 +131,32 @@ def recv_host_interrupt(*unused):
 
     args = [test_harness.EMULATOR_PATH,
             '-i', RECV_PIPE_NAME, hex_file]
-    emulator_process = subprocess.Popen(args, stdout=subprocess.PIPE,
-                                        stderr=subprocess.STDOUT)
+    with test_harness.TerminalStateRestorer():
+        emulator_process = subprocess.Popen(args, stdout=subprocess.PIPE,
+                                            stderr=subprocess.STDOUT)
 
-    try:
-        interrupt_pipe = os.open(RECV_PIPE_NAME, os.O_WRONLY)
-
-        # Send periodic interrupts to process
         try:
-            for intnum in range(5):
-                os.write(interrupt_pipe, str.encode(chr(intnum)))
-                time.sleep(0.2)
-        except OSError:
-            # Broken pipe will occur if the emulator exits early.
-            # We'll flag an error after communicate if we don't see a PASS.
-            pass
+            interrupt_pipe = os.open(RECV_PIPE_NAME, os.O_WRONLY)
 
-        # Wait for completion
-        result, _ = test_harness.TimedProcessRunner().communicate(emulator_process, 60)
-        strresult = str(result)
-        if 'PASS' not in strresult or 'FAIL' in strresult:
-            raise test_harness.TestException('Test failed ' + strresult)
-    finally:
-        os.close(interrupt_pipe)
-        os.unlink(RECV_PIPE_NAME)
+            # Send periodic interrupts to process
+            try:
+                for intnum in range(5):
+                    os.write(interrupt_pipe, str.encode(chr(intnum)))
+                    time.sleep(0.2)
+            except OSError:
+                # Broken pipe will occur if the emulator exits early.
+                # We'll flag an error after communicate if we don't see a PASS.
+                pass
+
+            # Wait for completion
+            result, _ = emulator_process.communicate(timeout=60)
+            strresult = str(result)
+            if 'PASS' not in strresult or 'FAIL' in strresult:
+                raise test_harness.TestException('Test failed ' + strresult)
+        finally:
+            emulator_process.kill()
+            os.close(interrupt_pipe)
+            os.unlink(RECV_PIPE_NAME)
 
 
 @test_harness.test(['emulator'])
@@ -170,21 +172,23 @@ def send_host_interrupt(*unused):
 
     args = [test_harness.EMULATOR_PATH,
             '-o', SEND_PIPE_NAME, hex_file]
-    emulator_process = subprocess.Popen(args, stdout=subprocess.PIPE,
-                                        stderr=subprocess.STDOUT)
+    with test_harness.TerminalStateRestorer():
+        emulator_process = subprocess.Popen(args, stdout=subprocess.PIPE,
+                                            stderr=subprocess.STDOUT)
 
-    try:
-        interrupt_pipe = os.open(SEND_PIPE_NAME, os.O_RDONLY | os.O_NONBLOCK)
-        test_harness.TimedProcessRunner().communicate(emulator_process, 60)
+        try:
+            interrupt_pipe = os.open(SEND_PIPE_NAME, os.O_RDONLY | os.O_NONBLOCK)
+            emulator_process.communicate(timeout=60)
 
-        # Interrupts should be in pipe now
-        interrupts = os.read(interrupt_pipe, 5)
-        if interrupts != b'\x05\x06\x07\x08\x09':
-            raise test_harness.TestException(
-                'Did not receive proper host interrupts')
-    finally:
-        os.close(interrupt_pipe)
-        os.unlink(SEND_PIPE_NAME)
+            # Interrupts should be in pipe now
+            interrupts = os.read(interrupt_pipe, 5)
+            if interrupts != b'\x05\x06\x07\x08\x09':
+                raise test_harness.TestException(
+                    'Did not receive proper host interrupts')
+        finally:
+            emulator_process.kill()
+            os.close(interrupt_pipe)
+            os.unlink(SEND_PIPE_NAME)
 
 ############################################################################
 # Test shared memory
@@ -232,25 +236,25 @@ def shared_memory(*unused):
     memory_file = tempfile.NamedTemporaryFile()
     args = [test_harness.EMULATOR_PATH, '-s',
             memory_file.name, hex_file]
-    process = subprocess.Popen(args, stdout=subprocess.PIPE,
-                               stderr=subprocess.STDOUT)
-
-    try:
-        # Hack: Need to wait for the emulator to create the shared memory
-        # file and initialize it. There's currently no way for the emulator
-        # to signal that this has completed, so just sleep a bit and hope
-        # it's done.
-        time.sleep(1.0)
-        memory = mmap.mmap(memory_file.fileno(), 0)
-        testvalues = [random.randint(0, 0xffffffff) for __ in range(10)]
-        for value in testvalues:
-            computed = sharedmem_transact(memory, value)
-            if computed != (value ^ 0xffffffff):
-                raise test_harness.TestException('Incorrect value from coprocessor expected ' +
-                                                 hex(value ^ 0xffffffff) +
-                                                 ' got ' + hex(computed))
-    finally:
-        test_harness.kill_gently(process)
+    with test_harness.TerminalStateRestorer():
+        process = subprocess.Popen(args, stdout=subprocess.PIPE,
+                                   stderr=subprocess.STDOUT)
+        try:
+            # Hack: Need to wait for the emulator to create the shared memory
+            # file and initialize it. There's currently no way for the emulator
+            # to signal that this has completed, so just sleep a bit and hope
+            # it's done.
+            time.sleep(1.0)
+            memory = mmap.mmap(memory_file.fileno(), 0)
+            testvalues = [random.randint(0, 0xffffffff) for __ in range(10)]
+            for value in testvalues:
+                computed = sharedmem_transact(memory, value)
+                if computed != (value ^ 0xffffffff):
+                    raise test_harness.TestException('Incorrect value from coprocessor expected ' +
+                                                    hex(value ^ 0xffffffff) +
+                                                    ' got ' + hex(computed))
+        finally:
+            process.kill()
 
 ############################################################################
 # Test remote GDB
@@ -357,8 +361,10 @@ class EmulatorProcess(object):
         self.num_cores = num_cores
         self.process = None
         self.output = None
+        self.terminal_restorer = test_harness.TerminalStateRestorer()
 
     def __enter__(self):
+        self.terminal_restorer.__enter__()
         emulator_args = [
             test_harness.EMULATOR_PATH,
             '-m',
@@ -378,7 +384,8 @@ class EmulatorProcess(object):
         return self
 
     def __exit__(self, *unused):
-        test_harness.kill_gently(self.process)
+        self.process.kill()
+        self.terminal_restorer.__exit__(*unused)
         if self.output:
             self.output.close()
 

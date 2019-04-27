@@ -45,12 +45,15 @@ def uart_echo_test(*unused):
     ]
 
     in_str = 'THE QUICK brOwn FOX jumPED Over THE LAZY DOG\n'
-    process = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-    out_str, _ = test_harness.TimedProcessRunner().communicate(process=process,
-        timeout=10, input=in_str.encode('ascii'))
-    out_str = out_str.decode()
-    if 'the quick brown fox jumped over the lazy dog' not in out_str:
-        raise test_harness.TestException('Subprocess returned incorrect result \"'
-            + out_str + '"')
+    with test_harness.TerminalStateRestorer():
+        process = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        try:
+            out_str, _ = process.communicate(timeout=10, input=in_str.encode('ascii'))
+        finally:
+            process.kill()
+        out_str = out_str.decode()
+        if 'the quick brown fox jumped over the lazy dog' not in out_str:
+            raise test_harness.TestException('Subprocess returned incorrect result \"'
+                + out_str + '"')
 
 test_harness.execute_tests()
