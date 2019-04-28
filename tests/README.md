@@ -43,8 +43,8 @@ The Makefile does not run the following tests:
 | Test Name            | Reason       |
 |----------------------|--------------|
 | stress/mmu/          | Takes a while to run, skipped to keep continuous integration tests quick.
-| lldb/                | LLDB is not installed in the CI environment's container. |
-| core/multicore/      |  Requires modifying hardware model to have 8 cores and rebuilding.
+| tools/lldb/          | LLDB is not installed in the CI environment's container. |
+| core/multicore/      | Requires modifying hardware model to have 8 cores and rebuilding.
 | csmith/              | Running on a 64-bit host produces different checksums than the program running on Nyuzi because of differences in native word width. Can still be useful to detect compiler crashes. |
 | fail/                | These test cases validate the test harness itself and are meant to produce failure results. |
 | float/               | Floating point conformance tests. There are still bugs in the hardware implementation that need to be fixed, and there are tweaks required to the test vectors to find canonical values where the spec is lenient. |

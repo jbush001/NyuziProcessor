@@ -49,7 +49,7 @@ def run_csmith_test(_, target):
     csmith_include = '-I/usr/local/include/csmith-' + version_str
 
     for x in range(100):
-        source_file = os.path.join(test_harness.WORK_DIR, 'test%04d.c' % x)
+        source_file = os.path.join(test_harness.WORK_DIR, 'test{}.c'.format(x))
         print('running ' + source_file)
 
         # Disable packed structs because we don't support unaligned accesses.
@@ -68,7 +68,7 @@ def run_csmith_test(_, target):
             raise test_harness.TestException('no checksum in host output')
 
         host_checksum = int(got.group('checksum'), 16)
-        print('host checksum %08x' % host_checksum)
+        print('host checksum {}'.format(host_checksum))
 
         # Compile and run under emulator
         hex_file = test_harness.build_program([source_file], cflags=[csmith_include])
@@ -78,7 +78,7 @@ def run_csmith_test(_, target):
             raise test_harness.TestException('no checksum in host output')
 
         emulator_checksum = int(got.group('checksum'), 16)
-        print('emulator checksum %08x' % emulator_checksum)
+        print('emulator checksum {}'.format(emulator_checksum))
         if host_checksum != emulator_checksum:
             raise test_harness.TestException('checksum mismatch')
 

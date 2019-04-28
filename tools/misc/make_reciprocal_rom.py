@@ -53,12 +53,12 @@ def main():
     for x in range(0, num_entries):
         significand = num_entries | x
         reciprocal = int((num_entries * num_entries * 2) / significand)
-        print('\t\t\t%d\'h%x: reciprocal_estimate = %d\'h%x;' %
-            (width, x, width, reciprocal & (num_entries - 1)))
+        print('                {}\'h{:x}: reciprocal_estimate = {}\'h{:x};'.format(
+            width, x, width, reciprocal & (num_entries - 1)))
 
-    print('''\t\t\tdefault: reciprocal_estimate = 6'h0;
-    \t\tendcase
-    \tend
+    print('''            default: reciprocal_estimate = 6'h0;
+            endcase
+        end
     endmodule
     ''')
 
