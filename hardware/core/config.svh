@@ -19,6 +19,7 @@
 
 //
 // Configurable parameters
+// - THREADS_PER_CORE must be 2 or greater.
 // - Number of cache ways must be 1, 2, 4, or 8 (TLB_WAYS does not have
 //   this constraint). This is a limitation in the cache_lru module.
 // - L1D_WAYS/L1I_WAYS must be greater than or equal to THREADS_PER_CORE,
