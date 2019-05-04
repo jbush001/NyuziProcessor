@@ -41,7 +41,8 @@ def load_file(*ignored):
     args = [
         test_harness.EMULATOR_PATH,
         '-d{},0,0x3c'.format(binary_output),
-        'valid-file-hex.txt']
+        'valid-file-hex.txt'
+    ]
     subprocess.check_output(args, stderr=subprocess.STDOUT)
     expected = [
         0x00fcff0f,
@@ -68,7 +69,7 @@ def load_file(*ignored):
                 raise test_harness.TestException('unexpected end of binary output')
 
             value = (word[0] << 24) | (word[1] << 16) | (word[2] << 8) | word[3]
-            if check != None and check != value:
+            if check is not None and check != value:
                 raise test_harness.TestException('incorrect value, expected {:x} got {:x}'.format(check, value))
 
 
@@ -172,8 +173,11 @@ def send_host_interrupt(*unused):
 
     os.mknod(SEND_PIPE_NAME, stat.S_IFIFO | 0o666)
 
-    args = [test_harness.EMULATOR_PATH,
-            '-o', SEND_PIPE_NAME, hex_file]
+    args = [
+        test_harness.EMULATOR_PATH,
+        '-o', SEND_PIPE_NAME,
+        hex_file
+    ]
     emulator_process = subprocess.Popen(args, stdout=subprocess.PIPE,
                                         stderr=subprocess.STDOUT)
 
@@ -235,8 +239,11 @@ def shared_memory(*unused):
 
     # Start the emulator
     memory_file = tempfile.NamedTemporaryFile()
-    args = [test_harness.EMULATOR_PATH, '-s',
-            memory_file.name, hex_file]
+    args = [
+        test_harness.EMULATOR_PATH,
+        '-s', memory_file.name,
+        hex_file
+    ]
     process = subprocess.Popen(args, stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT)
     try:
@@ -309,7 +316,7 @@ class DebugConnection(object):
 
         while True:
             leader = self.sock.recv(1)
-            if leader == '':
+            if not leader:
                 raise test_harness.TestException('unexpected socket close')
 
             if leader == b'$':
@@ -383,7 +390,7 @@ class EmulatorProcess(object):
 
     def __exit__(self, *unused):
         self.process.kill()
-        if self.output:
+        if self.output is not None:
             self.output.close()
 
 

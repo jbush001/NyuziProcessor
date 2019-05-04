@@ -116,7 +116,7 @@ def generate_binary_arith(outfile):
     regb = generate_arith_reg()
     maskreg = generate_arith_reg()
     opstr = '        {}{} {}{}, '.format(mnemonic, suffix, typed, dest)
-    if suffix != '':
+    if suffix:
         opstr += 's{}, '.format(maskreg)  # Add mask register
 
     opstr += '{}{}, '.format(typea, rega)

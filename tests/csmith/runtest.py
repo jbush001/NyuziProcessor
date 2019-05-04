@@ -41,7 +41,7 @@ def run_csmith_test(_, target):
     # Find version of csmith
     result = subprocess.check_output(['csmith', '-v']).decode()
     got = VERSION_RE.search(result)
-    if not got:
+    if got is None:
         raise test_harness.TestException(
             'Could not determine csmith version ' + result)
 
@@ -64,7 +64,7 @@ def run_csmith_test(_, target):
         result = subprocess.check_output(HOST_EXE).decode()
 
         got = CHECKSUM_RE.search(result)
-        if not got:
+        if got is None:
             raise test_harness.TestException('no checksum in host output')
 
         host_checksum = int(got.group('checksum'), 16)
@@ -74,7 +74,7 @@ def run_csmith_test(_, target):
         hex_file = test_harness.build_program([source_file], cflags=[csmith_include])
         result = test_harness.run_program(hex_file, target)
         got = CHECKSUM_RE.search(result)
-        if not got:
+        if got is None:
             raise test_harness.TestException('no checksum in host output')
 
         emulator_checksum = int(got.group('checksum'), 16)

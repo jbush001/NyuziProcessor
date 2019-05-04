@@ -38,7 +38,7 @@ def main():
     for line in sys.stdin.readlines():
         for regexp, itemlist, name, macro in patterns:
             match = regexp.search(line)
-            if match:
+            if match is not None:
                 pair = (match.group('width'), match.group('depth'))
                 if pair not in itemlist:
                     itemlist.append(pair)

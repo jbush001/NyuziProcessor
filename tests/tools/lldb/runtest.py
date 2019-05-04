@@ -140,10 +140,10 @@ def parse_stack_crawl(response):
     stack_info = []
     for line in response.split('\\n'):
         frame_match = FRAME_RE.search(line)
-        if frame_match:
+        if frame_match is not None:
             func = frame_match.group('function')
             at_match = AT_RE.search(line)
-            if at_match:
+            if at_match is not None:
                 stack_info += [(func, at_match.group('filename'),
                                 int(at_match.group('line')))]
             else:

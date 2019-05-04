@@ -73,7 +73,7 @@ def read_image_file(filename, resize_to_width=None, resize_to_height=None):
     os.close(handle)
 
     args = ['convert', '-debug', 'all']
-    if resize_to_width:
+    if resize_to_width is not None:
         args += ['-resize', '{}x{}^'.format(resize_to_width, resize_to_height)]
 
     args += [filename, 'rgba:' + temppath]
@@ -84,12 +84,12 @@ def read_image_file(filename, resize_to_width=None, resize_to_height=None):
     # information
     for line in str(err).split('\n'):
         got = size_re1.search(line)
-        if got:
+        if got is not None:
             width = int(got.group('width'))
             height = int(got.group('height'))
         else:
             got = size_re2.search(line)
-            if got:
+            if got is not None:
                 width = int(got.group('width'))
                 height = int(got.group('height'))
 
@@ -100,11 +100,11 @@ def read_image_file(filename, resize_to_width=None, resize_to_height=None):
     # Imagemagick often leaves junk at the end of the file, so explicitly
     # truncate here.
     expected_size = resize_to_width * resize_to_height * \
-        4 if resize_to_width else width * height * 4
+        4 if resize_to_width is not None else width * height * 4
     with open(temppath, 'rb') as f:
         texture_data = f.read(expected_size)
 
-    if resize_to_width and len(texture_data) != expected_size:
+    if resize_to_width is not None and len(texture_data) != expected_size:
         print('length mismatch {} != {}'.format(len(texture_data), expected_size))
 
     os.unlink(temppath)
@@ -283,7 +283,7 @@ def read_obj_file(filename):
                 parsed_indices = []
                 for index_tuple in fields[1:]:
                     parsed_indices.append([zero_to_one_based_index(
-                        int(x)) if x != '' else '' for x in index_tuple.split('/')])
+                        int(x)) if x else '' for x in index_tuple.split('/')])
 
                 if len(parsed_indices[0]) < 3:
                     # This file does not contain normals.  Generate a face
@@ -308,7 +308,7 @@ def read_obj_file(filename):
                     else:
                         vertex_attrs += (0, 0)
 
-                    if face_normal:
+                    if face_normal is not None:
                         vertex_attrs += face_normal
                     else:
                         vertex_attrs += normals[indices[2]]
@@ -321,9 +321,11 @@ def read_obj_file(filename):
 
                 # face_list is made up of polygons. Convert to triangles.
                 for index in range(1, len(polygon_indices) - 1):
-                    triangle_index_list += [polygon_indices[0],
-                                            polygon_indices[index],
-                                            polygon_indices[index + 1]]
+                    triangle_index_list += [
+                        polygon_indices[0],
+                        polygon_indices[index],
+                        polygon_indices[index + 1]
+                    ]
             elif fields[0] == 'usemtl':
                 # Switch material
                 new_texture_id = material_name_to_texture_idx[fields[1]]
@@ -341,7 +343,7 @@ def read_obj_file(filename):
                 path = os.path.join(os.path.dirname(filename), fields[1])
                 read_mtl_file(path)
 
-        if triangle_index_list != []:
+        if triangle_index_list:
             mesh_list += [(current_texture_id, combined_vertices,
                            triangle_index_list)]
 

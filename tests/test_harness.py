@@ -103,13 +103,15 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
     assert image_type in ['bare-metal', 'raw', 'user']
 
     elf_file = os.path.join(WORK_DIR, 'program.elf')
-    compiler_args = [os.path.join(COMPILER_BIN_DIR, 'clang'),
-                     '-o', elf_file,
-                     '-w',
-                     opt_level,
-                     '-I', TEST_DIR]    # To include asm_macros.h
+    compiler_args = [
+        os.path.join(COMPILER_BIN_DIR, 'clang'),
+        '-o', elf_file,
+        '-w',
+        opt_level,
+        '-I', TEST_DIR  # To include asm_macros.h
+    ]
 
-    if cflags:
+    if cflags is not None:
         compiler_args += cflags
 
     if image_type == 'raw':
@@ -120,9 +122,11 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
     compiler_args += source_files
 
     if any(name.endswith(('.c', '.cpp')) for name in source_files):
-        compiler_args += ['-I' + os.path.join(LIB_INCLUDE_DIR, 'libc/include'),
-                          '-I' + os.path.join(LIB_INCLUDE_DIR, 'libos'),
-                          os.path.join(LIB_DIR, 'libc/libc.a')]
+        compiler_args += [
+            '-I' + os.path.join(LIB_INCLUDE_DIR, 'libc/include'),
+            '-I' + os.path.join(LIB_INCLUDE_DIR, 'libos'),
+            os.path.join(LIB_DIR, 'libc/libc.a')
+        ]
         if image_type == 'user':
             compiler_args += [os.path.join(LIB_DIR, 'libos/kernel/libos-kern.a')]
         else:
@@ -164,7 +168,7 @@ class TerminalStateRestorer(object):
             pass
 
     def __exit__(self, *unused):
-        if self.attrs:
+        if self.attrs is not None:
             termios.tcsetattr(sys.stdin.fileno(), termios.TCSANOW, self.attrs)
 
 
@@ -260,10 +264,10 @@ def run_program(
     if target == 'emulator':
         args = [EMULATOR_PATH]
         args += ['-a']  # Enable thread scheduling randomization by default
-        if block_device:
+        if block_device is not None:
             args += ['-b', block_device]
 
-        if dump_file:
+        if dump_file is not None:
             args += ['-d', '{},0x{:x},0x{:x}'.format(dump_file, dump_base, dump_length)]
 
         args += [executable]
@@ -282,13 +286,15 @@ def run_program(
             '+verilator+rand+reset+2',
             '+verilator+seed+' + str(random_seed)
         ]
-        if block_device:
+        if block_device is not None:
             args += ['+block=' + block_device]
 
-        if dump_file:
-            args += ['+memdumpfile=' + dump_file,
-                     '+memdumpbase={:x}'.format(dump_base),
-                     '+memdumplen={:x}'.format(dump_length)]
+        if dump_file is not None:
+            args += [
+                '+memdumpfile=' + dump_file,
+                '+memdumpbase={:x}'.format(dump_base),
+                '+memdumplen={:x}'.format(dump_length)
+            ]
 
         if flush_l2:
             args += ['+autoflushl2=1']
@@ -296,7 +302,7 @@ def run_program(
         if trace:
             args += ['+trace']
 
-        if profile_file:
+        if profile_file is not None:
             args += ['+profile=' + profile_file]
 
         if DEBUG:
@@ -306,10 +312,10 @@ def run_program(
         if '***HALTED***' not in output:
             raise TestException(output + '\nProgram did not halt normally')
     elif target == 'fpga':
-        if block_device:
+        if block_device is not None:
             args += [block_device]
 
-        if dump_file:
+        if dump_file is not None:
             raise TestException('dump file is not supported on FPGA')
 
         if flush_l2:
@@ -640,7 +646,7 @@ def execute_tests():
 
     print('{}/{} tests failed'.format(test_run_count - test_pass_count,
                                       test_run_count))
-    if failing_tests != []:
+    if failing_tests:
         sys.exit(1)
 
 CHECK_PREFIX = 'CHECK: '
@@ -682,7 +688,7 @@ def check_result(source_file, program_output):
 
                 regexp = re.compile(expected)
                 got = regexp.search(program_output, output_offset)
-                if got:
+                if got is not None:
                     output_offset = got.end()
                 else:
                     error = 'FAIL: line {} expected string {} was not found\n'.format(
@@ -700,7 +706,7 @@ def check_result(source_file, program_output):
 
                     regexp = re.compile(nexpected)
                     got = regexp.search(program_output, output_offset)
-                    if got:
+                    if got is not None:
                         error = 'FAIL: line {} string {} should not be here:\n'.format(
                             line_num, nexpected)
                         error += program_output
@@ -799,7 +805,7 @@ def register_generic_test(name, targets=None):
     Raises:
         Nothing
     """
-    if not targets:
+    if targets is None:
         targets = ALL_TARGETS[:]
 
     register_tests(_run_generic_test, name, targets)
@@ -829,7 +835,7 @@ def register_generic_assembly_tests(tests, targets=None):
         Nothing
     """
 
-    if not targets:
+    if targets is None:
         targets = ALL_TARGETS[:]
 
     register_tests(_run_generic_assembly_test, tests, targets)

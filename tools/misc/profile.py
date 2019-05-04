@@ -68,7 +68,7 @@ def main():
     with open(sys.argv[1], 'r') as f:
         for line in f.readlines():
             got = symbolre.search(line)
-            if got:
+            if got is not None:
                 sym = got.group('symbol')
                 functions += [(int(got.group('addr'), 16), sym)]
                 counts[sym] = 0
@@ -80,7 +80,7 @@ def main():
     with open(sys.argv[2], 'r') as f:
         for line in f.readlines():
             func = find_function(functions, int(line, 16))
-            if func:
+            if func is not None:
                 counts[func] += 1
 
     total_cycles = 0

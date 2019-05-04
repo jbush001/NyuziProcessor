@@ -63,7 +63,7 @@ class SerialLoader(object):
         self.pipe, slave = pty.openpty()
         sname = os.ttyname(slave)
         args = [test_harness.SERIAL_BOOT_PATH, sname, self.hexfile]
-        if self.ramdisk != None:
+        if self.ramdisk is not None:
             args.append(self.ramdisk)
 
         self.serial_boot_process = subprocess.Popen(args, stdout=subprocess.PIPE,
@@ -147,7 +147,7 @@ class SerialLoader(object):
             raise test_harness.TestException('Int value mismatch: wanted {} got {}'.format(
                 expected, intval))
 
-    def expect_error(self, error_message):
+    def expect_error(self, expect_message):
         """Check for an error message printed to stderr by the serial loader.
 
         Args:
@@ -163,13 +163,13 @@ class SerialLoader(object):
             it does not print the error message somewhere on stderr.
         """
         if test_harness.DEBUG:
-            print('expect error: {}'.format(error_message))
+            print('expect error: {}'.format(expect_message))
 
         out, err = self.get_result()
         if not self.serial_boot_process.poll():
             raise test_harness.TestException('Loader did not return error result as expected')
 
-        if err.find(error_message) == -1:
+        if expect_message not in err:
             raise test_harness.TestException('Did not get expected error message. Got: ' + err)
 
 
@@ -219,7 +219,7 @@ class SerialLoader(object):
             if test_harness.DEBUG:
                 print(got)
 
-            if all_stdout.find(message) != -1:
+            if message in all_stdout:
                 break
 
             # Else we loop and read some more. Perhaps it hasn't been printed yet.
@@ -298,8 +298,12 @@ class SerialLoader(object):
         if test_harness.DEBUG:
             print('send_int {}'.format(value))
 
-        bytevals = [value & 0xff, (value >> 8) & 0xff,
-            (value >> 16) & 0xff, (value >> 24) & 0xff]
+        bytevals = [
+            value & 0xff,
+            (value >> 8) & 0xff,
+            (value >> 16) & 0xff,
+            (value >> 24) & 0xff
+        ]
         os.write(self.pipe, bytes(bytevals))
 
 def compute_checksum(byte_array):
@@ -598,7 +602,7 @@ def invalid_serial_port(*ignored):
         raise test_harness.TestException('loader did not return error')
     except subprocess.CalledProcessError as exc:
         error_message = exc.output.decode()
-        if error_message.find('couldn\'t open serial port') == -1:
+        if 'couldn\'t open serial port' not in error_message:
             raise test_harness.TestException('returned unknown error: ' + error_message)
 
 
@@ -611,7 +615,7 @@ def not_a_serial_port(*ignored):
         raise test_harness.TestException('loader did not return error')
     except subprocess.CalledProcessError as exc:
         error_message = exc.output.decode()
-        if error_message.find('Unable to initialize serial port') == -1:
+        if 'Unable to initialize serial port' not in error_message:
             raise test_harness.TestException('returned unknown error: ' + error_message)
 
 @test_harness.test(['emulator'])
