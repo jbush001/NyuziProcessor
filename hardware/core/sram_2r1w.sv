@@ -283,12 +283,14 @@ module sram_2r1w
 
     initial
     begin
-        // Initialize RAM with random values. This is redundant on Verilator
+`ifndef VERILATOR
+        // Initialize RAM with random values. This is unneeded on Verilator
         // (which already does randomizes memory), but is necessary on
         // 4-state simulators because memory is initially filled with Xs.
         // This was causing x-propagation bugs in some modules previously.
         for (int i = 0; i < SIZE; i++)
             data[i] = DATA_WIDTH'($random());
+`endif
 
         if ($test$plusargs("dumpmems") != 0)
             $display("sram2r1w %d %d", DATA_WIDTH, SIZE);
