@@ -134,7 +134,7 @@ module sdram_controller
     assign axi_bus.s_awready = !write_pending;
     assign axi_bus.s_rvalid = !lfifo_empty;
     assign axi_bus.s_wready = !sfifo_full;
-    assign axi_bus.s_bvalid = 1;    // Hack: pretend we always have a write result
+    assign axi_bus.s_bvalid = !reset;    // Hack: pretend we always have a write result
 
     // Each fifo can hold an entire SDRAM burst to avoid delays due
     // to the external bus.

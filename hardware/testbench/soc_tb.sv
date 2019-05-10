@@ -148,8 +148,6 @@ module soc_tb(
     assign processor_halt = nyuzi.thread_en == '0;
 
     axi_protocol_checker axi_protocol_checker(
-        .clk(clk),
-        .reset(reset),
         .axi_bus(axi_bus_m[0]));
 
     //
