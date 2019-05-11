@@ -50,7 +50,7 @@ TESTHEX_CONTENTS = [0xad, 0xde, 0x97, 0x20, 0x25, 0xb0, 0xf5, 0xa8, 0x25, 0xd5, 
 
 
 class SerialLoader(object):
-    def __init__(self, hexfile, ramdisk = None):
+    def __init__(self, hexfile, ramdisk=None):
         self.serial_boot_process = None
         self.pipe = None
         self.hexfile = hexfile
@@ -551,21 +551,21 @@ def ping_timeout(*unused):
 
 
 @test_harness.test(['emulator'])
-def invalid_character(*ignored):
+def invalid_character(*unused):
     """Invalid character in hex file"""
     with SerialLoader('invalid-character-hex.txt') as loader:
         loader.expect_error('read_hex_file: Invalid character ! in line 4')
 
 
 @test_harness.test(['emulator'])
-def number_out_of_range(*ignored):
+def number_out_of_range(*unused):
     """A number is too big"""
     with SerialLoader('number-out-of-range-hex.txt') as loader:
         loader.expect_error('read_hex_file: number out of range in line 3')
 
 
 @test_harness.test(['emulator'])
-def load_ramdisk(*ignored):
+def load_ramdisk(*unused):
     with SerialLoader('testhex.txt', 'ramdisk-bin') as loader:
         loader.expect_serial_bytes([PING_REQ])
         loader.send_serial([PING_ACK])
@@ -583,19 +583,19 @@ def load_ramdisk(*ignored):
 
 
 @test_harness.test(['emulator'])
-def missing_ramdisk_file(*ignored):
+def missing_ramdisk_file(*unused):
     with SerialLoader('testhex.txt', 'this_does_not_exist.bin') as loader:
         loader.expect_error('Error opening input file')
 
 
 @test_harness.test(['emulator'])
-def missing_hex_file(*ignored):
+def missing_hex_file(*unused):
     with SerialLoader('this_does_not_exist.txt') as loader:
         loader.expect_error('read_hex_file: error opening hex file')
 
 
 @test_harness.test(['emulator'])
-def invalid_serial_port(*ignored):
+def invalid_serial_port(*unused):
     args = [test_harness.SERIAL_BOOT_PATH, 'this_device_does_not_exist', 'testhex.txt']
     try:
         process = subprocess.check_output(args, stderr=subprocess.STDOUT)
@@ -607,7 +607,7 @@ def invalid_serial_port(*ignored):
 
 
 @test_harness.test(['emulator'])
-def not_a_serial_port(*ignored):
+def not_a_serial_port(*unused):
     # Note serial port (2nd arg) is normal file
     args = [test_harness.SERIAL_BOOT_PATH, 'testhex.txt', 'testhex.txt']
     try:
@@ -619,7 +619,7 @@ def not_a_serial_port(*ignored):
             raise test_harness.TestException('returned unknown error: ' + error_message)
 
 @test_harness.test(['emulator'])
-def execute_failure(*ignored):
+def execute_failure(*unused):
     with SerialLoader('testhex.txt') as loader:
         loader.expect_serial_bytes([PING_REQ])
         loader.send_serial([PING_ACK])
@@ -634,7 +634,7 @@ def execute_failure(*ignored):
 
 
 @test_harness.test(['emulator'])
-def console_mode(*ignored):
+def console_mode(*unused):
     with SerialLoader('testhex.txt') as loader:
         loader.expect_serial_bytes([PING_REQ])
         loader.send_serial([PING_ACK])
@@ -658,7 +658,7 @@ def console_mode(*ignored):
         loader.expect_stdout(stdout_msg)
 
 @test_harness.test(['emulator'])
-def error_recovery(*ignored):
+def error_recovery(*unused):
     with SerialLoader('testhex.txt') as loader:
         loader.expect_serial_bytes([PING_REQ])
         loader.send_serial([PING_ACK])

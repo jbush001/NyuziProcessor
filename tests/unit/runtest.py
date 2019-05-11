@@ -22,7 +22,6 @@ in the output.
 """
 
 import os
-import random
 import subprocess
 import sys
 

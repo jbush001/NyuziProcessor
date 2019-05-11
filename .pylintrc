@@ -65,7 +65,7 @@ confidence=
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use"--disable=all --enable=classes
 # --disable=W"
-disable=missing-docstring,wrong-import-position,superfluous-parens,invalid-name,too-few-public-methods,too-many-nested-blocks,too-many-arguments,too-many-branches,global-statement
+disable=wrong-continued-indentation,line-too-long,unused-argument,missing-docstring,wrong-import-position,superfluous-parens,invalid-name,too-few-public-methods,too-many-nested-blocks,too-many-arguments,too-many-branches,global-statement
 
 
 [REPORTS]

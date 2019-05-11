@@ -30,7 +30,6 @@ import shutil
 import subprocess
 import sys
 import termios
-import threading
 import traceback
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -161,7 +160,7 @@ class TerminalStateRestorer(object):
     def __enter__(self):
         try:
             self.attrs = termios.tcgetattr(sys.stdin.fileno())
-        except:
+        except termios.error:
             # This may throw an exception if the process doesn't
             # have a controlling TTY (continuous integration). In
             # this case, self.attrs will remain None.

@@ -36,7 +36,7 @@ sys.path.insert(0, '../..')
 import test_harness
 
 @test_harness.test(['emulator'])
-def load_file(*ignored):
+def load_file(*unused):
     binary_output = os.path.join(test_harness.WORK_DIR, 'mem.bin')
     args = [
         test_harness.EMULATOR_PATH,
@@ -86,30 +86,30 @@ def test_emulator_error(args, expected_error):
 
 
 @test_harness.test(['emulator'])
-def data_out_of_range(*ignored):
+def data_out_of_range(*unused):
     test_emulator_error(['data-out-of-range-hex.txt'],
                         'read_hex_file: number out of range in line 2')
 
 
 @test_harness.test(['emulator'])
-def address_out_of_range(*ignored):
+def address_out_of_range(*unused):
     test_emulator_error(['addr-out-of-range-hex.txt'],
                         'read_hex_file: address out of range in line 2')
 
 @test_harness.test(['emulator'])
-def invalid_character(*ignored):
+def invalid_character(*unused):
     test_emulator_error(
         ['bad-character-hex.txt'], 'read_hex_file: Invalid character ! in line 4')
 
 
 @test_harness.test(['emulator'])
-def missing_file(*ignored):
+def missing_file(*unused):
     test_emulator_error(['this_file_does_not_exist.hex'],
                         'read_hex_file: error opening hex file: No such file or directory')
 
 
 @test_harness.test(['emulator'])
-def no_file_specified(*ignored):
+def no_file_specified(*unused):
     test_emulator_error([], 'No image filename specified')
 
 ############################################################################

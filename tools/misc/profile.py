@@ -76,7 +76,6 @@ def main():
     functions.sort(key=lambda a: a[0])
 
     # Read profile trace
-    lines_processed = 0
     with open(sys.argv[2], 'r') as f:
         for line in f.readlines():
             func = find_function(functions, int(line, 16))
