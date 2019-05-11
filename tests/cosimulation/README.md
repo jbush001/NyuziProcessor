@@ -53,7 +53,7 @@ The second is output from the emulator.
 
 *Why are these different? Should probably clean this up*
 
-### Simulator Random Seed
+## Simulator Random Seed
 
 Verilator is a 2-state simulator. While a single bit in a standard Verilog
 simulator can have 4 states: 0, 1, X, and Z, Verilator only supports 0 and 1.
@@ -64,9 +64,7 @@ But this means the RTL model runs slightly differently each time because
 not all signals are initialized at reset (SRAMs, for example). When simulation
 starts, the program prints the random seed it is using:
 
-<pre>
-Random seed is 1405877782
-</pre>
+    Random seed is 1405877782
 
 To reproduce an problem that is timing dependent, you can set the environment
 variable RANDSEED to the value that caused the failure:
@@ -143,7 +141,7 @@ that has a side effect (branch instructions, for example, do not). It then
 compares the side effect of the instruction with the result from the Verilog
 simulator and flags an error if there is a mismatch.
 
-### Limitations
+## Limitations
 
 - The emulator does not model the behavior of the store buffer. As the store
   buffer affects visibility of writes to other threads, this means the emulator
@@ -153,7 +151,7 @@ simulator and flags an error if there is a mismatch.
 - The random instruction generator does not generate floating point
   instructions. The floating point pipeline is not fully IEEE 754 compliant
   yet, so there are a number of cases where results are off slightly.
-  (https://github.com/jbush001/NyuziProcessor/issues/87).
+  (<https://github.com/jbush001/NyuziProcessor/issues/87>).
 - store_sync doesn't really work correctly with interrupts (even in the absence
   of thread contention), because the following can happen:
     1. Hardware executes store_sync, which fails. It does not log a cosimuation event

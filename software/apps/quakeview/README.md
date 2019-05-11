@@ -66,7 +66,6 @@ generates continuous keypresses, but this will cause an infinite loop with this 
         -       processKeyboardEvents();
         +//     processKeyboardEvents();
 
-
 3. Increase the amount of RAM configured in the FPGA configuration. In hardware/testbench/soc_tb.sv,
 change MEM_SIZE to 'h4000000 (64 MB)
 
