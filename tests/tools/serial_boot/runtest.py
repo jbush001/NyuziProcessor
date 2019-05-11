@@ -185,7 +185,7 @@ class SerialLoader(object):
             TestException if the program returns a non-zero exit value.
         """
         self.send_serial([4]) # ^D Exits interactive mode
-        out, err = self.get_result()
+        self.get_result()
         if self.serial_boot_process.poll():
             raise test_harness.TestException('Process return error')
 
@@ -611,7 +611,7 @@ def not_a_serial_port(*unused):
     # Note serial port (2nd arg) is normal file
     args = [test_harness.SERIAL_BOOT_PATH, 'testhex.txt', 'testhex.txt']
     try:
-        process = subprocess.check_output(args, stderr=subprocess.STDOUT)
+        subprocess.check_output(args, stderr=subprocess.STDOUT)
         raise test_harness.TestException('loader did not return error')
     except subprocess.CalledProcessError as exc:
         error_message = exc.output.decode()

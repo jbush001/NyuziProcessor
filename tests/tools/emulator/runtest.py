@@ -245,7 +245,7 @@ def shared_memory(*unused):
         hex_file
     ]
     process = subprocess.Popen(args, stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT)
+                               stderr=subprocess.STDOUT)
     try:
         # Hack: Need to wait for the emulator to create the shared memory
         # file and initialize it. There's currently no way for the emulator
@@ -258,8 +258,8 @@ def shared_memory(*unused):
             computed = sharedmem_transact(memory, value)
             if computed != (value ^ 0xffffffff):
                 raise test_harness.TestException('Incorrect value from coprocessor expected ' +
-                                                hex(value ^ 0xffffffff) +
-                                                ' got ' + hex(computed))
+                                                 hex(value ^ 0xffffffff) +
+                                                 ' got ' + hex(computed))
     finally:
         process.kill()
 
