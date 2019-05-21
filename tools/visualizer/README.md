@@ -7,7 +7,7 @@ called statetrace.txt, which the visualizer reads.
 If you are running on MacOS X, download and install a recent version of the
 JDK:
 
-http://www.oracle.com/technetwork/java/javase/downloads/index.html
+<http://www.oracle.com/technetwork/java/javase/downloads/index.html>
 
 To build, type 'make'.
 

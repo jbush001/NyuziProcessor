@@ -598,7 +598,7 @@ def missing_hex_file(*unused):
 def invalid_serial_port(*unused):
     args = [test_harness.SERIAL_BOOT_PATH, 'this_device_does_not_exist', 'testhex.txt']
     try:
-        process = subprocess.check_output(args, stderr=subprocess.STDOUT)
+        subprocess.check_output(args, stderr=subprocess.STDOUT)
         raise test_harness.TestException('loader did not return error')
     except subprocess.CalledProcessError as exc:
         error_message = exc.output.decode()

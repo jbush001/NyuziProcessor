@@ -28,4 +28,4 @@ To run only on emulator:
   Some tests fail in this configuration because they use intrinsics
   that exist only for Nyuzi.
 - The Csmith random generation tool generated The csmith* tests:
-  http://embed.cs.utah.edu/csmith/
+  <http://embed.cs.utah.edu/csmith/>

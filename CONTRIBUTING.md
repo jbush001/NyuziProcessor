@@ -32,7 +32,7 @@ Github's standard pull request workflow.
 The compiler is a submodule under the tools directory, but nothing in the project
 directly references anything in that directory, only stuff that has been installed
 in /usr/local/... (using `make install`) To make changes to the compiler, the
-easiest thing to do is probably to fork https://github.com/jbush001/NyuziToolchain
+easiest thing to do is probably to fork <https://github.com/jbush001/NyuziToolchain>
 and clone it into another directory.
 
 ## Testing Changes

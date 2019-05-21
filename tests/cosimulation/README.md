@@ -96,7 +96,7 @@ issues branches too often, it will mask problems with instruction dependencies.
 Also, if it uses the full range of 32 registers as operands and destinations of
 instructions, RAW dependencies between instructions will be infrequent.
 
-For that reason, this uses _constrained_ random instruction generation, which
+For that reason, this uses *constrained* random instruction generation, which
 is described in more detail below. It also imposes extra constraints so the
 program doesn't crash.
 

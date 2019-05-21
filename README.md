@@ -14,8 +14,8 @@ Verilog, an instruction set emulator, an LLVM based C/C++ compiler, software
 libraries, and tests. It can be used to experiment with microarchitectural
 and instruction set design tradeoffs.
 
-**Documentation:** https://github.com/jbush001/NyuziProcessor/wiki<br/>
-**Mailing list:** https://groups.google.com/forum/#!forum/nyuzi-processor-dev<br/>
+**Documentation:** <https://github.com/jbush001/NyuziProcessor/wiki><br/>
+**Mailing list:** <https://groups.google.com/forum/#!forum/nyuzi-processor-dev><br/>
 **License:** Apache 2.0<br/>
 
 The following instructions explain how to set up the Nyuzi development
@@ -48,7 +48,7 @@ following:
 
     xcode-select --install
 
-Install Homebrew from https://brew.sh/, then use it to install the remaining packages
+Install Homebrew from <https://brew.sh/>, then use it to install the remaining packages
 from the terminal (do *not* use sudo):
 
     brew install cmake bison swig imagemagick sdl2 emacs ninja
@@ -83,9 +83,9 @@ Run tests:
 
     make tests
 
-_If you are on a Linux distribution that defaults to python3, you may run into build
+*If you are on a Linux distribution that defaults to python3, you may run into build
 problems with the compiler. In tools/NyuziToolchain/tools/CMakeLists.txt, comment
-out the following line:_
+out the following line:*
 
     add_llvm_external_project(lldb)
 
