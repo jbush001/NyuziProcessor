@@ -154,6 +154,7 @@ simulator and flags an error if there is a mismatch.
   (<https://github.com/jbush001/NyuziProcessor/issues/87>).
 - store_sync doesn't really work correctly with interrupts (even in the absence
   of thread contention), because the following can happen:
+
     1. Hardware executes store_sync, which fails. It does not log a cosimuation event
        because it *only* logs memory side effects, and those only occur on success
     2. Interrupt comes in. Emulator jumps to interrupt handler without executing the

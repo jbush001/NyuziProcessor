@@ -53,6 +53,7 @@ Other notes:
   causes it to dump instruction statistics.
 - See [SOC-Test-Environment](https://github.com/jbush001/NyuziProcessor/wiki/SOC-Test-Environment)
   for list of supported device registers. The emulator doesn't support the following devices:
+
   - LED/HEX display output registers
   - Serial reads
   - VGA frame buffer address/toggle

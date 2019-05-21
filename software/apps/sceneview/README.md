@@ -13,7 +13,7 @@ If the model does not contain normals, the script computes them.
 
 The Sponza model is from this repository:
 
-http://graphics.cs.williams.edu/data/meshes.xml
+<http://graphics.cs.williams.edu/data/meshes.xml>
 
 To view other models, extract the data files to a new directory. To point to
 the new object file, run cmake from the root directory with the following flag:
