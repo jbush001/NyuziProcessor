@@ -72,7 +72,7 @@ based chipset. Unfortunately, most serial cables do not advertise which
 chipset they use, but you can sometimes tell by going to their website to
 download the drivers. Also, if you search for 'FTDI USB serial' on a retail
 site like Amazon, there are a number that do explicitly note the chipset type.
-This one has worked well for me: <http://a.co/hOTKx9R*>
+This one has worked well for me: <http://a.co/hOTKx9R>*
 
 ## Synthesizing and Running Programs
 
