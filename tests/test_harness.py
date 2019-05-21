@@ -148,6 +148,16 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
     except subprocess.CalledProcessError as exc:
         raise TestException('Compilation failed:\n' + exc.output.decode())
 
+
+def get_elf_file_for_hex(hexfile):
+    """Get the path to a .elf file that was used to generate the .hex file.
+
+    This is a bit of a hack. build_program only returns the hex file, but
+    creates the ELF file in the same directory.
+    """
+    return os.path.splitext(hexfile)[0] + '.elf'
+
+
 class TerminalStateRestorer(object):
     """This saves and restores the configuration of POSIX terminals.
 

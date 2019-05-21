@@ -28,9 +28,7 @@ import test_harness
 def profile(*unused):
     hexfile = test_harness.build_program(['test_program.c'])
 
-    # XXX hack: this is currently not returned from build_program, but I
-    # know what the name is.
-    elffile = hexfile.replace('.hex', '.elf')
+    elffile = test_harness.get_elf_file_for_hex(hexfile)
     profile_file = os.path.join(test_harness.WORK_DIR, 'profile.out')
 
     test_harness.run_program(hexfile, 'verilator', profile_file=profile_file)

@@ -41,7 +41,7 @@ class EmulatorProcess(object):
         self.hexfile = hexfile
 
         # XXX hack: Making assumption about ELF file location and name.
-        self.elf_file = os.path.splitext(hexfile)[0] + '.elf'
+        self.elf_file = test_harness.get_elf_file_for_hex(hexfile)
         self.output = None
         self.emulator_proc = None
         self.lldb_proc = None

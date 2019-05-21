@@ -267,7 +267,7 @@ void cosim_check_scalar_store(struct processor *proc, uint32_t pc, uint32_t addr
     {
         cosim_mismatch = true;
         print_registers(proc, expected_thread);
-        printf("COSIM MISMATCH, thread %d\n", expected_thread);
+        printf("COSIM MISMATCH, thread %u\n", expected_thread);
         printf("Reference: %08x memory[%x]{%016" PRIx64 "} <= %08x\n", pc, address & ~CACHE_LINE_MASK,
                reference_mask, value);
         printf("Hardware:  ");
