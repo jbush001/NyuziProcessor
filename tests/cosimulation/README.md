@@ -66,10 +66,10 @@ starts, the program prints the random seed it is using:
 
     Random seed is 1405877782
 
-To reproduce an problem that is timing dependent, you can set the environment
-variable RANDSEED to the value that caused the failure:
+To reproduce an problem that is timing dependent, you can set the random seed to the
+value that caused the faulre:
 
-    RANDSEED=1405877782 ./runtest.py cache_stress.s
+    ./runtest.py --randseed=1405877782 cache_stress.s
 
 # Generating New Random Test Program
 

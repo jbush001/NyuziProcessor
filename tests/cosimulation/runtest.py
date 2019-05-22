@@ -30,7 +30,11 @@ EMULATOR_MEM_DUMP = os.path.join(test_harness.WORK_DIR, 'mmem.bin')
 
 
 def run_cosimulation_test(source_file, *unused):
-    random_seed = random.randint(0, 0xffffffff)
+    if test_harness.test_args.randseed:
+        random_seed = int(test_harness.test_args.randseed[0])
+    else:
+        random_seed = random.randint(0, 0xffffffff)
+
     if test_harness.DEBUG:
         print('random seed is {}'.format(random_seed))
 
@@ -44,10 +48,6 @@ def run_cosimulation_test(source_file, *unused):
         '+verilator+rand+reset+2',
         '+verilator+seed+{}'.format(random_seed)
     ]
-
-    # XXX this should probably be a command line option in test_harness.py
-    if 'RANDSEED' in os.environ:
-        verilator_args += ['+randseed=' + os.environ['RANDSEED']]
 
     emulator_args = [
         test_harness.EMULATOR_PATH,
