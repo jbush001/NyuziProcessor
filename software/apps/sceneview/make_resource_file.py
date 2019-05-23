@@ -27,6 +27,7 @@ import struct
 import subprocess
 import sys
 import tempfile
+from PIL import Image
 
 NUM_MIP_LEVELS = 4
 
@@ -45,10 +46,6 @@ size_re2 = re.compile(
 def read_image_file(filename, resize_to_width=None, resize_to_height=None):
     """Read and decode an image in the local filesystem.
 
-    This uses ImageMagick, and is limited to the types that it supports.
-    (Usually PNG and JPEG for our cases). The resulting image will be in
-    RGBA 32-bit format.
-
     Args:
         filename: str
             Path to image file.
@@ -66,50 +63,12 @@ def read_image_file(filename, resize_to_width=None, resize_to_height=None):
         Exception if there is a problem reading or decoding the file.
     """
 
-
-    width = None
-    height = None
-    handle, temppath = tempfile.mkstemp(suffix='.bin')
-    os.close(handle)
-
-    args = ['convert', '-debug', 'all']
+    image = Image.open(filename)
     if resize_to_width is not None:
-        args += ['-resize', '{}x{}^'.format(resize_to_width, resize_to_height)]
+        image = image.resize((resize_to_width, resize_to_height), Image.BICUBIC)
 
-    args += [filename, 'rgba:' + temppath]
-    p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    _, err = p.communicate()
 
-    # This is a kludge.  Try to determine width and height from debug
-    # information
-    for line in str(err).split('\n'):
-        got = size_re1.search(line)
-        if got is not None:
-            width = int(got.group('width'))
-            height = int(got.group('height'))
-        else:
-            got = size_re2.search(line)
-            if got is not None:
-                width = int(got.group('width'))
-                height = int(got.group('height'))
-
-    if width is None or height is None:
-        raise Exception(
-            'Could not determine dimensions of texture ' + filename)
-
-    # Imagemagick often leaves junk at the end of the file, so explicitly
-    # truncate here.
-    expected_size = resize_to_width * resize_to_height * \
-        4 if resize_to_width is not None else width * height * 4
-    with open(temppath, 'rb') as f:
-        texture_data = f.read(expected_size)
-
-    if resize_to_width is not None and len(texture_data) != expected_size:
-        print('length mismatch {} != {}'.format(len(texture_data), expected_size))
-
-    os.unlink(temppath)
-
-    return (width, height, texture_data)
+    return (image.size[0], image.size[1], image.convert("RGBA").tobytes())
 
 
 def read_texture(filename):

@@ -22,7 +22,9 @@
 
 FROM ubuntu:16.04
 MAINTAINER Jeff Bush (https://github.com/jbush001)
-RUN apt-get update && apt-get install -y make gcc g++ python3 perl libsdl2-dev imagemagick git cmake
+RUN apt-get update && apt-get install -y make gcc g++ python3 perl libsdl2-dev imagemagick git cmake python3-pip
+RUN pip3 install --upgrade pip
+RUN pip3 install pillow
 ADD tmp/clang-9 /usr/local/llvm-nyuzi/bin/
 ADD tmp/elf2hex /usr/local/llvm-nyuzi/bin/
 ADD tmp/lld /usr/local/llvm-nyuzi/bin/

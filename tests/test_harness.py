@@ -31,6 +31,7 @@ import subprocess
 import sys
 import termios
 import traceback
+from PIL import Image
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -905,8 +906,11 @@ def register_render_test(name, source_files, expected_hash, targets=None):
         sha.update(contents)
         actual_hash = sha.hexdigest()
         if actual_hash != expected_hash:
-            subprocess.check_output(['convert', '-depth', '8', '-size',
-                                     '640x480', 'rgba:' + RAW_FB_DUMP_FILE, PNG_DUMP_FILE])
+            with open(RAW_FB_DUMP_FILE, 'rb') as fp:
+                contents = fp.read()
+                image = Image.frombytes('RGBA', (640, 480), contents)
+                image.save(PNG_DUMP_FILE)
+
             raise TestException('render test failed, bad checksum {} output image written to {}'.format(
                 actual_hash, PNG_DUMP_FILE))
 

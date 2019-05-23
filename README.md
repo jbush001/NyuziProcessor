@@ -33,7 +33,8 @@ to change some package names. From a terminal, execute the following:
 
     sudo apt-get -y install autoconf cmake make gcc g++ bison flex python \
         python3 perl emacs openjdk-8-jdk swig zlib1g-dev python-dev \
-        libxml2-dev libedit-dev libncurses5-dev libsdl2-dev gtkwave imagemagick
+        libxml2-dev libedit-dev libncurses5-dev libsdl2-dev gtkwave python3-pip
+    pip3 install pillow
 
 *Emacs is used for [verilog-mode](http://www.veripool.org/wiki/verilog-mode) AUTO macros.
 The makefile executes this operation in batch mode*
@@ -48,10 +49,14 @@ following:
 
     xcode-select --install
 
+Install python libraries:
+
+    pip3 install pillow
+
 Install Homebrew from <https://brew.sh/>, then use it to install the remaining packages
 from the terminal (do *not* use sudo):
 
-    brew install cmake bison swig imagemagick sdl2 emacs ninja
+    brew install cmake bison swig sdl2 emacs ninja
 
 *Alternatively, you could use [MacPorts](https://www.macports.org/) if that is installed on your system, but you will need to change some of the package names*
 
