@@ -24,9 +24,7 @@ import math
 import os
 import re
 import struct
-import subprocess
 import sys
-import tempfile
 from PIL import Image
 
 NUM_MIP_LEVELS = 4
@@ -185,8 +183,12 @@ def compute_normal(vertex1, vertex2, vertex3):
     return (cx / mag, cy / mag, cz / mag)
 
 
-def zero_to_one_based_index(x):
-    """
+def obj_to_py_index(x):
+    """Convert OBJ index to python array index.
+
+    If index > 0, then it is the offset from the beginning of the vertex
+    list, starting at 1. If index < 0, it references from the end of the list,
+    starting at -1.
     """
     return x + 1 if x < 0 else x - 1
 
@@ -241,8 +243,8 @@ def read_obj_file(filename):
                 # convert to 0 based array (OBJ is 1 based)
                 parsed_indices = []
                 for index_tuple in fields[1:]:
-                    parsed_indices.append([zero_to_one_based_index(
-                        int(x)) if x else '' for x in index_tuple.split('/')])
+                    parsed_indices.append([obj_to_py_index(int(x))
+                        if x else '' for x in index_tuple.split('/')])
 
                 if len(parsed_indices[0]) < 3:
                     # This file does not contain normals.  Generate a face
@@ -251,10 +253,9 @@ def read_obj_file(filename):
                     # be the combination of all face normals, but it's good
                     # enough for our purposes.
                     face_normal = compute_normal(
-                        vertex_positions[
-                            parsed_indices[0][0]], vertex_positions[
-                            parsed_indices[1][0]], vertex_positions[
-                            parsed_indices[2][0]])
+                        vertex_positions[parsed_indices[0][0]],
+                        vertex_positions[parsed_indices[1][0]],
+                        vertex_positions[parsed_indices[2][0]])
                 else:
                     face_normal = None
 

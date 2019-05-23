@@ -115,7 +115,6 @@ def no_file_specified(*unused):
 ############################################################################
 # Test the mechanism for delivering interrupts to the emulator from a
 # separate host process (useful for co-emulation)
-# XXX A number of error cases do not clean up resources
 ############################################################################
 
 RECV_PIPE_NAME = os.path.join(test_harness.WORK_DIR, 'nyuzi_emulator_recvint')
