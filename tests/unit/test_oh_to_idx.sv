@@ -19,10 +19,11 @@
 import defines::*;
 
 module test_oh_to_idx(input clk, input reset);
-    localparam NUM_SIGNALS = 8;
+    localparam NUM_SIGNALS = 7; // Non power-of-two
+    localparam INDEX_WIDTH = $clog2(NUM_SIGNALS);
 
-    logic[2:0] index0;
-    logic[2:0] index1;
+    logic[INDEX_WIDTH - 1:0] index0;
+    logic[INDEX_WIDTH - 1:0] index1;
     logic[NUM_SIGNALS - 1:0] one_hot;
     int cycle;
 
@@ -46,7 +47,7 @@ module test_oh_to_idx(input clk, input reset);
             cycle <= 0;
         else
         begin
-            if (cycle == 8)
+            if (cycle == NUM_SIGNALS)
             begin
                 $display("PASS");
                 $finish;
@@ -56,8 +57,8 @@ module test_oh_to_idx(input clk, input reset);
             cycle <= cycle + 1;
             if (cycle > 0)
             begin
-                assert(index0 == 3'(cycle - 1));
-                assert(index1 == 3'(8 - cycle));
+                assert(index0 == INDEX_WIDTH'(cycle - 1));
+                assert(index1 == INDEX_WIDTH'(NUM_SIGNALS - cycle));
             end
         end
     end

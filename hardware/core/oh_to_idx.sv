@@ -39,7 +39,7 @@ module oh_to_idx
                 if (DIRECTION == "LSB0")
                     index |= oh_index[INDEX_WIDTH - 1:0];    // Use 'or' to avoid synthesizing priority encoder
                 else
-                    index |= ~oh_index[INDEX_WIDTH - 1:0];
+                    index |= INDEX_WIDTH'(NUM_SIGNALS - oh_index - 1);
             end
         end
     end
