@@ -31,7 +31,7 @@ This requires Ubuntu 16 (Xenial Xeres) or later to get the proper package
 versions. It should work for other distributions, but you will probably need
 to change some package names. From a terminal, execute the following:
 
-    sudo apt-get -y install autoconf cmake make gcc g++ bison flex python \
+    sudo apt-get -y install autoconf cmake make ninja gcc g++ bison flex python \
         python3 perl emacs openjdk-8-jdk swig zlib1g-dev python-dev \
         libxml2-dev libedit-dev libncurses5-dev libsdl2-dev gtkwave python3-pip
     pip3 install pillow
