@@ -233,7 +233,7 @@ module ifetch_tag_stage
     end
 
     tlb #(
-        .NUM_ENTRIES(`DTLB_ENTRIES),
+        .NUM_ENTRIES(`ITLB_ENTRIES),
         .NUM_WAYS(`TLB_WAYS)
     ) itlb(
         .lookup_en(cache_fetch_en),
