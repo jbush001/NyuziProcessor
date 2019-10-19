@@ -17,13 +17,10 @@
 project(bootrom)
 include(nyuzi)
 
-# XXX Previously, I used the boot.ld linker script and the flag
-# -Wl,--oformat,binary to produce the boot ROM. However, this
-# does not work with the latest toolchain: the read only data
-# segment is emitted before code. See issue #183.
-add_nyuzi_executable(bootrom
-    IMAGE_BASE_ADDRESS 0xfffee000
-    SOURCES
+add_nyuzi_binary(bootrom)
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--script ${CMAKE_CURRENT_SOURCE_DIR}/boot.ld -Wl,--oformat,binary")
+
+add_executable(bootrom
     start.S
     boot.c)
 
@@ -31,5 +28,5 @@ add_nyuzi_executable(bootrom
 # FPGA tools don't know how to find the latter.
 add_custom_command(TARGET bootrom
     POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:bootrom> boot.hex
+    COMMAND ${CMAKE_SOURCE_DIR}/tools/misc/bin2hex.py $<TARGET_FILE:bootrom> > boot.hex
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})

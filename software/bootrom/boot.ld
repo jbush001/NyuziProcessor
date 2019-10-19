@@ -1,7 +1,12 @@
 ENTRY(_start)
 SECTIONS {
   . = 0xfffee000;
-  .text : { *(.text) }
+  _start = .;
+  .text : {
+    *(.text)
+    *(.rodata)
+    *(.eh_frame)
+  }
   .data : { *(.data) }
   .bss  : { *(.bss) }
 }
