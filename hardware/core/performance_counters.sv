@@ -29,7 +29,7 @@ module performance_counters
     input                                               reset,
     input [NUM_EVENTS - 1:0]                            perf_events,
     input [NUM_COUNTERS - 1:0][EVENT_IDX_WIDTH - 1:0]   perf_event_select,
-    output [NUM_COUNTERS - 1:0][63:0]                   perf_event_count);
+    output logic[NUM_COUNTERS - 1:0][63:0]              perf_event_count);
 
     always_ff @(posedge clk, posedge reset)
     begin : update
