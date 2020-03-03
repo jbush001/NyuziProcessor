@@ -95,7 +95,7 @@ module test_l2_cache(input clk, input reset);
         begin
             // default values
             l2i_request_valid <= '0;
-            if (l2i_request_valid)
+            if (l2i_request_valid != '0)
                 assert(l2_ready[0]);
 
             unique case (state)
