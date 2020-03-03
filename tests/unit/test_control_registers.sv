@@ -624,53 +624,53 @@ module test_control_registers(input clk, input reset);
                 172:
                 begin
                     write_creg(CR_SUSPEND_THREAD, 32'h5);
-                    assert(cr_suspend_thread == 4'h0);
-                    assert(cr_resume_thread == 4'h0);
+                    assert(cr_suspend_thread == 'h0);
+                    assert(cr_resume_thread == 'h0);
                 end
 
                 // wait cycle
                 173:
                 begin
-                    assert(cr_suspend_thread == 4'h0);
-                    assert(cr_resume_thread == 4'h0);
+                    assert(cr_suspend_thread == 'h0);
+                    assert(cr_resume_thread == 'h0);
                 end
 
                 174:
                 begin
-                    assert(cr_suspend_thread == 4'h5);
-                    assert(cr_resume_thread == 4'h0);
+                    assert(cr_suspend_thread == 'h5);
+                    assert(cr_resume_thread == 'h0);
                 end
 
                 175:
                 begin
-                    assert(cr_suspend_thread == 4'h0);
-                    assert(cr_resume_thread == 4'h0);
+                    assert(cr_suspend_thread == 'h0);
+                    assert(cr_resume_thread == 'h0);
                 end
 
                 176:
                 begin
                     write_creg(CR_RESUME_THREAD, 32'ha);
-                    assert(cr_suspend_thread == 4'h0);
-                    assert(cr_resume_thread == 4'h0);
+                    assert(cr_suspend_thread == 'h0);
+                    assert(cr_resume_thread == 'h0);
                 end
 
                 // wait cycle
                 177:
                 begin
-                    assert(cr_suspend_thread == 4'h0);
-                    assert(cr_resume_thread == 4'h0);
+                    assert(cr_suspend_thread == 'h0);
+                    assert(cr_resume_thread == 'h0);
                 end
 
                 178:
                 begin
-                    assert(cr_suspend_thread == 4'h0);
-                    assert(cr_resume_thread == 4'ha);
+                    assert(cr_suspend_thread == 'h0);
+                    assert(cr_resume_thread == 'ha);
                 end
 
                 179:
                 begin
-                    assert(cr_suspend_thread == 4'h0);
-                    assert(cr_resume_thread == 4'h0);
+                    assert(cr_suspend_thread == 'h0);
+                    assert(cr_resume_thread == 'h0);
                 end
 
                 ////////////////////////////////////////////////////////////
