@@ -1,0 +1,20 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: get container
+      run: docker pull jeffbush001/nyuzi-build
+    - name: build
+      run: docker run -v $TRAVIS_BUILD_DIR:/root/NyuziProcessor -w /root/NyuziProcessor jeffbush001/nyuzi-build /bin/bash -c scripts/run_ci_tests.sh
+      
