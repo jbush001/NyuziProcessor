@@ -1,4 +1,4 @@
-name: Continuous Integration
+name: CI
 
 on:
   push:
@@ -17,4 +17,3 @@ jobs:
       run: docker pull jeffbush001/nyuzi-build
     - name: build
       run: docker run -v $TRAVIS_BUILD_DIR:/root/NyuziProcessor -w /root/NyuziProcessor jeffbush001/nyuzi-build /bin/bash -c scripts/run_ci_tests.sh
-      
