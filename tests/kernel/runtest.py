@@ -23,7 +23,7 @@ import test_harness
 
 def run_kernel_test(source_file, target):
     elf_file = test_harness.build_program([source_file], image_type='user')
-    result = test_harness.run_kernel(elf_file, target, timeout=240)
+    result = test_harness.run_kernel(elf_file, target, timeout=360)
     test_harness.check_result(source_file, result)
 
 test_list = test_harness.find_files(('.c', '.cpp'))
