@@ -44,7 +44,7 @@ default_config = config['DEFAULT']
 TOOL_BIN_DIR = default_config['TOOL_BIN_DIR']
 LIB_DIR = default_config['LIB_DIR']
 KERNEL_DIR = default_config['KERNEL_DIR']
-WORK_DIR = default_config['WORK_DIR']
+WORK_DIR = default_config['WORK_DIR'] # A place to dump temporary files. Cleared before each test.
 LIB_INCLUDE_DIR = default_config['LIB_INCLUDE_DIR']
 COMPILER_BIN_DIR = default_config['COMPILER_BIN_DIR']
 HARDWARE_INCLUDE_DIR = default_config['HARDWARE_INCLUDE_DIR']
@@ -76,7 +76,7 @@ DEBUG = test_args.debug
 
 
 def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags=None):
-    """Compile and or assemble one or more files.
+    """Compile and or assemble one or more files into a Nyuzi executable.
 
     If there are any .c files in the list, this will link in crt0, libc,
     and libos libraries. It converts the binary to a hex file that can be
@@ -187,9 +187,6 @@ class TerminalStateRestorer(object):
 def run_test_with_timeout(args, timeout):
     """Run program specified by args with timeout.
 
-    If it does not complete in time, throw a TestException. If it
-    returns a non-zero result, it will also throw a TestException.
-
     Args:
         args: list of str
             Arguments to called program the first being the path to the
@@ -202,7 +199,8 @@ def run_test_with_timeout(args, timeout):
         str All data printed to stdout by the process.
 
     Raises:
-        TestException if the test fails or times out.
+        TestException if the test returns a non-zero result or does not
+        complete in time.
     """
     process = subprocess.Popen(args, stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT)
@@ -242,7 +240,7 @@ def run_program(
         flush_l2=False,
         trace=False,
         profile_file=None):
-    """Run test program.
+    """Run Nyuzi test program.
 
     This uses the hex file produced by build_program.
 
@@ -251,14 +249,15 @@ def run_program(
             Path in host filesystem to file that should be executed.
             This is usually the return value from build_program.
         target: str
-            Which target will run the program. Can be 'verilator'
-            or 'emulator'.
+            Which target will run the program. Can be 'verilator',
+            'emulator', or 'fpga'.
         block_device: str
             Relative path to a file that contains a filesystem image.
-            If passed, contents will appear as a virtual SDMMC device.
+            If passed, contents will appear as a virtual SDMMC device
+            (verilator or emulator only).
         dump_file: str
             Path to a file to write memory contents into after
-            execution completes.
+            execution completes (verilator or emulator only).
         dump_base: int
             if dump_file is specified, base physical memory address to start
             writing mempry from.
@@ -362,9 +361,10 @@ def run_kernel(
         timeout=60):
     """Run test program as a user space program under the kernel.
 
-    This uses the elf file produced by build_program. The kernel reads
-    the file 'program.elf' from the filesystem. This will build a filesystem
-    with that image automatically.
+    This uses the elf file produced by build_program. It first boots
+    the kernel image, which then reads the file 'program.elf' from the
+    virtual filesystem. This will build a filesystem with that image
+    automatically.
 
     Args:
         target: str
@@ -422,7 +422,7 @@ def assert_not_equal(a, b):
 
 
 def assert_files_equal(file1, file2, error_msg='file mismatch'):
-    """Read two files and throw a TestException if they are not the same
+    """Read two files and throw a TestException if they are not the same.
 
     Args:
         file1: str
@@ -516,7 +516,7 @@ def register_tests(func, names, targets=None):
 
 
 def test(param=None):
-    """decorator @test automatically registers test to be run.
+    """decorator @test registers the following function to be run as a test.
 
     Args:
         param: list of str
@@ -525,11 +525,11 @@ def test(param=None):
     if callable(param):
         # If the test decorator is used without a target list,
         # this will just pass the function as the parameter.
-        # Run all targtes
+        # Run all targets.
         register_tests(param, [param.__name__], ALL_TARGETS)
         return param
 
-    # decorator is called with a list of targets. Return
+    # Decorator is called with a list of targets. Return
     # a fuction that will be called on the actual function.
     def register_func(func):
         register_tests(func, [func.__name__], param)
@@ -539,16 +539,17 @@ def test(param=None):
 
 
 def disable(func):
-    """Decorator that disables a test.
+    """Decorator to disable a test.
 
-    Useful to temporarily disable failing tests.
+    Useful to temporarily disable failing tests. This must always called right
+    after @test.
 
     Args:
         func: function
             Callback of function to disable
     """
     assert registered_tests[-1][0] == func
-    del registered_tests[-1] # This should always called right after @test
+    del registered_tests[-1]
 
 
 def find_files(extensions):
@@ -575,11 +576,10 @@ OUTPUT_ALIGN = 50
 
 
 def execute_tests():
-    """All tests are called from here.
+    """Run all registered tests.
 
-    Run all tests that have been registered with the register_tests functions
-    and print results. If this fails, it will call sys.exit with a non-zero
-    status.
+    This will print results to stdout. If this fails, it will call sys.exit
+    with a non-zero status.
 
     Args:
         None
@@ -588,7 +588,7 @@ def execute_tests():
         Nothing
 
     Raises:
-        NOthing
+        Nothing
     """
 
     global DEBUG
@@ -682,7 +682,7 @@ def check_result(source_file, program_output):
         Nothing
 
     Raises:
-        TestException if a string is not found.
+        TestException if the patterns do not match.
     """
 
     output_offset = 0
