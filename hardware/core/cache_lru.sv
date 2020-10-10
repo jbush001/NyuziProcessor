@@ -195,9 +195,9 @@ module cache_lru
                         3'd2: update_flags = {lru_flags[6], 3'b011, lru_flags[2:0]};
                         3'd3: update_flags = {lru_flags[6], 3'b001, lru_flags[2:0]};
                         3'd4: update_flags = {lru_flags[6:4], 3'b011, lru_flags[0]};
-                        3'd5: update_flags = {lru_flags[6:4], 3'b010, lru_flags[0]};
-                        3'd6: update_flags = {lru_flags[6:4], 2'b00, lru_flags[1], 1'b1};
-                        3'd7: update_flags = {lru_flags[6:4], 2'b00, lru_flags[1], 1'b0};
+                        3'd5: update_flags = {lru_flags[6:4], 3'b001, lru_flags[0]};
+                        3'd6: update_flags = {lru_flags[6:4], 1'b0, lru_flags[2], 2'b01};
+                        3'd7: update_flags = {lru_flags[6:4], 1'b0, lru_flags[2], 2'b00};
                         default: update_flags = '0;
                     endcase
                 end
