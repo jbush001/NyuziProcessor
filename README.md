@@ -2,7 +2,6 @@
 
 [![CI](https://github.com/jbush001/NyuziProcessor/workflows/CI/badge.svg)](https://github.com/jbush001/NyuziProcessor/actions?query=workflow%3ACI)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/fbafdd72749e459d8de6f381abc7436d)](https://www.codacy.com/app/jbush001/NyuziProcessor?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jbush001/NyuziProcessor&amp;utm_campaign=Badge_Grade)
-[![Chat at https://gitter.im/jbush001/NyuziProcessor](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jbush001/NyuziProcessor?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Nyuzi is an experimental GPGPU processor hardware design focused on compute
 intensive tasks. It is optimized for use cases like deep learning and
@@ -14,7 +13,6 @@ libraries, and tests. It can be used to experiment with microarchitectural
 and instruction set design tradeoffs.
 
 **Documentation:** <https://github.com/jbush001/NyuziProcessor/wiki><br/>
-**Mailing list:** <https://groups.google.com/forum/#!forum/nyuzi-processor-dev><br/>
 **License:** Apache 2.0<br/>
 
 The following instructions explain how to set up the Nyuzi development
