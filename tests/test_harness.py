@@ -31,6 +31,7 @@ import subprocess
 import sys
 import termios
 import traceback
+from typing import Any, Callable, List, Optional, Tuple
 from PIL import Image
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -75,7 +76,10 @@ test_args = parser.parse_args()
 DEBUG = test_args.debug
 
 
-def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags=None):
+def build_program(source_files: List[str],
+                  image_type: str = 'bare-metal',
+                  opt_level: str = '-O3',
+                  cflags: Optional[List[str]] = None) -> str:
     """Compile and or assemble one or more files into a Nyuzi executable.
 
     If there are any .c files in the list, this will link in crt0, libc,
@@ -83,16 +87,16 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
     loaded into memory.
 
     Args:
-        source_files: list of str
+        source_files:
             Paths to files to compile, which can be C/C++ or assembly files.
-        image_type: str
+        image_type:
             Can be:
             - 'bare-metal', Runs standalone, but with elf linkage
             - 'raw', Has no header and is linked at address 0
             - 'user', ELF binary linked at 0x1000, linked against kernel libs
-        opt_level: str
+        opt_level:
             Optimization level (-O0, -O1, -O2, or -O3)
-        cflags: list of str
+        cflags:
             Additional command line flags to pass to C compiler.
 
     Returns:
@@ -152,7 +156,7 @@ def build_program(source_files, image_type='bare-metal', opt_level='-O3', cflags
         raise TestException('Compilation failed:\n' + exc.output.decode())
 
 
-def get_elf_file_for_hex(hexfile):
+def get_elf_file_for_hex(hexfile: str) -> str:
     """Get the path to a .elf file that was used to generate the .hex file.
 
     This is a bit of a hack. build_program only returns the hex file, but
@@ -184,26 +188,26 @@ class TerminalStateRestorer(object):
             termios.tcsetattr(sys.stdin.fileno(), termios.TCSANOW, self.attrs)
 
 
-def run_test_with_timeout(args, timeout):
+def run_test_with_timeout(args: List[str], timeout: float) -> str:
     """Run program specified by args with timeout.
 
     Args:
-        args: list of str
+        args:
             Arguments to called program the first being the path to the
             executable
-        timeout: float
+        timeout:
             Number of seconds to wait for the program to exit normally
             before throwing exception.
 
     Returns:
-        str All data printed to stdout by the process.
+        All data printed to stdout by the process.
 
     Raises:
         TestException if the test returns a non-zero result or does not
         complete in time.
     """
     process = subprocess.Popen(args, stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT)
+                               stderr=subprocess.STDOUT)
     try:
         output, _ = process.communicate(timeout=timeout)
     except subprocess.TimeoutExpired:
@@ -218,7 +222,7 @@ def run_test_with_timeout(args, timeout):
     return output.decode()
 
 
-def reset_fpga():
+def reset_fpga() -> None:
     args = ['quartus_stp', '-t', os.path.join(TEST_DIR, 'reset_altera.tcl')]
 
     try:
@@ -229,44 +233,43 @@ def reset_fpga():
 
 
 def run_program(
-        executable,
-        target='emulator',
+        executable: str,
+        target: str = 'emulator',
         *,
-        block_device=None,
-        dump_file=None,
-        dump_base=None,
-        dump_length=None,
-        timeout=60,
-        flush_l2=False,
-        trace=False,
-        profile_file=None):
+        block_device: str = None,
+        dump_file: str = None,
+        dump_base: int = None,
+        dump_length: int = None,
+        timeout: int = 60,
+        flush_l2: bool = False,
+        trace: bool = False,
+        profile_file: Optional[str] = None) -> str:
     """Run Nyuzi test program.
 
     This uses the hex file produced by build_program.
 
     Args:
-        executable: str
+        executable:
             Path in host filesystem to file that should be executed.
             This is usually the return value from build_program.
-        target: str
+        target:
             Which target will run the program. Can be 'verilator',
             'emulator', or 'fpga'.
-        block_device: str
+        block_device:
             Relative path to a file that contains a filesystem image.
             If passed, contents will appear as a virtual SDMMC device
             (verilator or emulator only).
-        dump_file: str
+        dump_file:
             Path to a file to write memory contents into after
             execution completes (verilator or emulator only).
-        dump_base: int
+        dump_base:
             if dump_file is specified, base physical memory address to start
             writing mempry from.
-        dump_length: int
+        dump_length:
             number of bytes of memory to write to dump_file
 
     Returns:
-        str Output from program, anything written to virtual serial device,
-        as a str.
+        Output from program, anything written to virtual serial device
 
     Raises:
         TestException if emulated program crashes or the program cannot
@@ -323,6 +326,7 @@ def run_program(
         if '***HALTED***' not in output:
             raise TestException(output + '\nProgram did not halt normally')
     elif target == 'fpga':
+        args = []
         if block_device is not None:
             args += [block_device]
 
@@ -355,10 +359,10 @@ def run_program(
 
 
 def run_kernel(
-        exe_file,
-        target='emulator',
+        exe_file: str,
+        target: str = 'emulator',
         *,
-        timeout=60):
+        timeout: int = 60) -> str:
     """Run test program as a user space program under the kernel.
 
     This uses the elf file produced by build_program. It first boots
@@ -367,11 +371,13 @@ def run_kernel(
     automatically.
 
     Args:
-        target: str
+        target:
             Which target to execute on. Can be 'verilator' or 'emulator'.
+        timeout:
+            How long to wait before raising an exception, seconds.
 
     Returns:
-        str Output from program, anything written to virtual serial device
+        Output from program, anything written to virtual serial device
 
     Raises:
         TestException if emulated program crashes or the program cannot
@@ -391,45 +397,46 @@ def run_kernel(
     return output
 
 
-def assert_greater(a, b):
+def assert_greater(a: Any, b: Any) -> None:
     if a <= b:
         raise TestException('assert_greater failed: {}, {}'.format(a, b))
 
 
-def assert_greater_equal(a, b):
+def assert_greater_equal(a: Any, b: Any) -> None:
     if a < b:
         raise TestException('assert_greater_equal failed: {}, {}'.format(a, b))
 
 
-def assert_less(a, b):
+def assert_less(a: Any, b: Any) -> None:
     if a >= b:
         raise TestException('assert_less failed: {}, {}'.format(a, b))
 
 
-def assert_less_equal(a, b):
+def assert_less_equal(a: Any, b: Any) -> None:
     if a > b:
         raise TestException('assert_less_equal failed: {}, {}'.format(a, b))
 
 
-def assert_equal(a, b):
+def assert_equal(a: Any, b: Any) -> None:
     if a != b:
         raise TestException('assert_equal failed: {}, {}'.format(a, b))
 
 
-def assert_not_equal(a, b):
+def assert_not_equal(a: Any, b: Any) -> None:
     if a == b:
         raise TestException('assert_not_equal failed: {}, {}'.format(a, b))
 
 
-def assert_files_equal(file1, file2, error_msg='file mismatch'):
+def assert_files_equal(file1: str, file2: str,
+                       error_msg: str = 'file mismatch') -> None:
     """Read two files and throw a TestException if they are not the same.
 
     Args:
-        file1: str
+        file1:
             relative path to first file
-        file2: str
+        file2:
             relative path to second file
-        error_msg: str
+        error_msg:
             If there is a file mismatch, prepend this to error output
 
     Returns:
@@ -488,17 +495,18 @@ def assert_files_equal(file1, file2, error_msg='file mismatch'):
 registered_tests = []
 
 
-def register_tests(func, names, targets=None):
+def register_tests(func: Callable[[str, str], None], names: List[str],
+                   targets: Optional[List[str]] = None) -> None:
     """Add a list of tests to be run when execute_tests is called.
 
     This function can be called multiple times, it will append passed
     tests to the existing list.
 
     Args:
-        func: function
+        func:
             A function that will be called for each of the elements
             in the names list.
-        names: list of str
+        names:
             List of tests to run.
 
     Returns:
@@ -515,7 +523,7 @@ def register_tests(func, names, targets=None):
     registered_tests += [(func, name, targets) for name in names]
 
 
-def test(param=None):
+def test(param: Any = None) -> Callable[[Any], Any]:
     """decorator @test registers the following function to be run as a test.
 
     Args:
@@ -538,30 +546,30 @@ def test(param=None):
     return register_func
 
 
-def disable(func):
+def disable(func: Callable[[Any], Any]) -> None:
     """Decorator to disable a test.
 
     Useful to temporarily disable failing tests. This must always called right
     after @test.
 
     Args:
-        func: function
+        func:
             Callback of function to disable
     """
     assert registered_tests[-1][0] == func
     del registered_tests[-1]
 
 
-def find_files(extensions):
+def find_files(extensions: Tuple[str]) -> List[str]:
     """Find all files in the current directory that have the passed extensions.
 
     Args:
-        extensions: list of str
+        extensions
             File extensions, each starting with a dot. For example
             ['.c', '.cpp']
 
     Returns:
-        list of str Filenames.
+        Filenames.
 
     Raises:
         Nothing
@@ -575,7 +583,7 @@ COLOR_NONE = '\x1b[0m]'
 OUTPUT_ALIGN = 50
 
 
-def execute_tests():
+def execute_tests() -> None:
     """Run all registered tests.
 
     This will print results to stdout. If this fails, it will call sys.exit
@@ -665,7 +673,7 @@ CHECK_PREFIX = 'CHECK: '
 CHECKN_PREFIX = 'CHECKN: '
 
 
-def check_result(source_file, program_output):
+def check_result(source_file: str, program_output: str) -> None:
     """Check output of a program based on embedded comments in source code.
 
     For each pattern in a source file that begins with 'CHECK: ', search
@@ -675,8 +683,10 @@ def check_result(source_file, program_output):
     occur in the output.
 
     Args:
-        source_file: str
+        source_file:
             relative path to a source file that contains patterns
+        program_output:
+            Everything printed by program
 
     Returns:
         Nothing
@@ -729,18 +739,16 @@ def check_result(source_file, program_output):
     if not found_check_lines:
         raise TestException('FAIL: no lines with CHECK: were found')
 
-    return True
 
-
-def dump_hex(output_file, input_file):
+def dump_hex(output_file: str, input_file: str) -> None:
     """Read binary input file and encode as hexadecimal file.
 
     Each line of the output file is 4 bytes.
 
     Args:
-        output_file: str
+        output_file:
             Path of hex file to to write
-        input_file: str
+        input_file:
             Path of binary file to read
 
     Returns:
@@ -760,32 +768,32 @@ def dump_hex(output_file, input_file):
             ofile.write(b'\n')
 
 
-def endian_swap(value):
+def endian_swap(value: int) -> int:
     """"Given a 32-bit integer value, swap it to the opposite endianness.
 
     Args:
-        value: int
+        value:
             Value to endian swap
 
     Returns:
-        int Endian swapped result
+        Endian swapped result
     """
 
     return (((value >> 24) & 0xff) | ((value >> 8) & 0xff00)
             | ((value << 8) & 0xff0000) | (value << 24))
 
 
-def _run_generic_test(name, target):
+def _run_generic_test(name: str, target: str) -> None:
     """Compile a file, run the program, and call check_result on it.
 
     check_result will match expected strings in the source
     file with the programs output.
 
     Args:
-        name: str
+        name:
             Filename of the file to run, expected to be in the same
             directory is the runtest script
-        target: str
+        target:
             Name of the target (e.g. emulator, verilator)
 
     Returns:
@@ -800,7 +808,8 @@ def _run_generic_test(name, target):
     check_result(name, result)
 
 
-def register_generic_test(name, targets=None):
+def register_generic_test(names: List[str],
+                          targets: Optional[List[str]] = None) -> None:
     """Register a test without a custom test handler function.
 
     This will compile the passed filename, then use check_result to validate
@@ -808,7 +817,7 @@ def register_generic_test(name, targets=None):
     verilator and emulator configurations.
 
     Args:
-        names: list of str
+        names:
             Source file names. Each is compiled as a separate test.
 
     Returns:
@@ -820,17 +829,19 @@ def register_generic_test(name, targets=None):
     if targets is None:
         targets = ALL_TARGETS[:]
 
-    register_tests(_run_generic_test, name, targets)
+    register_tests(_run_generic_test, names, targets)
 
 
-def _run_generic_assembly_test(name, target):
+def _run_generic_assembly_test(name: str, target: str) -> None:
     hex_file = build_program([name])
     result = run_program(hex_file, target)
     if 'PASS' not in result or 'FAIL' in result:
         raise TestException('Test failed ' + result)
 
 
-def register_generic_assembly_tests(tests, targets=None):
+def register_generic_assembly_tests(
+        tests: List[str],
+        targets: Optional[List[str]] = None) -> None:
     """Register a test written in assembler without a custom test handler.
 
     This will assemble the passed program, then look for PASS or FAIL
@@ -853,7 +864,9 @@ def register_generic_assembly_tests(tests, targets=None):
     register_tests(_run_generic_assembly_test, tests, targets)
 
 
-def register_render_test(name, source_files, expected_hash, targets=None):
+def register_render_test(name: str, source_files: List[str],
+                         expected_hash: str,
+                         targets: Optional[List[str]] = None) -> None:
     """Register a test that renders graphics.
 
     This will compile the source files, run the program, then compute a
@@ -862,13 +875,13 @@ def register_render_test(name, source_files, expected_hash, targets=None):
     value to ensure the output is pixel accurate.
 
     Args:
-        name: str
+        name:
             Display name of the test in test result output
-        source_files: list of str
+        source_files:
             List of source files to compile (unlike other calls, these
             are all compiled into one executable, this call only registers
             one test, not multiple).
-        expected_hash: str
+        expected_hash:
             this is an ASCII hex string that the computed hash should match.
 
     Returns:
