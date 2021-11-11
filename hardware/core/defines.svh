@@ -44,8 +44,8 @@ parameter NUM_REGISTERS = 32;
 parameter TOTAL_THREADS = `THREADS_PER_CORE * `NUM_CORES;
 
 typedef logic[31:0] scalar_t;
-typedef logic[37:0] hamming_32b_t;
-typedef logic[521:0] hamming_512b_t;
+typedef logic[38:0] hamming_32b_t;
+typedef logic[522:0] hamming_512b_t;
 typedef logic[32:0] parity_t;
 typedef scalar_t[NUM_VECTOR_LANES - 1:0] vector_t;
 typedef logic[$clog2(`THREADS_PER_CORE) - 1:0] local_thread_idx_t;
