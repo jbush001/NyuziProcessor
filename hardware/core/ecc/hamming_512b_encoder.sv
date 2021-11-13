@@ -3,7 +3,7 @@
 import defines::*;
 
 
-module hamming_encoder(
+module hamming_512b_encoder(
     input                             clk,
     input                             reset,
 
