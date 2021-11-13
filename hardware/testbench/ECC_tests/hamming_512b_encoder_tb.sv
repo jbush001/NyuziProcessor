@@ -52,91 +52,112 @@ module hamming_encoder_tb();
 	  in_word = 512'h3;
       #20;
       if (out_word != 524'h0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001E) begin
-        $error("Error coding 2");
+        $error("Error coding 3");
         $displayh("Value of in_word: %h", in_word);
         $displayh("Value of out_word: %h", out_word);
       end
       in_word = 512'h4;
       #20;
       if (out_word != 524'h4000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002A) begin
-        $error("Error coding 2");
+        $error("Error coding 4");
         $displayh("Value of in_word: %h", in_word);
         $displayh("Value of out_word: %h", out_word);
       end
       in_word = 512'h5;
       #20;
       if (out_word != 524'h0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002D) begin
-        $error("Error coding 2");
+        $error("Error coding 5");
         $displayh("Value of in_word: %h", in_word);
         $displayh("Value of out_word: %h", out_word);
       end
       in_word = 512'h6;
       #20;
       if (out_word != 524'h00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000033) begin
-        $error("Error coding 2");
+        $error("Error coding 6");
         $displayh("Value of in_word: %h", in_word);
         $displayh("Value of out_word: %h", out_word);
       end
       in_word = 512'h7;
       #20;
       if (out_word != 524'h40000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000034) begin
-        $error("Error coding 2");
+        $error("Error coding 7");
         $displayh("Value of in_word: %h", in_word);
         $displayh("Value of out_word: %h", out_word);
       end
       in_word = 512'h8;
       #20;
       if (out_word != 524'h0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004B) begin
-        $error("Error coding 2");
+        $error("Error coding 8");
         $displayh("Value of in_word: %h", in_word);
         $displayh("Value of out_word: %h", out_word);
       end
       in_word = 512'h9;
       #20;
       if (out_word != 524'h4000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004C) begin
-        $error("Error coding 2");
+        $error("Error coding 9");
         $displayh("Value of in_word: %h", in_word);
         $displayh("Value of out_word: %h", out_word);
       end
       in_word = 512'hA;
       #20;
       if (out_word != 524'h40000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000052) begin
-        $error("Error coding 2");
+        $error("Error coding A");
         $displayh("Value of in_word: %h", in_word);
         $displayh("Value of out_word: %h", out_word);
       end
       in_word = 512'hB;
       #20;
       if (out_word != 524'h00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000055) begin
-        $error("Error coding 2");
+        $error("Error coding B");
         $displayh("Value of in_word: %h", in_word);
         $displayh("Value of out_word: %h", out_word);
       end
       in_word = 512'hC;
       #20;
       if (out_word != 524'h40000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000061) begin
-        $error("Error coding 2");
+        $error("Error coding C");
         $displayh("Value of in_word: %h", in_word);
         $displayh("Value of out_word: %h", out_word);
       end
       in_word = 512'hD;
       #20;
       if (out_word != 524'h00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000066) begin
-        $error("Error coding 2");
+        $error("Error coding D");
         $displayh("Value of in_word: %h", in_word);
         $displayh("Value of out_word: %h", out_word);
       end
       in_word = 512'hE;
       #20;
       if (out_word != 524'h00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000078) begin
-        $error("Error coding 2");
+        $error("Error coding E");
         $displayh("Value of in_word: %h", in_word);
         $displayh("Value of out_word: %h", out_word);
       end
       in_word = 512'hF;
       #20;
       if (out_word != 524'h4000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007F) begin
-        $error("Error coding 2");
+        $error("Error coding F");
+        $displayh("Value of in_word: %h", in_word);
+        $displayh("Value of out_word: %h", out_word);
+      end
+      in_word = 512'h10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000;
+      #20;
+      if (out_word != 524'h4408000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b) begin
+        $error("Error coding 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
+        $displayh("Value of in_word: %h", in_word);
+        $displayh("Value of out_word: %h", out_word);
+      end
+      in_word = 512'hAAA;
+      #20;
+      if (out_word != 524'h0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001AAD3) begin
+        $error("Error coding 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
+        $displayh("Value of in_word: %h", in_word);
+        $displayh("Value of out_word: %h", out_word);
+      end
+      in_word = 512'hAAAA;
+      #20;
+      if (out_word != 524'h0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000015AAD9) begin
+        $error("Error coding 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
         $displayh("Value of in_word: %h", in_word);
         $displayh("Value of out_word: %h", out_word);
       end
