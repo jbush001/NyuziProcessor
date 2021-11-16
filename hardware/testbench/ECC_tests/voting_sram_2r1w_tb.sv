@@ -4,6 +4,10 @@ import defines::*;
 
 module voting_sram_2r1w_tb();
     logic clk, reset;
+  
+    localparam SIZE = 32;
+    localparam ADDR_WIDTH = $clog2(SIZE);
+    localparam DATA_WIDTH = 32;
 
     logic read1_en;
     logic [ADDR_WIDTH - 1:0] read1_addr;
@@ -32,10 +36,10 @@ module voting_sram_2r1w_tb();
         end
     end
 
-    voting_sram_2r1w dut #(
+    voting_sram_2r1w #(
         .DATA_WIDTH($bits(scalar_t)),
-        .SIZE(32)
-    )
+        .SIZE(SIZE)
+    ) dut
     (
         .clk        (clk),
         .read1_en   (read1_en),
@@ -51,19 +55,19 @@ module voting_sram_2r1w_tb();
 
     initial begin
         repeat(100) begin
-            if (1'($random())) write_reg(DATA_WIDTH'($random()));
+          if (1'($random())) write_reg(DATA_WIDTH'($random()), ADDR_WIDTH'($random()));
             else read_reg(5'($random()), 5'($random()), $urandom_range(1, 3));
         end        
     end
 
-    task write_reg(logic [DATA_WIDTH-1:0] data);
+  task write_reg(logic [DATA_WIDTH-1:0] data, logic [ADDR_WIDTH-1:0] addr);
         write_en = 1'b1;
-        wirte_addr = addr;
+        write_addr = addr;
         write_data = data;
         $display("Writing %h at %d", data, addr);
         @(posedge clk);
         write_en = 1'b0;
-        wirte_addr = '0;
+        write_addr = '0;
         write_data = '0;
     endtask
 
@@ -102,5 +106,22 @@ module voting_sram_2r1w_tb();
             $display("Detected in bank %d addr %d a data mismatch", dut.voting_mismatch_reg[1], dut.voting_mismatch_addr[1]);
         end
     endfunction
+
+    initial begin
+        fork
+            begin
+                forever begin
+                    @(posedge clk);
+                    if ($urandom_range(0, 1000) == 1'd0) begin
+                        automatic int bank = $urandom_range(0,2);
+                        automatic logic [DATA_WIDTH-1:0] random_data = DATA_WIDTH'($random());
+                        automatic int addr = ADDR_WIDTH'($urandom());
+                        $display("ECC (RF): Injecting error in bank %d addr %d, new random data is %d", bank, addr, random_data);
+                        data[bank][addr] = random_data;
+                    end
+                end
+            end
+        join_none
+    end
 
 endmodule

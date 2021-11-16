@@ -2,7 +2,7 @@
 
 import defines::*;
 
-module parity_encoder(
+module parity_checker(
     // From thread_select_stage
     input parity_t                    coded_word,
     output logic                      error);

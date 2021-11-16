@@ -49,18 +49,11 @@ module voting_sram_2r1w
     input [ADDR_WIDTH - 1:0]         write_addr,
     input [DATA_WIDTH - 1:0]         write_data);
 
-`ifdef VENDOR_ALTERA
-    VENDOR_ALTERA_IS_NOT_SUPPORTED
-`elsif VENDOR_XILINX
-    VENDOR_XILINX_IS_NOT_SUPPORTED
-`elsif MEMORY_COMPILER
-    MEMORY_COMPILER_IS_NOT_SUPPORTED
-`else
     // Simulation
-    logic[DATA_WIDTH - 1:0] data_0[3][SIZE];
+    logic[DATA_WIDTH - 1:0][SIZE-1:0] data[3];
     logic voting_mismatch[2];
     logic [1:0] voting_mismatch_reg[2];
-    logic [SIZE-1:0] voting_missmatch_addr[2];
+    logic [SIZE-1:0] voting_mismatch_addr[2];
     logic [DATA_WIDTH-1:0] voting_data[2];
 
     // Do the voting when a read takes place
@@ -70,7 +63,7 @@ module voting_sram_2r1w
             read_data_0 = data[0][read1_addr];
             read_data_1 = data[1][read1_addr];
             read_data_2 = data[2][read1_addr];
-            voting_missmatch_addr[0] = read1_addr;
+            voting_mismatch_addr[0] = read1_addr;
 
             if ((read_data_0 != read_data_1) || (read_data_0 != read_data_2) || (read_data_1 != read_data_2)) begin
                 voting_mismatch[0] = 1'b1;
@@ -96,7 +89,7 @@ module voting_sram_2r1w
             read_data_0 = data[0][read2_addr];
             read_data_1 = data[1][read2_addr];
             read_data_2 = data[2][read2_addr];
-            voting_missmatch_addr[1] = read2_addr;
+            voting_mismatch_addr[1] = read2_addr;
 
             if ((read_data_0 != read_data_1) || (read_data_0 != read_data_2) || (read_data_1 != read_data_2)) begin
                 voting_mismatch[0] = 1'b1;
@@ -131,13 +124,13 @@ module voting_sram_2r1w
         
         if (voting_mismatch[0]) begin
             if (!write_en || write_addr != voting_mismatch_addr[0]) begin
-                data[voting_mismatch_reg[0][voting_mismatch_addr[0]] <= voting_data[0];
+              data[voting_mismatch_reg[0]][voting_mismatch_addr[0]] <= voting_data[0];
             end
         end
 
         if (voting_mismatch[1]) begin
             if (!write_en || write_addr != voting_mismatch_addr[1]) begin
-                data[voting_mismatch_reg[1][voting_mismatch_addr[1]] <= voting_data[1];
+              data[voting_mismatch_reg[1]][voting_mismatch_addr[1]] <= voting_data[1];
             end
         end
 
@@ -170,34 +163,11 @@ module voting_sram_2r1w
 
     initial
     begin
-`ifndef VERILATOR
-        // Initialize RAM with random values. This is unneeded on Verilator
-        // (which already does randomizes memory), but is necessary on
-        // 4-state simulators because memory is initially filled with Xs.
-        // This was causing x-propagation bugs in some modules previously.
         for (int i = 0; i < 3; i++)
             for (int j = 0; j < SIZE; j++)
                 data[i][j] = DATA_WIDTH'($random());
-`endif
 
         if ($test$plusargs("dumpmems") != 0)
             $display("sram2r1w %d %d", DATA_WIDTH, SIZE);
     end
-
-    initial begin
-        fork
-            begin
-                forever begin
-                    @(posedge clk_i);
-                    if ($urandom_range(0, 1000) == 1'd0) begin
-                        automatic int bank = $urandom_range(0,2);
-                        automatic logic [DATA_WIDTH-1:0] random_data = DATA_WIDTH'($random());
-                        $display("ECC (RF): Injecting error in bank %d, new random data is %d", bank, random_data);
-                        data[bank] = random_data;
-                    end
-                end
-            end
-        join_none
-    end
-`endif
 endmodule
