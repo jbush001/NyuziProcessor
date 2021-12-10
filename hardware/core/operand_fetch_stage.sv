@@ -58,7 +58,7 @@ module operand_fetch_stage(
     vector_t vector_val1;
     vector_t vector_val2;
 
-    sram_2r1w #(
+    voting_sram_2r1w #(
         .DATA_WIDTH($bits(scalar_t)),
         .SIZE(32 * `THREADS_PER_CORE),
         .READ_DURING_WRITE("DONT_CARE")

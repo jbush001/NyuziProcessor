@@ -22,12 +22,14 @@ module voting_sram_2r1w_tb();
   	initial begin
   		$dumpfile("dump.vcd");
   		$dumpvars;
-  		#10000 
-  		$finish;
+        
 	end  
 
     initial begin
         clk = 0;
+      	read1_en = 0;
+      	read2_en = 0;
+      	write_en = 0;
     end
 
     initial begin
@@ -54,10 +56,11 @@ module voting_sram_2r1w_tb();
     );
 
     initial begin
-        repeat(100) begin
+        for(int i = 0; i < 100; i++) begin
           if (1'($random())) write_reg(DATA_WIDTH'($random()), ADDR_WIDTH'($random()));
-            else read_reg(5'($random()), 5'($random()), $urandom_range(1, 3));
-        end        
+          else read_reg(5'($random()), 5'($random()), $urandom_range(1, 3));
+        end
+      $finish;
     end
 
   task write_reg(logic [DATA_WIDTH-1:0] data, logic [ADDR_WIDTH-1:0] addr);
@@ -92,6 +95,7 @@ module voting_sram_2r1w_tb();
         end
         detect_mismatch(); 
         @(posedge clk);
+        //detect_mismatch();
         read1_en = 1'b0;
         read2_en = 1'b0;
         read1_addr = '0;
@@ -100,28 +104,28 @@ module voting_sram_2r1w_tb();
 
     function void detect_mismatch();
         if (dut.voting_mismatch[0]) begin
-            $display("Detected in bank %d addr %d a data mismatch", dut.voting_mismatch_reg[0], dut.voting_mismatch_addr[0]);
+          $display("Detected in bank %d addr %0d a data mismatch", dut.voting_mismatch_reg[0], dut.voting_mismatch_addr[0]);
         end
         if (dut.voting_mismatch[1]) begin
-            $display("Detected in bank %d addr %d a data mismatch", dut.voting_mismatch_reg[1], dut.voting_mismatch_addr[1]);
+          $display("Detected in bank %d addr %0d a data mismatch", dut.voting_mismatch_reg[1], dut.voting_mismatch_addr[1]);
         end
     endfunction
-
-    initial begin
-        fork
-            begin
-                forever begin
-                    @(posedge clk);
-                    if ($urandom_range(0, 1000) == 1'd0) begin
-                        automatic int bank = $urandom_range(0,2);
-                        automatic logic [DATA_WIDTH-1:0] random_data = DATA_WIDTH'($random());
-                        automatic int addr = ADDR_WIDTH'($urandom());
-                        $display("ECC (RF): Injecting error in bank %d addr %d, new random data is %d", bank, addr, random_data);
-                        data[bank][addr] = random_data;
-                    end
-                end
-            end
-        join_none
-    end
+  
+  //initial begin
+  //      fork
+  //          begin
+  //              forever begin
+  //                  @(posedge clk);
+  //                  if ($urandom_range(0, 10) == 1'd0) begin
+  //                      automatic int bank = $urandom_range(0,2);
+  //                      automatic int addr = ADDR_WIDTH'($urandom());
+  //                      automatic logic [DATA_WIDTH-1:0] random_data = DATA_WIDTH'($random());
+  //                    $display("ECC (RF): Injecting error in bank %d addr %d, new random data is %d", bank, addr, random_data);
+  //                    dut.data[bank][addr] = random_data;
+  //                  end
+  //              end
+  //          end
+  //      join_none
+  //  end
 
 endmodule

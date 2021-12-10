@@ -2,13 +2,13 @@
 
 import defines::*;
 
-module parity_encoder(
-    // From thread_select_stage
-    input scalar_t                    word_to_code,
-    output parity_t                   coded_word);
+module parity_encoder #(
+    DATA_WIDTH = 32)
+    (
+    input [DATA_WIDTH - 1:0]          word_to_code,
+    output [DATA_WIDTH:0]             coded_word);
 
 
-    //Actual code
     always_comb begin
         coded_word = {words_to_code, ^words_to_code};
     end

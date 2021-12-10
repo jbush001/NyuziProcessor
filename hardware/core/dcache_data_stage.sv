@@ -161,6 +161,7 @@ module dcache_data_stage(
     logic tlb_read;
     logic fault_store_flag;
     logic lane_enabled;
+    logic ecc_pb_error;
 
     // Unlike earlier stages, this commits instruction side effects like stores,
     // so it needs to check if there is a rollback (which would be for the
@@ -472,7 +473,7 @@ module dcache_data_stage(
         .one_hot(way_hit_oh),
         .index(way_hit_idx));
 
-    sram_1r1w #(
+    sram_1r1w_pb_p #(
         .DATA_WIDTH(CACHE_LINE_BITS),
         .SIZE(`L1D_WAYS * `L1D_SETS),
         .READ_DURING_WRITE("NEW_DATA")

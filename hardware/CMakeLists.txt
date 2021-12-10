@@ -41,12 +41,13 @@ set(VERILATOR_OPTIONS --unroll-count 512
     -Wno-importstar
     -DSIMULATION=1
     -I${CMAKE_CURRENT_SOURCE_DIR}/core
+    -I${CMAKE_CURRENT_SOURCE_DIR}/core/ecc
     -y ${CMAKE_CURRENT_SOURCE_DIR}/testbench
     -y ${CMAKE_CURRENT_SOURCE_DIR}/fpga/common
     -Mdir ${VERILATOR_GEN_DIR}
     --threads ${NUM_THREADS})
 
-set(DUMP_WAVEFORM 0 CACHE BOOL "Enable dumping VCD waveforms from Verilog simulator.")
+set(DUMP_WAVEFORM 1 CACHE BOOL "Enable dumping VCD waveforms from Verilog simulator.")
 
 if(${DUMP_WAVEFORM})
     set(VERILATOR_OPTIONS ${VERILATOR_OPTIONS} --trace --trace-structs)

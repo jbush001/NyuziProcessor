@@ -50,14 +50,23 @@ module voting_sram_2r1w
     input [DATA_WIDTH - 1:0]         write_data);
 
     // Simulation
-    logic[DATA_WIDTH - 1:0][SIZE-1:0] data[3];
+    logic [DATA_WIDTH - 1:0] data[3][SIZE];
     logic voting_mismatch[2];
     logic [1:0] voting_mismatch_reg[2];
-    logic [SIZE-1:0] voting_mismatch_addr[2];
+    logic [ADDR_WIDTH-1:0] voting_mismatch_addr[2];
     logic [DATA_WIDTH-1:0] voting_data[2];
 
+    function void randomize_data();
+        if (read1_en) data[$random()%3][read1_addr] = DATA_WIDTH'($random());
+        if (read2_en) data[$random()%3][read2_addr] = DATA_WIDTH'($random());
+    endfunction
+
     // Do the voting when a read takes place
-    always_comb begin
+    always_comb begin : voting
+        // Randomly sometimes and just for simulation porpuses randomize the data of the data array just to check that we
+        // recover properly from this fail
+        if (~write_en & (read1_en | read2_en) & 1'($random())) randomize_data();
+
         if (read1_en) begin
             logic [DATA_WIDTH-1:0] read_data_0, read_data_1, read_data_2;
             read_data_0 = data[0][read1_addr];
@@ -84,6 +93,9 @@ module voting_sram_2r1w
                 voting_data[0] = read_data_0;
             end
         end
+        else begin
+            voting_mismatch[0] = 1'b0;
+        end
         if (read2_en) begin
             logic [DATA_WIDTH-1:0] read_data_0, read_data_1, read_data_2;
             read_data_0 = data[0][read2_addr];
@@ -92,7 +104,7 @@ module voting_sram_2r1w
             voting_mismatch_addr[1] = read2_addr;
 
             if ((read_data_0 != read_data_1) || (read_data_0 != read_data_2) || (read_data_1 != read_data_2)) begin
-                voting_mismatch[0] = 1'b1;
+                voting_mismatch[1] = 1'b1;
                 if (read_data_0 == read_data_1) begin
                     voting_mismatch_reg[1] = 2'd2;
                     voting_data[1] = read_data_0;
@@ -110,6 +122,9 @@ module voting_sram_2r1w
                 voting_data[1] = read_data_0;
             end
         end
+        else begin
+            voting_mismatch[1] = 1'b0;
+        end
     end
 
     // Note: use always here instead of always_ff so Modelsim will allow
@@ -126,11 +141,19 @@ module voting_sram_2r1w
             if (!write_en || write_addr != voting_mismatch_addr[0]) begin
               data[voting_mismatch_reg[0]][voting_mismatch_addr[0]] <= voting_data[0];
             end
+            else begin
+                $display("ERROR 0");
+                $error();
+            end
         end
 
         if (voting_mismatch[1]) begin
             if (!write_en || write_addr != voting_mismatch_addr[1]) begin
               data[voting_mismatch_reg[1]][voting_mismatch_addr[1]] <= voting_data[1];
+            end
+            else begin
+                $display("ERROR 1");
+                $error();
             end
         end
 
@@ -163,9 +186,12 @@ module voting_sram_2r1w
 
     initial
     begin
-        for (int i = 0; i < 3; i++)
-            for (int j = 0; j < SIZE; j++)
-                data[i][j] = DATA_WIDTH'($random());
+        for (int i = 0; i < SIZE; i++) begin
+            logic [DATA_WIDTH-1:0] random_data = DATA_WIDTH'($random());
+            data[0][i] = random_data;
+            data[1][i] = random_data;
+            data[2][i] = random_data;
+        end
 
         if ($test$plusargs("dumpmems") != 0)
             $display("sram2r1w %d %d", DATA_WIDTH, SIZE);
