@@ -162,6 +162,7 @@ module dcache_data_stage(
     logic fault_store_flag;
     logic lane_enabled;
     logic ecc_pb_error;
+    logic cache_hit_ecc;
 
     // Unlike earlier stages, this commits instruction side effects like stores,
     // so it needs to check if there is a rollback (which would be for the
@@ -473,7 +474,7 @@ module dcache_data_stage(
         .one_hot(way_hit_oh),
         .index(way_hit_idx));
 
-    sram_1r1w_pb_p #(
+    sram_1r1w_pb #(
         .DATA_WIDTH(CACHE_LINE_BITS),
         .SIZE(`L1D_WAYS * `L1D_SETS),
         .READ_DURING_WRITE("NEW_DATA")
@@ -489,12 +490,14 @@ module dcache_data_stage(
         .write_data(l2i_ddata_update_data),
         .*);
 
+    assign cache_hit_ecc = cache_hit && !ecc_pb_error;
+
     // cache_near_miss indicates a cache miss is occurring in the cycle this is
     // filling the same line. If this suspends the thread, it will never
     // receive a wakeup. Instead, roll the thread back and let it retry.
     // Do not be set for a synchronized load, even if the data is in the L1
     // cache: it must do a round trip to the L2 cache to latch the address.
-    assign cache_near_miss = !cache_hit
+    assign cache_near_miss = !cache_hit_ecc
         && dt_tlb_hit
         && cached_load_req
         && |l2i_dtag_update_en_oh
@@ -504,7 +507,7 @@ module dcache_data_stage(
         && !any_fault;
 
     assign dd_cache_miss = cached_load_req
-        && !cache_hit
+        && !cache_hit_ecc
         && dt_tlb_hit
         && !cache_near_miss
         && !any_fault;
@@ -512,7 +515,7 @@ module dcache_data_stage(
     assign dd_cache_miss_thread_idx = dt_thread_idx;
     assign dd_cache_miss_sync = sync_access_req;
 
-    assign dd_update_lru_en = cache_hit && cached_access_req && !any_fault;
+    assign dd_update_lru_en = cache_hit_ecc && cached_access_req && !any_fault;
     assign dd_update_lru_way = way_hit_idx;
 
     // Always treat the first synchronized load as a cache miss, even if data is
@@ -570,6 +573,7 @@ module dcache_data_stage(
             dd_trap_cause <= {2'b11, TT_ILLEGAL_STORE};
     end
 
+
     always_ff @(posedge clk, posedge reset)
     begin
         if (reset)
@@ -599,13 +603,13 @@ module dcache_data_stage(
                 && !squash_instruction;
 
             // Rollback on cache miss
-            dd_rollback_en <= cached_load_req && !cache_hit && dt_tlb_hit && !any_fault;
+            dd_rollback_en <= cached_load_req && !cache_hit_ecc && dt_tlb_hit && !any_fault;
 
             // Suspend the thread if there is a cache miss.
             // In the near miss case (described above), don't suspend thread.
             dd_suspend_thread <= cached_load_req
                 && dt_tlb_hit
-                && !cache_hit
+                && !cache_hit_ecc
                 && !cache_near_miss
                 && !any_fault;
 
@@ -613,9 +617,9 @@ module dcache_data_stage(
 
             // Perf events
             dd_perf_dcache_hit <= cached_load_req && !any_fault && !tlb_miss
-                 && cache_hit;
+                 && cache_hit_ecc;
             dd_perf_dcache_miss <= cached_load_req && !any_fault && !tlb_miss
-                && !cache_hit;
+                && !cache_hit_ecc;
             dd_perf_dtlb_miss <= tlb_miss;
         end
     end

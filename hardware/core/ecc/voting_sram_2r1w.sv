@@ -57,8 +57,8 @@ module voting_sram_2r1w
     logic [DATA_WIDTH-1:0] voting_data[2];
 
     function void randomize_data();
-        if (read1_en) data[$random()%3][read1_addr] = DATA_WIDTH'($random());
-        if (read2_en) data[$random()%3][read2_addr] = DATA_WIDTH'($random());
+        //if (read1_en) data[$random()%3][read1_addr] = DATA_WIDTH'($random());
+        //if (read2_en) data[$random()%3][read2_addr] = DATA_WIDTH'($random());
     endfunction
 
     // Do the voting when a read takes place

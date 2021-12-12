@@ -10,7 +10,7 @@ module parity_encoder #(
 
 
     always_comb begin
-        coded_word = {words_to_code, ^words_to_code};
+        coded_word = {word_to_code, ^word_to_code};
     end
 
 endmodule
