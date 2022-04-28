@@ -3,17 +3,13 @@
 [![CI](https://github.com/jbush001/NyuziProcessor/workflows/CI/badge.svg)](https://github.com/jbush001/NyuziProcessor/actions?query=workflow%3ACI)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/fbafdd72749e459d8de6f381abc7436d)](https://www.codacy.com/app/jbush001/NyuziProcessor?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jbush001/NyuziProcessor&amp;utm_campaign=Badge_Grade)
 
-Nyuzi is an experimental GPGPU processor hardware design focused on compute
-intensive tasks. It is optimized for use cases like deep learning and
-image processing.
-
-This project includes a synthesizable hardware design written in System
-Verilog, an instruction set emulator, an LLVM based C/C++ compiler, software
+Nyuzi is an experimental GPGPU processor focused on compute intensive tasks.
+It includes a synthesizable hardware design written in System Verilog, an
+instruction set emulator, an LLVM based C/C++ compiler, software
 libraries, and tests. It can be used to experiment with microarchitectural
 and instruction set design tradeoffs.
 
 **Documentation:** <https://github.com/jbush001/NyuziProcessor/wiki><br/>
-**License:** Apache 2.0<br/>
 
 The following instructions explain how to set up the Nyuzi development
 environment. This includes an emulator and cycle-accurate hardware simulator,
@@ -40,7 +36,7 @@ The makefile executes this operation in batch mode*
 
 These instruction assume OSX Mavericks or later.
 
-Install XCode from the AppStore application ([Click Here](https://itunes.apple.com/us/app/xcode/id497799835?mt=12)).
+Install XCode from the Mac AppStore ([Click Here](https://itunes.apple.com/us/app/xcode/id497799835?mt=12)).
 Then install the command line compiler tools by opening Terminal and typing the
 following:
 
