@@ -367,7 +367,7 @@ module writeback_stage(
             writeback_thread_idx_nxt = fx5_thread_idx;
             writeback_mask_nxt = fx5_mask_value;
             if (fx5_instruction.compare)
-                writeback_value_nxt = vector_t'(mcycle_vcompare_result);
+                writeback_value_nxt[0] = {16'd0, mcycle_vcompare_result};
             else
                 writeback_value_nxt = fx5_result;
 
@@ -397,9 +397,9 @@ module writeback_stage(
             writeback_thread_idx_nxt = ix_thread_idx;
             writeback_mask_nxt = ix_mask_value;
             if (ix_instruction.call)
-                writeback_value_nxt = vector_t'(ix_instruction.pc + 32'd4);
+                writeback_value_nxt[0] = ix_instruction.pc + 32'd4;
             else if (ix_instruction.compare)
-                writeback_value_nxt = vector_t'(scycle_vcompare_result);
+                writeback_value_nxt[0] = {16'd0, scycle_vcompare_result};
             else
                 writeback_value_nxt = ix_result;
 
