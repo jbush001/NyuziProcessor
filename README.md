@@ -29,6 +29,10 @@ to change some package names. From a terminal, execute the following:
         libxml2-dev libedit-dev libncurses5-dev libsdl2-dev gtkwave python3-pip
     pip3 install pillow
 
+**Note: Recent versions of cmake break building the LLVM toolchain. This can be worked 
+around by switching back to an older version of cmake: 
+<https://github.com/jbush001/NyuziProcessor/issues/204>**
+
 *Emacs is used for [verilog-mode](http://www.veripool.org/wiki/verilog-mode) AUTO macros.
 The makefile executes this operation in batch mode*
 
