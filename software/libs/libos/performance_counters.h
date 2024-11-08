@@ -20,7 +20,7 @@
 extern "C" {
 #endif
 
-#define NUM_COUNTERS 4
+#define NUM_COUNTERS 2
 
 enum performance_event
 {
